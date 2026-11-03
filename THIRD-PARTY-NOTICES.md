@@ -1,1307 +1,1412 @@
 # THIRD-PARTY-NOTICES
 
-Niniejszy dokument zawiera informacje o oprogramowaniu firm trzecich
-używanym w projekcie **S.O.K. — System Ofert i Kalkulacji**.
+Informacje o oprogramowaniu firm trzecich używanym w projekcie
+**S.O.K. — System Ofert i Kalkulacji**.
 
-> **UWAGA:** lista jest generowana automatycznie z `package-lock.json`
-> przez `npm run licenses:generate`. Nie edytuj jej ręcznie —
-> aktualizacja wymaga ponownego wygenerowania.
+> Plik generowany automatycznie z `package-lock.json` oraz zasobów w `public/` przez `npm run licenses:generate`. Nie edytuj ręcznie — zmień generator `scripts/generate-licenses.mjs`.
 
-Dane na dzień: **2026-10-31**. Pełne teksty licencji znajdują się
-w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
+Dane na dzień: **2026-11-03**.
 
-## Licencje użyte w projekcie
+## 1. Licencja projektu
 
-| Licencja                | Liczba pakietów |
-| ----------------------- | --------------: |
-| MIT                     |             992 |
-| ISC                     |              98 |
-| Apache-2.0              |              48 |
-| BSD-3-Clause            |              25 |
-| BSD-2-Clause            |              15 |
-| BlueOak-1.0.0           |              10 |
-| MIT OR CC0-1.0          |               5 |
-| MPL-2.0                 |               2 |
-| MIT-0                   |               1 |
-| Python-2.0              |               1 |
-| CC-BY-4.0               |               1 |
-| BSD                     |               1 |
-| MIT OR Apache-2.0       |               1 |
-| MIT OR GPL-3.0-or-later |               1 |
-| MIT AND Zlib            |               1 |
-| CC-BY-3.0               |               1 |
-| CC0-1.0                 |               1 |
-| 0BSD                    |               1 |
+Projekt **S.O.K. — System Ofert i Kalkulacji** jest objęty licencją własnościową.
+Tytuł pliku `LICENSE` zachowuje historyczną nazwę właściciela praw (firma WITROS); pełna treść w `LICENSE`.
+Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 
-## Oprogramowanie firm trzecich
+## 2. Model dystrybucji i zakres dokumentu
 
-### MIT (992)
+- Zależności produkcyjne: **222** pakietów — wchodzą do obrazu Docker i artefaktu wdrożenia.
+- Zależności deweloperskie/testowe: **983** pakietów — nie są wymagane w runtime i nie są przedmiotem dystrybucji.
+- Zasoby spoza npm (vendored): SheetJS, font Inter, subset ikon Lucide — są serwowane z `public/` i wymagają atrybucji.
+- Obraz Docker zachowuje `node_modules` (także devDependencies), więc teksty licencji są obecne w obrazie.
+- Oznaczenia `[prod]` / `[dev]` w sekcji 7 określają zakres: `[prod]` = dystrybuowane, `[dev]` = tylko development/CI.
 
-- @apidevtools/json-schema-ref-parser@14.0.1
-- @apidevtools/openapi-schemas@2.1.0
-- @apidevtools/swagger-methods@3.0.2
-- @apidevtools/swagger-parser@12.1.0
-- @asamuzakjp/css-color@3.2.0
-- @babel/code-frame@7.29.7
-- @babel/compat-data@7.29.7
-- @babel/core@7.29.7
-- @babel/generator@7.29.8
-- @babel/helper-compilation-targets@7.29.7
-- @babel/helper-globals@7.29.7
-- @babel/helper-module-imports@7.29.7
-- @babel/helper-module-transforms@7.29.7
-- @babel/helper-plugin-utils@7.29.7
-- @babel/helper-string-parser@7.29.11
-- @babel/helper-validator-identifier@7.29.7
-- @babel/helper-validator-option@7.29.7
-- @babel/helpers@7.29.10
-- @babel/parser@7.29.11
-- @babel/plugin-syntax-async-generators@7.8.4
-- @babel/plugin-syntax-bigint@7.8.3
-- @babel/plugin-syntax-class-properties@7.12.13
-- @babel/plugin-syntax-class-static-block@7.14.5
-- @babel/plugin-syntax-import-attributes@7.29.7
-- @babel/plugin-syntax-import-meta@7.10.4
-- @babel/plugin-syntax-json-strings@7.8.3
-- @babel/plugin-syntax-jsx@7.29.7
-- @babel/plugin-syntax-logical-assignment-operators@7.10.4
-- @babel/plugin-syntax-nullish-coalescing-operator@7.8.3
-- @babel/plugin-syntax-numeric-separator@7.10.4
-- @babel/plugin-syntax-object-rest-spread@7.8.3
-- @babel/plugin-syntax-optional-catch-binding@7.8.3
-- @babel/plugin-syntax-optional-chaining@7.8.3
-- @babel/plugin-syntax-private-property-in-object@7.14.5
-- @babel/plugin-syntax-top-level-await@7.14.5
-- @babel/plugin-syntax-typescript@7.29.7
-- @babel/template@7.29.7
-- @babel/traverse@7.29.10
-- @babel/types@7.29.11
-- @bcoe/v8-coverage@0.2.3
-- @cacheable/memory@2.2.0
-- @cacheable/utils@2.5.0
-- @commitlint/cli@21.2.4
-- @commitlint/config-conventional@21.2.4
-- @commitlint/config-validator@21.2.3
-- @commitlint/ensure@21.2.4
-- @commitlint/execute-rule@21.0.1
-- @commitlint/format@21.2.3
-- @commitlint/is-ignored@21.2.3
-- @commitlint/lint@21.2.4
-- @commitlint/load@21.2.4
-- @commitlint/message@21.2.0
-- @commitlint/parse@21.2.3
-- @commitlint/read@21.2.3
-- @commitlint/resolve-extends@21.2.3
-- @commitlint/rules@21.2.4
-- @commitlint/to-lines@21.0.1
-- @commitlint/top-level@21.2.0
-- @commitlint/types@21.2.3
-- @conventional-changelog/git-client@3.2.0
-- @conventional-changelog/template@1.4.0
-- @cspotcode/source-map-support@0.8.1
-- @csstools/css-calc@2.1.4
-- @csstools/css-color-parser@3.1.0
-- @csstools/css-parser-algorithms@3.0.5
-- @csstools/css-tokenizer@3.0.4
-- @emnapi/core@1.10.0
-- @emnapi/runtime@1.10.0
-- @emnapi/wasi-threads@1.2.1
-- @esbuild/aix-ppc64@0.28.2
-- @esbuild/android-arm@0.28.2
-- @esbuild/android-arm64@0.28.2
-- @esbuild/android-x64@0.28.2
-- @esbuild/darwin-arm64@0.28.2
-- @esbuild/darwin-x64@0.28.2
-- @esbuild/freebsd-arm64@0.28.2
-- @esbuild/freebsd-x64@0.28.2
-- @esbuild/linux-arm@0.28.2
-- @esbuild/linux-arm64@0.28.2
-- @esbuild/linux-ia32@0.28.2
-- @esbuild/linux-loong64@0.28.2
-- @esbuild/linux-mips64el@0.28.2
-- @esbuild/linux-ppc64@0.28.2
-- @esbuild/linux-riscv64@0.28.2
-- @esbuild/linux-s390x@0.28.2
-- @esbuild/linux-x64@0.28.2
-- @esbuild/netbsd-arm64@0.28.2
-- @esbuild/netbsd-x64@0.28.2
-- @esbuild/openbsd-arm64@0.28.2
-- @esbuild/openbsd-x64@0.28.2
-- @esbuild/openharmony-arm64@0.28.2
-- @esbuild/sunos-x64@0.28.2
-- @esbuild/win32-arm64@0.28.2
-- @esbuild/win32-ia32@0.28.2
-- @esbuild/win32-x64@0.28.2
-- @eslint-community/eslint-utils@4.10.1
-- @eslint-community/regexpp@4.12.2
-- @eslint/js@9.39.5
-- @istanbuljs/schema@0.1.6
-- @jest/console@30.4.1
-- @jest/core@30.4.2
-- @jest/diff-sequences@30.4.0
-- @jest/diff-sequences@30.4.0
-- @jest/diff-sequences@30.4.0
-- @jest/diff-sequences@30.5.0
-- @jest/environment-jsdom-abstract@30.5.2
-- @jest/environment@30.4.1
-- @jest/environment@30.4.1
-- @jest/environment@30.4.1
-- @jest/environment@30.4.1
-- @jest/environment@30.4.1
-- @jest/environment@30.5.2
-- @jest/expect-utils@30.4.1
-- @jest/expect-utils@30.4.1
-- @jest/expect-utils@30.5.2
-- @jest/expect@30.4.1
-- @jest/fake-timers@30.4.1
-- @jest/fake-timers@30.4.1
-- @jest/fake-timers@30.4.1
-- @jest/fake-timers@30.4.1
-- @jest/fake-timers@30.4.1
-- @jest/fake-timers@30.5.2
-- @jest/get-type@30.1.0
-- @jest/get-type@30.1.0
-- @jest/get-type@30.1.0
-- @jest/get-type@30.1.0
-- @jest/get-type@30.1.0
-- @jest/get-type@30.1.0
-- @jest/get-type@30.1.0
-- @jest/get-type@30.5.0
-- @jest/globals@30.4.1
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.4.0
-- @jest/pattern@30.5.0
-- @jest/react-is-18@18.3.1
-- @jest/react-is-19@19.3.1
-- @jest/reporters@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.4.1
-- @jest/schemas@30.5.0
-- @jest/snapshot-utils@30.4.1
-- @jest/source-map@30.0.1
-- @jest/test-result@30.4.1
-- @jest/test-sequencer@30.4.1
-- @jest/transform@30.4.1
-- @jest/transform@30.4.1
-- @jest/transform@30.4.1
-- @jest/transform@30.4.1
-- @jest/transform@30.4.1
-- @jest/transform@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.4.1
-- @jest/types@30.5.1
-- @jridgewell/gen-mapping@0.3.13
-- @jridgewell/remapping@2.3.5
-- @jridgewell/resolve-uri@3.1.2
-- @jridgewell/sourcemap-codec@1.6.0
-- @jridgewell/trace-mapping@0.3.31
-- @jridgewell/trace-mapping@0.3.9
-- @keyv/bigmap@1.3.1
-- @keyv/serialize@1.1.1
-- @napi-rs/wasm-runtime@1.2.5
-- @noble/hashes@1.8.0
-- @paralleldrive/cuid2@2.3.1
-- @pkgjs/parseargs@0.11.0
-- @pkgr/core@0.3.6
-- @sentry/conventions@0.16.0
-- @sentry/core@10.76.2
-- @sentry/node-core@10.76.2
-- @sentry/node@10.76.2
-- @sentry/opentelemetry@10.76.2
-- @sentry/server-utils@10.76.2
-- @simple-libs/child-process-utils@2.0.0
-- @simple-libs/stream-utils@2.0.0
-- @sinclair/typebox@0.34.52
-- @standard-schema/spec@1.1.0
-- @tsconfig/node10@1.0.13
-- @tsconfig/node12@1.0.11
-- @tsconfig/node14@1.0.3
-- @tsconfig/node16@1.0.4
-- @tybys/wasm-util@0.10.4
-- @types/babel__core@7.20.5
-- @types/babel__generator@7.27.0
-- @types/babel__template@7.4.4
-- @types/babel__traverse@7.28.0
-- @types/bcryptjs@2.4.6
-- @types/body-parser@1.19.6
-- @types/compression@1.8.1
-- @types/connect@3.4.38
-- @types/cookie-parser@1.4.10
-- @types/cookiejar@2.1.5
-- @types/esrecurse@4.3.1
-- @types/estree@1.0.9
-- @types/express-serve-static-core@4.19.9
-- @types/express@4.17.25
-- @types/http-errors@2.0.5
-- @types/istanbul-lib-coverage@2.0.6
-- @types/istanbul-lib-report@3.0.3
-- @types/istanbul-reports@3.0.4
-- @types/jest@30.0.0
-- @types/jsdom@21.1.7
-- @types/json-schema@7.0.15
-- @types/methods@1.1.4
-- @types/mime@1.3.5
-- @types/minimist@1.2.5
-- @types/node@26.6.5
-- @types/normalize-package-data@2.4.4
-- @types/qs@6.15.1
-- @types/range-parser@1.2.7
-- @types/send@0.17.6
-- @types/send@1.2.1
-- @types/serve-static@1.15.10
-- @types/stack-utils@2.0.3
-- @types/strip-bom@3.0.0
-- @types/strip-json-comments@0.0.30
-- @types/superagent@8.1.11
-- @types/supertest@7.2.1
-- @types/swagger-jsdoc@6.0.4
-- @types/swagger-ui-express@4.1.8
-- @types/tough-cookie@4.0.5
-- @types/yargs-parser@21.0.3
-- @types/yargs@17.0.35
-- @typescript-eslint/eslint-plugin@8.72.0
-- @typescript-eslint/parser@8.72.0
-- @typescript-eslint/project-service@8.72.0
-- @typescript-eslint/scope-manager@8.72.0
-- @typescript-eslint/tsconfig-utils@8.72.0
-- @typescript-eslint/type-utils@8.72.0
-- @typescript-eslint/types@8.72.0
-- @typescript-eslint/typescript-estree@8.72.0
-- @typescript-eslint/utils@8.72.0
-- @typescript-eslint/visitor-keys@8.72.0
-- @unrs/resolver-binding-android-arm-eabi@1.12.2
-- @unrs/resolver-binding-android-arm64@1.12.2
-- @unrs/resolver-binding-darwin-arm64@1.12.2
-- @unrs/resolver-binding-darwin-x64@1.12.2
-- @unrs/resolver-binding-freebsd-x64@1.12.2
-- @unrs/resolver-binding-linux-arm-gnueabihf@1.12.2
-- @unrs/resolver-binding-linux-arm-musleabihf@1.12.2
-- @unrs/resolver-binding-linux-arm64-gnu@1.12.2
-- @unrs/resolver-binding-linux-arm64-musl@1.12.2
-- @unrs/resolver-binding-linux-loong64-gnu@1.12.2
-- @unrs/resolver-binding-linux-loong64-musl@1.12.2
-- @unrs/resolver-binding-linux-ppc64-gnu@1.12.2
-- @unrs/resolver-binding-linux-riscv64-gnu@1.12.2
-- @unrs/resolver-binding-linux-riscv64-musl@1.12.2
-- @unrs/resolver-binding-linux-s390x-gnu@1.12.2
-- @unrs/resolver-binding-linux-x64-gnu@1.12.2
-- @unrs/resolver-binding-linux-x64-musl@1.12.2
-- @unrs/resolver-binding-openharmony-arm64@1.12.2
-- @unrs/resolver-binding-wasm32-wasi@1.12.2
-- @unrs/resolver-binding-win32-arm64-msvc@1.12.2
-- @unrs/resolver-binding-win32-ia32-msvc@1.12.2
-- @unrs/resolver-binding-win32-x64-msvc@1.12.2
-- accepts@1.3.8
-- acorn-jsx@5.3.2
-- acorn-walk@8.3.5
-- acorn@8.19.0
-- add-stream@1.0.0
-- agent-base@7.1.4
-- ajv-draft-04@1.0.0
-- ajv@6.15.0
-- ajv@8.20.0
-- ansi-escapes@4.3.2
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@5.0.1
-- ansi-regex@6.4.0
-- ansi-styles@3.2.1
-- ansi-styles@4.3.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@5.2.0
-- ansi-styles@6.2.3
-- ansi-styles@6.2.3
-- arg@4.1.3
-- argparse@1.0.10
-- argue-cli@3.2.0
-- array-flatten@1.1.1
-- array-ify@1.0.0
-- arrify@1.0.1
-- asap@2.0.6
-- asynckit@0.4.0
-- babel-jest@30.4.1
-- babel-plugin-jest-hoist@30.4.0
-- babel-preset-current-node-syntax@1.2.0
-- babel-preset-jest@30.4.0
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@1.0.2
-- balanced-match@4.0.4
-- binary-extensions@2.3.0
-- body-parser@1.20.9
-- brace-expansion@1.1.21
-- brace-expansion@1.1.21
-- brace-expansion@1.1.21
-- brace-expansion@1.1.21
-- brace-expansion@1.1.21
-- brace-expansion@1.1.21
-- brace-expansion@1.1.21
-- brace-expansion@1.1.21
-- brace-expansion@2.1.7
-- brace-expansion@5.0.12
-- braces@3.0.3
-- browserslist@4.29.4
-- bs-logger@0.2.6
-- bser@2.1.2
-- buffer-from@1.1.2
-- bytes@3.1.2
-- c12@3.1.0
-- cacheable@2.5.0
-- call-bind-apply-helpers@1.0.2
-- call-bound@1.0.4
-- call-me-maybe@1.0.2
-- callsites@3.1.0
-- camelcase-keys@6.2.2
-- camelcase@5.3.1
-- camelcase@6.3.0
-- chalk@2.4.2
-- chalk@4.1.2
-- char-regex@1.0.2
-- chokidar@3.6.0
-- chokidar@4.0.3
-- ci-info@4.4.0
-- citty@0.1.6
-- citty@0.2.2
-- cjs-module-lexer@2.3.0
-- co@4.6.0
-- collect-v8-coverage@1.0.3
-- color-convert@1.9.3
-- color-convert@2.0.1
-- color-name@1.1.3
-- color-name@1.1.4
-- combined-stream@1.0.8
-- commander@6.2.0
-- compare-func@2.0.0
-- component-emitter@1.3.1
-- compressible@2.0.18
-- compression@1.8.2
-- concat-map@0.0.1
-- concat-stream@2.0.0
-- confbox@0.2.4
-- confbox@0.3.1
-- consola@3.4.2
-- content-disposition@0.5.4
-- content-type@1.0.5
-- conventional-changelog-config-spec@2.1.0
-- conventional-changelog-core@4.2.4
-- conventional-changelog-preset-loader@2.3.4
-- conventional-changelog-writer@5.0.1
-- conventional-changelog@3.1.25
-- conventional-commits-filter@2.0.7
-- conventional-commits-filter@2.0.7
-- conventional-commits-parser@3.2.4
-- conventional-commits-parser@3.2.4
-- conventional-commits-parser@7.1.3
-- conventional-recommended-bump@6.1.0
-- convert-source-map@2.0.0
-- cookie-parser@1.4.7
-- cookie-signature@1.0.6
-- cookie-signature@1.2.2
-- cookie@0.7.2
-- cookiejar@2.1.4
-- core-util-is@1.0.3
-- cosmiconfig@9.0.2
-- create-require@1.1.1
-- cross-spawn@7.0.6
-- cssstyle@4.6.0
-- dargs@7.0.0
-- data-urls@5.0.0
-- dateformat@3.0.3
-- debug@2.6.9
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- decamelize-keys@1.1.1
-- decamelize@1.2.0
-- decimal.js@10.6.0
-- dedent@1.7.2
-- deep-is@0.1.4
-- deepmerge@4.3.1
-- defu@6.1.7
-- delayed-stream@1.0.0
-- depd@2.0.0
-- destr@2.0.5
-- destroy@1.2.0
-- detect-indent@6.1.0
-- detect-newline@3.1.0
-- docx@9.14.0
-- dot-prop@5.3.0
-- dunder-proto@1.0.1
-- dynamic-dedupe@0.3.0
-- eastasianwidth@0.2.0
-- ee-first@1.1.1
-- effect@3.21.0
-- emittery@0.13.1
-- emoji-regex@10.6.0
-- emoji-regex@8.0.0
-- emoji-regex@9.2.2
-- empathic@2.0.0
-- encodeurl@2.0.0
-- env-paths@2.2.1
-- error-ex@1.3.4
-- es-define-property@1.0.1
-- es-errors@1.3.0
-- es-module-lexer@3.0.4
-- es-object-atoms@1.1.2
-- es-set-tostringtag@2.1.0
-- es-toolkit@1.52.0
-- esbuild@0.28.2
-- escalade@3.2.0
-- escape-html@1.0.3
-- escape-string-regexp@1.0.5
-- escape-string-regexp@1.0.5
-- escape-string-regexp@2.0.0
-- escape-string-regexp@4.0.0
-- eslint-config-prettier@10.1.8
-- eslint@10.13.0
-- etag@1.8.1
-- execa@5.1.1
-- exit-x@0.2.2
-- expect@30.4.1
-- expect@30.4.1
-- expect@30.5.2
-- express@4.22.3
-- exsolve@1.1.3
-- fast-check@3.23.2
-- fast-deep-equal@3.1.3
-- fast-json-stable-stringify@2.1.0
-- fast-levenshtein@2.0.6
-- fast-safe-stringify@2.1.1
-- fb-watchman@2.0.4
-- fdir@6.5.0
-- figures@3.2.0
-- file-entry-cache@11.1.5
-- fill-range@7.1.1
-- finalhandler@1.3.2
-- find-up@2.1.0
-- find-up@3.0.0
-- find-up@4.1.0
-- find-up@4.1.0
-- find-up@4.1.0
-- find-up@5.0.0
-- flat-cache@6.1.23
-- form-data@4.0.6
-- formidable@3.5.4
-- forwarded@0.2.0
-- fresh@0.5.2
-- fsevents@2.3.3
-- function-bind@1.1.2
-- gensync@1.0.0-beta.2
-- get-east-asian-width@1.7.0
-- get-intrinsic@1.3.0
-- get-package-type@0.1.0
-- get-pkg-repo@4.2.1
-- get-proto@1.0.1
-- get-stream@6.0.1
-- giget@2.0.0
-- git-raw-commits@2.0.11
-- git-remote-origin-url@2.0.0
-- git-semver-tags@4.1.1
-- global-directory@5.0.0
-- globals@17.13.0
-- gopd@1.2.0
-- handlebars@4.7.10
-- hard-rejection@2.1.0
-- has-flag@3.0.0
-- has-flag@4.0.0
-- has-symbols@1.1.0
-- has-tostringtag@1.0.2
-- hash.js@1.1.7
-- hashery@1.5.1
-- hasown@2.0.4
-- helmet@8.3.0
-- hookified@1.15.1
-- hookified@2.2.0
-- html-encoding-sniffer@4.0.0
-- html-escaper@2.0.2
-- http-errors@2.0.1
-- http-proxy-agent@7.0.2
-- https-proxy-agent@7.0.6
-- husky@9.1.7
-- iconv-lite@0.4.24
-- iconv-lite@0.6.3
-- ignore@5.3.2
-- ignore@7.0.14
-- immediate@3.0.6
-- import-fresh@3.3.1
-- import-local@3.2.0
-- imurmurhash@0.1.4
-- indent-string@4.0.0
-- ipaddr.js@1.9.1
-- is-arrayish@0.2.1
-- is-binary-path@2.1.0
-- is-core-module@2.17.0
-- is-extglob@2.1.1
-- is-fullwidth-code-point@3.0.0
-- is-generator-fn@2.1.0
-- is-glob@4.0.3
-- is-number@7.0.0
-- is-obj@2.0.0
-- is-plain-obj@1.1.0
-- is-plain-obj@4.1.0
-- is-potential-custom-element-name@1.0.1
-- is-stream@2.0.1
-- is-text-path@1.0.1
-- isarray@1.0.0
-- jest-changed-files@30.4.1
-- jest-circus@30.4.2
-- jest-cli@30.4.2
-- jest-config@30.4.2
-- jest-diff@30.4.1
-- jest-diff@30.4.1
-- jest-diff@30.4.1
-- jest-diff@30.5.2
-- jest-docblock@30.4.0
-- jest-each@30.4.1
-- jest-environment-jsdom@30.5.2
-- jest-environment-node@30.4.1
-- jest-haste-map@30.4.1
-- jest-haste-map@30.4.1
-- jest-haste-map@30.4.1
-- jest-haste-map@30.4.1
-- jest-haste-map@30.4.1
-- jest-haste-map@30.4.1
-- jest-haste-map@30.4.1
-- jest-haste-map@30.4.1
-- jest-leak-detector@30.4.1
-- jest-matcher-utils@30.4.1
-- jest-matcher-utils@30.4.1
-- jest-matcher-utils@30.4.1
-- jest-matcher-utils@30.5.2
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.4.1
-- jest-message-util@30.5.1
-- jest-mock@30.4.1
-- jest-mock@30.4.1
-- jest-mock@30.4.1
-- jest-mock@30.4.1
-- jest-mock@30.4.1
-- jest-mock@30.4.1
-- jest-mock@30.4.1
-- jest-mock@30.5.2
-- jest-pnp-resolver@1.2.3
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.4.0
-- jest-regex-util@30.5.0
-- jest-resolve-dependencies@30.4.2
-- jest-resolve@30.4.1
-- jest-runner@30.4.2
-- jest-runtime@30.4.2
-- jest-snapshot@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.4.1
-- jest-util@30.5.1
-- jest-validate@30.4.1
-- jest-watcher@30.4.1
-- jest-worker@30.4.1
-- jest-worker@30.4.1
-- jest-worker@30.4.1
-- jest-worker@30.4.1
-- jest-worker@30.4.1
-- jest-worker@30.4.1
-- jest-worker@30.4.1
-- jest-worker@30.4.1
-- jest@30.4.2
-- jiti@2.7.0
-- js-tokens@4.0.0
-- js-yaml@3.15.2
-- js-yaml@4.3.2
-- jsdom@26.1.0
-- jsesc@3.1.0
-- json-parse-better-errors@1.0.2
-- json-parse-even-better-errors@2.3.1
-- json-schema-traverse@0.4.1
-- json-schema-traverse@1.0.0
-- json-stable-stringify-without-jsonify@1.0.1
-- json5@2.2.3
-- jsonparse@1.3.1
-- keyv@5.6.0
-- kind-of@6.0.3
-- leven@3.1.0
-- levn@0.4.1
-- lie@3.3.0
-- lilconfig@3.1.4
-- lines-and-columns@1.2.4
-- lint-staged@17.6.0
-- load-json-file@4.0.0
-- locate-path@2.0.0
-- locate-path@3.0.0
-- locate-path@5.0.0
-- locate-path@5.0.0
-- locate-path@5.0.0
-- locate-path@6.0.0
-- lodash.ismatch@4.4.0
-- lodash.memoize@4.1.2
-- lodash.mergewith@4.6.2
-- lodash@4.18.1
-- make-dir@4.0.0
-- map-obj@1.0.1
-- map-obj@4.3.0
-- math-intrinsics@1.1.0
-- media-typer@0.3.0
-- meow@8.1.2
-- merge-descriptors@1.0.3
-- merge-stream@2.0.0
-- methods@1.1.2
-- mime-db@1.52.0
-- mime-db@1.54.0
-- mime-types@2.1.35
-- mime@1.6.0
-- mime@2.6.0
-- mimic-fn@2.1.0
-- min-indent@1.0.1
-- minimist-options@4.1.0
-- minimist@1.2.8
-- mitt@3.0.1
-- mkdirp@1.0.4
-- modern-tar@0.8.6
-- modify-values@1.0.1
-- module-details-from-path@1.0.4
-- ms@2.0.0
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- nanoid@6.0.2
-- napi-postinstall@0.3.7
-- natural-compare@1.4.0
-- negotiator@0.6.3
-- negotiator@0.6.4
-- neo-async@2.6.2
-- node-fetch-native@1.6.7
-- node-int64@0.4.0
-- node-releases@2.0.60
-- normalize-path@3.0.0
-- npm-run-path@4.0.1
-- nwsapi@2.2.28
-- nypm@0.6.11
-- object-inspect@1.13.4
-- ohash@2.0.12
-- on-finished@2.4.2
-- on-headers@1.1.0
-- onetime@5.1.2
-- openapi-types@12.1.3
-- optionator@0.9.4
-- p-limit@1.3.0
-- p-limit@2.3.0
-- p-limit@2.3.0
-- p-limit@2.3.0
-- p-limit@2.3.0
-- p-limit@3.1.0
-- p-locate@2.0.0
-- p-locate@3.0.0
-- p-locate@4.1.0
-- p-locate@4.1.0
-- p-locate@4.1.0
-- p-locate@5.0.0
-- p-try@1.0.0
-- p-try@2.2.0
-- parent-module@1.0.1
-- parse-json@4.0.0
-- parse-json@5.2.0
-- parse5@7.3.0
-- parseurl@1.3.3
-- path-exists@3.0.0
-- path-exists@3.0.0
-- path-exists@4.0.0
-- path-is-absolute@1.0.1
-- path-key@3.1.1
-- path-parse@1.0.7
-- path-to-regexp@0.1.13
-- path-type@3.0.0
-- pathe@2.0.3
-- perfect-debounce@1.0.0
-- picomatch@2.3.2
-- picomatch@2.3.2
-- picomatch@4.0.7
-- pify@2.3.0
-- pify@3.0.0
-- pify@3.0.0
-- pirates@4.0.7
-- pkg-dir@4.2.0
-- pkg-types@2.4.0
-- prelude-ls@1.2.1
-- prettier@3.9.10
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.4.1
-- pretty-format@30.5.1
-- process-nextick-args@2.0.1
-- proxy-addr@2.0.8
-- punycode@2.3.1
-- pure-rand@6.1.0
-- pure-rand@7.0.1
-- q@1.5.1
-- qified@0.10.1
-- quick-lru@4.0.1
-- range-parser@1.2.1
-- raw-body@2.5.3
-- rc9@2.1.2
-- react-is-18@18.3.1
-- react-is-19@19.3.1
-- read-pkg-up@3.0.0
-- read-pkg-up@7.0.1
-- read-pkg@3.0.0
-- read-pkg@5.2.0
-- readable-stream@2.3.8
-- readable-stream@3.6.2
-- readable-stream@3.6.2
-- readable-stream@3.6.2
-- readdirp@3.6.0
-- readdirp@4.1.2
-- redent@3.0.0
-- require-directory@2.1.1
-- require-from-string@2.0.2
-- require-in-the-middle@8.0.1
-- resolve-cwd@3.0.0
-- resolve-from@4.0.0
-- resolve-from@5.0.0
-- resolve@1.22.13
-- rrweb-cssom@0.8.0
-- safe-buffer@5.1.2
-- safe-buffer@5.1.2
-- safe-buffer@5.2.1
-- safer-buffer@2.1.2
-- send@0.19.2
-- serve-static@1.16.3
-- setimmediate@1.0.5
-- shebang-command@2.0.0
-- shebang-regex@3.0.0
-- side-channel-list@1.0.1
-- side-channel-map@1.0.1
-- side-channel-weakmap@1.0.2
-- side-channel@1.1.1
-- slash@3.0.0
-- source-map-support@0.5.13
-- spdx-expression-parse@3.0.1
-- split@1.0.1
-- stack-utils@2.0.6
-- statuses@2.0.2
-- string_decoder@1.1.1
-- string-argv@0.3.2
-- string-length@4.0.2
-- string-width-cjs@4.2.3
-- string-width@4.2.3
-- string-width@5.1.2
-- string-width@7.2.0
-- string-width@8.3.0
-- strip-ansi-cjs@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@6.0.1
-- strip-ansi@7.2.0
-- strip-bom@3.0.0
-- strip-bom@3.0.0
-- strip-bom@4.0.0
-- strip-final-newline@2.0.0
-- strip-indent@3.0.0
-- strip-json-comments@2.0.1
-- strip-json-comments@3.1.1
-- superagent@10.4.1
-- supertest@7.3.1
-- supports-color@5.5.0
-- supports-color@7.2.0
-- supports-color@8.1.1
-- supports-color@8.1.1
-- supports-color@8.1.1
-- supports-color@8.1.1
-- supports-color@8.1.1
-- supports-color@8.1.1
-- supports-color@8.1.1
-- supports-color@8.1.1
-- supports-preserve-symlinks-flag@1.0.0
-- swagger-jsdoc@6.3.0
-- swagger-ui-express@5.0.1
-- symbol-tree@3.2.4
-- synckit@0.11.13
-- text-extensions@1.9.0
-- through@2.3.8
-- through2@2.0.5
-- through2@4.0.2
-- tinyexec@1.3.1
-- tinyglobby@0.2.17
-- tldts-core@6.1.86
-- tldts@6.1.86
-- to-regex-range@5.0.1
-- toidentifier@1.0.1
-- tr46@5.1.1
-- tree-kill@1.2.2
-- trim-newlines@3.0.1
-- ts-api-utils@2.5.0
-- ts-jest@29.4.15
-- ts-node-dev@2.0.0
-- ts-node@10.9.2
-- tsconfig@7.0.0
-- type-check@0.4.0
-- type-detect@4.0.8
-- type-is@1.6.18
-- typed-query-selector@2.12.3
-- typedarray@0.0.6
-- typescript-eslint@8.72.0
-- undici-types@8.9.0
-- unpipe@1.0.0
-- unrs-resolver@1.12.2
-- update-browserslist-db@1.3.4
-- util-deprecate@1.0.2
-- utils-merge@1.0.1
-- v8-compile-cache-lib@3.0.1
-- vary@1.1.2
-- verkit@0.5.0
-- w3c-xmlserializer@5.0.0
-- whatwg-encoding@3.1.1
-- whatwg-mimetype@4.0.0
-- whatwg-url@14.2.0
-- word-wrap@1.2.5
-- wordwrap@1.0.0
-- wrap-ansi-cjs@7.0.0
-- wrap-ansi@7.0.0
-- wrap-ansi@8.1.0
-- wrap-ansi@9.0.2
-- ws@8.22.0
-- xmlchars@2.2.0
-- xtend@4.0.2
-- yargs@16.2.2
-- yargs@16.2.2
-- yargs@17.7.3
-- yargs@18.2.0
-- yn@3.1.1
-- yocto-queue@0.1.0
-- zod@4.6.7
+## 3. Podsumowanie licencji
 
-### ISC (98)
+| Licencja                | Prod | Dev | Rodzaj                     | Komercyjnie | Atrybucja |
+| ----------------------- | ---: | --: | -------------------------- | :---------: | :-------: |
+| MIT                     |  165 | 827 | Permisywna                 |     tak     |    tak    |
+| ISC                     |   12 |  86 | Permisywna                 |     tak     |    tak    |
+| BSD-3-Clause            |    5 |  20 | Permisywna                 |     tak     |    tak    |
+| BSD-2-Clause            |    3 |  12 | Permisywna                 |     tak     |    tak    |
+| MIT AND Zlib            |    1 |   0 | Permisywna                 |     tak     |    tak    |
+| Python-2.0              |    1 |   0 | Permisywna                 |     tak     |    tak    |
+| BSD                     |    0 |   1 | Permisywna                 |     tak     |    tak    |
+| Apache-2.0              |   26 |  22 | Permisywna (NOTICE)        |     tak     |    tak    |
+| BlueOak-1.0.0           |    8 |   2 | Permisywna (bez atrybucji) |     tak     |    nie    |
+| 0BSD                    |    0 |   1 | Permisywna (bez atrybucji) |     tak     |    nie    |
+| MIT-0                   |    0 |   1 | Permisywna (bez atrybucji) |     tak     |    nie    |
+| MIT OR CC0-1.0          |    0 |   5 | Dualna — wybór licencji    |     tak     |    nie    |
+| MIT OR GPL-3.0-or-later |    1 |   0 | Dualna — wybór licencji    |     tak     |    tak    |
+| MIT OR Apache-2.0       |    0 |   1 | Dualna — wybór licencji    |     tak     |    tak    |
+| MPL-2.0                 |    0 |   2 | Słabe copyleft             |     tak     |    tak    |
+| CC-BY-3.0               |    0 |   1 | Treści / dane              |     tak     |    tak    |
+| CC-BY-4.0               |    0 |   1 | Treści / dane              |     tak     |    tak    |
+| CC0-1.0                 |    0 |   1 | Domena publiczna           |     tak     |    nie    |
 
-- @isaacs/cliui@8.0.2
-- @istanbuljs/load-nyc-config@1.1.0
-- @ungap/structured-clone@1.4.0
-- anymatch@3.1.3
-- cliui@7.0.4
-- cliui@7.0.4
-- cliui@8.0.1
-- cliui@9.0.1
-- conventional-changelog-angular@5.0.13
-- conventional-changelog-angular@9.4.0
-- conventional-changelog-atom@2.0.8
-- conventional-changelog-codemirror@2.0.8
-- conventional-changelog-conventionalcommits@10.4.1
-- conventional-changelog-conventionalcommits@4.6.3
-- conventional-changelog-conventionalcommits@4.6.3
-- conventional-changelog-ember@2.0.9
-- conventional-changelog-eslint@3.0.9
-- conventional-changelog-express@2.0.6
-- conventional-changelog-jquery@3.0.11
-- conventional-changelog-jshint@2.0.9
-- dezalgo@1.0.4
-- dotgitignore@2.1.0
-- electron-to-chromium@1.5.464
-- flatted@3.4.4
-- foreground-child@3.3.1
-- fs.realpath@1.0.0
-- get-caller-file@2.0.5
-- glob-parent@5.1.2
-- glob-parent@6.0.2
-- glob@10.5.0
-- glob@7.2.3
-- glob@7.2.3
-- glob@7.2.3
-- glob@7.2.3
-- glob@7.2.3
-- glob@7.2.3
-- glob@7.2.3
-- graceful-fs@4.2.11
-- hosted-git-info@2.8.9
-- hosted-git-info@2.8.9
-- hosted-git-info@4.1.0
-- inflight@1.0.6
-- inherits@2.0.4
-- ini@1.3.8
-- ini@6.0.0
-- isexe@2.0.0
-- json-stringify-safe@5.0.1
-- lru-cache@10.4.3
-- lru-cache@10.4.3
-- lru-cache@5.1.1
-- lru-cache@6.0.0
-- make-error@1.3.6
-- minimalistic-assert@1.0.1
-- minimatch@3.1.5
-- minimatch@3.1.5
-- minimatch@3.1.5
-- minimatch@3.1.5
-- minimatch@3.1.5
-- minimatch@3.1.5
-- minimatch@3.1.5
-- minimatch@3.1.5
-- minimatch@9.0.9
-- once@1.4.0
-- picocolors@1.1.1
-- rimraf@2.7.1
-- saxes@6.0.0
-- semver@5.7.2
-- semver@5.7.2
-- semver@6.3.1
-- semver@6.3.1
-- semver@6.3.1
-- semver@6.3.1
-- semver@7.8.5
-- setprototypeof@1.2.0
-- signal-exit@3.0.7
-- signal-exit@4.1.0
-- split2@3.2.2
-- standard-version@9.5.0
-- stringify-package@1.0.1
-- test-exclude@6.0.0
-- test-exclude@6.0.0
-- test-exclude@6.0.0
-- test-exclude@6.0.0
-- test-exclude@6.0.0
-- test-exclude@6.0.0
-- v8-to-istanbul@9.3.0
-- which@2.0.2
-- wrappy@1.0.2
-- write-file-atomic@5.0.1
-- y18n@5.0.8
-- yallist@3.1.1
-- yallist@4.0.0
-- yaml@2.0.0-1
-- yaml@2.9.1
-- yargs-parser@20.2.9
-- yargs-parser@21.1.1
-- yargs-parser@21.1.1
-- yargs-parser@22.0.0
+## 4. Obowiązki przy dystrybucji
 
-### Apache-2.0 (48)
+- **MIT** — Zachowaj notę o prawach autorskich i tekst licencji.
+- **ISC** — Zachowaj notę o prawach autorskich i tekst licencji.
+- **BSD-3-Clause** — Zachowaj notę o prawach autorskich i tekst licencji.
+- **BSD-2-Clause** — Zachowaj notę o prawach autorskich i tekst licencji.
+- **MIT AND Zlib** — Spełnij oba warunki: nota MIT oraz nota Zlib.
+- **Python-2.0** — Zachowaj notę o prawach autorskich i tekst licencji PSF.
+- **BSD** — Zachowaj notę o prawach autorskich i tekst licencji.
+- **Apache-2.0** — Dołącz tekst licencji oraz plik NOTICE, jeśli pakiet go zawiera.
+- **BlueOak-1.0.0** — Brak obowiązku atrybucji.
+- **0BSD** — Brak obowiązku atrybucji.
+- **MIT-0** — Brak obowiązku atrybucji.
+- **MIT OR CC0-1.0** — Wybór MIT (atrybucja) albo CC0 (bez atrybucji); wystarczy jedna ścieżka.
+- **MIT OR GPL-3.0-or-later** — Projekt korzysta ze ścieżki MIT — bez obowiązków copyleft.
+- **MIT OR Apache-2.0** — Projekt korzysta ze ścieżki MIT; zachowaj notę i tekst MIT.
+- **MPL-2.0** — Copyleft na poziomie pliku; publikuj źródło zmodyfikowanych plików MPL, reszta produktu bez zmian.
+- **CC-BY-3.0** — Podaj autora i źródło danych.
+- **CC-BY-4.0** — Podaj autora i źródło danych.
+- **CC0-1.0** — Brak obowiązku atrybucji.
 
-- @eslint/config-array@0.23.5
-- @eslint/config-helpers@0.7.0
-- @eslint/core@1.2.1
-- @eslint/object-schema@3.0.5
-- @eslint/plugin-kit@0.7.3
-- @humanfs/core@0.19.2
-- @humanfs/node@0.16.8
-- @humanfs/types@0.15.0
-- @humanwhocodes/module-importer@1.0.1
-- @humanwhocodes/retry@0.4.3
-- @hutson/parse-repository-url@3.0.2
-- @opentelemetry/api-logs@0.220.0
-- @opentelemetry/api@1.9.1
-- @opentelemetry/core@2.12.0
-- @opentelemetry/instrumentation@0.220.0
-- @opentelemetry/resources@2.12.0
-- @opentelemetry/sdk-trace-base@2.12.0
-- @opentelemetry/sdk-trace@2.12.0
-- @opentelemetry/semantic-conventions@1.43.0
-- @playwright/test@1.64.1
-- @prisma/client@6.19.3
-- @prisma/config@6.19.3
-- @prisma/debug@6.19.3
-- @prisma/engines-version@7.1.1-3.c2990dca591cba766e3b7ef5d9e8a84796e47ab7
-- @prisma/engines@6.19.3
-- @prisma/fetch-engine@6.19.3
-- @prisma/get-platform@6.19.3
-- @puppeteer/browsers@3.2.6
-- @scarf/scarf@1.4.0
-- baseline-browser-mapping@2.11.32
-- chromium-bidi@157.0.8090-0
-- doctrine@3.0.0
-- eslint-visitor-keys@3.4.3
-- eslint-visitor-keys@5.0.1
-- human-signals@2.1.0
-- import-in-the-middle@3.5.2
-- playwright-core@1.64.1
-- playwright@1.64.1
-- prisma@6.19.3
-- puppeteer-core@25.16.0
-- puppeteer@25.16.0
-- spdx-correct@3.2.0
-- swagger-ui-dist@5.34.0
-- typescript@6.0.3
-- validate-npm-package-license@3.0.4
-- walker@1.0.8
-- webdriver-bidi-protocol@1.0.1
-- xml-name-validator@5.0.0
+- Pełne teksty licencji pakietów npm znajdują się w `node_modules/<pakiet>/LICENSE` (obraz Docker je zawiera).
+- Teksty dla zasobów vendored są w `public/licenses/` i są dostępne pod `/licenses/<plik>` w działającej aplikacji.
+- Projekt nie modyfikuje plików objętych MPL-2.0; obowiązek udostępnienia źródła dotyczy tylko przyszłych modyfikacji tych plików.
 
-### BSD-3-Clause (25)
+## 5. Zasoby spoza npm (vendored)
 
-- @sinonjs/commons@3.0.1
-- @sinonjs/fake-timers@15.4.0
-- babel-plugin-istanbul@7.0.1
-- babel-plugin-istanbul@7.0.1
-- babel-plugin-istanbul@7.0.1
-- babel-plugin-istanbul@7.0.1
-- babel-plugin-istanbul@7.0.1
-- babel-plugin-istanbul@7.0.1
-- bcryptjs@3.0.3
-- deepmerge-ts@7.1.5
-- devtools-protocol@0.0.1704951
-- diff@4.0.4
-- esquery@1.7.0
-- fast-uri@3.1.9
-- istanbul-lib-coverage@3.2.2
-- istanbul-lib-instrument@6.0.3
-- istanbul-lib-report@3.0.1
-- istanbul-lib-source-maps@5.0.6
-- istanbul-reports@3.2.0
-- makeerror@1.0.12
-- qs@6.16.1
-- source-map@0.6.1
-- sprintf-js@1.0.3
-- tmpl@1.0.5
-- tough-cookie@5.1.2
+| Zasób                                                        | Wersja                                                    | Licencja                  | Plik licencji w repo              | Dowód wersji                            |
+| ------------------------------------------------------------ | --------------------------------------------------------- | ------------------------- | --------------------------------- | --------------------------------------- |
+| SheetJS Community Edition (`public/vendor/xlsx.full.min.js`) | 0.20.3                                                    | Apache-2.0                | `public/licenses/APACHE-2.0.txt`  | `e.version` + sha256 `c5e7f437d92d7752` |
+| Inter — subset woff2 (`public/css/fonts/`, 7 plików)         | subset statyczny (wagi 300, 400, 500, 600, 700, 800, 900) | SIL OFL 1.1               | `public/licenses/SIL-OFL-1.1.txt` | `public/css/inter.css`                  |
+| Lucide — subset ikon (`public/js/shared/iconsSlim.js`)       | subset (bez numeru wersji w pliku)                        | ISC + MIT (część Feather) | `public/licenses/ISC-Lucide.txt`  | nagłówek pliku + `data-lucide` w HTML   |
 
-### BSD-2-Clause (15)
+## 6. Składniki platformy i wdrożenia
 
-- dotenv@16.6.1
-- dotenv@17.4.2
-- entities@6.0.1
-- eslint-scope@9.1.2
-- espree@11.2.0
-- esprima@4.0.1
-- esrecurse@4.3.0
-- estraverse@5.3.0
-- esutils@2.0.3
-- normalize-package-data@2.5.0
-- normalize-package-data@2.5.0
-- normalize-package-data@3.0.3
-- uglify-js@3.19.3
-- uri-js@4.4.1
-- webidl-conversions@7.0.0
+| Składnik                         | Wersja / źródło                          | Licencja                              | Uwagi                                                 |
+| -------------------------------- | ---------------------------------------- | ------------------------------------- | ----------------------------------------------------- |
+| Node.js                          | `>=22.13.0`                              | MIT                                   | Runtime aplikacji; tekst licencji w dystrybucji Node. |
+| SQLite (silnik Prisma)           | biblioteka dołączona do `@prisma/client` | Public Domain                         | https://sqlite.org/copyright.html                     |
+| Obraz bazowy Docker              | `node:22-slim`                           | MIT (Node) + licencje pakietów Debian | Pełne teksty: `/usr/share/doc/*/copyright` w obrazie. |
+| Chromium (Puppeteer)             | pobierany przy `npm ci`                  | BSD-3-Clause + licencje komponentów   | Używany do PDF; lista licencji w binarce Chromium.    |
+| Caddy (opcjonalny reverse proxy) | wdrożenie hosta                          | Apache-2.0                            | Nie jest częścią artefaktu aplikacji.                 |
 
-### BlueOak-1.0.0 (10)
+## 7. Pakiety npm według licencji
 
-- @isaacs/cliui@9.0.0
-- glob@11.1.0
-- jackspeak@3.4.3
-- jackspeak@4.2.3
-- lru-cache@11.5.3
-- minimatch@10.2.6
-- minipass@7.1.3
-- package-json-from-dist@1.0.1
-- path-scurry@1.11.1
-- path-scurry@2.0.2
+Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na zakres dystrybucji.
 
-### MIT OR CC0-1.0 (5)
+### MIT (992; prod: 165, dev: 827)
 
-- type-fest@0.18.1
-- type-fest@0.21.3
-- type-fest@0.6.0
-- type-fest@0.8.1
-- type-fest@4.41.0
+- @apidevtools/json-schema-ref-parser@14.0.1 [prod]
+- @apidevtools/openapi-schemas@2.1.0 [prod]
+- @apidevtools/swagger-methods@3.0.2 [prod]
+- @apidevtools/swagger-parser@12.1.0 [prod]
+- @asamuzakjp/css-color@3.2.0 [dev]
+- @babel/code-frame@7.29.7 [dev]
+- @babel/compat-data@7.29.7 [dev]
+- @babel/core@7.29.7 [dev]
+- @babel/generator@7.29.8 [dev]
+- @babel/helper-compilation-targets@7.29.7 [dev]
+- @babel/helper-globals@7.29.7 [dev]
+- @babel/helper-module-imports@7.29.7 [dev]
+- @babel/helper-module-transforms@7.29.7 [dev]
+- @babel/helper-plugin-utils@7.29.7 [dev]
+- @babel/helper-string-parser@7.29.11 [dev]
+- @babel/helper-validator-identifier@7.29.7 [dev]
+- @babel/helper-validator-option@7.29.7 [dev]
+- @babel/helpers@7.29.10 [dev]
+- @babel/parser@7.29.11 [dev]
+- @babel/plugin-syntax-async-generators@7.8.4 [dev]
+- @babel/plugin-syntax-bigint@7.8.3 [dev]
+- @babel/plugin-syntax-class-properties@7.12.13 [dev]
+- @babel/plugin-syntax-class-static-block@7.14.5 [dev]
+- @babel/plugin-syntax-import-attributes@7.29.7 [dev]
+- @babel/plugin-syntax-import-meta@7.10.4 [dev]
+- @babel/plugin-syntax-json-strings@7.8.3 [dev]
+- @babel/plugin-syntax-jsx@7.29.7 [dev]
+- @babel/plugin-syntax-logical-assignment-operators@7.10.4 [dev]
+- @babel/plugin-syntax-nullish-coalescing-operator@7.8.3 [dev]
+- @babel/plugin-syntax-numeric-separator@7.10.4 [dev]
+- @babel/plugin-syntax-object-rest-spread@7.8.3 [dev]
+- @babel/plugin-syntax-optional-catch-binding@7.8.3 [dev]
+- @babel/plugin-syntax-optional-chaining@7.8.3 [dev]
+- @babel/plugin-syntax-private-property-in-object@7.14.5 [dev]
+- @babel/plugin-syntax-top-level-await@7.14.5 [dev]
+- @babel/plugin-syntax-typescript@7.29.7 [dev]
+- @babel/template@7.29.7 [dev]
+- @babel/traverse@7.29.10 [dev]
+- @babel/types@7.29.11 [dev]
+- @bcoe/v8-coverage@0.2.3 [dev]
+- @cacheable/memory@2.2.0 [dev]
+- @cacheable/utils@2.5.0 [dev]
+- @commitlint/cli@21.2.4 [dev]
+- @commitlint/config-conventional@21.2.4 [dev]
+- @commitlint/config-validator@21.2.3 [dev]
+- @commitlint/ensure@21.2.4 [dev]
+- @commitlint/execute-rule@21.0.1 [dev]
+- @commitlint/format@21.2.3 [dev]
+- @commitlint/is-ignored@21.2.3 [dev]
+- @commitlint/lint@21.2.4 [dev]
+- @commitlint/load@21.2.4 [dev]
+- @commitlint/message@21.2.0 [dev]
+- @commitlint/parse@21.2.3 [dev]
+- @commitlint/read@21.2.3 [dev]
+- @commitlint/resolve-extends@21.2.3 [dev]
+- @commitlint/rules@21.2.4 [dev]
+- @commitlint/to-lines@21.0.1 [dev]
+- @commitlint/top-level@21.2.0 [dev]
+- @commitlint/types@21.2.3 [dev]
+- @conventional-changelog/git-client@3.2.0 [dev]
+- @conventional-changelog/template@1.4.0 [dev]
+- @cspotcode/source-map-support@0.8.1 [dev]
+- @csstools/css-calc@2.1.4 [dev]
+- @csstools/css-color-parser@3.1.0 [dev]
+- @csstools/css-parser-algorithms@3.0.5 [dev]
+- @csstools/css-tokenizer@3.0.4 [dev]
+- @emnapi/core@1.10.0 [dev]
+- @emnapi/runtime@1.10.0 [dev]
+- @emnapi/wasi-threads@1.2.1 [dev]
+- @esbuild/aix-ppc64@0.28.2 [dev]
+- @esbuild/android-arm@0.28.2 [dev]
+- @esbuild/android-arm64@0.28.2 [dev]
+- @esbuild/android-x64@0.28.2 [dev]
+- @esbuild/darwin-arm64@0.28.2 [dev]
+- @esbuild/darwin-x64@0.28.2 [dev]
+- @esbuild/freebsd-arm64@0.28.2 [dev]
+- @esbuild/freebsd-x64@0.28.2 [dev]
+- @esbuild/linux-arm@0.28.2 [dev]
+- @esbuild/linux-arm64@0.28.2 [dev]
+- @esbuild/linux-ia32@0.28.2 [dev]
+- @esbuild/linux-loong64@0.28.2 [dev]
+- @esbuild/linux-mips64el@0.28.2 [dev]
+- @esbuild/linux-ppc64@0.28.2 [dev]
+- @esbuild/linux-riscv64@0.28.2 [dev]
+- @esbuild/linux-s390x@0.28.2 [dev]
+- @esbuild/linux-x64@0.28.2 [dev]
+- @esbuild/netbsd-arm64@0.28.2 [dev]
+- @esbuild/netbsd-x64@0.28.2 [dev]
+- @esbuild/openbsd-arm64@0.28.2 [dev]
+- @esbuild/openbsd-x64@0.28.2 [dev]
+- @esbuild/openharmony-arm64@0.28.2 [dev]
+- @esbuild/sunos-x64@0.28.2 [dev]
+- @esbuild/win32-arm64@0.28.2 [dev]
+- @esbuild/win32-ia32@0.28.2 [dev]
+- @esbuild/win32-x64@0.28.2 [dev]
+- @eslint-community/eslint-utils@4.10.1 [dev]
+- @eslint-community/regexpp@4.12.2 [dev]
+- @eslint/js@9.39.5 [dev]
+- @istanbuljs/schema@0.1.6 [dev]
+- @jest/console@30.4.1 [dev]
+- @jest/core@30.4.2 [dev]
+- @jest/diff-sequences@30.4.0 [dev]
+- @jest/diff-sequences@30.4.0 [dev]
+- @jest/diff-sequences@30.4.0 [dev]
+- @jest/diff-sequences@30.5.0 [dev]
+- @jest/environment-jsdom-abstract@30.5.2 [dev]
+- @jest/environment@30.4.1 [dev]
+- @jest/environment@30.4.1 [dev]
+- @jest/environment@30.4.1 [dev]
+- @jest/environment@30.4.1 [dev]
+- @jest/environment@30.4.1 [dev]
+- @jest/environment@30.5.2 [dev]
+- @jest/expect-utils@30.4.1 [dev]
+- @jest/expect-utils@30.4.1 [dev]
+- @jest/expect-utils@30.5.2 [dev]
+- @jest/expect@30.4.1 [dev]
+- @jest/fake-timers@30.4.1 [dev]
+- @jest/fake-timers@30.4.1 [dev]
+- @jest/fake-timers@30.4.1 [dev]
+- @jest/fake-timers@30.4.1 [dev]
+- @jest/fake-timers@30.4.1 [dev]
+- @jest/fake-timers@30.5.2 [dev]
+- @jest/get-type@30.1.0 [dev]
+- @jest/get-type@30.1.0 [dev]
+- @jest/get-type@30.1.0 [dev]
+- @jest/get-type@30.1.0 [dev]
+- @jest/get-type@30.1.0 [dev]
+- @jest/get-type@30.1.0 [dev]
+- @jest/get-type@30.1.0 [dev]
+- @jest/get-type@30.5.0 [dev]
+- @jest/globals@30.4.1 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.4.0 [dev]
+- @jest/pattern@30.5.0 [dev]
+- @jest/react-is-18@18.3.1 [dev]
+- @jest/react-is-19@19.3.1 [dev]
+- @jest/reporters@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.4.1 [dev]
+- @jest/schemas@30.5.0 [dev]
+- @jest/snapshot-utils@30.4.1 [dev]
+- @jest/source-map@30.0.1 [dev]
+- @jest/test-result@30.4.1 [dev]
+- @jest/test-sequencer@30.4.1 [dev]
+- @jest/transform@30.4.1 [dev]
+- @jest/transform@30.4.1 [dev]
+- @jest/transform@30.4.1 [dev]
+- @jest/transform@30.4.1 [dev]
+- @jest/transform@30.4.1 [dev]
+- @jest/transform@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.4.1 [dev]
+- @jest/types@30.5.1 [dev]
+- @jridgewell/gen-mapping@0.3.13 [dev]
+- @jridgewell/remapping@2.3.5 [dev]
+- @jridgewell/resolve-uri@3.1.2 [dev]
+- @jridgewell/sourcemap-codec@1.6.0 [dev]
+- @jridgewell/trace-mapping@0.3.31 [dev]
+- @jridgewell/trace-mapping@0.3.9 [dev]
+- @keyv/bigmap@1.3.1 [dev]
+- @keyv/serialize@1.1.1 [dev]
+- @napi-rs/wasm-runtime@1.2.5 [dev]
+- @noble/hashes@1.8.0 [dev]
+- @paralleldrive/cuid2@2.3.1 [dev]
+- @pkgjs/parseargs@0.11.0 [dev]
+- @pkgr/core@0.3.6 [dev]
+- @sentry/conventions@0.16.0 [prod]
+- @sentry/core@10.76.2 [prod]
+- @sentry/node-core@10.76.2 [prod]
+- @sentry/node@10.76.2 [prod]
+- @sentry/opentelemetry@10.76.2 [prod]
+- @sentry/server-utils@10.76.2 [prod]
+- @simple-libs/child-process-utils@2.0.0 [dev]
+- @simple-libs/stream-utils@2.0.0 [dev]
+- @sinclair/typebox@0.34.52 [dev]
+- @standard-schema/spec@1.1.0 [prod]
+- @tsconfig/node10@1.0.13 [dev]
+- @tsconfig/node12@1.0.11 [dev]
+- @tsconfig/node14@1.0.3 [dev]
+- @tsconfig/node16@1.0.4 [dev]
+- @tybys/wasm-util@0.10.4 [dev]
+- @types/babel__core@7.20.5 [dev]
+- @types/babel__generator@7.27.0 [dev]
+- @types/babel__template@7.4.4 [dev]
+- @types/babel__traverse@7.28.0 [dev]
+- @types/bcryptjs@2.4.6 [dev]
+- @types/body-parser@1.19.6 [dev]
+- @types/compression@1.8.1 [dev]
+- @types/connect@3.4.38 [dev]
+- @types/cookie-parser@1.4.10 [dev]
+- @types/cookiejar@2.1.5 [dev]
+- @types/esrecurse@4.3.1 [dev]
+- @types/estree@1.0.9 [dev]
+- @types/express-serve-static-core@4.19.9 [dev]
+- @types/express@4.17.25 [dev]
+- @types/http-errors@2.0.5 [dev]
+- @types/istanbul-lib-coverage@2.0.6 [dev]
+- @types/istanbul-lib-report@3.0.3 [dev]
+- @types/istanbul-reports@3.0.4 [dev]
+- @types/jest@30.0.0 [dev]
+- @types/jsdom@21.1.7 [dev]
+- @types/json-schema@7.0.15 [prod]
+- @types/methods@1.1.4 [dev]
+- @types/mime@1.3.5 [dev]
+- @types/minimist@1.2.5 [dev]
+- @types/node@26.6.5 [prod]
+- @types/normalize-package-data@2.4.4 [dev]
+- @types/qs@6.15.1 [dev]
+- @types/range-parser@1.2.7 [dev]
+- @types/send@0.17.6 [dev]
+- @types/send@1.2.1 [dev]
+- @types/serve-static@1.15.10 [dev]
+- @types/stack-utils@2.0.3 [dev]
+- @types/strip-bom@3.0.0 [dev]
+- @types/strip-json-comments@0.0.30 [dev]
+- @types/superagent@8.1.11 [dev]
+- @types/supertest@7.2.1 [dev]
+- @types/swagger-jsdoc@6.0.4 [dev]
+- @types/swagger-ui-express@4.1.8 [dev]
+- @types/tough-cookie@4.0.5 [dev]
+- @types/yargs-parser@21.0.3 [dev]
+- @types/yargs@17.0.35 [dev]
+- @typescript-eslint/eslint-plugin@8.72.0 [dev]
+- @typescript-eslint/parser@8.72.0 [dev]
+- @typescript-eslint/project-service@8.72.0 [dev]
+- @typescript-eslint/scope-manager@8.72.0 [dev]
+- @typescript-eslint/tsconfig-utils@8.72.0 [dev]
+- @typescript-eslint/type-utils@8.72.0 [dev]
+- @typescript-eslint/types@8.72.0 [dev]
+- @typescript-eslint/typescript-estree@8.72.0 [dev]
+- @typescript-eslint/utils@8.72.0 [dev]
+- @typescript-eslint/visitor-keys@8.72.0 [dev]
+- @unrs/resolver-binding-android-arm-eabi@1.12.2 [dev]
+- @unrs/resolver-binding-android-arm64@1.12.2 [dev]
+- @unrs/resolver-binding-darwin-arm64@1.12.2 [dev]
+- @unrs/resolver-binding-darwin-x64@1.12.2 [dev]
+- @unrs/resolver-binding-freebsd-x64@1.12.2 [dev]
+- @unrs/resolver-binding-linux-arm-gnueabihf@1.12.2 [dev]
+- @unrs/resolver-binding-linux-arm-musleabihf@1.12.2 [dev]
+- @unrs/resolver-binding-linux-arm64-gnu@1.12.2 [dev]
+- @unrs/resolver-binding-linux-arm64-musl@1.12.2 [dev]
+- @unrs/resolver-binding-linux-loong64-gnu@1.12.2 [dev]
+- @unrs/resolver-binding-linux-loong64-musl@1.12.2 [dev]
+- @unrs/resolver-binding-linux-ppc64-gnu@1.12.2 [dev]
+- @unrs/resolver-binding-linux-riscv64-gnu@1.12.2 [dev]
+- @unrs/resolver-binding-linux-riscv64-musl@1.12.2 [dev]
+- @unrs/resolver-binding-linux-s390x-gnu@1.12.2 [dev]
+- @unrs/resolver-binding-linux-x64-gnu@1.12.2 [dev]
+- @unrs/resolver-binding-linux-x64-musl@1.12.2 [dev]
+- @unrs/resolver-binding-openharmony-arm64@1.12.2 [dev]
+- @unrs/resolver-binding-wasm32-wasi@1.12.2 [dev]
+- @unrs/resolver-binding-win32-arm64-msvc@1.12.2 [dev]
+- @unrs/resolver-binding-win32-ia32-msvc@1.12.2 [dev]
+- @unrs/resolver-binding-win32-x64-msvc@1.12.2 [dev]
+- accepts@1.3.8 [prod]
+- acorn-jsx@5.3.2 [dev]
+- acorn-walk@8.3.5 [dev]
+- acorn@8.19.0 [dev]
+- add-stream@1.0.0 [dev]
+- agent-base@7.1.4 [dev]
+- ajv-draft-04@1.0.0 [prod]
+- ajv@6.15.0 [dev]
+- ajv@8.20.0 [prod]
+- ansi-escapes@4.3.2 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@5.0.1 [dev]
+- ansi-regex@6.4.0 [prod]
+- ansi-styles@3.2.1 [dev]
+- ansi-styles@4.3.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@5.2.0 [dev]
+- ansi-styles@6.2.3 [dev]
+- ansi-styles@6.2.3 [prod]
+- arg@4.1.3 [dev]
+- argparse@1.0.10 [dev]
+- argue-cli@3.2.0 [dev]
+- array-flatten@1.1.1 [prod]
+- array-ify@1.0.0 [dev]
+- arrify@1.0.1 [dev]
+- asap@2.0.6 [dev]
+- asynckit@0.4.0 [dev]
+- babel-jest@30.4.1 [dev]
+- babel-plugin-jest-hoist@30.4.0 [dev]
+- babel-preset-current-node-syntax@1.2.0 [dev]
+- babel-preset-jest@30.4.0 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@1.0.2 [dev]
+- balanced-match@4.0.4 [prod]
+- binary-extensions@2.3.0 [dev]
+- body-parser@1.20.9 [prod]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@1.1.21 [dev]
+- brace-expansion@2.1.7 [dev]
+- brace-expansion@5.0.12 [prod]
+- braces@3.0.3 [dev]
+- browserslist@4.29.4 [dev]
+- bs-logger@0.2.6 [dev]
+- bser@2.1.2 [dev]
+- buffer-from@1.1.2 [dev]
+- bytes@3.1.2 [prod]
+- c12@3.1.0 [prod]
+- cacheable@2.5.0 [dev]
+- call-bind-apply-helpers@1.0.2 [prod]
+- call-bound@1.0.4 [prod]
+- call-me-maybe@1.0.2 [prod]
+- callsites@3.1.0 [dev]
+- camelcase-keys@6.2.2 [dev]
+- camelcase@5.3.1 [dev]
+- camelcase@6.3.0 [dev]
+- chalk@2.4.2 [dev]
+- chalk@4.1.2 [dev]
+- char-regex@1.0.2 [dev]
+- chokidar@3.6.0 [dev]
+- chokidar@4.0.3 [prod]
+- ci-info@4.4.0 [dev]
+- citty@0.1.6 [prod]
+- citty@0.2.2 [prod]
+- cjs-module-lexer@2.3.0 [prod]
+- co@4.6.0 [dev]
+- collect-v8-coverage@1.0.3 [dev]
+- color-convert@1.9.3 [dev]
+- color-convert@2.0.1 [dev]
+- color-name@1.1.3 [dev]
+- color-name@1.1.4 [dev]
+- combined-stream@1.0.8 [dev]
+- commander@6.2.0 [prod]
+- compare-func@2.0.0 [dev]
+- component-emitter@1.3.1 [dev]
+- compressible@2.0.18 [prod]
+- compression@1.8.2 [prod]
+- concat-map@0.0.1 [dev]
+- concat-stream@2.0.0 [dev]
+- confbox@0.2.4 [prod]
+- confbox@0.3.1 [prod]
+- consola@3.4.2 [prod]
+- content-disposition@0.5.4 [prod]
+- content-type@1.0.5 [prod]
+- conventional-changelog-config-spec@2.1.0 [dev]
+- conventional-changelog-core@4.2.4 [dev]
+- conventional-changelog-preset-loader@2.3.4 [dev]
+- conventional-changelog-writer@5.0.1 [dev]
+- conventional-changelog@3.1.25 [dev]
+- conventional-commits-filter@2.0.7 [dev]
+- conventional-commits-filter@2.0.7 [dev]
+- conventional-commits-parser@3.2.4 [dev]
+- conventional-commits-parser@3.2.4 [dev]
+- conventional-commits-parser@7.1.3 [dev]
+- conventional-recommended-bump@6.1.0 [dev]
+- convert-source-map@2.0.0 [dev]
+- cookie-parser@1.4.7 [prod]
+- cookie-signature@1.0.6 [prod]
+- cookie-signature@1.2.2 [dev]
+- cookie@0.7.2 [prod]
+- cookiejar@2.1.4 [dev]
+- core-util-is@1.0.3 [prod]
+- cosmiconfig@9.0.2 [dev]
+- create-require@1.1.1 [dev]
+- cross-spawn@7.0.6 [prod]
+- cssstyle@4.6.0 [dev]
+- dargs@7.0.0 [dev]
+- data-urls@5.0.0 [dev]
+- dateformat@3.0.3 [dev]
+- debug@2.6.9 [prod]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [dev]
+- debug@4.4.3 [prod]
+- debug@4.4.3 [dev]
+- decamelize-keys@1.1.1 [dev]
+- decamelize@1.2.0 [dev]
+- decimal.js@10.6.0 [dev]
+- dedent@1.7.2 [dev]
+- deep-is@0.1.4 [dev]
+- deepmerge@4.3.1 [dev]
+- defu@6.1.7 [prod]
+- delayed-stream@1.0.0 [dev]
+- depd@2.0.0 [prod]
+- destr@2.0.5 [prod]
+- destroy@1.2.0 [prod]
+- detect-indent@6.1.0 [dev]
+- detect-newline@3.1.0 [dev]
+- docx@9.14.0 [prod]
+- dot-prop@5.3.0 [dev]
+- dunder-proto@1.0.1 [prod]
+- dynamic-dedupe@0.3.0 [dev]
+- eastasianwidth@0.2.0 [dev]
+- ee-first@1.1.1 [prod]
+- effect@3.21.0 [prod]
+- emittery@0.13.1 [dev]
+- emoji-regex@10.6.0 [prod]
+- emoji-regex@8.0.0 [dev]
+- emoji-regex@9.2.2 [dev]
+- empathic@2.0.0 [prod]
+- encodeurl@2.0.0 [prod]
+- env-paths@2.2.1 [dev]
+- error-ex@1.3.4 [dev]
+- es-define-property@1.0.1 [prod]
+- es-errors@1.3.0 [prod]
+- es-module-lexer@3.0.4 [prod]
+- es-object-atoms@1.1.2 [prod]
+- es-set-tostringtag@2.1.0 [dev]
+- es-toolkit@1.52.0 [dev]
+- esbuild@0.28.2 [dev]
+- escalade@3.2.0 [prod]
+- escape-html@1.0.3 [prod]
+- escape-string-regexp@1.0.5 [dev]
+- escape-string-regexp@1.0.5 [dev]
+- escape-string-regexp@2.0.0 [dev]
+- escape-string-regexp@4.0.0 [dev]
+- eslint-config-prettier@10.1.8 [dev]
+- eslint@10.13.0 [dev]
+- etag@1.8.1 [prod]
+- execa@5.1.1 [dev]
+- exit-x@0.2.2 [dev]
+- expect@30.4.1 [dev]
+- expect@30.4.1 [dev]
+- expect@30.5.2 [dev]
+- express@4.22.3 [prod]
+- exsolve@1.1.3 [prod]
+- fast-check@3.23.2 [prod]
+- fast-deep-equal@3.1.3 [prod]
+- fast-json-stable-stringify@2.1.0 [dev]
+- fast-levenshtein@2.0.6 [dev]
+- fast-safe-stringify@2.1.1 [dev]
+- fb-watchman@2.0.4 [dev]
+- fdir@6.5.0 [dev]
+- figures@3.2.0 [dev]
+- file-entry-cache@11.1.5 [dev]
+- fill-range@7.1.1 [dev]
+- finalhandler@1.3.2 [prod]
+- find-up@2.1.0 [dev]
+- find-up@3.0.0 [dev]
+- find-up@4.1.0 [dev]
+- find-up@4.1.0 [dev]
+- find-up@4.1.0 [dev]
+- find-up@5.0.0 [dev]
+- flat-cache@6.1.23 [dev]
+- form-data@4.0.6 [dev]
+- formidable@3.5.4 [dev]
+- forwarded@0.2.0 [prod]
+- fresh@0.5.2 [prod]
+- fsevents@2.3.3 [dev]
+- function-bind@1.1.2 [prod]
+- gensync@1.0.0-beta.2 [dev]
+- get-east-asian-width@1.7.0 [prod]
+- get-intrinsic@1.3.0 [prod]
+- get-package-type@0.1.0 [dev]
+- get-pkg-repo@4.2.1 [dev]
+- get-proto@1.0.1 [prod]
+- get-stream@6.0.1 [dev]
+- giget@2.0.0 [prod]
+- git-raw-commits@2.0.11 [dev]
+- git-remote-origin-url@2.0.0 [dev]
+- git-semver-tags@4.1.1 [dev]
+- global-directory@5.0.0 [dev]
+- globals@17.13.0 [dev]
+- gopd@1.2.0 [prod]
+- handlebars@4.7.10 [dev]
+- hard-rejection@2.1.0 [dev]
+- has-flag@3.0.0 [dev]
+- has-flag@4.0.0 [dev]
+- has-symbols@1.1.0 [prod]
+- has-tostringtag@1.0.2 [dev]
+- hash.js@1.1.7 [prod]
+- hashery@1.5.1 [dev]
+- hasown@2.0.4 [prod]
+- helmet@8.3.0 [prod]
+- hookified@1.15.1 [dev]
+- hookified@2.2.0 [dev]
+- html-encoding-sniffer@4.0.0 [dev]
+- html-escaper@2.0.2 [dev]
+- http-errors@2.0.1 [prod]
+- http-proxy-agent@7.0.2 [dev]
+- https-proxy-agent@7.0.6 [dev]
+- husky@9.1.7 [dev]
+- iconv-lite@0.4.24 [prod]
+- iconv-lite@0.6.3 [dev]
+- ignore@5.3.2 [dev]
+- ignore@7.0.14 [dev]
+- immediate@3.0.6 [prod]
+- import-fresh@3.3.1 [dev]
+- import-local@3.2.0 [dev]
+- imurmurhash@0.1.4 [dev]
+- indent-string@4.0.0 [dev]
+- ipaddr.js@1.9.1 [prod]
+- is-arrayish@0.2.1 [dev]
+- is-binary-path@2.1.0 [dev]
+- is-core-module@2.17.0 [dev]
+- is-extglob@2.1.1 [dev]
+- is-fullwidth-code-point@3.0.0 [dev]
+- is-generator-fn@2.1.0 [dev]
+- is-glob@4.0.3 [dev]
+- is-number@7.0.0 [dev]
+- is-obj@2.0.0 [dev]
+- is-plain-obj@1.1.0 [dev]
+- is-plain-obj@4.1.0 [dev]
+- is-potential-custom-element-name@1.0.1 [dev]
+- is-stream@2.0.1 [dev]
+- is-text-path@1.0.1 [dev]
+- isarray@1.0.0 [prod]
+- jest-changed-files@30.4.1 [dev]
+- jest-circus@30.4.2 [dev]
+- jest-cli@30.4.2 [dev]
+- jest-config@30.4.2 [dev]
+- jest-diff@30.4.1 [dev]
+- jest-diff@30.4.1 [dev]
+- jest-diff@30.4.1 [dev]
+- jest-diff@30.5.2 [dev]
+- jest-docblock@30.4.0 [dev]
+- jest-each@30.4.1 [dev]
+- jest-environment-jsdom@30.5.2 [dev]
+- jest-environment-node@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-haste-map@30.4.1 [dev]
+- jest-leak-detector@30.4.1 [dev]
+- jest-matcher-utils@30.4.1 [dev]
+- jest-matcher-utils@30.4.1 [dev]
+- jest-matcher-utils@30.4.1 [dev]
+- jest-matcher-utils@30.5.2 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.4.1 [dev]
+- jest-message-util@30.5.1 [dev]
+- jest-mock@30.4.1 [dev]
+- jest-mock@30.4.1 [dev]
+- jest-mock@30.4.1 [dev]
+- jest-mock@30.4.1 [dev]
+- jest-mock@30.4.1 [dev]
+- jest-mock@30.4.1 [dev]
+- jest-mock@30.4.1 [dev]
+- jest-mock@30.5.2 [dev]
+- jest-pnp-resolver@1.2.3 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.4.0 [dev]
+- jest-regex-util@30.5.0 [dev]
+- jest-resolve-dependencies@30.4.2 [dev]
+- jest-resolve@30.4.1 [dev]
+- jest-runner@30.4.2 [dev]
+- jest-runtime@30.4.2 [dev]
+- jest-snapshot@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.4.1 [dev]
+- jest-util@30.5.1 [dev]
+- jest-validate@30.4.1 [dev]
+- jest-watcher@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest-worker@30.4.1 [dev]
+- jest@30.4.2 [dev]
+- jiti@2.7.0 [prod]
+- js-tokens@4.0.0 [dev]
+- js-yaml@3.15.2 [dev]
+- js-yaml@4.3.2 [prod]
+- jsdom@26.1.0 [dev]
+- jsesc@3.1.0 [dev]
+- json-parse-better-errors@1.0.2 [dev]
+- json-parse-even-better-errors@2.3.1 [dev]
+- json-schema-traverse@0.4.1 [dev]
+- json-schema-traverse@1.0.0 [prod]
+- json-stable-stringify-without-jsonify@1.0.1 [dev]
+- json5@2.2.3 [dev]
+- jsonparse@1.3.1 [dev]
+- keyv@5.6.0 [dev]
+- kind-of@6.0.3 [dev]
+- leven@3.1.0 [dev]
+- levn@0.4.1 [dev]
+- lie@3.3.0 [prod]
+- lilconfig@3.1.4 [prod]
+- lines-and-columns@1.2.4 [dev]
+- lint-staged@17.6.0 [dev]
+- load-json-file@4.0.0 [dev]
+- locate-path@2.0.0 [dev]
+- locate-path@3.0.0 [dev]
+- locate-path@5.0.0 [dev]
+- locate-path@5.0.0 [dev]
+- locate-path@5.0.0 [dev]
+- locate-path@6.0.0 [dev]
+- lodash.ismatch@4.4.0 [dev]
+- lodash.memoize@4.1.2 [dev]
+- lodash.mergewith@4.6.2 [prod]
+- lodash@4.18.1 [dev]
+- make-dir@4.0.0 [dev]
+- map-obj@1.0.1 [dev]
+- map-obj@4.3.0 [dev]
+- math-intrinsics@1.1.0 [prod]
+- media-typer@0.3.0 [prod]
+- meow@8.1.2 [dev]
+- merge-descriptors@1.0.3 [prod]
+- merge-stream@2.0.0 [dev]
+- methods@1.1.2 [prod]
+- mime-db@1.52.0 [prod]
+- mime-db@1.54.0 [prod]
+- mime-types@2.1.35 [prod]
+- mime@1.6.0 [prod]
+- mime@2.6.0 [dev]
+- mimic-fn@2.1.0 [dev]
+- min-indent@1.0.1 [dev]
+- minimist-options@4.1.0 [dev]
+- minimist@1.2.8 [dev]
+- mitt@3.0.1 [prod]
+- mkdirp@1.0.4 [dev]
+- modern-tar@0.8.6 [prod]
+- modify-values@1.0.1 [dev]
+- module-details-from-path@1.0.4 [prod]
+- ms@2.0.0 [prod]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [dev]
+- ms@2.1.3 [prod]
+- ms@2.1.3 [prod]
+- ms@2.1.3 [dev]
+- nanoid@6.0.2 [prod]
+- napi-postinstall@0.3.7 [dev]
+- natural-compare@1.4.0 [dev]
+- negotiator@0.6.3 [prod]
+- negotiator@0.6.4 [prod]
+- neo-async@2.6.2 [dev]
+- node-fetch-native@1.6.7 [prod]
+- node-int64@0.4.0 [dev]
+- node-releases@2.0.60 [dev]
+- normalize-path@3.0.0 [dev]
+- npm-run-path@4.0.1 [dev]
+- nwsapi@2.2.28 [dev]
+- nypm@0.6.11 [prod]
+- object-inspect@1.13.4 [prod]
+- ohash@2.0.12 [prod]
+- on-finished@2.4.2 [prod]
+- on-headers@1.1.0 [prod]
+- onetime@5.1.2 [dev]
+- openapi-types@12.1.3 [prod]
+- optionator@0.9.4 [dev]
+- p-limit@1.3.0 [dev]
+- p-limit@2.3.0 [dev]
+- p-limit@2.3.0 [dev]
+- p-limit@2.3.0 [dev]
+- p-limit@2.3.0 [dev]
+- p-limit@3.1.0 [dev]
+- p-locate@2.0.0 [dev]
+- p-locate@3.0.0 [dev]
+- p-locate@4.1.0 [dev]
+- p-locate@4.1.0 [dev]
+- p-locate@4.1.0 [dev]
+- p-locate@5.0.0 [dev]
+- p-try@1.0.0 [dev]
+- p-try@2.2.0 [dev]
+- parent-module@1.0.1 [dev]
+- parse-json@4.0.0 [dev]
+- parse-json@5.2.0 [dev]
+- parse5@7.3.0 [dev]
+- parseurl@1.3.3 [prod]
+- path-exists@3.0.0 [dev]
+- path-exists@3.0.0 [dev]
+- path-exists@4.0.0 [dev]
+- path-is-absolute@1.0.1 [dev]
+- path-key@3.1.1 [prod]
+- path-parse@1.0.7 [dev]
+- path-to-regexp@0.1.13 [prod]
+- path-type@3.0.0 [dev]
+- pathe@2.0.3 [prod]
+- perfect-debounce@1.0.0 [prod]
+- picomatch@2.3.2 [dev]
+- picomatch@2.3.2 [dev]
+- picomatch@4.0.7 [dev]
+- pify@2.3.0 [dev]
+- pify@3.0.0 [dev]
+- pify@3.0.0 [dev]
+- pirates@4.0.7 [dev]
+- pkg-dir@4.2.0 [dev]
+- pkg-types@2.4.0 [prod]
+- prelude-ls@1.2.1 [dev]
+- prettier@3.9.10 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.4.1 [dev]
+- pretty-format@30.5.1 [dev]
+- process-nextick-args@2.0.1 [prod]
+- proxy-addr@2.0.8 [prod]
+- punycode@2.3.1 [dev]
+- pure-rand@6.1.0 [prod]
+- pure-rand@7.0.1 [dev]
+- q@1.5.1 [dev]
+- qified@0.10.1 [dev]
+- quick-lru@4.0.1 [dev]
+- range-parser@1.2.1 [prod]
+- raw-body@2.5.3 [prod]
+- rc9@2.1.2 [prod]
+- react-is-18@18.3.1 [dev]
+- react-is-19@19.3.1 [dev]
+- read-pkg-up@3.0.0 [dev]
+- read-pkg-up@7.0.1 [dev]
+- read-pkg@3.0.0 [dev]
+- read-pkg@5.2.0 [dev]
+- readable-stream@2.3.8 [prod]
+- readable-stream@3.6.2 [dev]
+- readable-stream@3.6.2 [dev]
+- readable-stream@3.6.2 [dev]
+- readdirp@3.6.0 [dev]
+- readdirp@4.1.2 [prod]
+- redent@3.0.0 [dev]
+- require-directory@2.1.1 [dev]
+- require-from-string@2.0.2 [prod]
+- require-in-the-middle@8.0.1 [prod]
+- resolve-cwd@3.0.0 [dev]
+- resolve-from@4.0.0 [dev]
+- resolve-from@5.0.0 [dev]
+- resolve@1.22.13 [dev]
+- rrweb-cssom@0.8.0 [dev]
+- safe-buffer@5.1.2 [prod]
+- safe-buffer@5.1.2 [prod]
+- safe-buffer@5.2.1 [prod]
+- safer-buffer@2.1.2 [prod]
+- send@0.19.2 [prod]
+- serve-static@1.16.3 [prod]
+- setimmediate@1.0.5 [prod]
+- shebang-command@2.0.0 [prod]
+- shebang-regex@3.0.0 [prod]
+- side-channel-list@1.0.1 [prod]
+- side-channel-map@1.0.1 [prod]
+- side-channel-weakmap@1.0.2 [prod]
+- side-channel@1.1.1 [prod]
+- slash@3.0.0 [dev]
+- source-map-support@0.5.13 [dev]
+- spdx-expression-parse@3.0.1 [dev]
+- split@1.0.1 [dev]
+- stack-utils@2.0.6 [dev]
+- statuses@2.0.2 [prod]
+- string_decoder@1.1.1 [prod]
+- string-argv@0.3.2 [dev]
+- string-length@4.0.2 [dev]
+- string-width-cjs@4.2.3 [dev]
+- string-width@4.2.3 [dev]
+- string-width@5.1.2 [dev]
+- string-width@7.2.0 [prod]
+- string-width@8.3.0 [prod]
+- strip-ansi-cjs@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@6.0.1 [dev]
+- strip-ansi@7.2.0 [prod]
+- strip-bom@3.0.0 [dev]
+- strip-bom@3.0.0 [dev]
+- strip-bom@4.0.0 [dev]
+- strip-final-newline@2.0.0 [dev]
+- strip-indent@3.0.0 [dev]
+- strip-json-comments@2.0.1 [dev]
+- strip-json-comments@3.1.1 [dev]
+- superagent@10.4.1 [dev]
+- supertest@7.3.1 [dev]
+- supports-color@5.5.0 [dev]
+- supports-color@7.2.0 [dev]
+- supports-color@8.1.1 [dev]
+- supports-color@8.1.1 [dev]
+- supports-color@8.1.1 [dev]
+- supports-color@8.1.1 [dev]
+- supports-color@8.1.1 [dev]
+- supports-color@8.1.1 [dev]
+- supports-color@8.1.1 [dev]
+- supports-color@8.1.1 [dev]
+- supports-preserve-symlinks-flag@1.0.0 [dev]
+- swagger-jsdoc@6.3.0 [prod]
+- swagger-ui-express@5.0.1 [prod]
+- symbol-tree@3.2.4 [dev]
+- synckit@0.11.13 [dev]
+- text-extensions@1.9.0 [dev]
+- through@2.3.8 [dev]
+- through2@2.0.5 [dev]
+- through2@4.0.2 [dev]
+- tinyexec@1.3.1 [prod]
+- tinyglobby@0.2.17 [dev]
+- tldts-core@6.1.86 [dev]
+- tldts@6.1.86 [dev]
+- to-regex-range@5.0.1 [dev]
+- toidentifier@1.0.1 [prod]
+- tr46@5.1.1 [dev]
+- tree-kill@1.2.2 [dev]
+- trim-newlines@3.0.1 [dev]
+- ts-api-utils@2.5.0 [dev]
+- ts-jest@29.4.15 [dev]
+- ts-node-dev@2.0.0 [dev]
+- ts-node@10.9.2 [dev]
+- tsconfig@7.0.0 [dev]
+- type-check@0.4.0 [dev]
+- type-detect@4.0.8 [dev]
+- type-is@1.6.18 [prod]
+- typed-query-selector@2.12.3 [prod]
+- typedarray@0.0.6 [dev]
+- typescript-eslint@8.72.0 [dev]
+- undici-types@8.9.0 [prod]
+- unpipe@1.0.0 [prod]
+- unrs-resolver@1.12.2 [dev]
+- update-browserslist-db@1.3.4 [dev]
+- util-deprecate@1.0.2 [prod]
+- utils-merge@1.0.1 [prod]
+- v8-compile-cache-lib@3.0.1 [dev]
+- vary@1.1.2 [prod]
+- verkit@0.5.0 [dev]
+- w3c-xmlserializer@5.0.0 [dev]
+- whatwg-encoding@3.1.1 [dev]
+- whatwg-mimetype@4.0.0 [dev]
+- whatwg-url@14.2.0 [dev]
+- word-wrap@1.2.5 [dev]
+- wordwrap@1.0.0 [dev]
+- wrap-ansi-cjs@7.0.0 [dev]
+- wrap-ansi@7.0.0 [dev]
+- wrap-ansi@8.1.0 [dev]
+- wrap-ansi@9.0.2 [prod]
+- ws@8.22.0 [prod]
+- xmlchars@2.2.0 [dev]
+- xtend@4.0.2 [dev]
+- yargs@16.2.2 [dev]
+- yargs@16.2.2 [dev]
+- yargs@17.7.3 [dev]
+- yargs@18.2.0 [prod]
+- yn@3.1.1 [dev]
+- yocto-queue@0.1.0 [dev]
+- zod@4.6.7 [prod]
 
-### MPL-2.0 (2)
+### ISC (98; prod: 12, dev: 86)
 
-- @axe-core/playwright@4.14.0
-- axe-core@4.14.0
+- @isaacs/cliui@8.0.2 [dev]
+- @istanbuljs/load-nyc-config@1.1.0 [dev]
+- @ungap/structured-clone@1.4.0 [dev]
+- anymatch@3.1.3 [dev]
+- cliui@7.0.4 [dev]
+- cliui@7.0.4 [dev]
+- cliui@8.0.1 [dev]
+- cliui@9.0.1 [prod]
+- conventional-changelog-angular@5.0.13 [dev]
+- conventional-changelog-angular@9.4.0 [dev]
+- conventional-changelog-atom@2.0.8 [dev]
+- conventional-changelog-codemirror@2.0.8 [dev]
+- conventional-changelog-conventionalcommits@10.4.1 [dev]
+- conventional-changelog-conventionalcommits@4.6.3 [dev]
+- conventional-changelog-conventionalcommits@4.6.3 [dev]
+- conventional-changelog-ember@2.0.9 [dev]
+- conventional-changelog-eslint@3.0.9 [dev]
+- conventional-changelog-express@2.0.6 [dev]
+- conventional-changelog-jquery@3.0.11 [dev]
+- conventional-changelog-jshint@2.0.9 [dev]
+- dezalgo@1.0.4 [dev]
+- dotgitignore@2.1.0 [dev]
+- electron-to-chromium@1.5.464 [dev]
+- flatted@3.4.4 [dev]
+- foreground-child@3.3.1 [prod]
+- fs.realpath@1.0.0 [dev]
+- get-caller-file@2.0.5 [prod]
+- glob-parent@5.1.2 [dev]
+- glob-parent@6.0.2 [dev]
+- glob@10.5.0 [dev]
+- glob@7.2.3 [dev]
+- glob@7.2.3 [dev]
+- glob@7.2.3 [dev]
+- glob@7.2.3 [dev]
+- glob@7.2.3 [dev]
+- glob@7.2.3 [dev]
+- glob@7.2.3 [dev]
+- graceful-fs@4.2.11 [dev]
+- hosted-git-info@2.8.9 [dev]
+- hosted-git-info@2.8.9 [dev]
+- hosted-git-info@4.1.0 [dev]
+- inflight@1.0.6 [dev]
+- inherits@2.0.4 [prod]
+- ini@1.3.8 [dev]
+- ini@6.0.0 [dev]
+- isexe@2.0.0 [prod]
+- json-stringify-safe@5.0.1 [dev]
+- lru-cache@10.4.3 [dev]
+- lru-cache@10.4.3 [dev]
+- lru-cache@5.1.1 [dev]
+- lru-cache@6.0.0 [dev]
+- make-error@1.3.6 [dev]
+- minimalistic-assert@1.0.1 [prod]
+- minimatch@3.1.5 [dev]
+- minimatch@3.1.5 [dev]
+- minimatch@3.1.5 [dev]
+- minimatch@3.1.5 [dev]
+- minimatch@3.1.5 [dev]
+- minimatch@3.1.5 [dev]
+- minimatch@3.1.5 [dev]
+- minimatch@3.1.5 [dev]
+- minimatch@9.0.9 [dev]
+- once@1.4.0 [dev]
+- picocolors@1.1.1 [dev]
+- rimraf@2.7.1 [dev]
+- saxes@6.0.0 [dev]
+- semver@5.7.2 [dev]
+- semver@5.7.2 [dev]
+- semver@6.3.1 [dev]
+- semver@6.3.1 [dev]
+- semver@6.3.1 [dev]
+- semver@6.3.1 [dev]
+- semver@7.8.5 [dev]
+- setprototypeof@1.2.0 [prod]
+- signal-exit@3.0.7 [dev]
+- signal-exit@4.1.0 [prod]
+- split2@3.2.2 [dev]
+- standard-version@9.5.0 [dev]
+- stringify-package@1.0.1 [dev]
+- test-exclude@6.0.0 [dev]
+- test-exclude@6.0.0 [dev]
+- test-exclude@6.0.0 [dev]
+- test-exclude@6.0.0 [dev]
+- test-exclude@6.0.0 [dev]
+- test-exclude@6.0.0 [dev]
+- v8-to-istanbul@9.3.0 [dev]
+- which@2.0.2 [prod]
+- wrappy@1.0.2 [dev]
+- write-file-atomic@5.0.1 [dev]
+- y18n@5.0.8 [prod]
+- yallist@3.1.1 [dev]
+- yallist@4.0.0 [dev]
+- yaml@2.0.0-1 [prod]
+- yaml@2.9.1 [dev]
+- yargs-parser@20.2.9 [dev]
+- yargs-parser@21.1.1 [dev]
+- yargs-parser@21.1.1 [dev]
+- yargs-parser@22.0.0 [prod]
 
-### MIT-0 (1)
+### BSD-3-Clause (25; prod: 5, dev: 20)
 
-- @csstools/color-helpers@5.1.0
+- @sinonjs/commons@3.0.1 [dev]
+- @sinonjs/fake-timers@15.4.0 [dev]
+- babel-plugin-istanbul@7.0.1 [dev]
+- babel-plugin-istanbul@7.0.1 [dev]
+- babel-plugin-istanbul@7.0.1 [dev]
+- babel-plugin-istanbul@7.0.1 [dev]
+- babel-plugin-istanbul@7.0.1 [dev]
+- babel-plugin-istanbul@7.0.1 [dev]
+- bcryptjs@3.0.3 [prod]
+- deepmerge-ts@7.1.5 [prod]
+- devtools-protocol@0.0.1704951 [prod]
+- diff@4.0.4 [dev]
+- esquery@1.7.0 [dev]
+- fast-uri@3.1.9 [prod]
+- istanbul-lib-coverage@3.2.2 [dev]
+- istanbul-lib-instrument@6.0.3 [dev]
+- istanbul-lib-report@3.0.1 [dev]
+- istanbul-lib-source-maps@5.0.6 [dev]
+- istanbul-reports@3.2.0 [dev]
+- makeerror@1.0.12 [dev]
+- qs@6.16.1 [prod]
+- source-map@0.6.1 [dev]
+- sprintf-js@1.0.3 [dev]
+- tmpl@1.0.5 [dev]
+- tough-cookie@5.1.2 [dev]
 
-### Python-2.0 (1)
+### BSD-2-Clause (15; prod: 3, dev: 12)
 
-- argparse@2.0.1
+- dotenv@16.6.1 [prod]
+- dotenv@17.4.2 [prod]
+- entities@6.0.1 [dev]
+- eslint-scope@9.1.2 [dev]
+- espree@11.2.0 [dev]
+- esprima@4.0.1 [dev]
+- esrecurse@4.3.0 [dev]
+- estraverse@5.3.0 [dev]
+- esutils@2.0.3 [prod]
+- normalize-package-data@2.5.0 [dev]
+- normalize-package-data@2.5.0 [dev]
+- normalize-package-data@3.0.3 [dev]
+- uglify-js@3.19.3 [dev]
+- uri-js@4.4.1 [dev]
+- webidl-conversions@7.0.0 [dev]
 
-### CC-BY-4.0 (1)
+### MIT AND Zlib (1; prod: 1, dev: 0)
 
-- caniuse-lite@1.0.30001819
+- pako@1.0.11 [prod]
 
-### BSD (1)
+### Python-2.0 (1; prod: 1, dev: 0)
 
-- gitconfiglocal@1.0.0
+- argparse@2.0.1 [prod]
 
-### MIT OR Apache-2.0 (1)
+### BSD (1; prod: 0, dev: 1)
 
-- JSONStream@1.3.5
+- gitconfiglocal@1.0.0 [dev]
 
-### MIT OR GPL-3.0-or-later (1)
+### Apache-2.0 (48; prod: 26, dev: 22)
 
-- jszip@3.10.2
+- @eslint/config-array@0.23.5 [dev]
+- @eslint/config-helpers@0.7.0 [dev]
+- @eslint/core@1.2.1 [dev]
+- @eslint/object-schema@3.0.5 [dev]
+- @eslint/plugin-kit@0.7.3 [dev]
+- @humanfs/core@0.19.2 [dev]
+- @humanfs/node@0.16.8 [dev]
+- @humanfs/types@0.15.0 [dev]
+- @humanwhocodes/module-importer@1.0.1 [dev]
+- @humanwhocodes/retry@0.4.3 [dev]
+- @hutson/parse-repository-url@3.0.2 [dev]
+- @opentelemetry/api-logs@0.220.0 [prod]
+- @opentelemetry/api@1.9.1 [prod]
+- @opentelemetry/core@2.12.0 [prod]
+- @opentelemetry/instrumentation@0.220.0 [prod]
+- @opentelemetry/resources@2.12.0 [prod]
+- @opentelemetry/sdk-trace-base@2.12.0 [prod]
+- @opentelemetry/sdk-trace@2.12.0 [prod]
+- @opentelemetry/semantic-conventions@1.43.0 [prod]
+- @playwright/test@1.64.1 [dev]
+- @prisma/client@6.19.3 [prod]
+- @prisma/config@6.19.3 [prod]
+- @prisma/debug@6.19.3 [prod]
+- @prisma/engines-version@7.1.1-3.c2990dca591cba766e3b7ef5d9e8a84796e47ab7 [prod]
+- @prisma/engines@6.19.3 [prod]
+- @prisma/fetch-engine@6.19.3 [prod]
+- @prisma/get-platform@6.19.3 [prod]
+- @puppeteer/browsers@3.2.6 [prod]
+- @scarf/scarf@1.4.0 [prod]
+- baseline-browser-mapping@2.11.32 [dev]
+- chromium-bidi@157.0.8090-0 [prod]
+- doctrine@3.0.0 [prod]
+- eslint-visitor-keys@3.4.3 [dev]
+- eslint-visitor-keys@5.0.1 [dev]
+- human-signals@2.1.0 [dev]
+- import-in-the-middle@3.5.2 [prod]
+- playwright-core@1.64.1 [dev]
+- playwright@1.64.1 [dev]
+- prisma@6.19.3 [prod]
+- puppeteer-core@25.16.0 [prod]
+- puppeteer@25.16.0 [prod]
+- spdx-correct@3.2.0 [dev]
+- swagger-ui-dist@5.34.0 [prod]
+- typescript@6.0.3 [prod]
+- validate-npm-package-license@3.0.4 [dev]
+- walker@1.0.8 [dev]
+- webdriver-bidi-protocol@1.0.1 [prod]
+- xml-name-validator@5.0.0 [dev]
 
-### MIT AND Zlib (1)
+### BlueOak-1.0.0 (10; prod: 8, dev: 2)
 
-- pako@1.0.11
+- @isaacs/cliui@9.0.0 [prod]
+- glob@11.1.0 [prod]
+- jackspeak@3.4.3 [dev]
+- jackspeak@4.2.3 [prod]
+- lru-cache@11.5.3 [prod]
+- minimatch@10.2.6 [prod]
+- minipass@7.1.3 [prod]
+- package-json-from-dist@1.0.1 [prod]
+- path-scurry@1.11.1 [dev]
+- path-scurry@2.0.2 [prod]
 
-### CC-BY-3.0 (1)
+### 0BSD (1; prod: 0, dev: 1)
 
-- spdx-exceptions@2.5.0
+- tslib@2.8.1 [dev]
 
-### CC0-1.0 (1)
+### MIT-0 (1; prod: 0, dev: 1)
 
-- spdx-license-ids@3.0.24
+- @csstools/color-helpers@5.1.0 [dev]
 
-### 0BSD (1)
+### MIT OR CC0-1.0 (5; prod: 0, dev: 5)
 
-- tslib@2.8.1
+- type-fest@0.18.1 [dev]
+- type-fest@0.21.3 [dev]
+- type-fest@0.6.0 [dev]
+- type-fest@0.8.1 [dev]
+- type-fest@4.41.0 [dev]
 
-## Wymagane noty (NOTICE)
+### MIT OR GPL-3.0-or-later (1; prod: 1, dev: 0)
 
-Poniższe pakiety (Apache-2.0) wymagają zachowania noty przy dystrybucji:
+- jszip@3.10.2 [prod]
 
-- @prisma/client@6.19.3 — zob. `node_modules/@prisma/client/NOTICE`
-- playwright-core@1.64.1 — zob. `node_modules/playwright-core/NOTICE`
-- playwright@1.64.1 — zob. `node_modules/playwright/NOTICE`
-- prisma@6.19.3 — zob. `node_modules/prisma/NOTICE`
-- puppeteer-core@25.16.0 — zob. `node_modules/puppeteer-core/NOTICE`
-- puppeteer@25.16.0 — zob. `node_modules/puppeteer/NOTICE`
-- typescript@6.0.3 — zob. `node_modules/typescript/NOTICE`
+### MIT OR Apache-2.0 (1; prod: 0, dev: 1)
+
+- JSONStream@1.3.5 [dev]
+
+### MPL-2.0 (2; prod: 0, dev: 2)
+
+- @axe-core/playwright@4.14.0 [dev]
+- axe-core@4.14.0 [dev]
+
+### CC-BY-3.0 (1; prod: 0, dev: 1)
+
+- spdx-exceptions@2.5.0 [dev]
+
+### CC-BY-4.0 (1; prod: 0, dev: 1)
+
+- caniuse-lite@1.0.30001819 [dev]
+
+### CC0-1.0 (1; prod: 0, dev: 1)
+
+- spdx-license-ids@3.0.24 [dev]
+
+## 8. Status Apache-2.0 (NOTICE)
+
+Dla pakietów Apache-2.0 w dystrybucji sprawdzono obecność plików `LICENSE` i `NOTICE` w zainstalowanym pakiecie.
+
+| Pakiet                              | Wersja                                           | Plik LICENSE | Plik NOTICE |
+| ----------------------------------- | ------------------------------------------------ | :----------: | :---------: |
+| @opentelemetry/api-logs             | 0.220.0                                          |     tak      |     nie     |
+| @opentelemetry/api                  | 1.9.1                                            |     tak      |     nie     |
+| @opentelemetry/core                 | 2.12.0                                           |     tak      |     nie     |
+| @opentelemetry/instrumentation      | 0.220.0                                          |     tak      |     nie     |
+| @opentelemetry/resources            | 2.12.0                                           |     tak      |     nie     |
+| @opentelemetry/sdk-trace-base       | 2.12.0                                           |     tak      |     nie     |
+| @opentelemetry/sdk-trace            | 2.12.0                                           |     tak      |     nie     |
+| @opentelemetry/semantic-conventions | 1.43.0                                           |     tak      |     nie     |
+| @prisma/client                      | 6.19.3                                           |     tak      |     nie     |
+| @prisma/config                      | 6.19.3                                           |     tak      |     nie     |
+| @prisma/debug                       | 6.19.3                                           |     tak      |     nie     |
+| @prisma/engines-version             | 7.1.1-3.c2990dca591cba766e3b7ef5d9e8a84796e47ab7 |     tak      |     nie     |
+| @prisma/engines                     | 6.19.3                                           |     tak      |     nie     |
+| @prisma/fetch-engine                | 6.19.3                                           |     tak      |     nie     |
+| @prisma/get-platform                | 6.19.3                                           |     tak      |     nie     |
+| @puppeteer/browsers                 | 3.2.6                                            |     nie      |     nie     |
+| @scarf/scarf                        | 1.4.0                                            |     tak      |     nie     |
+| chromium-bidi                       | 157.0.8090-0                                     |     tak      |     nie     |
+| doctrine                            | 3.0.0                                            |     tak      |     nie     |
+| import-in-the-middle                | 3.5.2                                            |     tak      |     tak     |
+| prisma                              | 6.19.3                                           |     tak      |     nie     |
+| puppeteer-core                      | 25.16.0                                          |     nie      |     nie     |
+| puppeteer                           | 25.16.0                                          |     nie      |     nie     |
+| swagger-ui-dist                     | 5.34.0                                           |     tak      |     tak     |
+| typescript                          | 6.0.3                                            |     tak      |     nie     |
+| webdriver-bidi-protocol             | 1.0.1                                            |     tak      |     nie     |
+
+Pakiety z plikiem NOTICE (zachowaj go w dystrybucji): `import-in-the-middle`, `swagger-ui-dist`.
+
+Pakiety z „nie” w kolumnie LICENSE są wymienione w sekcji 9.
+
+## 9. Pakiety bez pliku licencji w dystrybucji
+
+Pakiety produkcyjne bez pliku `LICENSE`/`COPYING` w zainstalowanym katalogu. Licencja pochodzi z `package.json`; tekst należy zachować z repozytorium upstream (są to zależności pośrednie).
+
+| Pakiet               | Wersja  | Deklarowana licencja | Repozytorium                                                             |
+| -------------------- | ------- | -------------------- | ------------------------------------------------------------------------ |
+| @puppeteer/browsers  | 3.2.6   | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/browsers       |
+| @sentry/server-utils | 10.76.2 | MIT                  | git://github.com/getsentry/sentry-javascript.git                         |
+| cookie-signature     | 1.0.6   | MIT                  | https://github.com/visionmedia/node-cookie-signature.git                 |
+| hash.js              | 1.1.7   | MIT                  | git@github.com:indutny/hash.js                                           |
+| isarray              | 1.0.0   | MIT                  | git://github.com/juliangruber/isarray.git                                |
+| puppeteer-core       | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer-core |
+| puppeteer            | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer      |
+
+## 10. Weryfikacja i aktualizacja
+
+```bash
+npm run licenses:generate   # regeneracja tego pliku
+npm run licenses:check      # porównanie z package-lock.json (brama validate)
+```
+
+Po dodaniu, usunięciu lub aktualizacji pakietu uruchom `licenses:generate` i zacommituj wynik razem ze zmianą w `package-lock.json`.
+Brama `licenses:check` porównuje cały plik poza datą generowania, więc każda zmiana drzewa zależności lub zasobów vendored wymaga regeneracji.

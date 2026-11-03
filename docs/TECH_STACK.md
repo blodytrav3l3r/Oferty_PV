@@ -1,34 +1,40 @@
 # Tech Stack — stos technologiczny
 
 **Wersja:** 1.55.20  
-**Ostatnia aktualizacja:** 2026-10-24
+**Ostatnia aktualizacja:** 2026-11-03
 
 ## Licencje — podsumowanie
 
-> Źródło prawdy: `THIRD-PARTY-NOTICES.md` w root projektu (generowany automatycznie przez `npm run licenses:generate` z `package-lock.json`).
+> Źródło prawdy: [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) w root projektu,
+> generowany przez `npm run licenses:generate` z `package-lock.json` oraz zasobów
+> `public/`. Ten dokument nie powtarza liczb pakietów — liczy je generator.
 
-| Licencja                | Liczba pakietów | Komercyjne użycie | Sprzedaż produktu |    Attribution     |
-| ----------------------- | :-------------: | :---------------: | :---------------: | :----------------: |
-| MIT                     |       992       |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| ISC                     |       98        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| Apache-2.0              |       48        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| BSD-3-Clause            |       25        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| BSD-2-Clause            |       15        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| BlueOak-1.0.0           |       10        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| MIT OR CC0-1.0          |        5        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| MPL-2.0                 |        2        |   ⚠ file-level    |      ✅ tak       |    ✅ wymagane     |
-| MIT-0                   |        1        |      ✅ tak       |      ✅ tak       |         —          |
-| Python-2.0              |        1        |      ✅ tak       |      ✅ tak       |         —          |
-| CC-BY-4.0               |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| BSD                     |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| MIT OR Apache-2.0       |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| MIT OR GPL-3.0-or-later |        1        |    ⚠ wybór MIT    |    ⚠ wybór MIT    | ⚠ zależy od wyboru |
-| MIT AND Zlib            |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| CC-BY-3.0               |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| CC0-1.0                 |        1        |      ✅ tak       |      ✅ tak       |         —          |
-| 0BSD                    |        1        |      ✅ tak       |      ✅ tak       |         —          |
+Podział zakresów:
 
-**Brak czystych licencji GPL, AGPL, LGPL copyleft** — wszystkie zależności są bezpieczne komercyjnie. Jedyny wyjątek to `jszip@3.10.2` z dual-license `MIT OR GPL-3.0-or-later` — wybór licencji należy do dewelopera; przy wyborze MIT nie ma obowiązków copyleft.
+- **Produkcyjne** — trafiają do obrazu Docker i artefaktu wdrożenia; wymagają zachowania
+  not i tekstów licencji.
+- **Deweloperskie/testowe** — tylko lokalnie i w CI; nie są przedmiotem dystrybucji.
+- **Vendored** — SheetJS (`public/vendor/xlsx.full.min.js`), font Inter
+  (`public/css/fonts/`) i subset ikon Lucide (`public/js/shared/iconsSlim.js`);
+  teksty licencji w `public/licenses/`.
+
+| Rodzaj                  | Licencje obecne w drzewie                                        | Wymóg przy dystrybucji                                            |
+| ----------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Permisywne              | MIT, ISC, BSD-2/3-Clause, BSD, MIT-0, 0BSD, BlueOak-1.0.0        | Zachowaj notę i tekst licencji (MIT-0, 0BSD, BlueOak — bez noty). |
+| Permisywne z NOTICE     | Apache-2.0                                                       | Tekst licencji + `NOTICE`, jeśli pakiet go zawiera.               |
+| Dualne — wybór licencji | `MIT OR CC0-1.0`, `MIT OR Apache-2.0`, `MIT OR GPL-3.0-or-later` | Projekt korzysta ze ścieżki MIT; bez obowiązków copyleft.         |
+| Złożone                 | `MIT AND Zlib`                                                   | Spełnij oba warunki (nota MIT i nota Zlib).                       |
+| Słabe copyleft          | MPL-2.0                                                          | Dotyczy tylko zmodyfikowanych plików MPL; obecnie wyłącznie dev.  |
+| Treści / dane           | CC-BY-3.0, CC-BY-4.0                                             | Podaj autora i źródło.                                            |
+| Domena publiczna        | CC0-1.0                                                          | Brak obowiązku atrybucji.                                         |
+
+**Brak licencji GPL, AGPL i LGPL w pakietach produkcyjnych.** Jedyny wyjątek to
+`jszip` z dual-license `MIT OR GPL-3.0-or-later` — projekt korzysta ze ścieżki MIT.
+MPL-2.0 dotyczy wyłącznie `@axe-core/playwright` i `axe-core` (dev), które nie trafiają
+do artefaktu runtime.
+
+Szczegóły, pełna lista pakietów `[prod]`/`[dev]`, status plików NOTICE i pakiety bez
+pliku `LICENSE` w dystrybucji: [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md).
 
 ---
 
@@ -44,14 +50,14 @@
 | Jest               | 30.4.2   | MIT           | Testy                     | https://jestjs.io                                           |     ✅      |
 | Puppeteer          | ^25.16.0 | Apache-2.0    | Generowanie PDF           | https://pptr.dev                                            |     ✅      |
 | Sentry             | ^10.59.0 | MIT           | Monitoring błędów         | https://sentry.io                                           |     ✅      |
-| Swagger            | ^6.3.0   | Apache-2.0    | Dokumentacja API          | https://swagger.io                                          |     ✅      |
+| swagger-jsdoc      | ^6.3.0   | MIT           | Dokumentacja API          | https://swagger.io                                          |     ✅      |
 | docx (npm)         | ^9.6.1   | MIT           | Generowanie DOCX          | https://docx.js.org                                         |     ✅      |
 | Helmet             | ^8.3.0   | MIT           | Bezpieczeństwo HTTP       | https://helmetjs.github.io                                  |     ✅      |
-| bcryptjs           | ^3.0.3   | MIT           | Haszowanie haseł          | https://github.com/dcodeIO/bcrypt.js                        |     ✅      |
+| bcryptjs           | ^3.0.3   | BSD-3-Clause  | Haszowanie haseł          | https://github.com/dcodeIO/bcrypt.js                        |     ✅      |
 | compression        | ^1.8.2   | MIT           | Kompresja HTTP            | https://expressjs.com/en/resources/middleware/compression   |     ✅      |
 | cookie-parser      | ^1.4.7   | MIT           | Ciastka sesji             | https://expressjs.com/en/resources/middleware/cookie-parser |     ✅      |
 | dotenv             | ^17.4.1  | BSD-2-Clause  | Zmienne .env              | https://github.com/motdotla/dotenv                          |     ✅      |
-| swagger-ui-express | ^5.0.1   | Apache-2.0    | UI dokumentacji API       | https://swagger.io                                          |     ✅      |
+| swagger-ui-express | ^5.0.1   | MIT           | UI dokumentacji API       | https://swagger.io                                          |     ✅      |
 | Zod                | ^4.3.6   | MIT           | Walidacja danych          | https://zod.dev                                             |     ✅      |
 | ESLint             | ^10.8.1  | MIT           | Linter                    | https://eslint.org                                          |     ✅      |
 | Prettier           | ^3.9.4   | MIT           | Formatter kodu            | https://prettier.io                                         |     ✅      |
@@ -60,6 +66,14 @@
 | standard-version   | ^9.5.0   | ISC           | Auto-wersjonowanie        | https://github.com/conventional-changelog/standard-version  |     ✅      |
 | esbuild            | ^0.28.2  | MIT           | Bundling JS               | https://esbuild.github.io                                   |     ✅      |
 | Playwright         | ^1.62.1  | Apache-2.0    | E2E / a11y                | https://playwright.dev                                      |     ✅      |
+
+## Zasoby frontendowe (vendored)
+
+| Zasób                      | Wersja / zakres             | Licencja            | Plik licencji w repo              |
+| -------------------------- | --------------------------- | ------------------- | --------------------------------- |
+| SheetJS Community Edition  | `xlsx.full.min.js` (0.20.3) | Apache-2.0          | `public/licenses/APACHE-2.0.txt`  |
+| Inter (font, subset woff2) | wagi 300–900, 7 plików      | SIL OFL 1.1         | `public/licenses/SIL-OFL-1.1.txt` |
+| Lucide (subset ikon SVG)   | `iconsSlim.js`              | ISC + MIT (Feather) | `public/licenses/ISC-Lucide.txt`  |
 
 ## Narzędzia CI/CD
 
@@ -70,9 +84,12 @@
 
 ## Podsumowanie zgodności komercyjnej
 
-**Wniosek**: Wszystkie technologie użyte w projekcie **mogą być używane komercyjnie** i **pozwalają na sprzedaż produktu**. Jedyny wymóg to zachowanie informacji o licencji (attribution) w dystrybucji — standardowe dla MIT/Apache/ISC/BSD.
+**Wniosek**: Wszystkie technologie użyte w projekcie **mogą być używane komercyjnie** i
+**pozwalają na sprzedaż produktu**. Wymóg to zachowanie informacji o licencji
+(attribution) w dystrybucji — standardowe dla MIT/Apache/ISC/BSD.
 
-> ⚠ MPL-2.0 (2 pakiety): wymaga opensourczenia modyfikacji danego pliku, ale nie wpływa na całość produktu. Dotyczy pakietów niskiego poziomu, nie modyfikowanych bezpośrednio.
+> ⚠ MPL-2.0 (2 pakiety, wyłącznie dev): wymaga udostępnienia źródła zmodyfikowanych
+> plików MPL, ale nie wpływa na całość produktu. Pakiety nie są modyfikowane.
 
 ## Telemetria AI — deduplikacja
 

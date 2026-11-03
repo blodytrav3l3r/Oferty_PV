@@ -121,7 +121,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
         - `index.ts`, `numbering.ts`, `production.ts`, `productionSearch.ts`
         - `ruryOrders.ts`, `ruryOrders.crud.ts`, `ruryOrders.export.ts`
         - `studnieOrders.ts`, `studnieOrders.crud.ts`, `studnieOrders.export.ts`
-    - `clients.ts` — CRUD klientów
+    - `clients/` — CRUD klientów (`index.ts`) i osoby kontaktowe (`contacts.ts`)
     - `audit.ts` — logi audytowe
     - `settings.ts` — ustawienia systemowe
     - `telemetry.ts` — telemetria AI
@@ -130,9 +130,8 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `telemetryAiDashboard.ts` — dashboard telemetrii
     - `featureFlags.ts` — zarządzanie flagami funkcjonalnymi
     - `exportCombined.ts` — łączny eksport (PDF/DOCX)
-    - `priceOverrides.ts` — nadpisania cen
-    - `precoPricingV2.ts` — cenniki Preco
     - `pricelistVersions.ts` — wersjonowanie cenników (draft/approve/publish/backdate/diff/export)
+    - `precoPricingV2.ts` — cenniki Preco
     - `care.ts` — opieka nad ofertą (kolejka, SLA, powiadomienia)
     - `locks.ts` — blokady edycji dokumentów (`doc_locks`, heartbeat, 423)
     - `aiTransfer.ts` — eksport/import pakietów modeli AI
@@ -302,7 +301,7 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 | -------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `public/js/rury/`          | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                          |
 | `public/js/studnie/`       | 150           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia)  |
-| `public/js/shared/`        | 44            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
+| `public/js/shared/`        | 45            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
 | `public/js/kartoteka/`     | 9             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)          |
 | `public/js/import-export/` | 12            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)        |
 | `public/js/spa/`           | 4             | Router SPA (router.js)                                                   |
@@ -452,7 +451,7 @@ Oferty_PV/
 │   │   ├── users.ts                # Zarządzanie użytkownikami
 │   │   ├── productsV2.ts           # Produkty rury
 │   │   ├── productsStudnieV2.ts    # Produkty studnie
-│   │   ├── clients.ts              # Klienci
+│   │   ├── clients/                # Klienci (index.ts, contacts.ts)
 │   │   ├── offers/
 │   │   │   ├── index.ts            # Router główny ofert
 │   │   │   ├── crud.ts             # CRUD (dispatcher)
@@ -480,17 +479,31 @@ Oferty_PV/
 │   │   ├── telemetryAiDashboard.ts # Dashboard AI
 │   │   ├── featureFlags.ts         # Feature flags
 │   │   ├── precoPricingV2.ts       # Cenniki Preco
-│   │   ├── priceOverrides.ts       # Nadpisania cen
+│   │   ├── pricelistVersions.ts    # Wersje cenników (admin, lock per typ)
+│   │   ├── care.ts                 # Opieka nad ofertą (SLA, przypomnienia)
+│   │   ├── drafts.ts               # Szkice dokumentów (If-Match)
+│   │   ├── locks.ts                # Blokady dokumentów
+│   │   ├── healthPdf.ts            # Diagnostyka PDF (Chromium)
+│   │   ├── aiTransfer.ts           # Import/eksport modeli AI
+│   │   ├── userPreferences.ts      # Preferencje użytkownika
 │   │   ├── shares.ts               # Udostępnianie dokumentów (GET/POST/revoke/DELETE)
 │   │   └── admin.ts                # Panel admina (FTS status/rebuild, /api/admin, admin only)
 │   ├── services/
 │   │   ├── auditService.ts         # Usługa audytu
+│   │   ├── auditPayload.ts         # Budowa payloadu audytu
+│   │   ├── careService.ts          # Opieka nad ofertą (SLA, kolejka)
 │   │   ├── combinedExport.ts       # Łączny eksport (PDF/DOCX)
 │   │   ├── pdfGenerator.ts         # Generowanie PDF (legacy wrapper)
-│   │   ├── priceOverrideService.ts # Nadpisania cen + saveDefaults
+│   │   ├── precoPricing.ts         # Cenniki Preco
+│   │   ├── pricelistVersionService.ts # Wersje cennika (lifecycle, publikacja)
+│   │   ├── ruryTransport.ts        # Transport rur
 │   │   ├── seedExporter.ts         # Eksport cenników do seed JSON
+│   │   ├── sessionAdmin.ts         # Sesje administracyjne
 │   │   ├── docx/                   # Generowanie DOCX (rury/studnie + helpers)
+│   │   ├── drafts/                 # Szkice dokumentów
+│   │   ├── orders/                 # Logika zamówień
 │   │   ├── pdf/                    # Karty budowy PDF (pdfEngine, kartaBudowy, ruryHtml, studnieHtml)
+│   │   ├── pricelist/              # Cenniki: bootstrap, lifecycle, liveProjection, validation
 │   │   ├── telemetry/              # Telemetria AI (telemetryService + learning/*)
 │   │   └── ml/                     # Pipeline ML (TrainingPipeline, FeatureExtractor, AcceptanceModel, ModelRegistry)
 │   ├── utils/
@@ -522,6 +535,7 @@ Oferty_PV/
 │   ├── js/                          # Skrypty JS
 │   ├── css/                         # 15 arkuszy źródłowych (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal/cennik/pricelist-panel + studnie/modal, studnie/offer); public/css/min/ to build
 │   ├── images/                      # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
+│   ├── licenses/                    # Teksty licencji zasobów vendored (Apache-2.0, OFL, Lucide)
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
 │   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │

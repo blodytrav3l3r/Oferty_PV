@@ -33,7 +33,7 @@ E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `D
 
 ## Deploy, licencje, skills
 
-`deploy`, `rollback`, `deploy:check`, `deploy:check:pdf`, `pdf:smoke:package` (szczegóły: `docs/DEPLOY_UPDATE.md`); `licenses:generate`, `licenses:check` (`THIRD-PARTY-NOTICES.md` — nie edytuj ręcznie); `git:safety*` (list/inspect/verify/restore); `skills:*` (build, stats, validate, cost, deps, capabilities, plan, feedback-record, feedback-show, provider-resolve, utility-recalc).
+`deploy`, `rollback`, `deploy:check`, `deploy:check:pdf`, `pdf:smoke:package` (szczegóły: `docs/DEPLOY_UPDATE.md`); `licenses:generate`, `licenses:check` (`THIRD-PARTY-NOTICES.md` — pakiety npm `[prod]`/`[dev]` + zasoby vendored; nie edytuj ręcznie); `git:safety*` (list/inspect/verify/restore); `skills:*` (build, stats, validate, cost, deps, capabilities, plan, feedback-record, feedback-show, provider-resolve, utility-recalc).
 
 ## Kodowanie polskich znaków (encoding policy)
 

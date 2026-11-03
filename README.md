@@ -588,10 +588,10 @@ Szczegóły procesu aktualizacji produkcyjnej (backup, migracje addytywne, rollb
 
 ### Licencje
 
-| Komenda                     | Opis                                                                           |
-| --------------------------- | ------------------------------------------------------------------------------ |
-| `npm run licenses:generate` | Generuj `THIRD-PARTY-NOTICES.md` (zależności i licencje z `package-lock.json`) |
-| `npm run licenses:check`    | Sprawdź aktualność `THIRD-PARTY-NOTICES.md` (część `validate`)                 |
+| Komenda                     | Opis                                                                                           |
+| --------------------------- | ---------------------------------------------------------------------------------------------- |
+| `npm run licenses:generate` | Generuj `THIRD-PARTY-NOTICES.md` (pakiety z `package-lock.json` + zasoby vendored z `public/`) |
+| `npm run licenses:check`    | Sprawdź aktualność `THIRD-PARTY-NOTICES.md` (część `validate`)                                 |
 
 ### Walidacja i kodowanie
 
@@ -617,13 +617,13 @@ Oferty_PV/
 │   │   ├── orders/            # Zamówienia, zlecenia
 │   │   ├── productsV2.ts      # CRUD produktów (rury)
 │   │   ├── productsStudnieV2.ts # CRUD produktów (studnie)
-│   │   ├── clients.ts         # Baza klientów
+│   │   ├── clients/           # Klienci (index.ts, contacts.ts)
 │   │   ├── settings.ts        # Ustawienia systemowe
 │   │   ├── audit.ts           # Logi audytowe
 │   │   ├── featureFlags.ts    # Flagi funkcjonalne
 │   │   ├── exportCombined.ts  # Łączny eksport PDF/DOCX
 │   │   ├── precoPricingV2.ts  # Cenniki Preco
-│   │   ├── priceOverrides.ts  # Nadpisania cen
+│   │   ├── pricelistVersions.ts # Wersje cenników (admin, lock per typ)
 │   │   └── telemetryAiMl.ts   # Endpointy ML (predict, reward, train, rollback)
 │   ├── services/              # Logika biznesowa
 │   │   ├── ml/                # AI/ML Pipeline
@@ -645,15 +645,16 @@ Oferty_PV/
 │   ├── kartoteka.html         # Kartoteka ofert i zamówień
 │   ├── zlecenia.html          # Zlecenia produkcyjne (PZ)
 │   ├── js/                    # Skrypty JS
-│   │   ├── shared/            # 44 pliki: auth, ui, icons, headerUser, toast, modalCore, StorageService
+│   │   ├── shared/            # 45 plików: auth, ui, icons, headerUser, toast, modalCore, StorageService
 │   │   ├── studnie/           # 150 plików: WellManager, solver, ruleEngine, ML hooks, Excel (28 modułów excel*.js)
 │   │   ├── rury/              # 30 plików: OfferItems, offerSummary, PEHD
 │   │   ├── kartoteka/         # 9 plików: kartotekaActions, kartotekaUi, kartotekaInit
 │   │   ├── import-export/     # 12 plików: toolbar.js + rury/studnie/shared (XLSX + JSON 1:1)
 │   │   ├── admin/             # 7 plików: AI dashboard, aiDashboard
 │   │   └── spa/               # 4 pliki: router.js, navGuard
-│   ├── css/                   # 15 arkuszy: style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal/cennik/pricelist-panel
+│   ├── css/                   # 13 arkuszy źródłowych + 2 w css/studnie/ (modal.css, offer.css)
 │   ├── images/                # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
+│   ├── licenses/              # Teksty licencji zasobów vendored (Apache-2.0, OFL, Lucide)
 │   ├── partials/              # Partiale HTML (header, rury/*, studnie/*) ładowane przez partialLoader
 │   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 ├── prisma/                    # Schema + migracje Prisma
@@ -669,7 +670,7 @@ Oferty_PV/
 │   ├── playwright/            # Testy Playwright (alignment, appName, a11y, smoke)
 │   └── ...
 ├── docs/                      # Dokumentacja
-│   ├── adr/                   # Decyzje architektoniczne (ADR-001..016)
+│   ├── adr/                   # Decyzje architektoniczne (ADR-001..017)
 │   ├── plans/                 # Plany i taski (+ archive/ — 161 archiwalnych)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...                    # ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES
@@ -771,3 +772,5 @@ Komercyjne wykorzystanie wymaga pisemnej zgody Autora.
 Zobacz [LICENSE](LICENSE) albo skontaktuj się przez blodytrav3l3r@gmail.com.
 
 Lista zależności i licencji oprogramowania firm trzecich: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Podział na pakiety produkcyjne `[prod]` i deweloperskie `[dev]`, status NOTICE oraz
+teksty licencji zasobów vendored: `public/licenses/` (dostępne pod `/licenses/`).

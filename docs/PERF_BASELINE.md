@@ -76,7 +76,7 @@ Wniosek P1.7 (451 req studnie.html): duplikaty ×2 z identycznym URL, oba
 Prod: `max-age 7d` + `?v=` → 2. pass z disk cache. Brak akcji.
 
 - P0: claim numerów 1× `count=N` → chunki 200 (2920 → 15 claimów).
-- P1-C: `chunkedCreateMany` 25 (seed + priceOverrideService).
+- P1-C: `chunkedCreateMany` 25 (seed + `src/services/pricelist/{bootstrap,validation}.ts`).
 - Bramy load/E5: `docs/plans/archive/e3-perf.md`, werdykty E5: `docs/plans/archive/e5-decision.md`.
 
 ## Baseline opieki P0 (2026-10-14, syntetyczne SQLite, scope=all)

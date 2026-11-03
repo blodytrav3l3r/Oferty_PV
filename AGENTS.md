@@ -37,7 +37,7 @@ Twarde reguły dowodowe, Evidence Ledger i szablon checkpointu: `docs/agents/evi
 
 - **Backend**: TypeScript + Express + Prisma + SQLite (`server.ts`, `src/`, `scripts/`, `tests/`). Warstwy: routes → validators → services → Prisma. Monolit celowy.
 - **Frontend**: Vanilla JS SPA (`app.html` + iframe modułów `studnie.html`/`rury.html`), kod w `public/js/` (nie kompilowany przez `tsc`, sprawdzany przez ESLint + `typecheck:frontend`).
-- **Decyzje (ADR)**: `docs/adr/` — ADR-001 SQLite, ADR-002 Vanilla SPA, ADR-004 Express+Prisma, ADR-005 Express jedynym serwerem, ADR-006 HTTPS/reverse proxy, ADR-007 cenniki, ADR-008 modularyzacja frontendu, ADR-009 mapa produktów studni, ADR-014 iframe boundary, ADR-016 SLA per zespół (pełna lista: `docs/adr/`).
+- **Decyzje (ADR)**: `docs/adr/` — ADR-001 SQLite, ADR-002 Vanilla SPA, ADR-004 Express+Prisma, ADR-005 Express jedynym serwerem, ADR-006 HTTPS/reverse proxy, ADR-007 cenniki, ADR-008 modularyzacja frontendu, ADR-009 mapa produktów studni, ADR-014 iframe boundary, ADR-016 SLA per zespół, ADR-017 awaryjny HTTP w LAN za VPN (pełna lista: `docs/adr/`).
 - **Legacy surface (nie powiększaj)**: bieżące liczby i komendy pomiarowe: `docs/agents/metrics.md`. Zasada: NEW globals/inline/inline-styles = 0; nowy kod ESM + `addEventListener`. Excel to protected zone.
 - **Zakazane kierunki** (decyzje, nie zaległości): React, PostgreSQL, mikroserwisy, Redis, BullMQ/Kafka, Pact, OpenTelemetry, pełna normalizacja JSON, masowe przepisywanie legacy.
 
