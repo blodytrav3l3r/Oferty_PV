@@ -524,6 +524,44 @@
         return n;
     }
 
+    /**
+     * Wyjście do logowania (ADR-014): osadzona ramka nawiguje okno najwyższe,
+     * samodzielny dokument przeładowuje się na `index.html`.
+     * @returns {boolean}
+     */
+    function __sokGoLogin() {
+        var target = 'index.html';
+        try {
+            if (window.top && window.top !== window && window.top.location) {
+                window.top.location.href = target;
+                return true;
+            }
+        } catch (_e) {}
+        try {
+            window.location.href = target;
+            return true;
+        } catch (_e2) {}
+        return false;
+    }
+
+    /**
+     * Przejście do trasy shella z ramki modułu (ADR-014): rodzic podmienia hash,
+     * więc iframe zostaje zamontowany z całym stanem edycji. Poza ramką zwraca
+     * false — samodzielna strona musi przeładować się na `app.html#/…`.
+     * @param {string} hash np. '#/kartoteka?kontakt=oferta%3A12'
+     * @returns {boolean}
+     */
+    function __sokNavigateShell(hash) {
+        if (typeof hash !== 'string' || hash.indexOf('#/') !== 0) return false;
+        try {
+            if (window.parent && window.parent !== window && window.parent.location) {
+                window.parent.location.hash = hash;
+                return true;
+            }
+        } catch (_e) {}
+        return false;
+    }
+
     try {
         window.__sokIsDirty = __sokIsDirty;
         window.__sokDescribeDirty = __sokDescribeDirty;
@@ -534,5 +572,7 @@
         window.__sokCountDrafts = __sokCountDrafts;
         window.__sokAbandonLocal = __sokAbandonLocal;
         window.__sokAbandonCurrent = __sokAbandonCurrent;
+        window.__sokGoLogin = __sokGoLogin;
+        window.__sokNavigateShell = __sokNavigateShell;
     } catch (_e) {}
 })();

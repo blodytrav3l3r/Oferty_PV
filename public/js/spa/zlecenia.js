@@ -96,11 +96,13 @@ const AppZlecenia = (() => {
             const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
             const authData = await authRes.json().catch(() => ({}));
             if (!authData.user) {
-                window.location.href = 'index.html';
+                if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+                else window.location.href = 'index.html';
                 return;
             }
         } catch (_e) {
-            window.location.href = 'index.html';
+            if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+            else window.location.href = 'index.html';
             return;
         }
 

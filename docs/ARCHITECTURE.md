@@ -268,6 +268,14 @@ monolityczne pliki JS rozbito na małe moduły delegujące (np. `wellActions.js`
 (adresy `app.html#/<moduł>`), nagłówek i logo współdzielone przez `public/js/shared/headerUser.js`
 oraz `public/images/logo-sok.svg`.
 
+Moduły shella (rejestr `MODULES` w `router.js`, każdy w iframe per
+[ADR-014](adr/ADR-014-iframe-boundary.md)): `rury`, `studnie`, `kartoteka`, `zlecenia`,
+`cennik` oraz `pulpit`. Pulpit to `index.html?host=pulpit`: serwer dokłada do `<html>`
+`data-embedded="pulpit"`, CSS chowa chrome strony wejścia, a `public/js/shared/dashboard.js`
+obsługuje tryb osadzony (brak formularza logowania, nawigacja trasami shella, wyjście do
+logowania w oknie najwyższym). Zmiana trasy shella i wylogowanie z osadzonego pulpitu idą
+przez kontrakt `__sok*` w `public/js/shared/sokDirty.js` (`__sokNavigateShell`, `__sokGoLogin`).
+
 Zdarzenia DOM bez inline handlerów (CSP-E, 2026-09-30): zero atrybutów `on*`
 w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.js`
 (`data-csp` + `data-csp-on` + `data-csp-args` JSON, warianty `-2..-6`, kompozyty
@@ -284,16 +292,16 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 
 ### Widoki
 
-| Plik                | Opis                              |
-| ------------------- | --------------------------------- |
-| `index.html`        | Strona główna / dashboard         |
-| `app.html`          | Główna aplikacja SPA              |
-| `rury.html`         | Zarządzanie ofertami rur          |
-| `studnie.html`      | Zarządzanie ofertami studni       |
-| `kartoteka.html`    | Kartoteka klientów                |
-| `zlecenia.html`     | Widok zamówień                    |
-| `cennik.html`       | Edycja cenników (osadzone moduły) |
-| `benchmark-tm.html` | Narzędzie benchmarku (dev)        |
+| Plik                | Opis                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| `index.html`        | Logowanie + dashboard (także iframe `?host=pulpit`)                                    |
+| `app.html`          | Shell SPA (`#/rury`, `#/studnie`, `#/kartoteka`, `#/zlecenia`, `#/cennik`, `#/pulpit`) |
+| `rury.html`         | Zarządzanie ofertami rur                                                               |
+| `studnie.html`      | Zarządzanie ofertami studni                                                            |
+| `kartoteka.html`    | Kartoteka klientów                                                                     |
+| `zlecenia.html`     | Widok zamówień                                                                         |
+| `cennik.html`       | Edycja cenników (osadzone moduły)                                                      |
+| `benchmark-tm.html` | Narzędzie benchmarku (dev)                                                             |
 
 ### Frontend — struktura JS
 

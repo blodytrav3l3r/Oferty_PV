@@ -473,17 +473,21 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
 
 function navigateToModule(offerType, entityId, mode) {
     const targetModule = offerType === 'studnia_oferta' ? 'studnie' : 'rury';
+    const hash = `#/${targetModule}?${mode}=${entityId}`;
     try {
         if (window.parent?.SpaRouter) {
             window.parent.SpaRouter.openOfferInModule(offerType, entityId, mode);
         } else if (window.SpaRouter) {
             window.SpaRouter.openOfferInModule(offerType, entityId, mode);
-        } else {
-            window.location.href = `app.html#/${targetModule}?${mode}=${entityId}`;
+        } else if (
+            typeof window.__sokNavigateShell !== 'function' ||
+            !window.__sokNavigateShell(hash)
+        ) {
+            window.location.href = 'app.html' + hash;
         }
     } catch (err) {
         logger.error('kartotekaUi', 'Błąd nawigacji:', err);
-        window.location.href = `app.html#/${targetModule}?${mode}=${entityId}`;
+        window.location.href = 'app.html' + hash;
     }
 }
 

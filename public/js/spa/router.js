@@ -508,13 +508,22 @@
             : { base: raw.slice(0, q), query: raw.slice(q + 1) };
     }
 
+    /**
+     * Parametry trasy dopisuje się do query modułu, ale nigdy nie nadpisują
+     * jego stałych parametrów (`host=pulpit` decyduje o trybie osadzonym).
+     */
+    function _applyRouteParams(usp, params) {
+        Object.entries(params || {}).forEach(([k, v]) => {
+            if (k === 'v' || _TRANSIENT_PARAMS.has(k)) return;
+            if (usp.has(k)) return;
+            if (v != null && v !== '') usp.set(k, String(v));
+        });
+    }
+
     function _buildModuleSrc(module, params) {
         const { base, query } = _moduleSrcParts(module);
         const usp = new URLSearchParams(query);
-        Object.entries(params || {}).forEach(([k, v]) => {
-            if (_TRANSIENT_PARAMS.has(k)) return;
-            if (v != null && v !== '') usp.set(k, String(v));
-        });
+        _applyRouteParams(usp, params);
         usp.set('v', '2.0');
         const qs = usp.toString();
         return qs ? base + '?' + qs : base;
@@ -524,10 +533,7 @@
         // Klucz bez cache-bust — decyduje czy reload faktycznie potrzebny
         const { base, query } = _moduleSrcParts(module);
         const usp = new URLSearchParams(query);
-        Object.entries(params || {}).forEach(([k, v]) => {
-            if (k === 'v' || _TRANSIENT_PARAMS.has(k)) return;
-            if (v != null && v !== '') usp.set(k, String(v));
-        });
+        _applyRouteParams(usp, params);
         usp.sort();
         const qs = usp.toString();
         return base + (qs ? '?' + qs : '');
@@ -893,7 +899,8 @@
             const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
             const authData = await authRes.json();
             if (!authData.user) {
-                window.location.href = 'index.html';
+                if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+                else window.location.href = 'index.html';
                 return;
             }
 
@@ -904,7 +911,8 @@
 
             window.currentUser = authData.user;
         } catch (_e) {
-            window.location.href = 'index.html';
+            if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+            else window.location.href = 'index.html';
             return;
         }
 

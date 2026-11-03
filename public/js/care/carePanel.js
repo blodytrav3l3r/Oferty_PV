@@ -1032,12 +1032,35 @@ function fmtTerm(it) {
 }
 
 /**
+ * Nawigacja do trasy shella z osadzonej ramki (ADR-014). W ramce pulpitu
+ * `location.href = 'app.html#/…'` załadowałoby shell w iframe (zagnieżdżenie).
+ */
+function openShellRoute(hash) {
+    try {
+        if (typeof window.__sokNavigateShell === 'function' && window.__sokNavigateShell(hash))
+            return true;
+    } catch {
+        /* kontrakt niedostępny — fallback niżej */
+    }
+    try {
+        if (window.parent && window.parent !== window && window.parent.location) {
+            window.parent.location.hash = hash;
+            return true;
+        }
+    } catch {
+        /* cross-origin — zostaje pełne przeładowanie */
+    }
+    return false;
+}
+
+/**
  * Handoff do modala opieki w Kartotece: zapis w sessionStorage + parametr
  * w hash (fallback gdyby storage był zablokowany).
  * Konsument: kartotekaInit.js (hash > storage, jednorazowo + świeżość 5 min).
  */
 export function careOpenContact(offerKind, offerId) {
-    const target = 'app.html#/kartoteka?kontakt=' + encodeURIComponent(offerKind + ':' + offerId);
+    const hash = '#/kartoteka?kontakt=' + encodeURIComponent(offerKind + ':' + offerId);
+    const target = 'app.html' + hash;
     try {
         if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem(
@@ -1052,12 +1075,14 @@ export function careOpenContact(offerKind, offerId) {
     } catch {
         /* storage zablokowany — ratuje parametr w hash */
     }
-    try {
-        if (typeof window !== 'undefined' && window.location) {
-            window.location.href = target;
+    if (!openShellRoute(hash)) {
+        try {
+            if (typeof window !== 'undefined' && window.location) {
+                window.location.href = target;
+            }
+        } catch {
+            /* best-effort */
         }
-    } catch {
-        /* best-effort */
     }
     return target;
 }

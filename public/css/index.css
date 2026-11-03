@@ -4009,7 +4009,15 @@ html[data-theme='light'] body.index-page.logged-in::before {
    Reguły działają od pierwszego malowania (znacznik z serwera). */
 html[data-embedded='pulpit'] #dash-header,
 html[data-embedded='pulpit'] #page-loader,
+html[data-embedded='pulpit'] #login-section,
 html[data-embedded='pulpit'] .index-logo,
 html[data-embedded='pulpit'] .subtitle {
     display: none !important;
+}
+
+/* `html:not(.is-loaded){visibility:hidden}` chowa całą ramkę (~0,3 s biały
+   flash w ciemnym motywie). W trybie osadzonym pokazujemy samo tło — treść
+   i tak czeka na wynik /me. */
+html[data-embedded='pulpit']:not(.is-loaded) {
+    visibility: visible;
 }

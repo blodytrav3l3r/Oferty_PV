@@ -11,12 +11,14 @@ const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
 const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
 
 async function waitForPulpitFrame(page) {
-    for (let i = 0; i < 40; i++) {
-        const frame = page.frames().find((f) => f.url().includes('index.html?host=pulpit'));
-        if (frame) return frame;
-        await page.waitForTimeout(250);
-    }
-    return null;
+    const isPulpit = (f) => !f.isDetached() && f.url().includes('index.html?host=pulpit');
+    await expect
+        .poll(() => page.frames().some(isPulpit), {
+            message: 'iframe pulpit nie został utworzony',
+            timeout: 15000
+        })
+        .toBe(true);
+    return page.frames().find(isPulpit) || null;
 }
 
 test.describe('SPA: pulpit jako moduł', () => {
@@ -72,10 +74,10 @@ test.describe('SPA: pulpit jako moduł', () => {
         await frame.waitForSelector('#user-section', { timeout: 15000 });
 
         await frame.evaluate(() => {
-            const link = document.querySelector('a[href^="app.html#/"]');
+            const link = document.querySelector('a[href="app.html#/rury"]');
             if (link) link.click();
         });
-        await page.waitForFunction(() => !location.hash.includes('pulpit'));
+        await page.waitForFunction(() => location.hash === '#/rury');
 
         // Ramka pulpitu nadal istnieje w shellu — nawigacja nie przeładowała jej.
         expect(await waitForPulpitFrame(page)).not.toBeNull();
@@ -100,6 +102,71 @@ test.describe('SPA: pulpit jako moduł', () => {
         await page.goto(`${BASE}/index.html?host=pulpit`);
         await page.waitForFunction(() => location.search === '', null, { timeout: 15000 });
         await expect(page.locator('#login-section')).toBeVisible();
+    });
+
+    test('logowanie na stronie wejścia kończy się w #/pulpit', async ({ page }) => {
+        await page.context().clearCookies();
+        await page.goto(`${BASE}/index.html`);
+        await page.fill('#login-username', 'admin');
+        await page.fill('#login-password', ADMIN_PASSWORD);
+        await page.click('.login-submit');
+        await page.waitForURL(/#\/pulpit$/, { timeout: 15000 });
+
+        const frame = await waitForPulpitFrame(page);
+        expect(frame).not.toBeNull();
+        await frame.waitForSelector('#user-section', { timeout: 15000 });
+    });
+
+    test('#/pulpit?host=x nie wyłącza trybu osadzonego', async ({ page }) => {
+        await page.goto(`${BASE}/app.html#/pulpit?host=x`);
+        const frame = await waitForPulpitFrame(page);
+        expect(frame).not.toBeNull();
+        expect(frame.url()).toContain('host=pulpit');
+        await frame.waitForSelector('#user-section', { timeout: 15000 });
+        expect(await frame.evaluate(() => document.documentElement.dataset.embedded)).toBe(
+            'pulpit'
+        );
+    });
+
+    test('bezpośredni index.html?host=pulpit z sesją wchodzi do shella', async ({ page }) => {
+        await page.goto(`${BASE}/index.html?host=pulpit`);
+        await page.waitForURL(/app\.html#\/pulpit$/, { timeout: 15000 });
+
+        const frame = await waitForPulpitFrame(page);
+        expect(frame).not.toBeNull();
+        await frame.waitForSelector('#user-section', { timeout: 15000 });
+    });
+
+    test('5xx /me w ramce nie wyrzuca z shella, 401 wyrzuca', async ({ page }) => {
+        let frameCalls = 0;
+        let frameAuth = 'error';
+        await page.route('**/api/auth/me', async (route) => {
+            // Shell (main frame) zawsze dostaje prawdziwą odpowiedź.
+            if (route.request().frame() === page.mainFrame()) return route.continue();
+            frameCalls++;
+            if (frameAuth === 'error') {
+                return route.fulfill({
+                    status: 500,
+                    contentType: 'application/json',
+                    body: '{}'
+                });
+            }
+            return route.fulfill({ status: 401, contentType: 'application/json', body: '{}' });
+        });
+
+        await page.goto(`${BASE}/app.html#/pulpit`);
+        await waitForPulpitFrame(page);
+        await expect.poll(() => frameCalls, { timeout: 15000 }).toBeGreaterThan(0);
+        // Negatywna asercja: po błędzie przejściowym shell zostaje na miejscu.
+        await page.waitForTimeout(800);
+        expect(page.url()).toContain('#/pulpit');
+
+        // Kolejne wejście do ramki dostaje 401 → wyjście na stronę logowania.
+        frameAuth = 'auth';
+        await page.reload();
+        await page.waitForURL(/\/index\.html$/, { timeout: 15000 });
+        // Sesja w oknie najwyższym jest ważna — wejście pokazuje dashboard.
+        await expect(page.locator('#user-section')).toBeVisible();
     });
 
     test('odświeżenie #/pulpit odtwarza moduł', async ({ page }) => {

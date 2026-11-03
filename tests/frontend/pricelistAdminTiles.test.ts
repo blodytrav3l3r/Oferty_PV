@@ -169,8 +169,9 @@ describe('SPA: deep-link do panelu wersji', () => {
         expect(router).toContain(
             "_TRANSIENT_PARAMS = new Set(['panel', 'pvtype', 'version', 'against'])"
         );
-        expect(router).toContain('if (_TRANSIENT_PARAMS.has(k)) return;');
         expect(router).toContain("if (k === 'v' || _TRANSIENT_PARAMS.has(k)) return;");
+        // Parametry trasy nie nadpisują stałych parametrów modułu (host=pulpit).
+        expect(router).toContain('if (usp.has(k)) return;');
     });
 
     it('brudna oferta: confirm przed otwarciem panelu', () => {

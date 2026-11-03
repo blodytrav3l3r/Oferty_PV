@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const authRes = await fetchWithTimeout('/api/auth/me', { credentials: 'same-origin' });
         const authData = await authRes.json();
         if (!authData.user) {
-            window.location.href = 'index.html';
+            if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+            else window.location.href = 'index.html';
             return;
         }
         currentUser = authData.user;
@@ -25,7 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Pobierz mapę wszystkich użytkowników dla list
         await fetchGlobalUsers();
     } catch (_e) {
-        window.location.href = 'index.html';
+        if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+        else window.location.href = 'index.html';
         return;
     }
 

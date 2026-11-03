@@ -44,6 +44,9 @@ describe('router: scalanie query modułu', () => {
         const url = ctx._buildModuleSrc('pulpit', { tab: 'x', panel: 'ignored' });
         expect(url).toBe('index.html?host=pulpit&tab=x&v=2.0');
         expect(url.split('?')).toHaveLength(2);
+        // Trasa `#/pulpit?host=x` nie może wyłączyć trybu osadzonego.
+        expect(ctx._buildModuleSrc('pulpit', { host: 'x' })).toBe('index.html?host=pulpit&v=2.0');
+        expect(ctx._logicalSrcKey('pulpit', { host: 'x' })).toBe('index.html?host=pulpit');
     });
 
     it('moduły bez query zachowują dotychczasowy URL', () => {
@@ -71,15 +74,44 @@ describe('pulpit: rejestracja i nawigacja', () => {
         const css = read('public/css/index.css');
         expect(css).toContain("html[data-embedded='pulpit'] #dash-header");
         expect(css).toContain("html[data-embedded='pulpit'] #page-loader");
+        expect(css).toContain("html[data-embedded='pulpit'] #login-section");
         expect(css).toContain("html[data-embedded='pulpit'] .index-logo");
     });
 
     it('dashboard zna tryb osadzony: login/redirect/nawigacja trasami shella', () => {
         const src = read('public/js/shared/dashboard.js');
+        expect(src).toContain("getAttribute('data-embedded') === 'pulpit'");
         expect(src).toContain("get('host') === 'pulpit'");
-        expect(src).toContain('window.top.location.href = target');
+        expect(src).toContain('probeEmbeddedSession');
+        expect(src).toContain('__sokNavigateShell');
         expect(src).toContain('window.parent.location.hash = hash');
         expect(src).toContain("window.location.replace('app.html#/pulpit')");
+    });
+
+    it('wolne /me i błąd 5xx nie wyrzucają usera z shella', () => {
+        const src = read('public/js/shared/dashboard.js');
+        // Timer w trybie osadzonym tylko zdejmuje auth-pending.
+        const timerStart = src.indexOf('const authTimer');
+        const embeddedStart = src.indexOf('if (embedded) {');
+        expect(timerStart).toBeGreaterThan(-1);
+        expect(embeddedStart).toBeGreaterThan(timerStart);
+        const timerBlock = src.slice(timerStart, embeddedStart);
+        expect(timerBlock).not.toContain('redirectToLogin');
+        // Brak sesji rozpoznaje wyłącznie 401/403; inne błędy kończą się pustą ramką.
+        expect(src).toContain('res.status === 401 || res.status === 403');
+        expect(src).toMatch(/else if \(probe\.expired\) \{\s*finish\(redirectToLogin\)/);
+    });
+
+    it('kontrakt __sok* obsługuje wejście do logowania i trasę shella', () => {
+        const sok = read('public/js/shared/sokDirty.js');
+        expect(sok).toMatch(/function __sokGoLogin\(\)[\s\S]*?window\.top\.location\.href/);
+        expect(sok).toMatch(
+            /function __sokNavigateShell\(hash\)[\s\S]*?window\.parent\.location\.hash = hash/
+        );
+        expect(sok).toContain('window.__sokGoLogin = __sokGoLogin');
+        expect(sok).toContain('window.__sokNavigateShell = __sokNavigateShell');
+        // Ramka pulpitu musi mieć kontrakt: index.html ładuje sokDirty.js.
+        expect(read('public/index.html')).toContain('js/shared/sokDirty.js');
     });
 
     it('logout i wygaśnięcie sesji nawigują okno najwyższe', () => {

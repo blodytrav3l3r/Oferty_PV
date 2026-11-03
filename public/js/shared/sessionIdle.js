@@ -35,7 +35,7 @@
     var warnShownForCycle = false;
     var countdownTimer = null;
 
-    /** Wyjście do logowania w oknie najwyższym (moduły SPA żyją w iframe). */
+    /** Wyjście do logowania w oknie najwyższym (SSoT: auth.js → __sokGoLogin). */
     function goLoginPage() {
         try {
             if (typeof window.navigateToLogin === 'function') {
@@ -44,12 +44,8 @@
             }
         } catch (_e) {}
         try {
-            if (window.top && window.top !== window && window.top.location) {
-                window.top.location.href = 'index.html';
-                return;
-            }
+            window.location.href = 'index.html';
         } catch (_e2) {}
-        window.location.href = 'index.html';
     }
 
     function esc(s) {

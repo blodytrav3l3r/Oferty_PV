@@ -24,7 +24,8 @@
         studnie: 'Oferty Studnie',
         kartoteka: 'Kartoteka',
         zlecenia: 'Zlecenia',
-        cennik: 'Cennik'
+        cennik: 'Cennik',
+        pulpit: 'Pulpit'
     };
 
     /** @returns {string|null} */

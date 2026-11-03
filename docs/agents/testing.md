@@ -17,3 +17,28 @@
 - `npm run validate`: version:check, typecheck BE+FE, lint BE+FE, appname, licenses, test:quick, collisions, ratchet, prices:verify.
 - Pre-push (`.husky/pre-push`, 4 grupy równoległe): `version:check` + `encoding:check` + `appname:check`; `lint` + `lint:frontend`; `typecheck` + `typecheck:frontend`; `jest` lite (`test:quick:lite` — bez `tests/migrations` i `git-safety`) + `tests/pricelistChunk.test.ts --runInBand` + `test:git-safety`.
 - DoD paczki: P0 open = 0; CSRF/matrix GREEN; typecheck/lint GREEN; `test:quick` GREEN; `version:check` GREEN; migration drift 0; NEW globals/inline/security-exceptions = 0.
+
+## Playwright — izolowana baza i hasło admina
+
+`tests/playwright/*.spec.ts` startują własny serwer na `:3199` z bazą z
+`PLAYWRIGHT_DATABASE_URL`. Stan środowiska, nie zmiana kodu:
+
+- istniejąca `prisma/test-playwright.sqlite` może mieć admina o nieznanym haśle, a
+  `ensureAdminExists` odrzuca `anim123456` (`src/middleware/auth.ts:427-436`) — wtedy
+  logowanie w E2E zwróci 401;
+- pewny przebieg: świeży plik bazy + hasło z env:
+
+```powershell
+# ścieżki DB są względne do prisma/schema.prisma → plik prisma/test-pulpit.sqlite
+$env:DATABASE_URL = "file:./test-pulpit.sqlite"
+$env:PLAYWRIGHT_DATABASE_URL = "file:./test-pulpit.sqlite?connection_limit=1&busy_timeout=30000"
+$env:DEFAULT_ADMIN_PASSWORD = "PulpitE2e!2026"
+$env:TEST_ADMIN_PASSWORD = "PulpitE2e!2026"
+npx prisma db push
+npm run test:e2e -- tests/playwright/pulpit.spec.ts
+# po przebiegu: usuń plik bazy (nie zostawiaj artefaktu w repo)
+```
+
+`test:e2e` to `playwright test`; config startuje serwer na `:3199` z `DATABASE_URL`
+z `PLAYWRIGHT_DATABASE_URL`, a serwer współdzieli się tylko przy
+`PLAYWRIGHT_REUSE_SERVER=1` — domyślnie każdy przebieg jest izolowany.

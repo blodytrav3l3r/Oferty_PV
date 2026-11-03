@@ -132,8 +132,12 @@ function _logoutDirtyWindow(moduleHint) {
 /**
  * Nawigacja do strony logowania w oknie najwyższym. W iframe modułu SPA
  * samo `location.href` przeładowałoby tylko ramkę (podwójny formularz).
+ * SSoT ruchu parent↔iframe: `__sokGoLogin` (ADR-014, shared/sokDirty.js).
  */
 function navigateToLogin() {
+    try {
+        if (typeof window.__sokGoLogin === 'function' && window.__sokGoLogin()) return;
+    } catch {}
     try {
         if (window.top && window.top !== window && window.top.location) {
             window.top.location.href = 'index.html';

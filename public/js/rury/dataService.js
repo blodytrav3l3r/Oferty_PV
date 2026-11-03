@@ -186,7 +186,8 @@ async function loadOffers() {
     try {
         const res = await fetch('/api/offers-rury', { headers: authHeaders() });
         if (res.status === 401) {
-            window.location.href = 'index.html';
+            if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+            else window.location.href = 'index.html';
             return [];
         }
         const json = await res.json();

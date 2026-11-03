@@ -13,9 +13,13 @@ const revokingUsers = new Set();
 
 /**
  * Pulpit osadzony w SPA (#/pulpit → index.html?host=pulpit): ta sama granica
- * iframe co pozostałe moduły (ADR-014). Tylko ten tryb nawiguje do shella.
+ * iframe co pozostałe moduły (ADR-014). Znacznik `data-embedded` stawia serwer
+ * (działa od pierwszego malowania); query zostaje fallbackiem.
  */
 function isPulpitEmbedded() {
+    try {
+        if (document.documentElement.getAttribute('data-embedded') === 'pulpit') return true;
+    } catch (_e0) {}
     try {
         if (typeof URLSearchParams !== 'function') return false;
         return new URLSearchParams(window.location.search).get('host') === 'pulpit';
@@ -24,10 +28,17 @@ function isPulpitEmbedded() {
     }
 }
 
-/** Przejście do trasy shella; z iframe zawsze przez okno nadrzędne. */
+/**
+ * Przejście do trasy shella; kontrakt `__sokNavigateShell` (ADR-014) podmienia
+ * hash okna nadrzędnego, więc ramka z edycją zostaje zamontowana.
+ */
 function goToShellRoute(target) {
     const hashIndex = target.indexOf('#');
     const hash = hashIndex === -1 ? '#/rury' : target.slice(hashIndex);
+    try {
+        if (typeof window.__sokNavigateShell === 'function' && window.__sokNavigateShell(hash))
+            return true;
+    } catch (_e0) {}
     try {
         if (window.parent && window.parent !== window && window.parent.location) {
             window.parent.location.hash = hash;
@@ -44,19 +55,24 @@ function goToShellRoute(target) {
 
 /**
  * Bez sesji w iframe nie pokazujemy formularza (podwójny login) — wracamy
- * do strony wejścia w oknie najwyższym.
+ * do strony wejścia w oknie najwyższym. SSoT: `navigateToLogin` (auth.js).
  */
 function redirectToLogin() {
-    const target = 'index.html';
     try {
-        if (window.top && window.top !== window && window.top.location) {
-            window.top.location.href = target;
+        if (typeof window.navigateToLogin === 'function') {
+            window.navigateToLogin();
             return;
         }
     } catch (_e) {}
     try {
-        window.location.href = target;
+        if (window.top && window.top !== window && window.top.location) {
+            window.top.location.href = 'index.html';
+            return;
+        }
     } catch (_e2) {}
+    try {
+        window.location.href = 'index.html';
+    } catch (_e3) {}
 }
 
 /** true w oknie najwyższym; iframe modułów zawsze ma różne `parent`. */
@@ -88,17 +104,51 @@ function redirectToShell() {
     }
 }
 
+/**
+ * Sesja w trybie osadzonym: tylko 401/403 (albo 200 bez usera) znaczą „brak
+ * sesji". Błąd sieci/5xx musi zostawić shellowi decyzję — ramka zostaje pusta,
+ * bo wyrzucenie do logowania zabiłoby stan pozostałych modułów.
+ * @returns {Promise<{user: object|null, expired: boolean}>}
+ */
+async function probeEmbeddedSession() {
+    try {
+        const res = await fetch('/api/auth/me', {
+            credentials: 'same-origin',
+            cache: 'no-store'
+        });
+        if (res.status === 401 || res.status === 403) return { user: null, expired: true };
+        if (!res.ok) return { user: null, expired: false };
+        const data = await res.json();
+        const user = (data && data.user) || null;
+        return { user: user, expired: !user };
+    } catch (_e) {
+        return { user: null, expired: false };
+    }
+}
+
 /** Osadzony pulpit: linki `app.html#/…` zmieniają trasę shella, nie ramki. */
 function bindEmbeddedNavigation() {
     if (!isPulpitEmbedded() || typeof document.addEventListener !== 'function') return;
     document.addEventListener('click', function (event) {
+        if (event.defaultPrevented) return;
+        if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)
+            return;
         const node = event.target;
         const anchor = node && typeof node.closest === 'function' ? node.closest('a[href]') : null;
         if (!anchor) return;
-        const href = anchor.getAttribute('href') || '';
-        if (href.indexOf('app.html') !== 0) return;
+        const target = anchor.getAttribute('target') || '';
+        if (target && target !== '_self') return;
+        let url;
+        try {
+            url = new URL(anchor.getAttribute('href') || '', window.location.href);
+        } catch (_e) {
+            return;
+        }
+        if (url.origin !== window.location.origin) return;
+        if (url.pathname.replace(/^.*\//, '') !== 'app.html') return;
+        if (!url.hash) return;
         event.preventDefault();
-        goToShellRoute(href);
+        goToShellRoute(url.hash);
     });
 }
 
@@ -143,6 +193,7 @@ function updateSubUsers(checkbox) {
 
 window.addEventListener('DOMContentLoaded', async () => {
     const html = document.documentElement;
+    const embedded = isPulpitEmbedded();
     let authResolved = false;
     bindEmbeddedNavigation();
     const finish = (fn, user) => {
@@ -158,10 +209,29 @@ window.addEventListener('DOMContentLoaded', async () => {
         // Nie zamykaj sprawy: spozniony (ale wazny) wynik /me ma jeszcze
         // podmienic formularz na panel zamiast zostawiac usera na loginie.
         html.classList.remove('auth-pending');
-        // W iframe nie ma czego pokazywać — formularz logowania należy do wejścia.
-        if (isPulpitEmbedded()) redirectToLogin();
-        else showLogin();
+        // W iframe nie ma czego pokazywać — formularz logowania należy do wejścia,
+        // a wolne /me nie może wyrzucić usera z shella.
+        if (!isPulpitEmbedded()) showLogin();
     }, 1500);
+    if (embedded) {
+        const probe = await probeEmbeddedSession();
+        if (probe.user) {
+            // Bezpośrednie `index.html?host=pulpit` ma wylądować w shellu;
+            // osadzona ramka po prostu pokazuje panel.
+            if (isTopLevelWindow()) {
+                finish(function () {});
+                redirectToShell();
+            } else {
+                finish(showLoggedIn, probe.user);
+            }
+        } else if (probe.expired) {
+            finish(redirectToLogin);
+        } else {
+            // Błąd przejściowy: nie ruszamy okna nadrzędnego.
+            finish(function () {});
+        }
+        return;
+    }
     // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly.
     // Brak pre-checku localStorage — cookie jest niewidoczne dla JS.
     // authReady() (shared/auth.js) cache'uje wynik dla modułów startowych,
@@ -176,11 +246,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             user = data.user;
         }
         if (user) finish(showLoggedIn, user);
-        else if (isPulpitEmbedded()) finish(redirectToLogin);
         else finish(showLogin);
     } catch (_e) {
-        if (isPulpitEmbedded()) finish(redirectToLogin);
-        else finish(showLogin);
+        finish(showLogin);
     }
 });
 
@@ -534,7 +602,8 @@ async function doLogout() {
     try {
         localStorage.removeItem('authToken');
     } catch {}
-    showLogin();
+    if (isPulpitEmbedded()) redirectToLogin();
+    else showLogin();
 }
 
 function pluralSessions(n) {

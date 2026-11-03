@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
         const authData = await authRes.json();
         if (!authData.user) {
-            window.location.href = 'index.html';
+            if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+            else window.location.href = 'index.html';
             return;
         }
 
@@ -18,7 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.headerUser.render(user);
         }
     } catch (_e) {
-        window.location.href = 'index.html';
+        if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+        else window.location.href = 'index.html';
         return;
     }
 });
