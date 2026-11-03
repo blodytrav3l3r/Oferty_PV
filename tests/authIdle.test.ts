@@ -71,11 +71,11 @@ describe('P1-idle: timeout 1h bezczynnosci / absolute 7d', () => {
 
     it('idle >1h: getSession null + kasowanie + reason idle', async () => {
         mockPrisma.sessions.findUnique.mockResolvedValue(sessionRow(HOUR + 1000));
-        mockPrisma.sessions.delete.mockResolvedValue({});
+        mockPrisma.sessions.deleteMany.mockResolvedValue({ count: 1 });
         const { session, reason } = await getSessionWithStatus('tok');
         expect(session).toBeNull();
         expect(reason).toBe('idle');
-        expect(mockPrisma.sessions.delete).toHaveBeenCalledWith({
+        expect(mockPrisma.sessions.deleteMany).toHaveBeenCalledWith({
             where: { token: hashToken('tok') }
         });
     });
@@ -87,7 +87,7 @@ describe('P1-idle: timeout 1h bezczynnosci / absolute 7d', () => {
             userId: 'user1',
             createdAt: BigInt(now - HOUR - 1000)
         });
-        mockPrisma.sessions.delete.mockResolvedValue({});
+        mockPrisma.sessions.deleteMany.mockResolvedValue({ count: 1 });
         const { session, reason } = await getSessionWithStatus('tok');
         expect(session).toBeNull();
         expect(reason).toBe('idle');
@@ -101,7 +101,7 @@ describe('P1-idle: timeout 1h bezczynnosci / absolute 7d', () => {
             createdAt: BigInt(now - 8 * 24 * HOUR),
             lastActivity: BigInt(now)
         });
-        mockPrisma.sessions.delete.mockResolvedValue({});
+        mockPrisma.sessions.deleteMany.mockResolvedValue({ count: 1 });
         const { session, reason } = await getSessionWithStatus('tok');
         expect(session).toBeNull();
         expect(reason).toBe('absolute');
@@ -109,7 +109,7 @@ describe('P1-idle: timeout 1h bezczynnosci / absolute 7d', () => {
 
     it('requireAuth: idle → 401 z kodem SESSION_IDLE_EXPIRED', async () => {
         mockPrisma.sessions.findUnique.mockResolvedValue(sessionRow(HOUR + 1000));
-        mockPrisma.sessions.delete.mockResolvedValue({});
+        mockPrisma.sessions.deleteMany.mockResolvedValue({ count: 1 });
         const app = express();
         app.use(cookieParser());
         app.get('/p', requireAuth, (_req, res) => res.json({ ok: true }));
@@ -126,7 +126,7 @@ describe('P1-idle: timeout 1h bezczynnosci / absolute 7d', () => {
             createdAt: BigInt(now - 8 * 24 * HOUR),
             lastActivity: BigInt(now)
         });
-        mockPrisma.sessions.delete.mockResolvedValue({});
+        mockPrisma.sessions.deleteMany.mockResolvedValue({ count: 1 });
         const app = express();
         app.use(cookieParser());
         app.get('/p', requireAuth, (_req, res) => res.json({ ok: true }));

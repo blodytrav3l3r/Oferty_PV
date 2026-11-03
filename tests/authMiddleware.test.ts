@@ -73,11 +73,11 @@ describe('getSession', () => {
             userId: 'user1',
             createdAt: expiredTime
         });
-        mockPrisma.sessions.delete.mockResolvedValue({});
+        mockPrisma.sessions.deleteMany.mockResolvedValue({ count: 1 });
 
         const result = await getSession('expired-token');
         expect(result).toBeNull();
-        expect(mockPrisma.sessions.delete).toHaveBeenCalledWith({
+        expect(mockPrisma.sessions.deleteMany).toHaveBeenCalledWith({
             where: { token: hashToken('expired-token') }
         });
     });

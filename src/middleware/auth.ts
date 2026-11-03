@@ -246,16 +246,18 @@ export async function touchSession(token: string): Promise<void> {
 
 /**
  * Kasuje sesję po tokenie.
+ * `deleteMany` zamiast `delete` — delete rzuca P2025, gdy wiersza już nie ma
+ * (drugie logowanie z wygasłą cookie), co zaśmiecało logi.
  */
 export async function deleteSession(token: string): Promise<void> {
     try {
         const tokenHash = hashToken(token);
         authCacheInvalidateToken(tokenHash);
-        await prisma.sessions.delete({
+        await prisma.sessions.deleteMany({
             where: { token: tokenHash }
         });
     } catch (_e) {
-        // Ignoruj jeśli sesja nie istnieje
+        // Ignoruj błędy bazy — sesja mogła już nie istnieć
     }
 }
 

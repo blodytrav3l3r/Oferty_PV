@@ -101,6 +101,8 @@ jest.mock('../src/prismaClient', () => ({
                 let n = 0;
                 if (where.token?.in) {
                     for (const t of where.token.in) if (sessions.delete(t)) n++;
+                } else if (where.token) {
+                    if (sessions.delete(where.token)) n++;
                 } else if (where.userId) {
                     for (const [t, s] of sessions)
                         if (s.userId === where.userId) {
