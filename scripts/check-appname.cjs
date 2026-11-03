@@ -10,9 +10,15 @@
  *   P2  "WITROS — Generator Ofert" (bug z orderEditMode.js:92; też "-" ASCII)
  *   P3  "WITROS PRECISION OS"      (stary working title)
  *   P4  "WITROS — <Moduł>"         (nagłówki)
+ *   P5  "witros-…" / "witros_…"    (identyfikatory: formaty transferu, klucze LS)
+ *
+ * P5 jest wrażliwy na wielkość liter (bez flagi `i`): łapie małe identyfikatory
+ * (`witros-offer-transfer`, `witros_excel_*`), a przepuszcza dane produktowe
+ * (`WITROS-1000`) i samą nazwę firmy „WITROS”.
  *
  * Dozwolony jest sam "WITROS" (firma/identyfikatory/dane seed) — żaden taki
- * tekst nie pasuje do P1–P4. Dokumenty historyczne i dane są na whitelist.
+ * tekst nie pasuje do P1–P5. Dokumenty historyczne i dane są na whitelist,
+ * a warstwa kompatybilności wstecznej (ALLOW_REL_FILES) na allowliście.
  *
  * Użycie:
  *   node scripts/check-appname.cjs                # skan katalogu głównego
@@ -36,6 +42,7 @@ const IGNORE_DIRS = new Set([
     'plans',
     'adr',
     'archive',
+    'audits',
     'graphify-out',
     'data',
     'junit'
@@ -60,6 +67,25 @@ const IGNORE_FILES = new Set([
 
 // Pliki pomijane po ścieżce względnej
 const IGNORE_REL = new Set(['docs/AUDIT.md']);
+
+// Warstwa kompatybilności wstecznej — historyczne identyfikatory "witros-*"/"witros_*"
+// muszą zostać, bo czytają je stare eksporty / zapisane ustawienia / runbooki ops.
+// Każdy wpis: powód, dla którego P5 nie może tu zadziałać.
+const ALLOW_REL_FILES = new Set([
+    // legacy `kind` transferu JSON (import starych plików)
+    'public/js/import-export/shared/jsonOfferTransfer.js',
+    // legacy klucze localStorage migrowane do `sok_*`
+    'public/js/studnie/excelState.js',
+    'public/js/studnie/displayUnits.js',
+    // runbook migracji wolumenu/sieci Docker sprzed rebrandingu
+    'docs/DEPLOYMENT.md',
+    // legacy nazwa zadania Task Scheduler (unregister przy migracji)
+    'scripts/install-backup-cron.ps1',
+    'scripts/uninstall-backup-cron.ps1',
+    // testy pokrywające migrację kluczy legacy
+    'tests/studnie/excelStateMigration.test.ts',
+    'tests/frontend/jsonOfferTransferKind.test.ts'
+]);
 
 const IGNORE_EXT = new Set([
     '.png',
@@ -91,24 +117,25 @@ const PATTERNS = [
     { id: 'P1', label: 'WITROS Oferty', re: /WITROS[ \t\u00A0]+Oferty/i },
     { id: 'P2', label: 'WITROS — Generator Ofert', re: /WITROS\s*[–—-]\s*Generator\s+Ofert/i },
     { id: 'P3', label: 'WITROS PRECISION OS', re: /WITROS[ \t\u00A0]+PRECISION[ \t\u00A0]+OS/i },
-    { id: 'P4', label: 'WITROS —', re: /WITROS[ \t\u00A0]+[–—-]/i }
+    { id: 'P4', label: 'WITROS —', re: /WITROS[ \t\u00A0]+[–—-]/i },
+    { id: 'P5', label: 'witros-… / witros_…', re: /witros[-_]/ }
 ];
 
-function shouldIgnoreDir(dir) {
+function shouldIgnoreDir(dir, root = ROOT) {
     if (dir.split(path.sep).some((p) => IGNORE_DIRS.has(p))) return true;
-    const rel = path.relative(ROOT, dir).replace(/\\/g, '/');
+    const rel = path.relative(root, dir).replace(/\\/g, '/');
     return IGNORE_REL_DIRS.has(rel) || [...IGNORE_REL_DIRS].some((d) => rel.startsWith(d + '/'));
 }
 
-function shouldIgnoreFile(full) {
-    const rel = path.relative(ROOT, full).replace(/\\/g, '/');
+function shouldIgnoreFile(full, root = ROOT) {
+    const rel = path.relative(root, full).replace(/\\/g, '/');
     const base = path.basename(full);
-    return IGNORE_FILES.has(base) || IGNORE_REL.has(rel);
+    return IGNORE_FILES.has(base) || IGNORE_REL.has(rel) || ALLOW_REL_FILES.has(rel);
 }
 
 const readErrors = [];
 
-function walkDir(dir, files = []) {
+function walkDir(dir, root = ROOT, files = []) {
     let entries;
     try {
         entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -119,10 +146,10 @@ function walkDir(dir, files = []) {
     for (const entry of entries) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
-            if (!shouldIgnoreDir(full)) walkDir(full, files);
+            if (!shouldIgnoreDir(full, root)) walkDir(full, root, files);
         } else if (entry.isFile()) {
             const ext = path.extname(entry.name).toLowerCase();
-            if (!IGNORE_EXT.has(ext) && !shouldIgnoreFile(full)) {
+            if (!IGNORE_EXT.has(ext) && !shouldIgnoreFile(full, root)) {
                 files.push(full);
             }
         }
@@ -161,7 +188,7 @@ function scanFiles(files) {
 
 function validateRepo(root) {
     readErrors.length = 0;
-    const files = fs.statSync(root).isDirectory() ? walkDir(root) : [root];
+    const files = fs.statSync(root).isDirectory() ? walkDir(root, root) : [root];
     return scanFiles(files);
 }
 

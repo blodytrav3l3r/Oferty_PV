@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -106,6 +107,28 @@ describe('check-appname — strażnik nazwy aplikacji (S.O.K.)', () => {
         const dir = makeFixture({ 'a.js': '/* WITROS PRECISION OS — APP.JS */' });
         const out = expectCliFail(dir);
         expect(out).toContain('P3');
+    });
+
+    it('odrzuca historyczny identyfikator "witros-offer-transfer" (P5)', () => {
+        const dir = makeFixture({ 'a.js': "const kind = 'witros-offer-transfer';" });
+        const out = expectCliFail(dir);
+        expect(out).toContain('P5');
+    });
+
+    it('odrzuca historyczny klucz "witros_excel_col_widths" (P5)', () => {
+        const dir = makeFixture({ 'a.js': "const KEY = 'witros_excel_col_widths';" });
+        const out = expectCliFail(dir);
+        expect(out).toContain('P5');
+    });
+
+    it('dopuszcza historyczne identyfikatory w warstwie kompatybilności (allowlista)', () => {
+        const dir = makeFixture({
+            'public/js/import-export/shared/jsonOfferTransfer.js':
+                "const LEGACY = ['witros-offer-transfer'];",
+            'public/js/studnie/excelState.js': "const KEY = 'witros_excel_col_widths';"
+        });
+        const out = runCli(dir);
+        expect(out).toContain('✓');
     });
 
     it('raportuje wiele naruszeń (2 pliki w stdout)', () => {
