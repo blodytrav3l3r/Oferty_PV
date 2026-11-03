@@ -7,6 +7,8 @@
  *
  * Metryki per strona (cold ×3 + warm ×3): requests, bajty, JS-bajty, DCL, load,
  * liczba /api/*, liczba /api/auth/me, bledy konsoli. Wynik: JSON + tabela median.
+ * Strony SPA mierza dodatkowo pierwsze montowanie modulu w iframe
+ * (frameReq/frameKB/frameJsKB/frameDcl/frameLoad) — wlasne Resource Timing ramki.
  * Exit 0 = OK.
  */
 
@@ -39,6 +41,7 @@ const PAGES = [
     ['app', '/app.html'],
     ['app-studnie', '/app.html#/studnie'],
     ['app-rury', '/app.html#/rury'],
+    ['app-pulpit', '/app.html#/pulpit'],
     ['studnie', '/studnie.html'],
     ['rury', '/rury.html'],
     ['kartoteka', '/kartoteka.html'],
@@ -149,6 +152,55 @@ async function loginOnce(browser) {
     return { name: cookie.name, value: cookie.value, domain: 'localhost', path: '/' };
 }
 
+async function readEmbeddedFrame(page) {
+    // Pierwsze montowanie modulu SPA: ramka ma wlasny dokument, wiec jej Resource
+    // Timing jest jedynym wiarygodnym pomiarem wagi (rodzic liczy tylko siebie).
+    // Ramke wybiera klasa routera (`spa-iframe-visible`) — nieistniejaca ramka
+    // (np. index.html bez shella) konczy pomiar od razu, bez czekania.
+    const main = page.mainFrame();
+    const isModule = (f) => !f.isDetached() && f !== main && f.url() !== 'about:blank';
+    let frame = null;
+    for (let i = 0; i < 12 && !frame; i++) {
+        const visible = await page.$('iframe.spa-iframe-visible');
+        frame = visible ? await visible.contentFrame() : null;
+        if (frame) break;
+        if (!(await page.$('iframe'))) break; // brak ramki na tej stronie
+        await page.waitForTimeout(250);
+    }
+    if (!frame) frame = page.frames().find(isModule) || null;
+    if (!frame)
+        return { found: false, url: '', req: 0, kb: 0, jsKB: 0, api: 0, me: 0, dcl: -1, load: -1 };
+    try {
+        await frame.waitForLoadState('load', { timeout: 15000 });
+    } catch (_) {}
+    const perf = await frame.evaluate(() => {
+        const nav = performance.getEntriesByType('navigation')[0];
+        const res = performance.getEntriesByType('resource');
+        const sum = (list) => list.reduce((s, r) => s + (r.transferSize || 0), 0);
+        const api = res.filter((r) => r.name.includes('/api/')).length;
+        return {
+            dcl: nav ? Math.round(nav.domContentLoadedEventEnd) : -1,
+            load: nav ? Math.round(nav.loadEventEnd) : -1,
+            jsBytes: Math.round(sum(res.filter((r) => r.initiatorType === 'script'))),
+            resBytes: Math.round(sum(res) + (nav ? nav.transferSize || 0 : 0)),
+            resCount: res.length + 1,
+            api,
+            me: res.filter((r) => r.name.includes('/api/auth/me')).length
+        };
+    });
+    return {
+        found: true,
+        url: frame.url(),
+        req: perf.resCount,
+        kb: Math.round(perf.resBytes / 1024),
+        jsKB: Math.round(perf.jsBytes / 1024),
+        api: perf.api,
+        me: perf.me,
+        dcl: perf.dcl,
+        load: perf.load
+    };
+}
+
 async function measurePage(browser, url, mode, authCookie) {
     const out = [];
     let context = null;
@@ -201,6 +253,7 @@ async function measurePage(browser, url, mode, authCookie) {
         });
         const api = reqs.filter((r) => r.url.includes('/api/')).length;
         const me = reqs.filter((r) => r.url.includes('/api/auth/me')).length;
+        const frame = await readEmbeddedFrame(page);
         out.push({
             requests: reqs.length,
             api,
@@ -209,6 +262,15 @@ async function measurePage(browser, url, mode, authCookie) {
             resBytes: nav.resBytes,
             dcl: nav.dcl,
             load: nav.load,
+            frameFound: frame.found,
+            frameUrl: frame.url,
+            frameReq: frame.req,
+            frameKB: frame.kb,
+            frameJsKB: frame.jsKB,
+            frameApi: frame.api,
+            frameMe: frame.me,
+            frameDcl: frame.dcl,
+            frameLoad: frame.load,
             consoleErrors,
             errTexts
         });
@@ -247,7 +309,12 @@ function median(a) {
             const c = result[name].cold[0];
             console.log(
                 `  ${name}: cold req=${c.requests} api=${c.api} me=${c.me} ` +
-                    `js=${(c.jsBytes / 1024).toFixed(0)}KB dcl=${c.dcl}ms load=${c.load}ms err=${c.consoleErrors}`
+                    `js=${(c.jsBytes / 1024).toFixed(0)}KB dcl=${c.dcl}ms load=${c.load}ms err=${c.consoleErrors}` +
+                    (c.frameFound
+                        ? ` | frame(${c.frameUrl.replace(/^.*\//, '')}) req=${c.frameReq} ` +
+                          `api=${c.frameApi} me=${c.frameMe} kb=${c.frameKB} ` +
+                          `js=${c.frameJsKB}KB dcl=${c.frameDcl}ms`
+                        : '')
             );
         }
     } finally {
@@ -268,6 +335,14 @@ function median(a) {
                 resKB: Math.round(m('resBytes') / 1024),
                 dclMs: m('dcl'),
                 loadMs: m('load'),
+                frameFound: rows.some((r) => r.frameFound),
+                frameReq: m('frameReq'),
+                frameKB: m('frameKB'),
+                frameJsKB: m('frameJsKB'),
+                frameApi: m('frameApi'),
+                frameMe: m('frameMe'),
+                frameDclMs: m('frameDcl'),
+                frameLoadMs: m('frameLoad'),
                 consoleErrors: m('consoleErrors')
             };
         }
@@ -287,6 +362,20 @@ function median(a) {
                 `${String(s.me).padStart(2)} ${String(s.jsKB).padStart(5)} ${String(s.resKB).padStart(5)} ` +
                 `${String(s.dclMs).padStart(5)} ${String(s.loadMs).padStart(5)} ${String(s.consoleErrors).padStart(4)}`
         );
+    }
+    const frames = pages.filter(([name]) => summary[name].cold.frameFound);
+    if (frames.length) {
+        console.log('\nPierwsze montowanie modulu w iframe (mediana cold):');
+        console.log('strona        req  api me  jsKB  kB  dcl   load');
+        for (const [name] of frames) {
+            const s = summary[name].cold;
+            console.log(
+                `${name.padEnd(13)} ${String(s.frameReq).padStart(3)} ${String(s.frameApi).padStart(4)} ` +
+                    `${String(s.frameMe).padStart(2)} ${String(s.frameJsKB).padStart(5)} ` +
+                    `${String(s.frameKB).padStart(4)} ${String(s.frameDclMs).padStart(4)} ` +
+                    `${String(s.frameLoadMs).padStart(5)}`
+            );
+        }
     }
     console.log('\nZapisano:', outPath);
 })().catch((e) => {

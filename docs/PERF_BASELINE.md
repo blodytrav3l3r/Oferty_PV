@@ -79,6 +79,47 @@ Prod: `max-age 7d` + `?v=` → 2. pass z disk cache. Brak akcji.
 - P1-C: `chunkedCreateMany` 25 (seed + `src/services/pricelist/{bootstrap,validation}.ts`).
 - Bramy load/E5: `docs/plans/archive/e3-perf.md`, werdykty E5: `docs/plans/archive/e5-decision.md`.
 
+> 2026-11-03: harness mierzy też `app-pulpit` (`#/pulpit`) i ramkę modułu
+> (pierwsze montowanie) — patrz sekcja niżej.
+
+## Pulpit jako moduł SPA — waga pierwszego montowania (2026-11-03, headless Chromium)
+
+Harness: `node tests/playwright/perfBaseline.cjs --spawn` z
+`PERF_ONLY=app,app-studnie,app-pulpit` (ten sam co P1.6; strona `app-pulpit` =
+`/app.html#/pulpit`). Mediana z 3 przebiegów cold + 3 warm, dev `no-store`
+(brak korzyści cache przeglądarki w cold — realna waga). Ramka modułu mierzona
+własnym Resource Timing (dokument + subzasoby), odczyt po `load`; rodzic liczy
+tylko siebie, więc bez tego pomiaru waga montowania jest niewidoczna.
+
+| Zakres                                          | req | api |  me | jsKB |   KB | DCL | load |
+| ----------------------------------------------- | --: | --: | --: | ---: | ---: | --: | ---: |
+| shell `app.html#/pulpit`                        | 123 |  43 |   4 |   75 |  267 |  85 |  138 |
+| ramka `index.html?host=pulpit&v=2.0` (pierwsze) |  82 |  34 |   2 |  167 |  274 |  49 |   49 |
+| ramka `rury.html?v=2.0&tab=builder` (dla skali) | 102 |   8 |   1 |  309 |  394 |  77 |   77 |
+| ramka `studnie.html?v=2.0` (dla skali)          | 229 |  13 |   1 |  927 | 1071 | 161 |  161 |
+
+Wnioski:
+
+- Wiersz `shell` liczy żądania wszystkich ramek (CDP: zdarzenia na poziomie strony),
+  więc zawiera też ramkę. Waga pierwszego montowania to wiersz `ramka`.
+- Pierwsze montowanie pulpitu to ~274 KB i 82 żądania, z czego 167 KB to JS
+  (`index.html` ładuje wszystkie skrypty strony wejścia). To ~2,2× więcej JS niż
+  shell (75 KB), ale najmniej w całym shellu: rury 394 KB, studnie 1 071 KB.
+- Koszt pulpitu to nie bajty, a liczba wywołań API: 34 żądania `/api/*` (rury 8,
+  studnie 13) — kafelki pulpitu strzelają po jednym zapytaniu każdy.
+- DCL/load ramki (49 ms) dotyczą samego dokumentu; realna gotowość UI czeka na
+  `/me` + render `#user-section`, czego Resource Timing nie obejmuje. Nie
+  traktować tych liczb jako TTI.
+- `me=2` w ramce: `probeEmbeddedSession()` (`dashboard.js`) i `authReady()`
+  z `carePanel`/`versionDisplay` startują równolegle, bo tryb osadzony nie korzysta
+  z cache `authReady`. Jedno żądanie do usunięcia przez seed wspólnego promise
+  w `shared/auth.js`; bez wpływu na UX, więc poza zakresem tej zmiany.
+- Ponowne wejście na `#/pulpit` nie montuje ramki drugi raz — router trzyma iframe
+  (`router.js:747-755`, reload tylko przy zmianie `edit`/`order`). Waga płaci się
+  raz na sesję, nie przy każdym przełączeniu trasy.
+- Szum pomiaru: ±2 żądania i ±20 KB między przebiegami (dev `no-store`, zimny start
+  serwera). Progi regresji dopiero po 2–3 powtórzeniach na tym samym hoście.
+
 ## Baseline opieki P0 (2026-10-14, syntetyczne SQLite, scope=all)
 
 Mediany per-op na `careService.ts` (user admin, limit 50):

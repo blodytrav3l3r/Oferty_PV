@@ -36,12 +36,32 @@ test.describe('SPA: pulpit jako moduł', () => {
         expect(frame, 'iframe pulpit nie został utworzony').not.toBeNull();
         await frame.waitForSelector('#user-section', { timeout: 15000 });
 
-        // Serwerowy znacznik trybu osadzonego + CSS ukrywające stronę wejścia.
+        // Serwerowy znacznik trybu osadzonego.
         const marker = await frame.evaluate(() => document.documentElement.dataset.embedded);
         expect(marker).toBe('pulpit');
-        for (const sel of ['#dash-header', '.index-logo', '.subtitle']) {
+
+        // Strona wejścia: logo/podtytuł/loader są unikalne dla niej (router ich nie chowa).
+        for (const sel of ['#page-loader', '.index-logo', '.subtitle']) {
             await expect(frame.locator(sel)).toBeHidden();
         }
+        // `#dash-header` router chowa w KAŻDYM module, więc samo „ukryty" nic nie
+        // dowodzi. Test różnicowy: zdejmij wstrzyknięty styl routera — nagłówek
+        // nadal ukryty przez CSS embedded; zdejmij znacznik — wraca.
+        await frame.evaluate(() => {
+            document.querySelectorAll('style').forEach((style) => {
+                if (style.textContent && style.textContent.includes('header.header'))
+                    style.remove();
+            });
+        });
+        const headerDisplay = () =>
+            frame.evaluate(() => getComputedStyle(document.getElementById('dash-header')).display);
+        expect(await headerDisplay()).toBe('none');
+        await frame.evaluate(() => document.documentElement.removeAttribute('data-embedded'));
+        expect(await headerDisplay()).not.toBe('none');
+        await frame.evaluate(() =>
+            document.documentElement.setAttribute('data-embedded', 'pulpit')
+        );
+
         // Brak podwójnego logowania: formularz z pulpitu nie jest widoczny.
         await expect(frame.locator('#login-section')).toBeHidden();
         await expect(frame.locator('#user-section')).toBeVisible();
@@ -138,29 +158,64 @@ test.describe('SPA: pulpit jako moduł', () => {
     });
 
     test('5xx /me w ramce nie wyrzuca z shella, 401 wyrzuca', async ({ page }) => {
-        let frameCalls = 0;
+        await page.addInitScript(() => {
+            // Sygnał zakończenia /me bez arbitralnego sleepa: licznik w wrapperze
+            // fetch jest podpięty PRZED awaitem w dashboardzie, więc rośnie przed
+            // jego kontynuacją (a ewentualny redirect woła się właśnie tam).
+            window.__meSettled = 0;
+            const origFetch = window.fetch;
+            window.fetch = function (input, init) {
+                const p = origFetch.call(this, input, init);
+                const url = typeof input === 'string' ? input : (input && input.url) || input || '';
+                if (String(url).indexOf('/api/auth/me') !== -1) {
+                    p.then(
+                        () => {
+                            window.__meSettled++;
+                        },
+                        () => {
+                            window.__meSettled++;
+                        }
+                    );
+                }
+                return p;
+            };
+        });
+
+        let releaseAuth;
+        const authGate = new Promise((resolve) => {
+            releaseAuth = resolve;
+        });
         let frameAuth = 'error';
         await page.route('**/api/auth/me', async (route) => {
             // Shell (main frame) zawsze dostaje prawdziwą odpowiedź.
             if (route.request().frame() === page.mainFrame()) return route.continue();
-            frameCalls++;
-            if (frameAuth === 'error') {
-                return route.fulfill({
-                    status: 500,
-                    contentType: 'application/json',
-                    body: '{}'
-                });
-            }
-            return route.fulfill({ status: 401, contentType: 'application/json', body: '{}' });
+            await authGate;
+            const status = frameAuth === 'error' ? 500 : 401;
+            return route.fulfill({ status, contentType: 'application/json', body: '{}' });
         });
 
         await page.goto(`${BASE}/app.html#/pulpit`);
-        await waitForPulpitFrame(page);
-        await expect.poll(() => frameCalls, { timeout: 15000 }).toBeGreaterThan(0);
-        // Negatywna asercja: po błędzie przejściowym shell zostaje na miejscu.
-        await page.waitForTimeout(800);
+        const frame = await waitForPulpitFrame(page);
+        await frame.waitForFunction(() => typeof window.redirectToLogin === 'function');
+        // Szpiedzy: błąd przejściowy NIE może wołać żadnego wyjścia do logowania.
+        await frame.evaluate(() => {
+            window.__loginRedirects = 0;
+            const count = () => {
+                window.__loginRedirects++;
+            };
+            window.redirectToLogin = count;
+            window.navigateToLogin = count;
+        });
+        // Wolne /me: timer dashboardu (1500 ms) musi tylko zdjąć auth-pending.
+        // Czekamy jego pełne okno, zanim odpowiemy — to pokrywa wariant „wolne /me".
+        await page.waitForTimeout(1700);
+        expect(await frame.evaluate(() => window.__loginRedirects)).toBe(0);
+        releaseAuth();
+        await frame.waitForFunction(() => window.__meSettled > 0, null, { timeout: 15000 });
+        // Granica tasków: wszystkie mikro-zadania (w tym ewentualny redirect) już zbiegły.
+        await frame.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
+        expect(await frame.evaluate(() => window.__loginRedirects)).toBe(0);
         expect(page.url()).toContain('#/pulpit');
-
         // Kolejne wejście do ramki dostaje 401 → wyjście na stronę logowania.
         frameAuth = 'auth';
         await page.reload();
