@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.55.21  
+**Wersja:** 1.56.0  
 **Ostatnia aktualizacja:** 2026-10-03  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne (surowy JSON: `GET /api/docs.json`)
 
@@ -33,7 +33,7 @@ Publiczny numer wersji aplikacji.
 **Odpowiedź:**
 
 ```json
-{ "version": "1.55.21" }
+{ "version": "1.56.0" }
 ```
 
 ### `GET /health/live`
@@ -64,12 +64,12 @@ Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `
 
 ```json
 {
-    "version": "1.55.21",
+    "version": "1.56.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.55.21",
+    "dbVersion": "1.56.0",
     "uptime": 123.45,
     "memory": { ... }
 }

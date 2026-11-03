@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.56.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.21...v1.56.0) (2026-11-03)
+
+### Features
+
+- **ui:** osadzony pulpit z powrotem do logowania z iframe ([a10aff0](https://github.com/blodytrav3l3r/Oferty_PV/commit/a10aff0f78eb7267aece887251eaa429c6924a1d))
+
+### Bug Fixes
+
+- **auth:** nie loguj bledu przy kasowaniu nieistniejacej sesji ([e6a8d0e](https://github.com/blodytrav3l3r/Oferty_PV/commit/e6a8d0ecf198c93e36065ef10383052c71079224))
+- **ui:** nazwa dostepna kafli nawigacji i stabilny pomiar axe ([62fa82a](https://github.com/blodytrav3l3r/Oferty_PV/commit/62fa82a451c0d221f09ed110da849509b82ce8e6))
+- **ui:** scalanie query modułów spa i trasa pulpit ([7e03860](https://github.com/blodytrav3l3r/Oferty_PV/commit/7e038607704b475786f66bc726951e0c47a9aa2c))
+- **ui:** stabilizacja osadzonego pulpitu i nawigacji shell ([0fe78c0](https://github.com/blodytrav3l3r/Oferty_PV/commit/0fe78c036918339a0939b38f8eafa86064a583e5))
+
 ### [1.55.21](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.20...v1.55.21) (2026-11-03)
 
 ### [1.55.20](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.19...v1.55.20) (2026-11-03)
