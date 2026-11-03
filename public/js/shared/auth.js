@@ -52,25 +52,65 @@ function authHeaders() {
  * @param {boolean} [force] odśwież cache (po loginie/logoutcie)
  * @returns {Promise<object|null>}
  */
-var _authReadyPromise = null;
-function authReady(force) {
-    if (force) _authReadyPromise = null;
-    if (!_authReadyPromise) {
-        _authReadyPromise = fetch('/api/auth/me', {
+var _meProbePromise = null;
+/**
+ * Wspolne jedno GET /api/auth/me na dokument, ze statusem odpowiedzi.
+ * `authReady()` i `probeEmbeddedSession()` (dashboard.js) dziela ten sam
+ * promise, zeby ramka pulpitu nie strzelala dwa razy tym samym zapytaniem.
+ * @param {boolean} [force] odswiez (po loginie/logoutcie)
+ * @returns {Promise<{status: number, ok: boolean, user: object|null}>}
+ */
+function meProbe(force) {
+    if (force) _meProbePromise = null;
+    if (!_meProbePromise) {
+        _meProbePromise = fetch('/api/auth/me', {
             credentials: 'same-origin',
             cache: 'no-store'
         })
             .then(function (res) {
+                var body =
+                    typeof res.json === 'function'
+                        ? res.json().catch(function () {
+                              return null;
+                          })
+                        : Promise.resolve(null);
+                return body.then(function (data) {
+                    var out = {
+                        status: res.status,
+                        ok: res.ok,
+                        user: (data && data.user) || null
+                    };
+                    // Blad przejsciowy serwera (5xx / siec / cokolwiek poza 2xx i 401/403):
+                    // NIE cache'uj wyniku — nastepne wolanie musi ponowic probe.
+                    if (!res.ok && res.status !== 401 && res.status !== 403) {
+                        _meProbePromise = null;
+                    }
+                    return out;
+                });
+            })
+            .catch(function (err) {
+                // Blad sieci: wyczysc cache i rzuc dalej.
+                _meProbePromise = null;
+                throw err;
+            });
+    }
+    return _meProbePromise;
+}
+
+var _authReadyPromise = null;
+function authReady(force) {
+    if (force) _authReadyPromise = null;
+    if (!_authReadyPromise) {
+        _authReadyPromise = meProbe(force)
+            .then(function (res) {
                 // 401/403 = brak sesji: wynik ostateczny, wolno go cache'owac.
                 if (res.status === 401 || res.status === 403) return null;
                 if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json().then(function (data) {
-                    return (data && data.user) || null;
-                });
+                return res.user;
             })
             .catch(function (e) {
-                // Blad przejsciowy (siec/5xx): NIE cache'uj, inaczej jeden
-                // blip przy starcie zabija panele do konca zycia strony.
+                // Blad przejsciowy: NIE cache'uj, inaczej jeden blip przy
+                // starcie zabija panele do konca zycia strony.
                 _authReadyPromise = null;
                 try {
                     if (typeof logger !== 'undefined' && logger.warn)
@@ -414,5 +454,6 @@ window.getAuthToken = getAuthToken;
 window.setAuthToken = setAuthToken;
 window.authHeaders = authHeaders;
 window.authReady = authReady;
+window.meProbe = meProbe;
 window.navigateToLogin = navigateToLogin;
 window.appLogout = appLogout;

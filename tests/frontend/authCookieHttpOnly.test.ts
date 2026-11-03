@@ -124,6 +124,27 @@ describe('wariant A: httpOnly-first (P1.4c/d)', () => {
         expect(calls).toBe(2);
     });
 
+    it('meProbe() i authReady() dzielą ten sam request i informują o statusie', async () => {
+        const { sandbox } = baseSandbox();
+        loadAuth(sandbox);
+        let calls = 0;
+        sandbox.fetch = () => {
+            calls += 1;
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ user: { id: 'u42' } })
+            });
+        };
+        const meProbe = sandbox.window.meProbe;
+        const authReady = sandbox.window.authReady;
+
+        const [probeRes, user] = await Promise.all([meProbe(), authReady()]);
+        expect(probeRes).toEqual({ status: 200, ok: true, user: { id: 'u42' } });
+        expect(user).toEqual({ id: 'u42' });
+        expect(calls).toBe(1);
+    });
+
     it('authReady() nie cache’uje błędu przejściowego (5xx) — ponawia i loguje', async () => {
         const { sandbox } = baseSandbox();
         loadAuth(sandbox);

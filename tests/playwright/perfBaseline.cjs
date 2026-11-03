@@ -23,6 +23,8 @@ const PORT = process.env.PERF_PORT || (SPAWN ? '3178' : '3000');
 const BASE = process.env.BASE_URL || `http://localhost:${PORT}`;
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
 
+const RESOURCE_TIMING_BUFFER_CAP = 5000;
+
 function resolvePlaywright() {
     try {
         return require('playwright');
@@ -186,9 +188,14 @@ async function readEmbeddedFrame(page) {
     try {
         await frame.waitForLoadState('load', { timeout: 15000 });
     } catch (_) {}
-    const perf = await frame.evaluate(() => {
+    const perf = await frame.evaluate((cap) => {
         const nav = performance.getEntriesByType('navigation')[0];
         const res = performance.getEntriesByType('resource');
+        if (res.length >= cap) {
+            throw new Error(
+                `Resource Timing buffer overflow in frame: ${res.length} >= ${cap} (limit truncates metrics)`
+            );
+        }
         const sum = (list) => list.reduce((s, r) => s + (r.transferSize || 0), 0);
         const api = res.filter((r) => r.name.includes('/api/')).length;
         return {
@@ -203,7 +210,7 @@ async function readEmbeddedFrame(page) {
             // plik, wiec wiersz ramki to przyrost po shellu, nie pelna waga modulu.
             cacheHits: res.filter((r) => !r.transferSize).length
         };
-    });
+    }, RESOURCE_TIMING_BUFFER_CAP);
     return {
         found: true,
         url: frame.url(),
@@ -256,10 +263,10 @@ async function measurePage(browser, url, mode, authCookie) {
             context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
             // DomySlny bufor Resource Timing (250 wpisow) ucina duze moduly
             // (studnie.html: 229) — bez tego req/KB/api cicho zanizone.
-            await context.addInitScript(() => {
+            await context.addInitScript((cap) => {
                 if (performance.setResourceTimingBufferSize)
-                    performance.setResourceTimingBufferSize(5000);
-            });
+                    performance.setResourceTimingBufferSize(cap);
+            }, RESOURCE_TIMING_BUFFER_CAP);
             await context.addCookies([authCookie]);
         }
         const page = await context.newPage();
@@ -288,22 +295,25 @@ async function measurePage(browser, url, mode, authCookie) {
         } catch (_) {}
         await page.waitForTimeout(2500);
         await waitForQuiescence(page);
-        const nav = await page.evaluate(() => {
+        const nav = await page.evaluate((cap) => {
             const n = performance.getEntriesByType('navigation')[0];
-            const js = performance
-                .getEntriesByType('resource')
+            const res = performance.getEntriesByType('resource');
+            if (res.length >= cap) {
+                throw new Error(
+                    `Resource Timing buffer overflow in page: ${res.length} >= ${cap} (limit truncates metrics)`
+                );
+            }
+            const js = res
                 .filter((r) => r.initiatorType === 'script')
                 .reduce((s, r) => s + (r.transferSize || 0), 0);
-            const total = performance
-                .getEntriesByType('resource')
-                .reduce((s, r) => s + (r.transferSize || 0), 0);
+            const total = res.reduce((s, r) => s + (r.transferSize || 0), 0);
             return {
                 dcl: n ? Math.round(n.domContentLoadedEventEnd) : -1,
                 load: n ? Math.round(n.loadEventEnd) : -1,
                 jsBytes: Math.round(js),
                 resBytes: Math.round(total)
             };
-        });
+        }, RESOURCE_TIMING_BUFFER_CAP);
         const api = reqs.filter((r) => r.url.includes('/api/')).length;
         const me = reqs.filter((r) => r.url.includes('/api/auth/me')).length;
         const frame = await readEmbeddedFrame(page);

@@ -894,11 +894,19 @@
 
     async function init() {
         // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly
-        // (redirect na index.html tylko gdy brak authData.user lub 401).
+        // (redirect na index.html tylko gdy brak usera lub 401). `authReady()`
+        // (shared/auth.js) cache'uje ten request, wiec panel wersji na tym samym
+        // dokumencie nie strzela drugi raz.
         try {
-            const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
-            const authData = await authRes.json();
-            if (!authData.user) {
+            let user = null;
+            if (typeof window.authReady === 'function') {
+                user = await window.authReady();
+            } else {
+                const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
+                const authData = await authRes.json();
+                user = (authData && authData.user) || null;
+            }
+            if (!user) {
                 if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
                 else window.location.href = 'index.html';
                 return;
@@ -906,10 +914,10 @@
 
             // Wyświetl użytkownika w nagłówku
             if (window.headerUser) {
-                window.headerUser.render(authData.user);
+                window.headerUser.render(user);
             }
 
-            window.currentUser = authData.user;
+            window.currentUser = user;
         } catch (_e) {
             if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
             else window.location.href = 'index.html';

@@ -99,39 +99,40 @@ pauzy, bufor Resource Timing podniesiony do 5000 wpisów (domyślne 250 ucinało
 
 | Ramka modułu (pierwsze montowanie) | req | api |  me | jsKB |   KB | DCL | load |
 | ---------------------------------- | --: | --: | --: | ---: | ---: | --: | ---: |
-| `index.html?host=pulpit&v=2.0`     |  83 |  35 |   2 |  167 |  275 |  50 |   51 |
-| `studnie.html?v=2.0`               | 229 |  13 |   1 |  927 | 1071 | 165 |  165 |
-| `rury.html?v=2.0&tab=builder`      | 102 |   8 |   1 |  309 |  394 |  67 |   67 |
-| `kartoteka.html?v=2.0`             |  67 |   7 |   1 |  213 |  268 |  58 |   58 |
+| `index.html?host=pulpit&v=2.0`     |  83 |  35 |   1 |  167 |  275 |  52 |   52 |
+| `studnie.html?v=2.0`               | 229 |  13 |   1 |  928 | 1071 | 166 |  166 |
+| `rury.html?v=2.0&tab=builder`      | 102 |   8 |   1 |  309 |  395 |  74 |   74 |
+| `kartoteka.html?v=2.0`             |  67 |   7 |   1 |  214 |  268 |  61 |   61 |
 | `zlecenia.html?v=2.0`              |  33 |   4 |   1 |   84 |  139 |  31 |   31 |
 
-Shell `app.html#/pulpit`: 124 req / 44 api / 4 me / 75 jsKB / 267 KB / DCL 89 /
-load 142. Pełne pierwsze wejście na trasę: **~542 KB** (267 KB shell + 275 KB
-ramka) i **124 żądania**.
+Shell `app.html#/pulpit`: 123 req / 43 api / 2 me / 76 jsKB / 267 KB / DCL 90 /
+load 144. Pełne pierwsze wejście na trasę: **~542 KB** (267 KB shell + 275 KB
+ramka) i **123 żądania** (w tym tylko **2 wywołania `/api/auth/me`**: dokładnie
+1 w shellu i dokładnie 1 w ramce pulpitu).
 
 Wnioski:
 
 - Wiersz `shell` miesza dwa źródła: `req`/`api`/`me` pochodzą z CDP
   (`page.on('response')` = wszystkie ramki, więc **zawierają** ramkę), a
   `jsKB`/`KB` z Resource Timing dokumentu głównego (= tylko shell). Dlatego
-  żądań nie sumuje się (124 to już całość), a bajty tak (267 + 275). Wagę
+  żądań nie sumuje się (123 to już całość), a bajty tak (267 + 275). Wagę
   montowania czyta się z wiersza `ramka`.
 - Pulpit jest trzeci od końca pod względem bajtów (275 KB; mniejsze są zlecenia
   139 KB i kartoteka 268 KB), ale **najcięższy pod względem API: 35 wywołań
   `/api/*`** (pozostałe moduły 4–13). Kafelki pulpitu pobierają dane niezależnie
   od siebie — to one, nie JS, decydują o czasie do gotowego ekranu.
 - JS ramki (167 KB) to wszystkie skrypty strony wejścia ładowane w `index.html`.
-  To więcej niż JS dokumentu głównego shella (75 KB), ale mniej niż rury (309 KB)
-  i studnie (927 KB).
-- DCL/load ramki (50/51 ms) dotyczą samego dokumentu; realna gotowość UI czeka na
+  To więcej niż JS dokumentu głównego shella (76 KB), ale mniej niż rury (309 KB)
+  i studnie (928 KB).
+- DCL/load ramki (52/52 ms) dotyczą samego dokumentu; realna gotowość UI czeka na
   `/me` i 35 odpowiedzi API, czego Resource Timing nie obejmuje. Nie traktować
   tych liczb jako TTI.
 - `cacheHits=0` we wszystkich przebiegach cold (dev `no-store`), więc wiersz
   `ramka` to pełna waga modułu, nie tylko przyrost po shellu.
-- `me=2` w ramce pulpitu: `probeEmbeddedSession()` (`dashboard.js`) i `authReady()`
-  z `carePanel`/`versionDisplay` startują równolegle, bo tryb osadzony nie korzysta
-  z cache `authReady`. Jedno żądanie do usunięcia przez seed wspólnego promise
-  w `shared/auth.js`; bez wpływu na UX, więc poza zakresem tej zmiany.
+- `me=1` w ramce pulpitu i `me=2` w shellu (dokładnie 1 /me w dokumencie shella
+  oraz 1 /me w dokumencie ramki): `probeEmbeddedSession()` (`dashboard.js`)
+  i `authReady()` współdzielą jeden request przez `window.meProbe` (`shared/auth.js`),
+  a router shella i panel wersji współdzielą `authReady()`. Zero duplikatów.
 - Ponowne wejście na `#/pulpit` nie montuje ramki drugi raz — router trzyma iframe
   (`router.js:747-755`, reload tylko przy zmianie `edit`/`order`). Waga płaci się
   raz na sesję, nie przy każdym przełączeniu trasy.

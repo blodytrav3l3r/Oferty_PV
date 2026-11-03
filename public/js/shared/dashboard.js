@@ -114,14 +114,27 @@ function redirectToShell() {
  */
 async function probeEmbeddedSession() {
     try {
-        const res = await fetch('/api/auth/me', {
-            credentials: 'same-origin',
-            cache: 'no-store'
-        });
+        // `window.meProbe` (shared/auth.js) to ten sam request, ktory wykonuje
+        // `authReady()` paneli w tej ramce — bez tego pulpit pyta /me dwa razy.
+        const probe =
+            typeof window.meProbe === 'function'
+                ? window.meProbe()
+                : fetch('/api/auth/me', {
+                      credentials: 'same-origin',
+                      cache: 'no-store'
+                  }).then(function (res) {
+                      return res.json().then(function (data) {
+                          return {
+                              status: res.status,
+                              ok: res.ok,
+                              user: (data && data.user) || null
+                          };
+                      });
+                  });
+        const res = await probe;
         if (res.status === 401 || res.status === 403) return { user: null, expired: true };
         if (!res.ok) return { user: null, expired: false };
-        const data = await res.json();
-        const user = (data && data.user) || null;
+        const user = res.user || null;
         return { user: user, expired: !user };
     } catch (_e) {
         return { user: null, expired: false };
