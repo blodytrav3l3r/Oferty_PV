@@ -67,7 +67,10 @@ Artefakty pomiarowe (nie bugi — nie „naprawiać"):
   app-shell (38 entries Resource Timing), nie porzucony exemplar.
   Realny download JS studnie.html = 5,46 MB (386 odpowiedzi, dev `no-store`).
 - `me=2` = dokument shell + dokument iframe (CDP frame tracking).
-  Każdy dokument woła `/me` dokładnie raz — wzorzec poprawny (P1.8: brak akcji).
+  Każdy dokument woła `/me` co najmniej raz — wzorzec poprawny (P1.8: brak akcji).
+  Od 2026-11-03 pomiar daje `me=3..4`: ramka modułu woła `/me` raz (dwa razy dla
+  pulpitu — patrz sekcja niżej), a shell dwa razy (przyczyna nieustalona; do
+  sprawdzenia osobno, poza zakresem pomiaru montowania).
 
 Wniosek P1.7 (451 req studnie.html): duplikaty ×2 z identycznym URL, oba
 `init=parser` (CDP) — standalone parsuje 182 tagi, potem `spaRedirect.js`
@@ -79,44 +82,64 @@ Prod: `max-age 7d` + `?v=` → 2. pass z disk cache. Brak akcji.
 - P1-C: `chunkedCreateMany` 25 (seed + `src/services/pricelist/{bootstrap,validation}.ts`).
 - Bramy load/E5: `docs/plans/archive/e3-perf.md`, werdykty E5: `docs/plans/archive/e5-decision.md`.
 
-> 2026-11-03: harness mierzy też `app-pulpit` (`#/pulpit`) i ramkę modułu
-> (pierwsze montowanie) — patrz sekcja niżej.
+> 2026-11-03: harness mierzy też `app-pulpit` (`#/pulpit`), ramkę modułu (pierwsze
+> montowanie) i startuje dopiero po wyciszeniu ruchu — liczby z tej sekcji **nie są
+> porównywalne** z tabelą powyżej (tam stała pauza 2,5 s). Artefakt:
+> `docs/plans/p16-baseline.json`.
 
 ## Pulpit jako moduł SPA — waga pierwszego montowania (2026-11-03, headless Chromium)
 
-Harness: `node tests/playwright/perfBaseline.cjs --spawn` z
-`PERF_ONLY=app,app-studnie,app-pulpit` (ten sam co P1.6; strona `app-pulpit` =
-`/app.html#/pulpit`). Mediana z 3 przebiegów cold + 3 warm, dev `no-store`
-(brak korzyści cache przeglądarki w cold — realna waga). Ramka modułu mierzona
-własnym Resource Timing (dokument + subzasoby), odczyt po `load`; rodzic liczy
-tylko siebie, więc bez tego pomiaru waga montowania jest niewidoczna.
+Harness: `node tests/playwright/perfBaseline.cjs --spawn` (build + seed
+`data/perf-baseline.sqlite` + serwer :3178). Mediana z 3 cold + 3 warm; odczyt po
+bramce spokoju (liczba wpisów Resource Timing stabilna przez ≥1 s) zamiast stałej
+pauzy, bufor Resource Timing podniesiony do 5000 wpisów (domyślne 250 ucinało
+`studnie.html`, 229 wpisów). Ramka modułu mierzona własnym Resource Timing
+(dokument + subzasoby); wiersze `ramka` istnieją tylko dla `/app.html`, bo
+`index.html`/`*.html` robią redirect do shella i to ten sam montaż.
 
-| Zakres                                          | req | api |  me | jsKB |   KB | DCL | load |
-| ----------------------------------------------- | --: | --: | --: | ---: | ---: | --: | ---: |
-| shell `app.html#/pulpit`                        | 123 |  43 |   4 |   75 |  267 |  85 |  138 |
-| ramka `index.html?host=pulpit&v=2.0` (pierwsze) |  82 |  34 |   2 |  167 |  274 |  49 |   49 |
-| ramka `rury.html?v=2.0&tab=builder` (dla skali) | 102 |   8 |   1 |  309 |  394 |  77 |   77 |
-| ramka `studnie.html?v=2.0` (dla skali)          | 229 |  13 |   1 |  927 | 1071 | 161 |  161 |
+| Ramka modułu (pierwsze montowanie) | req | api |  me | jsKB |   KB | DCL | load |
+| ---------------------------------- | --: | --: | --: | ---: | ---: | --: | ---: |
+| `index.html?host=pulpit&v=2.0`     |  83 |  35 |   2 |  167 |  275 |  50 |   51 |
+| `studnie.html?v=2.0`               | 229 |  13 |   1 |  927 | 1071 | 165 |  165 |
+| `rury.html?v=2.0&tab=builder`      | 102 |   8 |   1 |  309 |  394 |  67 |   67 |
+| `kartoteka.html?v=2.0`             |  67 |   7 |   1 |  213 |  268 |  58 |   58 |
+| `zlecenia.html?v=2.0`              |  33 |   4 |   1 |   84 |  139 |  31 |   31 |
+
+Shell `app.html#/pulpit`: 124 req / 44 api / 4 me / 75 jsKB / 267 KB / DCL 89 /
+load 142. Pełne pierwsze wejście na trasę: **~542 KB** (267 KB shell + 275 KB
+ramka) i **124 żądania**.
 
 Wnioski:
 
-- Wiersz `shell` liczy żądania wszystkich ramek (CDP: zdarzenia na poziomie strony),
-  więc zawiera też ramkę. Waga pierwszego montowania to wiersz `ramka`.
-- Pierwsze montowanie pulpitu to ~274 KB i 82 żądania, z czego 167 KB to JS
-  (`index.html` ładuje wszystkie skrypty strony wejścia). To ~2,2× więcej JS niż
-  shell (75 KB), ale najmniej w całym shellu: rury 394 KB, studnie 1 071 KB.
-- Koszt pulpitu to nie bajty, a liczba wywołań API: 34 żądania `/api/*` (rury 8,
-  studnie 13) — kafelki pulpitu strzelają po jednym zapytaniu każdy.
-- DCL/load ramki (49 ms) dotyczą samego dokumentu; realna gotowość UI czeka na
-  `/me` + render `#user-section`, czego Resource Timing nie obejmuje. Nie
-  traktować tych liczb jako TTI.
-- `me=2` w ramce: `probeEmbeddedSession()` (`dashboard.js`) i `authReady()`
+- Wiersz `shell` miesza dwa źródła: `req`/`api`/`me` pochodzą z CDP
+  (`page.on('response')` = wszystkie ramki, więc **zawierają** ramkę), a
+  `jsKB`/`KB` z Resource Timing dokumentu głównego (= tylko shell). Dlatego
+  żądań nie sumuje się (124 to już całość), a bajty tak (267 + 275). Wagę
+  montowania czyta się z wiersza `ramka`.
+- Pulpit jest trzeci od końca pod względem bajtów (275 KB; mniejsze są zlecenia
+  139 KB i kartoteka 268 KB), ale **najcięższy pod względem API: 35 wywołań
+  `/api/*`** (pozostałe moduły 4–13). Kafelki pulpitu pobierają dane niezależnie
+  od siebie — to one, nie JS, decydują o czasie do gotowego ekranu.
+- JS ramki (167 KB) to wszystkie skrypty strony wejścia ładowane w `index.html`.
+  To więcej niż JS dokumentu głównego shella (75 KB), ale mniej niż rury (309 KB)
+  i studnie (927 KB).
+- DCL/load ramki (50/51 ms) dotyczą samego dokumentu; realna gotowość UI czeka na
+  `/me` i 35 odpowiedzi API, czego Resource Timing nie obejmuje. Nie traktować
+  tych liczb jako TTI.
+- `cacheHits=0` we wszystkich przebiegach cold (dev `no-store`), więc wiersz
+  `ramka` to pełna waga modułu, nie tylko przyrost po shellu.
+- `me=2` w ramce pulpitu: `probeEmbeddedSession()` (`dashboard.js`) i `authReady()`
   z `carePanel`/`versionDisplay` startują równolegle, bo tryb osadzony nie korzysta
   z cache `authReady`. Jedno żądanie do usunięcia przez seed wspólnego promise
   w `shared/auth.js`; bez wpływu na UX, więc poza zakresem tej zmiany.
 - Ponowne wejście na `#/pulpit` nie montuje ramki drugi raz — router trzyma iframe
   (`router.js:747-755`, reload tylko przy zmianie `edit`/`order`). Waga płaci się
   raz na sesję, nie przy każdym przełączeniu trasy.
+- Wiersz `index` w tabeli wyżej (2026-09-30) opisywał stronę logowania. Po zmianie
+  z 2026-11-03 logowanie w oknie najwyższym kończy się w `app.html#/pulpit`, więc
+  dzisiejszy pomiar `index` mierzy już shell z ramką pulpitu (82 req / 399 KB).
+  To zachowanie produktu, nie regresja — dlatego starej tabeli nie przelicza się
+  tym samym przebiegiem.
 - Szum pomiaru: ±2 żądania i ±20 KB między przebiegami (dev `no-store`, zimny start
   serwera). Progi regresji dopiero po 2–3 powtórzeniach na tym samym hoście.
 

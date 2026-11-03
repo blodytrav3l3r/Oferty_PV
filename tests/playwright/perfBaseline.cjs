@@ -7,8 +7,9 @@
  *
  * Metryki per strona (cold ×3 + warm ×3): requests, bajty, JS-bajty, DCL, load,
  * liczba /api/*, liczba /api/auth/me, bledy konsoli. Wynik: JSON + tabela median.
- * Strony SPA mierza dodatkowo pierwsze montowanie modulu w iframe
- * (frameReq/frameKB/frameJsKB/frameDcl/frameLoad) — wlasne Resource Timing ramki.
+ * Strony shella mierza dodatkowo pierwsze montowanie modulu w iframe
+ * (frameReq/frameKB/frameJsKB/frameApi/frameMe/frameCacheHits/frameDcl/frameLoad)
+ * — wlasne Resource Timing ramki, odczyt po bramce spokoju (nie po stalej pauzie).
  * Exit 0 = OK.
  */
 
@@ -155,8 +156,21 @@ async function loginOnce(browser) {
 async function readEmbeddedFrame(page) {
     // Pierwsze montowanie modulu SPA: ramka ma wlasny dokument, wiec jej Resource
     // Timing jest jedynym wiarygodnym pomiarem wagi (rodzic liczy tylko siebie).
-    // Ramke wybiera klasa routera (`spa-iframe-visible`) — nieistniejaca ramka
-    // (np. index.html bez shella) konczy pomiar od razu, bez czekania.
+    // Tylko shell (`/app.html`): index.html i moduly standalone robia redirect do
+    // shella, wiec ich "ramka" to ten sam montaz — liczony raz, w wierszu app-*.
+    const notFound = {
+        found: false,
+        url: '',
+        req: 0,
+        kb: 0,
+        jsKB: 0,
+        api: 0,
+        me: 0,
+        cacheHits: 0,
+        dcl: -1,
+        load: -1
+    };
+    if (!page.url().includes('/app.html')) return notFound;
     const main = page.mainFrame();
     const isModule = (f) => !f.isDetached() && f !== main && f.url() !== 'about:blank';
     let frame = null;
@@ -168,8 +182,7 @@ async function readEmbeddedFrame(page) {
         await page.waitForTimeout(250);
     }
     if (!frame) frame = page.frames().find(isModule) || null;
-    if (!frame)
-        return { found: false, url: '', req: 0, kb: 0, jsKB: 0, api: 0, me: 0, dcl: -1, load: -1 };
+    if (!frame) return notFound;
     try {
         await frame.waitForLoadState('load', { timeout: 15000 });
     } catch (_) {}
@@ -183,9 +196,12 @@ async function readEmbeddedFrame(page) {
             load: nav ? Math.round(nav.loadEventEnd) : -1,
             jsBytes: Math.round(sum(res.filter((r) => r.initiatorType === 'script'))),
             resBytes: Math.round(sum(res) + (nav ? nav.transferSize || 0 : 0)),
-            resCount: res.length + 1,
+            resCount: res.length + (nav ? 1 : 0),
             api,
-            me: res.filter((r) => r.name.includes('/api/auth/me')).length
+            me: res.filter((r) => r.name.includes('/api/auth/me')).length,
+            // transferSize 0 przy trafieniu w cache: shell zdazyl juz pobrac ten
+            // plik, wiec wiersz ramki to przyrost po shellu, nie pelna waga modulu.
+            cacheHits: res.filter((r) => !r.transferSize).length
         };
     });
     return {
@@ -196,9 +212,39 @@ async function readEmbeddedFrame(page) {
         jsKB: Math.round(perf.jsBytes / 1024),
         api: perf.api,
         me: perf.me,
+        cacheHits: perf.cacheHits,
         dcl: perf.dcl,
         load: perf.load
     };
+}
+
+/** Liczba wpisow Resource Timing: dokument glowny + ramka modulu (jesli jest). */
+async function resourceCount(page) {
+    const main = await page.evaluate(() => performance.getEntriesByType('resource').length);
+    const frame = page.frames().find((f) => f !== page.mainFrame() && f.url() !== 'about:blank');
+    if (!frame) return main;
+    try {
+        return main + (await frame.evaluate(() => performance.getEntriesByType('resource').length));
+    } catch (_) {
+        return main;
+    }
+}
+
+/**
+ * Zamiana stalej pauzy 2,5 s na bramke spokoju: koniec dopiero gdy liczba
+ * zasobow (shell + ramka) nie rosnie przez 2 proby po min. 1 s. Bez tego
+ * wynik zalezy od szybkosci maszyny (szum +-2 zadania).
+ */
+async function waitForQuiescence(page) {
+    const started = Date.now();
+    let prev = -1;
+    for (let i = 0; i < 40; i++) {
+        const n = await resourceCount(page);
+        const elapsed = Date.now() - started;
+        if (n === prev && elapsed > 1000) return;
+        prev = n;
+        await page.waitForTimeout(250);
+    }
 }
 
 async function measurePage(browser, url, mode, authCookie) {
@@ -208,6 +254,12 @@ async function measurePage(browser, url, mode, authCookie) {
         if (mode === 'cold' || !context) {
             if (context) await context.close();
             context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
+            // DomySlny bufor Resource Timing (250 wpisow) ucina duze moduly
+            // (studnie.html: 229) — bez tego req/KB/api cicho zanizone.
+            await context.addInitScript(() => {
+                if (performance.setResourceTimingBufferSize)
+                    performance.setResourceTimingBufferSize(5000);
+            });
             await context.addCookies([authCookie]);
         }
         const page = await context.newPage();
@@ -235,6 +287,7 @@ async function measurePage(browser, url, mode, authCookie) {
             await page.waitForLoadState('load', { timeout: 20000 });
         } catch (_) {}
         await page.waitForTimeout(2500);
+        await waitForQuiescence(page);
         const nav = await page.evaluate(() => {
             const n = performance.getEntriesByType('navigation')[0];
             const js = performance
@@ -269,6 +322,7 @@ async function measurePage(browser, url, mode, authCookie) {
             frameJsKB: frame.jsKB,
             frameApi: frame.api,
             frameMe: frame.me,
+            frameCacheHits: frame.cacheHits,
             frameDcl: frame.dcl,
             frameLoad: frame.load,
             consoleErrors,
@@ -327,6 +381,10 @@ function median(a) {
         for (const mode of ['cold', 'warm']) {
             const rows = result[name][mode];
             const m = (k) => median(rows.map((r) => r[k]));
+            // Mediana tylko po przebiegach z ramka — inaczej brak ramki w 1 z 3
+            // przebiegow po cichu zaniza wiersz (zera wchodza do mediany).
+            const frameRows = rows.filter((r) => r.frameFound);
+            const fm = (k) => (frameRows.length ? median(frameRows.map((r) => r[k])) : 0);
             summary[name][mode] = {
                 requests: m('requests'),
                 api: m('api'),
@@ -335,14 +393,16 @@ function median(a) {
                 resKB: Math.round(m('resBytes') / 1024),
                 dclMs: m('dcl'),
                 loadMs: m('load'),
-                frameFound: rows.some((r) => r.frameFound),
-                frameReq: m('frameReq'),
-                frameKB: m('frameKB'),
-                frameJsKB: m('frameJsKB'),
-                frameApi: m('frameApi'),
-                frameMe: m('frameMe'),
-                frameDclMs: m('frameDcl'),
-                frameLoadMs: m('frameLoad'),
+                frameFound: frameRows.length > 0,
+                frameRuns: frameRows.length,
+                frameReq: fm('frameReq'),
+                frameKB: fm('frameKB'),
+                frameJsKB: fm('frameJsKB'),
+                frameApi: fm('frameApi'),
+                frameMe: fm('frameMe'),
+                frameCacheHits: fm('frameCacheHits'),
+                frameDclMs: fm('frameDcl'),
+                frameLoadMs: fm('frameLoad'),
                 consoleErrors: m('consoleErrors')
             };
         }
@@ -366,14 +426,14 @@ function median(a) {
     const frames = pages.filter(([name]) => summary[name].cold.frameFound);
     if (frames.length) {
         console.log('\nPierwsze montowanie modulu w iframe (mediana cold):');
-        console.log('strona        req  api me  jsKB  kB  dcl   load');
+        console.log('strona        req  api me cache  jsKB  kB  dcl   load');
         for (const [name] of frames) {
             const s = summary[name].cold;
             console.log(
                 `${name.padEnd(13)} ${String(s.frameReq).padStart(3)} ${String(s.frameApi).padStart(4)} ` +
-                    `${String(s.frameMe).padStart(2)} ${String(s.frameJsKB).padStart(5)} ` +
-                    `${String(s.frameKB).padStart(4)} ${String(s.frameDclMs).padStart(4)} ` +
-                    `${String(s.frameLoadMs).padStart(5)}`
+                    `${String(s.frameMe).padStart(2)} ${String(s.frameCacheHits).padStart(5)} ` +
+                    `${String(s.frameJsKB).padStart(5)} ${String(s.frameKB).padStart(4)} ` +
+                    `${String(s.frameDclMs).padStart(4)} ${String(s.frameLoadMs).padStart(5)}`
             );
         }
     }

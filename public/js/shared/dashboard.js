@@ -35,6 +35,8 @@ function isPulpitEmbedded() {
 function goToShellRoute(target) {
     const hashIndex = target.indexOf('#');
     const hash = hashIndex === -1 ? '#/rury' : target.slice(hashIndex);
+    // Ten sam kontrakt co `__sokNavigateShell`: wyłącznie trasa shella.
+    if (hash.indexOf('#/') !== 0) return false;
     try {
         if (typeof window.__sokNavigateShell === 'function' && window.__sokNavigateShell(hash))
             return true;

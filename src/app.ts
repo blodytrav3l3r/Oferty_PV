@@ -324,10 +324,11 @@ app.use((req, res, next) => {
         const baseHtml = getBrandHtml(file);
         if (baseHtml === null) return next();
         const injected = injectAppNameScript(baseHtml, res.locals.cspNonce as string | undefined);
+        // `?host=pulpit&host=x` daje w Express tablicę — bierzemy pierwszy wpis,
+        // żeby marker nie zniknął (klient czyta `URLSearchParams.get`, czyli pierwszy).
+        const host = Array.isArray(req.query.host) ? req.query.host[0] : req.query.host;
         const html =
-            rel === 'index.html' && req.query.host === 'pulpit'
-                ? injectEmbeddedMarker(injected)
-                : injected;
+            rel === 'index.html' && host === 'pulpit' ? injectEmbeddedMarker(injected) : injected;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache');
         res.send(html);

@@ -18,7 +18,21 @@ async function waitForPulpitFrame(page) {
             timeout: 15000
         })
         .toBe(true);
-    return page.frames().find(isPulpit) || null;
+    // Ramka może zostać odłączona między pollem a zwróceniem uchwytu
+    // (np. reload shella) — sprawdź żywotność jednym `evaluate`.
+    for (let i = 0; i < 20; i++) {
+        const frame = page.frames().find(isPulpit);
+        if (frame) {
+            try {
+                await frame.evaluate(() => true);
+                return frame;
+            } catch (_e) {
+                /* detached — spróbuj ponownie */
+            }
+        }
+        await page.waitForTimeout(100);
+    }
+    return null;
 }
 
 test.describe('SPA: pulpit jako moduł', () => {
@@ -47,12 +61,23 @@ test.describe('SPA: pulpit jako moduł', () => {
         // `#dash-header` router chowa w KAŻDYM module, więc samo „ukryty" nic nie
         // dowodzi. Test różnicowy: zdejmij wstrzyknięty styl routera — nagłówek
         // nadal ukryty przez CSS embedded; zdejmij znacznik — wraca.
+        // Router wstrzykuje styl w handlerze `load` ramki, więc czekamy na `load`,
+        // żeby usunięcie nie zostało nadpisane ponowną iniekcją.
+        await frame.waitForLoadState('load');
+        const injectedHeaderStyles = () =>
+            frame.evaluate(
+                () =>
+                    [...document.querySelectorAll('style')].filter((s) =>
+                        (s.textContent || '').includes('header.header')
+                    ).length
+            );
         await frame.evaluate(() => {
             document.querySelectorAll('style').forEach((style) => {
                 if (style.textContent && style.textContent.includes('header.header'))
                     style.remove();
             });
         });
+        expect(await injectedHeaderStyles()).toBe(0);
         const headerDisplay = () =>
             frame.evaluate(() => getComputedStyle(document.getElementById('dash-header')).display);
         expect(await headerDisplay()).toBe('none');
@@ -206,10 +231,8 @@ test.describe('SPA: pulpit jako moduł', () => {
             window.redirectToLogin = count;
             window.navigateToLogin = count;
         });
-        // Wolne /me: timer dashboardu (1500 ms) musi tylko zdjąć auth-pending.
-        // Czekamy jego pełne okno, zanim odpowiemy — to pokrywa wariant „wolne /me".
-        await page.waitForTimeout(1700);
-        expect(await frame.evaluate(() => window.__loginRedirects)).toBe(0);
+        // Timer 1500 ms (wolne /me) jest pokryty testem jednostkowym
+        // `pulpitRoute.test.ts` — tu nie ma snu zależnego od stałej dashboardu.
         releaseAuth();
         await frame.waitForFunction(() => window.__meSettled > 0, null, { timeout: 15000 });
         // Granica tasków: wszystkie mikro-zadania (w tym ewentualny redirect) już zbiegły.

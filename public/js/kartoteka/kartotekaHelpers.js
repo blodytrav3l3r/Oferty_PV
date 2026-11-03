@@ -473,7 +473,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
 
 function navigateToModule(offerType, entityId, mode) {
     const targetModule = offerType === 'studnia_oferta' ? 'studnie' : 'rury';
-    const hash = `#/${targetModule}?${mode}=${entityId}`;
+    const hash = `#/${targetModule}?${mode}=${encodeURIComponent(entityId)}`;
     try {
         if (window.parent?.SpaRouter) {
             window.parent.SpaRouter.openOfferInModule(offerType, entityId, mode);

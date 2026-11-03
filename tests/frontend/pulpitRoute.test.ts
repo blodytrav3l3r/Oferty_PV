@@ -147,6 +147,8 @@ describe('serwer: znacznik trybu osadzonego', () => {
 
     it('znacznik tylko dla index.html i host=pulpit', () => {
         const src = read('src/app.ts');
-        expect(src).toMatch(/rel === 'index\.html' && req\.query\.host === 'pulpit'/);
+        expect(src).toMatch(/rel === 'index\.html' && host === 'pulpit'/);
+        // `?host=pulpit&host=x` daje tablicę — bez normalizacji marker by zniknął.
+        expect(src).toContain('Array.isArray(req.query.host)');
     });
 });
