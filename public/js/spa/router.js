@@ -298,6 +298,13 @@
             src: 'cennik.html',
             logo: 'Cennik',
             sections: []
+        },
+        pulpit: {
+            // Pulpit = moduł tej samej granicy co reszta (ADR-014); index.html
+            // dostaje tryb osadzony przez `host=pulpit` (bez loginu i nagłówka).
+            src: 'index.html?host=pulpit',
+            logo: 'Pulpit',
+            sections: []
         }
     };
 
@@ -324,7 +331,8 @@
             studnie: 'spa-app-studnie',
             kartoteka: 'spa-app-kartoteka',
             zlecenia: 'spa-app-zlecenia',
-            cennik: 'spa-app-cennik'
+            cennik: 'spa-app-cennik',
+            pulpit: 'spa-app-pulpit'
         };
         Object.entries(navIds).forEach(([key, id]) => {
             const el = document.getElementById(id);
@@ -487,9 +495,22 @@
         });
     }
 
+    /**
+     * Rozdziela src modułu na ścieżkę i query. Moduł może mieć własne,
+     * stałe parametry (np. `index.html?host=pulpit`) — bez tego `?` z
+     * `_buildModuleSrc` dawał `?host=pulpit?v=2.0` i psuł wartość `host`.
+     */
+    function _moduleSrcParts(module) {
+        const raw = MODULES[module]?.src || module + '.html';
+        const q = raw.indexOf('?');
+        return q === -1
+            ? { base: raw, query: '' }
+            : { base: raw.slice(0, q), query: raw.slice(q + 1) };
+    }
+
     function _buildModuleSrc(module, params) {
-        const base = MODULES[module]?.src || module + '.html';
-        const usp = new URLSearchParams();
+        const { base, query } = _moduleSrcParts(module);
+        const usp = new URLSearchParams(query);
         Object.entries(params || {}).forEach(([k, v]) => {
             if (_TRANSIENT_PARAMS.has(k)) return;
             if (v != null && v !== '') usp.set(k, String(v));
@@ -501,8 +522,8 @@
 
     function _logicalSrcKey(module, params) {
         // Klucz bez cache-bust — decyduje czy reload faktycznie potrzebny
-        const base = MODULES[module]?.src || module + '.html';
-        const usp = new URLSearchParams();
+        const { base, query } = _moduleSrcParts(module);
+        const usp = new URLSearchParams(query);
         Object.entries(params || {}).forEach(([k, v]) => {
             if (k === 'v' || _TRANSIENT_PARAMS.has(k)) return;
             if (v != null && v !== '') usp.set(k, String(v));
