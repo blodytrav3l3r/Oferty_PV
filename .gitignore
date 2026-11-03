@@ -169,6 +169,7 @@ graphify-out/
 data/price_defaults.json
 
 
+tests/playwright/screenshots/
 tests/playwright/screenshots/debug/
 tests/tmp/
 

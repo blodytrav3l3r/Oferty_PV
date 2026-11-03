@@ -5,7 +5,6 @@ dist
 .cache
 package-lock.json
 ECC/
-plugins/
 *.htm
 *.html.bak
 *.xlsx

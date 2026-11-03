@@ -121,7 +121,7 @@ Zasady:
 - Dwa globalne configi (`opencode.json` + `opencode.jsonc`) są scalane — zmiana w jednym może zostać nadpisana przez drugi.
 - **Niepoprawny JSON w globalnym configu = plik pominięty bez błędu.** Po scaleniu dwóch obiektów w jednym pliku `opencode.json` przestał być czytany i cicho wypadł z niego cały wpis `plugins` (npm `ponytail` się nie ładował). Weryfikacja: `debug config` (lista dokumentów) + log `loading plugin` dla każdego wpisu.
 - Katalog `~/.config/opencode/plugins/*` jest skanowany niezależnie od listy `plugins` w configu — brak wpisu w configu nie dowodzi, że plugin nie działa (i odwrotnie: wpis npm bez poprawnego configu nie zadziała).
-- `plugins/ponytail` to **vendored submoduł** (`v5.3.2`, pin zgodny z npm), którego runtime **nie używa** — plugin pochodzi z npm (`5.3.2`). Wcześniej jego drzewo było formatowane przez Prettier repo (99 plików `M`), dlatego `plugins/` jest w `.prettierignore`. Nie traktować submodułu jako źródła prawdy o działającej wersji.
+- `@dietrichgebert/ponytail@5.3.2` pochodzi **wyłącznie z npm** (globalny `opencode.json`). Vendored submoduł `plugins/ponytail` usunięto 2026-11-03: runtime go nie używał, a repo utrzymywało dwa źródła prawdy o wersji. Powrót do kopii referencyjnej: `git show <commit-before-removal>:plugins/ponytail` lub klon `https://github.com/DietrichGebert/ponytail`.
 
 ## 9. Provisioning nowej maszyny
 
@@ -132,7 +132,7 @@ Klon repo **nie** przynosi warstwy agenta — to rzeczy poza repo. Po `install.b
 | 1    | `~/.config/opencode/opencode.json` — jeden **poprawny** obiekt z `plugins`                     | `node -e "JSON.parse(require('fs').readFileSync(require('os').homedir()+'/.config/opencode/opencode.json','utf8'))"` |
 | 2    | `~/.config/opencode/plugins/caveman/` (`server.js`, `caveman-config.cjs`, `caveman-parse.cjs`) | log: `loading plugin ... plugins\\caveman`                                                                           |
 | 3    | `~/.config/opencode/plugins/claude-mem/` i `open-code-review.ts`                               | log: `loading plugin` + tool `claude_mem_search`                                                                     |
-| 4    | `@dietrichgebert/ponytail@5.3.2` w `plugins` (wersja = submoduł `plugins/ponytail`)            | log: `loading plugin id=@dietrichgebert/ponytail@5.3.2`                                                              |
+| 4    | `@dietrichgebert/ponytail@5.3.2` w `plugins` (npm; repo nie zawiera kopii)                     | log: `loading plugin id=@dietrichgebert/ponytail@5.3.2`                                                              |
 | 5    | `~/.config/opencode/skills/` — `caveman*`, `ultracave`, `megacave`, `cavecrew`                 | `ls` + katalog skilli w sesji                                                                                        |
 | 6    | `~/.config/opencode/AGENTS.md` — blok caveman                                                  | widoczny w prompcie sesji                                                                                            |
 
