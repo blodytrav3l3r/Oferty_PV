@@ -14,7 +14,7 @@ function escapeHtmlValue(value: string): string {
  *
  * Statyczne strony (public/*.html) zawierają tokeny {{APP_NAME}} i
  * {{APP_SUBTITLE}} zamiast twardo zakodowanej nazwy — dzięki temu aplikacja
- * jest niezależna od nazwy (S.O.K., WITROS itd.), a nazwę ustawia się przez
+ * jest niezależna od nazwy (S.O.K. itd.), a nazwę ustawia się przez
  * zmienne środowiskowe APP_NAME/APP_SUBTITLE.
  */
 export function applyBrandTokens(html: string): string {

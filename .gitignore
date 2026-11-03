@@ -9,9 +9,8 @@ node_modules/
 /vendor/python_wheels/
 !/vendor/README.md
 
-# Offline bundle (build locally with python build_offline_bundle.py)
+# Artefakty builda lokalnego
 /dist-bundle/
-/WITROS-Oferty-PV-Offline.zip
 
 
 # Python
@@ -150,7 +149,6 @@ scripts/archive/
 # === Temp files z batch ===
 temp_*.txt
 *.tmp
-witros_dev_port_check.*
 cookies.txt
 
 # Lokalne dane feedback loop
