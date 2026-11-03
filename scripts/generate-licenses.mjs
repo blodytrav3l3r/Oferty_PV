@@ -352,7 +352,7 @@ async function buildNotices(lock) {
     lines.push('');
     lines.push('Projekt **S.O.K. — System Ofert i Kalkulacji** jest objęty licencją własnościową.');
     lines.push(
-        `Tytuł pliku \`LICENSE\` zachowuje historyczną nazwę właściciela praw (firma WITROS); pełna treść w \`LICENSE\`.`
+        'Właściciel praw majątkowych i warunki licencji — patrz `LICENSE` (nagłówek Copyright).'
     );
     lines.push('Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.');
     lines.push('');

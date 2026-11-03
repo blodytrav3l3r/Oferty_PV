@@ -10,7 +10,7 @@ Dane na dzień: **2026-11-03**.
 ## 1. Licencja projektu
 
 Projekt **S.O.K. — System Ofert i Kalkulacji** jest objęty licencją własnościową.
-Tytuł pliku `LICENSE` zachowuje historyczną nazwę właściciela praw (firma WITROS); pełna treść w `LICENSE`.
+Właściciel praw majątkowych i warunki licencji — patrz `LICENSE` (nagłówek Copyright).
 Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 
 ## 2. Model dystrybucji i zakres dokumentu
