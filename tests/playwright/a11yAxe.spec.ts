@@ -52,6 +52,17 @@ test.describe('a11y axe', () => {
             expect(frame, `brak iframe ${mod}`).not.toBeNull();
             // Stabilizacja: poczekaj na głowny kontener modułu w frame.
             await frame!.locator('main, #spa-main, body').first().waitFor({ timeout: 15000 });
+            // Determinizm: .wizard-step animuje wejscie (wizardFadeIn 0.35 s).
+            // Axe mierzyl kontrast przy opacity ~0.22 — kolor #fff na #686bed
+            // (4.27) zamiast steady-state #5b5fec (4.84). Czekamy na koniec animacji.
+            await frame!.waitForFunction(
+                () => {
+                    const el = document.querySelector('.wizard-step.active');
+                    return !el || Number(getComputedStyle(el).opacity) === 1;
+                },
+                null,
+                { timeout: 10000 }
+            );
             const results = await new AxeBuilder({ page })
                 .withTags(['wcag2a', 'wcag2aa'])
                 .exclude('#toast-container')

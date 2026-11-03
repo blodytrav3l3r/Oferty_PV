@@ -364,6 +364,7 @@
                 (s, i) => `
             <button class="nav-btn nav-tile${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
+                aria-label="${escapeHtmlAttr(s.label)}"
                 ${i === 0 ? 'aria-current="page"' : ''}
                 ${
                     s.isLink
