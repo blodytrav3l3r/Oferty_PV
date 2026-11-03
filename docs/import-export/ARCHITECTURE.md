@@ -101,7 +101,7 @@ Kolumny specyficzne dla studni (`GLEBOKOSC`, `SREDNICA`, `ZAKONCZENIE`, `MAGAZYN
 
 ```json
 {
-  "kind": "witros-offer-transfer",
+  "kind": "sok-offer-transfer",
   "schemaVersion": 1,
   "module": "rury",
   "exportedAt": "2026-07-05T12:00:00.000Z",
@@ -110,6 +110,8 @@ Kolumny specyficzne dla studni (`GLEBOKOSC`, `SREDNICA`, `ZAKONCZENIE`, `MAGAZYN
   "orders": [ ... ]
 }
 ```
+
+Import przyjmuje też pliki z historycznym `kind` sprzed rebrandingu (stary prefiks nazwy, format `offer`/`order`); eksport zawsze zapisuje aktualny `kind`.
 
 ## Obsługa konfliktów
 

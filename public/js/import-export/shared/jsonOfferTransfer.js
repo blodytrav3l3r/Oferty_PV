@@ -1,5 +1,18 @@
 window.JsonOfferTransfer = {
     SCHEMA_VERSION: 1,
+    OFFER_KIND: 'sok-offer-transfer',
+    ORDER_KIND: 'sok-order-transfer',
+    // Legacy `kind` sprzed rebrandingu — import starych eksportów musi działać.
+    LEGACY_OFFER_KINDS: ['witros-offer-transfer'],
+    LEGACY_ORDER_KINDS: ['witros-order-transfer'],
+
+    isOfferKind(kind) {
+        return kind === this.OFFER_KIND || this.LEGACY_OFFER_KINDS.indexOf(kind) !== -1;
+    },
+
+    isOrderKind(kind) {
+        return kind === this.ORDER_KIND || this.LEGACY_ORDER_KINDS.indexOf(kind) !== -1;
+    },
 
     async fetchOffer(module, offerId) {
         const base = module === 'studnie' ? '/api/offers-rury/studnie' : '/api/offers-rury';
@@ -21,7 +34,7 @@ window.JsonOfferTransfer = {
 
     buildPayload(module, offer, orders) {
         return {
-            kind: 'witros-offer-transfer',
+            kind: this.OFFER_KIND,
             schemaVersion: this.SCHEMA_VERSION,
             module: module,
             exportedAt: new Date().toISOString(),
@@ -37,7 +50,7 @@ window.JsonOfferTransfer = {
 
     validatePayload(json) {
         if (!json || typeof json !== 'object') throw new Error('Nieprawidłowy format pliku');
-        if (json.kind !== 'witros-offer-transfer')
+        if (!this.isOfferKind(json.kind))
             throw new Error('Plik nie jest plikiem transferu ofert (brak nagłówka kind)');
         if (typeof json.schemaVersion !== 'number' || json.schemaVersion > this.SCHEMA_VERSION) {
             throw new Error('Nieobsługiwana wersja schematu (' + json.schemaVersion + ')');
@@ -70,7 +83,7 @@ window.JsonOfferTransfer = {
 
     buildOrderPayload(module, order) {
         return {
-            kind: 'witros-order-transfer',
+            kind: this.ORDER_KIND,
             schemaVersion: this.SCHEMA_VERSION,
             module: module,
             exportedAt: new Date().toISOString(),
@@ -85,7 +98,7 @@ window.JsonOfferTransfer = {
 
     validateOrderPayload(json) {
         if (!json || typeof json !== 'object') throw new Error('Nieprawidłowy format pliku');
-        if (json.kind !== 'witros-order-transfer')
+        if (!this.isOrderKind(json.kind))
             throw new Error('Plik nie jest plikiem transferu zamówienia (brak nagłówka kind)');
         if (typeof json.schemaVersion !== 'number' || json.schemaVersion > this.SCHEMA_VERSION) {
             throw new Error('Nieobsługiwana wersja schematu (' + json.schemaVersion + ')');
@@ -114,7 +127,7 @@ window.JsonOfferTransfer = {
             reader.onload = (e) => {
                 try {
                     const json = JSON.parse(e.target.result);
-                    if (json.kind === 'witros-order-transfer') {
+                    if (this.isOrderKind(json.kind)) {
                         this.validateOrderPayload(json);
                     } else {
                         this.validatePayload(json);

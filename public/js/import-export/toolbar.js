@@ -457,7 +457,7 @@ window.importExportToolbar = /** @type {any} */ ({
                 let result;
                 const file = input.files[0];
                 const preview = await JsonOfferTransfer.readFile(file);
-                if (preview.kind === 'witros-order-transfer') {
+                if (JsonOfferTransfer.isOrderKind(preview.kind)) {
                     if (preview.module === 'studnie') {
                         result = await StudnieTransferJson.importOrder(file);
                     } else {
@@ -478,7 +478,7 @@ window.importExportToolbar = /** @type {any} */ ({
                     });
                 } else if (result.success) {
                     await appAlert(
-                        (preview.kind === 'witros-order-transfer'
+                        (JsonOfferTransfer.isOrderKind(preview.kind)
                             ? 'Zamówienie'
                             : 'Oferta ' +
                               (result.action === 'clone' ? 'sklonowana' : 'zaimportowana')) +
