@@ -11,6 +11,97 @@ let sessionsKnown = false;
 let adminRefreshSeq = 0;
 const revokingUsers = new Set();
 
+/**
+ * Pulpit osadzony w SPA (#/pulpit → index.html?host=pulpit): ta sama granica
+ * iframe co pozostałe moduły (ADR-014). Tylko ten tryb nawiguje do shella.
+ */
+function isPulpitEmbedded() {
+    try {
+        if (typeof URLSearchParams !== 'function') return false;
+        return new URLSearchParams(window.location.search).get('host') === 'pulpit';
+    } catch (_e) {
+        return false;
+    }
+}
+
+/** Przejście do trasy shella; z iframe zawsze przez okno nadrzędne. */
+function goToShellRoute(target) {
+    const hashIndex = target.indexOf('#');
+    const hash = hashIndex === -1 ? '#/rury' : target.slice(hashIndex);
+    try {
+        if (window.parent && window.parent !== window && window.parent.location) {
+            window.parent.location.hash = hash;
+            return true;
+        }
+    } catch (_e) {}
+    try {
+        window.location.href = target;
+        return true;
+    } catch (_e2) {
+        return false;
+    }
+}
+
+/**
+ * Bez sesji w iframe nie pokazujemy formularza (podwójny login) — wracamy
+ * do strony wejścia w oknie najwyższym.
+ */
+function redirectToLogin() {
+    const target = 'index.html';
+    try {
+        if (window.top && window.top !== window && window.top.location) {
+            window.top.location.href = target;
+            return;
+        }
+    } catch (_e) {}
+    try {
+        window.location.href = target;
+    } catch (_e2) {}
+}
+
+/** true w oknie najwyższym; iframe modułów zawsze ma różne `parent`. */
+function isTopLevelWindow() {
+    try {
+        return !window.parent || window.parent === window;
+    } catch (_e) {
+        return false;
+    }
+}
+
+/**
+ * Po zalogowaniu w oknie najwyższym wejście prowadzi do shella — Pulpit jest
+ * tam modułem (`#/pulpit`). W iframe nie ruszamy okna nadrzędnego.
+ */
+function redirectToShell() {
+    if (!isTopLevelWindow()) return false;
+    try {
+        if (typeof window.location.replace === 'function') {
+            window.location.replace('app.html#/pulpit');
+            return true;
+        }
+    } catch (_e) {}
+    try {
+        window.location.href = 'app.html#/pulpit';
+        return true;
+    } catch (_e2) {
+        return false;
+    }
+}
+
+/** Osadzony pulpit: linki `app.html#/…` zmieniają trasę shella, nie ramki. */
+function bindEmbeddedNavigation() {
+    if (!isPulpitEmbedded() || typeof document.addEventListener !== 'function') return;
+    document.addEventListener('click', function (event) {
+        const node = event.target;
+        const anchor = node && typeof node.closest === 'function' ? node.closest('a[href]') : null;
+        if (!anchor) return;
+        const href = anchor.getAttribute('href') || '';
+        if (href.indexOf('app.html') !== 0) return;
+        event.preventDefault();
+        goToShellRoute(href);
+    });
+}
+
 function toggleSubUsersList() {
     // Modal może być zamknięty — wtedy pól nie ma w DOM.
     const roleEl = document.getElementById('new-user-role');
@@ -53,6 +144,7 @@ function updateSubUsers(checkbox) {
 window.addEventListener('DOMContentLoaded', async () => {
     const html = document.documentElement;
     let authResolved = false;
+    bindEmbeddedNavigation();
     const finish = (fn, user) => {
         if (authResolved) return;
         authResolved = true;
@@ -66,7 +158,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         // Nie zamykaj sprawy: spozniony (ale wazny) wynik /me ma jeszcze
         // podmienic formularz na panel zamiast zostawiac usera na loginie.
         html.classList.remove('auth-pending');
-        showLogin();
+        // W iframe nie ma czego pokazywać — formularz logowania należy do wejścia.
+        if (isPulpitEmbedded()) redirectToLogin();
+        else showLogin();
     }, 1500);
     // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly.
     // Brak pre-checku localStorage — cookie jest niewidoczne dla JS.
@@ -82,9 +176,11 @@ window.addEventListener('DOMContentLoaded', async () => {
             user = data.user;
         }
         if (user) finish(showLoggedIn, user);
+        else if (isPulpitEmbedded()) finish(redirectToLogin);
         else finish(showLogin);
     } catch (_e) {
-        finish(showLogin);
+        if (isPulpitEmbedded()) finish(redirectToLogin);
+        else finish(showLogin);
     }
 });
 
@@ -411,6 +507,8 @@ async function doLogin(event) {
         // carePanel/versionDisplay czekają na reload.
         if (typeof window.authReady === 'function') await window.authReady(true);
         showLoggedIn(data.user);
+        // W oknie najwyższym Pulpit żyje w shellu jako moduł `#/pulpit`.
+        redirectToShell();
     } catch (_e) {
         errorEl.textContent = 'Błąd połączenia z serwerem';
     } finally {

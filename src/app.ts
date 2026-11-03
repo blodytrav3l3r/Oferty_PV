@@ -298,6 +298,15 @@ function getBrandHtml(file: string): string | null {
         return null;
     }
 }
+/**
+ * Znacznik trybu osadzonego (SPA `#/pulpit`). Wstrzykiwany per-request, po
+ * cache marki, więc nie zatruwa `brandHtmlCache`. CSS chowa po nim elementy
+ * strony wejścia (logo, loader) — bez nowego inline scriptu.
+ */
+function injectEmbeddedMarker(html: string): string {
+    return html.replace(/<html\b([^>]*)>/, '<html$1 data-embedded="pulpit">');
+}
+
 app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     const raw = req.path;
@@ -314,7 +323,11 @@ app.use((req, res, next) => {
     try {
         const baseHtml = getBrandHtml(file);
         if (baseHtml === null) return next();
-        const html = injectAppNameScript(baseHtml, res.locals.cspNonce as string | undefined);
+        const injected = injectAppNameScript(baseHtml, res.locals.cspNonce as string | undefined);
+        const html =
+            rel === 'index.html' && req.query.host === 'pulpit'
+                ? injectEmbeddedMarker(injected)
+                : injected;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache');
         res.send(html);

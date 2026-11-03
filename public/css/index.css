@@ -4002,3 +4002,14 @@ html[data-theme='light'] body.index-page.logged-in::before {
         grid-template-columns: 1fr;
     }
 }
+
+/* ── SPA: Pulpit osadzony (#/pulpit → index.html?host=pulpit) ──
+   Strona wejścia nie jest wtedy samodzielnym widokiem: logo/podtytuł dublują
+   logo shella, loader jest pełnoekranowy w ramce, a nagłówek ma router.
+   Reguły działają od pierwszego malowania (znacznik z serwera). */
+html[data-embedded='pulpit'] #dash-header,
+html[data-embedded='pulpit'] #page-loader,
+html[data-embedded='pulpit'] .index-logo,
+html[data-embedded='pulpit'] .subtitle {
+    display: none !important;
+}

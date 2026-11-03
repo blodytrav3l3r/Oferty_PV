@@ -130,6 +130,20 @@ function _logoutDirtyWindow(moduleHint) {
 }
 
 /**
+ * Nawigacja do strony logowania w oknie najwyższym. W iframe modułu SPA
+ * samo `location.href` przeładowałoby tylko ramkę (podwójny formularz).
+ */
+function navigateToLogin() {
+    try {
+        if (window.top && window.top !== window && window.top.location) {
+            window.top.location.href = 'index.html';
+            return;
+        }
+    } catch {}
+    window.location.href = 'index.html';
+}
+
+/**
  * Wylogowuje użytkownika — kasuje sesje i localStorage, przeładowuje stronę.
  * Gdy są niezapisane zmiany, pyta custom popupem (appConfirm) — kopia SSoT z ui.js.
  */
@@ -277,7 +291,7 @@ async function appLogout() {
                 window.draftAutosave.clearDismissed();
         }
     } catch {}
-    window.location.href = 'index.html';
+    navigateToLogin();
 }
 
 /**
@@ -396,4 +410,5 @@ window.getAuthToken = getAuthToken;
 window.setAuthToken = setAuthToken;
 window.authHeaders = authHeaders;
 window.authReady = authReady;
+window.navigateToLogin = navigateToLogin;
 window.appLogout = appLogout;

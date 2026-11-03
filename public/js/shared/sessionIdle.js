@@ -35,6 +35,23 @@
     var warnShownForCycle = false;
     var countdownTimer = null;
 
+    /** Wyjście do logowania w oknie najwyższym (moduły SPA żyją w iframe). */
+    function goLoginPage() {
+        try {
+            if (typeof window.navigateToLogin === 'function') {
+                window.navigateToLogin();
+                return;
+            }
+        } catch (_e) {}
+        try {
+            if (window.top && window.top !== window && window.top.location) {
+                window.top.location.href = 'index.html';
+                return;
+            }
+        } catch (_e2) {}
+        window.location.href = 'index.html';
+    }
+
     function esc(s) {
         try {
             if (typeof window.escapeHtml === 'function') return window.escapeHtml(s);
@@ -190,9 +207,9 @@
                 closeWarn();
                 try {
                     if (typeof window.appLogout === 'function') window.appLogout();
-                    else window.location.href = 'index.html';
+                    else goLoginPage();
                 } catch (_e) {
-                    window.location.href = 'index.html';
+                    goLoginPage();
                 }
             });
         try {
@@ -205,7 +222,7 @@
         expiredShown = true;
         closeWarn();
         if (typeof window.showModal !== 'function') {
-            window.location.href = 'index.html';
+            goLoginPage();
             return;
         }
         var msg =
@@ -246,7 +263,7 @@
                 if (typeof window._bypassBeforeUnload !== 'undefined')
                     window._bypassBeforeUnload = true;
             } catch (_e) {}
-            window.location.href = 'index.html';
+            goLoginPage();
         }
         if (loginBtn) loginBtn.addEventListener('click', goLogin);
         try {
