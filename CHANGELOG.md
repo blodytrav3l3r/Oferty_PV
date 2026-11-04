@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.56.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.2...v1.56.3) (2026-11-04)
+
+### Bug Fixes
+
+- **offers:** cichy heartbeat po usunieciu dokumentu ([85d4462](https://github.com/blodytrav3l3r/Oferty_PV/commit/85d446268b09656ad8347cf686d6d62be4a2c92e))
+- **offers:** usuwanie skopiowanych ofert studni ([c77b0e7](https://github.com/blodytrav3l3r/Oferty_PV/commit/c77b0e7cc49deeaeffc13c13384961a7d7b2bac3))
+
 ### [1.56.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.1...v1.56.2) (2026-11-03)
 
 ### Bug Fixes
