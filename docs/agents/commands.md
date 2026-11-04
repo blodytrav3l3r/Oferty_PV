@@ -35,6 +35,20 @@ E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `D
 
 `deploy`, `rollback`, `deploy:check`, `deploy:check:pdf`, `pdf:smoke:package` (szczegóły: `docs/DEPLOY_UPDATE.md`); `licenses:generate`, `licenses:check` (`THIRD-PARTY-NOTICES.md` — pakiety npm `[prod]`/`[dev]` + zasoby vendored; nie edytuj ręcznie); `git:safety*` (list/inspect/verify/restore); `skills:*` (build, stats, validate, cost, deps, capabilities, plan, feedback-record, feedback-show, provider-resolve, utility-recalc).
 
+## PowerShell 5.1 (Windows) — fałszywy „exit 1" z natywnych komend
+
+PS 5.1 zamienia każdą linię **stderr** natywnego procesu (`git`, `node`, `npm`) na
+`ErrorRecord` (`NativeCommandError`). Przy `2>&1` w pipeline ostatnie polecenie ma
+`$? = False`, więc narzędzie/agent raportuje „Exited with code 1", mimo że proces
+zwrócił `0`. Git pisze komunikaty informacyjne na stderr (`To https://...`,
+`Everything up-to-date`, postęp), stąd push i commit wyglądają na nieudane.
+
+- Wynik oceniaj po `$LASTEXITCODE` i stanie repo, nie po `$?` ani treści błędu:
+  `git push; "exit=$LASTEXITCODE"`, `git status -sb` (brak `[ahead N]` = push doszedł).
+- Nie doklejaj `2>&1` do natywnych komend. Gdy stderr trzeba połączyć:
+  `cmd /c "git push 2>&1"` albo `git push 2>$null; $LASTEXITCODE`.
+- PS 7 nie ma tego problemu (stderr nie jest domyślnie `ErrorRecord`).
+
 ## Kodowanie polskich znaków (encoding policy)
 
 | Typ pliku                          | Kodowanie           | Uwagi                                              |
