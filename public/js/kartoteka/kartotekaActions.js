@@ -598,7 +598,9 @@ export default {
             delete newOffer.orderId;
             delete newOffer.orderNumber;
 
-            newOffer.id = 'L_COPY_' + Date.now().toString(36);
+            // Prefiks typu: routing DELETE/GET po id rozpoznaje dział po prefiksie.
+            const copyPrefix = newOffer.type === 'studnia_oferta' ? 'offer_studnie_' : '';
+            newOffer.id = copyPrefix + 'L_COPY_' + Date.now().toString(36);
 
             // Logika wersji
             const oldNumber = newOffer.number || newOffer.offerNumber || '';

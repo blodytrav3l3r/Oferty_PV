@@ -201,11 +201,12 @@ class StorageService {
             if (res.status === 404) {
                 // Oferty nie ma na serwerze (stara lista, podwójne kliknięcie,
                 // oferta tylko lokalna) — to też sukces, nie błąd.
-                // 404 z własnego działu (pierwsza próba) kończy pętlę od razu:
-                // drugi endpoint i tak zwróciłby 404 (obcy dział), więc nie
-                // ma po co go pytać — mniej szumu 404 w konsoli.
+                // 404 z działu studni kończy pętlę: drugi endpoint pyta o rury
+                // i też zwróci 404. Dla id bez prefiksu (np. L_COPY_…)
+                // pierwszą próbą są rury, ale dokument może być studnią —
+                // wtedy drugi endpoint jest jedyną szansą na usunięcie.
                 sawNotFound = true;
-                if (i === 0) {
+                if (isStudnie) {
                     logger.info(
                         'StorageService',
                         `[StorageService] Oferta ${id} już nie istnieje (404) — traktuję jako usuniętą.`

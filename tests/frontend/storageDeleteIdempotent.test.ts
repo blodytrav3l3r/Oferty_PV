@@ -7,7 +7,8 @@ import vm from 'vm';
  * Regresja: kasowanie oferty jest idempotentne.
  * 404 („oferty nie ma na serwerze") to tez sukces ('already-gone'),
  * nie blad „Nie udało się usunąć oferty z żadnego endpointu".
- * 404 z wlasnego dzialu nie odpytuje drugiego endpointu (mniej szumu 404).
+ * 404 z prefiksem studni nie odpytuje drugiego endpointu (mniej szumu 404);
+ * id bez prefiksu (np. L_COPY_…) sprawdza oba endpointy, bo typ nieznany.
  */
 function readJs(rel: string): string {
     return fs.readFileSync(path.join(__dirname, '../../public/js', rel), 'utf8');
@@ -51,11 +52,26 @@ describe('StorageService.deleteOffer — idempotentny 404', () => {
         expect(calls).toEqual(['/api/offers-rury/offer_1790845390038']);
     });
 
-    it('rury: DELETE 404 = already-gone, drugi endpoint niepytany', async () => {
+    it('rury: DELETE 404 = already-gone po sprawdzeniu obu endpointow', async () => {
         const calls: string[] = [];
         const svc = loadService(calls, () => resp(404, { error: 'Oferta nie istnieje' }));
         await expect(svc.deleteOffer('offer_1790845390038')).resolves.toBe('already-gone');
-        expect(calls).toEqual(['/api/offers-rury/offer_1790845390038']);
+        expect(calls).toEqual([
+            '/api/offers-rury/offer_1790845390038',
+            '/api/offers-rury/studnie/offer_1790845390038'
+        ]);
+    });
+
+    it('legacy kopia studni bez prefiksu (L_COPY_…): 404 na rurach, 200 na studniach = true', async () => {
+        const calls: string[] = [];
+        const svc = loadService(calls, (url) =>
+            url.includes('/studnie/') ? resp(200, { ok: true }) : resp(404, {})
+        );
+        await expect(svc.deleteOffer('L_COPY_mw083o2x')).resolves.toBe(true);
+        expect(calls).toEqual([
+            '/api/offers-rury/L_COPY_mw083o2x',
+            '/api/offers-rury/studnie/L_COPY_mw083o2x'
+        ]);
     });
 
     it('studnie: DELETE 404 = already-gone, drugi endpoint niepytany', async () => {
