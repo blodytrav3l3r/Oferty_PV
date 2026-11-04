@@ -499,6 +499,11 @@ export default {
 
         try {
             const deleteResult = await storageService.deleteOffer(id);
+            // Lokalny stop heartbeatu: dokumentu już nie ma, serwerowy release
+            // zwróciłby 404 (guard P1.5), a heartbeat leciałby w próżnię.
+            if (window.lockService && typeof window.lockService.forget === 'function') {
+                window.lockService.forget(String(id));
+            }
             // Brak release po DELETE z premedytacją (jak przy 'already-gone'):
             // dokumentu nie ma na serwerze, więc POST /api/locks/release
             // wróciłby z celowym 404 guarda P1.5, nic nie zwalniając.

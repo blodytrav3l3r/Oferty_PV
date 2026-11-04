@@ -153,6 +153,48 @@ describe('lockService (doc_locks frontend)', () => {
         expect(modalOpts.html).not.toContain('Nie można otworzyć go do edycji');
     });
 
+    test('heartbeat 404 „dokument nie istnieje" = cichy stop, bez toasta', async () => {
+        let tick: (() => Promise<void>) | null = null;
+        ctx.setInterval = (fn: () => Promise<void>) => {
+            tick = fn;
+            return 1;
+        };
+        fetchHandler = (url: string) =>
+            url === '/api/locks/acquire'
+                ? okJson({ ok: true })
+                : errJson(404, { error: 'Dokument nie znaleziony' });
+        await ctx.window.lockService.tryOpen('offer', 'offer_1', () => {});
+        expect(tick).toBeTruthy();
+        await tick!();
+        expect(toasts).toEqual([]);
+        expect(ctx.window.lockService.current()).toBe(null);
+    });
+
+    test('heartbeat 404 DOC_LOCK_MISSING = blokada przejeta → toast', async () => {
+        let tick: (() => Promise<void>) | null = null;
+        ctx.setInterval = (fn: () => Promise<void>) => {
+            tick = fn;
+            return 1;
+        };
+        fetchHandler = (url: string) =>
+            url === '/api/locks/acquire'
+                ? okJson({ ok: true })
+                : errJson(404, { error: 'Blokada nie istnieje', code: 'DOC_LOCK_MISSING' });
+        await ctx.window.lockService.tryOpen('offer', 'offer_1', () => {});
+        await tick!();
+        expect(toasts).toHaveLength(1);
+        expect(toasts[0]).toContain('Utracono blokadę');
+    });
+
+    test('forget: zrzuca trzymana blokade bez requestu', async () => {
+        fetchHandler = () => okJson({ ok: true });
+        await ctx.window.lockService.tryOpen('offer', 'o1', () => {});
+        fetchCalls = [];
+        ctx.window.lockService.forget('o1');
+        expect(ctx.window.lockService.current()).toBe(null);
+        expect(fetchCalls).toEqual([]);
+    });
+
     test('describeHolder: data w formacie pl-PL bez sekund', () => {
         const { when } = ctx.window.lockService.describeHolder({
             userName: 'Ewa',

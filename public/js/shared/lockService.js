@@ -127,7 +127,16 @@ async function _heartbeatTick() {
     }
     try {
         await _post('/api/locks/heartbeat', { docType: _held.docType, docId: _held.docId });
-    } catch (_e) {
+    } catch (err) {
+        // 404 bez code = dokument zniknął (usunięty w innej karcie/oknie).
+        // Cisza: nie ma czego pilnować, a to nie utrata blokady w trakcie edycji.
+        // 404 z code DOC_LOCK_MISSING = blokadę przejął ktoś inny — ostrzegamy.
+        const e = /** @type {{status?: unknown, code?: unknown}} */ (err);
+        if (e && e.status === 404 && e.code !== 'DOC_LOCK_MISSING') {
+            _held = null;
+            _stopHeartbeat();
+            return;
+        }
         // Blokada utracona w trakcie edycji: formularz zostaje (ochrona danych),
         // zapis i tak odrzuci backend (423). Uzytkownik dostaje jeden toast.
         _stopHeartbeat();
@@ -169,6 +178,18 @@ async function releaseLock() {
     } catch (_e) {
         return { ok: true, released: false };
     }
+}
+
+/**
+ * Zrzuca lokalna blokade bez requestu. Uzywane po usunieciu dokumentu:
+ * serwerowy release i tak zwroci 404 (dokumentu nie ma), a heartbeat
+ * nie ma czego odswiezac.
+ * @param {string} docId
+ */
+function forgetLock(docId) {
+    if (!_held || (docId && _held.docId !== docId)) return;
+    _held = null;
+    _stopHeartbeat();
 }
 
 /**
@@ -328,6 +349,7 @@ window.lockService = {
     acquire: acquireLock,
     release: releaseLock,
     releaseOf,
+    forget: forgetLock,
     force: forceLock,
     current: currentLock,
     tryOpen,
