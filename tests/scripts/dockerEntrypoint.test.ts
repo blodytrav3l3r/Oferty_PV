@@ -4,6 +4,17 @@ import path from 'node:path';
 const ROOT = path.resolve(__dirname, '..', '..');
 
 describe('PostgreSQL Docker startup and bootstrap', () => {
+    it('installs the Puppeteer Chrome build in a cache readable by the runtime user', () => {
+        const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
+        const dockerignore = fs.readFileSync(path.join(ROOT, '.dockerignore'), 'utf8');
+
+        expect(dockerfile).toContain('unzip');
+        expect(dockerfile).toContain('rm -rf /app/.cache/puppeteer/chrome');
+        expect(dockerfile).toContain('./node_modules/.bin/puppeteer browsers install chrome');
+        expect(dockerfile).toContain('chown -R node:node /app/.cache/puppeteer');
+        expect(dockerignore).toContain('/.cache/');
+    });
+
     it('keeps the runtime entrypoint free of migration credentials and DDL', () => {
         const source = fs.readFileSync(path.join(ROOT, 'scripts', 'docker-entrypoint.sh'), 'utf8');
 

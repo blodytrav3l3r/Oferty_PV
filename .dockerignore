@@ -1,5 +1,6 @@
 # Dependencies (will be installed fresh via npm ci)
 node_modules/
+/.cache/
 
 # Build output (will be rebuilt in Docker)
 dist/

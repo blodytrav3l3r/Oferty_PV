@@ -1,8 +1,8 @@
 FROM node:22-slim
 
-# Instalacja bibliotek systemowych, PostgreSQL 18 client i Chromium (Puppeteer/PDF).
+# Instalacja bibliotek systemowych i PostgreSQL 18 client wymaganych przez runtime.
 RUN apt-get update && apt-get install -y \
-    ca-certificates curl gnupg openssl sed \
+    ca-certificates curl gnupg openssl sed unzip \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 \
     libpango-1.0-0 libcairo2 libglib2.0-0 fonts-liberation \
@@ -24,6 +24,12 @@ ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
 
 # Instalujemy wszystkie zależności
 RUN npm ci --no-audit --no-fund
+
+# Jawnie instalujemy wersję Chrome for Testing zgodną z lokalnym Puppeteer.
+# Nie polegamy na uruchomieniu postinstall przez npm (może być wyłączone polityką).
+RUN rm -rf /app/.cache/puppeteer/chrome && \
+    ./node_modules/.bin/puppeteer browsers install chrome && \
+    chown -R node:node /app/.cache/puppeteer
 
 COPY . .
 
