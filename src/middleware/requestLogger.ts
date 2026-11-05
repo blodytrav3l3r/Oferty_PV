@@ -22,9 +22,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
             recordRequest(req.method, fullPath, res.statusCode, ms);
             const dbQueries = getDbCount();
             const dbPart = dbQueries >= 0 ? `, db=${dbQueries}` : '';
+            const requestPath = req.originalUrl.split('?', 1)[0];
             logger.info(
                 'Request',
-                `[${requestId}] ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms${dbPart}`
+                `[${requestId}] ${req.method} ${requestPath} ${res.statusCode} ${ms}ms${dbPart}`
             );
         });
         // P2: kontekst requestId dla logow audytu/biznesu (AsyncLocalStorage).

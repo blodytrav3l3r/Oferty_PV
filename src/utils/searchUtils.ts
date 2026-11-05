@@ -2,11 +2,12 @@ import { Prisma } from '../../generated/prisma-postgres/client';
 
 // Akceptuje YYYY-MM-DD (zakres z input[type=date]) oraz pełny ISO z czasem
 // (YYYY-MM-DDTHH:MM:SS(.mmm)Z) — preset "Dzisiaj/7d/30d/miesiąc" (resolveDatePreset).
-const DATE_PARAM_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?)?$/;
+const DATE_PARAM_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z?)?$/;
+const EPOCH_MILLISECONDS_RE = /^\d{13}$/;
 
 function isValidCalendarDate(value: string): boolean {
     if (!DATE_PARAM_RE.test(value)) return false;
-    const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z?)?$/.exec(
+    const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?Z?)?$/.exec(
         value
     );
     if (!match) return false;
@@ -19,7 +20,7 @@ function isValidCalendarDate(value: string): boolean {
             Number(hours),
             Number(minutes),
             Number(seconds),
-            Number(fraction.padEnd(3, '0'))
+            Number(fraction.padEnd(3, '0').slice(0, 3))
         )
     );
     return (
@@ -49,6 +50,7 @@ export interface SearchParams {
     nextContactTo: string;
     cursor: string;
     cursorId: string;
+    cursorType?: 'rury' | 'studnie';
     limit: number;
     sort: 'createdAt' | 'offer_number' | 'followup';
     order: 'asc' | 'desc';
@@ -89,6 +91,10 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
                 : '',
         cursor: typeof query.cursor === 'string' ? query.cursor : '',
         cursorId: typeof query.cursorId === 'string' ? query.cursorId : '',
+        cursorType:
+            query.cursorType === 'rury' || query.cursorType === 'studnie'
+                ? query.cursorType
+                : undefined,
         limit: Math.min(100, Math.max(1, parseInt(String(query.limit), 10) || 50)),
         sort: ['createdAt', 'offer_number', 'followup'].includes(query.sort as string)
             ? (query.sort as SearchParams['sort'])
@@ -101,10 +107,9 @@ export function buildSearchOrderBy(
     sort: SearchParams['sort'],
     order: SearchParams['order']
 ): Prisma.Sql {
-    const sortColumn =
-        sort === 'offer_number' ? Prisma.raw('"offer_number"') : Prisma.raw('"createdAt"');
     const sortDirection = order === 'asc' ? Prisma.raw('ASC') : Prisma.raw('DESC');
-    return Prisma.sql`${sortColumn} ${sortDirection}, "id" ${sortDirection}`;
+    const sortKey = searchSortKey(sort);
+    return Prisma.sql`${sortKey} ${sortDirection}, "id" ${sortDirection}, "_type" ${sortDirection}`;
 }
 
 export interface OrderRef {
@@ -123,6 +128,7 @@ interface BuildWherePartsInput {
     userId: string;
     cursor: string;
     cursorId: string;
+    cursorType?: SearchParams['cursorType'];
     sort: string;
     order: string;
     /** Status zamówień — przy 'all' daty obejmują też daty zamówień (OR). */
@@ -133,7 +139,50 @@ interface BuildWherePartsInput {
 
 export function normalizedCreatedAtSql(col = '"createdAt"'): Prisma.Sql {
     const c = Prisma.raw(col);
-    return Prisma.sql`CASE WHEN (${c}) ~ '^[0-9]{13}$' THEN to_timestamp((${c})::double precision / 1000.0) ELSE (${c})::timestamptz END`;
+    return Prisma.sql`CASE
+        WHEN (${c}) ~ '^[0-9]{13}$' THEN to_timestamp((${c})::double precision / 1000.0)
+        WHEN (${c}) ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}([ T]|$)'
+             AND pg_input_is_valid(${c}, 'timestamp with time zone') THEN (${c})::timestamptz
+        ELSE NULL
+    END`;
+}
+
+function searchSortKey(sort: string): Prisma.Sql {
+    return sort === 'offer_number'
+        ? Prisma.sql`COALESCE("offer_number", '')`
+        : Prisma.sql`COALESCE(${normalizedCreatedAtSql()}, '-infinity'::timestamptz)`;
+}
+
+export function isValidSearchCursor(params: SearchParams): boolean {
+    if (!params.cursorId) return !params.cursor && !params.cursorType;
+    if (params.sort === 'offer_number') return params.cursor.length <= 512;
+    return (
+        !params.cursor ||
+        EPOCH_MILLISECONDS_RE.test(params.cursor) ||
+        isValidCalendarDate(params.cursor)
+    );
+}
+
+function buildSearchCursorCondition(input: BuildWherePartsInput): Prisma.Sql {
+    const op = Prisma.raw(input.order === 'desc' ? '<' : '>');
+    const sortKey = searchSortKey(input.sort);
+    const cursorValue =
+        input.sort === 'offer_number'
+            ? Prisma.sql`${input.cursor}`
+            : Prisma.sql`COALESCE(${normalizedCreatedAtSqlForValue(input.cursor)}, '-infinity'::timestamptz)`;
+    const branchType = input.orderRef?.alias === 's' ? 'studnie' : 'rury';
+    const tieBreaker = input.cursorType
+        ? Prisma.sql`(id, ${branchType}::text) ${op} (${input.cursorId}, ${input.cursorType}::text)`
+        : Prisma.sql`id ${op} ${input.cursorId}`;
+    return Prisma.sql`(${sortKey} ${op} ${cursorValue} OR
+        (${sortKey} = ${cursorValue} AND ${tieBreaker}))`;
+}
+
+function normalizedCreatedAtSqlForValue(value: string): Prisma.Sql {
+    if (!value) return Prisma.sql`NULL::timestamptz`;
+    return EPOCH_MILLISECONDS_RE.test(value)
+        ? Prisma.sql`to_timestamp(${value}::double precision / 1000.0)`
+        : Prisma.sql`${value}::timestamptz`;
 }
 
 export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
@@ -146,14 +195,7 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
         return [Prisma.sql`FALSE`];
     }
 
-    if (input.cursor && input.cursorId) {
-        const op = input.order === 'desc' ? '<' : '>';
-        const norm = normalizedCreatedAtSql();
-        parts.push(Prisma.sql`(
-            ${norm} ${Prisma.raw(op)} ${input.cursor}::timestamptz
-            OR (${norm} = ${input.cursor}::timestamptz AND id ${Prisma.raw(op)} ${input.cursorId})
-        )`);
-    }
+    if (input.cursorId) parts.push(buildSearchCursorCondition(input));
 
     if (input.q) {
         const qLike = `%${input.q}%`;
@@ -368,6 +410,7 @@ export function buildOffersCountSql(
 
 export interface RawOfferRow {
     id: string;
+    _cursorDate?: string | null;
     userId: string | null;
     clientId: string | null;
     state: string | null;

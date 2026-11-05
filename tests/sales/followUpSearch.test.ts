@@ -42,10 +42,6 @@ jest.mock('../../generated/prisma-postgres/client', () => {
     };
 });
 
-jest.mock('../../src/utils/fts5Sync', () => ({
-    buildFts5Query: () => null
-}));
-
 const NOW = '2026-10-08T12:00:00.000Z';
 const base = {
     followupStatus: 'all' as const,
@@ -59,11 +55,15 @@ const render = (conds: any[]): string =>
     conds.map((c) => (c && c.render ? c.render() : String(c))).join(' AND ');
 
 describe('buildSearchOrderBy — identyfikatory zgodne z PostgreSQL', () => {
-    it.each([
-        ['createdAt', 'desc', '"createdAt" DESC, "id" DESC'],
-        ['offer_number', 'asc', '"offer_number" ASC, "id" ASC']
-    ] as const)('sortuje po %s %s', (sort, order, expected) => {
-        expect((buildSearchOrderBy(sort, order) as any).render()).toBe(expected);
+    it('sortuje po znormalizowanej dacie i jednoznacznych kluczach tie-break', () => {
+        const sql = (buildSearchOrderBy('createdAt', 'desc') as any).render();
+        expect(sql).toContain('pg_input_is_valid("createdAt"');
+        expect(sql).toContain('DESC, "id" DESC, "_type" DESC');
+    });
+
+    it('sortuje po numerze także wtedy, gdy brak numeru', () => {
+        const sql = (buildSearchOrderBy('offer_number', 'asc') as any).render();
+        expect(sql).toBe(`COALESCE("offer_number", '') ASC, "id" ASC, "_type" ASC`);
     });
 });
 

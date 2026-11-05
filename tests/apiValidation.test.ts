@@ -1,3 +1,4 @@
+import { getClientCatalogRevision } from '../src/routes/clients/catalogRevision';
 /**
  * Testy E2E walidacji API (Faza 8)
  * Weryfikacja czy endpointy zwracają 400 dla nieprawidłowych danych
@@ -96,7 +97,7 @@ jest.mock('../src/prismaClient', () => ({
                         deleteMany: jest.fn(),
                         createMany: jest.fn().mockResolvedValue({ count: 0 })
                     },
-                    $queryRaw: jest.fn(),
+                    $queryRaw: jest.fn().mockResolvedValue([]),
                     $executeRaw: jest.fn()
                 };
                 return arg(tx);
@@ -421,10 +422,10 @@ describe('API Validation Tests', () => {
                 .put('/api/clients')
                 .set(authHeader)
                 .send({
-                    data: [{ name: 'Test', nip: '1234563218' }]
+                    data: [{ name: 'Test', nip: '1234563218' }],
+                    catalogRevision: getClientCatalogRevision([])
                 });
-            // 200 lub 500 zależy od mocka transakcji — ważne że walidacja NIP przechodzi
-            expect(res.statusCode).not.toBe(400);
+            expect(res.statusCode).toBe(200);
         });
     });
 });

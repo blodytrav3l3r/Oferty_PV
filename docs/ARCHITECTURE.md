@@ -1,6 +1,6 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.56.4  
+**Wersja:** 1.56.5  
 **Ostatnia aktualizacja:** 2026-11-04<br>
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline
 
@@ -180,7 +180,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `brandHtml.ts` — brandowanie nagłówka w generowanych dokumentach
     - `cronService.ts` — serwis cron (setInterval)
     - `dbQueryCounter.ts` — licznik zapytań DB (diagnostyka N+1)
-    - `fts5Sync.ts` — historycznie nazwana obsługa indeksu GIN PostgreSQL; migracje tworzą indeks, a admin może go zreindeksować
+    - `postgresOfferSearchIndexes.ts` — diagnostyka indeksów GIN wyszukiwania ofert z katalogów systemowych PostgreSQL
     - `logger.ts` — logger aplikacji
     - `ownership.ts` — weryfikacja własności zasobów (`canReadDoc`/`canWriteDoc`; legacy rekord bez właściciela = brak prawa zapisu dla nie-admina)
     - `paths.ts` — ścieżki plików i katalogów
@@ -516,7 +516,7 @@ Oferty_PV/
 │   │   └── ml/                     # Pipeline ML (TrainingPipeline, FeatureExtractor, AcceptanceModel, ModelRegistry)
 │   ├── utils/
 │   │   ├── cronService.ts          # Serwis cron
-│   │   ├── fts5Sync.ts             # PostgreSQL GIN status/reindex (nazwa historyczna)
+│   │   ├── postgresOfferSearchIndexes.ts # Diagnostyka indeksów GIN PostgreSQL
 │   │   ├── logger.ts               # Logger
 │   │   ├── ownership.ts            # Weryfikacja własności (canReadDoc/canWriteDoc)
 │   │   ├── productionOrderGuard.ts # Guard PZ (blokada usuwania z przypisanymi zleceniami)
@@ -653,8 +653,7 @@ Następujące moduły pozostają świadomie w `src/utils/`:
 ownership.ts
 telemetryOwnership.ts
 docLocks.ts
-fts5Sync.ts
-fts5Queue.ts
+postgresOfferSearchIndexes.ts
 cronService.ts
 productionOrderGuard.ts
 idempotency.ts

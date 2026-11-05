@@ -1,3 +1,4 @@
+import { getClientCatalogRevision } from '../../src/routes/clients/catalogRevision';
 import request from 'supertest';
 import express from 'express';
 import contactsRouter from '../../src/routes/clients/contacts';
@@ -460,7 +461,13 @@ describe('Katalog kontaktów — cascade przy usuwaniu klienta', () => {
         ]);
         const res = await request(app)
             .put('/api/clients')
-            .send({ data: [{ id: 'c-keep', name: 'Zostaje' }] });
+            .send({
+                data: [{ id: 'c-keep', name: 'Zostaje' }],
+                catalogRevision: getClientCatalogRevision([
+                    { id: 'c-keep', userId: 'user-id' },
+                    { id: 'c-del', userId: 'user-id' }
+                ])
+            });
         expect(res.status).toBe(200);
         expect(m.$transaction).toHaveBeenCalledTimes(1);
         expect(m.client_contacts_rel.deleteMany).toHaveBeenCalledWith({

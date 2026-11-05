@@ -2,6 +2,7 @@
  * mountRoutes.ts — BE-01 (plan modernizacji F5): montowanie tras Express
  * wydzielone z src/app.ts. Kolejność app.use NIE zmieniona.
  */
+import { requireAuth } from './middleware/auth';
 import express from 'express';
 import * as Sentry from '@sentry/node';
 import { logger, sanitizeForLog } from './utils/logger';
@@ -77,6 +78,13 @@ export function handleCspReport(req: express.Request, res: express.Response): vo
     res.status(204).end();
 }
 
+const requireAuthBeforeBody: express.RequestHandler = (req, res, next) => {
+    const hasBody =
+        req.headers['transfer-encoding'] !== undefined || Number(req.headers['content-length']) > 0;
+    if (!hasBody) return next();
+    void Promise.resolve(requireAuth(req, res, next)).catch(next);
+};
+
 export function mountRoutes(app: express.Express, apiLimiter: express.RequestHandler): void {
     // P1.3: parser JSON per-route zamiast globalnego (patrz komentarz wyżej).
     const smallJson = express.json({ limit: JSON_BODY_LIMITS.small });
@@ -98,18 +106,30 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
 
     // E4b: apiLimiter także na cennikach/ofertach/exportach (rzadkie, kosztowne GET-y).
     // Telemetry celowo BEZ apiLimiter — własne TELEMETRY_WRITE/READ (polling dashboardu).
-    app.use('/api/products', apiLimiter, largeJson, productRoutes);
-    app.use('/api/products-studnie', apiLimiter, largeJson, productStudnieRoutes);
+    app.use('/api/products', apiLimiter, requireAuthBeforeBody, largeJson, productRoutes);
+    app.use(
+        '/api/products-studnie',
+        apiLimiter,
+        requireAuthBeforeBody,
+        largeJson,
+        productStudnieRoutes
+    );
     app.use('/api/offers/search', apiLimiter, smallJson, searchRoutes);
-    app.use('/api/offers-rury', apiLimiter, offersJson, offerRoutes);
-    app.use('/api/offers-studnie', apiLimiter, offersJson, (req, res, next) => {
-        req.url = '/studnie' + req.url;
-        offerRoutes(req, res, next);
-    });
+    app.use('/api/offers-rury', apiLimiter, requireAuthBeforeBody, offersJson, offerRoutes);
+    app.use(
+        '/api/offers-studnie',
+        apiLimiter,
+        requireAuthBeforeBody,
+        offersJson,
+        (req, res, next) => {
+            req.url = '/studnie' + req.url;
+            offerRoutes(req, res, next);
+        }
+    );
 
     app.use('/api/orders-studnie/production/search', apiLimiter, smallJson, productionSearchRoutes);
-    app.use('/api/orders-studnie', apiLimiter, largeJson, orderRoutes);
-    app.use('/api/orders-rury', apiLimiter, largeJson, ruryOrdersRoutes);
+    app.use('/api/orders-studnie', apiLimiter, requireAuthBeforeBody, largeJson, orderRoutes);
+    app.use('/api/orders-rury', apiLimiter, requireAuthBeforeBody, largeJson, ruryOrdersRoutes);
     app.use('/api/clients', apiLimiter, smallJson, clientRoutes);
     app.use('/api/audit', apiLimiter, smallJson, auditRoutes);
     app.use('/api/settings', apiLimiter, smallJson, settingsRoutes);
@@ -118,11 +138,17 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     app.use('/api/telemetry', smallJson, telemetryAiRoutes);
     // Dashboard AI (Knowledge Base, Learning Engine, Recommender) - admin only
     app.use('/api/telemetry', smallJson, telemetryAiDashboardRoutes);
-    app.use('/api/preco-pricing', apiLimiter, largeJson, precoPricingRoutes);
+    app.use('/api/preco-pricing', apiLimiter, requireAuthBeforeBody, largeJson, precoPricingRoutes);
     app.use('/api/feature-flags', apiLimiter, smallJson, featureFlagsRoutes);
     app.use('/api/telemetry', smallJson, aiMlRoutes); // ML prediction API
     app.use('/api/telemetry', smallJson, aiTransferRoutes); // P7: AI/ML Transfer Center (.sokml)
-    app.use('/api/pricelist-versions', apiLimiter, largeJson, pricelistVersionsRoutes);
+    app.use(
+        '/api/pricelist-versions',
+        apiLimiter,
+        requireAuthBeforeBody,
+        largeJson,
+        pricelistVersionsRoutes
+    );
     app.use('/api/export-combined', apiLimiter, smallJson, exportCombinedRoutes);
     app.use('/api/shares', apiLimiter, smallJson, sharesRoutes);
     app.use('/api/admin', apiLimiter, smallJson, adminRoutes);

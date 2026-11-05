@@ -38,11 +38,6 @@ jest.mock('../../src/utils/logger', () => ({
     }
 }));
 
-jest.mock('../../src/utils/fts5Sync', () => ({
-    syncFts5: jest.fn().mockResolvedValue(true),
-    removeFts5: jest.fn().mockResolvedValue(true)
-}));
-
 const app = express();
 app.use(express.json());
 app.use('/api/offers', offerRoutes);
@@ -110,30 +105,6 @@ describe('POST /:id/duplicate — atomowość (prawdziwa DB)', () => {
             })
         ).rejects.toThrow();
         expect(await prisma.offers_rel.findUnique({ where: { id: tmpId } })).toBeNull();
-    });
-
-    it('pad syncFts5 nie wycofuje commita (warn-only, wzorzec pliku)', async () => {
-        const { syncFts5 } = jest.requireMock('../../src/utils/fts5Sync') as {
-            syncFts5: jest.Mock;
-        };
-        // Rzeczywisty tryb awarii syncFts5: resolve false, nigdy throw.
-        syncFts5.mockResolvedValueOnce(false);
-        const res = await request(app)
-            .post(`/api/offers/${srcId}/duplicate`)
-            .set('x-user-id', 'user-id');
-
-        expect(res.statusCode).toBe(200);
-        const kopia = await prisma.offers_rel.findMany({
-            where: {
-                offer_number:
-                    (await prisma.offers_rel.findUnique({ where: { id: srcId } }))?.offer_number +
-                    '-KOPIA'
-            }
-        });
-        expect(kopia.length).toBeGreaterThanOrEqual(1);
-        const newId = kopia[kopia.length - 1].id;
-        await prisma.offer_items_rel.deleteMany({ where: { offerId: newId } });
-        await prisma.offers_rel.delete({ where: { id: newId } });
     });
 
     it('happy path: KOPIA z pozycjami w jednej transakcji', async () => {

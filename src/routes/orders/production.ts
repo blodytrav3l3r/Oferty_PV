@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
+import { searchAccessScope } from '../../utils/searchAccessScope';
 import {
     jsonTextSql,
     mapProductionOrderRow,
@@ -194,7 +195,7 @@ router.get('/index', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
-        const cacheKey = { scope: 'pz-index', _userId: authReq.user.id };
+        const cacheKey = { scope: 'pz-index', access: searchAccessScope(authReq.user) };
         const cached = searchCache.get('production', cacheKey);
         if (cached) return res.json(cached);
 

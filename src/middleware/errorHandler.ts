@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { recordDbBusy } from '../utils/metrics';
-import { mapPrismaError } from '../utils/prismaErrors';
+import { isPrismaWriteConflict, mapPrismaError } from '../utils/prismaErrors';
 
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
     // requestId z loggera (req.id) albo z nagłówka X-Request-Id — do korelacji logów z odpowiedzią.
@@ -26,7 +26,7 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     }
     // Prisma: klasyfikacja po kodzie, nie po treści komunikatu.
     // P2034 (konflikt transakcji) wymaga Retry-After, więc obsługa tutaj.
-    if ((err as { code?: string }).code === 'P2034') {
+    if (isPrismaWriteConflict(err)) {
         recordDbBusy();
         try {
             res.setHeader('Retry-After', 2);

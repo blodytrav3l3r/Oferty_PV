@@ -5,7 +5,6 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
 import { normalizeDate } from '../../helpers';
 import { searchCache } from '../../utils/searchCache';
-import { enqueueFtsSync, enqueueFtsRemove } from '../../utils/fts5Queue';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
@@ -605,13 +604,6 @@ router.post(
                 exists: boolean;
                 serverVersion: number | null;
                 clientVersion: number | null;
-                fts: {
-                    id: string;
-                    offer_number: string | null;
-                    clientName: string | null;
-                    investName: string | null;
-                    clientNumber: string | null;
-                };
                 auditAction: 'create' | 'update';
                 auditOld: Record<string, unknown> | null;
                 auditNew: Record<string, unknown>;
@@ -911,13 +903,6 @@ router.post(
                         // (tylko update ze stampem == ACTIVE).
                         ...(requestedStamp ? { pricelistVersionId: requestedStamp } : {})
                     },
-                    fts: {
-                        id: docId,
-                        offer_number: offerNumber ?? '',
-                        clientName,
-                        investName,
-                        clientNumber
-                    },
                     auditAction,
                     auditOld,
                     auditNew: o as Record<string, unknown>
@@ -957,10 +942,7 @@ router.post(
                 }
             }, HOT_TX_OPTS);
             const results: Record<string, unknown>[] = [];
-            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
-            // Bezpieczne: sync był post-commit warn-only, a search ma LIKE-fallback.
             for (const w of pending) {
-                enqueueFtsSync('studnie', w.fts);
                 results.push({ id: w.docId, ok: true });
             }
 
@@ -1080,13 +1062,6 @@ router.put(
                 historyStr: string;
                 updatedAt: string;
                 auditOld: Record<string, unknown> | null;
-                fts: {
-                    id: string;
-                    offer_number: string | null;
-                    clientName: string | null;
-                    investName: string | null;
-                    clientNumber: string | null;
-                };
             }> = [];
             for (const o of incoming) {
                 let docId = typeof o.id === 'string' ? o.id : '';
@@ -1286,13 +1261,6 @@ router.put(
                         // Awans pieczątki po „Przelicz do aktywnego"
                         // (tylko update ze stampem == ACTIVE).
                         ...(requestedPutStamp ? { pricelistVersionId: requestedPutStamp } : {})
-                    },
-                    fts: {
-                        id: docId,
-                        offer_number: (o.offer_number as string) || null,
-                        clientName,
-                        investName,
-                        clientNumber
                     }
                 });
             }
@@ -1326,10 +1294,6 @@ router.put(
                     );
                 }
             }, HOT_TX_OPTS);
-            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
-            for (const w of pendingPut) {
-                enqueueFtsSync('studnie', w.fts);
-            }
 
             searchCache.invalidateAll();
             res.json({ ok: true });
@@ -1373,10 +1337,7 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
         } catch (_e) {
             logger.warn('Offers', 'Uszkodzony JSON data podczas usuwania oferty studni', id);
         }
-        logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
-
         // P0-E: guard + kasowanie biznesowe w JEDNEJ transakcji.
-        // FTS to dane pochodne — po COMMIT, nigdy nie blokuje kasowania.
         // P1-E: także żywe zamówienia (nie tylko PZ) blokują kasowanie.
         try {
             await prisma.$transaction(async (tx) => {
@@ -1398,6 +1359,15 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
                     };
                 }
                 await tx.offers_studnie_rel.delete({ where: { id } });
+                await logAudit(
+                    'studnia_oferta',
+                    id,
+                    authReq.user?.id || '',
+                    'delete',
+                    null,
+                    oldData,
+                    tx
+                );
                 // P1-E: shares w tej samej tx (koniec okna crash→sierota).
                 try {
                     await tx.document_shares.deleteMany({
@@ -1419,9 +1389,6 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
             }
             throw e;
         }
-        // B1: tombstone FTS w tle — search ma LIKE-fallback, brak fałszywego braku.
-        enqueueFtsRemove('studnie', id);
-
         logger.info(
             'Offers',
             `Oferta studnie ${req.params.id} usunięta przez ${authReq.user?.username}`

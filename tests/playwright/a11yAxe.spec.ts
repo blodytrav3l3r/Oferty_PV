@@ -94,59 +94,43 @@ test.describe('a11y axe', () => {
     }
 
     test('kartoteka filtry mają dostępne nazwy (aria-label)', async ({ page }) => {
+        const login = await page.request.post('/api/auth/login', {
+            data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
+        });
+        expect(login.ok(), 'logowanie do Kartoteki').toBe(true);
         await page.goto('/app.html#/kartoteka');
-        // Kartoteka jest w iframe (SPA) — poczekaj na frame
-        const frame = await (async () => {
-            for (let i = 0; i < 30; i++) {
-                const f = page.frames().find((fr) => fr.url().includes('kartoteka.html'));
-                if (f) return f;
-                await page.waitForTimeout(300);
-            }
-            return null;
-        })();
-        if (frame) {
-            // Sprawdź bezpośrednio atrybuty w iframe (bardziej stabilne niż Axe include na page)
-            await frame.waitForSelector('#ka-user-filter', { timeout: 10000 });
-            const userFilterLabel = (
-                (await frame.getAttribute('#ka-user-filter', 'aria-label')) || ''
-            ).trim();
-            const dateFromLabel = (
-                (await frame.getAttribute('#ka-date-from', 'aria-label')) || ''
-            ).trim();
-            // Alternatywnie: label for — liczy się tylko niepusty tekst etykiety.
-            expect(
-                userFilterLabel ||
-                    (await frame.locator('#ka-user-filter').evaluate((el) => {
-                        const l = document.querySelector(`label[for="${el.id}"]`);
-                        return !!(l && (l.textContent || '').trim());
-                    })),
-                'Brak etykiety dla #ka-user-filter'
-            ).toBeTruthy();
-            expect(
-                dateFromLabel ||
-                    (await frame.locator('#ka-date-from').evaluate((el) => {
-                        const l = document.querySelector(`label[for="${el.id}"]`);
-                        return !!(l && (l.textContent || '').trim());
-                    })),
-                'Brak etykiety dla #ka-date-from'
-            ).toBeTruthy();
-            // Dodatkowo uruchom axe na całym frame (bez include — unika błędu No elements for include)
-            const results = await new AxeBuilder({ page })
-                .withTags(['wcag2a', 'wcag2aa'])
-                .analyze();
-            const missingLabel = results.violations.filter(
-                (v) => v.id === 'label' || v.id === 'aria-input-field-name'
-            );
-            expect(missingLabel).toEqual([]);
-        } else {
-            // Fallback: bez iframe — analizuj całą stronę
-            const results = await new AxeBuilder({ page })
-                .withTags(['wcag2a', 'wcag2aa'])
-                .analyze();
-            const missingLabel = results.violations.filter(
-                (v) => v.id === 'label' || v.id === 'aria-input-field-name'
-            );
-            expect(missingLabel).toEqual([]);
-        }
+        const frame = await waitForModuleFrame(page, 'kartoteka.html');
+        expect(frame, 'brak autoryzowanego iframe Kartoteki').not.toBeNull();
+        // Sprawdź bezpośrednio atrybuty w iframe (bardziej stabilne niż Axe include na page)
+        await frame.waitForSelector('#ka-user-filter', { timeout: 10000 });
+        const userFilterLabel = (
+            (await frame.getAttribute('#ka-user-filter', 'aria-label')) || ''
+        ).trim();
+        const dateFromLabel = (
+            (await frame.getAttribute('#ka-date-from', 'aria-label')) || ''
+        ).trim();
+        // Alternatywnie: label for — liczy się tylko niepusty tekst etykiety.
+        expect(
+            userFilterLabel ||
+                (await frame.locator('#ka-user-filter').evaluate((el) => {
+                    const l = document.querySelector(`label[for="${el.id}"]`);
+                    return !!(l && (l.textContent || '').trim());
+                })),
+            'Brak etykiety dla #ka-user-filter'
+        ).toBeTruthy();
+        expect(
+            dateFromLabel ||
+                (await frame.locator('#ka-date-from').evaluate((el) => {
+                    const l = document.querySelector(`label[for="${el.id}"]`);
+                    return !!(l && (l.textContent || '').trim());
+                })),
+            'Brak etykiety dla #ka-date-from'
+        ).toBeTruthy();
+        // Dodatkowo uruchom axe na całym frame (bez include — unika błędu No elements for include)
+        const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+        const missingLabel = results.violations.filter(
+            (v) => v.id === 'label' || v.id === 'aria-input-field-name'
+        );
+        expect(missingLabel).toEqual([]);
     });
 });

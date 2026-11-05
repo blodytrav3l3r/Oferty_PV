@@ -148,7 +148,7 @@ export interface MetricsSnapshot {
 
 export function getMetricsSnapshot(
     pdf: Record<string, unknown> = {},
-    fts: Record<string, unknown> = {}
+    fts: Record<string, unknown> = { queued: 0, done: 0, failed: 0, depth: 0 }
 ): MetricsSnapshot {
     const eps: MetricsSnapshot['endpoints'] = {};
     for (const [key, st] of endpoints) {

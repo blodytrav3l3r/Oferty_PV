@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.5 (2026-11-05)
+
+### Bug Fixes
+
+- **clients:** ochrona kartoteki klientów i kontaktów przed zapisem ze starszej sesji
+- **offers:** stabilna paginacja PostgreSQL i zakres dat wydruku łącznego
+- **security:** uszczelnienie blokad edycji, autoryzacji dużych żądań i kontekstu Docker
+
+### Maintenance
+
+- **prisma:** usunięcie kolejki FTS5 i weryfikacja indeksów GIN na PostgreSQL
+- **test:** izolacja schematu PostgreSQL raz na worker Jest oraz weryfikacja dostępności zalogowanej Kartoteki
+
 ### [1.56.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.3...v1.56.4) (2026-11-05)
 
 ### Features

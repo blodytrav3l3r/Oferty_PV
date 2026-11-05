@@ -1,78 +1,51 @@
-# Dependencies (will be installed fresh via npm ci)
-node_modules/
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!prisma.config.ts
+!server.ts
+!VERSION
+!LICENSE
+!THIRD-PARTY-NOTICES.md
+!src/
+!src/**
+!public/
+!public/**
+!prisma/
+!prisma/**
+!scripts/
+!scripts/**
+!data/
+data/**
+!data/seed_preco.json
+!data/seed_rury.json
+!data/seed_studnie.json
+!data/pricelists/
+data/pricelists/**
+!data/pricelists/active-pricelists.json
+
+# Keep local configuration and generated files out of allowed trees.
+**/.env*
+**/.claude/
+**/.codex/
+**/.agents/
+**/.opencode/
+**/graphify-out/
+**/node_modules/
+**/*.log
+**/*.tmp
+**/*.dump
+**/*.sqlite*
+**/*.db
 /.cache/
-
-# Build output (will be rebuilt in Docker)
-dist/
-
-# Generated Prisma client (will be regenerated)
-generated/
-
-# Git
-.git/
-.gitignore
-.gitattributes
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Environment (Docker sets its own)
-.env
-.env.local
-.env.*.local
-.env.??????
-.sok-postgres-installed
-.sok-postgres-installed.*
-data/install-admin-password.txt
-cutover/
-/scripts/export-active-pricelists.py
-/prisma/migrations/
-
-# Database files (template is created in Dockerfile)
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal
-*.db
-data/backup/
-data/backups/
-data/migration_backup/
-local_catalog.db
-
-# Lokalne źródłowe cenniki i firmowe wartości referencyjne nie są używane runtime.
+public/css/min/
+public/dist/
+scripts/archive/
 assets/
 data/price_defaults.json
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-
-# Test & coverage
-coverage/
-tests/
-
-# Docs & examples
-README.md
-CHANGELOG.md
-1 Pliki przykładowe/
-
-# CI/CD
-.github/
-
-# Gemini / AI
-.kilo/
-.gemini/
-
-# Python backend (separate service)
-well_configurator_backend/
-
-# Temp files
-*.tmp
-*.temp
-order_data.json
+data/install-admin-password.txt
+data/install-admin-password.*
+.sok-postgres-installed
+.sok-postgres-installed.*
+/scripts/export-active-pricelists.py
+/prisma/migrations/

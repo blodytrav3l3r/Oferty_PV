@@ -224,4 +224,3 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 | `npm run restore <plik-backupu>`                               | Przywróć bazę z backupu (automatycznie synchronizuje schemat)                                                          |
 | `npm run deploy` / `npm run rollback` / `npm run deploy:check` | Bezpieczny deploy produkcji / rollback / smoke check (patrz `docs/DEPLOY_UPDATE.md`)                                   |
 | `npm run prisma:deploy`                                        | Zastosuj migracje (baza z `_prisma_migrations`)                                                                        |
-| `npx prisma db push --accept-data-loss`                        | Sync schematu TYLKO dla baz legacy bez `_prisma_migrations`                                                            |

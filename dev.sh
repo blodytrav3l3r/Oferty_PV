@@ -68,22 +68,16 @@ else
 fi
 
 # 4. Schema DB
-log STEP "Krok 4/6 - Sprawdzanie schematu (7 tabel telemetry/AI)..."
-mkdir -p data
-set +e
-node scripts/check-db.js >/dev/null 2>&1
-CHECK_EXIT=$?
-set -e
-if [ "$CHECK_EXIT" -eq 0 ]; then
-    log OK "Schema OK"
-elif [ "$CHECK_EXIT" -eq 2 ]; then
-    log WARN "Baza pusta - uruchamiam seed..."
-    npx ts-node prisma/seed.ts
-    log OK "Seed zakonczony"
-else
-    log WARN "Schema niezgodny - db push --accept-data-loss"
-    npx prisma db push --accept-data-loss
+log STEP "Krok 4/6 - Sprawdzanie migracji i danych startowych PostgreSQL..."
+if ! npm run prisma:status; then
+    log ERROR "Sprawdz DATABASE_URL i stan migracji. Dla przygotowanej bazy dev uzyj npm run prisma:deploy."
+    exit 1
 fi
+if ! node --env-file-if-exists=.env scripts/check-db.js; then
+    log ERROR "Brakuje wymaganego schematu lub danych startowych. Dla nowej bazy dev uzyj bash install.sh."
+    exit 1
+fi
+log OK "Schemat i dane startowe PostgreSQL gotowe"
 
 # 5. Port 3000 - bezpieczny check (nie netstat, a lsof jeśli dostępne)
 log STEP "Krok 5/6 - Sprawdzanie portu 3000..."
@@ -111,7 +105,7 @@ else
     log OK "Port 3000 wolny"
 fi
 
-# Stare instancje bez listenera (DB lock) - jak wyzej, przed migracja/seedem.
+# Stare instancje bez listenera - sprawdz przed uruchomieniem kolejnego serwera.
 STALE_PIDS=$(bash scripts/find-stale-server.sh 2>/dev/null || true)
 if [ -n "$STALE_PIDS" ]; then
     log WARN "Znaleziono procesy node serwera S.O.K.: $(echo $STALE_PIDS | tr '\n' ' ')"

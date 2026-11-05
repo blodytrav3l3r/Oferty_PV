@@ -334,6 +334,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             stickyBg +
             ';"><input type="checkbox" class="excel-row-select cursor-accent-check" data-widx="' +
             wIdx +
+            '" aria-label="Zaznacz studnię w wierszu ' +
+            (idx + 1) +
             '"' +
             cbChecked +
             ' tabindex="-1"  /></td>';
@@ -376,7 +378,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td class="excel-td excel-col-name" style="background:' +
             stickyBg +
-            ';"><input type="text" value="' +
+            ';"><input type="text" aria-label="Nazwa studni w wierszu ' +
+            (idx + 1) +
+            '" value="' +
             escapeHtmlAttr(well.name) +
             '" data-csp="excelOnNameChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
@@ -387,7 +391,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td class="excel-td excel-col-rzwl" style="background:' +
             stickyBg +
-            ';"><input type="number" step="0.01" data-field="rzednaWlazu" value="' +
+            ';"><input type="number" step="0.01" data-field="rzednaWlazu" aria-label="Rzędna włazu w wierszu ' +
+            (idx + 1) +
+            '" value="' +
             (well.rzednaWlazu != null ? well.rzednaWlazu : '') +
             '" data-csp="excelOnRzednaChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
@@ -398,7 +404,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td class="excel-td excel-col-rzdn" style="background:' +
             stickyBg +
-            ';"><input type="number" step="0.01" data-field="rzednaDna" value="' +
+            ';"><input type="number" step="0.01" data-field="rzednaDna" aria-label="Rzędna dna w wierszu ' +
+            (idx + 1) +
+            '" value="' +
             (well.rzednaDna != null ? well.rzednaDna : '') +
             '" data-csp="excelOnRzednaChange" data-csp-on="change" data-csp-args="[' +
             wIdx +

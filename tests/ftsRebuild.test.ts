@@ -2,7 +2,9 @@ import request from 'supertest';
 import express from 'express';
 import prisma from '../src/prismaClient';
 import adminRouter from '../src/routes/admin';
-import { ftsSyncStatus, rebuildFts5, syncFts5 } from '../src/utils/fts5Sync';
+import { ftsSyncStatus } from '../src/utils/postgresOfferSearchIndexes';
+import { Prisma } from '../generated/prisma-postgres/client';
+import { buildWhereParts } from '../src/utils/searchUtils';
 
 const mockUser = {
     id: 'admin-1',
@@ -63,21 +65,38 @@ describe('PostgreSQL GIN search indexes', () => {
                 data: JSON.stringify({ offerNotes: 'indeks PostgreSQL' })
             }
         });
-        await syncFts5('rury', {
-            id: created.id,
-            offer_number: null,
-            clientName: created.clientName,
-            investName: created.investName
-        });
         const afterInsert = await ftsSyncStatus();
         expect(afterInsert.inSync).toBe(true);
         expect(afterInsert.tables.rury.offers).toBe(before.tables.rury.offers + 1);
 
         await prisma.offers_rel.delete({ where: { id: created.id } });
         await prisma.offers_rel.create({ data: { id: `${offerId}-rebuild` } });
-        const rebuilt = await rebuildFts5();
-        expect(rebuilt).toBeGreaterThanOrEqual(1);
         expect((await ftsSyncStatus()).inSync).toBe(true);
+    });
+
+    test('updates search results inside a PostgreSQL transaction and rolls back the change', async () => {
+        const id = offerId + '-transaction';
+        const filter = buildWhereParts({
+            q: 'przykladgin',
+            dateFrom: '',
+            dateTo: '',
+            userId: '',
+            cursor: '',
+            cursorId: '',
+            sort: 'createdAt',
+            order: 'desc'
+        });
+        const sql = Prisma.sql`SELECT id FROM offers_rel o WHERE o.id = ${id} AND ${Prisma.join(filter, ' AND ')}`;
+        await prisma.offers_rel.create({ data: { id, clientName: 'Pierwotny', data: '{}' } });
+        const rollback = new Error('fixture rollback');
+        await expect(
+            prisma.$transaction(async (tx) => {
+                await tx.offers_rel.update({ where: { id }, data: { clientName: 'przykladgin' } });
+                expect(await tx.$queryRaw(sql)).toEqual([{ id }]);
+                throw rollback;
+            })
+        ).rejects.toBe(rollback);
+        expect(await prisma.$queryRaw(sql)).toEqual([]);
     });
 
     test('admin status endpoint remains restricted to administrators', async () => {
@@ -92,11 +111,9 @@ describe('PostgreSQL GIN search indexes', () => {
         mockUser.role = 'admin';
     });
 
-    test('admin rebuild endpoint reindexes both PostgreSQL indexes', async () => {
-        await prisma.offers_rel.create({ data: { id: `${offerId}-endpoint` } });
+    test('runtime does not request PostgreSQL index DDL', async () => {
         const response = await request(createApp()).post('/api/admin/fts-rebuild');
-        expect(response.status).toBe(200);
-        expect(response.body.rows).toBeGreaterThanOrEqual(1);
-        expect(response.body.lastProgress).toBe(response.body.rows);
+        expect(response.status).toBe(409);
+        expect(response.body.code).toBe('POSTGRES_INDEX_MAINTENANCE_REQUIRED');
     });
 });

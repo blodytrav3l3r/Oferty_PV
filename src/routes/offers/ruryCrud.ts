@@ -5,7 +5,6 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
 import { normalizeDate } from '../../helpers';
 import { searchCache } from '../../utils/searchCache';
-import { enqueueFtsSync } from '../../utils/fts5Queue';
 import { buildRoleWhereClauseWithShares } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
@@ -237,13 +236,6 @@ router.post(
                 // Awans pieczątki po „Przelicz do aktywnego" (tylko update
                 // ze zgodnym stampem — zweryfikowany wyżej przez resolveActive).
                 advanceStamp: boolean;
-                fts: {
-                    id: string;
-                    offer_number: string;
-                    clientName: string | null;
-                    investName: string | null;
-                    clientNumber: string | null;
-                };
                 auditAction: 'create' | 'update';
                 auditOld: Record<string, unknown> | null;
                 auditNew: Record<string, unknown>;
@@ -453,13 +445,6 @@ router.post(
                           ((old.pricelistVersionId as string | null | undefined) ?? null)
                         : frozenRuryVersionId,
                     advanceStamp: !!requestedStamp,
-                    fts: {
-                        id: docId,
-                        offer_number: offerNumber ?? '',
-                        clientName,
-                        investName,
-                        clientNumber
-                    },
                     auditAction,
                     auditOld,
                     auditNew: {
@@ -566,11 +551,6 @@ router.post(
                     );
                 }
             }, HOT_TX_OPTS);
-            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
-            // Bezpieczne: sync był post-commit warn-only, a search ma LIKE-fallback.
-            for (const w of pendingWrites) {
-                enqueueFtsSync('rury', w.fts);
-            }
 
             logger.info(
                 'Offers',
@@ -745,13 +725,6 @@ router.put(
                 historyStr: string;
                 updatedAt: string;
                 auditOld: Record<string, unknown> | null;
-                fts: {
-                    id: string;
-                    offer_number: string | null;
-                    clientName: string | null;
-                    investName: string | null;
-                    clientNumber: string | null;
-                };
             }> = [];
             for (const o of incoming) {
                 let docId = o.id;
@@ -856,14 +829,7 @@ router.put(
                     stamp: requestedPutStamp || null,
                     historyStr: JSON.stringify(historyArr),
                     updatedAt: modifiedAt,
-                    auditOld,
-                    fts: {
-                        id: docId,
-                        offer_number: o.offer_number || null,
-                        clientName,
-                        investName,
-                        clientNumber
-                    }
+                    auditOld
                 });
             }
 
@@ -962,10 +928,6 @@ router.put(
                     }
                 }
             }, HOT_TX_OPTS);
-            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
-            for (const w of pendingPut) {
-                enqueueFtsSync('rury', w.fts);
-            }
 
             searchCache.invalidateAll();
             res.json({ ok: true });
@@ -1092,15 +1054,6 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                     }))
                 });
             }
-        });
-
-        // FTS poza transakcją, w tle (B1) — dryf łata kolejka/reconcile.
-        enqueueFtsSync('rury', {
-            id: newId,
-            offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
-            clientName: dupClientName,
-            investName: dupInvestName,
-            clientNumber: dupClientNumber
         });
 
         logAudit('offer', newId, authReq.user?.id || '', 'duplicate', null, { sourceId: id });

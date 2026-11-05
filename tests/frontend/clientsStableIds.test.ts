@@ -17,6 +17,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 function createServer() {
     const store = new Map();
     const wireIds = [];
+    let revision = 0;
+    const snapshot = () => ({
+        data: [...store.values()],
+        catalogRevision: revision.toString(16).padStart(64, '0')
+    });
     const put = (rows) => {
         const ids = [];
         for (const c of rows) {
@@ -25,10 +30,12 @@ function createServer() {
             store.set(docId, { ...(store.get(docId) || {}), ...c, id: docId });
         }
         wireIds.push(ids);
-        return { ok: true, count: ids.length };
+        revision++;
+        return { ok: true, count: ids.length, ...snapshot() };
     };
     return {
         put,
+        snapshot,
         wireIds,
         size: () => store.size,
         get: (id) => store.get(id),
@@ -51,18 +58,20 @@ function loadClientManager(server) {
         JSON,
         Object,
         Array,
+        clientsDb: [],
         authHeaders: () => ({}),
-        fetchWithTimeout: async () => {
-            throw new Error('not used here');
-        },
+        fetchWithTimeout: async () => ({ ok: true, json: async () => server.snapshot() }),
         logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() },
         showToast: jest.fn(),
         appConfirm: async () => false,
         closeModal: jest.fn(),
         fetch: async (_url, options) => {
             const body = JSON.parse(options.body);
-            server.put(body.data);
-            return { ok: true, json: async () => ({ ok: true }) };
+            if (body.catalogRevision !== server.snapshot().catalogRevision) {
+                return { ok: false, json: async () => ({ error: 'stale revision' }) };
+            }
+            const result = server.put(body.data);
+            return { ok: true, json: async () => result };
         }
     };
     sandbox.window = sandbox;
@@ -102,8 +111,9 @@ describe('D-009 client-side stable ids (frontend)', () => {
         const server = createServer();
         const sb = loadClientManager(server);
         const rows = [{ name: 'ACME Sp. z o.o.', nip: '', address: '' }];
-        expect(await sb.saveClientsDbData(rows)).toBe(true);
-        expect(await sb.saveClientsDbData(rows)).toBe(true);
+        sb.clientsDb = await sb.loadClientsDb();
+        expect(await sb.saveClientsDbData(rows, sb.clientsDb)).toMatchObject({ catalog: rows });
+        expect(await sb.saveClientsDbData(rows, sb.clientsDb)).toMatchObject({ catalog: rows });
         expect(server.size()).toBe(1);
         // Oba PUTy niosły to samo id — retry idempotentny.
         expect(server.wireIds[0]).toEqual(server.wireIds[1]);
@@ -114,9 +124,10 @@ describe('D-009 client-side stable ids (frontend)', () => {
         const server = createServer();
         const sb = loadClientManager(server);
         const rows = [{ id: 'c-1', name: 'Stara nazwa' }];
-        expect(await sb.saveClientsDbData(rows)).toBe(true);
+        sb.clientsDb = await sb.loadClientsDb();
+        expect(await sb.saveClientsDbData(rows, sb.clientsDb)).toMatchObject({ catalog: rows });
         rows[0].name = 'Nowa nazwa';
-        expect(await sb.saveClientsDbData(rows)).toBe(true);
+        expect(await sb.saveClientsDbData(rows, sb.clientsDb)).toMatchObject({ catalog: rows });
         expect(server.size()).toBe(1);
         expect(server.get('c-1').name).toBe('Nowa nazwa');
         expect(server.wireIds[1]).toEqual(['c-1']);

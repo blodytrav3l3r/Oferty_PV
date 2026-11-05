@@ -3,11 +3,16 @@ import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { deserializeSnapshot } from '../utils/snapshots';
+import { isTruncatedAuditPayload } from '../services/auditPayload';
 
 const router = express.Router();
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const INCOMPLETE_SNAPSHOT = {
+    error: 'Nie można odtworzyć dokumentu z niepełnego wpisu audytu.',
+    code: 'AUDIT_SNAPSHOT_INCOMPLETE'
+};
 
 /**
  * Allowlista entityType czytanych przez GET (źródło: literały logAudit
@@ -198,8 +203,9 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
                 currentState = JSON.parse(baseLogRow.newData);
             }
         } catch (_e) {
-            return res.status(500).json({ error: 'Blad deserializacji zapisu bazowego.' });
+            return res.status(422).json(INCOMPLETE_SNAPSHOT);
         }
+        if (isTruncatedAuditPayload(currentState)) return res.status(422).json(INCOMPLETE_SNAPSHOT);
 
         if (baseLogRow.id === targetLog.id) {
             return res.json({ data: currentState });
@@ -222,10 +228,13 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             if (!log.newData) continue;
             try {
                 const patch = JSON.parse(log.newData);
-                delete patch._diffMode;
-                currentState = { ...currentState, ...patch };
+                if (isTruncatedAuditPayload(patch))
+                    return res.status(422).json(INCOMPLETE_SNAPSHOT);
+                const { _diffMode, ...changes } = patch;
+                currentState = { ...currentState, ...changes };
             } catch (_e) {
-                logger.warn('AuditRebuild', `Pominieto uszkodzony JSON w logu: ${log.id}`);
+                logger.warn('AuditRebuild', `Uszkodzony JSON w logu: ${log.id}`);
+                return res.status(422).json(INCOMPLETE_SNAPSHOT);
             }
         }
 

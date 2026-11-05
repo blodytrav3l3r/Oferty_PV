@@ -347,15 +347,23 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
 
             expect(fields.status.textContent).toBe('Wczytano 0 ofert rur i 0 ofert studni.');
             expect(fetchCalls).toHaveLength(2);
-            expect(fetchCalls.every((url) => url.includes('dateFrom=2026-11-01'))).toBe(true);
+            const from = new Date(2026, 10, 1).toISOString();
+            expect(
+                fetchCalls.every(
+                    (url) => new URL(url, 'http://test').searchParams.get('dateFrom') === from
+                )
+            ).toBe(true);
             expect(fetchCalls.every((url) => !url.includes('dateTo='))).toBe(true);
 
             fields.dateTo.value = '2026-11-30';
             await sandbox.window.combinedFilter_action();
             expect(fetchCalls).toHaveLength(4);
-            expect(fetchCalls.slice(2).every((url) => url.includes('dateTo=2026-11-30'))).toBe(
-                true
-            );
+            const to = new Date(2026, 11, 1).toISOString();
+            expect(
+                fetchCalls
+                    .slice(2)
+                    .every((url) => new URL(url, 'http://test').searchParams.get('dateTo') === to)
+            ).toBe(true);
         });
 
         it('odrzuca wyniki żądania, gdy użytkownik zmieni daty przed odpowiedzią', async () => {

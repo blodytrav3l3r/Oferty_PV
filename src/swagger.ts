@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
                 cookieAuth: {
                     type: 'apiKey',
                     in: 'cookie',
-                    name: 'token'
+                    name: 'authToken'
                 }
             },
             schemas: {
@@ -56,7 +56,7 @@ const options: swaggerJsdoc.Options = {
             { name: 'System', description: 'Healthcheck i diagnostyka' }
         ]
     },
-    apis: ['./src/routes/**/*.ts']
+    apis: ['./src/app.ts', './src/routes/**/*.ts']
 };
 
 const swaggerSpec = swaggerJsdoc(options);

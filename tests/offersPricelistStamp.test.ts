@@ -35,11 +35,6 @@ jest.mock('../src/middleware/rateLimiters', () => ({
     WRITE_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next()
 }));
 
-jest.mock('../src/utils/fts5Sync', () => ({
-    syncFts5: jest.fn(async () => true),
-    removeFts5: jest.fn(async () => true)
-}));
-
 jest.mock('../src/utils/logger', () => ({
     logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() }
 }));

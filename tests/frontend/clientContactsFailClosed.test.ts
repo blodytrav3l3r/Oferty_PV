@@ -30,10 +30,27 @@ function loadCM(contactsGet) {
             return {
                 ok: true,
                 status: 200,
-                json: async () => ({ ok: true, updatedAt: '2026-10-13T00:00:00.000Z' })
+                json: async () => ({
+                    ok: true,
+                    updatedAt: '2026-10-13T00:00:00.000Z',
+                    data:
+                        u.endsWith('/api/clients') && options.method === 'PUT'
+                            ? JSON.parse(options.body).data
+                            : [...sandbox.clientsDb],
+                    catalogRevision: 'a'.repeat(64)
+                })
             };
         }
         if (/\/contacts(\?|$)/.test(u)) return contactsGet();
+        if (u.endsWith('/api/clients'))
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    data: [...sandbox.clientsDb],
+                    catalogRevision: 'a'.repeat(64)
+                })
+            };
         return { ok: true, status: 200, json: async () => ({}) };
     };
     const toasts = [];
@@ -109,7 +126,15 @@ function loadCMOffer({ catalogGet, offerRows }) {
             return {
                 ok: true,
                 status: 200,
-                json: async () => ({ ok: true, updatedAt: '2026-10-13T00:00:00.000Z' })
+                json: async () => ({
+                    ok: true,
+                    updatedAt: '2026-10-13T00:00:00.000Z',
+                    data:
+                        u.endsWith('/api/clients') && options.method === 'PUT'
+                            ? JSON.parse(options.body).data
+                            : [...sandbox.clientsDb],
+                    catalogRevision: 'a'.repeat(64)
+                })
             };
         }
         if (/\/contacts(\?|$)/.test(u)) return catalogGet();
@@ -117,7 +142,15 @@ function loadCMOffer({ catalogGet, offerRows }) {
             return {
                 ok: true,
                 status: 200,
-                json: async () => ({ ok: true, updatedAt: '2026-10-13T00:00:00.000Z' })
+                json: async () => ({
+                    ok: true,
+                    updatedAt: '2026-10-13T00:00:00.000Z',
+                    data:
+                        u.endsWith('/api/clients') && options.method === 'PUT'
+                            ? JSON.parse(options.body).data
+                            : [...sandbox.clientsDb],
+                    catalogRevision: 'a'.repeat(64)
+                })
             };
         }
         return { ok: true, status: 200, json: async () => ({}) };
@@ -193,7 +226,7 @@ describe('clientContacts offer→katalog: doklejanie zamiast replace', () => {
             offerRows: [{ name: 'Jan', phone: '600', email: '' }]
         });
         offerDom();
-        await sb.loadClientsDb();
+        sb.clientsDb = await sb.loadClientsDb();
         await sb.saveClientToDb();
         await flush();
         // Jan już w katalogu → brak zmian → zero PUT (delete niemożliwy).
@@ -210,7 +243,7 @@ describe('clientContacts offer→katalog: doklejanie zamiast replace', () => {
             offerRows: [{ name: 'Zbigniew', phone: '111', email: '' }]
         });
         offerDom();
-        await sb.loadClientsDb();
+        sb.clientsDb = await sb.loadClientsDb();
         await sb.saveClientToDb();
         await flush();
         expect(syncCalls).toHaveLength(1);
@@ -228,19 +261,68 @@ describe('clientContacts offer→katalog: doklejanie zamiast replace', () => {
             offerRows: [{ name: 'Jan', phone: '600', email: '' }]
         });
         offerDom();
-        await sb.loadClientsDb();
+        sb.clientsDb = await sb.loadClientsDb();
         await sb.saveClientToDb();
         await flush();
         expect(syncCalls).toHaveLength(0);
         expect(toasts.some((t) => t.type === 'warning' && /katalog/i.test(t.msg))).toBe(true);
     });
+
+    test('zapis z oferty zachowuje kontakt dodany po zapełnieniu cache', async () => {
+        const catalogGet = jest
+            .fn()
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ items: CATALOG_TWO.slice(0, 1) })
+            })
+            .mockResolvedValue({ ok: true, json: async () => ({ items: CATALOG_TWO }) });
+        const { sb, syncCalls } = loadCMOffer({
+            catalogGet,
+            offerRows: [{ name: 'Zbigniew', phone: '111', email: '' }]
+        });
+        offerDom();
+        await sb.fetchClientContacts('c-9');
+        sb.clientsDb = await sb.loadClientsDb();
+
+        await sb.saveClientToDb();
+        await flush();
+
+        expect(catalogGet).toHaveBeenCalledTimes(2);
+        expect(syncCalls).toHaveLength(1);
+        expect(syncCalls[0].contacts.map((contact) => contact.name)).toEqual([
+            'Jan',
+            'Ewa',
+            'Zbigniew'
+        ]);
+    });
 });
 
 describe('clientContacts fail-closed (frontend)', () => {
+    test('edycja klienta wymaga potwierdzenia kontaktów z odświeżonego katalogu', async () => {
+        const catalogGet = jest
+            .fn()
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ items: CATALOG_TWO.slice(0, 1) })
+            })
+            .mockResolvedValue({ ok: true, json: async () => ({ items: CATALOG_TWO }) });
+        const { sb, syncCalls } = loadCM(catalogGet);
+        document.body.innerHTML = '<div id="clients-db-list"></div>';
+        sb.clientsDb = await sb.loadClientsDb();
+        await sb.fetchClientContacts('c-1');
+        sb.clientsDb = await sb.loadClientsDb();
+        sb.editClientInDb('c-1');
+
+        await sb.saveEditedClientInDb('c-1');
+
+        expect(syncCalls).toHaveLength(0);
+        expect(document.querySelectorAll('#edit-client-contacts .ccc-row')).toHaveLength(2);
+    });
+
     test('failed-load katalogu → Zapisz zablokowany, zero PUT /contacts/sync', async () => {
         const { sb, syncCalls, toasts } = loadCM(failGet);
         editorDom();
-        await sb.loadClientsDb();
+        sb.clientsDb = await sb.loadClientsDb();
         await sb.saveEditedClientInDb('c-1');
         expect(syncCalls).toHaveLength(0);
         expect(toasts.some((t) => t.type === 'error' && /katalog/i.test(t.msg))).toBe(true);
@@ -257,7 +339,7 @@ describe('clientContacts fail-closed (frontend)', () => {
             json: async () => ({ ok: true, items })
         }));
         editorDom();
-        await sb.loadClientsDb();
+        sb.clientsDb = await sb.loadClientsDb();
         await sb.saveEditedClientInDb('c-1');
         // Bez weryfikacji świeżych wierszy: zero PUT.
         expect(syncCalls).toHaveLength(0);

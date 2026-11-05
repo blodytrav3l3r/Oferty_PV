@@ -31,7 +31,13 @@ RUN rm -rf /app/.cache/puppeteer/chrome && \
     ./node_modules/.bin/puppeteer browsers install chrome && \
     chown -R node:node /app/.cache/puppeteer
 
-COPY . .
+COPY tsconfig.json prisma.config.ts server.ts VERSION LICENSE THIRD-PARTY-NOTICES.md ./
+COPY src/ ./src/
+COPY public/ ./public/
+COPY prisma/ ./prisma/
+COPY scripts/ ./scripts/
+COPY data/seed_preco.json data/seed_rury.json data/seed_studnie.json ./data/
+COPY data/pricelists/active-pricelists.json ./data/pricelists/
 
 # Build potrzebuje URL ze względu na prisma.config.ts; to syntaktyczny adres
 # bez sekretu i nie jest utrwalany w obrazie. Runtime wymaga DATABASE_URL z Compose.

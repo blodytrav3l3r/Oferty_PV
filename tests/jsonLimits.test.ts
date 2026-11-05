@@ -7,7 +7,11 @@
 
 // Mock auth middleware
 jest.mock('../src/middleware/auth', () => ({
-    requireAuth: (req: any, _res: any, next: any) => {
+    requireAuth: (req: any, res: any, next: any) => {
+        if (req.headers['x-test-anonymous']) {
+            res.status(401).json({ error: 'Sesja wymagana' });
+            return;
+        }
         if (!req.user) {
             req.user = { id: 'user-id', role: 'admin', username: 'admin' };
         }
@@ -106,6 +110,24 @@ describe('P1.3 limity JSON per-route', () => {
 
     beforeEach(() => {
         app = createTestApp();
+    });
+
+    it.each([
+        '/api/products',
+        '/api/products-studnie',
+        '/api/offers-rury',
+        '/api/offers-studnie',
+        '/api/orders-studnie',
+        '/api/orders-rury',
+        '/api/preco-pricing',
+        '/api/pricelist-versions'
+    ])('odrzuca anonimowe żądanie przed parsowaniem JSON na %s', async (route) => {
+        const response = await request(app)
+            .post(route)
+            .set('x-test-anonymous', '1')
+            .set('Content-Type', 'application/json')
+            .send('{');
+        expect(response.statusCode).toBe(401);
     });
 
     it('duży payload na małej trasie → 413 z JSON', async () => {

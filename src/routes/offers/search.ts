@@ -7,9 +7,12 @@ import {
 } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { searchCache } from '../../utils/searchCache';
+import { searchAccessScope } from '../../utils/searchAccessScope';
 import { parseJsonField } from '../../helpers';
 import {
     parseSearchParams,
+    isValidSearchCursor,
+    normalizedCreatedAtSql,
     buildSearchOrderBy,
     buildWhereParts,
     buildOrderStatusSql,
@@ -34,12 +37,6 @@ router.get('/', requireAuth, async (req, res) => {
             return res.status(401).json({ error: 'Nieautoryzowany' });
         }
 
-        // Sprawdź cache
-        const cached = searchCache.get(user.id, params as unknown as Record<string, unknown>);
-        if (cached) {
-            return res.json(cached);
-        }
-
         // Tryb follow-up: sortowanie po zaległości, nie po createdAt —
         // kursor paginacji (createdAt) jest wtedy niezgodny, więc go pomijamy
         // (v1: widok "Do kontaktu" bez głębokiej paginacji, hasMore działa).
@@ -50,6 +47,13 @@ router.get('/', requireAuth, async (req, res) => {
             params.nextContactFrom !== '' ||
             params.nextContactTo !== '' ||
             params.sort === 'followup';
+        if (!followupMode && !isValidSearchCursor(params)) {
+            return res.status(400).json({ error: 'Nieprawidłowy kursor wyszukiwania' });
+        }
+        const cacheKey = { ...params, access: searchAccessScope(user) };
+        const cached = searchCache.get(user.id, cacheKey);
+        if (cached) return res.json(cached);
+
         const nowIso = new Date().toISOString();
 
         // Filtr dat obejmuje też daty zamówień (OR EXISTS per gałąź UNION).
@@ -61,6 +65,7 @@ router.get('/', requireAuth, async (req, res) => {
                 userId: params.userId,
                 cursor: followupMode ? '' : params.cursor,
                 cursorId: followupMode ? '' : params.cursorId,
+                cursorType: followupMode ? undefined : params.cursorType,
                 sort: params.sort,
                 order: params.order,
                 orderStatus: params.orderStatus,
@@ -135,7 +140,10 @@ router.get('/', requireAuth, async (req, res) => {
         const limitVal = Math.min(params.limit, SEARCH_LIMIT_MAX);
 
         const sql = Prisma.sql`
-            SELECT * FROM (
+            SELECT *, to_char(
+                ${normalizedCreatedAtSql()} AT TIME ZONE 'UTC',
+                'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'
+            ) AS "_cursorDate" FROM (
                 SELECT
                     o.id, "userId", "clientId", state, "createdAt", "updatedAt",
                     "offer_number",
@@ -271,14 +279,17 @@ router.get('/', requireAuth, async (req, res) => {
 
         let nextCursor: string | null = null;
         let nextCursorId: string | null = null;
+        let nextCursorType: RawOfferRow['_type'] | null = null;
         if (hasMore && dataRows.length > 0 && !followupMode) {
             const last = dataRows[dataRows.length - 1];
-            nextCursor = last.createdAt;
+            nextCursor =
+                (params.sort === 'offer_number' ? last.offer_number : last._cursorDate) ?? '';
             nextCursorId = last.id;
+            nextCursorType = last._type;
         }
 
         let totalCount: number | null = null;
-        if (!params.cursor) {
+        if (followupMode || !params.cursorId) {
             // Aliasy o/s jak w głównym SELECT — wymaga ich OR EXISTS z filtra dat.
             const countSql = buildOffersCountSql(whereSqlRury, whereSqlStudnie, combinedWhere);
             const countResult = (await prisma.$queryRaw(countSql)) as { cnt: number | bigint }[];
@@ -292,10 +303,11 @@ router.get('/', requireAuth, async (req, res) => {
             totalCount,
             hasMore,
             nextCursor,
-            nextCursorId
+            nextCursorId,
+            nextCursorType
         };
 
-        searchCache.set(user.id, params as unknown as Record<string, unknown>, result);
+        searchCache.set(user.id, cacheKey, result);
         res.json(result);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

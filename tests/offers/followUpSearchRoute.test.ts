@@ -80,6 +80,7 @@ function row(id: string, createdAt: string) {
         clientId: null,
         state: 'draft',
         createdAt,
+        _cursorDate: createdAt,
         updatedAt: createdAt,
         offer_number: 'N-' + id,
         history: '[]',
@@ -108,6 +109,31 @@ beforeEach(() => {
 });
 
 describe('search route: hasMore/nextCursor/totalCount', () => {
+    it('returns the offer number as the cursor when sorting by number', async () => {
+        const query = prisma.$queryRaw as jest.Mock;
+        query.mockResolvedValueOnce([
+            row('2', '2026-10-01T10:00:00.000Z'),
+            row('1', '2026-10-02T10:00:00.000Z')
+        ]);
+        query.mockResolvedValueOnce([{ cnt: 2 }]);
+        const result = await request(createApp()).get(
+            '/api/offers/search?limit=1&sort=offer_number'
+        );
+
+        expect(result.status).toBe(200);
+        expect(result.body.nextCursor).toBe('N-2');
+        expect(result.body.nextCursorId).toBe('2');
+        expect(result.body.nextCursorType).toBe('rury');
+    });
+
+    it('rejects a malformed date cursor before querying PostgreSQL', async () => {
+        const result = await request(createApp()).get(
+            '/api/offers/search?cursor=no-date&cursorId=1'
+        );
+
+        expect(result.status).toBe(400);
+        expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    });
     it('tryb zwykly: wiecej niz limit -> hasMore=true + kursor; mniej -> false', async () => {
         const q = prisma.$queryRaw as jest.Mock;
         // limit=2, wierszy 3 -> hasMore, slice do 2.

@@ -19,6 +19,9 @@ export default defineConfig({
         // PLAYWRIGHT_BASE_URL: testy na izolowanym serwerze :3199,
         // żeby nie dotykać deweloperskiego :3000 ani prod DB.
         baseURL: process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${E2E_PORT}`,
+        launchOptions: {
+            executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+        },
         trace: 'on-first-retry',
         screenshot: 'only-on-failure'
     },

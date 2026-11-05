@@ -146,6 +146,9 @@ jobs:
             - name: Coverage gate (blocking, progi scripts/coverage-check.mjs)
               run: node scripts/coverage-check.mjs --fail
 
+            - name: Kontrakty instalatorów i PostgreSQL
+              run: npm run test:installer-linux
+
             - name: Upload coverage
               uses: actions/upload-artifact@v4
               with:
@@ -925,9 +928,8 @@ jobs:
               if: env.RENDER_PROD_DEPLOY_HOOK != ''
               run: |
                   set -o pipefail
-                  RESP=$(curl -sf -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}")
-                  echo "  Triggered: $RESP"
-                  echo "DEPLOY_STATUS=DEPLOYED" >> "$GITHUB_STEP_SUMMARY"
+                  curl -sSf -o /dev/null -X POST "$RENDER_PROD_DEPLOY_HOOK"
+                  echo "DEPLOY_STATUS=TRIGGERED (readiness not verified)" >> "$GITHUB_STEP_SUMMARY"
 
             - name: Skip — brak RENDER_PROD_DEPLOY_HOOK (NOT_CONFIGURED, nie DEPLOYED)
               if: env.RENDER_PROD_DEPLOY_HOOK == ''

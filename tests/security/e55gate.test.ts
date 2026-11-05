@@ -1,3 +1,4 @@
+import { getClientCatalogRevision } from '../../src/routes/clients/catalogRevision';
 /**
  * E5.5 — security & contract gate dla endpointów zmienionych w E2-E4.
  *
@@ -504,7 +505,10 @@ describe('E5.5 gate: role i ownership', () => {
         const res = await request(app)
             .put('/api/clients')
             .set(user)
-            .send({ data: [{ id: 'c-own', name: 'Cudzy' }] });
+            .send({
+                data: [{ id: 'c-own', name: 'Cudzy' }],
+                catalogRevision: getClientCatalogRevision([{ id: 'c-own', userId: 'owner-db' }])
+            });
         expect(res.status).toBe(200);
         // Batch: owner z DB ląduje w parametrach jednego bulk UPSERT ($executeRaw).
         const seen = JSON.stringify(txMock.$executeRaw.mock.calls);

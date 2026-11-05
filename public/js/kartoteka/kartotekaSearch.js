@@ -117,7 +117,8 @@ export default {
         if (this.abortController) {
             this.abortController.abort();
         }
-        this.abortController = new AbortController();
+        const controller = new AbortController();
+        this.abortController = controller;
 
         // silent = praca w tle (auto-refresh, „Pokaż więcej"): nigdy spinnera
         // ani ekranu błędu na wierzchu istniejącej listy.
@@ -130,7 +131,7 @@ export default {
                 ? authHeaders()
                 : { 'Content-Type': 'application/json' };
 
-        const isLoadMore = !!params.cursor;
+        const isLoadMore = !!params.cursorId;
         const qs = new URLSearchParams({
             q: params.q || '',
             type: params.type || 'all',
@@ -145,18 +146,19 @@ export default {
             order: params.order || 'desc',
             cursor: params.cursor || '',
             cursorId: params.cursorId || '',
+            cursorType: params.cursorType || '',
             t: String(Date.now())
         }).toString();
 
         try {
             const resp = await fetch('/api/offers/search?' + qs, {
                 headers,
-                signal: this.abortController.signal
+                signal: controller.signal
             });
 
             if (!resp.ok) {
                 const errBody = await resp.json().catch(() => ({}));
-                if (silent) return;
+                if (silent || this.abortController !== controller) return;
                 if (resp.status === 429 && Number(errBody.retryAfter) > 0) {
                     this.showError(
                         errBody.error || window.httpErrorMessage(429),
@@ -167,24 +169,28 @@ export default {
                 throw new Error(errBody.error || window.httpErrorMessage(resp.status));
             }
             const json = await resp.json();
+            if (this.abortController !== controller) return;
 
             if (isLoadMore) {
                 // Dedupe po id: kursor na rosnącej tabeli przepuszcza wiersze między
                 // stronami (świeży wiersz doklejony na końcu + stary odpowiednik
                 // na poprzedniej stronie) — nowszy (świeższy fetch) wygrywa.
-                const seen = new Set((json.data || []).map((o) => o && o.id));
-                const kept = (this.searchResults.items || []).filter((o) => !o || !seen.has(o.id));
+                const key = (o) => o && JSON.stringify([o.type, o.id]);
+                const seen = new Set((json.data || []).map(key));
+                const kept = (this.searchResults.items || []).filter((o) => !seen.has(key(o)));
                 this.searchResults.items = [...kept, ...(json.data || [])];
                 this.searchResults.hasMore = json.hasMore;
                 this.searchResults.nextCursor = json.nextCursor;
                 this.searchResults.nextCursorId = json.nextCursorId;
+                this.searchResults.nextCursorType = json.nextCursorType;
             } else {
                 this.searchResults = {
                     items: json.data || [],
                     totalCount: json.totalCount || 0,
                     hasMore: json.hasMore,
                     nextCursor: json.nextCursor,
-                    nextCursorId: json.nextCursorId
+                    nextCursorId: json.nextCursorId,
+                    nextCursorType: json.nextCursorType
                 };
                 // Po nowym wyszukiwaniu odśwież listę opiekunów
                 this.populateUserFilter();
@@ -202,11 +208,11 @@ export default {
             }
             this.updateOfferCounter(this.searchResults.items.length, this.searchResults.totalCount);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || this.abortController !== controller) return;
             logger.error('kartotekaUi', 'Błąd wyszukiwania ofert:', error);
             if (!silent) this.showError(error.message || 'Błąd sieci');
         } finally {
-            this.isLoading = false;
+            if (this.abortController === controller) this.isLoading = false;
         }
     },
 
@@ -222,6 +228,7 @@ export default {
         const params = this.buildSearchParams();
         params.cursor = this.searchResults.nextCursor;
         params.cursorId = this.searchResults.nextCursorId;
+        params.cursorType = this.searchResults.nextCursorType;
         params.limit = 50;
 
         await this.searchOffers(params, false, { silent: true });

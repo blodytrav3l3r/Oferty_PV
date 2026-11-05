@@ -59,10 +59,11 @@ describe('P1.1 load status semantics', () => {
 });
 
 describe('P1.2 deploy status semantics', () => {
-    it('deploy produkcyjny raportuje DEPLOYED przy triggerrze', () => {
+    it('hook produkcyjny raportuje TRIGGERED bez potwierdzenia gotowości', () => {
         const idx = CI.indexOf('deploy-production');
         const section = CI.slice(idx);
-        expect(section).toMatch(/DEPLOY_STATUS=DEPLOYED/);
+        expect(section).toMatch(/DEPLOY_STATUS=TRIGGERED \(readiness not verified\)/);
+        expect(section).not.toMatch(/DEPLOY_STATUS=DEPLOYED/);
         expect(section).toMatch(/GITHUB_STEP_SUMMARY/);
     });
 
@@ -77,7 +78,7 @@ describe('P1.2 deploy status semantics', () => {
     it('curl hooka z flaga -f: blad hooka to FAILED joba (nie silent success)', () => {
         const idx = CI.indexOf('Deploy to Render');
         const section = CI.slice(idx, idx + 1500);
-        expect(section).toMatch(/curl -sf/);
+        expect(section).toMatch(/curl -sSf -o \/dev\/null -X POST "\$RENDER_PROD_DEPLOY_HOOK"/);
         expect(section).toMatch(/pipefail/);
     });
 });

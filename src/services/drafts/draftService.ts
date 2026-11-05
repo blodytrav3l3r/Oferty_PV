@@ -93,32 +93,51 @@ export async function getDraft(
     docId: string,
     now: number = Date.now()
 ): Promise<DraftRecord | null> {
-    const row = await prisma.drafts.findUnique({
-        where: { userId_kind_docId: { userId, kind, docId } }
-    });
-    if (!row) return null;
-    if (row.expiresAt <= nowIso(now)) {
-        await prisma.drafts.deleteMany({ where: { userId, kind, docId } });
-        return null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+        const row = await prisma.drafts.findUnique({
+            where: { userId_kind_docId: { userId, kind, docId } }
+        });
+        if (!row) return null;
+
+        if (row.expiresAt > nowIso(now)) {
+            const payload = parseDraftPayload(row.payload);
+            if (payload !== undefined) {
+                return {
+                    kind: row.kind,
+                    docId: row.docId,
+                    baseVersion: row.baseVersion,
+                    bytes: row.bytes,
+                    version: row.version,
+                    updatedAt: row.updatedAt,
+                    expiresAt: row.expiresAt,
+                    payload
+                };
+            }
+        }
+
+        // Usuń tylko odczytaną wersję. Równoległy zapis może odświeżyć draft.
+        const result = await prisma.drafts.deleteMany({
+            where: {
+                userId,
+                kind,
+                docId,
+                version: row.version,
+                updatedAt: row.updatedAt,
+                expiresAt: row.expiresAt,
+                payload: row.payload
+            }
+        });
+        if (result.count > 0) return null;
     }
-    let payload: unknown = null;
+    return null;
+}
+
+function parseDraftPayload(value: string): unknown {
     try {
-        payload = JSON.parse(row.payload);
+        return JSON.parse(value);
     } catch {
-        // Uszkodzony wiersz nie może udawać poprawnego draftu.
-        await prisma.drafts.deleteMany({ where: { userId, kind, docId } });
-        return null;
+        return undefined;
     }
-    return {
-        kind: row.kind,
-        docId: row.docId,
-        baseVersion: row.baseVersion,
-        bytes: row.bytes,
-        version: row.version,
-        updatedAt: row.updatedAt,
-        expiresAt: row.expiresAt,
-        payload
-    };
 }
 
 /**

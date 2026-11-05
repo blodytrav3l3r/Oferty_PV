@@ -1,3 +1,4 @@
+import { getClientCatalogRevision } from '../src/routes/clients/catalogRevision';
 import request from 'supertest';
 import express from 'express';
 import clientRoutes from '../src/routes/clients';
@@ -6,7 +7,7 @@ import prisma from '../src/prismaClient';
 // N+1 w PUT /api/clients (sprzed batcha):
 //   1x SELECT + 2x NULL-uj (gdy są delety) + D x DELETE + U x upsert.
 // Po batchu: 1x SELECT + 2x NULL-uj + 1x deleteMany + 1x multi-row UPSERT,
-// czyli stałe ≤6 roundtripów niezależnie od D i U.
+// czyli stałe ≤7 roundtripów niezależnie od D i U.
 const mockUser: any = { id: 'admin-1', role: 'admin', subUsers: [] };
 
 jest.mock('../src/middleware/auth', () => ({
@@ -86,7 +87,7 @@ beforeEach(() => {
 });
 
 describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
-    it('50 upsertów + 10 deletów = 6 roundtripów (przed: 63; +1 cascade kontaktów)', async () => {
+    it('50 upsertów + 10 deletów = 7 roundtripów (przed: 63; +1 cascade kontaktów)', async () => {
         const app = createApp();
         const existing = [
             ...Array.from({ length: 50 }, (_, i) => ({ id: `c-${i}`, userId: 'admin-1' })),
@@ -99,12 +100,15 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
 
         const res = await request(app)
             .put('/api/clients')
-            .send({ data: existing.slice(0, 50).map((c) => ({ id: c.id, name: `K ${c.id}` })) });
+            .send({
+                catalogRevision: getClientCatalogRevision(existing),
+                data: existing.slice(0, 50).map((c) => ({ id: c.id, name: `K ${c.id}` }))
+            });
 
         expect(res.statusCode).toBe(200);
         expect(res.body).toMatchObject({ ok: true, count: 50 });
         expect(typeof res.body.updatedAt).toBe('string');
-        expect(txMock.$queryRaw).toHaveBeenCalledTimes(1);
+        expect(txMock.$queryRaw).toHaveBeenCalledTimes(2);
         expect(txMock.offers_rel.updateMany).toHaveBeenCalledTimes(1);
         expect(txMock.offers_studnie_rel.updateMany).toHaveBeenCalledTimes(1);
         expect(txMock.clients_rel.deleteMany).toHaveBeenCalledTimes(1);
@@ -116,10 +120,10 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
             where: { clientId: { in: existing.slice(50).map((c) => c.id) } }
         });
         expect(txMock.$executeRaw).toHaveBeenCalledTimes(1);
-        expect(roundtrips(txMock)).toBe(6);
+        expect(roundtrips(txMock)).toBe(7);
     });
 
-    it('sam upsert bez deletów = 2 roundtripy, zero zapisów kasujących', async () => {
+    it('sam upsert bez deletów = 3 roundtripy, zero zapisów kasujących', async () => {
         const app = createApp();
         const existing = Array.from({ length: 20 }, (_, i) => ({
             id: `c-${i}`,
@@ -132,17 +136,20 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
 
         const res = await request(app)
             .put('/api/clients')
-            .send({ data: existing.map((c) => ({ id: c.id, name: `K ${c.id}` })) });
+            .send({
+                catalogRevision: getClientCatalogRevision(existing),
+                data: existing.map((c) => ({ id: c.id, name: `K ${c.id}` }))
+            });
 
         expect(res.statusCode).toBe(200);
         expect(res.body).toMatchObject({ ok: true, count: 20 });
         expect(typeof res.body.updatedAt).toBe('string');
-        expect(txMock.$queryRaw).toHaveBeenCalledTimes(1);
+        expect(txMock.$queryRaw).toHaveBeenCalledTimes(2);
         expect(txMock.$executeRaw).toHaveBeenCalledTimes(1);
         expect(txMock.offers_rel.updateMany).not.toHaveBeenCalled();
         expect(txMock.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
         expect(txMock.clients_rel.deleteMany).not.toHaveBeenCalled();
-        expect(roundtrips(txMock)).toBe(2);
+        expect(roundtrips(txMock)).toBe(3);
     });
 
     it('bulk UPSERT niesie wszystkie wiersze w jednym statement (50 krotek VALUES)', async () => {
@@ -158,7 +165,10 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
 
         await request(app)
             .put('/api/clients')
-            .send({ data: existing.map((c) => ({ id: c.id, name: `K ${c.id}` })) });
+            .send({
+                catalogRevision: getClientCatalogRevision(existing),
+                data: existing.map((c) => ({ id: c.id, name: `K ${c.id}` }))
+            });
 
         const [query] = txMock.$executeRaw.mock.calls[0];
         expect(query.text).toMatch(/ON CONFLICT \("id"\) DO UPDATE/);

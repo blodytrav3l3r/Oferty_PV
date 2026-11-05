@@ -25,10 +25,6 @@ jest.mock('../src/middleware/rateLimiters', () => ({
     WRITE_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next()
 }));
 
-jest.mock('../src/utils/fts5Sync', () => ({
-    syncFts5: jest.fn(async () => true)
-}));
-
 jest.mock('../src/services/auditService', () => ({
     logAudit: jest.fn()
 }));

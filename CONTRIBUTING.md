@@ -107,28 +107,12 @@ tej samej instalacji; szczegóły: `docs/instalacja-przenoszenie-systemu.md`.
 
 ## Aktualizacja istniejącej instalacji (schemat bazy)
 
-1. Zawsze najpierw backup: `npm run backup`
-2. Pobierz nowy kod i zależności: `git pull`, `npm ci`
-3. Zsynchronizuj schemat — domyślnie `npx prisma migrate deploy`; `db push` wyłącznie
-   dla baz legacy:
-    - **Baza legacy utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
-      `npx prisma db push --accept-data-loss`
-      (komenda `migrate deploy` na niej NIE zadziała — baza nie ma historii migracji).
-    - **Baza z historią migracji** (`_prisma_migrations` istnieje):
-      `npx prisma migrate deploy`
-    - Jak sprawdzić: `npx prisma migrate status` — jeśli pokazuje wszystkie
-      migracje jako niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
-4. Uruchom serwer (`start.bat`).
+1. Wykonaj i zweryfikuj backup PostgreSQL zgodnie z [procedurą wdrożenia](docs/DEPLOYMENT.md).
+2. Pobierz nowy kod i zainstaluj zależności przez `npm ci`.
+3. Sprawdź historię migracji przez `npm run prisma:status`. Jeśli istniejąca baza zawiera dane bez kanonicznej historii migracji, przerwij aktualizację i wyjaśnij rozbieżność na kopii.
+4. Zastosuj wersjonowane migracje PostgreSQL przez `npm run prisma:deploy`, używając roli migratora. Uruchom serwer i sprawdź gotowość aplikacji zgodnie z [procedurą aktualizacji](docs/DEPLOY_UPDATE.md).
 
-> Migracja `20260815000000_baseline` zawiera indeksy na `ai_telemetry_logs`
-> (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Indeksy są
-> idempotentne i powstają automatycznie przez `migrate deploy` (definicje w `schema.prisma`).
-> Na bazie bez `migrate deploy` (legacy db push) można je utworzyć ręcznie:
->
-> ```sql
-> CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId");
-> CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId");
-> ```
+Uruchomienie `bash dev.sh` sprawdza status migracji oraz schemat i dane startowe PostgreSQL. Świeżą bazę deweloperską przygotowuje `bash install.sh`.
 
 ## Dependabot
 

@@ -3,6 +3,7 @@
  */
 import request from 'supertest';
 import express from 'express';
+import { errorHandler } from '../src/middleware/errorHandler';
 
 type ShareRow = {
     id: string;
@@ -24,6 +25,10 @@ function matches(row: ShareRow, where: any): boolean {
 
 const sharesModel = {
     count: jest.fn(async ({ where }: any) => store.shares.filter((r) => matches(r, where)).length),
+    findUnique: jest.fn(
+        async ({ where }: any) => store.shares.find((row) => matches(row, where)) ?? null
+    ),
+    delete: jest.fn(),
     findMany: jest.fn(async ({ where, select }: any) => {
         const rows = store.shares.filter((r) => matches(r, where));
         if (!select) return rows.map((r) => ({ ...r }));
@@ -111,6 +116,7 @@ function createApp() {
     const app = express();
     app.use(express.json());
     app.use('/api/shares', sharesRouter);
+    app.use(errorHandler);
     return app;
 }
 
@@ -120,6 +126,50 @@ beforeEach(() => {
     store.shares = [];
     store.users = { u2: { role: 'user' }, u3: { role: 'user' }, u4: { role: 'user' } };
     jest.clearAllMocks();
+});
+
+describe('przekazywanie błędów tras udostępnień do Express', () => {
+    it('zwraca 429 z Retry-After w razie przekroczenia czasu odczytu', async () => {
+        sharesModel.findMany.mockRejectedValueOnce(new Error('database timeout'));
+        const app = createApp();
+        const response = await request(app).get('/api/shares').query(DOC);
+        expect(response.status).toBe(429);
+        expect(response.headers['retry-after']).toBe('2');
+        expect((await request(app).get('/api/shares').query(DOC)).status).toBe(200);
+    });
+
+    it('zwraca 409 dla konfliktu unikalności przy równoległym utworzeniu udziału', async () => {
+        sharesModel.createMany.mockRejectedValueOnce(
+            Object.assign(new Error('unique constraint'), { code: 'P2002' })
+        );
+        const response = await request(createApp())
+            .post('/api/shares')
+            .send({ ...DOC, userIds: ['u2'] });
+        expect(response.status).toBe(409);
+        expect(response.body.code).toBe('UNIQUE_CONFLICT');
+    });
+
+    it('zwraca 404, jeśli udział zniknął przed usunięciem', async () => {
+        const id = '00000000-0000-4000-8000-000000000123';
+        store.shares.push({ id, ...DOC, sharedWithUserId: 'u2' });
+        sharesModel.delete.mockRejectedValueOnce(
+            Object.assign(new Error('record missing'), { code: 'P2025' })
+        );
+        const response = await request(createApp()).delete('/api/shares/' + id);
+        expect(response.status).toBe(404);
+        expect(response.body.code).toBe('NOT_FOUND');
+    });
+
+    it('zwraca 429, jeśli cofnięcie udziałów napotka konflikt transakcji', async () => {
+        sharesModel.deleteMany.mockRejectedValueOnce(
+            Object.assign(new Error('transaction conflict'), { code: 'P2034' })
+        );
+        const response = await request(createApp())
+            .post('/api/shares/revoke')
+            .send({ ...DOC, userIds: ['u2'] });
+        expect(response.status).toBe(429);
+        expect(response.headers['retry-after']).toBe('2');
+    });
 });
 
 describe('POST /api/shares limit 50 atomowo', () => {

@@ -21,6 +21,7 @@ jest.mock('../src/prismaClient', () => ({
     default: {
         audit_logs: {
             count: jest.fn(async () => 0),
+            findFirst: jest.fn(),
             findMany: jest.fn(async () => [])
         }
     }
@@ -45,6 +46,18 @@ describe('audit limit clamp', () => {
         const res = await request(createApp()).get('/api/audit/offer/abc?limit=1000');
         expect(res.status).toBe(200);
     });
+});
+
+test('rebuild rejects truncated snapshots instead of returning partial offer data', async () => {
+    const log = { id: 'log1', action: 'update', newData: '{"_auditTruncated":true}' };
+    (prisma.audit_logs.findFirst as jest.Mock).mockResolvedValueOnce(log);
+    (prisma.audit_logs.findMany as jest.Mock).mockResolvedValueOnce([log]);
+
+    const result = await request(createApp()).get('/api/audit/rebuild/offer/abc/log1');
+
+    expect(result.status).toBe(422);
+    expect(result.body.code).toBe('AUDIT_SNAPSHOT_INCOMPLETE');
+    expect(result.body.data).toBeUndefined();
 });
 
 describe('audit entityType allowlist', () => {

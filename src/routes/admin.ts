@@ -4,7 +4,7 @@ import { ADMIN_USERS_LIMITER } from '../middleware/rateLimiters';
 import { revokeSessionsForAdmin } from '../services/sessionAdmin';
 import { mapPrismaError } from '../utils/prismaErrors';
 import { logger } from '../utils/logger';
-import { ftsSyncStatus, rebuildFts5 } from '../utils/fts5Sync';
+import { ftsSyncStatus } from '../utils/postgresOfferSearchIndexes';
 
 const router = express.Router();
 
@@ -23,20 +23,11 @@ router.get('/fts-status', requireAuth, requireAdmin, async (_req, res) => {
     }
 });
 
-// POST /api/admin/fts-rebuild — pełna przebudowa z tabel biznesowych.
-// Wyłącznie na żądanie (nigdy automatycznie): długi zapis na dużej bazie.
-router.post('/fts-rebuild', requireAuth, requireAdmin, async (_req, res) => {
-    try {
-        let done = 0;
-        const total = await rebuildFts5((n) => {
-            done = n;
-        });
-        res.json({ ok: true, rows: total, lastProgress: done });
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        logger.error('Admin', 'Błąd fts-rebuild', message);
-        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-    }
+router.post('/fts-rebuild', requireAuth, requireAdmin, (_req, res) => {
+    res.status(409).json({
+        code: 'POSTGRES_INDEX_MAINTENANCE_REQUIRED',
+        error: 'Indeksy wyszukiwania aktualizuje PostgreSQL. Ich naprawę wykonuje operator bazy.'
+    });
 });
 
 /* ===== Sesje — widok i wymuszone wylogowanie (admin) ===== */

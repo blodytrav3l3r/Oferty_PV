@@ -5,6 +5,12 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..', '..');
+const devLauncher = fs.readFileSync(path.join(root, 'dev.sh'), 'utf8');
+assert.doesNotMatch(
+    devLauncher,
+    /\bnpx\s+prisma\s+db\s+push\b/,
+    'the developer launcher must never modify the schema outside PostgreSQL migrations'
+);
 const linuxInstallerPath = path.join(root, 'install-linux-server.sh');
 const linuxInstaller = fs.readFileSync(linuxInstallerPath, 'utf8');
 const windowsInstaller = fs.readFileSync(path.join(root, 'scripts', 'setup-new-pc.ps1'), 'utf8');

@@ -39,7 +39,7 @@ jest.mock('../src/utils/logger', () => ({
 // P1.5: guard read-access — domyslnie prawda (stare testy bez zmian),
 // pojedyncze testy nadpisuja przez mockResolvedValueOnce(false).
 jest.mock('../src/utils/ownership', () => ({
-    __esModule: true,
+    ...jest.requireActual('../src/utils/ownership'),
     canReadWithShare: jest.fn(async () => true)
 }));
 
@@ -127,6 +127,7 @@ const asUser = (u: any) => {
 };
 const userA = { id: 'user-a', username: 'adam', role: 'user', subUsers: [] };
 const userB = { id: 'user-b', username: 'ewa', role: 'user', subUsers: [] };
+const supervisor = { ...userB, role: 'pro', subUsers: [userA.id] };
 const admin = { id: 'admin-1', username: 'admin', role: 'admin', subUsers: [] };
 
 beforeEach(() => {
@@ -153,14 +154,14 @@ describe('Twarda blokada edycji (doc_locks)', () => {
                 .send({ docType: 'offer', docId: 'o1' }),
             request(app)
                 .post('/api/locks/acquire')
-                .set('x-test-user', 'user-b')
+                .set('x-test-user', 'admin-1')
                 .send({ docType: 'offer', docId: 'o1' })
         ]);
         const statuses = [r1.status, r2.status].sort();
         expect(statuses).toEqual([200, 423]);
         const loser = r1.status === 423 ? r1 : r2;
         expect(loser.body.code).toBe('DOC_LOCKED');
-        expect(loser.body.holder.userId).toMatch(/user-[ab]/);
+        expect(loser.body.holder.userId).toMatch(/^(user-a|admin-1)$/);
     });
 
     test('ten sam user w dwoch kartach = re-entrancy (200/200, swiadome)', async () => {
@@ -176,7 +177,7 @@ describe('Twarda blokada edycji (doc_locks)', () => {
                 .send({ docType: 'offer', docId: 'o1' })
         ]);
         expect([r1.status, r2.status].sort()).toEqual([200, 200]);
-        asUser(userB);
+        asUser(supervisor);
         const rb = await request(app)
             .post('/api/locks/acquire')
             .send({ docType: 'offer', docId: 'o1' });
@@ -193,7 +194,7 @@ describe('Twarda blokada edycji (doc_locks)', () => {
             ...store.get(k),
             heartbeatAt: new Date(Date.now() - 200000).toISOString()
         });
-        asUser(userB);
+        asUser(supervisor);
         const res = await request(createApp())
             .post('/api/locks/acquire')
             .send({ docType: 'offer', docId: 'o1' });
@@ -201,14 +202,14 @@ describe('Twarda blokada edycji (doc_locks)', () => {
         expect(res.body.lock.userId).toBe('user-b');
     });
 
-    test('heartbeat wlasciciela → 200; heartbeat obcego → 423', async () => {
+    test('heartbeat posiadacza → 200; heartbeat innego edytora → 423', async () => {
         const app = createApp();
         await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });
         const ok = await request(app)
             .post('/api/locks/heartbeat')
             .send({ docType: 'offer', docId: 'o1' });
         expect(ok.status).toBe(200);
-        asUser(userB);
+        asUser(supervisor);
         const denied = await request(app)
             .post('/api/locks/heartbeat')
             .send({ docType: 'offer', docId: 'o1' });
@@ -229,7 +230,7 @@ describe('Twarda blokada edycji (doc_locks)', () => {
             .send({ docType: 'offer', docId: 'o1' });
         expect(forced.status).toBe(200);
         expect(forced.body.lock.userId).toBe('admin-1');
-        asUser(userB);
+        asUser(supervisor);
         const afterForce = await request(app)
             .post('/api/locks/acquire')
             .send({ docType: 'offer', docId: 'o1' });
@@ -337,7 +338,6 @@ describe('Twarda blokada edycji (doc_locks)', () => {
 
     test('P1.5: acquire bez read-access → 404 + brak wiersza (brak lock-squattingu)', async () => {
         asUser(userB);
-        (canReadWithShare as jest.Mock).mockResolvedValueOnce(false);
         const res = await request(createApp())
             .post('/api/locks/acquire')
             .send({ docType: 'offer', docId: 'o1' });
@@ -354,14 +354,32 @@ describe('Twarda blokada edycji (doc_locks)', () => {
         expect(store.has(keyOf('offer', 'missing-x'))).toBe(false);
     });
 
-    test('P1.5: acquire z read-access → 200 jak dotad', async () => {
+    test('udział tylko do odczytu nie pozwala nabyć blokady', async () => {
         asUser(userB);
-        (canReadWithShare as jest.Mock).mockResolvedValueOnce(true);
         const res = await request(createApp())
             .post('/api/locks/acquire')
             .send({ docType: 'order_rury', docId: 'r9' });
-        expect(res.status).toBe(200);
-        expect(res.body.lock.userId).toBe('user-b');
+        expect(res.status).toBe(404);
+        expect(store.has(keyOf('order_rury', 'r9'))).toBe(false);
+    });
+
+    test('odbiorca udziału widzi status, ale nie odnowi wcześniej nabytej blokady', async () => {
+        const app = createApp();
+        await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });
+        const key = keyOf('offer', 'o1');
+        const heartbeatAt = new Date(Date.now() - 60_000).toISOString();
+        store.set(key, { ...store.get(key), userId: userB.id, heartbeatAt });
+        asUser(userB);
+
+        const status = await request(app).get('/api/locks/offer/o1');
+        const heartbeat = await request(app)
+            .post('/api/locks/heartbeat')
+            .send({ docType: 'offer', docId: 'o1' });
+
+        expect(status.body).toMatchObject({ locked: true, lock: { userId: userB.id } });
+        expect(heartbeat.status).toBe(404);
+        expect(heartbeat.body.holder).toBeUndefined();
+        expect(store.get(key).heartbeatAt).toBe(heartbeatAt);
     });
 
     test('P1.5: GET holdera obcego locka → 404 (oracle zamknięty jak acquire)', async () => {
@@ -378,7 +396,6 @@ describe('Twarda blokada edycji (doc_locks)', () => {
         const app = createApp();
         await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });
         asUser(userB);
-        (canReadWithShare as jest.Mock).mockResolvedValueOnce(false);
         const res = await request(app)
             .post('/api/locks/heartbeat')
             .send({ docType: 'offer', docId: 'o1' });
@@ -408,7 +425,7 @@ describe('Twarda blokada edycji (doc_locks)', () => {
             ...store.get(k),
             heartbeatAt: new Date(Date.now() - 200000).toISOString()
         });
-        asUser(userB);
+        asUser(supervisor);
         const res = await request(app)
             .post('/api/locks/heartbeat')
             .send({ docType: 'offer', docId: 'o1' });
@@ -418,12 +435,14 @@ describe('Twarda blokada edycji (doc_locks)', () => {
 
     test('GET status: 600/min przechodzi, 601. dostaje prawdziwe 429', async () => {
         const app = createApp();
-        // P1.5: 3 GET-y z testow powyzej zuzywaja budzet okna — petla 597, by suma dala 600.
-        for (let i = 0; i < 597; i++) {
-            const r = await request(app).get('/api/locks/offer/rate-probe');
+        app.set('trust proxy', 1);
+        const probe = () =>
+            request(app).get('/api/locks/offer/rate-probe').set('X-Forwarded-For', '192.0.2.10');
+        for (let i = 0; i < 600; i++) {
+            const r = await probe();
             expect(r.status).toBe(200);
         }
-        const blocked = await request(app).get('/api/locks/offer/rate-probe');
+        const blocked = await probe();
         expect(blocked.status).toBe(429);
         expect(blocked.body.error).toContain('Zbyt wiele');
     }, 120000);

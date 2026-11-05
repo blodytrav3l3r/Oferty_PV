@@ -163,9 +163,12 @@ describe('frontend: offer contacts roundtrip', () => {
 
     test('katalog N-osob: sync dopiero po zapisie firmy (brak wyscigu 404)', () => {
         const src = read('public/js/shared/clientManager.js');
-        expect(src).toContain('await saveClientsDbData(clientsDb)');
-        const saveIdx = src.indexOf('async function saveClientToDb');
-        const syncIdx = src.indexOf('syncOfferEditorToCatalog(newId, stamp)');
+        const saveIdx = src.indexOf(
+            'await saveClientsDbData([...baseCatalog, newClient], baseCatalog)'
+        );
+        const syncIdx = src.indexOf(
+            'syncOfferEditorToCatalog(newId, saved.updatedAt, saved.catalog)'
+        );
         expect(saveIdx).toBeGreaterThan(-1);
         expect(syncIdx).toBeGreaterThan(saveIdx);
     });
@@ -179,7 +182,7 @@ describe('frontend: offer contacts roundtrip', () => {
 
     test('HIGH batch: brak zapisu na niezaladowanej bazie (anty-wipe)', () => {
         const src = read('public/js/shared/clientManager.js');
-        expect(src).toContain('clientsLoadedOk');
+        expect(src).toContain('clientCatalogRevisions.has(clientsDb)');
         expect(src).toContain('requireClientsLoaded');
     });
 

@@ -40,11 +40,6 @@ jest.mock('../../src/utils/logger', () => ({
     }
 }));
 
-jest.mock('../../src/utils/fts5Sync', () => ({
-    syncFts5: jest.fn().mockResolvedValue(true),
-    removeFts5: jest.fn().mockResolvedValue(true)
-}));
-
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {

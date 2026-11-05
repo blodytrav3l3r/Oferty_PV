@@ -19,7 +19,6 @@ import { ensureAdminExists } from './middleware/auth';
 import { requireAuth, requireAdmin } from './middleware/auth';
 import { getMetricsSnapshot } from './utils/metrics';
 import { getPdfMetrics } from './services/pdf/pdfEngine';
-import { getFtsQueueMetrics } from './utils/fts5Queue';
 import healthPdfRouter from './routes/healthPdf';
 import { isBackupStale, readBackupMarker, MAX_BACKUP_AGE_MS } from '../scripts/backup';
 import {
@@ -230,7 +229,7 @@ app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
  *         description: Wymagana rola admin
  */
 app.get('/metrics', requireAuth, requireAdmin, (_req, res) => {
-    res.json(getMetricsSnapshot(getPdfMetrics(), getFtsQueueMetrics()));
+    res.json(getMetricsSnapshot(getPdfMetrics()));
 });
 
 /* ===== DOKUMENTACJA API (Swagger) ===== */

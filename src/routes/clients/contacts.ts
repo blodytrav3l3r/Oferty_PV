@@ -6,10 +6,18 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { WRITE_LIMITER, READ_LIMITER } from '../../middleware/rateLimiters';
 import { validateData } from '../../validators/authSchema';
 import { logger } from '../../utils/logger';
-import { mapPrismaError } from '../../utils/prismaErrors';
+import { isPrismaWriteConflict, mapPrismaError } from '../../utils/prismaErrors';
 import { searchCache } from '../../utils/searchCache';
 import { splitMergedContact } from '../../utils/contactSplit';
 import { encodeAuditPayload } from '../../services/auditPayload';
+import { Prisma } from '../../../generated/prisma-postgres/client';
+import {
+    CATALOG_CONFLICT_CODE,
+    CATALOG_CONFLICT_MESSAGE,
+    getClientCatalogRevision,
+    normalizeClientCatalog,
+    readClientCatalog
+} from './catalogRevision';
 
 const router = express.Router();
 
@@ -40,7 +48,11 @@ const contactEntrySchema = z.object({
 
 const contactsSyncSchema = z.object({
     contacts: z.array(contactEntrySchema).max(MAX_CONTACTS),
-    clientUpdatedAt: z.string().nullish()
+    clientUpdatedAt: z.string().nullish(),
+    catalogRevision: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional()
 });
 
 type ContactsSyncBody = z.infer<typeof contactsSyncSchema>;
@@ -156,124 +168,150 @@ router.put(
             const fail = (status: number, code: string, message: string): never => {
                 throw { __syncHttp: true, status, code, message };
             };
-            const result = await prisma.$transaction(async (tx) => {
-                const existing = await tx.client_contacts_rel.findMany({
-                    where: { clientId }
-                });
-                const existingIds = new Set(existing.map((c) => c.id));
-                const unknownIds = [
-                    ...new Set(
-                        entries
-                            .filter((c) => c.id !== null && !existingIds.has(c.id))
-                            .map((c) => c.id as string)
-                    )
-                ];
-                if (unknownIds.length > 0) {
-                    const clash = (await tx.client_contacts_rel.findMany({
-                        where: { id: { in: unknownIds } },
-                        select: { id: true, clientId: true }
-                    })) as Array<{ id: string; clientId: string }>;
-                    // IDOR: id należące do INNEGO klienta → 404 (jak loadFollowUp).
-                    // Wolne id (FE-mintowane, retry) → insert z żądanym id.
-                    if (clash.some((r) => r.clientId !== clientId)) {
-                        fail(404, 'NOT_FOUND', 'Kontakt nie istnieje');
+            const result = await prisma.$transaction(
+                async (tx) => {
+                    if (
+                        body.catalogRevision &&
+                        getClientCatalogRevision(await readClientCatalog(tx)) !==
+                            body.catalogRevision
+                    ) {
+                        fail(409, CATALOG_CONFLICT_CODE, CATALOG_CONFLICT_MESSAGE);
                     }
-                }
-                const freeIds = new Set(unknownIds);
-                const incomingIds = new Set(
-                    entries.filter((c) => c.id !== null).map((c) => c.id as string)
-                );
-                const toDelete = existing.filter((c) => !incomingIds.has(c.id)).map((c) => c.id);
-                // Max-jeden główny: pierwszy oznaczony wygrywa (id bez id
-                // mintujemy z góry, żeby zerowanie reszty było jawne w tej samej tx).
-                const newIds = new Map<number, string>();
-                entries.forEach((c, i) => {
-                    if (c.id === null) newIds.set(i, crypto.randomUUID());
-                });
-                const idOf = (i: number): string => entries[i].id ?? (newIds.get(i) as string);
-                const primaryIdx = entries.findIndex((c) => c.isPrimary);
-                const primaryId = primaryIdx === -1 ? null : idOf(primaryIdx);
-                const news = entries
-                    .map((c, i) => ({ c, i }))
-                    .filter(({ c }) => c.id === null || freeIds.has(c.id as string))
-                    .map(({ c, i }) => ({
-                        id: idOf(i),
-                        clientId,
-                        name: c.name,
-                        phone: c.phone,
-                        email: c.email,
-                        position: c.position,
-                        isPrimary: primaryId !== null && idOf(i) === primaryId ? 1 : 0,
-                        createdByUserId: authReq.user?.id ?? null,
-                        createdAt: now,
-                        updatedAt: now
-                    }));
-                const updates = entries
-                    .filter((c) => c.id !== null && !freeIds.has(c.id as string))
-                    .map((c) => ({
-                        id: c.id as string,
-                        data: {
+                    const existing = await tx.client_contacts_rel.findMany({
+                        where: { clientId }
+                    });
+                    const existingIds = new Set(existing.map((c) => c.id));
+                    const unknownIds = [
+                        ...new Set(
+                            entries
+                                .filter((c) => c.id !== null && !existingIds.has(c.id))
+                                .map((c) => c.id as string)
+                        )
+                    ];
+                    if (unknownIds.length > 0) {
+                        const clash = (await tx.client_contacts_rel.findMany({
+                            where: { id: { in: unknownIds } },
+                            select: { id: true, clientId: true }
+                        })) as Array<{ id: string; clientId: string }>;
+                        // IDOR: id należące do INNEGO klienta → 404 (jak loadFollowUp).
+                        // Wolne id (FE-mintowane, retry) → insert z żądanym id.
+                        if (clash.some((r) => r.clientId !== clientId)) {
+                            fail(404, 'NOT_FOUND', 'Kontakt nie istnieje');
+                        }
+                    }
+                    const freeIds = new Set(unknownIds);
+                    const incomingIds = new Set(
+                        entries.filter((c) => c.id !== null).map((c) => c.id as string)
+                    );
+                    const toDelete = existing
+                        .filter((c) => !incomingIds.has(c.id))
+                        .map((c) => c.id);
+                    // Max-jeden główny: pierwszy oznaczony wygrywa (id bez id
+                    // mintujemy z góry, żeby zerowanie reszty było jawne w tej samej tx).
+                    const newIds = new Map<number, string>();
+                    entries.forEach((c, i) => {
+                        if (c.id === null) newIds.set(i, crypto.randomUUID());
+                    });
+                    const idOf = (i: number): string => entries[i].id ?? (newIds.get(i) as string);
+                    const primaryIdx = entries.findIndex((c) => c.isPrimary);
+                    const primaryId = primaryIdx === -1 ? null : idOf(primaryIdx);
+                    const news = entries
+                        .map((c, i) => ({ c, i }))
+                        .filter(({ c }) => c.id === null || freeIds.has(c.id as string))
+                        .map(({ c, i }) => ({
+                            id: idOf(i),
+                            clientId,
                             name: c.name,
                             phone: c.phone,
                             email: c.email,
                             position: c.position,
-                            isPrimary: primaryId !== null && c.id === primaryId ? 1 : 0,
+                            isPrimary: primaryId !== null && idOf(i) === primaryId ? 1 : 0,
+                            createdByUserId: authReq.user?.id ?? null,
+                            createdAt: now,
+                            updatedAt: now
+                        }));
+                    const updates = entries
+                        .filter((c) => c.id !== null && !freeIds.has(c.id as string))
+                        .map((c) => ({
+                            id: c.id as string,
+                            data: {
+                                name: c.name,
+                                phone: c.phone,
+                                email: c.email,
+                                position: c.position,
+                                isPrimary: primaryId !== null && c.id === primaryId ? 1 : 0,
+                                updatedAt: now
+                            }
+                        }));
+                    // Mirror kompatybilności: primary ?? [0] → clients_rel.
+                    const all = [...updates.map((u) => ({ ...u.data, id: u.id })), ...news];
+                    const mirrorSource =
+                        (primaryId !== null ? all.find((c) => c.id === primaryId) : null) ??
+                        all[0] ??
+                        null;
+                    const oldList = [...existing].sort((a, b) =>
+                        String(a.id).localeCompare(String(b.id))
+                    );
+                    if (toDelete.length > 0) {
+                        await tx.client_contacts_rel.deleteMany({
+                            where: { clientId, id: { in: toDelete } }
+                        });
+                    }
+                    for (const u of updates) {
+                        await tx.client_contacts_rel.update({ where: { id: u.id }, data: u.data });
+                    }
+                    for (const n of news) {
+                        await tx.client_contacts_rel.create({ data: n });
+                    }
+                    await tx.clients_rel.update({
+                        where: { id: clientId },
+                        data: {
+                            contact: mirrorSource ? mirrorSource.name : '',
+                            phone: mirrorSource?.phone ?? '',
+                            email: mirrorSource?.email ?? '',
                             updatedAt: now
                         }
-                    }));
-                // Mirror kompatybilności: primary ?? [0] → clients_rel.
-                const all = [...updates.map((u) => ({ ...u.data, id: u.id })), ...news];
-                const mirrorSource =
-                    (primaryId !== null ? all.find((c) => c.id === primaryId) : null) ??
-                    all[0] ??
-                    null;
-                const oldList = [...existing].sort((a, b) =>
-                    String(a.id).localeCompare(String(b.id))
-                );
-                if (toDelete.length > 0) {
-                    await tx.client_contacts_rel.deleteMany({
-                        where: { clientId, id: { in: toDelete } }
                     });
-                }
-                for (const u of updates) {
-                    await tx.client_contacts_rel.update({ where: { id: u.id }, data: u.data });
-                }
-                for (const n of news) {
-                    await tx.client_contacts_rel.create({ data: n });
-                }
-                await tx.clients_rel.update({
-                    where: { id: clientId },
-                    data: {
-                        contact: mirrorSource ? mirrorSource.name : '',
-                        phone: mirrorSource?.phone ?? '',
-                        email: mirrorSource?.email ?? '',
-                        updatedAt: now
-                    }
-                });
-                await tx.audit_logs.create({
-                    data: {
-                        id: crypto.randomUUID(),
-                        entityType: 'client_contact',
-                        entityId: clientId,
-                        userId: authReq.user?.id ?? null,
-                        action: 'sync',
-                        oldData: encodeAuditPayload(oldList),
-                        newData: encodeAuditPayload(
-                            [...updates.map((u) => ({ ...u.data, id: u.id })), ...news].sort(
-                                (a, b) => String(a.id).localeCompare(String(b.id))
-                            )
-                        ),
-                        createdAt: now
-                    }
-                });
-                return { count: entries.length };
-            });
+                    await tx.audit_logs.create({
+                        data: {
+                            id: crypto.randomUUID(),
+                            entityType: 'client_contact',
+                            entityId: clientId,
+                            userId: authReq.user?.id ?? null,
+                            action: 'sync',
+                            oldData: encodeAuditPayload(oldList),
+                            newData: encodeAuditPayload(
+                                [...updates.map((u) => ({ ...u.data, id: u.id })), ...news].sort(
+                                    (a, b) => String(a.id).localeCompare(String(b.id))
+                                )
+                            ),
+                            createdAt: now
+                        }
+                    });
+                    const catalog = body.catalogRevision ? await readClientCatalog(tx) : null;
+                    return {
+                        count: entries.length,
+                        ...(catalog
+                            ? {
+                                  data: normalizeClientCatalog(catalog),
+                                  catalogRevision: getClientCatalogRevision(catalog)
+                              }
+                            : {})
+                    };
+                },
+                { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+            );
             searchCache.invalidateAll();
-            return res.json({ ok: true, clientId, count: result.count, updatedAt: now });
+            return res.json({ ok: true, clientId, ...result, updatedAt: now });
         } catch (e) {
             if (e && typeof e === 'object' && (e as { __syncHttp?: unknown }).__syncHttp === true) {
                 const s = e as { status: number; code: string; message: string };
                 return res.status(s.status).json({ error: s.message, code: s.code });
+            }
+            if (isPrismaWriteConflict(e)) {
+                return res
+                    .status(409)
+                    .json({ error: CATALOG_CONFLICT_MESSAGE, code: CATALOG_CONFLICT_CODE });
             }
             if (mapPrismaError(res, e)) return;
             logger.error('ClientContacts', 'Błąd synchronizacji kontaktów klienta', {

@@ -32,16 +32,6 @@ jest.mock('../src/utils/logger', () => ({
     logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() }
 }));
 
-jest.mock('../src/utils/fts5Queue', () => ({
-    enqueueFtsSync: jest.fn(),
-    enqueueFtsRemove: jest.fn()
-}));
-
-jest.mock('../src/utils/fts5Sync', () => ({
-    syncFts5: jest.fn().mockResolvedValue(undefined),
-    removeFts5: jest.fn().mockResolvedValue(undefined)
-}));
-
 jest.mock('../src/services/pdfGenerator', () => ({
     __esModule: true,
     generateOfferRuryPDF: jest.fn(async () => Buffer.from('pdf')),

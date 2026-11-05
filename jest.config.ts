@@ -18,7 +18,7 @@ const config: Config.InitialOptions = {
         {
             displayName: 'backend',
             preset: 'ts-jest',
-            testEnvironment: 'node',
+            testEnvironment: '<rootDir>/tests/postgresTestEnvironment.cjs',
             roots: ['<rootDir>/tests'],
             moduleNameMapper: {
                 // Puppeteer >= 25 jest ESM-only — patrz tests/mocks/puppeteer.stub.js.
@@ -27,9 +27,7 @@ const config: Config.InitialOptions = {
             testMatch: ['**/*.test.ts', '!**/frontend/**', '!**/git-safety/**'],
             // Negacje w testMatch (nie ignorePatterns): CLI --testPathIgnorePatterns
             // nadpisuje config-ignore (npm test/lite), a testMatch zostaje.
-            testPathIgnorePatterns: ['/frontend/', 'git-safety'],
-            // Każdy worker dostaje osobny schemat PostgreSQL.
-            setupFiles: ['<rootDir>/tests/setupDbIsolation.ts']
+            testPathIgnorePatterns: ['/frontend/', 'git-safety']
         },
         {
             displayName: 'frontend',

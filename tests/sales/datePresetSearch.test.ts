@@ -84,20 +84,20 @@ describe('buildWhereParts — klauzule createdAt', () => {
     it('dateFrom ISO: >= porównuje z timestampem UTC po normalizacji', () => {
         const parts = buildWhereParts({ ...base, dateFrom: '2026-08-07T22:00:00.000Z' });
         expect(renderParts(parts)).toContain('>= 2026-08-07T22:00:00.000Z');
-        expect(renderParts(parts)).toContain('CASE WHEN');
+        expect(renderParts(parts)).toMatch(/CASE\s+WHEN/);
         expect(renderParts(parts)).toContain('::timestamptz');
     });
 
     it('dateTo ISO: < z surowa wartoscia (poloowki przedzial presetu)', () => {
         const parts = buildWhereParts({ ...base, dateTo: '2026-08-08T22:00:00.000Z' });
         expect(renderParts(parts)).toContain('< 2026-08-08T22:00:00.000Z');
-        expect(renderParts(parts)).toContain('CASE WHEN');
+        expect(renderParts(parts)).toMatch(/CASE\s+WHEN/);
     });
 
     it('dateTo YYYY-MM-DD: <= z suffixem konca dnia', () => {
         const parts = buildWhereParts({ ...base, dateTo: '2026-08-08' });
         expect(renderParts(parts)).toContain('<= 2026-08-08T23:59:59.999Z');
-        expect(renderParts(parts)).toContain('CASE WHEN');
+        expect(renderParts(parts)).toMatch(/CASE\s+WHEN/);
     });
 
     it('puste daty: brak klauzul createdAt', () => {

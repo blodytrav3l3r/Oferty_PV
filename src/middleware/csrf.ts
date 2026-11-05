@@ -28,22 +28,23 @@ import { Request, Response, NextFunction } from 'express';
 
 const EXEMPT_PATHS = new Set(['/api/csp-report']);
 
-function hostOf(value: string | undefined): string | null {
+function originOf(value: string | undefined): string | null {
     if (!value) return null;
     try {
-        return new URL(value).host.toLowerCase();
+        return new URL(value).origin;
     } catch {
         return null;
     }
 }
 
 export function isSameOriginRequest(req: Request): boolean {
-    const expected = (req.get('host') || '').toLowerCase();
+    const host = req.get('host');
+    const expected = host ? originOf(`${req.protocol}://${host}`) : null;
     if (!expected) return false;
     const origin = req.get('origin');
-    if (origin) return hostOf(origin) === expected;
+    if (origin) return originOf(origin) === expected;
     const referer = req.get('referer');
-    if (referer) return hostOf(referer) === expected;
+    if (referer) return originOf(referer) === expected;
     // Brak obu: dozwolone wyłącznie bez ciasteczek (brak sesji do podrobienia).
     const cookie = req.get('cookie');
     return !cookie;

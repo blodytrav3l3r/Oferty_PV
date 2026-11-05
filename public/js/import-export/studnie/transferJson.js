@@ -68,11 +68,12 @@ window.StudnieTransferJson = {
         if (json.offer.data && typeof json.offer.data === 'object') {
             Object.assign(importPayload, json.offer.data);
         }
+        importPayload.id = targetId;
 
         importPayload.wells = json.offer.wells || json.offer.data?.wells || [];
 
         try {
-            const resp = await fetch('/api/offers-rury/studnie', {
+            const resp = await fetch('/api/offers-studnie', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -85,22 +86,42 @@ window.StudnieTransferJson = {
             const result = await resp.json();
             const newOfferId = result.results?.[0]?.id;
 
-            for (const order of json.orders || []) {
-                const orderPayload = {
+            if (!newOfferId) throw new Error('Serwer nie zwrócił identyfikatora zapisanej oferty.');
+
+            const orders = (json.orders || []).map((order) => {
+                const {
+                    type: _type,
+                    offerId: _sourceOffer,
+                    offerStudnieId: _sourceStudnie,
+                    ...data
+                } = order.data || {};
+                return {
+                    ...data,
                     id: order.id,
-                    offerStudnieId: newOfferId,
                     status: order.status || 'new',
                     createdAt: order.createdAt,
-                    ...(order.data || {})
+                    offerStudnieId: newOfferId
                 };
-                delete orderPayload.type;
-
-                await fetch('/api/orders-studnie', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ data: [orderPayload] })
-                });
+            });
+            if (orders.length > 0) {
+                try {
+                    const orderResponse = await fetch('/api/orders-studnie', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ data: orders })
+                    });
+                    if (!orderResponse.ok) throw new Error('HTTP ' + orderResponse.status);
+                } catch (error) {
+                    return {
+                        error: true,
+                        offerId: newOfferId,
+                        message:
+                            'Oferta została zapisana. Nie potwierdzono zapisu zamówień (' +
+                            error.message +
+                            '). Sprawdź ofertę przed ponowieniem importu.'
+                    };
+                }
             }
 
             await fetch('/api/feature-flags/audit', {

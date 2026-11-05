@@ -4,6 +4,59 @@ import path from 'node:path';
 const ROOT = path.resolve(__dirname, '..', '..');
 
 describe('PostgreSQL Docker startup and bootstrap', () => {
+    it('includes only expected application files in the Docker context and image', () => {
+        const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
+        const dockerignore = fs.readFileSync(path.join(ROOT, '.dockerignore'), 'utf8');
+        const allowlist = [
+            '!package.json',
+            '!package-lock.json',
+            '!tsconfig.json',
+            '!prisma.config.ts',
+            '!server.ts',
+            '!VERSION',
+            '!LICENSE',
+            '!THIRD-PARTY-NOTICES.md',
+            '!src/',
+            '!src/**',
+            '!public/',
+            '!public/**',
+            '!prisma/',
+            '!prisma/**',
+            '!scripts/',
+            '!scripts/**',
+            '!data/',
+            '!data/seed_preco.json',
+            '!data/seed_rury.json',
+            '!data/seed_studnie.json',
+            '!data/pricelists/',
+            '!data/pricelists/active-pricelists.json'
+        ];
+        const rules = dockerignore
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line && !line.startsWith('#'));
+
+        expect(rules[0]).toBe('**');
+        expect(rules.filter((line) => line.startsWith('!'))).toEqual(allowlist);
+        expect(rules.indexOf('data/**')).toBeGreaterThan(rules.indexOf('!data/'));
+        expect(rules.indexOf('data/**')).toBeLessThan(rules.indexOf('!data/seed_preco.json'));
+        expect(rules.indexOf('data/pricelists/**')).toBeGreaterThan(
+            rules.indexOf('!data/pricelists/')
+        );
+        expect(rules.indexOf('data/pricelists/**')).toBeLessThan(
+            rules.indexOf('!data/pricelists/active-pricelists.json')
+        );
+        expect(dockerfile).not.toMatch(/^COPY\s+\.\s/m);
+        expect(dockerfile).toContain(
+            'COPY data/pricelists/active-pricelists.json ./data/pricelists/'
+        );
+        for (const excluded of ['**/.env*', '**/.claude/', '**/.codex/', '**/graphify-out/']) {
+            expect(rules.indexOf(excluded)).toBeGreaterThan(
+                rules.indexOf('!data/pricelists/active-pricelists.json')
+            );
+        }
+    });
+
     it('installs the Puppeteer Chrome build in a cache readable by the runtime user', () => {
         const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
         const dockerignore = fs.readFileSync(path.join(ROOT, '.dockerignore'), 'utf8');

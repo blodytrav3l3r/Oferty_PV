@@ -257,12 +257,17 @@
         };
     }
 
+    function localDateBound(value, end) {
+        const [year, month, day] = value.split('-').map(Number);
+        return new Date(year, month - 1, day + (end ? 1 : 0)).toISOString();
+    }
+
     function buildSearchUrl(type, filters) {
         const params = new URLSearchParams();
         params.set('type', type);
         params.set('limit', '100');
-        if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
-        if (filters.dateTo) params.set('dateTo', filters.dateTo);
+        if (filters.dateFrom) params.set('dateFrom', localDateBound(filters.dateFrom, false));
+        if (filters.dateTo) params.set('dateTo', localDateBound(filters.dateTo, true));
         if (filters.userId) params.set('userId', filters.userId);
         return `/api/offers/search?${params.toString()}`;
     }

@@ -15,6 +15,14 @@ import { logAudit } from '../services/auditService';
 import { searchCache } from '../utils/searchCache';
 
 const router = express.Router();
+
+type AsyncShareHandler = (req: express.Request, res: express.Response) => Promise<unknown>;
+
+function shareHandler(handler: AsyncShareHandler): express.RequestHandler {
+    return (req, res, next) => {
+        void handler(req, res).catch(next);
+    };
+}
 const SHARE_LIMIT = 50;
 
 async function resolveDocOwner(
@@ -56,160 +64,181 @@ async function resolveDocOwner(
 }
 
 // GET /api/shares?documentType&documentId — kto ma dostęp
-router.get('/', requireAuth, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    const { documentType, documentId } = req.query as {
-        documentType?: string;
-        documentId?: string;
-    };
-    if (!documentType || !documentId || !isValidShareDocumentType(String(documentType))) {
-        return res.status(400).json({ error: 'Nieprawidłowe documentType lub documentId' });
-    }
-    const doc = await resolveDocOwner(String(documentType), String(documentId));
-    if (!doc.exists) return res.status(404).json({ error: 'Dokument nie istnieje' });
-    // tylko jeśli caller ma read (owner/pro/admin lub shared)
-    const canRead = (() => {
-        if (authReq.user?.role === 'admin') return true;
-        if (
-            doc.userId &&
-            authReq.user &&
-            (doc.userId === authReq.user.id ||
-                (authReq.user.role === 'pro' && (authReq.user.subUsers || []).includes(doc.userId)))
-        )
-            return true;
-        return false;
-    })();
-    // pozwól też odbiorcy zobaczyć shares swojego dokumentu (read via share)
-    let allowed = canRead;
-    if (!allowed && authReq.user) {
-        allowed = await hasShare(authReq.user.id, String(documentType), String(documentId));
-        // jeśli ma share, to może zobaczyć listę — ale tylko wtedy gdy jest odbiorcą? Pozwól właścicielowi i odbiorcom
-        // Dla prostoty: każdy kto ma read (share) może zobaczyć listę
-    }
-    if (!allowed && authReq.user?.role !== 'admin') {
-        // jeszcze sprawdź owner globalnie — jeśli nie ma read, to 403
-        // ale pozwól właścicielowi (już canRead) — więc tu 403
-        return res.status(403).json({ error: 'Brak uprawnień do podglądu udostępnień' });
-    }
+router.get(
+    '/',
+    requireAuth,
+    shareHandler(async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        const { documentType, documentId } = req.query as {
+            documentType?: string;
+            documentId?: string;
+        };
+        if (!documentType || !documentId || !isValidShareDocumentType(String(documentType))) {
+            return res.status(400).json({ error: 'Nieprawidłowe documentType lub documentId' });
+        }
+        const doc = await resolveDocOwner(String(documentType), String(documentId));
+        if (!doc.exists) return res.status(404).json({ error: 'Dokument nie istnieje' });
+        // tylko jeśli caller ma read (owner/pro/admin lub shared)
+        const canRead = (() => {
+            if (authReq.user?.role === 'admin') return true;
+            if (
+                doc.userId &&
+                authReq.user &&
+                (doc.userId === authReq.user.id ||
+                    (authReq.user.role === 'pro' &&
+                        (authReq.user.subUsers || []).includes(doc.userId)))
+            )
+                return true;
+            return false;
+        })();
+        // pozwól też odbiorcy zobaczyć shares swojego dokumentu (read via share)
+        let allowed = canRead;
+        if (!allowed && authReq.user) {
+            allowed = await hasShare(authReq.user.id, String(documentType), String(documentId));
+            // jeśli ma share, to może zobaczyć listę — ale tylko wtedy gdy jest odbiorcą? Pozwól właścicielowi i odbiorcom
+            // Dla prostoty: każdy kto ma read (share) może zobaczyć listę
+        }
+        if (!allowed && authReq.user?.role !== 'admin') {
+            // jeszcze sprawdź owner globalnie — jeśli nie ma read, to 403
+            // ale pozwól właścicielowi (już canRead) — więc tu 403
+            return res.status(403).json({ error: 'Brak uprawnień do podglądu udostępnień' });
+        }
 
-    const shares = await prisma.document_shares.findMany({
-        where: { documentType: String(documentType), documentId: String(documentId) },
-        orderBy: { createdAt: 'desc' }
-    });
-    const canShare =
-        !!authReq.user && (authReq.user.role === 'admin' || canWriteDoc(authReq.user, doc.userId));
-    res.json({ data: shares, canShare });
-});
+        const shares = await prisma.document_shares.findMany({
+            where: { documentType: String(documentType), documentId: String(documentId) },
+            orderBy: { createdAt: 'desc' }
+        });
+        const canShare =
+            !!authReq.user &&
+            (authReq.user.role === 'admin' || canWriteDoc(authReq.user, doc.userId));
+        res.json({ data: shares, canShare });
+    })
+);
 
 // POST /api/shares — udostępnij
-router.post('/', requireAuth, WRITE_LIMITER, validateData(shareCreateSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    const { documentType, documentId, userIds } = req.body as {
-        documentType: string;
-        documentId: string;
-        userIds: string[];
-    };
+router.post(
+    '/',
+    requireAuth,
+    WRITE_LIMITER,
+    validateData(shareCreateSchema),
+    shareHandler(async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        const { documentType, documentId, userIds } = req.body as {
+            documentType: string;
+            documentId: string;
+            userIds: string[];
+        };
 
-    const doc = await resolveDocOwner(documentType, documentId);
-    if (!doc.exists) return res.status(404).json({ error: 'Dokument nie istnieje' });
-    if (!doc.userId)
-        return res.status(400).json({ error: 'Dokument bez właściciela — nie można udostępnić' });
-
-    if (
-        !authReq.user ||
-        (!canWriteDoc(authReq.user, doc.userId) && authReq.user.role !== 'admin')
-    ) {
-        return res.status(403).json({ error: 'Brak uprawnień do udostępniania tego dokumentu' });
-    }
-
-    const uniqueIds = [...new Set(userIds.map(String).filter(Boolean))];
-    if (uniqueIds.includes(authReq.user!.id)) {
-        return res.status(400).json({ error: 'Nie możesz udostępnić dokumentu samemu sobie' });
-    }
-    // sprawdź czy wszyscy istnieją
-    const users = await prisma.users.findMany({
-        where: { id: { in: uniqueIds } },
-        select: { id: true, role: true }
-    });
-    const foundIds = new Set(users.map((u) => u.id));
-    const missing = uniqueIds.filter((id) => !foundIds.has(id));
-    // D-012: generyczny komunikat bez echa ids (nie potwierdzaj sondowania UUID).
-    if (missing.length > 0) return res.status(400).json({ error: 'Nieznani użytkownicy' });
-    // user może udostępniać tylko innym userom — admin/pro mają dostęp zawsze
-    if (authReq.user!.role === 'user') {
-        const nonUserTargets = users.filter((u) => u.role !== 'user').map((u) => u.id);
-        if (nonUserTargets.length > 0) {
+        const doc = await resolveDocOwner(documentType, documentId);
+        if (!doc.exists) return res.status(404).json({ error: 'Dokument nie istnieje' });
+        if (!doc.userId)
             return res
                 .status(400)
-                .json({ error: 'Możesz udostępniać tylko innym użytkownikom z rolą USER' });
-        }
-    }
+                .json({ error: 'Dokument bez właściciela — nie można udostępnić' });
 
-    // Zasada 1: limit 50 aktywnych na dokument — atomowo w transakcji
-    // (bez niej równoległe POST-y mijały się przy checku i przekraczały limit).
-    const result = await prisma.$transaction(async (tx) => {
-        const currentCount = await tx.document_shares.count({
+        if (
+            !authReq.user ||
+            (!canWriteDoc(authReq.user, doc.userId) && authReq.user.role !== 'admin')
+        ) {
+            return res
+                .status(403)
+                .json({ error: 'Brak uprawnień do udostępniania tego dokumentu' });
+        }
+
+        const uniqueIds = [...new Set(userIds.map(String).filter(Boolean))];
+        if (uniqueIds.includes(authReq.user!.id)) {
+            return res.status(400).json({ error: 'Nie możesz udostępnić dokumentu samemu sobie' });
+        }
+        // sprawdź czy wszyscy istnieją
+        const users = await prisma.users.findMany({
+            where: { id: { in: uniqueIds } },
+            select: { id: true, role: true }
+        });
+        const foundIds = new Set(users.map((u) => u.id));
+        const missing = uniqueIds.filter((id) => !foundIds.has(id));
+        // D-012: generyczny komunikat bez echa ids (nie potwierdzaj sondowania UUID).
+        if (missing.length > 0) return res.status(400).json({ error: 'Nieznani użytkownicy' });
+        // user może udostępniać tylko innym userom — admin/pro mają dostęp zawsze
+        if (authReq.user!.role === 'user') {
+            const nonUserTargets = users.filter((u) => u.role !== 'user').map((u) => u.id);
+            if (nonUserTargets.length > 0) {
+                return res
+                    .status(400)
+                    .json({ error: 'Możesz udostępniać tylko innym użytkownikom z rolą USER' });
+            }
+        }
+
+        // PostgreSQL Serializable chroni licznik także przy dwóch równoległych
+        // insertach różnych odbiorców. Konflikt transakcji wraca jako 429.
+        const result = await prisma.$transaction(
+            async (tx) => {
+                const currentCount = await tx.document_shares.count({
+                    where: { documentType, documentId }
+                });
+                const existing = await tx.document_shares.findMany({
+                    where: { documentType, documentId, sharedWithUserId: { in: uniqueIds } },
+                    select: { sharedWithUserId: true }
+                });
+                const already = new Set(existing.map((e) => e.sharedWithUserId));
+                const newIds = uniqueIds.filter((id) => !already.has(id));
+                if (currentCount + newIds.length > SHARE_LIMIT) {
+                    return {
+                        overLimit: true as boolean,
+                        currentCount,
+                        tryAdd: newIds.length,
+                        newIds: [] as string[]
+                    };
+                }
+                if (newIds.length === 0) {
+                    const shares = await tx.document_shares.findMany({
+                        where: { documentType, documentId }
+                    });
+                    return { overLimit: false as boolean, shares, newIds };
+                }
+
+                const now = new Date().toISOString();
+                const toCreate = newIds.map((uid) => ({
+                    id: crypto.randomUUID(),
+                    documentType,
+                    documentId,
+                    ownerId: doc.userId!,
+                    sharedWithUserId: uid,
+                    permission: 'read',
+                    createdAt: now,
+                    createdBy: authReq.user!.id
+                }));
+                await tx.document_shares.createMany({ data: toCreate });
+                return { overLimit: false as boolean, newIds };
+            },
+            { isolationLevel: 'Serializable' }
+        );
+        if (result.overLimit) {
+            return res.status(400).json({
+                error: `Limit ${SHARE_LIMIT} udostępnień na dokument przekroczony (${result.currentCount}/${SHARE_LIMIT}, próba +${result.tryAdd})`
+            });
+        }
+        const { newIds } = result;
+        if (newIds.length === 0 && 'shares' in result) {
+            return res.json({ ok: true, data: result.shares, added: 0 });
+        }
+
+        await logAudit('document_share', documentId, authReq.user!.id, 'create', {
+            documentType,
+            sharedWithUserIds: newIds
+        });
+        logger.info(
+            'Shares',
+            `Udostępniono ${documentType} ${documentId} → ${newIds.join(', ')} przez ${authReq.user!.username}`
+        );
+
+        // F-003b: zmiana shares zmienia role-where w search → invaliduj cache (jak crud).
+        searchCache.invalidateAll();
+        const shares = await prisma.document_shares.findMany({
             where: { documentType, documentId }
         });
-        const existing = await tx.document_shares.findMany({
-            where: { documentType, documentId, sharedWithUserId: { in: uniqueIds } },
-            select: { sharedWithUserId: true }
-        });
-        const already = new Set(existing.map((e) => e.sharedWithUserId));
-        const newIds = uniqueIds.filter((id) => !already.has(id));
-        if (currentCount + newIds.length > SHARE_LIMIT) {
-            return {
-                overLimit: true as boolean,
-                currentCount,
-                tryAdd: newIds.length,
-                newIds: [] as string[]
-            };
-        }
-        if (newIds.length === 0) {
-            const shares = await tx.document_shares.findMany({
-                where: { documentType, documentId }
-            });
-            return { overLimit: false as boolean, shares, newIds };
-        }
-
-        const now = new Date().toISOString();
-        const toCreate = newIds.map((uid) => ({
-            id: crypto.randomUUID(),
-            documentType,
-            documentId,
-            ownerId: doc.userId!,
-            sharedWithUserId: uid,
-            permission: 'read',
-            createdAt: now,
-            createdBy: authReq.user!.id
-        }));
-        await tx.document_shares.createMany({ data: toCreate });
-        return { overLimit: false as boolean, newIds };
-    });
-    if (result.overLimit) {
-        return res.status(400).json({
-            error: `Limit ${SHARE_LIMIT} udostępnień na dokument przekroczony (${result.currentCount}/${SHARE_LIMIT}, próba +${result.tryAdd})`
-        });
-    }
-    const { newIds } = result;
-    if (newIds.length === 0 && 'shares' in result) {
-        return res.json({ ok: true, data: result.shares, added: 0 });
-    }
-
-    await logAudit('document_share', documentId, authReq.user!.id, 'create', {
-        documentType,
-        sharedWithUserIds: newIds
-    });
-    logger.info(
-        'Shares',
-        `Udostępniono ${documentType} ${documentId} → ${newIds.join(', ')} przez ${authReq.user!.username}`
-    );
-
-    // F-003b: zmiana shares zmienia role-where w search → invaliduj cache (jak crud).
-    searchCache.invalidateAll();
-    const shares = await prisma.document_shares.findMany({ where: { documentType, documentId } });
-    res.json({ ok: true, data: shares, added: newIds.length });
-});
+        res.json({ ok: true, data: shares, added: newIds.length });
+    })
+);
 
 // POST /api/shares/revoke — batch revoke po userIds (musi być przed /:id)
 router.post(
@@ -217,7 +246,7 @@ router.post(
     requireAuth,
     WRITE_LIMITER,
     validateData(shareRevokeSchema),
-    async (req, res) => {
+    shareHandler(async (req, res) => {
         const authReq = req as AuthenticatedRequest;
         const { documentType, documentId, userIds } = req.body as {
             documentType: string;
@@ -272,53 +301,59 @@ router.post(
         // F-003b: revoke zmienia role-where w search → invaliduj cache.
         searchCache.invalidateAll();
         res.json({ ok: true, data: shares });
-    }
+    })
 );
 
 // DELETE /api/shares/:id — revoke pojedynczy share
-router.delete('/:id', requireAuth, WRITE_LIMITER, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    // E3c: malformed :id → 400 przed bazą (bez 404-oracle).
-    const parsed = idUuidParamSchema.safeParse(req.params);
-    if (!parsed.success) {
-        return res.status(400).json({ error: 'Nieprawidłowy format ID' });
-    }
-    const { id } = parsed.data;
-    const share = await prisma.document_shares.findUnique({ where: { id } });
-    if (!share) return res.status(404).json({ error: 'Udostępnienie nie istnieje' });
+router.delete(
+    '/:id',
+    requireAuth,
+    WRITE_LIMITER,
+    shareHandler(async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        // E3c: malformed :id → 400 przed bazą (bez 404-oracle).
+        const parsed = idUuidParamSchema.safeParse(req.params);
+        if (!parsed.success) {
+            return res.status(400).json({ error: 'Nieprawidłowy format ID' });
+        }
+        const { id } = parsed.data;
+        const share = await prisma.document_shares.findUnique({ where: { id } });
+        if (!share) return res.status(404).json({ error: 'Udostępnienie nie istnieje' });
 
-    const doc = await resolveDocOwner(share.documentType, share.documentId);
-    const isOwner =
-        !!authReq.user &&
-        !!doc.userId &&
-        (doc.userId === authReq.user.id ||
-            authReq.user.role === 'admin' ||
-            (authReq.user.role === 'pro' && (authReq.user.subUsers || []).includes(doc.userId)));
-    const isSelfRevoke = !!authReq.user && share.sharedWithUserId === authReq.user.id;
-    const isAdmin = authReq.user?.role === 'admin';
-    if (!isOwner && !isSelfRevoke && !isAdmin) {
-        return res.status(403).json({ error: 'Brak uprawnień do cofnięcia udostępnienia' });
-    }
-    // delete + audit w JEDNEJ tx (koniec phantom revoke po rollbacku).
-    await prisma.$transaction(async (tx) => {
-        await tx.document_shares.delete({ where: { id } });
-        await logAudit(
-            'document_share',
-            share.documentId,
-            authReq.user!.id,
-            'revoke',
-            {
-                shareId: id,
-                documentType: share.documentType,
-                sharedWithUserId: share.sharedWithUserId
-            },
-            null,
-            tx
-        );
-    });
-    // F-003b: revoke zmienia role-where w search → invaliduj cache.
-    searchCache.invalidateAll();
-    res.json({ ok: true });
-});
+        const doc = await resolveDocOwner(share.documentType, share.documentId);
+        const isOwner =
+            !!authReq.user &&
+            !!doc.userId &&
+            (doc.userId === authReq.user.id ||
+                authReq.user.role === 'admin' ||
+                (authReq.user.role === 'pro' &&
+                    (authReq.user.subUsers || []).includes(doc.userId)));
+        const isSelfRevoke = !!authReq.user && share.sharedWithUserId === authReq.user.id;
+        const isAdmin = authReq.user?.role === 'admin';
+        if (!isOwner && !isSelfRevoke && !isAdmin) {
+            return res.status(403).json({ error: 'Brak uprawnień do cofnięcia udostępnienia' });
+        }
+        // delete + audit w JEDNEJ tx (koniec phantom revoke po rollbacku).
+        await prisma.$transaction(async (tx) => {
+            await tx.document_shares.delete({ where: { id } });
+            await logAudit(
+                'document_share',
+                share.documentId,
+                authReq.user!.id,
+                'revoke',
+                {
+                    shareId: id,
+                    documentType: share.documentType,
+                    sharedWithUserId: share.sharedWithUserId
+                },
+                null,
+                tx
+            );
+        });
+        // F-003b: revoke zmienia role-where w search → invaliduj cache.
+        searchCache.invalidateAll();
+        res.json({ ok: true });
+    })
+);
 
 export default router;

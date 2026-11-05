@@ -202,10 +202,8 @@ function openExcelTableModal() {
     /* Snapshot wells — "Zamknij bez zapisu" przywraca ten stan */
     if (Array.isArray(wells) && wells.length <= 100) {
         _excelOpenSnapshot = structuredClone(wells);
-        _excelOpenSnapshotSkipped = false;
     } else {
         _excelOpenSnapshot = null;
-        _excelOpenSnapshotSkipped = true;
     }
     _perfMark('open-clone');
 
@@ -548,7 +546,6 @@ function openExcelTableModal() {
 let _excelClosing = false;
 /* Snapshot wells przy otwarciu — do "Zamknij bez zapisu" (przywrócenie stanu sprzed edycji) */
 let _excelOpenSnapshot = null;
-let _excelOpenSnapshotSkipped = false;
 
 /* Fizyczne zamknięcie overlayu — wydzielone, by excelSaveAll mógł je wywołać bez rekurencji */
 function _excelCloseOverlay() {
@@ -578,19 +575,21 @@ function _excelCloseOverlay() {
     _excelDirty = false;
     _excelClosing = false;
     _excelOpenSnapshot = null;
-    _excelOpenSnapshotSkipped = false;
 }
 
 async function closeExcelTableModal() {
     if (_excelClosing) return;
     _excelClosing = true;
     if (_excelDirty && typeof appConfirm === 'function') {
+        const canDiscard = !!_excelOpenSnapshot;
         const shouldSave = await appConfirm(
-            'Są niezapisane zmiany. Czy zapisać przed zamknięciem?',
+            canDiscard
+                ? 'Są niezapisane zmiany. Czy zapisać przed zamknięciem?'
+                : 'Zmiany możesz zapisać teraz albo zachować w edytorze oferty. Cofnięcie całej sesji edycji jest niedostępne.',
             {
                 title: 'Niezapisane zmiany',
                 okText: '<i data-lucide="save"></i> Zapisz i zamknij',
-                cancelText: 'Zamknij bez zapisu',
+                cancelText: canDiscard ? 'Odrzuć zmiany i zamknij' : 'Zachowaj zmiany w edytorze',
                 type: 'warning'
             }
         );
@@ -603,16 +602,6 @@ async function closeExcelTableModal() {
         /* Zamknij bez zapisu — przywróć stan sprzed edycji */
         if (_excelDirty && _excelOpenSnapshot) {
             wells.splice(0, wells.length, ..._excelOpenSnapshot);
-        } else if (_excelDirty && _excelOpenSnapshotSkipped) {
-            if (typeof _excelNotifyUndoRejected === 'function')
-                _excelNotifyUndoRejected(
-                    'za duzo studni (>100) - Zamknij bez zapisu bez full-restore'
-                );
-            else if (typeof showToast === 'function')
-                showToast(
-                    'Tryb >100: Zamknij bez zapisu nie przywraca pelnego stanu sprzed otwarcia',
-                    'warning'
-                );
         }
     }
     // Defense-in-depth: usuń ewentualne puste przejścia które przeszły guard (np. legacy)

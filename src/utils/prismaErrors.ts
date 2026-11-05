@@ -15,6 +15,23 @@ export function isUniqueConstraintError(e: unknown): boolean {
     return !!e && typeof e === 'object' && (e as { code?: unknown }).code === 'P2002';
 }
 
+export function isPrismaWriteConflict(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const { code, meta, cause } = error as {
+        code?: string;
+        meta?: { code?: string; driverAdapterError?: { cause?: { kind?: string } } };
+        cause?: { kind?: string };
+    };
+    const kind = meta?.driverAdapterError?.cause?.kind ?? cause?.kind;
+    return (
+        code === 'P2034' ||
+        code === '40001' ||
+        code === '40P01' ||
+        kind === 'TransactionWriteConflict' ||
+        (code === 'P2010' && ['40001', '40P01'].includes(meta?.code ?? ''))
+    );
+}
+
 export function mapPrismaError(res: JsonRes, e: unknown, extra?: Record<string, unknown>): boolean {
     const code = (e as { code?: string }).code;
     if (code === 'P2025') {

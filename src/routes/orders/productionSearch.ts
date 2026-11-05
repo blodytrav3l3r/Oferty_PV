@@ -11,6 +11,7 @@ import {
     jsonTextSql
 } from '../../utils/productionSearchUtils';
 import { searchCache } from '../../utils/searchCache';
+import { searchAccessScope } from '../../utils/searchAccessScope';
 import { logger } from '../../utils/logger';
 
 const router = Router();
@@ -24,7 +25,7 @@ router.get('/', requireAuth, async (req, res) => {
 
     const params = parseSearchParams(req.query as Record<string, unknown>);
 
-    const cacheKey: Record<string, unknown> = { ...params, _userId: user.id };
+    const cacheKey = { ...params, access: searchAccessScope(user) };
     const cached = searchCache.get('production', cacheKey);
     if (cached) return res.json(cached);
 

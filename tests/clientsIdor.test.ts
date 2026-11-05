@@ -1,3 +1,4 @@
+import { getClientCatalogRevision } from '../src/routes/clients/catalogRevision';
 import request from 'supertest';
 import express from 'express';
 import clientRoutes from '../src/routes/clients';
@@ -104,7 +105,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ id: 'c-own', name: 'Własny klient' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([{ id: 'c-own' }]),
+                    data: [{ id: 'c-own', name: 'Własny klient' }]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
@@ -123,7 +127,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ id: 'c-other', name: 'Cudzy klient' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([{ id: 'c-other' }]),
+                    data: [{ id: 'c-other', name: 'Cudzy klient' }]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
@@ -145,7 +152,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ name: 'Nowy klient' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([]),
+                    data: [{ name: 'Nowy klient' }]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
@@ -170,7 +180,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                 fn(txMock)
             );
 
-            const res = await request(app).put('/api/clients').send({ data: [] });
+            const res = await request(app)
+                .put('/api/clients')
+                .send({ catalogRevision: getClientCatalogRevision([]), data: [] });
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
@@ -196,7 +208,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ id: 'c1', name: 'Cudzy klient' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([{ id: 'c1', userId: 'userB' }]),
+                    data: [{ id: 'c1', name: 'Cudzy klient' }]
+                });
 
             expect(res.statusCode).toBe(200);
             const upsert = upserts.find((u) => u.sql.includes('ON CONFLICT'));
@@ -227,7 +242,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ name: 'Nowy klient' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([]),
+                    data: [{ name: 'Nowy klient' }]
+                });
 
             expect(res.statusCode).toBe(200);
             const upsert = upserts.find((u) => u.sql.includes('ON CONFLICT'));
@@ -259,7 +277,13 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ id: 'c-keep', name: 'Zostaje' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([
+                        { id: 'c-gone', userId: 'user-id' },
+                        { id: 'c-keep', userId: 'user-id' }
+                    ]),
+                    data: [{ id: 'c-keep', name: 'Zostaje' }]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(txMock.clients_rel.deleteMany).toHaveBeenCalledWith({
@@ -301,7 +325,13 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ id: 'c-moj', name: 'Mój' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([
+                        { id: 'c-obcy', userId: 'userB' },
+                        { id: 'c-moj', userId: 'user-id' }
+                    ]),
+                    data: [{ id: 'c-moj', name: 'Mój' }]
+                });
 
             expect(res.statusCode).toBe(403);
             expect(res.body.error).toMatch(/cudzych klientów/);
@@ -337,7 +367,13 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
 
             const res = await request(app)
                 .put('/api/clients')
-                .send({ data: [{ id: 'c-moj', name: 'Mój' }] });
+                .send({
+                    catalogRevision: getClientCatalogRevision([
+                        { id: 'c-obcy', userId: 'userB' },
+                        { id: 'c-moj', userId: 'user-id' }
+                    ]),
+                    data: [{ id: 'c-moj', name: 'Mój' }]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(txMock.offers_rel.updateMany).toHaveBeenCalledWith({

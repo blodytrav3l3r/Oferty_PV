@@ -34,11 +34,6 @@ jest.mock('../../src/utils/logger', () => ({
     }
 }));
 
-jest.mock('../../src/utils/fts5Sync', () => ({
-    syncFts5: jest.fn().mockResolvedValue(undefined),
-    removeFts5: jest.fn().mockResolvedValue(undefined)
-}));
-
 jest.mock('../../src/utils/searchCache', () => ({
     searchCache: {
         invalidateAll: jest.fn()
@@ -120,7 +115,7 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
     });
 
     describe('POST /api/offers/studnie (upsert studni)', () => {
-        it('tworzy nową ofertę studni i wywołuje create + syncFts5', async () => {
+        it('tworzy nową ofertę studni i wywołuje create', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
 

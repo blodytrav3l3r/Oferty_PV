@@ -57,11 +57,12 @@ describe('dbQueryCounter (Faza 5.2)', () => {
             res.json({ ok: true });
         });
 
-        await request(app).get('/test').expect(200);
+        await request(app).get('/test?q=synthetic-customer-nip').expect(200);
 
         expect(infoMock).toHaveBeenCalled();
         const message = infoMock.mock.calls[0][1] as string;
         expect(message).toContain('/test 200');
+        expect(message).not.toContain('synthetic-customer-nip');
         expect(message).toMatch(/, db=1$/);
         expect(message).toMatch(/^\[[0-9a-f]{8}\] /);
     });

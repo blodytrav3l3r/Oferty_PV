@@ -45,6 +45,26 @@ describe('P0.1 CSRF same-origin', () => {
         expect(res.status).toBe(403);
     });
 
+    it('rejects the same host with a different scheme', async () => {
+        const res = await request(buildApp())
+            .post('/api/mut')
+            .set('Host', HOST)
+            .set('Origin', `https://${HOST}`)
+            .set('X-Forwarded-Proto', 'https');
+        expect(res.status).toBe(403);
+    });
+
+    it('accepts HTTPS from a trusted proxy', async () => {
+        const app = buildApp();
+        app.set('trust proxy', 'loopback');
+        const res = await request(app)
+            .post('/api/mut')
+            .set('Host', HOST)
+            .set('Origin', `https://${HOST}`)
+            .set('X-Forwarded-Proto', 'https');
+        expect(res.status).toBe(200);
+    });
+
     it('missing Origin + valid Referer -> 2xx', async () => {
         const res = await request(buildApp())
             .post('/api/mut')

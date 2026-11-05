@@ -106,22 +106,42 @@ window.RuryTransferJson = {
             const result = await resp.json();
             const newOfferId = result.results?.[0]?.id;
 
-            for (const order of json.orders || []) {
-                const orderPayload = {
+            if (!newOfferId) throw new Error('Serwer nie zwrócił identyfikatora zapisanej oferty.');
+
+            const orders = (json.orders || []).map((order) => {
+                const {
+                    type: _type,
+                    offerId: _sourceOffer,
+                    offerStudnieId: _sourceStudnie,
+                    ...data
+                } = order.data || {};
+                return {
+                    ...data,
                     id: order.id,
-                    offerId: newOfferId,
                     status: order.status || 'new',
                     createdAt: order.createdAt,
-                    ...(order.data || {})
+                    offerId: newOfferId
                 };
-                delete orderPayload.type;
-
-                await fetch('/api/orders-rury', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ data: [orderPayload] })
-                });
+            });
+            if (orders.length > 0) {
+                try {
+                    const orderResponse = await fetch('/api/orders-rury', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ data: orders })
+                    });
+                    if (!orderResponse.ok) throw new Error('HTTP ' + orderResponse.status);
+                } catch (error) {
+                    return {
+                        error: true,
+                        offerId: newOfferId,
+                        message:
+                            'Oferta została zapisana. Nie potwierdzono zapisu zamówień (' +
+                            error.message +
+                            '). Sprawdź ofertę przed ponowieniem importu.'
+                    };
+                }
             }
 
             await fetch('/api/feature-flags/audit', {

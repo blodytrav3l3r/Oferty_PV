@@ -34,11 +34,6 @@ jest.mock('../../src/utils/logger', () => ({
     }
 }));
 
-jest.mock('../../src/utils/fts5Sync', () => ({
-    syncFts5: jest.fn().mockResolvedValue(undefined),
-    removeFts5: jest.fn().mockResolvedValue(undefined)
-}));
-
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
@@ -121,7 +116,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
     });
 
     describe('POST /api/offers (upsert rur)', () => {
-        it('tworzy nową ofertę i wywołuje upsert + createMany + syncFts5', async () => {
+        it('tworzy nową ofertę i wywołuje upsert + createMany', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});

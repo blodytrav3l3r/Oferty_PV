@@ -65,12 +65,8 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
         return;
     }
 
-    // x-forwarded-proto może zawierać listę przy wielu proxy (np. "https, http") — bierzemy pierwszy wpis
-    const forwardedProto = req.headers['x-forwarded-proto'];
-    const isHttps =
-        req.secure ||
-        (typeof forwardedProto === 'string' && forwardedProto.split(',')[0].trim() === 'https');
-    if (process.env.NODE_ENV === 'production' && !isHttps) {
+    // Express uwzględnia X-Forwarded-Proto tylko dla zaufanego proxy.
+    if (process.env.NODE_ENV === 'production' && !req.secure) {
         const base = resolveHttpsBase(req);
         if (base === null) {
             // Brak zaufanego originu: nie odbijamy nagłówka Host (open-redirect).

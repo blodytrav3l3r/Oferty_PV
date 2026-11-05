@@ -337,7 +337,10 @@ export async function getActiveSessionsByUser(now = Date.now()): Promise<ActiveS
 /**
  * Middleware: wymaga autoryzacji (ważna sesja).
  */
+const authenticatedRequests = new WeakSet<Request>();
+
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    if (authenticatedRequests.has(req)) return next();
     // Cookie-only: legacy shim x-auth-token usunięty (sunset) — nagłówek ignorowany.
     const token = req.cookies?.authToken;
     if (!token) {
@@ -374,6 +377,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     void touchSessionByHash(tokenHash, session.lastActivity ?? null, session.createdAt);
     if (cached && cached.id === session.userId) {
         req.user = cached;
+        authenticatedRequests.add(req);
         next();
         return;
     }
@@ -389,6 +393,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
         req.user = getUserObject(user);
         authCacheSet(tokenHash, req.user, session.userId);
+        authenticatedRequests.add(req);
         next();
     } catch (e) {
         logger.error('Auth', 'Błąd bazy danych w requireAuth', e);

@@ -120,18 +120,18 @@ class CronService {
 
     /**
      * P1-B: kontrola spójności FTS vs tabele biznesowe.
-     * Tylko odczyt + warn. Rebuild wyłącznie na żądanie (POST /api/admin/fts-rebuild).
+     * Tylko odczyt i ostrzeżenie. Naprawę indeksu wykonuje operator PostgreSQL.
      */
     async runFtsCheck(): Promise<void> {
         try {
-            const { ftsSyncStatus } = await import('./fts5Sync');
+            const { ftsSyncStatus } = await import('./postgresOfferSearchIndexes');
             const st = await ftsSyncStatus();
             if (!st.inSync) {
                 logger.warn(
                     'CronService',
                     `[ftsCheck] ROZJAZD FTS: rury ${st.tables.rury.fts}/${st.tables.rury.offers}, ` +
                         `studnie ${st.tables.studnie.fts}/${st.tables.studnie.offers}, ` +
-                        `brakujące: ${st.missingIds.length} — rebuild: POST /api/admin/fts-rebuild`
+                        'sprawdź indeksy GIN i historię migracji PostgreSQL'
                 );
             } else {
                 logger.info(

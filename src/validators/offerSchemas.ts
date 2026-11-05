@@ -234,6 +234,10 @@ export const clientSchema = z.object({
 });
 
 export const clientsBatchSchema = z.object({
+    catalogRevision: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
     data: z.array(clientSchema)
 });
 

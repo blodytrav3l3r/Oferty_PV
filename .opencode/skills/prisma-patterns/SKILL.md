@@ -163,7 +163,7 @@ npx prisma migrate dev --name add_column
 npx prisma migrate deploy
 ```
 
-> S.O.K. uzywa `prisma db push` na bazach bez historii migracji (brak `_prisma_migrations`) - patrz CONTRIBUTING.md. Na takich bazach `migrate deploy` NIE zadziala.
+> S.O.K. stosuje wersjonowane migracje PostgreSQL. Jeżeli istniejąca baza zawiera dane bez kanonicznej historii migracji, przerwij aktualizację i sprawdź rozbieżność na kopii zgodnie z CONTRIBUTING.md.
 
 ### Ręczna edycja pliku migracji psuje przyszle deploye
 
@@ -212,13 +212,13 @@ Catch na granicy serwisu i tlumacz na bledy domenowe. Nigdy nie eksponuj surowyc
 
 ## Best Practices
 
-| Regula                                                               | Powod                                           |
-| -------------------------------------------------------------------- | ----------------------------------------------- |
-| `migrate deploy` / `db push` w deployu, `migrate dev` tylko lokalnie | `migrate dev` moze zresetowac baze przy drifcie |
-| Mapuj encje do DTO odpowiedzi                                        | Zapobiega wyciekowi wewnetrznych pol            |
-| Lap `PrismaClientKnownRequestError` na granicy serwisu               | Tlumacz na bledy domenowe                       |
-| Zawsze podawaj `where` na `deleteMany`                               | Zapobiega przypadkowemu wyczyszczeniu tabeli    |
-| Ustaw `updatedAt: new Date()` recznie w `updateMany`                 | `@updatedAt` pomija bulk                        |
+| Regula                                                                   | Powod                                                |
+| ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `migrate deploy` przy wdrożeniu, `migrate dev` tylko na izolowanej bazie | `migrate dev` może zresetować bazę przy rozbieżności |
+| Mapuj encje do DTO odpowiedzi                                            | Zapobiega wyciekowi wewnetrznych pol                 |
+| Lap `PrismaClientKnownRequestError` na granicy serwisu                   | Tlumacz na bledy domenowe                            |
+| Zawsze podawaj `where` na `deleteMany`                                   | Zapobiega przypadkowemu wyczyszczeniu tabeli         |
+| Ustaw `updatedAt: new Date()` recznie w `updateMany`                     | `@updatedAt` pomija bulk                             |
 
 ## Related Skills
 
