@@ -261,25 +261,29 @@ jobs:
 
             - name: Provision least-privilege PostgreSQL roles
               run: |
-                  docker run --rm --network host \
+                  docker run --rm -i --network host \
                     -e POSTGRES_ADMIN_URL='postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test' \
                     -e SOK_MIGRATOR_PASSWORD='ci-only-migrator' \
                     -e SOK_APP_PASSWORD='ci-only-app' \
                     -e SOK_BACKUP_PASSWORD='ci-only-backup' \
-                    --entrypoint node sok-oferty:${{ github.sha }} -e '
+                    --entrypoint node sok-oferty:${{ github.sha }} - <<'NODE'
                   const { Client } = require("pg");
                   const client = new Client({ connectionString: process.env.POSTGRES_ADMIN_URL });
                   const roles = [["sok_migrator", "SOK_MIGRATOR_PASSWORD"], ["sok_app", "SOK_APP_PASSWORD"], ["sok_backup", "SOK_BACKUP_PASSWORD"]];
                   client.connect().then(async () => {
                     for (const [role, envName] of roles) {
-                      const { rows } = await client.query("SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', $1, $2) AS statement", [role, process.env[envName]]);
+                      const { rows } = await client.query(
+                        "SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', $1, $2) AS statement",
+                        [role, process.env[envName]]
+                      );
                       await client.query(rows[0].statement);
                     }
                     await client.query("GRANT CONNECT ON DATABASE sok_test TO sok_migrator, sok_app, sok_backup");
                     await client.query("GRANT CREATE ON DATABASE sok_test TO sok_migrator");
                     await client.query("ALTER SCHEMA public OWNER TO sok_migrator");
                     await client.query("GRANT USAGE ON SCHEMA public TO sok_app, sok_backup");
-                  }).catch(error => { console.error(error.message); process.exitCode = 1; }).finally(() => client.end());'
+                  }).catch(error => { console.error(error.message); process.exitCode = 1; }).finally(() => client.end());
+                  NODE
 
             - name: Apply PostgreSQL migrations and bootstrap
               run: |
@@ -516,6 +520,7 @@ jobs:
                     --health-retries 12
         env:
             DATABASE_URL: 'postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test?schema=public'
+            PLAYWRIGHT_DATABASE_URL: 'postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test'
             TEST_ADMIN_PASSWORD: test-admin-pass
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
         steps:

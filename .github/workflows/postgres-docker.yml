@@ -78,26 +78,26 @@ jobs:
             - name: Apply PostgreSQL bootstrap once
               run: |
                   docker run --rm \
-                    --add-host=host.docker.internal:host-gateway \
+                    --network host \
                     --entrypoint /bin/sh \
-                    -e DATABASE_URL='postgresql://sok_app:ci-only-p03-app@host.docker.internal:5432/sok_test?schema=public' \
-                    -e MIGRATION_DATABASE_URL='postgresql://sok_migrator:ci-only-p03-migrator@host.docker.internal:5432/sok_test?schema=public' \
+                    -e DATABASE_URL='postgresql://sok_app:ci-only-p03-app@localhost:5432/sok_test?schema=public' \
+                    -e MIGRATION_DATABASE_URL='postgresql://sok_migrator:ci-only-p03-migrator@localhost:5432/sok_test?schema=public' \
                     -e DEFAULT_ADMIN_PASSWORD="$DEFAULT_ADMIN_PASSWORD" \
                     sok-postgres-smoke:ci /app/scripts/docker-db-bootstrap.sh
 
             - name: Start application with explicit PostgreSQL URL
               run: |
                   docker run -d --name sok-postgres-smoke \
-                    --add-host=host.docker.internal:host-gateway \
-                    -p 3000:10000 \
-                    -e DATABASE_URL='postgresql://sok_app:ci-only-p03-app@host.docker.internal:5432/sok_test?schema=public' \
-                    -e BACKUP_DATABASE_URL='postgresql://sok_backup:ci-only-p03-backup@host.docker.internal:5432/sok_test?schema=public' \
+                    --network host \
+                    -e PORT=10000 \
+                    -e DATABASE_URL='postgresql://sok_app:ci-only-p03-app@localhost:5432/sok_test?schema=public' \
+                    -e BACKUP_DATABASE_URL='postgresql://sok_backup:ci-only-p03-backup@localhost:5432/sok_test?schema=public' \
                     sok-postgres-smoke:ci
 
             - name: Wait for application readiness
               run: |
                   for attempt in $(seq 1 48); do
-                    if curl -sf http://localhost:3000/health/ready >/dev/null; then
+                    if curl -sf http://localhost:10000/health/ready >/dev/null; then
                       echo "Application ready on attempt $attempt."
                       exit 0
                     fi
@@ -107,6 +107,15 @@ jobs:
                   docker logs --tail=100 sok-postgres-smoke > /tmp/sok-postgres-smoke.log
                   node scripts/redact-db-log.mjs /tmp/sok-postgres-smoke.log >&2
                   exit 1
+
+            - name: Verify PostgreSQL backup and archive format
+              run: |
+                  docker exec \
+                    -e DATABASE_URL='postgresql://sok_app:ci-only-p03-app@localhost:5432/sok_test?schema=public' \
+                    -e BACKUP_DATABASE_URL='postgresql://sok_backup:ci-only-p03-backup@localhost:5432/sok_test?schema=public' \
+                    -e PG_DUMP_BIN=/usr/lib/postgresql/18/bin/pg_dump \
+                    -e PG_RESTORE_BIN=/usr/lib/postgresql/18/bin/pg_restore \
+                    sok-postgres-smoke npm run backup
 
             - name: Verify migrations are registered in PostgreSQL
               run: |

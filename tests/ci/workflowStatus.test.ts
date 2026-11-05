@@ -150,4 +150,15 @@ describe('PostgreSQL test toolchain', () => {
         expect(POSTGRES_DOCKER).toMatch(/ON_ERROR_STOP=1/);
         expect(POSTGRES_DOCKER).not.toMatch(/require\(['"]pg['"]\)/);
     });
+
+    it('docker-build provisions PostgreSQL roles without nested shell quoting', () => {
+        const start = CI.indexOf('    docker-build:');
+        const end = CI.indexOf('\n    e2e-appname:', start);
+        const section = CI.slice(start, end);
+
+        expect(start).toBeGreaterThan(-1);
+        expect(section).toMatch(/--entrypoint node[^\n]*- <<'NODE'/);
+        expect(section).toMatch(/format\('CREATE ROLE %I LOGIN PASSWORD %L'/);
+        expect(section).not.toMatch(/--entrypoint node[^\n]*-e '/);
+    });
 });

@@ -39,11 +39,14 @@ async function claimProductionSeqs(
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
             return await prisma.$transaction(async (tx) => {
-                const recycled = await tx.recycled_production_numbers.findMany({
-                    where: { userId, year },
-                    orderBy: { seqNumber: 'asc' },
-                    take: count
-                });
+                const recycled = await tx.$queryRaw<Array<{ seqNumber: number }>>`
+                    SELECT "seqNumber"
+                    FROM "recycled_production_numbers"
+                    WHERE "userId" = ${userId} AND "year" = ${year}
+                    ORDER BY "seqNumber" ASC
+                    LIMIT ${count}
+                    FOR UPDATE
+                `;
                 const wanted = recycled.map((r) => r.seqNumber);
                 if (wanted.length > 0) {
                     const del = await tx.recycled_production_numbers.deleteMany({

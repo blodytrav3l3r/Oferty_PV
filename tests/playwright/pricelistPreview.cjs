@@ -123,6 +123,23 @@ function precoRows(price) {
     };
 }
 
+async function readJsonResponse(response) {
+    try {
+        const body = await response.json();
+        return body && typeof body === 'object' && !Array.isArray(body) ? body : {};
+    } catch (_) {
+        return {};
+    }
+}
+
+function summarizeApiResponse(response, body) {
+    const code =
+        typeof body.code === 'string' && /^[A-Z0-9_]{1,64}$/.test(body.code)
+            ? ` code=${body.code}`
+            : '';
+    return `status=${response.status()}${code}`;
+}
+
 /**
  * Czeka na gotowy iframe modułu. Re-rozwiazuje uchwyt w petli, bo iframe SPA
  * potrafi sie przeladowac tuz po `contentFrame()` i stary uchwyt nigdy nie
@@ -204,7 +221,7 @@ function trackWrites(page) {
                 data: { rows: precoRows(100), note: 'E2E preview base' }
             }
         );
-        const baseBody = baseDraft.status() === 201 ? await baseDraft.json() : {};
+        const baseBody = await readJsonResponse(baseDraft);
         const baseVersion = baseBody.version || {};
 
         const approve = await context.request.post(
@@ -214,7 +231,7 @@ function trackWrites(page) {
                 data: { effectiveFrom: new Date().toISOString() }
             }
         );
-        const approveBody = approve.status() === 200 ? await approve.json() : {};
+        const approveBody = await readJsonResponse(approve);
 
         const changedDraft = await context.request.post(
             `${BASE}/api/pricelist-versions/preco/drafts`,
@@ -223,7 +240,7 @@ function trackWrites(page) {
                 data: { rows: precoRows(110), note: 'E2E preview changed' }
             }
         );
-        const changedBody = changedDraft.status() === 201 ? await changedDraft.json() : {};
+        const changedBody = await readJsonResponse(changedDraft);
         const changedVersion = changedBody.version || {};
         draftCleanupId = changedVersion.id || '';
 
@@ -235,7 +252,7 @@ function trackWrites(page) {
                 approveBody.version &&
                 approveBody.version.status === 'APPROVED'
             ),
-            `draft=${baseDraft.status()} approve=${approve.status()} status=${approveBody.version?.status} draft2=${changedDraft.status()}`
+            `draft=${summarizeApiResponse(baseDraft, baseBody)} approve=${summarizeApiResponse(approve, approveBody)} draft2=${summarizeApiResponse(changedDraft, changedBody)}`
         );
 
         const tilesPage = await context.newPage();

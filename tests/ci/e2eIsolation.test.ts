@@ -11,6 +11,7 @@ import path from 'node:path';
 const ROOT = path.resolve(__dirname, '..', '..');
 const PW = fs.readFileSync(path.join(ROOT, 'playwright.config.ts'), 'utf8');
 const CI = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
+const PRISMA_CONFIG = fs.readFileSync(path.join(ROOT, 'prisma.config.ts'), 'utf8');
 const SMOKE = fs.readFileSync(
     path.join(ROOT, 'tests', 'playwright', 'smokeOfferFlow.spec.ts'),
     'utf8'
@@ -95,5 +96,20 @@ describe('D-017 E2E isolation: CI jobs', () => {
         expect(section).not.toMatch(/PORT=3000/);
         expect(section).not.toMatch(/localhost:3000\/health/);
         expect(section).toMatch(/BASE_URL/);
+    });
+
+    it('axe-a11y przekazuje jawny URL do izolowanej bazy PostgreSQL', () => {
+        const start = CI.indexOf('    axe-a11y:');
+        const end = CI.indexOf('\n    e2e-smoke:', start);
+        const section = CI.slice(start, end);
+
+        expect(start).toBeGreaterThan(-1);
+        expect(section).toMatch(/PLAYWRIGHT_DATABASE_URL:\s*'postgresql:\/\//);
+        expect(section).not.toMatch(/file:|\.sqlite|app_database/);
+    });
+
+    it('Prisma uruchamia seed przez lokalny Node i ts-node/register', () => {
+        expect(PRISMA_CONFIG).toMatch(/seed:\s*'node -r ts-node\/register prisma\/seed\.ts'/);
+        expect(PRISMA_CONFIG).not.toMatch(/seed:\s*'ts-node /);
     });
 });

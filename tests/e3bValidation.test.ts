@@ -83,7 +83,10 @@ jest.mock('../src/prismaClient', () => ({
                     deleteMany: async () => ({ count: 0 })
                 },
                 $executeRaw: async () => 1,
-                $queryRaw: async () => [{ lastNumber: 5 }]
+                $queryRaw: async (strings: TemplateStringsArray) =>
+                    strings[0]?.includes('FROM "recycled_production_numbers"')
+                        ? []
+                        : [{ lastNumber: 5 }]
             })
         )
     }

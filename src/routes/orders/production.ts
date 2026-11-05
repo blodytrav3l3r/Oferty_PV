@@ -895,9 +895,9 @@ router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req,
         const targetYear = parsed.data.year ?? new Date().getFullYear();
         const rows = seqs.map((seq) => Prisma.sql`(${userId}, ${targetYear}, ${seq})`);
         await prisma.$executeRaw`
-            INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
+            INSERT INTO "recycled_production_numbers" ("userId", "year", "seqNumber")
             VALUES ${Prisma.join(rows)}
-            ON CONFLICT ("userId", year, seqNumber) DO NOTHING
+            ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING
         `;
         res.json({ ok: true, returned: seqs.length });
     } catch (e: unknown) {

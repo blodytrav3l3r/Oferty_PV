@@ -57,6 +57,7 @@ const store: {
     failUpsertAfter: -1,
     upsertCalls: 0
 };
+const recycledClaimLocks = new Map<string, Promise<void>>();
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -161,6 +162,7 @@ jest.mock('../../src/prismaClient', () => ({
             const snapOrder = (id: string) => {
                 if (!(id in undo.orders)) undo.orders[id] = store.orders[id];
             };
+            const recycledLockRelease: { release?: () => void } = {};
             const tx = {
                 // P0-C/D: PUT batch działa na tx.production_orders_rel.
                 production_orders_rel: {
@@ -287,7 +289,29 @@ jest.mock('../../src/prismaClient', () => ({
                     }
                     return 1;
                 }),
-                $queryRaw: jest.fn(async (_strings: any, ...values: any[]) => {
+                $queryRaw: jest.fn(async (strings: any, ...values: any[]) => {
+                    const sql: string = strings[0] || '';
+                    if (sql.includes('FROM "recycled_production_numbers"')) {
+                        const [userId, year, take] = values;
+                        const lockKey = `${userId}|${year}`;
+                        const previous = recycledClaimLocks.get(lockKey) ?? Promise.resolve();
+                        let release!: () => void;
+                        const lock = new Promise<void>((resolve) => {
+                            release = resolve;
+                        });
+                        recycledClaimLocks.set(lockKey, lock);
+                        await previous;
+                        recycledLockRelease.release = () => {
+                            release();
+                            if (recycledClaimLocks.get(lockKey) === lock)
+                                recycledClaimLocks.delete(lockKey);
+                        };
+                        return store.recycled
+                            .filter((row) => row.userId === userId && row.year === year)
+                            .sort((a, b) => a.seqNumber - b.seqNumber)
+                            .slice(0, take)
+                            .map((row) => ({ seqNumber: row.seqNumber }));
+                    }
                     const [userId, year] = values;
                     return [{ lastNumber: store.counters[userId + '|' + year] ?? 0 }];
                 })
@@ -315,6 +339,8 @@ jest.mock('../../src/prismaClient', () => ({
                     else store.orders[id] = undo.orders[id];
                 }
                 throw e;
+            } finally {
+                recycledLockRelease.release?.();
             }
         }),
         $queryRaw: jest.fn(async () => []),
@@ -587,7 +613,11 @@ describe('POST /production/recycle-numbers', () => {
             .send({ userId: 'u1', seqNumbers: [5, 6, 5] });
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ ok: true, returned: 2 });
-        expect(prisma.$executeRaw).toHaveBeenCalled();
+        const [queryParts] = prisma.$executeRaw.mock.calls.at(-1);
+        const sql = queryParts.join('?');
+        expect(sql).toContain('INSERT INTO "recycled_production_numbers"');
+        expect(sql).toContain('"userId", "year", "seqNumber"');
+        expect(sql).toContain('ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING');
     });
 
     test('E3a strict: śmieć w seqNumbers / year → 400 z details', async () => {

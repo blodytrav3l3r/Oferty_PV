@@ -5,7 +5,7 @@ export default defineConfig({
     schema: 'prisma/schema.prisma',
     migrations: {
         path: 'prisma/migrations-postgresql',
-        seed: 'ts-node prisma/seed.ts'
+        seed: 'node -r ts-node/register prisma/seed.ts'
     },
     datasource: {
         url: env('DATABASE_URL')
