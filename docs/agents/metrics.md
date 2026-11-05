@@ -8,25 +8,25 @@
 
 | Element      | Wartość                                                                                |
 | ------------ | -------------------------------------------------------------------------------------- |
-| Data pomiaru | 2026-11-03                                                                             |
-| HEAD         | `143bbcd`                                                                              |
+| Data pomiaru | 2026-11-05                                                                             |
+| HEAD         | `8e2a076a`                                                                             |
 | Zakres       | pliki śledzone przez Git (`git ls-files`); pliki nieśledzone pomijane                  |
 | Weryfikacja  | dwie niezależne metody: `git grep` / `git ls-files` oraz `ripgrep` — wyniki identyczne |
 
 ## 2. Liczby
 
-| Metryka                                    | Wartość |
-| ------------------------------------------ | ------- |
-| Pliki `.js` w `public/js`                  | 263     |
-| Pliki `.js` w `public/js/studnie`          | 150     |
-| Przypisania `window.X =` w `public/js`     | 1312    |
-| Programistyczne `.onclick =` w `public/js` | 21      |
-| Inline handlery `on*=` w plikach HTML      | 0       |
-| Pliki `.html` śledzone przez Git           | 34      |
-| Pliki testowe `.test.ts` / `.spec.ts`      | 588     |
-| Pliki w `scripts/`                         | 84      |
-| Migracje w `prisma/migrations`             | 39      |
-| Modele w `prisma/schema.prisma`            | 47      |
+| Metryka                                              | Wartość |
+| ---------------------------------------------------- | ------- |
+| Pliki `.js` w `public/js`                            | 263     |
+| Pliki `.js` w `public/js/studnie`                    | 150     |
+| Przypisania `window.X =` w `public/js`               | 1316    |
+| Programistyczne `.onclick =` w `public/js`           | 21      |
+| Inline handlery `on*=` w plikach HTML                | 0       |
+| Pliki `.html` śledzone przez Git                     | 34      |
+| Pliki testowe `.test.ts` / `.spec.ts`                | 587     |
+| Pliki w `scripts/`                                   | 88      |
+| Migracje PostgreSQL w `prisma/migrations-postgresql` | 3       |
+| Modele w `prisma/schema.prisma`                      | 47      |
 
 Zero inline handlerów w HTML jest stanem wymuszonym przez CSP (nonce + dyspozytor
 `data-csp*`), nie przypadkiem — patrz `docs/agents/security.md`.
@@ -38,12 +38,12 @@ Bash / Git Bash:
 ```bash
 git ls-files public/js | grep -c '\.js$'                                  # 263
 git ls-files public/js/studnie | grep -c '\.js$'                          # 150
-git grep -o -E 'window\.[A-Za-z_$][A-Za-z0-9_$]*[[:space:]]*=[^=]' -- public/js | wc -l   # 1312
+git grep -o -E 'window\.[A-Za-z_$][A-Za-z0-9_$]*[[:space:]]*=[^=]' -- public/js | wc -l   # 1316
 git grep -o -E '\.onclick[[:space:]]*=' -- public/js | wc -l              # 21
 git grep -o -i -E '[[:space:]]on[a-z]+[[:space:]]*=' -- '*.html' | wc -l  # 0
 git ls-files '*.html' | wc -l                                             # 34
-git ls-files tests | grep -cE '\.(test|spec)\.ts$'                        # 588
-git ls-files scripts | wc -l                                              # 84
+git ls-files tests | grep -cE '\.(test|spec)\.ts$'                        # 587
+git ls-files scripts | wc -l                                              # 88
 ls -d prisma/migrations-postgresql/*/ | wc -l                             # 3
 grep -c '^model ' prisma/schema.prisma                                    # 47
 ```
@@ -58,7 +58,7 @@ PowerShell:
 (git grep -o -i -E '[[:space:]]on[a-z]+[[:space:]]*=' -- '*.html' | Measure-Object -Line).Lines
 (git ls-files tests | Where-Object { $_ -match '\.(test|spec)\.ts$' } | Measure-Object -Line).Lines
 (git ls-files scripts | Measure-Object -Line).Lines
-(Get-ChildItem prisma/migrations -Directory).Count
+(Get-ChildItem prisma/migrations-postgresql -Directory).Count
 (Select-String -Path prisma/schema.prisma -Pattern '^model ' | Measure-Object -Line).Lines
 ```
 
@@ -82,8 +82,8 @@ wymaga odświeżania.
 - Baseline'y wydajnościowe z `docs/plans/` opisują pomiary historyczne. Jeśli
   artefakt wskazuje bazę SQLite, traktuj wynik wyłącznie jako punkt odniesienia
   dla ówczesnej instalacji, nie jako baseline PostgreSQL ani dowód równoważnej
-  wydajności. Baseline PostgreSQL 18 wymaga osobnego pomiaru po zakończeniu
-  konwersji runtime i walidacji danych.
+  wydajności. Baseline PostgreSQL 18 wymaga osobnego pomiaru bezpośrednio na
+  PostgreSQL; nie wyciągaj wniosków o porównywalnej wydajności z dawnych danych.
 - `docs/AUDIT.md` — **migawka historyczna** (stan 2026-08-24). Liczby zostają jako
   zapis z daty audytu; nie aktualizować.
 - `docs/plans/` — wpisy historyczne, wartości mogą zostać jako zapis stanu z daty.

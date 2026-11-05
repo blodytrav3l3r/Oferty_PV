@@ -51,7 +51,7 @@ Node.js/Express. Node.js pozostaje serwerem HTTP i w produkcji binduje się domy
                └────────┬────────┘
                         │
                         ▼
-              Prisma / SQLite
+           Prisma / PostgreSQL 18
 ```
 
 ## Uzasadnienie

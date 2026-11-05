@@ -12,7 +12,7 @@ Warstwy: `routes` → `validators` → `services` → `Prisma` (+ `auth`, `owner
 
 Decyzje (szczegóły w `docs/adr/`): ADR-001 i ADR-012 opisują historyczny wybór SQLite, nie aktywny kierunek; docelowy backend to PostgreSQL. Pozostałe: ADR-002 Vanilla JS SPA; ADR-004 Express + Prisma; ADR-005 Express jedynym serwerem (Vite wycofany); ADR-006 HTTPS przez reverse proxy; ADR-007 ujednolicony cennik; ADR-008 modularyzacja frontendu; ADR-009 mapa produktów studni (`Map<string,Product>` + kontrakt `window.studnieProducts` + `__assertStudnieMapFresh`).
 
-Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-013) — przeczytaj przed zmianą logiki biznesowej.
+Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-014) — przeczytaj przed zmianą logiki biznesowej.
 
 ## Konwencje kodu
 
@@ -35,6 +35,6 @@ Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-013) — przeczytaj 
 
 ## Czego nie robić
 
-- Bez React/mikroserwisów/Redis/BullMQ/Kafka/Pact/OpenTelemetry (decyzje architektoniczne, nie zaległości). PostgreSQL jest wymaganym celem migracji.
+- Bez React/mikroserwisów/Redis/BullMQ/Kafka/Pact/OpenTelemetry (decyzje architektoniczne, nie zaległości). PostgreSQL 18 jest jedynym wspieranym providerem runtime, narzędzi i aktywnych testów.
 - Bez globalnego cleanup Excel; bez masowego przepisywania `window.*`/`onclick`.
 - Bez zmiany kontraktów API, logiki cenowej i solvera bez testów inwariantów.

@@ -13,7 +13,7 @@ PostgreSQL 18 jest jedynym wspieranym silnikiem danych runtime i aktywnych test�
 - Chwile zdarzeń modeluj jako `timestamptz` UTC, daty kalendarzowe jako `date`; zachowuj publiczny format dat po jawnej serializacji. Nie konwertuj tekstu/epoki bez rozpoznania istniejących formatów i producentów.
 - Używaj `Json`/JSONB dla pól, których kontrakt jest rzeczywiście strukturalnym JSON; wersjonowane snapshoty zachowują kopertę `{schemaVersion, data}`. Nie normalizuj całego modelu JSON bez uzasadnienia domenowego.
 - Nowe relacje mają jawne PK/FK, reguły `ON DELETE`, named constraints i indeksy uzasadnione query shape. Wejście trafia do zapytań wyłącznie parametryzowane; nie sklejaj SQL z danymi użytkownika.
-- Zachowuj wszystkie 56 modeli oraz rodziny `PricelistVersion`/`PricelistItem*`, `AiTransfer`, `client_contacts_rel` i `user_preferences`, chyba że osobna decyzja zmieni zakres.
+- Zachowuj wszystkie modele z kanonicznego `prisma/schema.prisma` oraz rodziny `PricelistVersion`/`PricelistItem*`, `AiTransfer`, `client_contacts_rel` i `user_preferences`, chyba że osobna decyzja zmieni zakres.
 
 ## Migracje i cykl życia
 

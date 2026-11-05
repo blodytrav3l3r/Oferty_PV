@@ -5,6 +5,7 @@
 ## Stack
 
 - Czysty Vanilla JS (bez frameworków SPA), serwowany wprost przez Express z `public/` (dev i prod). Kod modułów: `public/js/rury/` oraz `public/js/studnie/`.
+- Dostęp do serwerowych danych domenowych przebiega przez API Express; frontend nie łączy się bezpośrednio z PostgreSQL. Backend obsługuje je przez Prisma i PostgreSQL 18. Lokalne drafty i stan przeglądarki zachowują własne kontrakty; standard bazy opisują `docs/DATABASE.md` i `docs/agents/database.md`.
 - SPA: `app.html` to jedyny entry point. Moduły (`studnie.html`, `rury.html`) ładowane jako iframe wewnątrz `app.html`.
 - `tsc` nie kompiluje `public/`; frontend sprawdzają ESLint (osobne reguły w `eslint.config.mjs`), `npm run typecheck:frontend` i `npm run lint:frontend`. Składnię weryfikuj też ręcznie: `node -c <plik>`.
 - Globalne helpery rejestruj jawnie na `window` (np. na końcu pliku: `window.myHelper = myHelper;`).
