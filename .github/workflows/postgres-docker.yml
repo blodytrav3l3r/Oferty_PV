@@ -56,22 +56,24 @@ jobs:
 
             - name: Provision isolated least-privilege smoke roles
               run: |
-                  node <<'NODE'
-                  const { Client } = require('pg');
-                  const client = new Client({ connectionString: process.env.POSTGRES_ADMIN_URL });
-                  client.connect()
-                    .then(async () => {
-                      await client.query("CREATE ROLE sok_migrator LOGIN PASSWORD 'ci-only-p03-migrator'");
-                      await client.query("CREATE ROLE sok_app LOGIN PASSWORD 'ci-only-p03-app'");
-                      await client.query("CREATE ROLE sok_backup LOGIN PASSWORD 'ci-only-p03-backup'");
-                      await client.query('GRANT CONNECT, CREATE ON DATABASE sok_test TO sok_migrator');
-                      await client.query('ALTER SCHEMA public OWNER TO sok_migrator');
-                      await client.query('GRANT CONNECT ON DATABASE sok_test TO sok_app, sok_backup');
-                      await client.query('GRANT USAGE ON SCHEMA public TO sok_app, sok_backup');
-                    })
-                    .catch((error) => { console.error(error.message); process.exitCode = 1; })
-                    .finally(() => client.end());
-                  NODE
+                  postgres_container="$(docker ps --filter 'ancestor=postgres:18-alpine' --format '{{.ID}}' | head -n 1)"
+                  if [ -z "$postgres_container" ]; then
+                    echo 'PostgreSQL 18 service container was not found.' >&2
+                    exit 1
+                  fi
+                  echo "POSTGRES_CONTAINER_ID=$postgres_container" >> "$GITHUB_ENV"
+                  docker exec -i "$postgres_container" psql \
+                    --set=ON_ERROR_STOP=1 \
+                    --username=sok_test \
+                    --dbname=sok_test <<'SQL'
+                  CREATE ROLE sok_migrator LOGIN PASSWORD 'ci-only-p03-migrator';
+                  CREATE ROLE sok_app LOGIN PASSWORD 'ci-only-p03-app';
+                  CREATE ROLE sok_backup LOGIN PASSWORD 'ci-only-p03-backup';
+                  GRANT CONNECT, CREATE ON DATABASE sok_test TO sok_migrator;
+                  ALTER SCHEMA public OWNER TO sok_migrator;
+                  GRANT CONNECT ON DATABASE sok_test TO sok_app, sok_backup;
+                  GRANT USAGE ON SCHEMA public TO sok_app, sok_backup;
+                  SQL
 
             - name: Apply PostgreSQL bootstrap once
               run: |
@@ -108,18 +110,18 @@ jobs:
 
             - name: Verify migrations are registered in PostgreSQL
               run: |
-                  node <<'NODE'
-                  const { Client } = require('pg');
-                  const client = new Client({ connectionString: process.env.DATABASE_URL });
-                  client.connect()
-                    .then(() => client.query('SELECT count(*)::int AS count FROM public."_prisma_migrations"'))
-                    .then(({ rows }) => {
-                      if (rows[0].count < 1) throw new Error('No PostgreSQL migrations were applied.');
-                      console.log(`PostgreSQL migration records: ${rows[0].count}`);
-                    })
-                    .catch((error) => { console.error(error.message); process.exitCode = 1; })
-                    .finally(() => client.end());
-                  NODE
+                  migration_count="$(docker exec "$POSTGRES_CONTAINER_ID" psql \
+                    --set=ON_ERROR_STOP=1 \
+                    --tuples-only \
+                    --no-align \
+                    --username=sok_test \
+                    --dbname=sok_test \
+                    --command='SELECT count(*) FROM public."_prisma_migrations"')"
+                  if [ "$migration_count" -lt 1 ]; then
+                    echo 'No PostgreSQL migrations were applied.' >&2
+                    exit 1
+                  fi
+                  echo "PostgreSQL migration records: $migration_count"
 
             - name: Stop application container
               if: always()

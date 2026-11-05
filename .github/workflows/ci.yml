@@ -129,6 +129,8 @@ jobs:
                   echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
                   sudo apt-get update
                   sudo apt-get install -y postgresql-client-18
+                  echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+                  export PATH="/usr/lib/postgresql/18/bin:$PATH"
                   pg_dump --version | grep -E ' 18(\.|$)'
                   pg_restore --version | grep -E ' 18(\.|$)'
 
@@ -194,6 +196,8 @@ jobs:
                   echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
                   sudo apt-get update
                   sudo apt-get install -y postgresql-client-18
+                  echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+                  export PATH="/usr/lib/postgresql/18/bin:$PATH"
                   pg_dump --version | grep -E ' 18(\.|$)'
                   pg_restore --version | grep -E ' 18(\.|$)'
 

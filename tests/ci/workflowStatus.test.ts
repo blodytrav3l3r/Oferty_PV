@@ -13,6 +13,10 @@ const NIGHTLY = fs.readFileSync(
     path.join(ROOT, '.github', 'workflows', 'load-nightly.yml'),
     'utf8'
 );
+const POSTGRES_DOCKER = fs.readFileSync(
+    path.join(ROOT, '.github', 'workflows', 'postgres-docker.yml'),
+    'utf8'
+);
 
 describe('P1.1 load status semantics', () => {
     it('ci.yml: brak maskujacego LOAD_SKIP=true', () => {
@@ -132,8 +136,17 @@ describe('PostgreSQL test toolchain', () => {
         for (const section of [jestJob, flakyDetect]) {
             expect(section).toMatch(/Install PostgreSQL 18 client tools/);
             expect(section).toMatch(/apt-get install -y postgresql-client-18/);
+            expect(section).toMatch(/export PATH="\/usr\/lib\/postgresql\/18\/bin:\$PATH"/);
+            expect(section).toMatch(/\/usr\/lib\/postgresql\/18\/bin.*GITHUB_PATH/);
             expect(section).toMatch(/pg_dump --version \| grep -E ' 18/);
             expect(section).toMatch(/pg_restore --version \| grep -E ' 18/);
         }
+    });
+
+    it('PostgreSQL Docker smoke uses psql inside the service container', () => {
+        expect(POSTGRES_DOCKER).toMatch(/docker ps .*ancestor=postgres:18-alpine/);
+        expect(POSTGRES_DOCKER).toMatch(/docker exec .*psql/);
+        expect(POSTGRES_DOCKER).toMatch(/ON_ERROR_STOP=1/);
+        expect(POSTGRES_DOCKER).not.toMatch(/require\(['"]pg['"]\)/);
     });
 });
