@@ -1,12 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// D-017: E2E na izolowanym porcie :3199 (nie dev :3000, nie --spawn :3177/:3178)
-// + izolowany plik DB. reuseExistingServer default false (dziura lokalna);
-// opt-in tylko przez PLAYWRIGHT_REUSE_SERVER=1.
+// D-017: E2E używa osobnego procesu, portu i schematu PostgreSQL.
+// reuseExistingServer jest domyślnie wyłączone; opt-in tylko przez env.
 const E2E_PORT = process.env.PLAYWRIGHT_PORT || '3199';
-const E2E_DB =
-    process.env.PLAYWRIGHT_DATABASE_URL ||
-    'file:./test-playwright.sqlite?connection_limit=1&busy_timeout=30000';
+if (!process.env.PLAYWRIGHT_DATABASE_URL) {
+    throw new Error('PLAYWRIGHT_DATABASE_URL is required; SQLite is unsupported');
+}
 
 export default defineConfig({
     testDir: 'tests/playwright',
@@ -24,14 +23,16 @@ export default defineConfig({
         screenshot: 'only-on-failure'
     },
     webServer: {
-        command: 'npm run build && node dist/server.js',
+        command: 'npm run build && node tests/playwright/postgresServer.cjs',
         url: `http://localhost:${E2E_PORT}/health`,
         reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === '1',
         timeout: 60_000,
         env: {
             NODE_ENV: 'test',
             PORT: E2E_PORT,
-            DATABASE_URL: E2E_DB,
+            PLAYWRIGHT_DATABASE_URL: process.env.PLAYWRIGHT_DATABASE_URL,
+            TEST_ADMIN_PASSWORD: process.env.TEST_ADMIN_PASSWORD,
+            DEFAULT_ADMIN_PASSWORD: process.env.TEST_ADMIN_PASSWORD,
             // Suity care/AI robią setki zapisów i logowań w jednym oknie limiterów.
             RATE_LIMIT_MULT: '100',
             // Determinizm unreadCount: bez throttle każdy GET syncuje powiadomienia.

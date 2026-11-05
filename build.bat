@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.3
+REM  Wersja: 1.56.4
 REM ===========================================================
 REM  build.bat - Budowanie production bundle (final)
 REM ===========================================================
@@ -7,7 +7,7 @@ REM ===========================================================
 setlocal
 cd /d "%~dp0"
 
-set "APP_VERSION=1.56.3"
+set "APP_VERSION=1.56.4"
 
 echo ===========================================================
 echo   S.O.K. - Budowanie produkcyjne v%APP_VERSION%
@@ -55,16 +55,16 @@ if errorlevel 1 (
 )
 echo [OK] dist\
 
-REM Kopiuj Prisma Client do dist - tsc nie kopiuje generated/ (src/prismaClient.ts importuje ../generated/prisma)
+REM Kopiuj Prisma Client do dist - tsc nie kopiuje generated/ (src/prismaClient.ts importuje ../generated/prisma-postgres)
 echo [INFO] Kopiowanie Prisma Client...
 if not exist "dist\generated" mkdir "dist\generated"
-xcopy /e /i /y "generated\prisma" "dist\generated\prisma" >nul
+xcopy /e /i /y "generated\prisma-postgres" "dist\generated\prisma-postgres" >nul
 if errorlevel 1 (
     echo [BLAD] Kopiowanie Prisma Client nie powiodlo sie.
     pause
     exit /b 1
 )
-echo [OK] dist\generated\prisma
+echo [OK] dist\generated\prisma-postgres
 
 echo ===========================================================
 echo   Build zakonczony

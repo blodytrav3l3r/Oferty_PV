@@ -30,7 +30,7 @@ jest.mock('../src/utils/searchUtils', () => {
     const actual = jest.requireActual('../src/utils/searchUtils');
     return {
         ...actual,
-        // buildOrderStatusSql importuje Prisma z generated/prisma (real Sql object),
+        // buildOrderStatusSql importuje Prisma z generated/prisma-postgres (real Sql object),
         // co psuje rendering w mocku prismaClient — zwracamy marker string.
         buildOrderStatusSql: () => ({
             joinSql: '',
@@ -97,7 +97,7 @@ describe('Wyszukiwarka ofert — filtr typu (rury vs studnie)', () => {
         app = createApp();
     });
 
-    // Renderuje mock-stringi ORAZ real-Sql ({strings, values} z generated/prisma)
+    // Renderuje mock-stringi ORAZ real-Sql ({strings, values} z generated/prisma-postgres)
     // — buildOffersCountSql buduje real-Sql w actual searchUtils.
     function renderArg(arg: unknown): string {
         if (

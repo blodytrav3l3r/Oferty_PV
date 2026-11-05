@@ -21,8 +21,8 @@ jest.mock('../../src/utils/logger', () => ({
 }));
 
 /**
- * R-BLOB-3: prawdziwy round-trip zamówienia studni przez SQLite workera
- * (tests/tmp/jest-worker-*.sqlite, schema z db push — BEZ mocków prismy).
+ * R-BLOB-3: prawdziwy round-trip zamówienia studni przez izolowany schemat
+ * PostgreSQL workera (migracje wdrożone, BEZ mocków prismy).
  *
  * Dowodzi braku cichego gubienia pól na ścieżce:
  * REST PUT → serializer (destructure + rest→blob) → kolumny + JSON →
@@ -60,7 +60,7 @@ function orderDoc(id: string) {
     };
 }
 
-describe('R-BLOB-3 orders studnie blob round-trip (real SQLite)', () => {
+describe('R-BLOB-3 orders studnie blob round-trip (real PostgreSQL)', () => {
     let app: express.Application;
     const orderId = uid('ord-rt');
 

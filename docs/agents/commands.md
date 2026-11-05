@@ -17,19 +17,19 @@
 
 Testy: `npm test` (wszystkie z pokryciem), `test:quick`, `test:quick:lite` (bez migracji i git-safety, pre-push), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:parity`, `test:golden`, `test:excel-visual`, `test:excel-slo`, `test:openperf`, `test:e2e-appname`, `test:spa-guard`, `test:e2e-qe-switch`, `test:e2e-pricelist-preview`, `test:watch`, `perf:baseline` (initial-load SPA, spawn :3178; `PERF_ONLY=a,b` filtruje strony).
 
-E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `DATABASE_URL` na plik testowy) — nigdy default :3000 (dev-serwer/prod DB).
+E2E na izolacji: PostgreSQL testowy przez jawny `PLAYWRIGHT_DATABASE_URL` lub `DATABASE_URL` (izolowany schemat testowy) i `PLAYWRIGHT_BASE_URL=http://localhost:PORT` — nigdy default :3000 (dev-serwer/prod DB).
 
 ## AI/ML, benchmark, pomiary
 
-`ai:setup` (diagnostyka modułu AI/ML); `benchmark`, `benchmark:quick`, `benchmark:autoselect[:quick]`; `measure:telemetry` (wzrost tabel audit/telemetria + progi); `load`, `load:quick`, `load:sustained`; `alerts` (progi metryk).
+`ai:setup` (diagnostyka modułu AI/ML); `benchmark`, `benchmark:quick`, `benchmark:autoselect[:quick]`; `measure:telemetry` (odczyt PostgreSQL: wzrost tabel audit/telemetria + progi); `load`, `load:quick`, `load:sustained`; `alerts` (progi metryk).
 
 ## Baza danych
 
-`prisma:generate`, `prisma:migrate` (dev), `prisma:deploy` (produkcja; `db push` wyłącznie legacy bez `_prisma_migrations`), `prisma:seed`, `prisma:studio`, `prisma:reset` (utrata danych!), `prisma:status`, `export:seed`, `pricelist:preflight`, `pricelist:health`, `import:offers`, `backfill:offer-counts`.
+`prisma:generate`, `prisma:migrate` (izolowana PostgreSQL dev DB), `prisma:deploy` (wersjonowane migracje PostgreSQL), `prisma:seed`, `prisma:studio`, `prisma:reset` (utrata danych!), `prisma:status`, `export:seed`, `pricelist:preflight`, `pricelist:health`, `import:offers`, `backfill:offer-counts`.
 
 ## Backup i cenniki
 
-`backup` (VACUUM INTO), `restore <plik>` (z synchronizacją schematu), `backup:install-cron` / `backup:uninstall-cron` (Windows), `prices:verify`, `audit:integrity`.
+`backup` (`pg_dump` custom archive), `restore <plik.dump>` (cel przez `RESTORE_DB_URL`, nigdy connection URL w argv; checksum/archiwum weryfikowane), `backup:install-cron` / `backup:uninstall-cron` (Windows), `prices:verify`, `audit:integrity`.
 
 ## Deploy, licencje, skills
 

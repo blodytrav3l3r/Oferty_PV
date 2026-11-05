@@ -2,7 +2,7 @@
  * P1.6: baseline performance frontendu (BEFORE dla P1.7).
  *
  * Run: node tests/playwright/perfBaseline.cjs --spawn
- *   (buduje + push/seed data/perf-baseline.sqlite + serwer :3178, jak appNameConsistency)
+ *   (buduje + migruje izolowany PostgreSQL + serwer :3178)
  * Bez --spawn: mierzy istniejacy serwer na BASE_URL (domyslnie :3000).
  *
  * Metryki per strona (cold ×3 + warm ×3): requests, bajty, JS-bajty, DCL, load,
@@ -16,6 +16,7 @@
 const { execFileSync, spawn } = require('child_process');
 const { join, resolve } = require('path');
 const fs = require('fs');
+const { createIsolatedPostgresSchema } = require('./isolatedPostgres.cjs');
 
 const ROOT = resolve(__dirname, '..', '..');
 const SPAWN = process.argv.includes('--spawn');
@@ -54,14 +55,9 @@ const RUNS = 3;
 const ONLY = process.env.PERF_ONLY ? process.env.PERF_ONLY.split(',') : null;
 
 async function startServer() {
-    const { rmSync, existsSync, symlinkSync, mkdirSync } = require('fs');
+    const { existsSync, symlinkSync } = require('fs');
     const { delimiter } = require('path');
-    const dbFile = join(ROOT, 'data', 'perf-baseline.sqlite');
-    const dbUrl = 'file:' + dbFile.replace(/\\/g, '/');
-    mkdirSync(join(ROOT, 'data'), { recursive: true });
-    for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
-        if (existsSync(f)) rmSync(f);
-    }
+    const { databaseUrl: dbUrl } = await createIsolatedPostgresSchema('perf_baseline');
     const distGen = join(ROOT, 'dist', 'generated');
     if (!existsSync(distGen)) {
         symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
@@ -70,22 +66,6 @@ async function startServer() {
         ...process.env,
         PATH: join(ROOT, 'node_modules', '.bin') + delimiter + (process.env.PATH || ''),
         ...extra
-    });
-    execFileSync(
-        process.execPath,
-        [
-            require.resolve('prisma/build/index.js'),
-            'db',
-            'push',
-            '--skip-generate',
-            '--accept-data-loss'
-        ],
-        { cwd: ROOT, env: withBin({ DATABASE_URL: dbUrl }), stdio: 'pipe' }
-    );
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
-        cwd: ROOT,
-        env: withBin({ DATABASE_URL: dbUrl }),
-        stdio: 'pipe'
     });
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
         cwd: ROOT,

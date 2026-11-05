@@ -1,55 +1,43 @@
 /**
  * Singleton klienta Prisma - zapewnia jedno połączenie z bazą danych w całej aplikacji
  */
-import fs from 'fs';
-import path from 'path';
-import { PrismaClient, Prisma } from '../generated/prisma';
-import { resolveProjectRoot } from './utils/paths';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, Prisma } from '../generated/prisma-postgres/client';
 import { countDbQuery } from './utils/dbQueryCounter';
-import { requireDatabaseUrl } from './utils/databaseUrl';
+import { requirePostgresDatabaseUrl } from './utils/databaseUrl';
 import { recordDbQuery } from './utils/metrics';
 
-/**
- * Normalizuje względną ścieżkę w DATABASE_URL do absolutnej.
- *
- * Prisma rozwiązuje względne ścieżki w URL `file:` względem katalogu, w którym
- * znajduje się schema.prisma widziana przez klienta — a ten katalog różni się
- * między dev (root `prisma/`) a prod (bundlowane `dist/prisma`). To sprawia,
- * że na produkcji `file:../data/...` wskazuje w nieistniejące miejsce i każda
- * kwerenda pada z "Error code 14: Unable to open the database file".
- *
- * Ujednolicenie do absolutnej ścieżki (względem katalogu schema.prisma w root)
- * sprawia, że dev i prod używają tego samego pliku niezależnie od CWD.
- */
-function normalizeDatabaseUrl(raw: string): string {
-    if (!raw.startsWith('file:')) {
-        return raw;
+export function createPrismaClient(rawUrl = process.env.DATABASE_URL): PrismaClient {
+    const connectionString = requirePostgresDatabaseUrl(rawUrl);
+    const parsedUrl = new URL(connectionString);
+    const schema = parsedUrl.searchParams.get('schema') ?? undefined;
+    if (schema && !/^[a-z_][a-z0-9_]*$/.test(schema)) {
+        throw new Error('DATABASE_URL schema must be a valid PostgreSQL identifier');
     }
-    const rest = raw.slice('file:'.length);
-    const queryIdx = rest.indexOf('?');
-    const pathPart = queryIdx === -1 ? rest : rest.slice(0, queryIdx);
-    const query = queryIdx === -1 ? '' : rest.slice(queryIdx);
-    if (path.isAbsolute(pathPart)) {
-        return raw;
-    }
-    // SQLite nie tworzy brakujących katalogów nadrzędnych — na świeżej instalacji
-    // katalog bazy może nie istnieć, a wtedy Prisma zwraca CANTOPEN (Error code 14).
-    const abs = path.resolve(resolveProjectRoot(), 'prisma', pathPart);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    return 'file:' + abs.replace(/\\/g, '/') + query;
+    parsedUrl.searchParams.delete('schema');
+    const adapter = new PrismaPg(
+        {
+            connectionString: parsedUrl.toString(),
+            max: 10,
+            connectionTimeoutMillis: 10_000,
+            idleTimeoutMillis: 30_000,
+            ...(schema ? { options: `-c search_path=${schema}` } : {})
+        },
+        schema ? { schema } : undefined
+    );
+
+    return new PrismaClient({
+        adapter,
+        // M: query events do metryk (stdout dla warn/error bez zmian).
+        log: [
+            { emit: 'stdout', level: 'warn' },
+            { emit: 'stdout', level: 'error' },
+            { emit: 'event', level: 'query' }
+        ]
+    });
 }
 
-const databaseUrl = normalizeDatabaseUrl(requireDatabaseUrl(process.env.DATABASE_URL));
-
-export const prisma = new PrismaClient({
-    datasources: { db: { url: databaseUrl } },
-    // M: query events do metryk (stdout dla warn/error bez zmian).
-    log: [
-        { emit: 'stdout', level: 'warn' },
-        { emit: 'stdout', level: 'error' },
-        { emit: 'event', level: 'query' }
-    ]
-});
+export const prisma = createPrismaClient();
 
 interface QueryEvent {
     duration: number;

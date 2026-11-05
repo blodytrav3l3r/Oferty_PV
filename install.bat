@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.3
+REM  Wersja: 1.56.4
 REM ===========================================================
 REM  install.bat - Setup srodowiska developer-skiego (final)
 REM  Strategia: proste kroki, zero kolorow i delikatnych ANSI.
@@ -8,7 +8,7 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set "APP_VERSION=1.56.3"
+set "APP_VERSION=1.56.4"
 
 echo ===========================================================
 echo   S.O.K. - Instalator v%APP_VERSION%
@@ -117,19 +117,7 @@ REM 8. Schema DB
 echo [INFO] migrate db...
 call npx prisma migrate deploy
 if errorlevel 1 (
-    echo [INFO] migrate deploy nie powiodl sie...
-    call node scripts\check-legacy-db.js
-    if !errorlevel! equ 1 (
-        echo [INFO] Baza legacy (db push) - fallback db push
-        call npx prisma db push --skip-generate --accept-data-loss
-    ) else (
-        echo [BLAD] migrate deploy nie powiodl sie, a baza nie jest legacy (db push).
-        pause
-        exit /b 1
-    )
-)
-if errorlevel 1 (
-    echo [BLAD] Prisma schema nie powiodl sie.
+    echo [BLAD] Prisma migrate deploy nie powiodlo sie. Sprawdz DATABASE_URL i stan migracji PostgreSQL.
     pause
     exit /b 1
 )
@@ -148,7 +136,7 @@ if not defined SKIP_SEED (
             echo [BLAD] Seed nie powiodl sie. Sprawdz komunikaty powyzej.
             echo [INFO] Jesli przenosisz baze z innego urzadzenia, uruchom:
             echo [INFO]   install.bat --skip-seed
-            echo [INFO]   npm run restore data/backups/nazwa_backupu.sqlite
+            echo [INFO]   npm run restore data/backups/nazwa_backupu.dump
             echo [INFO] Ceny z innej instalacji przeniesiesz jako wersje cennika:
             echo [INFO] panel "Wersje cennika" - eksport/import XLSX (bez pliku JSON).
             pause
@@ -178,6 +166,6 @@ echo.
 echo Uruchom start.bat aby zaczac prace.
 echo.
 echo UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:
-echo   npm run restore data/backups/nazwa_pliku.sqlite
+echo   npm run restore data/backups/nazwa_pliku.dump
 echo.
 endlocal

@@ -1,23 +1,36 @@
-# S.O.K. — Agent: baza danych (Prisma + SQLite)
+# S.O.K. — Agent: baza danych (Prisma + PostgreSQL)
 
 > Szczegółowy przewodnik domenowy. Root: `AGENTS.md` (mapa + bramy).
 
-## Model
+## Kierunek i status
 
-- SQLite WAL, `busy_timeout=30000`, seed paczkami (chunk 25/transakcja), inicjalizacja sekwencyjna (`await`, błędy #1/#2/#12).
-- 56 modeli Prisma (3 enumy); migracje w `prisma/migrations/` (36). Nowe instalacje: `prisma migrate deploy`. Rodzina `PricelistVersion` + `PricelistItem*` (wersjonowanie cenników), `AiTransfer`, `client_contacts_rel` i `user_preferences` to część schematu — nie pomijaj ich przy audycie. `db push` wyłącznie dla baz legacy bez `_prisma_migrations` (jednorazowa konwersja, nie alternatywny model utrzymania).
-- N+1: zbiorcze `findMany` + `in` i mapowanie w pamięci (błąd #9). Czyszczenie audit loga partiami + indeks `createdAt` (błąd #11).
-- JSON w kolumnach `String`: dopuszczalny dla snapshotów/telemetrii/konfiguracji; każdy snapshot przez kopertę `{schemaVersion, data}` (`src/utils/snapshots.ts` — `serialize/deserializeSnapshot`). Nie normalizuj wszystkiego; kolumny filtrowane/relacje biznesowe modeluj jawnie.
-- Monitor wzrostu: `npm run measure:telemetry` (telemetria ~0.6 MB/dzień — brak pilnej retencji; audyt ~81 KB/wiersz by design, retencja 180 dni w `cleanupAuditLogs`).
+PostgreSQL 18 jest jedynym docelowym i wspieranym silnikiem danych we wszystkich środowiskach. Provider i klient Prisma są przełączeni, CI/Compose są konwertowane, ale migracja trwa: część runtime SQL, aktywnych testów i narzędzi nadal zawiera nieprzepisane zależności SQLite, a działanie całej aplikacji na PostgreSQL 18 nie zostało zweryfikowane. Nie uznawaj cutoveru za wykonany, dopóki schemat, runtime, migracje, narzędzia, CI i testy nie działają na PostgreSQL. Nie dodawaj nowej obsługi SQLite. Jedynym dozwolonym wyjątkiem jest jednorazowy, read-only odczyt starej bazy w celu wyeksportowania aktywnych cenników; nie może wejść do runtime.
 
-## Migracje i schemat
+## Standard schematu
 
-- Migracje addytywne; status: `npx prisma migrate status`. Niezamigrowane bazy legacy: `npx prisma db push --skip-generate --accept-data-loss` (tylko legacy).
-- CI: `drift-check` + `migrate-deploy-verify` (blokują); release na `migrate deploy` (parity prod).
-- Schemat legacy: `prisma db push` tworzy brakujące obiekty ad-hoc przy starcie (auto-heal) — nie zastępuje migracji.
+- Utrzymuj jeden provider PostgreSQL i jedną kanoniczną historię migracji PostgreSQL, budowaną od pustej bazy. Nie uruchamiaj historii migracji SQLite na PostgreSQL.
+- Kwoty PLN przechowuj jako dokładne `Decimal` z jawnie uzgodnioną precyzją/scale i serializuj na granicach API/eksportu do dotychczasowych typów JSON; zaokrąglaj wyłącznie przez `roundMoney` zgodnie z `docs/MONEY_ROUNDING.md`. Nie używaj typu `money` ani Float do walut.
+- Chwile zdarzeń modeluj jako `timestamptz` UTC, daty kalendarzowe jako `date`; zachowuj publiczny format dat po jawnej serializacji. Nie konwertuj tekstu/epoki bez rozpoznania istniejących formatów i producentów.
+- Używaj `Json`/JSONB dla pól, których kontrakt jest rzeczywiście strukturalnym JSON; wersjonowane snapshoty zachowują kopertę `{schemaVersion, data}`. Nie normalizuj całego modelu JSON bez uzasadnienia domenowego.
+- Nowe relacje mają jawne PK/FK, reguły `ON DELETE`, named constraints i indeksy uzasadnione query shape. Wejście trafia do zapytań wyłącznie parametryzowane; nie sklejaj SQL z danymi użytkownika.
+- Zachowuj wszystkie 56 modeli oraz rodziny `PricelistVersion`/`PricelistItem*`, `AiTransfer`, `client_contacts_rel` i `user_preferences`, chyba że osobna decyzja zmieni zakres.
 
-## Backup / restore / cenniki
+## Migracje i cykl życia
 
-- `npm run backup` (VACUUM INTO + sha256) / `npm run restore <plik>` (nagłówek + `integrity_check` + czyszczenie WAL/SHM). Integralność: `npm run audit:integrity`.
-- Cenniki: `npm run prices:verify` (seed + ACTIVE) w `validate`; tabele LIVE i snapshot JSON usunięte w etapie 2.
-- Restore test istnieje (`tests/migrations/restoreRoundtrip.test.ts`) — utrzymuj, nie duplikuj.
+- Zmiany schematu wyłącznie przez wersjonowane migracje PostgreSQL. `migrate dev` służy do generowania/review SQL na izolowanej bazie deweloperskiej; instalacja i release używają `migrate deploy`. Runtime nie wykonuje DDL, auto-heal, `db push` ani równoległego deployu migracji przez wiele replik.
+- Każda migracja ma sprawdzenie SQL, ograniczeń, indeksów, locków, statusu i driftu na PostgreSQL. Najpierw fixture/czysta baza; upgrade danych produkcyjnych i live cutover wymagają odrębnej bramy GO.
+- Świeża baza otrzymuje migracje, bezpieczny seed startowy oraz aktywne cenniki przez osobny allowlistowany i audytowany import. Zachowuj tylko aktualnie aktywne wersje zgodne z lifecycle; nie importuj draftów ani historii ofert/użytkowników.
+- Nigdy nie maskuj błędu aktywnego cennika seedem fabrycznym ani fallbackiem do innego źródła.
+
+## Operacje i bezpieczeństwo
+
+- Aplikacja, migrator i backup używają oddzielnych ról o minimalnych uprawnieniach. Runtime nie otrzymuje superusera ani uprawnień DDL. Połączenia zdalne używają zweryfikowanego TLS; URL-e i sekrety pochodzą z secret managera/env, nigdy z kodu, logów ani argumentów procesu.
+- Backup/restore opieraj na `pg_dump`/`pg_restore` lub oficjalnym API wybranego hosta; nie kopiuj plików bazy. Restore drill wykonuj na izolowanym celu, sprawdzając checksum, migracje, aktywne cenniki i health/smoke.
+- `/health/ready` sprawdza osiągalność DB i zwraca odpowiedź bez szczegółów hosta, SQL ani sekretów. Monitoruj pulę, latency, błędy połączeń, deadlocki, miejsce, backup i restore.
+- Przed migracją/seedem lub operacją na live DB sprawdź kontrakt autonomii w `AGENTS.md`; plan migracji nie jest zgodą na produkcyjny cutover.
+
+## Domeny wymagające zachowania
+
+- Wersje i aktywność cennika zgodnie z `src/services/pricelist/` oraz I-014; ceny ofert i snapshoty zgodnie z I-001.
+- Ownership, numeracja/idempotencja i CAS zgodnie z I-003/I-004/I-009/I-013; nie zastępuj gwarancji przez cache ani lock aplikacyjny.
+- Backup/restore muszą spełniać I-005/I-006. Dotychczasowy test `tests/migrations/restoreRoundtrip.test.ts` należy przenieść na PostgreSQL — nie uznawać dawnej bazy SQLite za test docelowego restore.

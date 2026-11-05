@@ -24,6 +24,9 @@
  */
 
 const { randomUUID } = require('crypto');
+require('dotenv/config');
+require('ts-node/register');
+const { default: prisma } = require('../src/prismaClient.ts');
 
 /** Wyciaga wells z bloba (te same ksztalty co extractWellsFromOfferData). */
 function wellsFromBlob(dataStr) {
@@ -117,8 +120,6 @@ async function main() {
     console.log(apply ? '  [APPLY] Naprawiam liczniki' : '  [DRY RUN] Podglad, bez zapisu');
     console.log('');
 
-    const { PrismaClient } = require('../generated/prisma/index.js');
-    const prisma = new PrismaClient();
     const report = await backfillOfferCounts(prisma, { apply });
 
     console.log(`  Studnie do naprawy: ${report.studnieRows.length}`);

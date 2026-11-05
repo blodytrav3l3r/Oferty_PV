@@ -4,8 +4,8 @@
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
 </div>
 
-**Wersja:** 1.56.3  
-**Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
+**Wersja:** 1.56.4  
+**Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline<br>
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** Łukasz Kobyłka
 
@@ -17,7 +17,7 @@ S.O.K. — System Ofert i Kalkulacji to aplikacja webowa do generowania ofert ha
 
 Nazwa aplikacji wyświetlana na pulpicie i stronie logowania: **S.O.K. (System Ofert i Kalkulacji)** (rebranding z 2026-08-09, commit `a4b853f`).
 
-Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i bazą SQLite. Przeznaczona do wdrożenia na lokalnym serwerze, VPS lub przez Docker.
+Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i docelową bazą PostgreSQL 18. Migracja runtime i testów trwa; do czasu przejścia pełnej walidacji PostgreSQL 18 repozytorium nie jest gotowe do wdrożenia produkcyjnego. Aktualny stan i procedura cutoveru: [docs/DATABASE.md](docs/DATABASE.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) i [plan migracji](docs/plans/2026-11-04-migracja-postgresql.md).
 
 ---
 
@@ -43,12 +43,14 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 
 ### Wymagania wstępne
 
-| Składnik | Wersja minimalna | Pobierz                                                                                                                            |
-| -------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js  | >= 22.13         | [https://nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x)                                                           |
-| npm      | 9+               | Instaluje się automatycznie z Node.js                                                                                              |
-| Git      | dowolna          | [https://git-scm.com](https://git-scm.com) (opcjonalnie)                                                                           |
-| Python   | 3.10+            | Opcjonalnie — tylko do walidacji Excel w pre-commit (`scripts/excel-validator.py`); instalacja i uruchomienie NIE wymagają Pythona |
+| Składnik       | Wersja minimalna | Użycie                                                                                                |
+| -------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
+| Docker Desktop | aktualna         | Instalacja nowego komputera Windows; backend WSL 2 dla PostgreSQL 18 Compose                          |
+| Node.js        | >= 22.13         | Tylko rozwój lokalny bez Compose; [nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x)    |
+| npm            | 9+               | Tylko rozwój lokalny; instaluje się automatycznie z Node.js                                           |
+| Git            | dowolna          | Opcjonalnie do pobierania i aktualizacji źródeł; [git-scm.com](https://git-scm.com)                   |
+| PostgreSQL     | 18.x             | Dostarczany w Compose dla instalacji nowego komputera; lokalny serwer wymagany tylko poza Compose     |
+| Python         | 3.10+            | Opcjonalnie — jednorazowy eksport aktywnych cenników ze starej bazy oraz walidacja Excel w pre-commit |
 
 **Sprawdź zainstalowane wersje:**
 
@@ -72,29 +74,40 @@ cd Oferty_PV
 **Opcja B — z archiwum ZIP:**
 
 1. Pobierz ZIP z [https://github.com/blodytrav3l3r/Oferty_PV](https://github.com/blodytrav3l3r/Oferty_PV)
-2. Rozpakuj w docelowym folderze (np. `C:\SOK_Oferty`)
+2. Rozpakuj w folderze swojego użytkownika (np. `%USERPROFILE%\SOK_Oferty`, nie w `Program Files`)
 3. Otwórz terminal w tym folderze
 
-#### 2. Uruchom instalator (Windows)
+#### 2. Windows — lokalne testy
 
-```powershell
-.\install.bat
-```
+Dwukrotnie kliknij `install-new-pc.bat`. Host nie musi mieć Node.js ani PostgreSQL: instalator przygotowuje Docker Desktop, uruchamia PostgreSQL 18 w Compose, stosuje migracje i seed, a potem otwiera S.O.K. pod `http://localhost:3000`. Pliki bazy są w zarządzanym wolumenie Dockera, poza folderem aplikacji. Ten wariant służy do testów na Windows 10/11, nie do serwerowego wdrożenia ani dystrybucji Docker Desktop z S.O.K.
 
-Instalator automatycznie:
+Po udanej instalacji używaj `start-postgres.bat`, aby uruchomić istniejące kontenery PostgreSQL i S.O.K. Launcher wymaga znacznika zakończonej instalacji, który instalator zapisuje dopiero po imporcie aktywnych cenników i przejściu health checku. Nie tworzy nowej bazy, nie importuje cenników ani nie resetuje wolumenów. Przy pierwszej instalacji lub jej wznowieniu użyj `install-new-pc.bat`.
 
-- Sprawdzi i zweryfikuje wersję Node.js (>= 22.13)
-- Utworzy plik `.env` z `.env.example` (jeśli nie istnieje) — przez `scripts/init-env.mjs`,
-  który przy okazji wygeneruje losowe hasło administratora, jeśli `DEFAULT_ADMIN_PASSWORD`
-  jest puste lub równe domyślnej wartości `CHANGE_ME_PLEASE` (zapisze je w `.env`)
-- Zainstaluje zależności (`npm ci` — jeśli istnieje `package-lock.json`)
-- Wygeneruje klienta Prisma (`npx prisma generate`)
-- Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` — domyślnie; `npx prisma db push --skip-generate --accept-data-loss` wyłącznie dla baz legacy utworzonych przez `db push`, bez tabeli `_prisma_migrations`)
-- Zasieje dane początkowe (`npm run prisma:seed`) lub pominie z `--skip-seed`
-- Przy pierwszym uruchomieniu serwera utworzy wersję bazową cennika (`v1`, APPROVED)
-  z plików `data/seed_*.json` — oferty od razu mają z czego liczyć ceny
+Instalator tworzy lokalne sekrety i ogranicza ACL pliku `.env`. Pierwsze hasło administratora otworzy w Notatniku w pliku `data/install-admin-password.txt`; zmień je po pierwszym logowaniu. Instalator nie kasuje istniejących wolumenów. Jeśli Windows musi włączyć WSL 2, pojawi się prośba UAC i może być potrzebny restart. Docker Desktop wymaga akceptacji warunków przy pierwszym uruchomieniu; komercyjne użycie w większych organizacjach może wymagać płatnej subskrypcji.
 
-#### 3. Ręczna instalacja (alternatywa)
+Instalacja wymaga `active-pricelists.json` wyeksportowanego ze starej bazy. Na starym komputerze wykonaj eksport zgodnie z [instrukcją cutoveru](docs/cutover/active-pricelists.md), skopiuj plik na nowy komputer i podaj jego ścieżkę instalatorowi. Instalator pokaże dry-run, zapisze wyłącznie aktywne cenniki po wpisaniu `IMPORT`, a potem uruchomi aplikację. Bez artefaktu instalacja zatrzymuje się przed utworzeniem bazy.
+
+`install.bat` pozostaje instalatorem developerskim z zależnościami Node.js; nie służy do nowego komputera bez przygotowanej bazy. Jeśli poprzednia instalacja została przerwana po utworzeniu wolumenu, wznowienie wymaga `install-new-pc.bat -ResumeExistingVolume`, potwierdzenia `RESUME` oraz osobnej zgody `MIGRATE AND SEED` na migracje i seed w istniejącej bazie.
+
+**Status migracji:** pełne działanie wszystkich ścieżek S.O.K. na PostgreSQL 18 nadal wymaga potwierdzenia testami integracyjnymi; nie używaj tej konfiguracji jako wdrożenia produkcyjnego przed przejściem bram projektu.
+
+#### 3. Linux — serwer firmowy
+
+Docelowy wariant działa na Ubuntu lub Debianie z Docker Engine i wtyczką Docker Compose z oficjalnego repozytorium Docker. Nie używa Docker Desktop ani jego subskrypcji. PostgreSQL 18 działa w lokalnym wolumenie Compose; baza nie jest publikowana na sieć.
+
+Docker Engine i PostgreSQL są używane na licencjach open source bez opłaty za komercyjne użycie. Instalator nie dołącza Docker Desktop. To nie obejmuje kosztu systemu operacyjnego, sprzętu, domeny, certyfikatu od zewnętrznego dostawcy ani ewentualnego wsparcia. Przed sprzedażą S.O.K. trzeba osobno zamknąć przegląd licencji i praw do wszystkich składników aplikacji; lista zależności znajduje się w [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+1. Przygotuj pełny folder S.O.K. na serwerze i skopiuj do niego `active-pricelists.json` albo zachowaj ten plik poza folderem aplikacji.
+2. Uruchom instalację jako administrator: `sudo bash install-linux-server.sh --artifact /bezpieczna/sciezka/active-pricelists.json`.
+3. Przeczytaj raport dry-run cenników i wpisz `IMPORT`, aby potwierdzić zapis. Instalator dopiero potem uruchomi aplikację.
+4. Przy nowej konfiguracji `.env` pierwsze hasło administratora znajdziesz w `~/.config/sok/install-admin-password.txt`; zmień je po pierwszym logowaniu. Przy zachowanym `.env` instalator nie zgaduje bieżącego hasła — użyj istniejących danych logowania.
+5. S.O.K. będzie nasłuchiwał lokalnie na serwerze pod `http://127.0.0.1:3000`. Aby użytkownicy firmowi mogli łączyć się z innych komputerów, skonfiguruj reverse proxy HTTPS i firmowy DNS zgodnie z [instrukcją HTTPS](docs/DEPLOY_HTTPS_IT.md). Nie otwieraj portu PostgreSQL ani socketu Dockera. Nie instaluj operatorów S.O.K. do grupy `docker` — dostęp do niej daje uprawnienia równoważne administratorowi.
+
+Instalator Linux wymaga Ubuntu/Debian z systemd i dostępu do oficjalnych repozytoriów pakietów. Nie usuwa istniejących baz ani wolumenów; istniejący wolumen musi być oznaczony jako należący do projektu Compose S.O.K., a wznowienie wymaga `--resume-existing-volume`, wpisania `RESUME` i osobnego `MIGRATE AND SEED`. Wymaga też zachowanego `.env` z hasłami tej bazy. Uruchomienie z `--help` pokazuje składnię.
+
+**Status wdrożenia:** kod instalatora nie jest dowodem gotowości produkcyjnej. Pełne działanie S.O.K. na PostgreSQL 18, test czystej instalacji na Ubuntu/Debian, import cenników, oferty, eksporty oraz backup/restore muszą przejść bramy projektu przed produkcją.
+
+#### 4. Ręczna instalacja developerska (alternatywa)
 
 Jeśli `install.bat` nie działa lub używasz systemu innego niż Windows:
 
@@ -112,8 +125,6 @@ npx prisma generate
 
 # 4. Zsynchronizuj schemat bazy danych
 npx prisma migrate deploy
-# (baza legacy utworzona przez db push, bez _prisma_migrations:
-#  npx prisma db push --skip-generate --accept-data-loss)
 
 # 5. Zasiej dane początkowe (produkty, cenniki)
 npm run prisma:seed
@@ -122,7 +133,7 @@ npm run prisma:seed
 npm run build
 ```
 
-> **Jeśli przenosisz bazę z innej instalacji:** użyj `.\install.bat --skip-seed` (pomija seed), a po instalacji przywróć bazę z backupu `npm run restore data/backups/backup_*.sqlite` (patrz sekcja [Przenoszenie bazy cenników z istniejącej instalacji](#przenoszenie-bazy-cenników-z-istniejącej-instalacji)).
+> **Przenoszenie ze starej instalacji:** nie odtwarzaj pełnej bazy. Zachowywane są wyłącznie aktywne cenniki, a pozostałe dane aplikacji zaczynają jako świeży stan. Użyj [procedury cutoveru aktywnych cenników](docs/cutover/active-pricelists.md); nie wdrażaj jej produkcyjnie bez osobnej zgody na cutover.
 
 #### 4. Uruchom serwer
 
@@ -172,9 +183,10 @@ bash prod.sh   # Production (npm start; automatycznie buduje dist, jeśli brak)
 ```
 
 Instalator `install.sh` — tak samo jak `install.bat` — wygeneruje losowe hasło
-administratora (przez `scripts/init-env.mjs`), zsynchronizuje schemat bazy
-(`migrate deploy`; fallback `db push` tylko dla baz legacy bez `_prisma_migrations`) i zasieje dane początkowe
-(z pominięciem przy `--skip-seed`).
+administratora, zastosuje wersjonowane migracje PostgreSQL i uruchomi seed.
+Wymaga jawnego `DATABASE_URL` wskazującego PostgreSQL 18. Migracja aplikacji i
+testów nie jest jeszcze zakończona; nie używaj instalatora do produkcyjnego
+cutoveru przed przejściem pełnej walidacji opisanej w dokumentacji migracji.
 
 **Wariant B — kroki ręczne:**
 
@@ -193,19 +205,17 @@ cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
-# (baza legacy utworzona przez db push, bez _prisma_migrations:
-#  npx prisma db push --skip-generate --accept-data-loss)
 
 # 4. Baza danych — opcje:
 #    a) Zasiej dane początkowe (nowa instalacja):
 npm run prisma:seed
-#    b) LUB przywróć bazę z backupu z innego urządzenia (pomijając seed):
-#       npm run restore data/backups/backup_*.sqlite
+#    b) Dla istniejącej instalacji przenieś wyłącznie aktywne cenniki zgodnie
+#       z docs/cutover/active-pricelists.md; pełnego backupu starej bazy nie odtwarzaj.
 
 # 5. Zbuduj projekt
 npm run build
 #    Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
-mkdir -p dist/generated && cp -r generated/prisma dist/generated/
+mkdir -p dist/generated && cp -r generated/prisma-postgres dist/generated/
 #    (build.bat/build.sh robią to automatycznie)
 
 # 6. Uruchom (zalecane przez PM2)
@@ -227,141 +237,38 @@ Aplikacja: **http://localhost:3000** (port zgodny z konfiguracją w `.env`)
 
 ---
 
-### Przenoszenie bazy cenników z istniejącej instalacji
+### Przenoszenie aktywnych cenników
 
-Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów, możesz przenieść ją na nowe urządzenie — pozwala to pominąć proces seedowania i zachować wszystkie dane.
+Przy przejściu ze starszej instalacji zachowuj wyłącznie aktualnie aktywne cenniki rur, studni i PRECO. Oferty, klienci, użytkownicy, sesje, zamówienia, logi, drafty i historia wersji nie są przenoszone. Pełny backup starej bazy nie jest formatem migracji PostgreSQL.
 
-#### Krok po kroku:
+Eksport wykonuje jednorazowy skrypt read-only, a import zapisuje wyłącznie aktywne wersje z zatwierdzonego artefaktu. Pełna procedura, walidacja hash/count, wymagane kolejności i komendy Docker Compose są opisane w [docs/cutover/active-pricelists.md](docs/cutover/active-pricelists.md). Import musi nastąpić po migracjach i przed pierwszym startem serwera, który tworzy fabryczny baseline cenników.
 
-1. **Na starym urządzeniu** wykonaj backup bazy danych:
+Procedury produkcyjnej nie uruchamiaj bez odrębnego GO na cutover. Aktualna implementacja PostgreSQL jest w toku; najpierw wymagane są zielone testy na PostgreSQL 18 oraz kompletna kontrola migracji, runtime, eksportów i backup/restore.
 
-    ```powershell
-    npm run backup
-    ```
+### Aktualizacja istniejącej instalacji
 
-    Backup zostanie zapisany w `data/backups/backup_<data>.sqlite`.
-
-2. **Skopiuj plik backupu** na nowe urządzenie (przez USB, sieć, chmurę):
-
-    ```
-    data/backups/backup_2026-07-14_*.sqlite
-    ```
-
-3. **Na nowym urządzeniu** wykonaj instalację z pominięciem seedowania:
-
-    ```powershell
-    .\install.bat --skip-seed   # Windows
-    bash install.sh --skip-seed  # Linux
-    ```
-
-    Flaga `--skip-seed` zapobiega nadpisaniu bazy danych początkowych, co byłoby sprzeczne z przywracaniem własnej bazy.
-
-4. **Przywróć bazę z backupu**:
-
-    ```powershell
-    npm run restore data/backups/backup_2026-07-14_*.sqlite
-    ```
-
-    lub ręcznie:
-
-    ```powershell
-    copy /Y data\backups\backup_2026-07-14_*.sqlite data\app_database.sqlite
-    npx prisma migrate deploy
-    ```
-
-    > **Uwaga:** `npm run restore` automatycznie synchronizuje schemat (`migrate deploy`).
-    > Przy ręcznym kopiowaniu pliku bazy ta synchronizacja **nie zachodzi** — po kopiowaniu
-    > uruchom `npx prisma migrate deploy` (dla bazy legacy utworzonej przez `db push`,
-    > bez `_prisma_migrations`: `npx prisma db push --skip-generate --accept-data-loss`).
-
-5. **Uruchom serwer**:
-
-    ```powershell
-    .\start.bat
-    ```
-
-6. **(opcjonalnie)** Jeśli chcesz przenieść również niestandardowe ceny cennika (rury, studnie, preco),
-   przenieś je jako **wersję cennika**: panel wersji → eksport/import XLSX albo
-   eksport wersji na starym urządzeniu i import na nowym. Plik SQLite nie jest do tego potrzebny.
-
-    > **Ceny żyją wyłącznie w wersjach cennika.** Publikacja wersji (APPROVED) jest
-    > jedynym źródłem cen ofert. „Przywróć domyślne" wczytuje wartości fabryczne
-    > z `data/seed_*.json`; snapshot `data/price_defaults.json` i tabele LIVE
-    > zostały usunięte (etap 2).
-
-#### Co zawiera baza?
-
-Plik `data/app_database.sqlite` przechowuje:
-
-| Zawartość                | Opis                                        |
-| ------------------------ | ------------------------------------------- |
-| Produkty (rury, studnie) | Cenniki, kategorie, średnice, długości      |
-| Ceny i stawki            | Bieżące ceny produktów i usług              |
-| Klienci                  | Baza klientów z danymi kontaktowymi         |
-| Oferty i zamówienia      | Historia ofert i zamówień                   |
-| Użytkownicy i sesje      | Konta użytkowników i ich sesje logowania    |
-| Konfiguracja systemu     | Ustawienia, flagi funkcjonalne, preferencje |
-| Logi audytu              | Historia zmian w systemie                   |
-| Dane ML/AI               | Modele, telemetria, rekomendacje rankowania |
-
-> **Uwaga:** Po przeniesieniu bazy upewnij się, że hasło administratora (`DEFAULT_ADMIN_PASSWORD` w `.env`) jest zgodne z poprzednią instalacją — w przeciwnym razie zmień je w bazie lub utwórz nowe konto admina.
-
-#### Weryfikacja po przeniesieniu
-
-1. Uruchom serwer: `.\start.bat`
-2. Sprawdź endpoint `/health`:
-    ```powershell
-    curl http://localhost:3000/health
-    ```
-3. Zaloguj się i zweryfikuj:
-    - Lista produktów i ceny są zgodne z poprzednią instalacją
-    - Historia ofert jest dostępna
-    - Klienci są na swoich miejscach
-
-### Aktualizacja istniejącej instalacji (schemat bazy)
-
-Podczas aktualizacji do nowszej wersji aplikacji (już wdrożonej, z danymi):
-
-1. Zawsze najpierw zrób backup: `npm run backup`
-2. Pobierz nowy kod i zależności: `git pull`, `npm ci`
-3. Zsynchronizuj schemat — domyślnie `npx prisma migrate deploy`; `db push` wyłącznie
-   dla baz legacy:
-    - **Baza legacy utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
-      `npx prisma db push --skip-generate --accept-data-loss`
-      (komenda `migrate deploy` na niej NIE zadziała — baza nie ma historii migracji).
-    - **Baza z historią migracji** (`_prisma_migrations` istnieje):
-      `npx prisma migrate deploy`
-    - Jak sprawdzić: `npx prisma migrate status` — jeśli pokazuje wszystkie
-      migracje jako niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
-4. Uruchom serwer (`start.bat`).
-
-> Migracja `20260815000000_baseline` zawiera indeksy na `ai_telemetry_logs`
-> (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Indeksy są
-> idempotentne i powstają automatycznie przez `migrate deploy` (definicje w `schema.prisma`).
-> Na bazie bez `migrate deploy` (legacy db push) można je utworzyć ręcznie:
->
-> ```sql
-> CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId");
-> CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId");
-> ```
-
----
+Aplikacja używa jednej kanonicznej historii migracji PostgreSQL. Po uzyskaniu gotowej i zatwierdzonej wersji aktualizację wykonuj przez backup PostgreSQL, `npm ci`, `npx prisma migrate deploy` i smoke test. Nie używaj `prisma db push`, nie kopiuj plików bazy i nie stosuj narzędzi legacy do istniejącej bazy. Obecny stan migracji oraz bramki cutoveru są opisane w [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Konfiguracja (.env)
 
-| Zmienna                  | Opis                                                                                                              | Domyślnie                            | Wymagane |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------- |
-| `PORT`                   | Port serwera                                                                                                      | `3000`                               | Nie      |
-| `HOST`                   | Adres nasłuchiwania. W produkcji domyślnie `127.0.0.1` (tylko loopback); `0.0.0.0` tylko w Dockerze/osobnym proxy | `127.0.0.1` (prod) / `0.0.0.0` (dev) | Nie      |
-| `NODE_ENV`               | Środowisko: `development` / `production` (production ustawiają skrypty startowe)                                  | `development`                        | Nie      |
-| `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (przy pierwszym uruchomieniu)                                                                | —                                    | **Tak**  |
-| `DATABASE_URL`           | Ścieżka do bazy SQLite                                                                                            | `file:../data/app_database.sqlite`   | Nie      |
-| `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)                                                                  | —                                    | Nie      |
-| `COOKIE_SECURE`          | Wymusza flagę `Secure` na ciastku sesji                                                                           | `true` gdy `NODE_ENV=production`     | Nie      |
-| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (Caddy/Nginx = 1, Cloudflare→Nginx→App = 2)                                  | `1`                                  | Nie      |
-| `PUBLIC_BASE_URL`        | Publiczny origin (np. `https://oferty.example.pl`) używany przy przekierowaniu HTTP→HTTPS                         | — (fallback: zwalidowany `Host`)     | Nie      |
-| `APP_NAME`               | Nazwa aplikacji (tytuły stron, branding)                                                                          | `S.O.K.`                             | Nie      |
-| `APP_SUBTITLE`           | Podtytuł aplikacji (aria-label logo, wydruki)                                                                     | `System Ofert i Kalkulacji`          | Nie      |
+| Zmienna                  | Opis                                                                                                              | Domyślnie                                                   | Wymagane        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------- |
+| `PORT`                   | Port serwera                                                                                                      | `3000`                                                      | Nie             |
+| `HOST`                   | Adres nasłuchiwania. W produkcji domyślnie `127.0.0.1` (tylko loopback); `0.0.0.0` tylko w Dockerze/osobnym proxy | `127.0.0.1` (prod) / `0.0.0.0` (dev)                        | Nie             |
+| `NODE_ENV`               | Środowisko: `development` / `production` (production ustawiają skrypty startowe)                                  | `development`                                               | Nie             |
+| `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (przy pierwszym uruchomieniu)                                                                | —                                                           | **Tak**         |
+| `DATABASE_URL`           | Jawny URL roli runtime PostgreSQL 18; wymagany przez runtime i CLI                                                | `postgresql://user:secret@localhost:5432/sok?schema=public` | **Tak**         |
+| `MIGRATION_DATABASE_URL` | Połączenie PostgreSQL roli migratora; tylko migracje i kontrolowane granty                                        | Z secret managera / `.env`                                  | **Tak**         |
+| `BACKUP_DATABASE_URL`    | Połączenie PostgreSQL roli backupu z prawami odczytu                                                              | Z secret managera / `.env`                                  | **Tak**         |
+| `POSTGRES_DB`            | Nazwa bazy w Docker Compose                                                                                       | `sok`                                                       | Tak dla Compose |
+| `POSTGRES_USER`          | Rola inicjalizacyjna PostgreSQL; nie używaj jej jako roli runtime produkcji                                       | `sok_bootstrap`                                             | Tak dla Compose |
+| `POSTGRES_PASSWORD`      | Hasło roli inicjalizacyjnej PostgreSQL                                                                            | z secret managera                                           | Tak dla Compose |
+| `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)                                                                  | —                                                           | Nie             |
+| `COOKIE_SECURE`          | Wymusza flagę `Secure` na ciastku sesji                                                                           | `true` gdy `NODE_ENV=production`                            | Nie             |
+| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (Caddy/Nginx = 1, Cloudflare→Nginx→App = 2)                                  | `1`                                                         | Nie             |
+| `PUBLIC_BASE_URL`        | Publiczny origin (np. `https://oferty.example.pl`) używany przy przekierowaniu HTTP→HTTPS                         | — (fallback: zwalidowany `Host`)                            | Nie             |
+| `APP_NAME`               | Nazwa aplikacji (tytuły stron, branding)                                                                          | `S.O.K.`                                                    | Nie             |
+| `APP_SUBTITLE`           | Podtytuł aplikacji (aria-label logo, wydruki)                                                                     | `System Ofert i Kalkulacji`                                 | Nie             |
 
 > **Ważne:** `DEFAULT_ADMIN_PASSWORD` jest wymagane tylko przy **pierwszym** uruchomieniu. Po utworzeniu konta admina zmiana hasła w `.env` nie wpływa na istniejące konto.
 
@@ -395,7 +302,7 @@ npm start
 ```
 
 > **Uwaga (Linux):** po surowym `npm run build` (bez `build.sh`) skopiuj klienta Prisma do `dist/`:
-> `mkdir -p dist/generated && cp -r generated/prisma dist/generated/` — albo użyj `build.bat`/`build.sh`, które robią to automatycznie.
+> `mkdir -p dist/generated && cp -r generated/prisma-postgres dist/generated/` — albo użyj `build.bat`/`build.sh`, które robią to automatycznie.
 
 Aplikacja: `http://localhost:3000` (lokalnie; w produkcji przez HTTPS — patrz sekcja [HTTPS / Reverse proxy](#https--reverse-proxy-produkcja))
 
@@ -422,15 +329,18 @@ npm run deploy:check                                               # smoke check
 
 Projekt zawiera wygodne skrypty dla systemu Windows:
 
-| Skrypt         | Opis                                                                                          |
-| -------------- | --------------------------------------------------------------------------------------------- |
-| `start.bat`    | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`                           |
-| `dev.bat`      | Alias do `start.bat` (zachowany dla kompatybilności)                                          |
-| `build.bat`    | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005) |
-| `install.bat`  | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed                             |
-| `prod.bat`     | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                               |
-| `deploy.bat`   | Deploy produkcji: `deploy.bat <windows\|linux\|docker> vX.Y.Z`                                |
-| `rollback.bat` | Powrót do poprzedniej wersji: `rollback.bat <windows\|linux\|docker> vX.Y.Z`                  |
+| Skrypt                    | Opis                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `start.bat`               | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`                                       |
+| `start-postgres.bat`      | Uruchamia istniejący zestaw Docker Compose po ukończonej instalacji PG18 i imporcie aktywnych cenników    |
+| `dev.bat`                 | Alias do `start.bat` (zachowany dla kompatybilności)                                                      |
+| `build.bat`               | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005)             |
+| `install.bat`             | Instalator developerski; wymaga Node.js oraz dostępnej bazy PostgreSQL z hosta. `--skip-seed` pomija seed |
+| `install-new-pc.bat`      | Instalator testowy Windows 10/11: Docker Desktop, PostgreSQL 18 Compose i S.O.K.                          |
+| `install-linux-server.sh` | Docelowy instalator serwera Ubuntu/Debian: Docker Engine, PostgreSQL 18 Compose i S.O.K.                  |
+| `prod.bat`                | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                                           |
+| `deploy.bat`              | Deploy produkcji: `deploy.bat <windows\|linux\|docker> vX.Y.Z`                                            |
+| `rollback.bat`            | Powrót do poprzedniej wersji: `rollback.bat <windows\|linux\|docker> vX.Y.Z`                              |
 
 ---
 
@@ -503,13 +413,13 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Backup i przenoszenie bazy
 
-| Komenda                         | Opis                                                                |
-| ------------------------------- | ------------------------------------------------------------------- |
-| `npm run backup`                | Wykonaj backup bazy SQLite (`VACUUM INTO`, max 1 kopia)             |
-| `npm run backup:check`          | Sprawdź świeżość ostatniego backupu (exit 1 = brak lub > 26 h)      |
-| `npm run restore <plik>`        | Przywróć bazę z pliku backupu (`node scripts/restore-db.js <plik>`) |
-| `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows)                                   |
-| `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows)                                   |
+| Komenda                         | Opis                                                                             |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| `npm run backup`                | Wykonaj backup PostgreSQL w formacie custom `pg_dump` (`.dump`)                  |
+| `npm run backup:check`          | Sprawdź świeżość ostatniego backupu (exit 1 = brak lub > 26 h)                   |
+| `npm run restore <plik.dump>`   | Restore PostgreSQL; ustaw `RESTORE_DB_URL` w env, nie przekazuj URL/hasła w argv |
+| `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows)                                                |
+| `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows)                                                |
 
 ### Wersjonowanie
 
@@ -658,11 +568,11 @@ Oferty_PV/
 │   ├── partials/              # Partiale HTML (header, rury/*, studnie/*) ładowane przez partialLoader
 │   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 ├── prisma/                    # Schema + migracje Prisma
-│   ├── schema.prisma          # Definicja schematu (SQLite)
-│   └── migrations/            # Migracje: 20260815000000_baseline … 20261031120000_drop_pricelist_live (pełna lista: prisma/migrations/)
-├── data/                      # Baza SQLite + pliki seed
-│   ├── app_database.sqlite    # Główna baza (SQLite)
-│   └── seed_*.json            # seed_rury/studnie/preco.json (wersja bazowa cennika)
+│   ├── schema.prisma          # Definicja schematu PostgreSQL
+│   ├── migrations-postgresql/ # Kanoniczna historia PostgreSQL od pustej bazy
+│   └── migrations/            # Historyczna ścieżka SQLite; nie jest używana przez runtime PG
+├── data/                      # Pliki aplikacji, cenników bazowych i backupów PostgreSQL
+│   └── seed_*.json            # Fabryczne cenniki dla świeżej instalacji
 ├── tests/                     # Testy (Jest + Playwright)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie (Excel, solver, pzGuard)
@@ -675,9 +585,9 @@ Oferty_PV/
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...                    # ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES
 ├── scripts/                   # Skrypty narzędziowe
-│   ├── backup.ts              # Backup bazy (VACUUM INTO, max 1 kopia)
-│   ├── restore-db.js          # Przywracanie bazy z backupu (header + integrity_check + WAL cleanup)
-│   ├── check-db.js            # Weryfikacja schematu przy starcie (ensure-db.bat)
+│   ├── backup.ts              # Backup PostgreSQL przez pg_dump custom archive
+│   ├── restore-db.js          # Przywracanie przez pg_restore do jawnie wskazanego celu
+│   ├── check-db.js            # Kontrola PostgreSQL i migracji
 │   ├── check-version.mjs      # Weryfikacja spójności wersji (VERSION ↔ package.json ↔ CHANGELOG ↔ *.bat ↔ HTML ?v= ↔ docs)
 │   ├── check-appname.cjs      # Sprawdzanie nazwy aplikacji (pre-push, APP_NAME SSoT)
 │   ├── check-global-collisions.mjs # Kolizje globali window.* (shared vs studnie)
@@ -687,7 +597,7 @@ Oferty_PV/
 │   ├── bump-version.mjs       # Podbijanie wersji (patch/minor/major)
 │   ├── bundle-scripts.mjs     # Bundling JS studnie/rury (esbuild)
 │   ├── minify-css.mjs         # Minifikacja CSS (prestart)
-│   ├── copy-prisma-client.mjs # Kopiowanie generated/prisma → dist/generated
+│   ├── copy-prisma-client.mjs # Kopiowanie generated/prisma-postgres → dist/generated
 │   ├── encoding-integrity.js  # Sprawdzanie kodowania UTF-8 + mojibake
 │   ├── skill-cli.mjs          # Skill CLI (build cost, stats, capabilities)
 │   ├── export-settings-to-seed.mjs # Eksport cenników z tabel DB do data/seed_*.json

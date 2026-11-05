@@ -7,7 +7,7 @@
 #   bash scripts/audit-disconnect.sh --since 4h # logi z 4h (domyslnie 2h)
 #   bash scripts/audit-disconnect.sh --out /tmp # inny katalog wyjsciowy
 #
-# Wymagania: docker, (opcjonalnie) sqlite3, curl, jq; bez roota zbierze co sie da.
+# Wymagania: docker, curl; bez roota zbierze co sie da.
 # Bezpieczenstwo: ZERO komend destrukcyjnych, nadpisujacych ani restartujacych kontener/proxy.
 # Kodowanie: UTF-8 bez BOM.
 
@@ -25,7 +25,7 @@ while [ $# -gt 0 ]; do
     --container) CONTAINER="${2:-sok-oferty}"; shift 2 ;;
     --help|-h)
       echo "Uzycie: $0 [--since 2h] [--out DIR] [--container NAME]"
-      echo "  Zbiera: docker ps/inspect/logs/stats/events, dmesg, journalctl, caddy/nginx, curl /health*, env, PRAGMA, mount, df, free"
+      echo "  Zbiera: docker ps/inspect/logs/stats/events, dmesg, journalctl, caddy/nginx, curl /health*, variable names, PostgreSQL status, mount, df, free"
       exit 0
       ;;
     *) echo "[WARN] Nieznany argument: $1" >&2; shift ;;
@@ -69,15 +69,15 @@ sec "1. DOCKER — stan kontenera"
 cap "docker ps -a" "docker ps -a 2>&1" "01-docker-ps.txt"
 cap "docker inspect State/Health" "docker inspect $CONTAINER --format '{{json .State}}' 2>&1 | python3 -m json.tool 2>&1 || docker inspect $CONTAINER --format '{{json .State}}' 2>&1 || docker inspect $CONTAINER 2>&1 | head -n 300" "02-docker-inspect-state.txt"
 cap "docker inspect Health (raw)" "docker inspect $CONTAINER --format '{{json .State.Health}}' 2>&1 | python3 -m json.tool 2>&1 || docker inspect $CONTAINER --format '{{json .State.Health}}' 2>&1" "03-docker-health.txt"
-cap "docker inspect Config Env/Volumes" "docker inspect $CONTAINER --format 'Env: {{json .Config.Env}} | Mounts: {{json .Mounts}} | RestartPolicy: {{json .HostConfig.RestartPolicy}}' 2>&1" "04-docker-config.txt"
+cap "docker inspect mounts/restart policy" "docker inspect $CONTAINER --format 'Mounts: {{json .Mounts}} | RestartPolicy: {{json .HostConfig.RestartPolicy}}' 2>&1" "04-docker-config.txt"
 cap "docker stats --no-stream" "docker stats --no-stream 2>&1 | head -n 30" "05-docker-stats.txt"
 cap "docker events --since $SINCE" "timeout 5 docker events --since $SINCE --until 0s 2>&1 | head -n 500 || docker events --since $SINCE 2>&1 | head -n 500" "06-docker-events.txt"
 
-# ── 2. Logi kontenera — korelacja A (exit) i B (SQLITE_BUSY) + E (CronService) ──
+# ── 2. Logi kontenera — korelacja A (exit) i B (PostgreSQL) + E (CronService) ──
 sec "2. LOGI KONTENERA — korelacja A/B/E"
 cap "docker logs --since $SINCE (timestamps, 2000 linii)" "docker logs --since $SINCE --timestamps $CONTAINER 2>&1 | tail -n 2000" "10-docker-logs.txt"
 cap "grep UnhandledRejection/UncaughtException/flushSentry" "docker logs --since $SINCE --timestamps $CONTAINER 2>&1 | grep -i -E 'UnhandledRejection|UncaughtException|flushSentry|UnhandledError' | tail -n 200 || echo '(brak dopasowan)'" "11-grep-rejection.txt"
-cap "grep SQLITE_BUSY/busy/timeout/PRAGMA" "docker logs --since $SINCE --timestamps $CONTAINER 2>&1 | grep -i -E 'SQLITE_BUSY|busy|timeout|PRAGMA|P1017|Unable to open' | tail -n 200 || echo '(brak dopasowan)'" "12-grep-busy.txt"
+cap "grep PostgreSQL/timeout/deadlock" "docker logs --since $SINCE --timestamps $CONTAINER 2>&1 | grep -i -E 'postgres|database|timeout|deadlock|pool|P1001|P1017|Unable to connect' | tail -n 200 || echo '(brak dopasowan)'" "12-grep-database.txt"
 cap "grep CronService/mlTraining/429" "docker logs --since $SINCE --timestamps $CONTAINER 2>&1 | grep -i -E 'CronService|mlTraining|fullCycle|Retry-After| 429 ' | tail -n 200 || echo '(brak dopasowan)'" "13-grep-cron-ratelimit.txt"
 cap "grep ERROR/WARN" "docker logs --since $SINCE --timestamps $CONTAINER 2>&1 | grep -i -E '\\[ERROR\\]|\\[WARN\\]' | tail -n 300 || echo '(brak dopasowan)'" "14-grep-error-warn.txt"
 
@@ -87,7 +87,7 @@ cap "dmesg oom/killed" "dmesg 2>&1 | grep -i -E 'oom|killed|out of memory' | tai
 cap "journalctl -u docker --since $SINCE" "journalctl -u docker --since \"$SINCE ago\" --no-pager 2>&1 | tail -n 300 || journalctl --since \"$SINCE ago\" --no-pager 2>&1 | grep -i docker | tail -n 300 || echo '(brak journalctl lub brak uprawnien)'" "21-journalctl-docker.txt"
 cap "free -h; uptime; df -h" "free -h 2>&1; echo '---'; uptime 2>&1; echo '---'; df -h 2>&1" "22-host-resources.txt"
 cap "top -b -n1 (head)" "top -b -n1 2>&1 | head -n 40" "23-top.txt"
-cap "df -h data + ls -l data + mount" "df -h . 2>&1; echo '---'; ls -l data 2>&1 | head -n 30; echo '---'; ls -lh data/*.sqlite* 2>&1 | head -n 20; echo '---'; mount 2>&1 | grep -i -E 'data|/var' | head -n 20" "24-disk-mount.txt"
+cap "df/du data and backups + mount" "df -h . 2>&1; echo '---'; du -sh data data/backups 2>&1; echo '---'; ls -lh data/backups 2>&1 | head -n 20; echo '---'; mount 2>&1 | grep -i -E 'data|/var' | head -n 20" "24-disk-mount.txt"
 cap "iostat (jesli dostepny)" "iostat 2>&1 | head -n 40 || echo '(iostat niedostepny — opcjonalne)'" "25-iostat.txt"
 
 # ── 4. Sieć i proxy: Caddy/Nginx, ss, curl health ─────────────────────
@@ -106,12 +106,10 @@ fi
 cap "rate-limit naglowki" "curl -si http://localhost:3000/api/version 2>&1 | grep -i -E 'x-ratelimit|retry-after|429' | head -n 20 || echo '(brak naglowkow rate-limit lub endpoint wymaga auth — sprobuj: curl -i http://localhost:3000/api/version)'" "36-ratelimit-headers.txt"
 cap "ufw/iptables (jesli dostepne)" "ufw status 2>&1 | head -n 20 || echo 'ufw: brak'; echo '---'; iptables -L 2>&1 | head -n 30 || echo 'iptables: brak uprawnien'" "37-firewall.txt"
 
-# ── 5. Runtime w kontenerze: DATABASE_URL, PRAGMA, journal_mode ──────
-sec "5. RUNTIME W KONTENERZE — DATABASE_URL / PRAGMA"
-cap "env DATABASE_URL w kontenerze" "docker exec $CONTAINER env 2>&1 | grep -i -E 'DATABASE_URL|NODE_ENV|PORT|HOST|TRUST_PROXY' | sort || echo '(docker exec nieudany — kontener nie dziala?)'" "40-env-container.txt"
-cap "PRAGMA journal_mode/busy_timeout/synchronous (sqlite3)" "docker exec $CONTAINER sh -c 'sqlite3 /var/data/app_database.sqlite \"PRAGMA journal_mode; PRAGMA busy_timeout; PRAGMA synchronous;\" 2>&1' 2>&1 | head -n 20 || echo '(sqlite3 niedostepny w kontenerze lub baza nie istnieje)'" "41-pragma.txt"
-cap "PRAGMA przez Node (fallback gdy brak sqlite3)" "docker exec $CONTAINER node -e \"const p=require('./src/prismaClient').default||require('./dist/src/prismaClient').default;Promise.all([p.\\\$queryRawUnsafe('PRAGMA journal_mode'),p.\\\$queryRawUnsafe('PRAGMA busy_timeout'),p.\\\$queryRawUnsafe('PRAGMA synchronous')]).then(r=>console.log(JSON.stringify(r))).catch(e=>console.error(e.message))\" 2>&1 | head -n 30 || echo '(fallback PRAGMA nieudany)'" "42-pragma-node.txt"
-cap "ls -l /var/data w kontenerze" "docker exec $CONTAINER ls -lh /var/data 2>&1 | head -n 30 || echo '(docker exec nieudany)'" "43-ls-vardata-container.txt"
+sec "5. RUNTIME W KONTENERZE — PostgreSQL"
+cap "database variable names only" "docker inspect $CONTAINER --format '{{range .Config.Env}}{{println .}}{{end}}' | cut -d= -f1 | grep -E 'DATABASE_URL|NODE_ENV|PORT|HOST|TRUST_PROXY' | sort" "40-env-names.txt"
+cap "PostgreSQL read-only connectivity/version/size" "docker exec $CONTAINER node -e 'const {Client}=require(\"pg\");const c=new Client({connectionString:process.env.DATABASE_URL});c.connect().then(()=>c.query(\"SELECT current_database(), current_setting($$server_version$$), pg_database_size(current_database())\")).then(async r=>{console.log(JSON.stringify(r.rows[0]));await c.end()}).catch(async()=>{console.error(\"PostgreSQL diagnostic failed\");await c.end();process.exit(1)})'" "41-postgres.txt"
+cap "backup volume in app container" "docker exec $CONTAINER ls -lh /app/data/backups 2>&1 | head -n 30 || echo '(docker exec nieudany)'" "42-backups-container.txt"
 cap "node -v + prisma --version w kontenerze" "docker exec $CONTAINER sh -c 'node -v; npx prisma --version 2>&1 | head -n 10' 2>&1 | head -n 20 || true" "44-node-prisma-version.txt"
 
 # ── 6. Pakowanie ──────────────────────────────────────────────────────
@@ -144,18 +142,16 @@ SUMMARY="$TMPDIR/99-WERDYKT-P0.txt"
   echo "  02-docker-inspect-state.txt — RestartCount, StartedAt, FinishedAt — potwierdza restart Dockera"
   echo "  06-docker-events.txt    — restart/kill/oom"
   echo "  20-dmesg-oom.txt        — OOM killer → infra"
-  echo "  40-env-container.txt    — DATABASE_URL bez ?busy_timeout → trop B wymaga PRAGMA (41/42)"
-  echo "  41-pragma.txt / 42-pragma-node.txt — busy_timeout per-connection: wartosc z osobnego polaczenia"
-  echo "    (sqlite3/Node fallback) NIE dowodzi wartosci w app; brak WARN PRAGMA to dowod posredni,"
-  echo "    najmocniej: PRAGMA na tym samym polaczeniu Prisma lub test contention (lock busy)"
-  echo "  12-grep-busy.txt        — SQLITE_BUSY → potwierdzenie B"
+  echo "  40-env-names.txt        — tylko nazwy zmiennych środowiskowych; brak sekretów"
+  echo "  41-postgres.txt         — read-only wersja/rozmiar DB; nie dowodzi stanu poola aplikacji"
+  echo "  12-grep-database.txt    — błędy połączeń, timeouty, deadlocki i pool PostgreSQL"
   echo "  13-grep-cron-ratelimit.txt — korelacja co 15 min (:00/:15/:30/:45) → E; 429 → D"
   echo "  33/34-curl-*.txt        — /health 200 + /health/ready 503 → C (readiness)"
   echo "  30/31-proxy-*.txt       — 502/504 w proxy → proxy/timeout"
   echo ""
   echo "Kolejnosc wg audytu:"
   echo "  1) A (exit) — najlatwiej potwierdzic jednym grepem"
-  echo "  2) B (PRAGMA/busy) — wymaga 40+41/42 (nie nazywaj deterministycznym bez tego)"
+  echo "  2) B (PostgreSQL) — koreluj logi aplikacji z metrykami połączeń i serwera"
   echo "  3) E (freeze co 15 min) — korelacja timestampow"
   echo "  4) C (healthcheck) — healthy vs unhealthy bez restartu"
   echo "  5) D (429) — tylko przy wielu klientach/NAT"

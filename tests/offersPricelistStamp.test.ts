@@ -282,6 +282,12 @@ describe('offers pricelist stamp (POST-upsert, ścieżka zapisu edytora)', () =>
         expect(res.status).toBe(200);
         expect(updates).toHaveLength(1);
         expect(updates[0].pricelistVersionId).toBe('v-active');
+        const orderedWellSql = prismaMock.$queryRaw.mock.calls
+            .map(([template]: [TemplateStringsArray]) => Array.from(template).join(' '))
+            .find((sql: string) => sql.includes('FROM orders_studnie_rel'));
+        expect(orderedWellSql).toContain('pg_input_is_valid');
+        expect(orderedWellSql).toContain("data::jsonb ->> 'offerStudnieId'");
+        expect(orderedWellSql).not.toContain('json_extract');
     });
 
     it('studnie: stamp != ACTIVE -> 409 STALE_PRICELIST', async () => {
@@ -354,5 +360,21 @@ describe('brak aktywnego cennika blokuje zapis nowej oferty (etap 1)', () => {
         expect(res.status).toBe(503);
         expect(res.body.code).toBe('PRICELIST_UNAVAILABLE');
         expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+});
+
+describe('studnie PostgreSQL list query', () => {
+    it('does not rely on SQLite date functions or pattern operators', async () => {
+        authMocks();
+
+        const res = await request(studnieApp()).get('/studnie').set('Cookie', COOKIE);
+
+        expect(res.status).toBe(200);
+        const sql = prismaMock.$queryRaw.mock.calls
+            .map(([template]: [TemplateStringsArray]) => Array.from(template).join(' '))
+            .join(' ');
+        expect(sql).toContain('"createdAt"');
+        expect(sql).toContain('"updatedAt"');
+        expect(sql).not.toMatch(/\bGLOB\b|\bdatetime\s*\(|unixepoch/i);
     });
 });

@@ -1,9 +1,36 @@
-import { Prisma } from '../../generated/prisma';
-import { buildFts5Query } from './fts5Sync';
+import { Prisma } from '../../generated/prisma-postgres/client';
 
 // Akceptuje YYYY-MM-DD (zakres z input[type=date]) oraz pełny ISO z czasem
 // (YYYY-MM-DDTHH:MM:SS(.mmm)Z) — preset "Dzisiaj/7d/30d/miesiąc" (resolveDatePreset).
 const DATE_PARAM_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?)?$/;
+
+function isValidCalendarDate(value: string): boolean {
+    if (!DATE_PARAM_RE.test(value)) return false;
+    const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z?)?$/.exec(
+        value
+    );
+    if (!match) return false;
+    const [, year, month, day, hours = '0', minutes = '0', seconds = '0', fraction = '0'] = match;
+    const date = new Date(
+        Date.UTC(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hours),
+            Number(minutes),
+            Number(seconds),
+            Number(fraction.padEnd(3, '0'))
+        )
+    );
+    return (
+        date.getUTCFullYear() === Number(year) &&
+        date.getUTCMonth() + 1 === Number(month) &&
+        date.getUTCDate() === Number(day) &&
+        date.getUTCHours() === Number(hours) &&
+        date.getUTCMinutes() === Number(minutes) &&
+        date.getUTCSeconds() === Number(seconds)
+    );
+}
 
 export type FollowupStatus = 'all' | 'needs_contact' | 'in_progress' | 'won' | 'lost';
 
@@ -96,71 +123,69 @@ interface BuildWherePartsInput {
 
 export function normalizedCreatedAtSql(col = '"createdAt"'): Prisma.Sql {
     const c = Prisma.raw(col);
-    return Prisma.sql`CASE WHEN ${c} GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' THEN datetime(CAST(${c} AS INTEGER)/1000, 'unixepoch') ELSE ${c} END`;
+    return Prisma.sql`CASE WHEN (${c}) ~ '^[0-9]{13}$' THEN to_timestamp((${c})::double precision / 1000.0) ELSE (${c})::timestamptz END`;
 }
 
 export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
     const parts: Prisma.Sql[] = [];
 
+    if (
+        (input.dateFrom && !isValidCalendarDate(input.dateFrom)) ||
+        (input.dateTo && !isValidCalendarDate(input.dateTo))
+    ) {
+        return [Prisma.sql`FALSE`];
+    }
+
     if (input.cursor && input.cursorId) {
         const op = input.order === 'desc' ? '<' : '>';
         const norm = normalizedCreatedAtSql();
         parts.push(Prisma.sql`(
-            ${norm} ${Prisma.raw(op)} ${input.cursor}
-            OR (${norm} = ${input.cursor} AND id ${Prisma.raw(op)} ${input.cursorId})
+            ${norm} ${Prisma.raw(op)} ${input.cursor}::timestamptz
+            OR (${norm} = ${input.cursor}::timestamptz AND id ${Prisma.raw(op)} ${input.cursorId})
         )`);
     }
 
     if (input.q) {
-        const ftsQuery = buildFts5Query(input.q);
         const qLike = `%${input.q}%`;
+        const offerAlias = Prisma.raw(input.orderRef?.alias === 's' ? 's' : 'o');
+        const fullTextMatch = Prisma.sql`to_tsvector('simple'::regconfig, COALESCE(${offerAlias}.data, '') || ' ' || COALESCE(${offerAlias}."clientName", '') || ' ' || COALESCE(${offerAlias}."investName", '') || ' ' || COALESCE(${offerAlias}."clientNip", '') || ' ' || COALESCE(${offerAlias}."clientNumber", '') || ' ' || COALESCE(${offerAlias}."offer_number", '')) @@ plainto_tsquery('simple'::regconfig, ${input.q})`;
 
         const searchSubquery = Prisma.sql`
-            "userId" IN (
+            ${offerAlias}."userId" IN (
                 SELECT id FROM users
-                WHERE username LIKE ${qLike}
-                   OR "firstName" LIKE ${qLike}
-                   OR "lastName" LIKE ${qLike}
-                   OR ("firstName" || ' ' || "lastName") LIKE ${qLike}
-                   OR symbol LIKE ${qLike}
+                WHERE username ILIKE ${qLike}
+                   OR "firstName" ILIKE ${qLike}
+                   OR "lastName" ILIKE ${qLike}
+                   OR ("firstName" || ' ' || "lastName") ILIKE ${qLike}
+                   OR symbol ILIKE ${qLike}
             )
-            OR json_extract(data, '$.offerUser') LIKE ${qLike}
-            OR json_extract(data, '$.preparedBy') LIKE ${qLike}
-            OR json_extract(data, '$.author') LIKE ${qLike}
-            OR json_extract(data, '$.investAddress') LIKE ${qLike}
-            OR json_extract(data, '$.investContractor') LIKE ${qLike}
-            OR "clientNip" LIKE ${qLike}
-            OR json_extract(data, '$.clientNip') LIKE ${qLike}
-            OR json_extract(data, '$.clientContact') LIKE ${qLike}
-            OR json_extract(data, '$.clientAddress') LIKE ${qLike}
-            OR json_extract(data, '$.offerNotes') LIKE ${qLike}
-            OR json_extract(data, '$.notes') LIKE ${qLike}
-            OR json_extract(data, '$.orderNumber') LIKE ${qLike}
-            OR json_extract(data, '$.order_number') LIKE ${qLike}
-            OR id IN (
+            OR (${offerAlias}.data::jsonb ->> 'offerUser') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'preparedBy') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'author') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'investAddress') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'investContractor') ILIKE ${qLike}
+            OR ${offerAlias}."clientNip" ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'clientNip') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'clientContact') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'clientAddress') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'offerNotes') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'notes') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'orderNumber') ILIKE ${qLike}
+            OR (${offerAlias}.data::jsonb ->> 'order_number') ILIKE ${qLike}
+            OR ${offerAlias}.id IN (
                 SELECT "offerId" FROM orders_rury_rel
-                WHERE id LIKE ${qLike}
-                   OR json_extract(data, '$.orderNumber') LIKE ${qLike}
-                   OR json_extract(data, '$.order_number') LIKE ${qLike}
+                WHERE id ILIKE ${qLike}
+                   OR (data::jsonb ->> 'orderNumber') ILIKE ${qLike}
+                   OR (data::jsonb ->> 'order_number') ILIKE ${qLike}
                 UNION
                 SELECT "offerStudnieId" FROM orders_studnie_rel
-                WHERE id LIKE ${qLike}
-                   OR json_extract(data, '$.orderNumber') LIKE ${qLike}
-                   OR json_extract(data, '$.order_number') LIKE ${qLike}
+                WHERE id ILIKE ${qLike}
+                   OR (data::jsonb ->> 'orderNumber') ILIKE ${qLike}
+                   OR (data::jsonb ->> 'order_number') ILIKE ${qLike}
             )
         `;
 
-        if (ftsQuery) {
-            parts.push(Prisma.sql`(
-                id IN (
-                    SELECT id FROM offers_search_fts
-                    WHERE offers_search_fts MATCH ${ftsQuery}
-                )
-                OR ${searchSubquery}
-            )`);
-        } else {
-            parts.push(Prisma.sql`(${searchSubquery})`);
-        }
+        parts.push(Prisma.sql`(${fullTextMatch} OR ${searchSubquery})`);
     }
 
     // Filtr dat: oferta przechodzi gdy sama jest z zakresu LUB ma zamówienie
@@ -170,8 +195,8 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
     const orderDateClauses: Prisma.Sql[] = [];
     const orderNorm = normalizedCreatedAtSql('"createdAt"');
     if (input.dateFrom) {
-        dateClauses.push(Prisma.sql`${normalizedCreatedAtSql()} >= ${input.dateFrom}`);
-        orderDateClauses.push(Prisma.sql`${orderNorm} >= ${input.dateFrom}`);
+        dateClauses.push(Prisma.sql`${normalizedCreatedAtSql()} >= ${input.dateFrom}::timestamptz`);
+        orderDateClauses.push(Prisma.sql`${orderNorm} >= ${input.dateFrom}::timestamptz`);
     }
     if (input.dateTo) {
         // Pełny ISO (preset) to już górna granica półotwarta [from, to);
@@ -179,8 +204,10 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
         const isFullIso = input.dateTo.includes('T');
         const toBound = isFullIso ? input.dateTo : input.dateTo + 'T23:59:59.999Z';
         const toOp = isFullIso ? '<' : '<=';
-        dateClauses.push(Prisma.sql`${normalizedCreatedAtSql()} ${Prisma.raw(toOp)} ${toBound}`);
-        orderDateClauses.push(Prisma.sql`${orderNorm} ${Prisma.raw(toOp)} ${toBound}`);
+        dateClauses.push(
+            Prisma.sql`${normalizedCreatedAtSql()} ${Prisma.raw(toOp)} ${toBound}::timestamptz`
+        );
+        orderDateClauses.push(Prisma.sql`${orderNorm} ${Prisma.raw(toOp)} ${toBound}::timestamptz`);
     }
     if (dateClauses.length > 0) {
         const ref = input.orderRef;
@@ -241,7 +268,7 @@ export function buildOrderStatusSql(orderStatus: SearchParams['orderStatus']): {
 export function followUpColumnsSql(kind: 'rury' | 'studnie', alias: string): Prisma.Sql {
     const a = Prisma.raw(alias);
     const latestWhere = Prisma.sql`"offerKind" = ${kind} AND "offerId" = ${a}.id`;
-    const latestOrder = Prisma.sql`ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1`;
+    const latestOrder = Prisma.sql`ORDER BY "contactedAt" DESC NULLS LAST, "createdAt" DESC NULLS LAST, "id" DESC LIMIT 1`;
     return Prisma.sql`,
         (SELECT outcome FROM offer_follow_ups WHERE ${latestWhere} ${latestOrder}) AS "_fu_outcome",
         (SELECT "nextContactAt" FROM offer_follow_ups WHERE ${latestWhere} ${latestOrder}) AS "_fu_next",
@@ -424,6 +451,12 @@ export function mapOfferRow(row: RawOfferRow): SearchOfferRowMapped {
     offer.type = row._type === 'studnie' ? 'studnia_oferta' : 'offer';
     offer.number = row.offer_number || '';
     offer._orderCount = Number(row._orderCount);
+    offer.transportCost =
+        row.transportCost === null || row.transportCost === undefined
+            ? null
+            : Number.isFinite(Number(row.transportCost))
+              ? Number(row.transportCost)
+              : null;
     // Opieka nad ofertą (P0.4): latest follow-up jako projekcja do badge w P1.
     offer.followup =
         row._fu_outcome === null && row._fu_next === null && row._fu_last === null

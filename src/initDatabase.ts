@@ -1,312 +1,71 @@
-/**
- * initDatabase.ts — BE-01 (plan modernizacji F5): kroki bazodanowe initApp
- * wydzielone z src/app.ts. Kolejność wywołań w initApp NIE zmieniona.
- */
 import prisma from './prismaClient';
-import { Prisma } from '../generated/prisma';
-import { logger } from './utils/logger';
 import { splitMergedContact } from './utils/contactSplit';
-import crypto from 'crypto';
+import { logger } from './utils/logger';
 
 /**
- * PRAGMA połączenia: WAL + synchronous + busy_timeout + user_version + FK.
- * Dev/test: connection_limit=1; prod Docker: connection_limit=3 (równoległe
- * odczyty WAL, pisarz nadal serializowany przez SQLite + busy_timeout).
- */
-export async function initDatabasePragmas(): Promise<void> {
-    try {
-        // Sekwencyjnie (Promise.all na współdzielonym połączeniu SQLite
-        // dawał SQLITE_BUSY / race).
-        await prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL');
-        await prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL');
-        await prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000');
-        await prisma.$executeRawUnsafe('PRAGMA user_version = 20000');
-        await prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON');
-        logger.info(
-            'Server',
-            'PRAGMA WAL/synchronous/busy_timeout/user_version/foreign_keys ustawione'
-        );
-        // P1-E self-check: FK musi być realnie egzekwowane na połączeniu aplikacji.
-        const fkOn = (await prisma.$queryRawUnsafe('PRAGMA foreign_keys')) as Array<{
-            foreign_keys: number;
-        }>;
-        if (!fkOn?.[0]?.foreign_keys) {
-            logger.warn(
-                'Server',
-                'PRAGMA foreign_keys=OFF na połączeniu — FK uśpione, działa tylko straż kodowa'
-            );
-        }
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się ustawić PRAGMA WAL/synchronous/busy_timeout/user_version/foreign_keys:',
-            err instanceof Error ? err.message : err
-        );
-    }
-}
-
-/**
- * Auto-heal schematu: indeksy i tabele dla instalacji bez migrate deploy
- * (legacy prisma db push). Idempotentne (IF NOT EXISTS). UWAGA: można wyciąć
- * po pełnym przejściu na migracje (A8) — baseline zawiera te indeksy.
- */
-export async function ensureDatabaseIndexes(): Promise<void> {
-    // Indeks na createdAt dla audit_logs (jeśli nie istnieje)
-    try {
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)`;
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się utworzyć indeksu idx_audit_created_at:',
-            err instanceof Error ? err.message : String(err)
-        );
-    }
-
-    // Indeksy deduplikacji telemetrii AI
-    try {
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId")`;
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się utworzyć indeksów deduplikacji telemetrii AI:',
-            err instanceof Error ? err.message : String(err)
-        );
-    }
-
-    // Auto-heal: tabela shares (instalacje bez migrate deploy — legacy db push)
-    try {
-        await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "document_shares" ("id" TEXT NOT NULL PRIMARY KEY, "documentType" TEXT NOT NULL, "documentId" TEXT NOT NULL, "ownerId" TEXT NOT NULL, "sharedWithUserId" TEXT NOT NULL, "permission" TEXT NOT NULL DEFAULT 'read', "createdAt" TEXT NOT NULL, "createdBy" TEXT NOT NULL)`;
-        await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "uq_share_doc_user" ON "document_shares"("documentType", "documentId", "sharedWithUserId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_sharedwith" ON "document_shares"("sharedWithUserId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_docid" ON "document_shares"("documentId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_doctype_docid" ON "document_shares"("documentType", "documentId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_owner" ON "document_shares"("ownerId")`;
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się upewnić schematu document_shares:',
-            e instanceof Error ? e.message : String(e)
-        );
-    }
-
-    // Pełny schemat FTS5 (m.in. kolumna clientNumber) — idempotentne
-    try {
-        const { ensureFts5Schema } = await import('./utils/fts5Sync');
-        await ensureFts5Schema();
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się upewnić schematu FTS5:',
-            e instanceof Error ? e.message : String(e)
-        );
-    }
-
-    // Auto-heal: kolumna sessions.lastActivity (idle timeout 1h).
-    // Instalacje bez migrate deploy (legacy db push) nie maja kolumny —
-    // dolozenie + backfill lastActivity = createdAt. Idempotentne.
-    // UWAGA: wylacznie statyczny DDL bez parametrow uzytkownika, forma
-    // $executeRaw z literalem (kontrakt tests/sqlInjection.test.ts).
-    // Bez nowego indeksu (celowo): max 10 sesji na usera, drift migracji 0.
-    try {
-        const cols = (await prisma.$queryRawUnsafe('PRAGMA table_info("sessions")')) as Array<{
-            name: string;
-        }>;
-        if (Array.isArray(cols) && !cols.some((c) => c?.name === 'lastActivity')) {
-            await prisma.$executeRaw`ALTER TABLE "sessions" ADD COLUMN "lastActivity" BIGINT`;
-            await prisma.$executeRaw`UPDATE "sessions" SET "lastActivity" = "createdAt" WHERE "lastActivity" IS NULL`;
-            logger.info('Server', 'Auto-heal: dodano kolumnę sessions.lastActivity');
-        }
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się upewnić schematu sessions.lastActivity:',
-            e instanceof Error ? e.message : String(e)
-        );
-    }
-
-    await ensureClientContactsTable();
-    await ensureLatestFollowup();
-}
-
-/**
- * Auto-heal katalogu kontaktów klienta (Paczka 2): CREATE TABLE IF NOT EXISTS
- * + backfill legacy (clients_rel.contact/phone/email → 1 wiersz
- * isPrimary=1, tylko gdy któryś niepusty i klient nie ma jeszcze kontaktów).
- * Idempotentne. Backfill w JS (id = crypto.randomUUID — SQLite nie ma UUID).
+ * One-time compatibility repair for legacy client rows. Table and indexes are
+ * owned by PostgreSQL migrations; application startup must never change DDL.
  */
 export async function ensureClientContactsTable(): Promise<void> {
     try {
-        await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "client_contacts_rel" ("id" TEXT NOT NULL PRIMARY KEY, "clientId" TEXT NOT NULL, "name" TEXT NOT NULL, "phone" TEXT, "email" TEXT, "position" TEXT DEFAULT '', "isPrimary" INTEGER NOT NULL DEFAULT 0, "createdByUserId" TEXT, "createdAt" TEXT, "updatedAt" TEXT)`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_client_contacts_client" ON "client_contacts_rel"("clientId")`;
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się upewnić schematu client_contacts_rel:',
-            e instanceof Error ? e.message : String(e)
-        );
-        return;
-    }
-    try {
-        // UWAGA: wyłącznie statyczny DDL/DML bez parametrów użytkownika,
-        // forma $queryRaw z literalem (kontrakt tests/sqlInjection.test.ts).
-        const legacy =
-            (await prisma.$queryRaw`SELECT c."id", c."userId", c."contact", c."phone", c."email" FROM "clients_rel" AS "c" LEFT JOIN "client_contacts_rel" AS "cc" ON "cc"."clientId" = "c"."id" WHERE "cc"."id" IS NULL`) as Array<{
-                id: string;
-                userId: string | null;
-                contact: string | null;
-                phone: string | null;
-                email: string | null;
-            }>;
+        const clients = await prisma.clients_rel.findMany({
+            select: {
+                id: true,
+                userId: true,
+                contact: true,
+                phone: true,
+                email: true
+            }
+        });
+        const contacts = clients.length
+            ? await prisma.client_contacts_rel.findMany({
+                  where: { clientId: { in: clients.map((client) => client.id) } },
+                  select: { clientId: true }
+              })
+            : [];
+        const clientsWithContacts = new Set(contacts.map((contact) => contact.clientId));
+        const legacy = clients.filter((client) => !clientsWithContacts.has(client.id));
         const now = new Date().toISOString();
-        const rows = [];
-        for (const r of Array.isArray(legacy) ? legacy : []) {
-            let name = (r.contact ?? '').trim();
-            const email = (r.email ?? '').trim();
-            // Łączony mirror "Jan, 600" → osobne kolumny (jak display FE).
-            const split = splitMergedContact(name, (r.phone ?? '').trim() || null);
+        const rows = legacy.flatMap((client) => {
+            let name = (client.contact ?? '').trim();
+            const email = (client.email ?? '').trim();
+            const split = splitMergedContact(name, (client.phone ?? '').trim() || null);
             name = split.name;
             const phone = (split.phone ?? '').trim();
-            if (!name && !phone && !email) continue;
-            rows.push({
-                id: crypto.randomUUID(),
-                clientId: r.id,
-                name,
-                phone: phone || null,
-                email: email || null,
-                position: '',
-                isPrimary: 1,
-                createdByUserId: r.userId ?? null,
-                createdAt: now,
-                updatedAt: now
-            });
-        }
-        if (rows.length > 0) {
-            await prisma.client_contacts_rel.createMany({ data: rows });
-            logger.info(
-                'Server',
-                `Auto-heal: backfill katalogu kontaktów (${rows.length} wierszy)`
-            );
-        }
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się wykonać backfillu client_contacts_rel:',
-            e instanceof Error ? e.message : String(e)
-        );
-    }
-    // Re-split verbatim ("Jan, 600" sprzed fixów): name niesie telefon
-    // przy pustym phone ALBO zgodnym z wyciągniętym (po cyfrach).
-    // Idempotentne — po rozcięciu warunek już nie matchuje.
-    try {
-        const merged = (await prisma.client_contacts_rel.findMany({
-            select: { id: true, name: true, phone: true }
-        })) as Array<{ id: string; name: string | null; phone: string | null }>;
-        let fixed = 0;
-        for (const m of Array.isArray(merged) ? merged : []) {
-            const before = String(m.name ?? '');
-            const split = splitMergedContact(before, m.phone ?? null);
-            if (split.name === before) continue;
-            await prisma.client_contacts_rel.update({
-                where: { id: m.id },
-                data: {
-                    name: split.name,
-                    phone: split.phone,
-                    updatedAt: new Date().toISOString()
+            if (!name && !phone && !email) return [];
+            return [
+                {
+                    id: crypto.randomUUID(),
+                    clientId: client.id,
+                    name,
+                    phone: phone || null,
+                    email: email || null,
+                    position: '',
+                    isPrimary: 1,
+                    createdByUserId: client.userId,
+                    createdAt: now,
+                    updatedAt: now
                 }
-            });
-            fixed++;
-        }
-        if (fixed > 0) {
-            logger.info('Server', `Auto-heal: rozcięto łączone kontakty (${fixed} wierszy)`);
-        }
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się wykonać re-split client_contacts_rel:',
-            e instanceof Error ? e.message : String(e)
-        );
-    }
-}
+            ];
+        });
+        if (rows.length) await prisma.client_contacts_rel.createMany({ data: rows });
 
-/**
- * Auto-heal materializacji latest follow-up (P1): CREATE TABLE IF NOT EXISTS
- * + triggery trg_fu_latest_* (DROP+CREATE, deterministyczny rerun) + backfill
- * brakujących top-1 regułą latest. Idempotentne. Bazy legacy db push nie
- * mają triggerów (Prisma ich nie widzi) — bez heala cache byłby pusty,
- * a odczyt (LEFT JOIN) zwróciłby NULL zamiast latest.
- */
-export async function ensureLatestFollowup(): Promise<void> {
-    try {
-        await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "latest_followup" ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "followupId" TEXT NOT NULL, "outcome" TEXT, "nextContactAt" TEXT, "contactedAt" TEXT, "createdAt" TEXT, "note" TEXT, CONSTRAINT "latest_followup_pkey" PRIMARY KEY ("offerKind", "offerId"))`;
-        // UWAGA: wyłącznie statyczne literaly DDL z tablicy poniżej
-        // (kontrakt tests/sqlInjection.test.ts: Unsafe/interpolacja = fail).
-        // Prisma.sql z gotowego stringa bez values = static, jak tag bez ${}.
-        const ddls: string[] = [
-            `DROP TRIGGER IF EXISTS "trg_fu_latest_ai"`,
-            `CREATE TRIGGER "trg_fu_latest_ai" AFTER INSERT ON "offer_follow_ups" BEGIN
-                DELETE FROM "latest_followup" WHERE "offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId";
-                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
-                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
-                    WHERE "offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId"
-                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
-            END`,
-            `DROP TRIGGER IF EXISTS "trg_fu_latest_au"`,
-            `CREATE TRIGGER "trg_fu_latest_au" AFTER UPDATE ON "offer_follow_ups" BEGIN
-                DELETE FROM "latest_followup" WHERE ("offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId") OR ("offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId");
-                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
-                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
-                    WHERE "offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId"
-                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
-                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
-                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
-                    WHERE ("offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId")
-                        AND (OLD."offerKind" <> NEW."offerKind" OR OLD."offerId" <> NEW."offerId")
-                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
-            END`,
-            `DROP TRIGGER IF EXISTS "trg_fu_latest_ad"`,
-            `CREATE TRIGGER "trg_fu_latest_ad" AFTER DELETE ON "offer_follow_ups" BEGIN
-                DELETE FROM "latest_followup" WHERE "offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId";
-                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
-                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
-                    WHERE "offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId"
-                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
-            END`,
-            `DROP TRIGGER IF EXISTS "trg_offers_latest_ad"`,
-            `CREATE TRIGGER "trg_offers_latest_ad" AFTER DELETE ON "offers_rel" BEGIN
-                DELETE FROM "latest_followup" WHERE "offerKind" = 'rury' AND "offerId" = OLD."id";
-            END`,
-            `DROP TRIGGER IF EXISTS "trg_offersstud_latest_ad"`,
-            `CREATE TRIGGER "trg_offersstud_latest_ad" AFTER DELETE ON "offers_studnie_rel" BEGIN
-                DELETE FROM "latest_followup" WHERE "offerKind" = 'studnie' AND "offerId" = OLD."id";
-            END`
-        ];
-        for (const sql of ddls) {
-            await prisma.$executeRaw(Prisma.sql([sql]));
+        const existing = await prisma.client_contacts_rel.findMany({
+            select: { id: true, name: true, phone: true }
+        });
+        for (const contact of existing) {
+            const split = splitMergedContact(contact.name, contact.phone);
+            if (split.name === contact.name) continue;
+            await prisma.client_contacts_rel.update({
+                where: { id: contact.id },
+                data: { name: split.name, phone: split.phone, updatedAt: now }
+            });
         }
-    } catch (e) {
+    } catch (error) {
         logger.warn(
             'Server',
-            'Nie udało się upewnić schematu latest_followup:',
-            e instanceof Error ? e.message : String(e)
-        );
-        return;
-    }
-    try {
-        await prisma.$executeRaw`INSERT OR IGNORE INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note") SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM (SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note", ROW_NUMBER() OVER (PARTITION BY "offerKind", "offerId" ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC) AS "rn" FROM "offer_follow_ups") WHERE "rn" = 1`;
-        const missing =
-            (await prisma.$queryRaw`SELECT COUNT(*) AS "c" FROM "offer_follow_ups" AS "f" LEFT JOIN "latest_followup" AS "l" ON "l"."offerKind" = "f"."offerKind" AND "l"."offerId" = "f"."offerId" WHERE "l"."followupId" IS NULL`) as Array<{
-                c: number | bigint;
-            }>;
-        const n = Number(missing[0]?.c ?? 0);
-        if (n > 0) {
-            logger.warn('Server', `Auto-heal: latest_followup bez wpisu dla ${n} follow-upów`);
-        }
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się wykonać backfillu latest_followup:',
-            e instanceof Error ? e.message : String(e)
+            'Nie udało się wykonać zgodnościowego backfillu kontaktów klienta',
+            error instanceof Error ? error.message : String(error)
         );
     }
 }

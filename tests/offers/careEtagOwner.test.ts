@@ -1,11 +1,6 @@
-/*
- * tests/offers/careEtagOwner.test.ts
- * Zmiana opiekuna oferty MUSI unieważniać ETag panelu (inaczej żywy Pulpit
- * dostaje 304 w kółko i nie widać przeniesienia oferty).
- */
-import { DatabaseSync } from 'node:sqlite';
-import { ensureLatestFollowupFixture } from './careLatestFixture';
-import type { Prisma } from '../../generated/prisma';
+/* Owner changes, shares and in-place edits invalidate PostgreSQL care snapshots. */
+import prisma from '../../src/prismaClient';
+import { Prisma } from '../../generated/prisma-postgres/client';
 import {
     buildCareQueueQueries,
     getCareEtagInput,
@@ -16,237 +11,149 @@ import {
 
 const NOW = '2026-10-10T00:00:00.000Z';
 const T0 = '2026-10-01T00:00:00.000Z';
-const T1 = '2026-10-11T00:00:00.000Z';
-const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
-const U2: CareUser = { id: 'u2', role: 'user', subUsers: [] };
-const ADMIN: CareUser = { id: 'admin', role: 'admin', subUsers: [] };
+const T1 = '2099-10-11T00:00:00.000Z';
+const testId = `care-owner-${process.pid}-${Date.now()}`;
+const user1 = `${testId}-u1`;
+const user2 = `${testId}-u2`;
+const adminId = `${testId}-admin`;
+const offer1 = `${testId}-o1`;
+const U1: CareUser = { id: user1, role: 'user', subUsers: [] };
+const U2: CareUser = { id: user2, role: 'user', subUsers: [] };
+const ADMIN: CareUser = { id: adminId, role: 'admin', subUsers: [] };
 
-function freshDb(): DatabaseSync {
-    const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "updatedAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "updatedAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
-        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
-            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
-        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT, note TEXT, "updatedAt" TEXT);
-        CREATE TABLE care_notifications ("id" TEXT PRIMARY KEY, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL);
-        CREATE TABLE care_sla_config (id TEXT PRIMARY KEY, "firstContactH" INTEGER, "staleD" INTEGER, "escalationH" INTEGER, "updatedBy" TEXT, "updatedAt" TEXT);
-        CREATE TABLE care_sla_scopes ("scopeType" TEXT NOT NULL, "scopeId" TEXT NOT NULL, "firstContactH" INTEGER NOT NULL, "staleD" INTEGER NOT NULL, "escalationH" INTEGER NOT NULL, "updatedBy" TEXT, "updatedAt" TEXT,
-            CONSTRAINT "care_sla_scopes_pkey" PRIMARY KEY ("scopeType", "scopeId"));`);
-    db.prepare(
-        'INSERT INTO offers_rel (id, "userId", "createdAt", "updatedAt") VALUES (?, ?, ?, ?)'
-    ).run('o1', 'u1', T0, T0);
-    db.prepare(
-        `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
-         "contactedAt", "createdAt", "updatedAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?,?)`
-    ).run('f1', 'rury', 'o1', 'u1', T0, T0, T0, 'OPEN', null);
-    // P1: cache latest (triggery + backfill).
-    ensureLatestFollowupFixture(db);
-    return db;
+async function seed(): Promise<void> {
+    await prisma.offers_rel.create({
+        data: { id: offer1, userId: user1, createdAt: T0, updatedAt: T0 }
+    });
+    await prisma.offer_follow_ups.create({
+        data: {
+            id: `${testId}-f1`,
+            offerKind: 'rury',
+            offerId: offer1,
+            createdByUserId: user1,
+            contactedAt: T0,
+            createdAt: T0,
+            updatedAt: T0,
+            channel: 'PHONE',
+            result: 'CONTACTED',
+            outcome: 'OPEN'
+        }
+    });
 }
 
-function flatSql(
-    strings: TemplateStringsArray,
-    values: unknown[]
-): { sql: string; values: unknown[] } {
-    let sql = '';
-    const out: unknown[] = [];
-    strings.forEach((s: string, i: number) => {
-        sql += s;
-        if (i < values.length) {
-            const v = values[i] as unknown as { sql?: unknown; values?: unknown };
-            if (v && typeof v === 'object' && typeof v.sql === 'string') {
-                sql += v.sql;
-                out.push(...((v.values as unknown[]) ?? []));
-            } else {
-                sql += '?';
-                out.push(values[i]);
-            }
-        }
-    });
-    return { sql, values: out };
+async function cleanup(): Promise<void> {
+    await prisma.document_shares.deleteMany({ where: { id: { startsWith: testId } } });
+    await prisma.care_states.deleteMany({ where: { offerId: { startsWith: testId } } });
+    await prisma.care_notifications.deleteMany({ where: { offerId: { startsWith: testId } } });
+    await prisma.offer_follow_ups.deleteMany({ where: { offerId: { startsWith: testId } } });
+    await prisma.offers_rel.deleteMany({ where: { id: { startsWith: testId } } });
 }
 
-function fake(db: DatabaseSync) {
-    return {
-        $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
-            const a0 = args[0] as Prisma.Sql;
-            const maybe = a0 as unknown as { sql?: unknown; values?: unknown };
-            if (maybe && typeof maybe.sql === 'string') {
-                const raw = maybe as unknown as { sql: string; values: unknown[] };
-                return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
-            }
-            // Wywołanie tag-template (db.$queryRaw`...${v}...`): strings + values,
-            // zagnieżdżone Prisma.Sql spłaszczane (ten sam styl ? co sterownik).
-            const flat = flatSql(a0 as unknown as TemplateStringsArray, args.slice(1));
-            return db.prepare(flat.sql).all(...(flat.values as never[])) as unknown as T;
-        }
-    };
+async function queueIds(user: CareUser): Promise<string[]> {
+    const result = await getCareQueue(prisma, user, { nowIso: NOW });
+    return result.items.map((item) => `${item.offerKind}:${item.offerId}`);
 }
 
-async function queueIds(db: DatabaseSync, user: CareUser): Promise<string[]> {
-    const res = await getCareQueue(fake(db), user, { nowIso: NOW });
-    return res.items.map((i) => `${i.offerKind}:${i.offerId}`);
-}
+describe('ETag panelu a zmiana opiekuna (PostgreSQL)', () => {
+    beforeEach(seed);
+    afterEach(cleanup);
 
-describe('ETag panelu a zmiana opiekuna', () => {
-    it('widocznosc idzie za wlascicielem (po userId, nie po autorze)', async () => {
-        const db = freshDb();
-        try {
-            expect(await queueIds(db, U1)).toEqual(['rury:o1']);
-            expect(await queueIds(db, U2)).toEqual([]);
-            // Kartoteka: assign u1 -> u2 (kolumna userId + bump updatedAt).
-            db.prepare('UPDATE offers_rel SET "userId" = ?, "updatedAt" = ? WHERE id = ?').run(
-                'u2',
-                T1,
-                'o1'
-            );
-            expect(await queueIds(db, U2)).toEqual(['rury:o1']);
-            expect(await queueIds(db, U1)).toEqual([]);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+    it('widoczność idzie za właścicielem po userId, nie po autorze', async () => {
+        expect(await queueIds(U1)).toEqual([`rury:${offer1}`]);
+        expect(await queueIds(U2)).toEqual([]);
+        await prisma.offers_rel.update({
+            where: { id: offer1 },
+            data: { userId: user2, updatedAt: T1 }
+        });
+        expect(await queueIds(U2)).toEqual([`rury:${offer1}`]);
+        expect(await queueIds(U1)).toEqual([]);
     });
 
-    it('assign zmienia wejscie ETag (brak wiecznego 304)', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            const before = await getCareEtagInput(f, 'u1');
-            db.prepare('UPDATE offers_rel SET "userId" = ?, "updatedAt" = ? WHERE id = ?').run(
-                'u2',
-                T1,
-                'o1'
-            );
-            const after = await getCareEtagInput(f, 'u1');
-            expect(after).not.toEqual(before);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+    it('assign zmienia wejście ETag (brak wiecznego 304)', async () => {
+        const before = await getCareEtagInput(prisma, user1);
+        await prisma.offers_rel.update({
+            where: { id: offer1 },
+            data: { userId: user2, updatedAt: T1 }
+        });
+        const after = await getCareEtagInput(prisma, user1);
+        expect(after).not.toEqual(before);
     });
 
-    it('nadanie shares zmienia wejscie ETag (brak wiecznego 304)', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            const before = await getCareEtagInput(f, 'u2');
-            // Udostępnienie o1 (u1) dla u2 — u2 widzi nowy wiersz w kolejce.
-            db.prepare(
-                'INSERT INTO document_shares (id, "sharedWithUserId", "documentType", "documentId") VALUES (?, ?, ?, ?)'
-            ).run('sh1', 'u2', 'offer', 'o1');
-            const after = await getCareEtagInput(f, 'u2');
-            expect(after).not.toEqual(before);
-            expect(await queueIds(db, U2)).toEqual(['rury:o1']);
-            // Revoke też unieważnia (COUNT spada) — brak wiecznego 304.
-            db.prepare('DELETE FROM document_shares WHERE id = ?').run('sh1');
-            const afterRevoke = await getCareEtagInput(f, 'u2');
-            expect(afterRevoke).not.toEqual(after);
-            expect(await queueIds(db, U2)).toEqual([]);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
+    it('nadanie i cofnięcie shares zmienia wejście ETag i widoczność', async () => {
+        const before = await getCareEtagInput(prisma, user2);
+        await prisma.document_shares.create({
+            data: {
+                id: `${testId}-share`,
+                documentType: 'offer',
+                documentId: offer1,
+                ownerId: user1,
+                sharedWithUserId: user2,
+                createdAt: T1,
+                createdBy: user1
             }
-            throw e;
-        }
+        });
+        const after = await getCareEtagInput(prisma, user2);
+        expect(after).not.toEqual(before);
+        expect(await queueIds(U2)).toEqual([`rury:${offer1}`]);
+        await prisma.document_shares.delete({ where: { id: `${testId}-share` } });
+        expect(await getCareEtagInput(prisma, user2)).not.toEqual(after);
+        expect(await queueIds(U2)).toEqual([]);
     });
 
-    it('scope=all + repOwner: tylko oferty repa (nie 1=1)', () => {
-        const db = freshDb();
-        try {
-            db.prepare(
-                'INSERT INTO offers_rel (id, "userId", "createdAt", "updatedAt") VALUES (?, ?, ?, ?)'
-            ).run('o2', 'u2', T0, T0);
-            db.prepare(
-                `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
-                 "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)`
-            ).run('f2', 'rury', 'o2', 'u2', T0, T0, 'OPEN', null);
-            const { data } = buildCareQueueQueries(ADMIN, {
-                nowIso: NOW,
-                scope: 'all',
-                repOwner: 'u1'
-            });
-            const raw = data as unknown as { sql: string; values: unknown[] };
-            const rows = db.prepare(raw.sql).all(...(raw.values as never[])) as Array<{
-                offerId: string;
-            }>;
-            expect(rows.map((r) => r.offerId)).toEqual(['o1']);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
+    it('scope=all + repOwner filtruje do ofert repa', async () => {
+        const otherOffer = `${testId}-o2`;
+        await prisma.offers_rel.create({ data: { id: otherOffer, userId: user2, createdAt: T0 } });
+        await prisma.offer_follow_ups.create({
+            data: {
+                id: `${testId}-f2`,
+                offerKind: 'rury',
+                offerId: otherOffer,
+                createdByUserId: user2,
+                contactedAt: T0,
+                createdAt: T0,
+                channel: 'PHONE',
+                result: 'CONTACTED',
+                outcome: 'OPEN'
             }
-            throw e;
-        }
+        });
+        const { data } = buildCareQueueQueries(ADMIN, {
+            nowIso: NOW,
+            scope: 'all',
+            repOwner: user1
+        });
+        const rows = await prisma.$queryRaw<Array<{ offerId: string }>>(data as Prisma.Sql);
+        expect(rows.map((row) => row.offerId)).toEqual([offer1]);
     });
 
-    it('hidePaused: jeden flag w summary i kolejce (parzystość liczników)', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            db.prepare(
-                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
-            ).run('rury', 'o1', null, NOW, 'u1', NOW);
-            // Default false: pauza widoczna w obu (totalCount zgodny).
-            const s = await getCareSummary(f, U1, 'mine', NOW, {});
-            const q = await getCareQueue(fake(db), U1, { nowIso: NOW });
-            expect(s.totalCount).toBe(1);
-            expect(q.totalCount).toBe(1);
-            // hidePaused=true: oba wycinają pauzę.
-            const s2 = await getCareSummary(f, U1, 'mine', NOW, { hidePaused: true });
-            const q2 = await getCareQueue(fake(db), U1, { nowIso: NOW, hidePaused: true });
-            expect(s2.totalCount).toBe(0);
-            expect(q2.totalCount).toBe(0);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
+    it('hidePaused ma zgodne liczniki w summary i kolejce', async () => {
+        await prisma.care_states.create({
+            data: {
+                offerKind: 'rury',
+                offerId: offer1,
+                doneAt: NOW,
+                updatedBy: user1,
+                updatedAt: NOW
             }
-            throw e;
-        }
+        });
+        const summary = await getCareSummary(prisma, U1, 'mine', NOW, {});
+        const queue = await getCareQueue(prisma, U1, { nowIso: NOW });
+        expect(summary.totalCount).toBe(1);
+        expect(queue.totalCount).toBe(1);
+        const hiddenSummary = await getCareSummary(prisma, U1, 'mine', NOW, { hidePaused: true });
+        const hiddenQueue = await getCareQueue(prisma, U1, { nowIso: NOW, hidePaused: true });
+        expect(hiddenSummary.totalCount).toBe(0);
+        expect(hiddenQueue.totalCount).toBe(0);
     });
-    it('edycja w miejscu zmienia ETag (marker updatedAt), brak edycji nie', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            const before = await getCareEtagInput(f, 'u1');
-            // Bez edycji: ten sam snapshot.
-            expect(await getCareEtagInput(f, 'u1')).toEqual(before);
-            // PUT w miejscu: note/outcome ruszone, contactedAt/createdAt stoja.
-            // Stare markery a/b slepe - tylko m (MAX updatedAt) uniewaznia 304.
-            db.prepare(
-                'UPDATE offer_follow_ups SET note = ?, outcome = ?, "updatedAt" = ? WHERE id = ?'
-            ).run('poprawiona notatka', 'WON', T1, 'f1');
-            const after = await getCareEtagInput(f, 'u1');
-            expect(after).not.toEqual(before);
-            expect(after[after.length - 1]).toBe(T1);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+
+    it('edycja w miejscu zmienia ETag przez marker updatedAt', async () => {
+        const before = await getCareEtagInput(prisma, user1);
+        expect(await getCareEtagInput(prisma, user1)).toEqual(before);
+        await prisma.offer_follow_ups.update({
+            where: { id: `${testId}-f1` },
+            data: { note: 'poprawiona notatka', outcome: 'WON', updatedAt: T1 }
+        });
+        const after = await getCareEtagInput(prisma, user1);
+        expect(after).not.toEqual(before);
+        expect(after[after.length - 1]).toBe(T1);
     });
 });

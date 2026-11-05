@@ -802,10 +802,9 @@ describe('Równoległe zapisy telemetry', () => {
     it('5 równoległych upsertów sukces', async () => {
         const time = Date.now();
         const prefix = 'par_' + time + '_';
-        // SQLite single-connection: równoległe $transaction mogą dostać
-        // SQLITE_BUSY albo P2028 (głodzenie startu transakcji przy
-        // obciążonej maszynie) — retry z backoffem, nie osłabianie
-        // równoległości. Matcher obejmuje kody i komunikaty silnika.
+        // PostgreSQL pool/serializable transactions may report P2028/P2034
+        // under load — retry with backoff, preserving parallelism. Matcher
+        // includes Prisma codes and database connection timeout messages.
         const upsertBusyRetry = async (args: any, tries = 6): Promise<any> => {
             let lastErr: unknown;
             for (let a = 0; a < tries; a++) {

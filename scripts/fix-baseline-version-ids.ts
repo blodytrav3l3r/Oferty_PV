@@ -51,7 +51,7 @@ interface PlannedRename {
 
 async function countWhere(table: string, column: string, value: string): Promise<number> {
     const rows = await prisma.$queryRawUnsafe<{ n: bigint | number }[]>(
-        `SELECT COUNT(*) AS n FROM "${table}" WHERE "${column}" = ?`,
+        `SELECT COUNT(*) AS n FROM "${table}" WHERE "${column}" = $1`,
         value
     );
     return Number(rows[0]?.n ?? 0);
@@ -105,14 +105,14 @@ async function planRenames(): Promise<PlannedRename[]> {
 async function applyRename(plan: PlannedRename): Promise<void> {
     await prisma.$transaction(async (tx) => {
         const renamed = await tx.$executeRawUnsafe(
-            'UPDATE "PricelistVersion" SET "id" = ? WHERE "id" = ?',
+            'UPDATE "PricelistVersion" SET "id" = $1 WHERE "id" = $2',
             plan.newId,
             plan.oldId
         );
         if (renamed !== 1) throw new Error(`Nie zmieniono nagłówka "${plan.oldId}" (${renamed})`);
         for (const table of ITEM_TABLES) {
             await tx.$executeRawUnsafe(
-                `UPDATE "${table}" SET "id" = replace("id", ?, ?) WHERE "versionId" = ?`,
+                `UPDATE "${table}" SET "id" = replace("id", $1, $2) WHERE "versionId" = $3`,
                 `${plan.oldId}:`,
                 `${plan.newId}:`,
                 plan.newId
@@ -120,7 +120,7 @@ async function applyRename(plan: PlannedRename): Promise<void> {
         }
         for (const table of STAMP_TABLES) {
             await tx.$executeRawUnsafe(
-                `UPDATE "${table}" SET "pricelistVersionId" = ? WHERE "pricelistVersionId" = ?`,
+                `UPDATE "${table}" SET "pricelistVersionId" = $1 WHERE "pricelistVersionId" = $2`,
                 plan.newId,
                 plan.oldId
             );

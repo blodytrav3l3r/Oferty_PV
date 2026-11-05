@@ -2,7 +2,7 @@ import { parseSearchParams, buildWhereParts } from '../../src/utils/searchUtils'
 
 // Mock wierny semantyce Prisma: buildWhereParts/parseSearchParams używają
 // Prisma.sql/raw/empty/join do budowy fragmentów SQL — renderujemy je do stringów.
-jest.mock('../../generated/prisma', () => {
+jest.mock('../../generated/prisma-postgres/client', () => {
     const renderSql = (strings: any, values: any) => {
         if (strings && typeof strings === 'object' && strings.__prismaSql) {
             return strings.render();
@@ -33,10 +33,6 @@ jest.mock('../../generated/prisma', () => {
     };
 });
 
-jest.mock('../../src/utils/fts5Sync', () => ({
-    buildFts5Query: () => null
-}));
-
 const renderParts = (parts: any[]): string =>
     parts.map((p) => (p && p.render ? p.render() : String(p))).join(' AND ');
 
@@ -66,9 +62,8 @@ describe('parseSearchParams — walidacja dat', () => {
     it('brzegi: epoch i offset strefy odrzucone, kalendarz na poziomie regex', () => {
         expect(parseSearchParams({ dateFrom: '1756675200000' }).dateFrom).toBe('');
         expect(parseSearchParams({ dateFrom: '2026-08-07T22:00:00+02:00' }).dateFrom).toBe('');
-        // Regex nie sprawdza kalendarza (2026-02-29 nie istnieje, 13 miesiąc
-        // też przejdzie) — nieszkodliwe: brak dopasowań w DB. Zmiana kodu
-        // wymagałaby walidacji kalendarzowej w parseSearchParams (DEFER).
+        // Parser zachowuje kompatybilny format; buildWhereParts zamienia
+        // niemożliwą datę kalendarzową na predykat FALSE przed rzutowaniem PG.
         expect(parseSearchParams({ dateFrom: '2024-02-29' }).dateFrom).toBe('2024-02-29');
         expect(parseSearchParams({ dateFrom: '2026-02-29' }).dateFrom).toBe('2026-02-29');
     });
@@ -86,11 +81,11 @@ describe('buildWhereParts — klauzule createdAt', () => {
         order: 'desc'
     };
 
-    it('dateFrom ISO: >= z surowa wartoscia', () => {
+    it('dateFrom ISO: >= porównuje z timestampem UTC po normalizacji', () => {
         const parts = buildWhereParts({ ...base, dateFrom: '2026-08-07T22:00:00.000Z' });
-        // P1.3: normalizedCreatedAtSql() — CASE z GLOB, nie surowe "createdAt"
         expect(renderParts(parts)).toContain('>= 2026-08-07T22:00:00.000Z');
         expect(renderParts(parts)).toContain('CASE WHEN');
+        expect(renderParts(parts)).toContain('::timestamptz');
     });
 
     it('dateTo ISO: < z surowa wartoscia (poloowki przedzial presetu)', () => {
@@ -111,6 +106,11 @@ describe('buildWhereParts — klauzule createdAt', () => {
         expect(sql).not.toContain('createdAt');
     });
 
+    it('nieprawidłowa data kalendarzowa nie wywołuje błędu rzutowania PostgreSQL', () => {
+        const parts = buildWhereParts({ ...base, dateFrom: '2026-02-29' });
+        expect(renderParts(parts)).toBe('FALSE');
+    });
+
     it('q z zapytaniem: szuka w zamowieniach rur/studni, opiekunie (users/offerUser), inwestycji, uwagach i NIP', () => {
         const parts = buildWhereParts({ ...base, q: 'Kowalski' });
         const sql = renderParts(parts);
@@ -121,6 +121,8 @@ describe('buildWhereParts — klauzule createdAt', () => {
         expect(sql).toContain('offerUser');
         expect(sql).toContain('investAddress');
         expect(sql).toContain('offerNotes');
+        expect(sql).toContain("COALESCE(o.data, '') || ' ' || COALESCE(o.\"clientName\", '')");
+        expect(sql).not.toContain('concat_ws');
     });
 });
 

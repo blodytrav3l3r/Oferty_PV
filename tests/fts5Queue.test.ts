@@ -1,9 +1,9 @@
 /**
- * B1: kolejka FTS w tle — eventual consistency na realnej izolowanej DB.
- * - enqueue sync → drain → wpis w FTS (inSync);
- * - enqueue remove → drain → wpis znika;
- * - crash (wiersz bez wpisu = utracona kolejka) → reconcile dobudowuje;
- * - metryki queued/done.
+ * B1: indeks GIN PostgreSQL — wpisy zmieniają się atomowo wraz z ofertą.
+ * - enqueue/drain zachowuje stan indeksu;
+ * - usunięcie oferty usuwa ją również z indeksu;
+ * - reconcile potwierdza brak utraconej kolejki;
+ * - metryki queued/done pozostają widoczne.
  */
 import {
     enqueueFtsSync,
@@ -29,8 +29,8 @@ afterAll(async () => {
     await prisma.$disconnect();
 });
 
-describe('B1 fts5Queue', () => {
-    test('enqueue sync → drain → inSync', async () => {
+describe('B1 PostgreSQL search index queue compatibility', () => {
+    test('enqueue sync → drain → indeks GIN pozostaje gotowy', async () => {
         const id = oid('a');
         await prisma.offers_rel.create({ data: { id, clientName: 'QueueTestowie' } });
         enqueueFtsSync('rury', {
@@ -40,16 +40,14 @@ describe('B1 fts5Queue', () => {
             investName: null
         });
         expect(await drainFtsQueue()).toBe(true);
-        const rows = (await prisma.$queryRawUnsafe(
-            'SELECT id FROM offers_search_fts WHERE id = ?',
-            id
-        )) as Array<{ id: string }>;
-        expect(rows.map((r) => r.id)).toContain(id);
+        const status = await ftsSyncStatus();
+        expect(status.inSync).toBe(true);
+        expect(status.tables.rury.offers).toBeGreaterThanOrEqual(1);
         const m = getFtsQueueMetrics();
         expect(m.done).toBeGreaterThanOrEqual(1);
     });
 
-    test('enqueue remove → drain → wpis znika (LIKE-fallback nadal widzi ofertę)', async () => {
+    test('usunięcie oferty po drain usuwa ją atomowo z indeksu GIN', async () => {
         const id = oid('b');
         await prisma.offers_rel.create({ data: { id, clientName: 'RemoveMe' } });
         enqueueFtsSync('rury', {
@@ -59,23 +57,19 @@ describe('B1 fts5Queue', () => {
             investName: null
         });
         expect(await drainFtsQueue()).toBe(true);
+        await prisma.offers_rel.delete({ where: { id } });
         enqueueFtsRemove('rury', id);
         expect(await drainFtsQueue()).toBe(true);
-        const rows = (await prisma.$queryRawUnsafe(
-            'SELECT id FROM offers_search_fts WHERE id = ?',
-            id
-        )) as Array<{ id: string }>;
-        expect(rows).toHaveLength(0);
-        // Wiersz biznesowy nietknięty — search LIKE go znajdzie.
-        expect(await prisma.offers_rel.findUnique({ where: { id } })).not.toBeNull();
+        expect(await prisma.offers_rel.findUnique({ where: { id } })).toBeNull();
+        expect((await ftsSyncStatus()).inSync).toBe(true);
     });
 
-    test('crash: wiersz bez wpisu → reconcile dobudowuje (restart recovery)', async () => {
+    test('GIN indeksuje nową ofertę transakcyjnie, reconcile nie wymaga odbudowy', async () => {
         const id = oid('c');
         await prisma.offers_rel.create({ data: { id, clientName: 'CrashSim' } });
-        // Bez enqueue — symulacja utraconej kolejki in-memory.
+        // Bez enqueue — PostgreSQL GIN musi już zawierać ofertę po INSERT.
         const fixed = await reconcileFts5();
-        expect(fixed).toBeGreaterThanOrEqual(1);
+        expect(fixed).toBe(0);
         const status = await ftsSyncStatus();
         expect(status.missingIds.find((x) => x.id === id)).toBeUndefined();
     });

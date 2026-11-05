@@ -12,6 +12,10 @@ import type {
     RuryOrderDataBlob,
     StudnieOrderDataBlob
 } from '../../types/offerData';
+import {
+    decimalMoneyRowsToNumbers,
+    decimalMoneyValueToNumber
+} from '../pricelist/moneySerialization';
 
 const MAX_TRANSPORT_WEIGHT = 24000;
 
@@ -82,9 +86,12 @@ export async function buildRuryOfferContextFromOfferId(
         dataCorrupted = true;
     }
 
-    const items = await prisma.offer_items_rel.findMany({
-        where: { offerId }
-    });
+    const items = decimalMoneyRowsToNumbers(
+        await prisma.offer_items_rel.findMany({
+            where: { offerId }
+        }),
+        ['price']
+    );
 
     const enhancedItems: unknown[] = Array.isArray(offerData.items) ? offerData.items : items;
     const withCategories = await enrichRuryItemsWithCategories(enhancedItems);
@@ -111,7 +118,9 @@ export async function buildRuryOfferContextFromOfferId(
         transportRate: Number(offerData.transportRate ?? 0),
         transportCount: Number(offerData.transportCount ?? 0),
         transportCostPerTrip: Number(offerData.transportCostPerTrip ?? 0),
-        transportCost: Number(offerData.transportCost ?? 0),
+        transportCost: Number(
+            offerData.transportCost ?? decimalMoneyValueToNumber(offer.transportCost) ?? 0
+        ),
         createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
         validityDays: Number(offerData.validityDays ?? 30),
         notes: String(offerData.notes ?? ''),
@@ -143,9 +152,12 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
     if (Array.isArray(orderData.items)) {
         items = orderData.items;
     } else if (order.offerId) {
-        const offerItems = await prisma.offer_items_rel.findMany({
-            where: { offerId: order.offerId }
-        });
+        const offerItems = decimalMoneyRowsToNumbers(
+            await prisma.offer_items_rel.findMany({
+                where: { offerId: order.offerId }
+            }),
+            ['price']
+        );
         items = offerItems;
         if (!Array.isArray(orderData.items) && orderData.wells) {
             items = orderData.wells as unknown[];

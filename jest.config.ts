@@ -10,6 +10,7 @@ const config: Config.InitialOptions = {
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
     coverageProvider: 'v8',
+    maxWorkers: process.env.CI === 'true' ? 2 : 4,
     verbose: true,
     testTimeout: 10000,
     setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
@@ -27,8 +28,7 @@ const config: Config.InitialOptions = {
             // Negacje w testMatch (nie ignorePatterns): CLI --testPathIgnorePatterns
             // nadpisuje config-ignore (npm test/lite), a testMatch zostaje.
             testPathIgnorePatterns: ['/frontend/', 'git-safety'],
-            // Izolacja SQLite per worker (setupDbIsolation) — koniec flaków
-            // SQLITE_BUSY ze współdzielonego pliku DB.
+            // Każdy worker dostaje osobny schemat PostgreSQL.
             setupFiles: ['<rootDir>/tests/setupDbIsolation.ts']
         },
         {

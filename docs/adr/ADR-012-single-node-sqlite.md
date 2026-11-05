@@ -1,6 +1,6 @@
 # ADR-012: SQLite single-node — jeden proces na plik bazy
 
-**Status:** przyjęta (2026-09-20, E6 Master Planu 1.27.0)
+**Status:** Historyczny — ograniczenia SQLite są legacy; PostgreSQL został wskazany jako jedyny docelowy backend, a migracja implementacyjna jest w toku. Zachowaj ten ADR wyłącznie jako kontekst historyczny (pierwotna decyzja: 2026-09-20, E6 Master Planu 1.27.0).
 **Kontekst:** ADR-001 (SQLite jako produkcja), Master Plan §7/E6
 
 ## Decyzja

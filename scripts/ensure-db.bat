@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.3
+REM  Wersja: 1.56.4
 REM ensure-db.bat - Sprawdza i przygotowuje baze danych
 REM Zwraca: errorlevel 0 = OK, 1 = blad krytyczny
 REM Uzycie: call scripts\ensure-db.bat
@@ -7,17 +7,16 @@ REM Uzycie: call scripts\ensure-db.bat
 setlocal ENABLEDELAYEDEXPANSION
 set "RETRY=0"
 
-REM ---------- 0. Stare instancje serwera (DB lock) ----------
-REM Martwy dev-serwer (ts-node-dev/server.js, takze bez listenera na :3000)
-REM trzyma -shm/-wal i wywala "database is locked" w migrate deploy.
-REM Wykryj przed migracja i zapytaj (domyslnie NIE zabijaj - bezpieczne).
+REM ---------- 0. Stare instancje serwera ----------
+REM Nie uruchamiaj migracji przy pozostawionej instancji S.O.K.
+REM Potwierdzenie zatrzymania procesu pozostaje wymagane.
 set "STALE_PIDS="
 for /f %%p in ('powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\find-stale-server.ps1" ^<nul 2^>nul') do (
     if "%%p" neq "" set "STALE_PIDS=!STALE_PIDS! %%p"
 )
 if defined STALE_PIDS (
     echo [UWAGA] Znaleziono dzialajace procesy node serwera S.O.K. - PID:!STALE_PIDS!
-    echo [UWAGA] Stara instancja blokuje baze - blad "database is locked" w migracji.
+    echo [UWAGA] Wykryto pozostawiona instancje S.O.K. przed migracja PostgreSQL.
     set "KILLSTALE="
     if /i "%SOK_KILL_STALE%"=="1" set "KILLSTALE=T"
     if not defined KILLSTALE set /p "KILLSTALE=Czy zatrzymac te procesy i kontynuowac? T/N [N]: "
@@ -79,12 +78,6 @@ if !CHECK_EXIT! equ 1 (
     set /a RETRY+=1
     if !RETRY! lss 3 goto :check_loop
     echo [BLAD] Za duzo prob - przerywam.
-    endlocal
-    exit /b 1
-)
-
-if !CHECK_EXIT! equ 4 (
-    echo [BLAD] Brak node:sqlite i sqlite3 CLI - nie mozna sprawdzic bazy.
     endlocal
     exit /b 1
 )

@@ -1,9 +1,15 @@
 # Instrukcja instalacji S.O.K. — System Ofert i Kalkulacji — krok po kroku dla laika
 
 > **Plik:** docs/instalacja-krok-po-kroku-dla-laika.md
-> **Wersja:** 1.56.3
+> **Wersja:** 1.56.4
 > **Dla kogo:** Osób bez doświadczenia technicznego
 > Wersja ops (Docker, VPS, praca zdalna, migracje): `docs/instalacja-przenoszenie-systemu.md`.
+>
+> **Status:** instrukcja wymaga aktualizacji do PostgreSQL 18. Migracja
+> aplikacji nie jest ukończona ani zweryfikowana w pełnym runtime. Kroki 2–7,
+> 9–10 oraz stare przykłady SQLite są historyczne i nie stanowią bieżącej
+> procedury instalacji, backupu ani odtworzenia. Status i aktualna ścieżka:
+> [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ---
 
@@ -16,7 +22,7 @@
 5. [Krok 3 — Skonfiguruj hasło](#5-krok-3--skonfiguruj-hasło)
 6. [Krok 4 — Uruchom instalator](#6-krok-4--uruchom-instalator)
 7. [Krok 5 — Uruchom aplikację](#7-krok-5--uruchom-aplikację)
-8. [Przenoszenie bazy ze starego komputera](#8-przenoszenie-bazy-ze-starego-komputera)
+8. [Przenoszenie aktywnych cenników ze starszej instalacji](#8-przenoszenie-aktywnych-cenników-ze-starszej-instalacji)
 9. [Problemy i rozwiązania](#9-problemy-i-rozwiązania)
 10. [Ściągawka](#10-ściągawka)
 
@@ -209,50 +215,19 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 
 ---
 
-## 8. Przenoszenie bazy ze starego komputera
+## 8. Przenoszenie aktywnych cenników ze starszej instalacji
 
-Masz już dane (produkty, oferty, cenniki) na starym komputerze i chcesz je przenieść na nowy? **Nie musisz zaczynać od zera!**
+PostgreSQL 18 jest jedynym docelowym silnikiem bazy. Przy cutoverze ze starszej
+instalacji przenoszone są wyłącznie aktywne cenniki rur, studni i PRECO. Oferty,
+klienci, użytkownicy, zamówienia, sesje, drafty i historia wersji pozostają w
+starej bazie i nie są importowane. Plik SQLite ani backup SQLite nie może być
+przywrócony jako baza aplikacji PostgreSQL.
 
-### Co to jest "baza danych"?
-
-Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/app_database.sqlite`. Przeniesienie go na nowy komputer = wszystkie dane są przeniesione.
-
-### Krok po kroku — przenoszenie danych
-
-#### Na STARYM komputerze (zrób kopię):
-
-1. Otwórz folder z programem na starym komputerze
-2. Kliknij PRAWYM w pustym miejscu w folderze (przytrzymaj Shift i kliknij prawym)
-3. Wybierz **"Otwórz w terminalu"** lub **"Otwórz okno PowerShell tutaj"**
-4. Wpisz w oknie: `npm run backup`
-5. Naciśnij Enter
-6. Zobaczysz napis: `[Backup] Utworzono: data/backups/backup_...`
-7. Wejdź do folderu `data/backups/` — zobaczysz plik `backup_YYYY-MM-DD_TIMESTAMP.sqlite`
-8. **Skopiuj ten plik na pendrive** (lub wyślij przez e-mail / chmurę)
-
-#### Na NOWYM komputerze (przywróć dane):
-
-1. Wykonaj Kroki 1-4 z tej instrukcji (zainstaluj Node.js, pobierz program, skonfiguruj .env)
-2. **Uruchom `install.bat --skip-seed`** — dzięki fladze `--skip-seed` baza nie zostanie nadpisana przykładowymi danymi
-3. Skopiuj plik backupu (ze starego komputera) do folderu `data/backups/` na nowym komputerze
-4. Kliknij PRAWYM w pustym miejscu w folderze → **"Otwórz w terminalu"**
-5. Wpisz: `npm run restore data/backups/backup_NAZWA_PLIKU.sqlite`
-    > Zamiast `backup_NAZWA_PLIKU.sqlite` wpisz rzeczywistą nazwę pliku
-6. Naciśnij Enter
-7. System zapyta: "Czy na pewno przywrócić backup?" — wpisz: `tak` i naciśnij Enter
-8. Zobaczysz: "Baza przywrócona z: ..."
-9. Uruchom aplikację (`start.bat`) — wszystkie dane są już na miejscu
-
-> Po uruchomieniu `start.bat` sam sprawdzi bazę (tabele, indeksy, wyszukiwarkę FTS5)
-> i uzupełni ewentualne braki — nie musisz nic robić ręcznie.
-
-### ⚠️ WAŻNE PRZY PRZENOSZENIU:
-
-- **Wersja programu na starym i nowym komputerze powinna być taka sama** (sprawdź w pliku `VERSION`)
-- Jeśli wersje są różne, po przywróceniu bazy uruchom `install.bat --skip-seed` jeszcze raz (zaktualizuje schemat bazy bez nadpisywania danych)
-- Po wykonaniu backupu na starym komputerze możesz bezpiecznie wyłączyć stary komputer
-
----
+Ta operacja wymaga administratora systemu i osobnej zgody na cutover. Wykonaj
+ją tylko według [runbooka aktywnych cenników](cutover/active-pricelists.md), po
+potwierdzeniu gotowości PostgreSQL 18 i spełnieniu wszystkich bramek w
+[`DEPLOYMENT.md`](DEPLOYMENT.md). Migracja runtime nadal trwa, więc ta
+instrukcja nie jest samodzielnym przewodnikiem uruchomienia produkcyjnego.
 
 ## 9. Problemy i rozwiązania
 
@@ -367,23 +342,23 @@ Jeśli całkowicie zablokowałeś system:
 
 ### Gdzie są pliki?
 
-| Plik / Folder              | Opis                                                             |
-| -------------------------- | ---------------------------------------------------------------- |
-| `data/app_database.sqlite` | **BAZA DANYCH** — najważniejszy plik! To w nim są wszystkie dane |
-| `data/backups/`            | Folder z kopiami bezpieczeństwa                                  |
-| `.env`                     | Plik z hasłem i ustawieniami                                     |
-| `node_modules/`            | Biblioteki (nie ruszaj, instalator sam zarządza)                 |
-| `dist/`                    | Skompilowany program (tworzony przez `build.bat`)                |
+| Plik / Folder   | Opis                                                      |
+| --------------- | --------------------------------------------------------- |
+| PostgreSQL 18   | Docelowa baza danych; migracja i weryfikacja nadal trwają |
+| `data/backups/` | Folder z archiwami backupu PostgreSQL (`.dump`)           |
+| `.env`          | Plik z hasłem i ustawieniami                              |
+| `node_modules/` | Biblioteki (nie ruszaj, instalator sam zarządza)          |
+| `dist/`         | Skompilowany program (tworzony przez `build.bat`)         |
 
 ### 💡 Złote zasady:
 
 1. **Zawsze zmieniaj domyślne hasło** w pliku `.env`
-2. **Rób backup regularnie** — `npm run backup` raz w tygodniu
+2. **Backup PostgreSQL** wykonuj zgodnie z procedurą administratora systemu
 3. **Nie zamykaj czarnego okna** — dopóki okno jest otwarte, aplikacja działa
 4. **Nie usuwaj folderu `node_modules`** — instalator sam go utworzył i zarządza nim
-5. **Gdy coś nie działa** — uruchom `install.bat` jeszcze raz (to naprawia większość problemów)
-6. **Przed aktualizacją** zrób backup (`npm run backup`)
-7. **Przy przenoszeniu na nowy komputer** → najpierw backup na starym, potem restore na nowym
+5. **Gdy coś nie działa** — zgłoś problem administratorowi systemu
+6. Aktualizacji i odtworzenia bazy nie wykonuj według tej historycznej instrukcji
+7. Przenoszenie ze starszej instalacji obejmuje tylko aktywne cenniki według runbooka
 
 ---
 

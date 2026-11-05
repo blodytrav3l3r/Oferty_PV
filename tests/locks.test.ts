@@ -43,7 +43,7 @@ jest.mock('../src/utils/ownership', () => ({
     canReadWithShare: jest.fn(async () => true)
 }));
 
-// In-memory doc_locks z wierna semantyka predykatow (jak SQLite).
+// In-memory doc_locks z wierną semantyką predykatów używanych przez Prisma.
 const store = new Map<string, any>();
 const keyOf = (t: string, i: string) => `${t}:${i}`;
 

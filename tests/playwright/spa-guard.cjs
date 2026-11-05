@@ -24,6 +24,7 @@
 
 const { execFileSync, spawn } = require('child_process');
 const { resolve } = require('path');
+const { createIsolatedPostgresSchema } = require('./isolatedPostgres.cjs');
 
 const ROOT = resolve(__dirname, '..', '..');
 const SPAWN = process.argv.includes('--spawn');
@@ -78,37 +79,7 @@ async function pollHealth(url, tries = 30) {
 }
 
 async function startServer() {
-    const { rmSync, existsSync, symlinkSync, mkdirSync } = require('fs');
-    const dbFile = resolve(ROOT, 'data', 'e2e-spa-guard.sqlite');
-    try {
-        rmSync(dbFile, { force: true });
-        rmSync(dbFile + '-wal', { force: true });
-        rmSync(dbFile + '-shm', { force: true });
-    } catch (_) {}
-    const dbUrl = `file:${dbFile}?connection_limit=1&busy_timeout=30000`;
-    const withBin = (env) => ({
-        ...env,
-        PATH: `${resolve(ROOT, 'node_modules', '.bin')}${require('path').delimiter}${process.env.PATH}`
-    });
-    execFileSync(
-        process.execPath,
-        [
-            require.resolve('prisma/build/index.js'),
-            'db',
-            'push',
-            '--skip-generate',
-            '--accept-data-loss'
-        ],
-        { cwd: ROOT, env: withBin({ DATABASE_URL: dbUrl }), stdio: 'pipe' }
-    );
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
-        cwd: ROOT,
-        env: withBin({ DATABASE_URL: dbUrl }),
-        stdio: 'pipe'
-    });
-    void existsSync;
-    void symlinkSync;
-    void mkdirSync;
+    const { databaseUrl: dbUrl } = await createIsolatedPostgresSchema('spa_guard');
     const server = spawn(process.execPath, [resolve(ROOT, 'dist', 'server.js')], {
         cwd: ROOT,
         env: {

@@ -6,7 +6,7 @@ const path = require('path');
 const TAG_RE = /^v\d+\.\d+\.\d+$/;
 const TARGETS = ['windows', 'linux', 'docker'];
 const BACKUP_DIR = path.resolve(__dirname, '..', 'data', 'backups');
-const BACKUP_FILE_RE = /^backup_\d{4}-\d{2}-\d{2}_\d+\.sqlite$/;
+const BACKUP_FILE_RE = /^backup_\d{4}-\d{2}-\d{2}_\d+\.dump$/;
 
 function validateTag(tag) {
     if (typeof tag !== 'string' || !TAG_RE.test(tag)) {
@@ -49,7 +49,7 @@ function startCmd(target) {
         case 'linux':
             return linuxStartCmd();
         case 'docker':
-            return 'docker compose up -d --build';
+            return 'docker compose up -d app';
         default:
             throw new Error(`Brak komendy start dla targetu: ${target}`);
     }
@@ -64,23 +64,27 @@ function resolveSteps(target, tag) {
         { name: `Przejscie na ${tag}`, cmd: `git checkout ${tag}` },
         { name: 'Instalacja zaleznosci', cmd: 'npm ci' },
         { name: 'Generacja klienta Prisma', cmd: 'npx prisma generate' },
-        { name: 'Migracja schematu (addytywna)', cmd: 'npx prisma migrate deploy' },
+        ...(target === 'docker'
+            ? []
+            : [{ name: 'Migracja schematu (addytywna)', cmd: 'npx prisma migrate deploy' }]),
         { name: 'Budowa projektu', cmd: 'npm run build' }
     ];
     if (target === 'linux') {
         steps.push({
             name: 'Kopiowanie klienta Prisma do dist',
-            cmd: 'mkdir -p dist/generated && cp -r generated/prisma dist/generated/'
+            cmd: 'mkdir -p dist/generated && cp -r generated/prisma-postgres dist/generated/'
         });
     }
     steps.push({ name: 'Kontrola spojnosci wersji', cmd: 'npm run version:check' });
     if (target === 'docker') {
-        // P0.3-B: host-side ownership ./data pod UID kontenera (build-time
-        // chown z Dockerfile jest pod bind mountem nieskuteczny). Bez tego
-        // migrate pada "unable to open database file" jako node.
         steps.push({
-            name: 'Przygotowanie katalogu danych (ownership)',
-            cmd: 'bash scripts/docker-prepare-data.sh'
+            name: 'Walidacja konfiguracji Docker PostgreSQL',
+            cmd: 'bash scripts/docker-preflight.sh'
+        });
+        steps.push({ name: 'Budowa obrazu aplikacji', cmd: 'docker compose build app' });
+        steps.push({
+            name: 'Bootstrap PostgreSQL (jednorazowy)',
+            cmd: 'docker compose run --rm db-bootstrap'
         });
     }
     steps.push(

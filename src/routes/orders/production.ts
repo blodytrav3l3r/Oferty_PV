@@ -17,7 +17,11 @@ import { z } from 'zod';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
-import { mapProductionOrderRow } from '../../utils/productionSearchUtils';
+import {
+    jsonTextSql,
+    mapProductionOrderRow,
+    normalizedDateTimeSql
+} from '../../utils/productionSearchUtils';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { assertDocLockForWrite } from '../../utils/docLocks';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
@@ -59,9 +63,9 @@ async function recycleProductionNumber(
     const fullYear = 2000 + yearShort;
     if (seqNumber > 0) {
         await db.$executeRaw`
-            INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
+            INSERT INTO "recycled_production_numbers" ("userId", "year", "seqNumber")
             VALUES (${userId}, ${fullYear}, ${seqNumber})
-            ON CONFLICT ("userId", year, seqNumber) DO NOTHING
+            ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING
         `;
     }
 }
@@ -93,9 +97,9 @@ async function recycleProductionNumbersBulk(
     if (entries.length === 0) return;
     const rows = entries.map((e) => Prisma.sql`(${e.userId}, ${e.year}, ${e.seq})`);
     await db.$executeRaw`
-        INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
+        INSERT INTO "recycled_production_numbers" ("userId", "year", "seqNumber")
         VALUES ${Prisma.join(rows)}
-        ON CONFLICT ("userId", year, seqNumber) DO NOTHING
+        ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING
     `;
 }
 
@@ -159,15 +163,11 @@ router.get('/', requireAuth, async (req, res) => {
                 dbSalesOrderId: string | null;
             }>
         >`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel."elementKey", production_orders_rel.data, production_orders_rel.version,
-            CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE production_orders_rel."createdAt" END as "createdAt",
-            CASE WHEN production_orders_rel."updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST(production_orders_rel."updatedAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE production_orders_rel."updatedAt" END as "updatedAt",
+            ${normalizedDateTimeSql(Prisma.sql`production_orders_rel."createdAt"`)} as "createdAt",
+            ${normalizedDateTimeSql(Prisma.sql`production_orders_rel."updatedAt"`)} as "updatedAt",
             u1."firstName" as handlerFirstName, u1."lastName" as handlerLastName, u1.username as handlerUsername,
             u2."firstName" as creatorFirstName, u2."lastName" as creatorLastName, u2.username as creatorUsername,
-            json_extract(o.data, '$.orderNumber') as "dbSalesOrderNumber",
+            ${jsonTextSql(Prisma.sql`o.data`, 'orderNumber')} as "dbSalesOrderNumber",
             o.id as "dbSalesOrderId"
          FROM production_orders_rel 
          LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
@@ -187,7 +187,7 @@ router.get('/', requireAuth, async (req, res) => {
 
 /**
  * Lekki indeks PZ (Faza 1 PZ): tylko kolumny + status/numer/offerId przez
- * json_extract — bez ciężkiej kolumny `data`. KB zamiast MB przy dużej tabeli.
+ * PostgreSQL JSON operators read only selected columns, without returning full `data`.
  * MUSI być przed `/:id` (inaczej "index" wpadnie w param).
  */
 router.get('/index', requireAuth, async (req, res) => {
@@ -217,9 +217,9 @@ router.get('/index', requireAuth, async (req, res) => {
             production_orders_rel."orderId", production_orders_rel."wellId",
             production_orders_rel."elementIndex", production_orders_rel."elementKey",
             production_orders_rel."createdAt", production_orders_rel."updatedAt",
-            json_extract(production_orders_rel.data, '$.status') as "status",
-            json_extract(production_orders_rel.data, '$.productionOrderNumber') as "productionOrderNumber",
-            json_extract(production_orders_rel.data, '$.offerId') as "offerId"
+            ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status')} as "status",
+            ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'productionOrderNumber')} as "productionOrderNumber",
+            ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'offerId')} as "offerId"
          FROM production_orders_rel
          ${whereCondition}`;
 

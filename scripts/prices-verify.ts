@@ -117,15 +117,17 @@ async function checkActive(strict: boolean): Promise<string[]> {
 }
 
 /**
- * Baza bez wdrożonego schematu (zero tabel) to SKIP, nie awaria.
+ * Baza PostgreSQL bez wdrożonego schematu (zero tabel aplikacji) to SKIP, nie awaria.
  * Brak pojedynczej tabeli w bazie z danymi to dryf schematu — twardy błąd,
  * inaczej `validate` przechodzi przy niedostępnej lub rozjechanej bazie.
  */
 async function isUninitializedDb(err: unknown): Promise<boolean> {
     if ((err as { code?: unknown })?.code !== 'P2021') return false;
-    const rows = await prisma.$queryRawUnsafe<Array<{ c: bigint | number }>>(
-        "SELECT count(*) AS c FROM sqlite_master WHERE type = 'table'"
-    );
+    const rows = await prisma.$queryRaw<Array<{ c: bigint | number }>>`
+        SELECT count(*) AS c
+        FROM information_schema.tables
+        WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'
+    `;
     return Number(rows[0]?.c ?? 0) === 0;
 }
 

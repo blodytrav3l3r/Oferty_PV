@@ -11,7 +11,7 @@ Bezpieczne, odwracalne zmiany schematu bazy w systemach produkcyjnych.
 
 > S.O.K.: Prisma + SQLite. Sposob synchronizacji schematu zalezy od historii bazy:
 >
-> - **Baza utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`): `npx prisma db push --skip-generate --accept-data-loss`
+> - **Baza utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`): `npx prisma db push --accept-data-loss`
 > - **Baza z historia migracji**: `npx prisma migrate deploy`
 > - Jak sprawdzic: `npx prisma migrate status`
 

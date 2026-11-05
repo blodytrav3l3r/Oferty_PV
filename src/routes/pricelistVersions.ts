@@ -732,7 +732,8 @@ router.get('/:id/rows', requireAuth, READ_LIMITER, async (req, res) => {
         return;
     }
     try {
-        const { version, sheets, precoIncluded } = await getVersionExportSheets(id);
+        const { version, sheets, precoIncluded, precoSource, precoVersion } =
+            await getVersionExportSheets(id);
         const effectiveFrom = version.effectiveFrom
             ? new Date(version.effectiveFrom).getTime()
             : NaN;
@@ -758,7 +759,9 @@ router.get('/:id/rows', requireAuth, READ_LIMITER, async (req, res) => {
                 status: version.status
             },
             sheets,
-            precoIncluded
+            precoIncluded,
+            precoSource,
+            precoVersion
         });
     } catch (err) {
         sendVersionError(res, err);
@@ -774,7 +777,13 @@ router.get('/:id/export', requireAuth, requireAdmin, READ_LIMITER, async (req, r
             sendInvalidId(res);
             return;
         }
-        const { version, sheets: live, precoIncluded } = await getVersionExportSheets(id);
+        const {
+            version,
+            sheets: live,
+            precoIncluded,
+            precoSource,
+            precoVersion
+        } = await getVersionExportSheets(id);
         if (!isKnownType(version.type)) {
             res.status(422).json({ error: 'Wersja ma nieznany typ', code: 'INVALID_TYPE' });
             return;
@@ -782,6 +791,7 @@ router.get('/:id/export', requireAuth, requireAdmin, READ_LIMITER, async (req, r
         // Flaga dla UI: studnie bez PRECO same-seq eksportują same studnie (ciche
         // pominięcie zamienione na toast po stronie FE).
         res.setHeader('X-Preco-Included', precoIncluded ? '1' : '0');
+        res.setHeader('X-Preco-Source', precoSource);
         const sheets: XlsxSheet[] = Object.entries(live).map(([name, rows]) => {
             const headers = rows.length > 0 ? Object.keys(rows[0]) : ['id'];
             return {
@@ -793,7 +803,13 @@ router.get('/:id/export', requireAuth, requireAdmin, READ_LIMITER, async (req, r
         const xlsx = await buildXlsx([
             ...(sheets.length > 0 ? sheets : [{ name: 'Cennik', headers: ['id'], rows: [] }]),
             // Numer wersji także w pliku (importer pomija arkusze techniczne `_*`).
-            cennikMetaSheet(TYPE_LABEL[version.type] || version.type, version.version)
+            cennikMetaSheet(
+                TYPE_LABEL[version.type] || version.type,
+                version.version,
+                precoSource === 'ACTIVE_FALLBACK' && precoVersion
+                    ? { version: precoVersion.version, seq: precoVersion.seq }
+                    : null
+            )
         ]);
         res.setHeader(
             'Content-Type',

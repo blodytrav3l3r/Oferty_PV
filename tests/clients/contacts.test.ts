@@ -7,7 +7,6 @@ import { ensureClientContactsTable } from '../../src/initDatabase';
 import { createIsolatedProject } from '../migrations/helpers';
 import fs from 'node:fs';
 import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
 
 const mockUser: any = { id: 'user-id', role: 'user', subUsers: [] };
 
@@ -471,15 +470,15 @@ describe('Katalog kontaktów — cascade przy usuwaniu klienta', () => {
     });
 });
 
-describe('Katalog kontaktów — auto-heal legacy-DB', () => {
-    it('tworzy tabelę + backfill tylko niepustych (isPrimary=1)', async () => {
+describe('Katalog kontaktów — backfill zgodnościowy danych legacy', () => {
+    it('backfill tylko niepustych (isPrimary=1)', async () => {
         const m = mockPrisma();
-        m.$queryRaw.mockResolvedValue([
+        m.clients_rel.findMany.mockResolvedValue([
             { id: 'c-full', userId: 'u-1', contact: 'Jan', phone: '600', email: '' },
             { id: 'c-empty', userId: 'u-1', contact: '', phone: null, email: null }
         ]);
+        m.client_contacts_rel.findMany.mockResolvedValue([]);
         await ensureClientContactsTable();
-        expect(m.$executeRaw).toHaveBeenCalledTimes(2);
         expect(m.client_contacts_rel.createMany).toHaveBeenCalledTimes(1);
         const rows = m.client_contacts_rel.createMany.mock.calls[0][0].data;
         expect(rows).toHaveLength(1);
@@ -493,15 +492,15 @@ describe('Katalog kontaktów — auto-heal legacy-DB', () => {
         expect(typeof rows[0].id).toBe('string');
     });
 
-    it('błąd DDL nie wywala startu (warn-only)', async () => {
+    it('błąd odczytu nie wywala startu (warn-only)', async () => {
         const m = mockPrisma();
-        m.$executeRaw.mockRejectedValueOnce(new Error('locked'));
+        m.clients_rel.findMany.mockRejectedValueOnce(new Error('unavailable'));
         await expect(ensureClientContactsTable()).resolves.toBeUndefined();
     });
 
     it('re-split naprawia verbatim sprzed fixa (pusty phone, telefon w name)', async () => {
         const m = mockPrisma();
-        m.$queryRaw.mockResolvedValue([]);
+        m.clients_rel.findMany.mockResolvedValue([]);
         m.client_contacts_rel.findMany.mockResolvedValue([
             { id: 'r1', name: 'Jan Kowalski, 600 100 200' },
             { id: 'r2', name: 'Anna' },
@@ -517,7 +516,7 @@ describe('Katalog kontaktów — auto-heal legacy-DB', () => {
 
     it('backfill rozcina łączony mirror "Jan, 600" na name/phone', async () => {
         const m = mockPrisma();
-        m.$queryRaw.mockResolvedValue([
+        m.clients_rel.findMany.mockResolvedValue([
             {
                 id: 'c-merged',
                 userId: 'u-1',
@@ -527,6 +526,7 @@ describe('Katalog kontaktów — auto-heal legacy-DB', () => {
             },
             { id: 'c-plain', userId: 'u-1', contact: 'FHU Kowalski, import', phone: '', email: '' }
         ]);
+        m.client_contacts_rel.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
         await ensureClientContactsTable();
         const rows = m.client_contacts_rel.createMany.mock.calls[0][0].data;
         expect(rows).toHaveLength(2);
@@ -543,23 +543,23 @@ describe('Katalog kontaktów — auto-heal legacy-DB', () => {
 
 describe('Katalog kontaktów — migracja (realna persystencja)', () => {
     it('deploy tworzy tabelę z kolumnami i indeksem', () => {
-        const dir = path.join(__dirname, '..', '..', 'prisma', 'migrations');
+        const dir = path.join(__dirname, '..', '..', 'prisma', 'migrations-postgresql');
         const names = fs
             .readdirSync(dir, { withFileTypes: true })
             .filter((d) => d.isDirectory())
             .map((d) => d.name)
             .filter((n) => fs.existsSync(path.join(dir, n, 'migration.sql')))
             .sort();
-        expect(names).toContain('20261009000001_client_contacts');
         const project = createIsolatedProject('client-contacts', names);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);
-            expect(out).toContain('All migrations have been successfully applied');
-            const db = new DatabaseSync(project.dbPath);
-            const cols = db
-                .prepare(`SELECT name FROM pragma_table_info('client_contacts_rel') ORDER BY cid`)
-                .all() as Array<{ name: string }>;
-            expect(cols.map((c) => c.name)).toEqual([
+            expect(out).toMatch(/successfully applied|no pending migrations/i);
+            const cols = project.query<{ column_name: string }>(
+                `SELECT column_name FROM information_schema.columns
+                 WHERE table_schema = current_schema() AND table_name = 'client_contacts_rel'
+                 ORDER BY ordinal_position`
+            );
+            expect(cols.map((column) => column.column_name)).toEqual([
                 'id',
                 'clientId',
                 'name',
@@ -571,11 +571,11 @@ describe('Katalog kontaktów — migracja (realna persystencja)', () => {
                 'createdAt',
                 'updatedAt'
             ]);
-            const idx = db
-                .prepare(`SELECT name FROM pragma_index_list('client_contacts_rel') ORDER BY name`)
-                .all() as Array<{ name: string }>;
-            expect(idx.map((i) => i.name)).toContain('idx_client_contacts_client');
-            db.close();
+            const indexes = project.query<{ indexname: string }>(
+                `SELECT indexname FROM pg_indexes
+                 WHERE schemaname = current_schema() AND tablename = 'client_contacts_rel'`
+            );
+            expect(indexes.map((index) => index.indexname)).toContain('idx_client_contacts_client');
         } finally {
             project.cleanup();
         }

@@ -3,7 +3,7 @@
  *
  * Read-only + runtime contract: FAIL dowodzi luki, PASS blokuje regresję.
  * Auth mockowane nagłówkami (x-test-anon / x-user-id / x-user-role),
- * DB mockowana — testy dowodzą kontraktu HTTP, nie integracji z SQLite.
+ * DB mockowana — testy dowodzą kontraktu HTTP, nie integracji z bazą.
  * Rate limiting i CSP weryfikowane statycznie (okablowanie bez zmian
  * zachowania) + istniejące tests/security/{headers,rateLimit,csrf}.test.ts.
  */
@@ -489,6 +489,7 @@ describe('E5.5 gate: role i ownership', () => {
 
     it('clients PUT: user nie przepisuje właściciela istniejącego wiersza', async () => {
         const txMock = {
+            $executeRaw: jest.fn().mockResolvedValue(1),
             $queryRaw: jest.fn((parts: TemplateStringsArray) =>
                 String(parts.join('')).includes('SELECT')
                     ? Promise.resolve([{ id: 'c-own', userId: 'owner-db' }])
@@ -505,8 +506,8 @@ describe('E5.5 gate: role i ownership', () => {
             .set(user)
             .send({ data: [{ id: 'c-own', name: 'Cudzy' }] });
         expect(res.status).toBe(200);
-        // Batch: owner z DB ląduje w parametrach jednego bulk UPSERT ($queryRawUnsafe).
-        const seen = JSON.stringify(txMock.$queryRawUnsafe.mock.calls);
+        // Batch: owner z DB ląduje w parametrach jednego bulk UPSERT ($executeRaw).
+        const seen = JSON.stringify(txMock.$executeRaw.mock.calls);
         expect(seen).toContain('owner-db');
         expectNoLeak(res.body);
     });

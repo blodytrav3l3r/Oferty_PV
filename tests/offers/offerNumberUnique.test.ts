@@ -2,7 +2,7 @@ import prisma from '../../src/prismaClient';
 
 /**
  * I-004: numer oferty unikalny globalnie per tabela; NULL = brak numeru
- * (SQLite UNIQUE dopuszcza wiele NULL).
+ * (PostgreSQL UNIQUE dopuszcza wiele NULL).
  */
 const PREFIX = 't-unq-offer-';
 

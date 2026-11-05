@@ -60,7 +60,7 @@ export function buildLatestCte(fuScope: Prisma.Sql): Prisma.Sql {
         SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice", f."createdByUserId"
         FROM (
             SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice", f."createdByUserId",
-                ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
+                ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC NULLS LAST, f."createdAt" DESC NULLS LAST, f."id" DESC) AS "rn"
             FROM offer_follow_ups f
             WHERE ${fuScope}
         ) f WHERE f."rn" = 1
@@ -133,17 +133,35 @@ const statsQuerySchema = z
         message: 'Zakres dat: maksymalnie 366 dni'
     });
 
+type DataAlias = 'o' | 's';
+type DataJsonPath = 'totalBrutto' | 'summary,totalBrutto';
+
+function dataJson(alias: DataAlias): Prisma.Sql {
+    return Prisma.raw(`${alias}."data"::jsonb`);
+}
+
+function dataNumber(alias: DataAlias, path: DataJsonPath): Prisma.Sql {
+    const value = Prisma.sql`${dataJson(alias)} #>> ${Prisma.raw(`'{${path}}'`)}`;
+    return Prisma.sql`CASE WHEN ${value} ~ '^[+-]?[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?$' THEN (${value})::double precision END`;
+}
+
 /** Rury: tylko blob.totalBrutto (brak kolumny ceny — jak search). */
-function ruryValueSql(alias: string): Prisma.Sql {
-    const d = Prisma.raw(`${alias}."data"`);
-    return Prisma.sql`CAST(json_extract(${d}, '$.totalBrutto') AS REAL)`;
+function ruryValueSql(alias: DataAlias): Prisma.Sql {
+    return dataNumber(alias, 'totalBrutto');
 }
 
 /** Studnie: ten sam guard co kolejka opieki (kolumna > blob > wellsExport). */
-function studnieValueSql(alias: string): Prisma.Sql {
-    const t = Prisma.raw(`${alias}."totalPrice"`);
-    const d = Prisma.raw(`${alias}."data"`);
-    return Prisma.sql`CAST(COALESCE(NULLIF(${t}, 0), json_extract(${d}, '$.totalBrutto'), (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL) FROM json_each(${d}, '$.wellsExport'))) AS REAL)`;
+function studnieValueSql(alias: DataAlias): Prisma.Sql {
+    const d = dataJson(alias);
+    const wellsTotal = Prisma.sql`(
+        SELECT ROUND(COALESCE(SUM(CASE
+            WHEN well.value->>'totalPrice' ~ '^[+-]?[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?$'
+            THEN (well.value->>'totalPrice')::numeric END), 0), 2)::double precision
+        FROM jsonb_array_elements(CASE WHEN jsonb_typeof(${d}->'wellsExport') = 'array'
+            THEN ${d}->'wellsExport' ELSE '[]'::jsonb END) AS well(value)
+    )`;
+    const column = Prisma.raw(`${alias}."totalPrice"`);
+    return Prisma.sql`COALESCE(NULLIF(${column}, 0)::double precision, ${dataNumber(alias, 'totalBrutto')}, ${wellsTotal})`;
 }
 
 /** Zakres po dacie utworzenia oferty (born). Zawsze przez normalizedCreatedAtSql
@@ -308,7 +326,7 @@ router.get('/followups/stats', requireAuth, READ_LIMITER, async (req, res) => {
             // Średni czas do pierwszego kontaktu (globalnie): pierwszy kontakt
             // oferty vs data utworzenia oferty (ISO lub epoch-ms — reuse normalizacji).
             prisma.$queryRaw(
-                Prisma.sql`SELECT AVG((julianday("first_c") - julianday("oc")) * 24) AS "h" FROM (
+                Prisma.sql`SELECT AVG(EXTRACT(EPOCH FROM ("first_c"::timestamptz - "oc")) / 3600.0) AS "h" FROM (
                     SELECT (SELECT MIN(f2."contactedAt") FROM offer_follow_ups f2
                             WHERE f2."offerKind" = 'rury' AND f2."offerId" = o."id") AS "first_c",
                         ${normalizedCreatedAtSql('o."createdAt"')} AS "oc"
@@ -321,10 +339,10 @@ router.get('/followups/stats', requireAuth, READ_LIMITER, async (req, res) => {
                 ) WHERE "first_c" IS NOT NULL AND "oc" IS NOT NULL`
             ),
             prisma.$queryRaw(
-                Prisma.sql`SELECT SUM(CAST(COALESCE(json_extract(o."data", '$.totalBrutto'), json_extract(o."data", '$.summary.totalBrutto')) AS REAL)) AS "ovr" FROM orders_rury_rel o WHERE ${orderScopeRury}${andBornRury}`
+                Prisma.sql`SELECT SUM(COALESCE(${dataNumber('o', 'totalBrutto')}, ${dataNumber('o', 'summary,totalBrutto')})) AS "ovr" FROM orders_rury_rel o WHERE ${orderScopeRury}${andBornRury}`
             ),
             prisma.$queryRaw(
-                Prisma.sql`SELECT SUM(CAST(COALESCE(json_extract(s."data", '$.totalBrutto'), json_extract(s."data", '$.summary.totalBrutto')) AS REAL)) AS "ovs" FROM orders_studnie_rel s WHERE ${orderScopeStudnie}${andBornStudnie}`
+                Prisma.sql`SELECT SUM(COALESCE(${dataNumber('s', 'totalBrutto')}, ${dataNumber('s', 'summary,totalBrutto')})) AS "ovs" FROM orders_studnie_rel s WHERE ${orderScopeStudnie}${andBornStudnie}`
             )
         ])) as [
             Array<{ outcome: string; c: number | bigint }>,

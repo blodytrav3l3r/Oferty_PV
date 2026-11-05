@@ -6,7 +6,7 @@ import prisma from '../src/prismaClient';
 // N+1 w PUT /api/clients (sprzed batcha):
 //   1x SELECT + 2x NULL-uj (gdy są delety) + D x DELETE + U x upsert.
 // Po batchu: 1x SELECT + 2x NULL-uj + 1x deleteMany + 1x multi-row UPSERT,
-// czyli stałe ≤5 roundtripów niezależnie od D i U.
+// czyli stałe ≤6 roundtripów niezależnie od D i U.
 const mockUser: any = { id: 'admin-1', role: 'admin', subUsers: [] };
 
 jest.mock('../src/middleware/auth', () => ({
@@ -115,7 +115,7 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
         expect(txMock.client_contacts_rel.deleteMany).toHaveBeenCalledWith({
             where: { clientId: { in: existing.slice(50).map((c) => c.id) } }
         });
-        expect(txMock.$queryRawUnsafe).toHaveBeenCalledTimes(1);
+        expect(txMock.$executeRaw).toHaveBeenCalledTimes(1);
         expect(roundtrips(txMock)).toBe(6);
     });
 
@@ -138,7 +138,7 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
         expect(res.body).toMatchObject({ ok: true, count: 20 });
         expect(typeof res.body.updatedAt).toBe('string');
         expect(txMock.$queryRaw).toHaveBeenCalledTimes(1);
-        expect(txMock.$queryRawUnsafe).toHaveBeenCalledTimes(1);
+        expect(txMock.$executeRaw).toHaveBeenCalledTimes(1);
         expect(txMock.offers_rel.updateMany).not.toHaveBeenCalled();
         expect(txMock.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
         expect(txMock.clients_rel.deleteMany).not.toHaveBeenCalled();
@@ -160,11 +160,11 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
             .put('/api/clients')
             .send({ data: existing.map((c) => ({ id: c.id, name: `K ${c.id}` })) });
 
-        const [sql, ...params] = txMock.$queryRawUnsafe.mock.calls[0];
-        expect(sql).toMatch(/ON CONFLICT\(id\) DO UPDATE/);
-        expect(sql).toMatch(/excluded\.userId/);
-        // 50 wierszy x 11 kolumn = 550 parametrów, 50 krotek VALUES.
-        expect(params).toHaveLength(550);
-        expect((sql.match(/\(\?,\?,\?,\?,\?,\?,\?,\?,\?,\?,\?\)/g) || []).length).toBe(50);
+        const [query] = txMock.$executeRaw.mock.calls[0];
+        expect(query.text).toMatch(/ON CONFLICT \("id"\) DO UPDATE/);
+        expect(query.text).toMatch(/EXCLUDED\."userId"/);
+        expect(query.text).toMatch(/\$550/);
+        expect(query.values).toHaveLength(550);
+        expect((query.text.match(/\(\s*\$\d+,\s*\$\d+,\s*\$\d+/g) || []).length).toBe(50);
     });
 });

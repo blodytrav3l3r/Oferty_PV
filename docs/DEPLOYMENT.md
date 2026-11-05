@@ -1,590 +1,135 @@
-# Wdrożenie — S.O.K. — System Ofert i Kalkulacji
-
-**Wersja:** 1.56.3  
-**Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
-**Ostatnia aktualizacja:** 2026-08-24
-
-> **Aktualizacje produkcyjne** (backup, migracje addytywne, rollback) opisuje [DEPLOY_UPDATE.md](DEPLOY_UPDATE.md).
-
----
-
-## 1. Zmienne środowiskowe
-
-Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platformie).
-
-| Zmienna                  | Opis                                               | Wymagane | Przykład                                |
-| ------------------------ | -------------------------------------------------- | -------- | --------------------------------------- |
-| `PORT`                   | Port serwera                                       | Nie      | `10000`                                 |
-| `HOST`                   | Adres nasłuchiwania                                | Nie      | `0.0.0.0`                               |
-| `NODE_ENV`               | Środowisko: `development` / `production`           | Nie      | `production`                            |
-| `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (tylko pierwsze uruchomienie) | **Tak**  | `bezpieczne-haslo-123`                  |
-| `DATABASE_URL`           | Ścieżka do bazy SQLite                             | Nie      | `file:../data/app_database.sqlite`      |
-| `SENTRY_DSN`             | DSN Sentry do monitorowania błędów                 | Nie      | `https://...@o....ingest.sentry.io/...` |
-| `COOKIE_SECURE`          | Wymuszenie `Secure` flagi na ciastku sesji         | Nie*     | `true`                                  |
-| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (1 lub 2)     | Nie      | `1`                                     |
-| `PUBLIC_BASE_URL`        | Publiczny origin do przekierowania HTTP→HTTPS      | Nie      | `https://oferty.example.pl`             |
-
-> \* `COOKIE_SECURE=true` jest wymagane, gdy aplikacja jest serwowana przez HTTPS
-> w trybie innym niż `production` (w `production` flaga jest wymuszana automatycznie).
-
----
-
-## 2. Wdrożenie lokalne (Windows/Linux)
-
-### Wymagania
-
-- Node.js >= 22.13 (rekomendowane LTS 22.x / 24.x)
-- npm
-
-### Instalacja
-
-```bash
-git clone https://github.com/blodytrav3l3r/Oferty_PV.git
-cd Oferty_PV
-npm ci
-cp .env.example .env
-# edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD
-npx prisma generate
-npx prisma migrate deploy
-# (baza legacy utworzona przez db push, bez _prisma_migrations:
-#  npx prisma db push --skip-generate --accept-data-loss)
-npm run prisma:seed
-npm run build
-# Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
-mkdir -p dist/generated && cp -r generated/prisma dist/generated/
-```
-
-### Uruchomienie
-
-```bash
-npm start
-```
-
-Serwer dostępny pod adresem: `http://localhost:3000`
-
-> `database is locked` przy starcie = martwa instancja serwera trzyma DB.
-> `start.bat` / `prod.sh` / `dev.sh` wykrywają takie procesy przed migracją
-> i pytają o zatrzymanie (domyślnie NIE). W CI/headless: zamknij stare
-> procesy ręcznie (`kill PID`) albo ustaw `SOK_KILL_STALE=1` (tylko Linux).
-
-### Skrypty startowe
-
-Projekt zawiera wygodne skrypty startowe:
-
-- **Windows:** `start.bat` — uruchamia serwer w oknie konsoli
-- **Instalator:** `install.bat` — automatyzuje `npm ci`, `prisma generate`, seed i build
-
----
-
-## 3. Docker
-
-### Dockerfile
-
-Plik `Dockerfile` buduje obraz na bazie `node:22-slim`. Wykonuje:
-
-1. Instalację OpenSSL (wymagany przez Prisma) + biblioteki systemowe Chromium dla Puppeteer (generowanie PDF: libnss3, libatk*, libcups2, libdrm2, libgbm1, libasound2, libpango, libcairo, fonts-liberation)
-2. `npm ci` (wszystkie zależności — bez `npm prune --production`; devDeps są potrzebne w runtime do seedowania i `migrate deploy`)
-3. `npx prisma generate` (generacja klienta, `DATABASE_URL=file:/var/data/...`)
-4. `npm run build` (kompilacja TypeScript, zawiera `copy-prisma-client.mjs`)
-5. Symlink `dist/generated` → `generated` (klient Prisma; `rm -rf` przed `ln -sf`, bo build już kopiuje)
-6. Konfigurację katalogu `/var/data` dla bazy danych
-7. `ENV NODE_ENV=production PORT=10000 HOST=0.0.0.0 COOKIE_SECURE=true` (secure cookie za reverse proxy)
-8. `EXPOSE 10000` (mapowane na 3000 hosta: `3000:10000`)
-9. `ENTRYPOINT scripts/docker-entrypoint.sh` (naprawa CRLF + chmod, `migrate deploy` + seed przy starcie)
-
-### docker-compose.yml
-
-```yaml
-version: '3.8'
-services:
-    app:
-        build: .
-        container_name: sok-oferty
-        restart: unless-stopped
-        ports:
-            - '3000:10000'
-        environment:
-            - NODE_ENV=production
-            - PORT=10000
-            - HOST=0.0.0.0
-        volumes:
-            - ./data:/var/data
-        healthcheck:
-            test:
-                [
-                    'CMD',
-                    'node',
-                    '-e',
-                    "require('http').get('http://localhost:10000/health/ready', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-                ]
-            interval: 30s
-            timeout: 10s
-            retries: 3
-            start_period: 30s
-
-networks:
-    sok-network:
-        driver: bridge
-```
-
-> **Bind mount zamiast named volume:** serwis używa `./data:/var/data` — baza i backupy
-> są widoczne na hoście, więc backup/restore działają identycznie jak na bare-metal
-> (`npm run backup` / `npm run restore` wprost na hoście). Zakaz `docker compose down -v`.
-> Aktualne nazwy: kontener `sok-oferty`, sieć `sok-network` (patrz `docker-compose.yml`).
-> Nazwy `witros_data` / `witros-network` w sekcji migracji poniżej to nazwy historyczne
-> (legacy) — dotyczą tylko instalacji sprzed migracji na bind mount.
-
-### Uruchomienie
-
-> **Prerequisite (P0.3-B):** kontener działa jako `USER node`, a `chown`
-> z Dockerfile jest pod bind mountem nieskuteczny. Przed pierwszym startem
-> (i po każdym klonowaniu bez `./data`) przygotuj katalog hosta:
->
-> ```bash
-> sudo bash scripts/docker-prepare-data.sh
-> docker compose up --build -d
-> ```
->
-> Skrypt wykrywa UID/GID `node` z budowanego obrazu i ustawia ownership
-> wyłącznie na `./data` + `app_database.sqlite*` (bez `chown -R`: seedy
-> i `backups/*` zostają przy dotychczasowym właścicielu). Podgląd bez zmian:
-> `bash scripts/docker-prepare-data.sh --dry-run`. Deploy dockerowy wykonuje
-> ten krok automatycznie (`node scripts/deploy.mjs docker vX.Y.Z`).
->
-> **Backup a ownership:** backup/restore działają na hoście jako użytkownik
-> hosta (`npm run backup`, cron). Gdy host-UID różni się od UID kontenera,
-> użytkownik crona musi mieć zapis do `./data/backups/` (ten sam UID albo
-> członkostwo w grupie GID kontenera) — inaczej backup padnie mimo działającej
-> aplikacji. Nowo utworzony `backups/` skrypt przypisuje wywołującemu.
-
-Aplikacja dostępna pod: `http://localhost:3000`
-
-### Migracja wolumenu `witros_data` → katalog `data` (bind mount)
-
-> **KRYTYCZNE:** wolumen zawiera bazę SQLite. Zmiana lokalizacji bez migracji = nowy
-> PUSTY katalog = seed pustej bazy (pozorowana utrata danych). Postępuj ściśle wg
-> poniższych kroków — NIGDY nie używaj `docker compose down -v` przy tej operacji.
-
-1. Pre-check: `docker compose ps` (aplikacja działa), `git status` czyste,
-   `docker network inspect witros-network` — jeśli na sieci są OBCE kontenery
-   (zewnętrzny proxy), NIE zmieniaj nazwy sieci (wróć do `witros-network`).
-2. Czysty shutdown (SQLite WAL → checkpoint do `app_database.sqlite`):
-   `docker compose down` (bez `-v`).
-3. Utwórz katalog bind mount: `mkdir data`.
-4. Skopiuj dane:
-   `docker run --rm -v witros_data:/from -v "<absolutna_sciezka>/data":/to alpine:3.20 sh -c "cp -a /from/. /to/"`
-5. **Weryfikacja kopii (obowiązkowo):**
-    ```
-    docker run --rm -v witros_data:/from alpine:3.20 sh -c "sha256sum /from/app_database.sqlite"
-    docker run --rm -v <absolutna_sciezka>/data:/to alpine:3.20 sh -c "sha256sum /to/app_database.sqlite"
-    ```
-    → identyczne sumy; `ls -la data/` zawiera `app_database.sqlite` (+ `-wal`/`-shm`).
-6. Zaktualizuj pliki (docker-compose.yml / docs) i uruchom:
-   `docker compose up -d --build`.
-7. Weryfikacja: `docker ps` (kontener `sok-oferty` healthy), `curl localhost:3000/health/ready`
-   → 200, logowanie → istniejące oferty/zamówienia widoczne.
-8. **Retencja:** NIE usuwaj `witros_data` przez minimum 2 cykle release.
-   Usunięcie tylko po potwierdzeniu stabilności:
-   `docker volume rm witros_data`.
-
-### Health check
-
-Docker ma wbudowany HEALTHCHECK (w `Dockerfile`, `start-period: 15s`):
-
-```
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:10000/health/ready', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-```
-
-Uwaga: `docker-compose.yml` używa `start_period: 30s` w sekcji `healthcheck` — dłuższy okres startu pod compose niż wbudowany w obraz.
-
-### Diagnostyka PDF w kontenerze
-
-Generowanie PDF wymaga Chromium Puppeteera. Obraz ustawia `PUPPETEER_CACHE_DIR=/app/.cache/puppeteer`, żeby binarka pobrana przez `npm ci` (jako root w buildzie) była widoczna dla runtime'owego `USER node`, a compose dokłada `shm_size: 512m` (domyślne 64 MB wywala duże dokumenty, np. ofertę łączną).
-
-Po starcie sprawdź:
-
-```
-curl localhost:3000/health/pdf            # 200 {status:"ok"} = Chromium gotowy (publiczny, minimalny)
-# smoke wymaga sesji admina (cookie authToken), anonimowo 401:
-curl -b authToken=<sesja-admina> "localhost:3000/health/pdf?smoke=1"    # 200 + smoke.ok = próbny render działa
-```
-
-`503 {status: "degraded"}` = binarka niewidoczna (sprawdź `PUPPETEER_CACHE_DIR`, `HOME`, `docker exec` → `ls ~/.cache/puppeteer`). Deploy dockerowy (`node scripts/deploy.mjs docker vX.Y.Z`) wykonuje te kontrole automatycznie jako krok `deploy:check:pdf` (`npm run deploy:check:pdf` loguje się jako admin; bez hasła w env smoke jest SKIPPED) — nieudany smoke przerywa deploy.
-
-### Pamięć kontenera (C3 — protokół pomiaru, limit PENDING staging)
-
-`mem_limit` celowo NIE ustawiony: na dev-maszynie brak Dockera, a RSS noda
-(~200–230 MB we wszystkich load-100) nie liczy procesów potomnych Chromium
-(sonda: 2× równoległy PDF, RSS 226 → 226 MB — dzieci poza RSS noda).
-Arbitralny limit zabiłby PDF albo nic nie wniósł.
-
-Szacunek z pomiarów (do potwierdzenia na stagingu):
-`~230 MB (node) + 2 × ~350 MB (Chromium, concurrency=2) + 512 MB (shm)` ≈ **1,5 GB peak**.
-
-Drill na stagingu przed ustawieniem `mem_limit`:
-
-1. `docker compose up -d --build`, odczekaj healthy (`/health/ready`).
-2. W tle: `docker stats --no-stream --format '{{.MemUsage}}' sok-oferty` co 10 s.
-3. `node scripts/load-100.mjs --users 100` + równolegle 2× eksport PDF dużej oferty.
-4. Zanotuj peak; `mem_limit = peak × 1,5`, `mem_reservation = peak`.
-5. Restart: `docker restart sok-oferty` → healthy w `start_period` 30 s.
-6. Powtórz load — brak OOM-kill (`docker inspect -f '{{.State.OOMKilled}}'`).
-
-## 4. VPS (Linux)
-
-> **HTTPS jest wymagane w produkcji.** Bez reverse proxy z TLS funkcje przeglądarki
-> (clipboard, `window.open()` itp.) mogą być blokowane na HTTP. Zobacz
-> [ADR-006](adr/ADR-006-https-transport.md) i konfigurację w `Caddyfile`.
-
-### Wymagania
-
-- Node.js >= 22.13 (rekomendowane LTS 22.x / 24.x)
-- PM2 (opcjonalnie, do zarządzania procesem)
-- Reverse proxy: Caddy (rekomendowany) lub Nginx
-
-### Instalacja
-
-```bash
-# 1. Aktualizacja systemu
-sudo apt update && sudo apt upgrade -y
-
-# 2. Instalacja Node.js 22.x (LTS, >= 22.13)
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# 3. Klonowanie repozytorium
-git clone https://github.com/blodytrav3l3r/Oferty_PV.git
-cd Oferty_PV
-
-# 4. Instalacja zależności
-npm ci
-
-# 5. Konfiguracja
-cp .env.example .env
-nano .env  # ustaw DEFAULT_ADMIN_PASSWORD, PORT, COOKIE_SECURE=true
-
-# 6. Przygotowanie bazy
-npx prisma generate
-npx prisma migrate deploy
-# (baza legacy utworzona przez db push, bez _prisma_migrations:
-#  npx prisma db push --skip-generate --accept-data-loss)
-npm run prisma:seed
-
-# 7. Budowa
-npm run build
-# Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
-mkdir -p dist/generated && cp -r generated/prisma dist/generated/
-
-# 8. Uruchomienie przez PM2 (konfig kanoniczny z limitami/autorestartem)
-pm2 start ecosystem.config.cjs
-pm2 save
-pm2 startup
-```
-
-> Ręczny `pm2 start dist/server.js` omija limity (`ecosystem.config.cjs`).
-> Aktualizacje tylko przez `node scripts/deploy.mjs linux vX.Y.Z`
-> (backup → migrate → build → health), szczegóły: `docs/DEPLOY_UPDATE.md`.
-
-> W produkcji serwer binduje się domyślnie do `127.0.0.1` — nie jest dostępny z sieci
-> bezpośrednio. Jawnie ustawiony `HOST` (np. w Dockerze) ma pierwszeństwo.
-
-### Caddy jako reverse proxy (rekomendowany)
-
-```bash
-sudo apt install caddy
-export DOMAIN=twoja-domena.pl
-export EMAIL=twoj@email.com
-caddy run --config Caddyfile
-```
-
-Caddy automatycznie:
-
-- wydaje certyfikat Let's Encrypt,
-- odnawia certyfikat,
-- przekierowuje HTTP → HTTPS,
-- przekazuje ruch do `127.0.0.1:3000`.
-
-### Nginx jako reverse proxy z Let's Encrypt
-
-```bash
-sudo apt install nginx certbot python3-certbot-nginx
-```
-
-```nginx
-server {
-    listen 80;
-    server_name twoja-domena.pl;
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-```bash
-sudo certbot --nginx -d twoja-domena.pl
-```
-
----
-
-## 5. Bezpieczeństwo w produkcji
-
-| Obszar       | Zalecenie                                                  |
-| ------------ | ---------------------------------------------------------- |
-| HTTPS        | **Wymagane** — reverse proxy (Caddy/Nginx) z Let's Encrypt |
-| Firewall     | Ogranicz dostęp do portu aplikacji (np. tylko localhost)   |
-| Backup       | Skonfiguruj automatyczny backup bazy (cron / PM2)          |
-| Monitoring   | Skonfiguruj Sentry (zmienna `SENTRY_DSN`)                  |
-| PM2          | Użyj do zarządzania procesem i auto-restartu               |
-| Aktualizacje | Regularnie aktualizuj npm (`npm audit`, `npm update`)      |
-
----
-
-## 6. Backup bazy w produkcji
-
-### Backup w aplikacji (domyślnie, bez uprawnień administratora)
-
-`CronService` (`src/utils/cronService.ts`, zadanie `dailyBackup`) uruchamia
-`runBackup` co 24 h od startu procesu. Nie wymaga Task Schedulera ani uprawnień
-administratora — warunkiem jest działająca aplikacja.
-
-### Alternatywy (wybierz JEDNĄ — nie łącz)
-
-Nie uruchamiaj crona systemowego, gdy działa backup w aplikacji: powstaną dwie
-kopie dziennie, a przy `MAX_BACKUPS = 1` będą się wzajemnie wypierać i marker
-świeżości przestanie odpowiadać rzeczywistości.
-
-#### Cron (Linux)
-
-```bash
-# Dodaj do crontab (codziennie o 3:00)
-0 3 * * * cd /path/to/Oferty_PV && npm run backup >> /var/log/sok-oferty-backup.log 2>&1
-```
-
-#### Task Scheduler (Windows)
-
-```bash
-npm run backup:install-cron
-```
-
-### Monitoring świeżości
-
-Każdy udany backup zapisuje `data/backups/.last-backup.json` (`at`, `file`,
-`size`, `sha256`, `verification`). Marker **nie** aktualizuje się przy porażce —
-inaczej monitoring kłamałby dokładnie wtedy, gdy jest potrzebny.
-
-| Sygnał                 | Co robi                                                                 |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `npm run backup:check` | JSON na stdout + exit 0/1; próg 26 h (`MAX_BACKUP_AGE_MS`)              |
-| `GET /health/backup`   | 200 = świeżo, 503 = brak lub przestarzały; nie dotyka bazy              |
-| `BACKUP_ALERT_WEBHOOK` | opcjonalny POST z raportem przy FAIL (ntfy.sh / Telegram / dowolny URL) |
-
-Próg to 26 h, nie 24 h: backup startuje od startu procesu, więc dryfuje przy
-restartach, a samo 24 h dawałoby fałszywe alarmy.
-
-### Drill restore (miesięcznie)
-
-Retencja: max 1 kopia (`scripts/backup.ts`). Retencja działa **tylko po zweryfikowanym
-backupie** (`PRAGMA integrity_check` = ok) — gdy nowa kopia jest uszkodzona lub nie da się
-jej sprawdzić, stare kopie zostają na dysku, a skrypt kończy się błędem (exit 1).
-
-Raz w miesiącu na stagingu:
-
-```bash
-npm run backup
-npm run restore -- data/backups/backup_<najnowszy>.sqlite
-```
-
-Cel: RTO minuty, RPO = interwał crona. Nieudany drill = P1.
-
----
-
-## 7. Weryfikacja po wdrożeniu (checklist)
-
-Skonsolidowana checklista do wykonania ręcznie po wdrożeniu produkcyjnym przez
-reverse proxy z HTTPS. Szczegóły konfiguracji proxy znajdują się w sekcji 4
-powyżej — poniższa lista jest samowystarczalna dla wykonawcy (odhaczasz
-checkboxy w §7.1–§7.6 poniżej).
-
-### 7.1 Deploy reverse proxy (HTTPS)
-
-- [ ] DNS domeny propagowany — `dig`/`nslookup` zwraca adres IP serwera
-- [ ] Porty 80 i 443 otwarte w firewallu
-- [ ] Port aplikacji (domyślnie 3000) NIE jest wystawiony na świat — Node słucha na `127.0.0.1`
-
-**Caddy:**
-
-- [ ] `caddy validate` — konfiguracja `Caddyfile` poprawna
-- [ ] `caddy run --config Caddyfile` — uruchomiony, certyfikat Let's Encrypt wydany
-
-**Nginx:**
-
-- [ ] Konfiguracja serwera wg sekcji 4 (proxy_pass na `127.0.0.1:3000`)
-- [ ] `sudo certbot --nginx -d twoja-domena.pl` — certyfikat wydany
-
-### 7.2 Konfiguracja `.env`
-
-- [ ] `COOKIE_SECURE=true` ustawione
-- [ ] `HOST` nie jest ustawione na `0.0.0.0` (w produkcji domyślnie `127.0.0.1`)
-- [ ] `TRUST_PROXY=1` (2 tylko przy łańcuchu Cloudflare → Nginx → App)
-- [ ] `PUBLIC_BASE_URL=https://<domena>` (redirect HTTP→HTTPS nie zależy wtedy od nagłówka `Host`)
-
-### 7.3 Kolejność startu
-
-- [ ] Reverse proxy (Caddy/Nginx) uruchomione PRZED aplikacją Node
-- [ ] `https://domena.pl/health` zwraca `200 OK`
-
-### 7.4 Weryfikacja E2E w przeglądarce (przez HTTPS, DevTools)
-
-- [ ] `window.isSecureContext === true` — w konsoli DevTools
-- [ ] Brak mixed content — zakładki Console/Network/Security/Issues czyste
-- [ ] `http://domena.pl` przekierowuje na HTTPS (301/308)
-- [ ] Nagłówek HSTS obecny: `max-age=...`
-- [ ] Po zalogowaniu ciastko sesji ma flagę `Secure` i `SameSite=Lax`
-- [ ] Logowanie działa przez HTTPS
-- [ ] `/api/*` działa przez HTTPS
-- [ ] Iframe (rury, studnie) działają
-- [ ] Clipboard copy/paste działa
-- [ ] Excel copy/paste zakresu działa
-- [ ] Drukowanie oferty działa
-- [ ] `window.open` (print) działa
-- [ ] Generowanie/pobieranie PDF/DOCX działa
-- [ ] Upload XLSX (import) działa
-- [ ] Wylogowanie działa — `clearCookie` z flagą `Secure` usuwa ciastko sesji
-
-### 7.5 Macierz przeglądarek
-
-- [ ] Przetestowano macierz przeglądarek
-      (Chrome, Edge, Firefox, Safari, Brave) — funkcje: logowanie, iframe,
-      clipboard, Excel, drukowanie, `window.open`, PDF/DOCX, upload, storage
-
-### 7.6 Zamknięcie wdrożenia
-
-- [ ] Odhaczono checkboxy §7.4 (Testy E2E) i §7.5 (Macierz przeglądarek) powyżej
-- [ ] Odhaczono kryteria manualne w `docs/plans/archive/https-migration-plan.md` §10 (Kryteria zakończenia)
-
----
-
-## 8. Obsługa błędów — Sentry
-
-Aby włączyć Sentry:
-
-1. Załóż konto na [sentry.io](https://sentry.io)
-2. Utwórz projekt Node.js
-3. Ustaw zmienną `SENTRY_DSN` w `.env`:
-    ```
-    SENTRY_DSN=https://klucz@o123456.ingest.sentry.io/654321
+# Wdrożenie S.O.K. — docelowy standard PostgreSQL 18
+
+**Docelowa architektura:** Node.js + Express + Prisma + PostgreSQL 18 + Vanilla JS SPA.
+
+**Status:** migracja w toku. Prisma provider, kanoniczne migracje PostgreSQL, część runtime SQL, backup/restore oraz konfiguracja CI/Compose są przełączane na PostgreSQL 18. Pozostają nieprzepisane ścieżki runtime, aktywne testy i narzędzia, a pełna aplikacja nie została jeszcze zweryfikowana na działającym PostgreSQL 18. Nie wdrażaj produkcyjnie przed zakończeniem konwersji, pełnymi testami i odrębnym GO.
+
+> To jest docelowy kontrakt wdrożeniowy, nie gotowa instrukcja produkcyjna.
+> Provider, migracje, backup/restore oraz część konfiguracji kontenerów i CI są
+> już przełączane; brak jeszcze pełnej konwersji i wykonania weryfikacji
+> integracyjnej na PostgreSQL 18. Nie wykonuj
+> PostgreSQL cutoveru na podstawie tego dokumentu przed zielonymi bramami i
+> odrębną zgodą na operację live.
+
+## 1. Celowa topologia
+
+- Aplikacja S.O.K. działa jako usługa Node.js. PostgreSQL 18 jest osobną
+  managed usługą albo odrębną, utrzymywaną usługą bazodanową w prywatnej sieci.
+- Kontener aplikacji nie zawiera bazy ani persistent volume z danymi DB. Nie ma
+  ścieżki do lokalnego pliku bazy ani fallbacku do innego silnika.
+- Aplikacja, migrator i backup mają oddzielne role. Runtime ma tylko wymagane
+  uprawnienia DML; migrator otrzymuje DDL wyłącznie podczas kontrolowanego
+  release; backup ma wyłącznie wymagane prawa odczytu/eksportu.
+- Zdalne połączenie do PostgreSQL wymaga zweryfikowanego TLS, ograniczeń sieci
+  oraz sekretów dostarczanych przez secret manager.
+- Wybór hosta, regionu, SLA, RPO/RTO i retencji musi być opisany w ADR przed
+  konfiguracją produkcyjną. PostgreSQL 18 jest wymaganym targetem; odstępstwo
+  wersji wymaga jawnej decyzji architektonicznej.
+
+## 2. Konfiguracja środowiska
+
+| Ustawienie                                                         | Docelowe znaczenie                                 | Zasada bezpieczeństwa                                                                      |
+| ------------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                                                     | Rola runtime `sok_app`, tylko wymagane DML         | Secret/env; TLS dla połączeń zdalnych; nigdy nie logować ani commitować.                   |
+| `MIGRATION_DATABASE_URL`                                           | Rola migratora `sok_migrator`, uprawnienia DDL     | Używana wyłącznie w kontrolowanym deploy/import; nie przekazuj do runtime serwera.         |
+| `BACKUP_DATABASE_URL`                                              | Rola backupu `sok_backup`, prawa odczytu           | Secret/env; używana przez backup; nigdy nie logować ani commitować.                        |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`                               | Rola bootstrapowa kontenera PostgreSQL             | Superuser inicjalizacyjny; tylko provisioning, nie używać jako roli runtime aplikacji.     |
+| `SOK_MIGRATOR_PASSWORD`, `SOK_APP_PASSWORD`, `SOK_BACKUP_PASSWORD` | Hasła ról aplikacyjnych                            | Wstrzykiwane wyłącznie do init PostgreSQL/Compose z secret managera albo lokalnego `.env`. |
+| `DEFAULT_ADMIN_PASSWORD`                                           | Sekret startowego administratora pustej instalacji | Wstrzykiwany tylko na czas utworzenia konta; nie zapisuj w obrazie ani pliku przykładowym. |
+| `HOST`, `PORT`                                                     | Adres i port procesu HTTP                          | Domyślnie bind lokalny za reverse proxy; publiczny dostęp przez HTTPS.                     |
+| `TRUST_PROXY`, `PUBLIC_BASE_URL`, `COOKIE_SECURE`                  | Granica reverse proxy i bezpieczne cookie          | Ustaw zgodnie z faktycznym łańcuchem proxy; w produkcji HTTPS i Secure cookies.            |
+| `SENTRY_DSN`                                                       | Endpoint telemetryczny błędów, jeśli używany       | Tylko sekret/env; scrub danych klienta i connection stringów.                              |
+
+Aktualny `DATABASE_URL` runtime musi używać jawnego URL PostgreSQL. Nie ma
+fallbacku do innego silnika. Brak, błąd TLS lub brak połączenia musi blokować
+readiness bez ujawnienia szczegółów w publicznej odpowiedzi. Do czasu zakończenia
+pozostałej konwersji i testów nie uznawaj tego checkoutu za wdrażalny.
+
+Compose inicjalizuje role `sok_migrator`, `sok_app` i `sok_backup` przez
+`docker/postgres/init-roles.sh`; `POSTGRES_USER` jest superuserem jednorazowej
+inicjalizacji wolumenu i nie może być użyty jako konto aplikacji. Migracje
+wykonuje `MIGRATION_DATABASE_URL`. Po migracjach `node scripts/grant-postgres-roles.mjs`
+nadaje role runtime/backup do istniejących tabel i ustawia default privileges;
+następnie seed/import używa
+`DATABASE_URL` roli `sok_app`. Backup używa `BACKUP_DATABASE_URL`. Compose wymaga
+wszystkich tych zmiennych i sekretów.
+
+## 3. Docelowa sekwencja release
+
+Po zakończeniu implementacji i akceptacji release przebiega w następującej
+kolejności:
+
+1. Provision PostgreSQL 18 w prywatnej sieci; ustaw TLS, retencję, monitoring,
+   połączenia/pool limits oraz role runtime, migration i backup.
+2. Utwórz pustą bazę i zweryfikuj endpoint, wersję serwera, TLS oraz uprawnienia
+   przez izolowany preflight. Nie używaj produkcyjnych danych w CI.
+3. Zatwierdzony release job wykonuje PostgreSQL migration deploy jeden raz.
+   Migracje są odtwarzalne od pustej bazy; po nich sprawdź status i brak driftu.
+4. Po migracjach wykonaj granty dla runtime/backup, następnie seeduj tylko
+   brakujące dane startowe i bezpieczne konto administratora rolą runtime.
+   W osobnym, audytowalnym kroku importuj tylko aktywne cenniki z artefaktu
+   allowlistowanego z bazy źródłowej; potwierdź count/hash oraz
+   `prices:verify`.
+5. Uruchom aplikację po gotowej bazie. Readiness sprawdza połączenie i
+   wymagane schematyczne warunki, nie wykonuje DDL i nie zwraca hosta/SQL.
+6. Na stagingu przejdź smoke i E2E dla logowania, ofert Rury/Studnie, zapisów,
+   wyszukiwania, importów/eksportów CSV/XLSX/PDF/DOCX, zamówień, aktywnych
+   cenników, CAS/ownership oraz obsługi błędów bazy.
+7. Dopiero po zielonych CI, testach migracji i backup/restore drill oraz osobnym
+   GO na live przełącz ruch. Nie wykonuj dual-write.
+
+**Stan niezweryfikowany:** pełny runtime SQL, wszystkie testy integracyjne i
+Playwright, aktywne narzędzia oraz kompletne smoke testy nie przeszły jeszcze na
+działającej instancji PostgreSQL 18. CI i Compose zawierają konfigurację PG18,
+ale sama obecność konfiguracji ani statyczne testy nie potwierdzają udanego
+cutoveru. Nie wykonuj poleceń migracji/seed/importu na produkcji bez osobnego GO.
+
+## 4. Backup, restore i rollback
+
+- Backup implementowany jest przez `pg_dump` custom archive i dedykowaną rolę
+  backupu; checksum i archiwum są weryfikowane przed restore. Nadal wymagane są
+  restore drill oraz weryfikacja pełnej retencji, świeżości i monitoringu na PG18.
+- Restore najpierw do izolowanego celu; sprawdź checksum, PostgreSQL/schema
+  version, `migrate deploy`, `prices:verify` i aplikacyjne smoke. Restore do
+  live wymaga osobnego GO.
+- Rollback aplikacji jest dozwolony tylko przy zgodności wersji schematu. Nie
+  odtwarzaj równoległych zapisów do dwóch baz. Stare źródło pozostaje
+  read-only wyłącznie przez uzgodniony okres przejściowy i zgodnie z polityką
+  retencji.
+- Restore wymaga jawnego celu przez zmienną środowiskową `RESTORE_DB_URL` — nigdy
+  nie przekazuj URL ani hasła jako argumentu procesu. Przykład PowerShell dla
+  izolowanej lokalnej bazy testowej:
+
+    ```powershell
+    $env:RESTORE_DB_URL = 'postgresql://sok_test:<hasło>@localhost:5432/sok_test?schema=public'
+    node scripts/restore-db.js data/backups/<backup>.dump
+    Remove-Item Env:RESTORE_DB_URL
     ```
 
-Sentry będzie rejestrować:
+    Przywrócenie do bazy runtime wymaga jawnego `--live` i celu `RESTORE_DB_URL`
+    używającego osobnej roli wskazanej przez `MIGRATION_DATABASE_URL`. Rola
+    runtime `DATABASE_URL` jest odrzucana. Po odtworzeniu migracje i granty
+    uruchamia rola migracyjna. Produkcyjny restore nadal wymaga osobnego GO.
+    Nie umieszczaj sekretnego URL w historii shella ani logach.
 
-- Nieobsłużone wyjątki
-- Błędy 500
-- Wydajność (opcjonalnie, traceSampleRate: 0.1)
+## 5. Sieć HTTP i reverse proxy
 
----
+S.O.K. nadal udostępnia HTTP aplikacji za reverse proxy. W produkcji proxy
+obsługuje TLS/certyfikaty, przekierowanie HTTP→HTTPS i nagłówki proxy; port
+procesu aplikacji nie powinien być publicznie dostępny. Ustaw
+`TRUST_PROXY` i `PUBLIC_BASE_URL` zgodnie z topologią, a `COOKIE_SECURE` dla
+HTTPS.
 
----
+Po wdrożeniu sprawdź `/health`, `/health/ready`, logowanie, bezpieczne cookie,
+iframe modułów, import XLSX, eksport/druk PDF-DOCX, clipboard i podstawowe
+przepływy w obsługiwanych przeglądarkach. Publiczne health endpoints nie
+ujawniają connection stringu, SQL, hosta ani sekretów.
 
-## 9. Przenoszenie bazy na inne urządzenie
+## 6. Historyczny kontekst SQLite
 
-Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest prostą operacją kopiowania.
-
-### Procedura
-
-#### Na urządzeniu źródłowym (starym):
-
-1. Zatrzymaj serwer (Ctrl+C)
-2. Wykonaj backup:
-
-    ```bash
-    npm run backup
-    ```
-
-    Backup trafi do `data/backups/backup_<timestamp>.sqlite`.
-
-3. Skopiuj plik backupu na nowe urządzenie (pendrive, SCP, chmura).
-
-#### Na urządzeniu docelowym (nowym):
-
-1. Zainstaluj aplikację według instrukcji w README (kroki 1–3, bez seedowania)
-2. Zbuduj projekt: `npm run build`
-
-    > **Uwaga (Linux):** po surowym `npm run build` (bez `build.sh`) skopiuj klienta Prisma:
-    > `mkdir -p dist/generated && cp -r generated/prisma dist/generated/` — albo użyj `build.bat`/`build.sh`.
-
-3. Przywróć bazę:
-    ```bash
-    npm run restore -- data/backups/backup_*.sqlite
-    ```
-    lub ręcznie:
-    ```bash
-    cp data/backups/backup_*.sqlite data/app_database.sqlite
-    ```
-    > **Docker/Linux:** baza jest własnością użytkownika kontenera (`node`),
-    > więc restore wymaga uprawnień administratora:
-    > `sudo -E npm run restore -- data/backups/backup_*.sqlite`.
-    > Backup (`npm run backup`, bez sudo) działa jako zwykły użytkownik.
-4. **Zsynchronizuj schemat bazy** (wymagane — backup zawiera tylko dane, a nowsza
-   wersja aplikacji może wymagać nowych tabel/indeksów):
-    ```bash
-    npx prisma migrate deploy
-    ```
-    > `npm run restore` synchronizuje schemat automatycznie; przy ręcznym `cp` ta
-    > synchronizacja **nie zachodzi** i musi być uruchomiona jawnie.
-5. Uruchom serwer: `npm start`
-
-### Co gdy schemat bazy różni się między wersjami?
-
-Po przeniesieniu bazy na nowe urządzenie z nowszą wersją aplikacji zsynchronizuj schemat.
-Sposób zależy od historii bazy:
-
-- **Baza z historią migracji** (istnieje tabela `_prisma_migrations`) — ścieżka domyślna:
-    ```bash
-    npx prisma migrate deploy
-    ```
-- **Baza legacy tworzona przez `db push`** (brak `_prisma_migrations`): `migrate deploy` NIE zadziała
-  (próbowałby odtworzyć historię migracji na istniejących tabelach). Użyj:
-    ```bash
-    npx prisma db push --skip-generate --accept-data-loss
-    ```
-    Jak sprawdzić typ bazy: `npx prisma migrate status` — jeśli pokazuje migracje jako
-    niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
-
-Prisma automatycznie dostosuje schemat do aktualnego stanu bez utraty danych.
-
-> Migracja `20260815000000_baseline` dodaje 2 indeksy na `ai_telemetry_logs`
-> (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Są one
-> idempotentne i powstają automatycznie przez `migrate deploy` (definicje w `schema.prisma`).
-
-### Weryfikacja
-
-Po przywróceniu bazy sprawdź:
-
-1. Endpoint `/health` zwraca `200 OK`
-2. Lista produktów i ceny zgodne z oczekiwaniami
-3. Historia ofert i klienci dostępni
-
-## 10. CI (GitHub Actions) a wdrożenie
-
-Job `deploy-production` w `.github/workflows/ci.yml` jest **wyłączony domyślnie** — wymaga
-repozytoryjnej zmiennej `RENDER_DEPLOY_ENABLED = true` (warunek na poziomie joba, nie kroku).
-
-| Stan w repo                                | Widok w CI                           | Znaczenie                 |
-| ------------------------------------------ | ------------------------------------ | ------------------------- |
-| brak zmiennej `RENDER_DEPLOY_ENABLED`      | job `skipped`                        | wdrożenie NIE wykonane    |
-| `RENDER_DEPLOY_ENABLED=true`, brak sekretu | job FAIL (`::error::`, krok „Skip…") | konfiguracja niekompletna |
-| zmienna + sekret `RENDER_PROD_DEPLOY_HOOK` | krok „Deploy to Render", `DEPLOYED`  | wdrożenie wykonane        |
-
-Włączenie (tylko jeśli produkcja faktycznie stoi na Render): `Settings → Secrets and variables
-→ Actions` → zmienna `RENDER_DEPLOY_ENABLED=true` + sekret `RENDER_PROD_DEPLOY_HOOK`.
-
-Kontekst: w repo nie ma `render.yaml`, a `scripts/deploy.mjs` obsługuje targety
-`windows|linux|docker` (produkcja PM2 + Caddy — §4). Dlatego domyślny stan `skipped`
-jest poprawny, a zielony status nie oznacza wdrożenia.
+Poprzednie instrukcje wdrożenia bazowały na lokalnym pliku SQLite, katalogu
+`data`, `db push`, WAL, kopiowaniu plików i `VACUUM INTO`. Są zachowane wyłącznie
+jako historia obecnego runtime, nie jako docelowa lub wspierana procedura.
+Stare SQLite artefakty można wykorzystać wyłącznie w jednorazowym, read-only
+eksporcie aktywnych cenników; nie przenosi się z nich kont, sesji ani historii
+ofert.

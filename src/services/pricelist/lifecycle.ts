@@ -7,7 +7,7 @@
 
 import { randomUUID } from 'crypto';
 import prisma from '../../prismaClient';
-import type { PricelistVersion } from '../../../generated/prisma';
+import type { PricelistVersion } from '../../../generated/prisma-postgres/client';
 import { sha256Canonical } from './canonical';
 import {
     PricelistVersionError,

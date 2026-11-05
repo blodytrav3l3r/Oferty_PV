@@ -77,13 +77,7 @@ log STEP "  prisma migrate deploy..."
 if npx prisma migrate deploy; then
     log OK "Migracje zastosowane"
 else
-    # fallback db push TYLKO dla bazy legacy (db push, brak _prisma_migrations)
-    if node scripts/check-legacy-db.js; then
-        err "migrate deploy nie powiodl sie, a baza jest zarzadzana przez migracje. Przerywam."
-    else
-        warn "Baza legacy (db push) - fallback db push"
-        npx prisma db push --skip-generate --accept-data-loss
-    fi
+    err "prisma migrate deploy nie powiodlo sie. Sprawdz DATABASE_URL i stan migracji PostgreSQL."
 fi
 log OK "Schema bazy aktualny"
 
@@ -127,5 +121,5 @@ echo "INFO: Ceny z innej instalacji przeniesiesz jako wersje cennika:"
 echo "  panel 'Wersje cennika' - eksport XLSX na starym, import na nowym."
 echo ""
 echo "UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:"
-echo "  npm run restore data/backups/nazwa_pliku.sqlite"
+echo "  npm run restore data/backups/nazwa_pliku.dump"
 

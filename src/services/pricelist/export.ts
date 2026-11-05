@@ -4,7 +4,7 @@
  */
 
 import prisma from '../../prismaClient';
-import type { PricelistVersion } from '../../../generated/prisma';
+import type { PricelistVersion } from '../../../generated/prisma-postgres/client';
 import type { XlsxSheet } from '../../utils/minimalXlsx';
 import { canonicalStringify, diffById } from './canonical';
 import {
@@ -51,15 +51,26 @@ export function liveSheetsToXlsxSheets(live: LiveSheetRows, fallbackName: string
  * Arkusz-techniczny z numerem cennika. Nazwa zaczyna się od `_`, więc importer
  * (FE i backend) pomija go — plik zostaje w pełni re-importowalny.
  */
-export function cennikMetaSheet(typeLabel: string, label: string | null): XlsxSheet {
+export function cennikMetaSheet(
+    typeLabel: string,
+    label: string | null,
+    precoFallback?: { version: string; seq: number } | null
+): XlsxSheet {
+    const rows: Array<[string, string]> = [
+        ['Cennik', typeLabel],
+        ['Numer cennika', label || 'brak wersji'],
+        ['Eksport', new Date().toISOString()]
+    ];
+    if (precoFallback) {
+        rows.push(
+            ['Źródło PRECO', 'Bieżący aktywny cennik zastępczy'],
+            ['Numer PRECO', `${precoFallback.version} (nr ${precoFallback.seq})`]
+        );
+    }
     return {
         name: '_Cennik',
         headers: ['Pole', 'Wartość'],
-        rows: [
-            ['Cennik', typeLabel],
-            ['Numer cennika', label || 'brak wersji'],
-            ['Eksport', new Date().toISOString()]
-        ]
+        rows
     };
 }
 
@@ -505,6 +516,8 @@ export interface VersionPreviewPrecoRef {
     seq: number;
 }
 
+export type VersionPreviewPrecoSource = 'TIMELINE' | 'ACTIVE_FALLBACK' | 'NONE';
+
 /**
  * Podgląd wersji (GET /:id/preview): arkuszowe shape LIVE + liczniki.
  * `precoIncluded`/`precoVersion` występują WYŁĄCZNIE dla `studnie` (dla
@@ -520,6 +533,32 @@ export interface VersionPreview {
     truncated: boolean;
     precoIncluded?: boolean;
     precoVersion?: VersionPreviewPrecoRef | null;
+    precoSource?: VersionPreviewPrecoSource;
+}
+
+async function findActivePrecoVersion(atIso: string): Promise<PricelistVersion | null> {
+    const override = await prisma.settings.findUnique({
+        where: { key: 'pricelist_active_override_preco' }
+    });
+    if (override?.value) {
+        const pinned = await prisma.pricelistVersion.findFirst({
+            where: {
+                id: override.value,
+                type: 'preco',
+                status: { in: [...PRECO_REFERENCE_STATUSES] },
+                effectiveFrom: { lte: atIso }
+            }
+        });
+        if (pinned) return pinned;
+    }
+    return prisma.pricelistVersion.findFirst({
+        where: {
+            type: 'preco',
+            status: { in: [...PRECO_REFERENCE_STATUSES] },
+            effectiveFrom: { lte: atIso }
+        },
+        orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
+    });
 }
 
 /**
@@ -563,9 +602,18 @@ export async function getVersionPreview(id: string): Promise<VersionPreview> {
     };
     if (type === 'studnie') {
         const precoVersion = await pickPrecoVersionForStudnie(version);
-        preview.precoIncluded = precoVersion !== null;
-        preview.precoVersion = precoVersion
-            ? { id: precoVersion.id, version: precoVersion.version, seq: precoVersion.seq }
+        const activeFallback = precoVersion
+            ? null
+            : await findActivePrecoVersion(new Date().toISOString());
+        const selectedPreco = precoVersion ?? activeFallback;
+        preview.precoIncluded = selectedPreco !== null;
+        preview.precoSource = precoVersion
+            ? 'TIMELINE'
+            : activeFallback
+              ? 'ACTIVE_FALLBACK'
+              : 'NONE';
+        preview.precoVersion = selectedPreco
+            ? { id: selectedPreco.id, version: selectedPreco.version, seq: selectedPreco.seq }
             : null;
     }
     return preview;
@@ -639,26 +687,57 @@ export async function pickPrecoVersionForStudnie(
  * LIVE (GET /api/products-studnie/export.xlsx, F1) dokleja PRECO po arkuszach
  * studni; eksport zamrożonej wersji studni robi to samo: najnowsza wersja
  * PRECO obowiązująca w dacie eksportu (D1: status ACTIVE/BACKDATE/ARCHIVED),
- * arkusze PO studni (merge {...studnie, ...preco} jak w F1). Brak starszej
- * lub równej PRECO → tylko studnie (bez błędu, flaga precoIncluded=false).
+ * arkusze PO studni (merge {...studnie, ...preco} jak w F1). Po cutoverze bez
+ * historii PRECO starsza wersja jest zastępowana bieżącym aktywnym PRECO.
  * Rury i preco bez zmian.
  */
 export async function getVersionExportSheets(
-    id: string
-): Promise<{ version: PricelistVersion; sheets: LiveSheetRows; precoIncluded: boolean }> {
+    id: string,
+    atIso: string = new Date().toISOString()
+): Promise<{
+    version: PricelistVersion;
+    sheets: LiveSheetRows;
+    precoIncluded: boolean;
+    precoSource: VersionPreviewPrecoSource | 'NOT_APPLICABLE';
+    precoVersion: VersionPreviewPrecoRef | null;
+}> {
     const { version, sections } = await getVersionExport(id);
     if (!isPricelistType(version.type)) {
         throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
     }
     const type: PricelistType = version.type;
     const sheets = projectVersionToLiveShape(type, sections);
-    if (type !== 'studnie') return { version, sheets, precoIncluded: true };
-    const precoVersion = await pickPrecoVersionForStudnie(version);
-    if (!precoVersion) return { version, sheets, precoIncluded: false };
-    const preco = await getVersionExport(precoVersion.id);
+    if (type !== 'studnie') {
+        return {
+            version,
+            sheets,
+            precoIncluded: true,
+            precoSource: 'NOT_APPLICABLE',
+            precoVersion: null
+        };
+    }
+    const timelinePreco = await pickPrecoVersionForStudnie(version);
+    const activeFallback = timelinePreco ? null : await findActivePrecoVersion(atIso);
+    const selectedPreco = timelinePreco ?? activeFallback;
+    if (!selectedPreco) {
+        return {
+            version,
+            sheets,
+            precoIncluded: false,
+            precoSource: 'NONE',
+            precoVersion: null
+        };
+    }
+    const preco = await getVersionExport(selectedPreco.id);
     return {
         version,
         sheets: { ...sheets, ...projectVersionToLiveShape('preco', preco.sections) },
-        precoIncluded: true
+        precoIncluded: true,
+        precoSource: timelinePreco ? 'TIMELINE' : 'ACTIVE_FALLBACK',
+        precoVersion: {
+            id: selectedPreco.id,
+            version: selectedPreco.version,
+            seq: selectedPreco.seq
+        }
     };
 }

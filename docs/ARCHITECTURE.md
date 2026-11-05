@@ -1,8 +1,10 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.56.3  
-**Ostatnia aktualizacja:** 2026-10-24  
-**Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
+**Wersja:** 1.56.4  
+**Ostatnia aktualizacja:** 2026-11-04<br>
+**Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline
+
+> **Status:** provider Prisma i środowiska CI/Compose zostały przełączone na PostgreSQL, ale konwersja runtime SQL, narzędzi i testów trwa. Nie traktuj tej gałęzi jako zweryfikowanego wdrożenia produkcyjnego, dopóki workflow PostgreSQL 18 nie przejdzie pełnej ścieżki aplikacji.
 
 ---
 
@@ -12,7 +14,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 
 - **Backend API** — Express.js (TypeScript) obsługujący logikę biznesową i dane
 - **Frontend SPA** — Vanilla JavaScript z osobnymi widokami HTML (bez frameworka)
-- **Baza danych** — SQLite przez Prisma ORM
+- **Baza danych** — PostgreSQL 18 przez Prisma ORM; provider docelowy, migracja aplikacji w toku
 - **Serwer** — Express jako jedyny serwer (dev i prod), serwuje API i `public/`
 - **Model procesu** — single-node, jednodprocesowy: stan ulotny w `Map` w pamięci
   (`predictionCache`, `dryRunStore`, flaga `trainingRunning`) znika przy restarcie.
@@ -45,7 +47,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
                        │  Prisma ORM
                        ▼
 ┌──────────────────────────────────────────────────────┐
-│              SQLite Database                          │
+│              PostgreSQL 18                            │
 │  ┌──────────────────────────────────────────────────┐ │
 │  │  Tables: offers_rel │ offers_studnie_rel │ users  │ │
 │  │  products_rury │ products_studnie │ clients      │ │
@@ -72,8 +74,8 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
                                                 │
                                                 ▼
                                         ┌─────────────┐
-                                        │  SQLite      │
-                                        │  (baza plik) │
+                                        │ PostgreSQL   │
+                                        │ (DB server)  │
                                         └─────────────┘
 ```
 
@@ -83,21 +85,21 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 
 ### Stack
 
-| Technologia | Wersja   | Rola                            |
-| ----------- | -------- | ------------------------------- |
-| Node.js     | >= 22.13 | Środowisko uruchomieniowe       |
-| TypeScript  | ^6.0.2   | Język programowania             |
-| Express.js  | ^4.22.3  | Framework webowy                |
-| Prisma      | ^6.0     | ORM (Object-Relational Mapping) |
-| Zod         | ^4.3     | Walidacja danych wejściowych    |
-| bcryptjs    | ^3.0     | Haszowanie haseł                |
-| Helmet      | ^8.3     | Nagłówki bezpieczeństwa HTTP    |
-| Sentry      | ^10.59   | Monitoring błędów               |
-| docx        | ^9.6     | Generowanie dokumentów DOCX     |
-| Puppeteer   | ^25.16   | Generowanie PDF                 |
-| ts-node-dev | ^2.0     | Hot-reload w dev                |
-| Jest        | 30.4.2   | Framework testowy (pin exact)   |
-| Swagger     | 6.x      | Dokumentacja API                |
+| Technologia | Wersja   | Rola                          |
+| ----------- | -------- | ----------------------------- |
+| Node.js     | >= 22.13 | Środowisko uruchomieniowe     |
+| TypeScript  | ^6.0.2   | Język programowania           |
+| Express.js  | ^4.22.3  | Framework webowy              |
+| Prisma      | 7.10.1   | ORM + `@prisma/adapter-pg`    |
+| Zod         | ^4.3     | Walidacja danych wejściowych  |
+| bcryptjs    | ^3.0     | Haszowanie haseł              |
+| Helmet      | ^8.3     | Nagłówki bezpieczeństwa HTTP  |
+| Sentry      | ^10.59   | Monitoring błędów             |
+| docx        | ^9.6     | Generowanie dokumentów DOCX   |
+| Puppeteer   | ^25.16   | Generowanie PDF               |
+| ts-node-dev | ^2.0     | Hot-reload w dev              |
+| Jest        | 30.4.2   | Framework testowy (pin exact) |
+| Swagger     | 6.x      | Dokumentacja API              |
 
 ### Warstwy
 
@@ -178,7 +180,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `brandHtml.ts` — brandowanie nagłówka w generowanych dokumentach
     - `cronService.ts` — serwis cron (setInterval)
     - `dbQueryCounter.ts` — licznik zapytań DB (diagnostyka N+1)
-    - `fts5Sync.ts` — synchronizacja FTS5 dla wyszukiwarki (auto-tworzenie tabeli wirtualnej + backfill przy starcie, nie tylko przebudowa przy braku kolumn)
+    - `fts5Sync.ts` — historycznie nazwana obsługa indeksu GIN PostgreSQL; migracje tworzą indeks, a admin może go zreindeksować
     - `logger.ts` — logger aplikacji
     - `ownership.ts` — weryfikacja własności zasobów (`canReadDoc`/`canWriteDoc`; legacy rekord bez właściciela = brak prawa zapisu dla nie-admina)
     - `paths.ts` — ścieżki plików i katalogów
@@ -217,13 +219,10 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
   `pricingFingerprint` (cena/waga — totalPrice jest cechą treningową ML) + `shouldSendAutoJs`;
   `public/js/studnie/offerSave.js` — przy zapisie istniejącej oferty wysyła tylko zmienione
   studnie (`_filterChangedWells` + `_wellSnapshot` + `_wellPricingStats`).
-- **Indeksy dedup telemetrii**: migracja `20260815000000_baseline` + definicje
-  w `prisma/schema.prisma` (`idx_logs_well`, `idx_logs_source_well`). Auto-heal przy starcie
-  serwera (`src/initDatabase.ts`): `CREATE INDEX IF NOT EXISTS` dla obu indeksów obok
-  `idx_audit_created_at` — instalacje bez historii migracji (`db push`) nie tworzą nowych indeksów.
-- **Auto-heal FTS5** (`src/utils/fts5Sync.ts`): `ensureFts5Schema` tworzy tabelę wirtualną
-  FTS5 (`createFts5Table`) + robi `backfillFts5` także wtedy, gdy tabeli brak (świeża baza),
-  nie tylko gdy brakuje kolumn (przebudowa + backfill).
+- **Indeksy dedup telemetrii**: kanoniczna migracja PostgreSQL tworzy indeksy zdefiniowane
+  w schemacie. Runtime nie powinien wykonywać DDL ani samonaprawiać schematu.
+- **Wyszukiwanie pełnotekstowe**: PostgreSQL GIN indeksuje treść ofert; indeks utrzymuje
+  PostgreSQL. Start aplikacji nie tworzy wirtualnych tabel ani nie wykonuje backfill.
 - **TrainingPipeline** (`src/services/ml/TrainingPipeline.ts`): sliding window treningowy
   (`orderBy createdAt desc` + `take TRAINING_BATCH_SIZE` + `reverse()`), znacznik
   `lastTrainedAt` (zamiast `lastFeatureCount`), bramka nowych danych
@@ -359,13 +358,15 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
 ## Baza danych
 
-### Provider: SQLite
+### Provider: PostgreSQL 18
 
-- Lokalna baza plikowa (`data/app_database.sqlite`)
-- Backup przez `VACUUM INTO` (WAL-safe snapshot)
-- Prisma ORM zarządza schematem i migracjami
+- Jedyny docelowy silnik danych; runtime wymaga jawnego `DATABASE_URL` PostgreSQL.
+- Kanoniczne migracje są w `prisma/migrations-postgresql/` i powstają od pustej bazy.
+- Aplikacja nie powinna wykonywać DDL przy starcie; schemat zmienia się przez `prisma migrate deploy`.
+- Backup/restore używa `pg_dump`/`pg_restore` w formacie custom archive; nie kopiuje pliku bazy.
+- Migracja runtime i testów jest w toku; nie wdrażaj tej wersji produkcyjnie przed pełnym testem PostgreSQL 18.
 
-### Modele (47)
+### Modele (56)
 
 - **users** — użytkownicy systemu
 - **user_preferences** — preferencje użytkownika (m.in. motyw)
@@ -402,9 +403,8 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **idempotency_keys** — klucze idempotentności API (`@@id(userId, endpoint, key)`, `idx_idempotency_expires`)
 - **doc_locks** — twarda blokada edycji 1 dokument = 1 użytkownik (TTL 180 s + heartbeat 60 s, `POST/GET /api/locks`, 423 przy cudzej świeżej blokadzie)
 
-- **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId) na
-  `ai_telemetry_logs` — migracja `20260815000000_baseline`, idempotentnie odtwarzane
-  przy starcie serwera (`CREATE INDEX IF NOT EXISTS` w `src/initDatabase.ts`).
+- **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId)
+  na `ai_telemetry_logs` — tworzone przez kanoniczne migracje PostgreSQL, nie przez startup.
 
 Szczegóły: [DATABASE.md](DATABASE.md)
 
@@ -436,7 +436,7 @@ Oferty_PV/
 │
 ├── src/                             # Backend
 │   ├── app.ts                      # Konfiguracja Express
-│   ├── initDatabase.ts             # Auto-heal indeksów telemetrii + FTS5 przy starcie
+│   ├── initDatabase.ts             # Helper backfill bez wykonywania DDL
 │   ├── prismaClient.ts             # Klient Prisma (singleton)
 │   ├── helpers.ts                  # Pomocnicze funkcje
 │   ├── version.ts                  # Wersja aplikacji
@@ -516,14 +516,14 @@ Oferty_PV/
 │   │   └── ml/                     # Pipeline ML (TrainingPipeline, FeatureExtractor, AcceptanceModel, ModelRegistry)
 │   ├── utils/
 │   │   ├── cronService.ts          # Serwis cron
-│   │   ├── fts5Sync.ts             # Synchronizacja FTS5
+│   │   ├── fts5Sync.ts             # PostgreSQL GIN status/reindex (nazwa historyczna)
 │   │   ├── logger.ts               # Logger
 │   │   ├── ownership.ts            # Weryfikacja własności (canReadDoc/canWriteDoc)
 │   │   ├── productionOrderGuard.ts # Guard PZ (blokada usuwania z przypisanymi zleceniami)
 │   │   ├── productionSearchUtils.ts# Narzędzia wyszukiwania produkcji
 │   │   ├── roleFilter.ts           # Filtr roli
 │   │   ├── searchCache.ts          # Cache wyszukiwania
-│   │   └── searchUtils.ts          # Narzędzia wyszukiwania (FTS5 + cache)
+│   │   └── searchUtils.ts          # Narzędzia wyszukiwania PostgreSQL + cache
 │   ├── validators/
 │   │   ├── authSchema.ts           # Walidacja auth
 │   │   ├── offerSchemas.ts         # Walidacja ofert
@@ -550,19 +550,19 @@ Oferty_PV/
 ├── prisma/                          # Prisma
 │   ├── schema.prisma                # Definicja schematu
 │   ├── seed.ts                      # Seed danych początkowych (admin, modele AI, ustawienia)
-│   └── migrations/                  # Migracje schematu (pełna lista: prisma/migrations/)
+│   ├── migrations-postgresql/       # Kanoniczna historia migracji PostgreSQL
+│   └── migrations/                  # Historyczne migracje SQLite; poza aktywną ścieżką
 │
-├── data/                            # Baza danych
-│   ├── app_database.sqlite          # Główna baza (SQLite)
-│   ├── backups/                     # Kopie zapasowe (VACUUM INTO)
+├── data/                            # Pliki aplikacji; PostgreSQL działa jako osobny serwer
+│   ├── backups/                     # Archiwa PostgreSQL pg_dump custom
 │   ├── seed_rury.json               # Seed produktów (rury)
 │   ├── seed_studnie.json            # Seed produktów (studnie)
 │   └── seed_preco.json              # Seed cenników Preco
 │
 ├── scripts/                         # Skrypty narzędziowe
-│   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 1 kopia)
-│   ├── restore-db.js                # Restore z walidacją (header + integrity_check + WAL cleanup)
-│   ├── check-db.js                  # Weryfikacja schematu przy starcie (ensure-db.bat)
+│   ├── backup.ts                    # Backup PostgreSQL przez pg_dump
+│   ├── restore-db.js                # Restore przez pg_restore do jawnego celu
+│   ├── check-db.js                  # Weryfikacja połączenia i katalogu PostgreSQL
 │   ├── check-version.mjs            # Spójność wersji (VERSION ↔ package.json ↔ CHANGELOG ↔ *.bat ↔ HTML ?v= ↔ docs)
 │   ├── check-appname.cjs            # Nazwa aplikacji (pre-push, APP_NAME SSoT)
 │   ├── check-global-collisions.mjs  # Kolizje globali window.*
@@ -575,7 +575,7 @@ Oferty_PV/
 │   ├── bump-version.mjs             # Podbicie wersji (patch/minor/major)
 │   ├── bundle-scripts.mjs           # Bundling JS studnie/rury (esbuild)
 │   ├── minify-css.mjs               # Minifikacja CSS (prestart)
-│   ├── copy-prisma-client.mjs       # Kopiowanie generated/prisma → dist/generated
+│   ├── copy-prisma-client.mjs       # Kopiowanie generated/prisma-postgres → dist/generated
 │   ├── encoding-integrity.js        # Kodowanie UTF-8 + mojibake (staged/pre-push/CI)
 │   ├── skill-cli.mjs                # CLI skilli (build-cost, stats, capabilities)
 │   ├── export-settings-to-seed.mjs  # Eksport cenników z wersji DB do data/seed_*.json
@@ -741,7 +741,7 @@ docker compose up --build
 ### VPS
 
 1. Zainstaluj Node.js >= 22.13
-2. `npm ci && npm run build` (`build` zawiera `copy-prisma-client.mjs` — kopię `generated/prisma` → `dist/generated`; ręczne kopiowanie tylko jako fallback po surowym `tsc`)
+2. `npm ci && npm run build` (`build` zawiera `copy-prisma-client.mjs` — kopię `generated/prisma-postgres` → `dist/generated`; ręczne kopiowanie tylko jako fallback po surowym `tsc`)
 3. Uruchom `node dist/server.js` (lub przez PM2)
 
 Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)

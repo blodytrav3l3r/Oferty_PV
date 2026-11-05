@@ -60,7 +60,7 @@ fi
 
 # 3. Prisma Client
 log STEP "Krok 3/6 - Generowanie Prisma Client..."
-if [ ! -f generated/prisma/index.d.ts ]; then
+if [ ! -f generated/prisma-postgres/client.d.ts ]; then
     npx prisma generate
     log OK "Prisma Client wygenerowany"
 else
@@ -82,7 +82,7 @@ elif [ "$CHECK_EXIT" -eq 2 ]; then
     log OK "Seed zakonczony"
 else
     log WARN "Schema niezgodny - db push --accept-data-loss"
-    npx prisma db push --skip-generate --accept-data-loss
+    npx prisma db push --accept-data-loss
 fi
 
 # 5. Port 3000 - bezpieczny check (nie netstat, a lsof jeśli dostępne)

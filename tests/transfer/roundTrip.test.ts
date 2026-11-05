@@ -1,5 +1,5 @@
 /**
- * P7.9 — testy round-trip transferu (prawdziwa per-worker SQLite, bez mocków).
+ * P7.9 — testy round-trip transferu (izolowany schemat PostgreSQL per-worker, bez mocków).
  *
  * Scenariusz PC-A → PC-B na jednej instancji:
  * export → dry-run (zero zapisów domenowych) → import → CANDIDATE →

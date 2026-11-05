@@ -4,7 +4,7 @@
  *
  * NOWY plik, wzorowany na carePanel.spec.ts (tamtego NIE tykać):
  *   login przez page.request/request (cookie httpOnly w jarze kontekstu),
- *   seed TYLKO przez publiczne API na izolowanej DB :3199 (test-playwright.sqlite),
+ *   seed TYLKO przez publiczne API na izolowanym schemacie PostgreSQL :3199,
  *   zero prod/dev DB, zero migracji z testu (webServer w playwright.config.ts).
  *
  * UWAGA: LOGIN_LIMITER (10/min na IP|login) i WRITE_LIMITER (60/min na IP) —
@@ -84,7 +84,7 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
     });
 
     test.afterAll(async ({ request }) => {
-        // Sprzątanie seedów przez API (nie sqlite): DELETE ofert best-effort.
+        // Sprzątanie seedów przez API: DELETE ofert best-effort.
         const login = await request.post(`${BASE}/api/auth/login`, {
             headers: ORIGIN,
             data: { username: 'admin', password: ADMIN_PASSWORD }

@@ -1,7 +1,12 @@
-import { PrismaClient } from '../generated/prisma';
+import 'dotenv/config';
+import type { PrismaClient } from '../generated/prisma-postgres/client';
+import prisma from '../src/prismaClient';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { execFileSync } from 'child_process';
+import { createReadStream } from 'fs';
+import { once } from 'events';
 import { resolveDataDir } from '../src/utils/paths';
 
 /**
@@ -56,6 +61,38 @@ export function getBackupMarkerPath(dir: string = backupDir): string {
     return path.join(dir, BACKUP_MARKER_FILE);
 }
 
+function verifyPrivatePermissions(filePath: string, mask: number): void {
+    if (process.platform === 'win32') return;
+    const mode = fs.statSync(filePath).mode & 0o777;
+    if ((mode & mask) !== 0) {
+        throw new Error(`Backup permissions are too broad: ${path.basename(filePath)}`);
+    }
+}
+
+export function ensurePrivateBackupDirectory(dir: string = backupDir): void {
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    const stat = fs.lstatSync(dir);
+    if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        throw new Error('Backup directory must be a real directory, not a symbolic link');
+    }
+    if (process.platform !== 'win32') fs.chmodSync(dir, 0o700);
+    verifyPrivatePermissions(dir, 0o077);
+}
+
+export function createPrivateBackupArchive(filePath: string): void {
+    const descriptor = fs.openSync(filePath, 'wx', 0o600);
+    fs.closeSync(descriptor);
+}
+
+export function verifyPrivateBackupArchive(filePath: string): void {
+    const stat = fs.lstatSync(filePath);
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+        throw new Error('Backup archive is not a regular file');
+    }
+    if (process.platform !== 'win32') fs.chmodSync(filePath, 0o600);
+    verifyPrivatePermissions(filePath, 0o077);
+}
+
 /** Odczyt markera; uszkodzony/brakujący plik → `null` (nie rzuca). */
 export function readBackupMarker(dir: string = backupDir): BackupMarker | null {
     try {
@@ -68,7 +105,7 @@ export function readBackupMarker(dir: string = backupDir): BackupMarker | null {
 }
 
 /**
- * P0.6: czysta selekcja retencji — liczy WYŁĄCZNIE pliki .sqlite
+ * Selekcja retencji liczy wyłącznie archiwa PostgreSQL `.dump`.
  * (sidecary .sha256 nie są kopiami). Zwraca nazwy do usunięcia
  * (najstarsze), posortowane od najstarszej.
  */
@@ -77,13 +114,13 @@ export function selectBackupsForRetention(
     maxBackups: number = MAX_BACKUPS
 ): string[] {
     const backups = files
-        .filter((f) => f.name.startsWith('backup_') && f.name.endsWith('.sqlite'))
+        .filter((f) => f.name.startsWith('backup_') && f.name.endsWith('.dump'))
         .sort((a, b) => a.mtimeMs - b.mtimeMs)
         .map((x) => x.name);
     return backups.slice(0, Math.max(0, backups.length - maxBackups));
 }
 
-/** Sidecary .sha256 bez pary .sqlite (sieroty do posprzątania). */
+/** Sidecary .sha256 bez pary .dump (sieroty do posprzątania). */
 export function findOrphanSidecars(files: string[]): string[] {
     const set = new Set(files);
     return files.filter(
@@ -96,15 +133,16 @@ export function findOrphanSidecars(files: string[]): string[] {
 
 /**
  * Status weryfikacji świeżego backupu.
- * - `ok`         — integralność potwierdzona (`PRAGMA integrity_check` = ok)
- * - `corrupt`    — baza nie przechodzi integrity_check (plik uszkodzony)
- * - `unverified` — nie dało się sprawdzić (brak node:sqlite, plik zablokowany)
+ * - `ok`         — `pg_restore --list` poprawnie odczytał custom archive
+ * - `corrupt`    — archiwum PostgreSQL nie jest czytelne
+ * - `unverified` — nie można wykonać kontroli pg_restore
  */
 export type BackupVerification = 'ok' | 'corrupt' | 'unverified';
 
 /** Błąd integralności → plik uszkodzony; pozostałe błędy → brak możliwości weryfikacji. */
 export function classifyVerification(message: string): BackupVerification {
-    return message.includes('integrity_check') ? 'corrupt' : 'unverified';
+    if (/ENOENT|EBUSY|EACCES|permission denied/i.test(message)) return 'unverified';
+    return message ? 'corrupt' : 'unverified';
 }
 
 /**
@@ -119,7 +157,7 @@ export function canPruneOldBackups(verification: BackupVerification): boolean {
 /**
  * Plan czyszczenia katalogu backupów. `toDelete` jest puste, gdy nowy backup
  * nie przeszedł weryfikacji — stare kopie zostają. Sieroce sidecary (`.sha256`
- * bez pary `.sqlite`) są bezużyteczne niezależnie od weryfikacji.
+ * bez pary `.dump`) są bezużyteczne niezależnie od weryfikacji.
  */
 export function planRetention(
     files: Array<{ name: string; mtimeMs: number }>,
@@ -140,77 +178,163 @@ export interface BackupResult {
     keptCount: number;
 }
 
+interface PostgresConnection {
+    host: string;
+    port: string;
+    user: string;
+    password: string;
+    database: string;
+    sslMode?: string;
+    sslRootCert?: string;
+    sslCert?: string;
+    sslKey?: string;
+}
+
+export function parsePostgresUrl(rawUrl: string): PostgresConnection {
+    const url = new URL(rawUrl);
+    if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+        throw new Error('DATABASE_URL must use PostgreSQL');
+    }
+    const database = decodeURIComponent(url.pathname.slice(1));
+    if (!url.hostname || !database || !url.username) {
+        throw new Error('DATABASE_URL must include host, database and username');
+    }
+    const sslMode = url.searchParams.get('sslmode') ?? undefined;
+    if (sslMode && !['disable', 'verify-full'].includes(sslMode)) {
+        throw new Error('DATABASE_URL has an unsupported sslmode');
+    }
+    const host = url.hostname.replace(/^\[(.*)\]$/, '$1');
+    const isLocalHost = ['localhost', '127.0.0.1', '::1', 'postgres'].includes(host.toLowerCase());
+    if (!isLocalHost && sslMode !== 'verify-full') {
+        throw new Error('Remote PostgreSQL backup connections require sslmode=verify-full');
+    }
+    return {
+        host,
+        port: url.port || '5432',
+        user: decodeURIComponent(url.username),
+        password: decodeURIComponent(url.password),
+        database,
+        sslMode,
+        sslRootCert: url.searchParams.get('sslrootcert') ?? undefined,
+        sslCert: url.searchParams.get('sslcert') ?? undefined,
+        sslKey: url.searchParams.get('sslkey') ?? undefined
+    };
+}
+
+function postgresCliEnvironment(connection: PostgresConnection): NodeJS.ProcessEnv {
+    const env: NodeJS.ProcessEnv = {
+        ...process.env,
+        PGHOST: connection.host,
+        PGPORT: connection.port,
+        PGUSER: connection.user,
+        PGPASSWORD: connection.password,
+        PGDATABASE: connection.database
+    };
+    for (const key of [
+        'DATABASE_URL',
+        'MIGRATION_DATABASE_URL',
+        'BACKUP_DATABASE_URL',
+        'RESTORE_DB_URL',
+        'POSTGRES_TEST_URL',
+        'PLAYWRIGHT_DATABASE_URL'
+    ]) {
+        delete env[key];
+    }
+    if (connection.sslMode) env.PGSSLMODE = connection.sslMode;
+    if (connection.sslRootCert) env.PGSSLROOTCERT = connection.sslRootCert;
+    if (connection.sslCert) env.PGSSLCERT = connection.sslCert;
+    if (connection.sslKey) env.PGSSLKEY = connection.sslKey;
+    return env;
+}
+
+async function sha256File(filePath: string): Promise<string> {
+    const hash = crypto.createHash('sha256');
+    const input = createReadStream(filePath);
+    input.on('data', (chunk: Buffer) => hash.update(chunk));
+    await once(input, 'end');
+    return hash.digest('hex');
+}
+
+function removeBackupFile(filePath: string): void {
+    try {
+        fs.unlinkSync(filePath);
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            throw new Error(`Unable to remove backup artifact: ${path.basename(filePath)}`);
+        }
+    }
+}
+
 /**
- * Pełny cykl backupu: `VACUUM INTO` → sidecar SHA-256 → weryfikacja
- * integralności → retencja → marker świeżości.
+ * Pełny cykl backupu: `pg_dump` custom archive → SHA-256 → format-check
+ * przez `pg_restore --list` → retencja → marker świeżości.
  *
  * Rzuca przy porażce: CLI tłumaczy to na `exit 1` (cron widzi porażkę zamiast
  * cichego sukcesu), a CronService łapie i loguje — procesu aplikacji nie wolno
  * zabijać z powodu backupu, dlatego tutaj nie ma `process.exit`.
  */
-export async function runBackup(prisma: PrismaClient): Promise<BackupResult> {
-    if (!fs.existsSync(backupDir)) {
-        fs.mkdirSync(backupDir, { recursive: true });
-    }
+export async function runBackup(_prisma: PrismaClient): Promise<BackupResult> {
+    ensurePrivateBackupDirectory();
 
     const date = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
     const timestamp = Date.now();
-    const backupName = `backup_${date}_${timestamp}.sqlite`;
+    const backupName = `backup_${date}_${timestamp}.dump`;
     const backupPath = path.join(backupDir, backupName);
+    const rawUrl = process.env.BACKUP_DATABASE_URL;
+    if (!rawUrl) throw new Error('BACKUP_DATABASE_URL is required for PostgreSQL backup');
+    const cliEnv = postgresCliEnvironment(parsePostgresUrl(rawUrl));
+    try {
+        createPrivateBackupArchive(backupPath);
+        execFileSync(
+            process.env.PG_DUMP_BIN || 'pg_dump',
+            ['--format=custom', '--no-owner', '--no-acl', '--exit-on-error', '--file', backupPath],
+            { env: cliEnv, stdio: 'pipe' }
+        );
+    } catch {
+        removeBackupFile(backupPath);
+        throw new Error('pg_dump failed; verify PostgreSQL connectivity and the backup role');
+    }
 
-    // WAL-safe: SQLite's VACUUM INTO tworzy spójny snapshot niezależnie
-    // od aktywnych połączeń i write-ahead log. Bezpieczne nawet gdy
-    // aplikacja pisze do bazy w trakcie backupu.
-    const targetPath = backupPath.replace(/\\/g, '/');
-    await prisma.$executeRawUnsafe(`VACUUM INTO '${targetPath}'`);
+    try {
+        verifyPrivateBackupArchive(backupPath);
+    } catch (error) {
+        removeBackupFile(backupPath);
+        throw error;
+    }
 
     const stats = fs.statSync(backupPath);
-    if (stats.size === 0) throw new Error('Backup pusty (0 B) — VACUUM nie utworzył pliku');
-    console.log(`[Backup] Utworzono: ${backupPath} (${(stats.size / 1024).toFixed(1)} KB)`);
+    if (!stats.isFile() || stats.size === 0) throw new Error('PostgreSQL backup archive is empty');
+    console.log(`[Backup] Utworzono: ${backupName} (${(stats.size / 1024).toFixed(1)} KB)`);
 
-    // P0-F: SHA-256 backupu — restore weryfikuje przed nadpisaniem bazy.
-    const hash = crypto.createHash('sha256').update(fs.readFileSync(backupPath)).digest('hex');
+    const hash = await sha256File(backupPath);
     fs.writeFileSync(backupPath + '.sha256', `${hash}  ${backupName}\n`, 'utf8');
     console.log(`[Backup] SHA-256: ${hash}`);
 
-    // weryfikacja integralności backupu — bramka przed retencją
+    // Archive TOC parsing is a file-format check, not a full restore drill.
     let verification: BackupVerification = 'unverified';
     try {
-        const { DatabaseSync } = await import('node:sqlite');
-        const db = new DatabaseSync(backupPath, { readOnly: true });
-        const row = db.prepare('PRAGMA integrity_check').get() as { integrity_check: string };
-        db.close();
-        if (row.integrity_check !== 'ok')
-            throw new Error(`integrity_check: ${row.integrity_check}`);
+        execFileSync(process.env.PG_RESTORE_BIN || 'pg_restore', ['--list', backupPath], {
+            env: cliEnv,
+            stdio: 'pipe'
+        });
         verification = 'ok';
-        console.log('[Backup] Weryfikacja integralności OK');
+        console.log('[Backup] PostgreSQL archive format verified');
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
-        verification = classifyVerification(msg);
-        console.warn('[Backup] Ostrzeżenie weryfikacji:', msg);
+        verification = msg.includes('ENOENT') ? 'unverified' : 'corrupt';
+        console.warn('[Backup] PostgreSQL archive verification failed');
     }
 
     // W katalogu trzymamy WYŁĄCZNIE zweryfikowane kopie: plik, którego
     // integralności nie da się potwierdzić, wypierałby dobrą kopię
     // w retencji, więc go usuwamy. Stare kopie zostają na dysku.
     if (verification !== 'ok') {
-        try {
-            fs.unlinkSync(backupPath);
-            console.log(`[Backup] Usunięto niezweryfikowany backup (${verification})`);
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            console.warn(`[Backup] Nie udało się usunąć niezweryfikowanego backupu: ${msg}`);
-        }
-        try {
-            fs.unlinkSync(backupPath + '.sha256');
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            console.warn(`[Backup] Nie udało się usunąć sidecara: ${msg}`);
-        }
+        removeBackupFile(backupPath);
+        removeBackupFile(`${backupPath}.sha256`);
+        console.log(`[Backup] Usunięto niezweryfikowany backup (${verification})`);
     }
 
-    // P0.6: retencja liczy WYŁĄCZNIE pliki .sqlite (sidecary .sha256
-    // nie są kopiami — wcześniej 30 plików ≈ 15 backupów).
+    // Retention counts only PostgreSQL archives, not checksum sidecars.
     const files = fs.readdirSync(backupDir);
     const withMtime = files.map((f) => ({
         name: f,
@@ -218,25 +342,21 @@ export async function runBackup(prisma: PrismaClient): Promise<BackupResult> {
     }));
     const { toDelete: toDeleteList, orphanSidecars } = planRetention(withMtime, verification);
 
-    // P0.6: sprzątanie sierot — sidecar bez pary .sqlite.
+    // Remove orphan checksum sidecars.
     for (const f of orphanSidecars) {
-        try {
-            fs.unlinkSync(path.join(backupDir, f));
-            console.log(`[Backup] Usunięto sierocy sidecar: ${f}`);
-        } catch {}
+        removeBackupFile(path.join(backupDir, f));
+        console.log(`[Backup] Usunięto sierocy sidecar: ${f}`);
     }
 
     for (const toDelete of toDeleteList) {
         fs.unlinkSync(path.join(backupDir, toDelete));
-        // P0.6: kasowanie pary sqlite+sha256 atomowo (względem retencji).
-        try {
-            fs.unlinkSync(path.join(backupDir, toDelete + '.sha256'));
-        } catch {}
+        // Remove the archive checksum sidecar with the retained archive.
+        removeBackupFile(path.join(backupDir, toDelete + '.sha256'));
         console.log(`[Backup] Usunięto starą kopię: ${toDelete}`);
     }
 
     const kept = withMtime.filter(
-        (f) => f.name.startsWith('backup_') && f.name.endsWith('.sqlite')
+        (f) => f.name.startsWith('backup_') && f.name.endsWith('.dump')
     ).length;
 
     const keptCount = Math.min(kept, MAX_BACKUPS);
@@ -272,7 +392,6 @@ export async function runBackup(prisma: PrismaClient): Promise<BackupResult> {
 }
 
 async function main() {
-    const prisma = new PrismaClient();
     try {
         await runBackup(prisma);
     } catch (error: unknown) {

@@ -25,6 +25,10 @@ import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validator
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 import { resolveActive, resolveActiveForStamp } from '../../services/pricelistVersionService';
 import { shadowStudnieTotal } from '../../services/pricelist/shadowSum';
+import {
+    decimalMoneyValueToNumber,
+    decimalMoneyRowsToNumbers
+} from '../../services/pricelist/moneySerialization';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -236,8 +240,10 @@ async function getOrderedWellIdsForOffers(offerIds: string[]): Promise<Map<strin
         (await prisma.$queryRaw<Array<{ offerStudnieId: string | null; data: string | null }>>`
         SELECT "offerStudnieId", data FROM orders_studnie_rel
         WHERE "offerStudnieId" IN (${Prisma.join(ids)})
-           OR json_extract(data, '$.offerId') IN (${Prisma.join(ids)})
-           OR json_extract(data, '$.offerStudnieId') IN (${Prisma.join(ids)})
+           OR CASE WHEN pg_input_is_valid(data, 'jsonb')
+                THEN data::jsonb ->> 'offerId' END IN (${Prisma.join(ids)})
+           OR CASE WHEN pg_input_is_valid(data, 'jsonb')
+                THEN data::jsonb ->> 'offerStudnieId' END IN (${Prisma.join(ids)})
     `) || [];
     for (const r of rows) {
         if (!r.data) continue;
@@ -357,12 +363,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
                   }>
               >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice", version,
                 "pricelistVersionId",
-                CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                    THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                    ELSE "createdAt" END as "createdAt",
-                CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                    THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
-                    ELSE "updatedAt" END as "updatedAt"
+                "createdAt",
+                "updatedAt"
               FROM offers_studnie_rel s ${whereCondition} ${cursorWhere}
                 ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}, id ${Prisma.raw(sortDir)}
                 LIMIT ${pq.limit + 1}`
@@ -381,12 +383,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
                   }>
               >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice", version,
                 "pricelistVersionId",
-                CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                    THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                    ELSE "createdAt" END as "createdAt",
-                CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                    THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
-                    ELSE "updatedAt" END as "updatedAt"
+                "createdAt",
+                "updatedAt"
               FROM offers_studnie_rel s ${whereCondition}
                  ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
                 LIMIT ${pq.limit} OFFSET ${pq.skip}`;
@@ -418,13 +416,13 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 type: 'studnia_oferta',
                 userId: offer.userId,
                 title: `Oferta Studnia ${offer.offer_number || offer.id}`,
-                price: typeof offer.totalPrice === 'number' ? offer.totalPrice : 0,
+                price: decimalMoneyValueToNumber(offer.totalPrice) ?? 0,
                 status: offer.state === 'final' ? 'active' : 'draft',
                 createdAt: offer.createdAt || new Date().toISOString(),
                 updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                 lastEditedBy: offer.userId,
                 wellCount: typeof offer.wellCount === 'number' ? offer.wellCount : 0,
-                totalPrice: typeof offer.totalPrice === 'number' ? offer.totalPrice : 0,
+                totalPrice: decimalMoneyValueToNumber(offer.totalPrice) ?? 0,
                 // F3 freeze: wersja cennika z chwili utworzenia (null = legacy).
                 pricelistVersionId: offer.pricelistVersionId ?? null,
                 // P0-D2: baza optimistic lockingu (round-trip bez zmian frontu).
@@ -565,19 +563,22 @@ router.post(
                 pricelistVersionId: string | null;
             }> =
                 incomingIds.length > 0
-                    ? (await prisma.offers_studnie_rel.findMany({
-                          where: { id: { in: incomingIds } },
-                          select: {
-                              id: true,
-                              history: true,
-                              data: true,
-                              state: true,
-                              userId: true,
-                              version: true,
-                              totalPrice: true,
-                              pricelistVersionId: true
-                          }
-                      })) || []
+                    ? decimalMoneyRowsToNumbers(
+                          await prisma.offers_studnie_rel.findMany({
+                              where: { id: { in: incomingIds } },
+                              select: {
+                                  id: true,
+                                  history: true,
+                                  data: true,
+                                  state: true,
+                                  userId: true,
+                                  version: true,
+                                  totalPrice: true,
+                                  pricelistVersionId: true
+                              }
+                          }),
+                          ['totalPrice']
+                      )
                     : [];
             const oldMap = new Map(oldsList.map((r) => [r.id, r]));
             // P4-P0: ordered-well guard jednym zapytaniem (nie per oferta w pętli).
@@ -802,7 +803,7 @@ router.post(
                     // FINAL: snapshot slim jak rury (bez bloba data!) — pełne
                     // dane lądują w audit_logs (logAudit poniżej). Pełny snapshot
                     // 7 MB × 5 wpisów = 29 MB history paraliżowało każdy search
-                    // (json_each po history na liście).
+                    // (pełne JSON history w zapytaniach listy).
                     const oldWells = extractWellsFromOfferData(old.data);
                     const snapshot = {
                         updatedAt: new Date().toISOString(),
@@ -923,8 +924,8 @@ router.post(
                 });
             }
             // Atomowy zapis wszystkich ofert — all-or-nothing (P1.1 correctness).
-            // Timeout 30 s zamiast domyślnych 5 s: upsert oferty z ~3k studni
-            // (~10 MB JSON) potrafi trwać >6 s na SQLite (Transaction API error).
+            // Timeout 30 s: upsert oferty z ~3k studni (~10 MB JSON) może
+            // przekroczyć domyślny limit transakcji przy wolniejszej bazie.
             await prisma.$transaction(async (tx) => {
                 for (const w of pending) {
                     // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
@@ -1016,21 +1017,24 @@ router.put(
                 updatedAt: string | null;
             }> =
                 incomingIds.length > 0
-                    ? (await prisma.offers_studnie_rel.findMany({
-                          where: { id: { in: incomingIds } },
-                          select: {
-                              id: true,
-                              userId: true,
-                              data: true,
-                              wellCount: true,
-                              totalPrice: true,
-                              version: true,
-                              history: true,
-                              state: true,
-                              createdAt: true,
-                              updatedAt: true
-                          }
-                      })) || []
+                    ? decimalMoneyRowsToNumbers(
+                          await prisma.offers_studnie_rel.findMany({
+                              where: { id: { in: incomingIds } },
+                              select: {
+                                  id: true,
+                                  userId: true,
+                                  data: true,
+                                  wellCount: true,
+                                  totalPrice: true,
+                                  version: true,
+                                  history: true,
+                                  state: true,
+                                  createdAt: true,
+                                  updatedAt: true
+                              }
+                          }),
+                          ['totalPrice']
+                      )
                     : [];
             const existingById = new Map(existingDocs.map((d) => [d.id, d]));
             // P4-P0: guard + dane jednym zapytaniem (nie per oferta w pętli).

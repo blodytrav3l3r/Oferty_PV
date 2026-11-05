@@ -1,5 +1,5 @@
 import { parseJsonField } from '../helpers';
-import { Prisma } from '../prismaClient';
+import { Prisma } from '../../generated/prisma-postgres/client';
 
 export interface SearchParams {
     q: string;
@@ -18,7 +18,20 @@ export interface SearchParams {
 }
 
 function escLike(str: string): string {
-    return str.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+    return str.replace(/!/g, '!!').replace(/%/g, '!%').replace(/_/g, '!_');
+}
+
+/** Parse valid stored JSON without treating NULL/empty values as malformed. */
+export function jsonTextSql(column: Prisma.Sql, key: string): Prisma.Sql {
+    return Prisma.sql`COALESCE(NULLIF(${column}, '')::jsonb, '{}'::jsonb) ->> ${key}`;
+}
+
+/** Normalize legacy epoch-ms text and ISO timestamps to PostgreSQL timestamptz. */
+export function normalizedDateTimeSql(column: Prisma.Sql): Prisma.Sql {
+    return Prisma.sql`CASE
+        WHEN ${column} ~ '^[0-9]{13}$' THEN to_timestamp(${column}::double precision / 1000)
+        ELSE NULLIF(${column}, '')::timestamptz
+    END`;
 }
 
 export function parseSearchParams(query: Record<string, unknown>): SearchParams {
@@ -59,9 +72,7 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
  * bo search jest cache'owany (searchCache) tym samym kluczem.
  */
 export function normalizedCreatedAtSql() {
-    return Prisma.sql`CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-        THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER) / 1000, 'unixepoch')
-        ELSE production_orders_rel."createdAt" END`;
+    return normalizedDateTimeSql(Prisma.sql`production_orders_rel."createdAt"`);
 }
 /**
  * Wspólne budowanie klauzul WHERE dla wyszukiwania zleceń produkcyjnych
@@ -89,23 +100,28 @@ export function buildProductionSearchWhere(
     if (cursor && cursorId) {
         const op = params.order === 'desc' ? '<' : '>';
         if (params.sort === 'productionOrderNumber') {
+            const orderNumber = jsonTextSql(
+                Prisma.sql`production_orders_rel.data`,
+                'productionOrderNumber'
+            );
             // Kursor po nr zlecenia (sort leksykograficzny) — koherentny z ORDER BY
             whereParts.push(
-                Prisma.sql`(json_extract(production_orders_rel.data, '$.productionOrderNumber') ${Prisma.raw(op)} ${cursor}
-                    OR (json_extract(production_orders_rel.data, '$.productionOrderNumber') = ${cursor}
+                Prisma.sql`(${orderNumber} ${Prisma.raw(op)} ${cursor}
+                    OR (${orderNumber} = ${cursor}
                         AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
             );
         } else if (params.sort === 'updatedAt') {
+            const updatedAt = normalizedDateTimeSql(Prisma.sql`production_orders_rel."updatedAt"`);
             whereParts.push(
-                Prisma.sql`(production_orders_rel."updatedAt" ${Prisma.raw(op)} ${cursor}
-                    OR (production_orders_rel."updatedAt" = ${cursor}
+                Prisma.sql`(${updatedAt} ${Prisma.raw(op)} ${cursor}::timestamptz
+                    OR (${updatedAt} = ${cursor}::timestamptz
                         AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
             );
         } else {
             // Domyślnie kursor po znormalizowanym createdAt (tie-breaker id)
             whereParts.push(
-                Prisma.sql`(${normalizedCreatedAtSql()} ${Prisma.raw(op)} ${cursor}
-                    OR (${normalizedCreatedAtSql()} = ${cursor}
+                Prisma.sql`(${normalizedCreatedAtSql()} ${Prisma.raw(op)} ${cursor}::timestamptz
+                    OR (${normalizedCreatedAtSql()} = ${cursor}::timestamptz
                         AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
             );
         }
@@ -114,20 +130,23 @@ export function buildProductionSearchWhere(
     if (status === 'draft') {
         whereParts.push(Prisma.sql`(
             production_orders_rel.data IS NULL
-            OR json_extract(production_orders_rel.data, '$.status') IS NOT 'accepted'
-            OR json_extract(production_orders_rel.data, '$.status') IS NULL
+            OR ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status')} IS DISTINCT FROM 'accepted'
         )`);
     } else if (status === 'accepted') {
         whereParts.push(
-            Prisma.sql`json_extract(production_orders_rel.data, '$.status') = 'accepted'`
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status')} = 'accepted'`
         );
     }
 
     if (dateFrom) {
-        whereParts.push(Prisma.sql`${normalizedCreatedAtSql()} >= ${dateFrom}`);
+        whereParts.push(
+            Prisma.sql`${normalizedCreatedAtSql()} >= ${dateFrom + 'T00:00:00.000Z'}::timestamptz`
+        );
     }
     if (dateTo) {
-        whereParts.push(Prisma.sql`${normalizedCreatedAtSql()} <= ${dateTo + 'T23:59:59.999Z'}`);
+        whereParts.push(
+            Prisma.sql`${normalizedCreatedAtSql()} <= ${dateTo + 'T23:59:59.999Z'}::timestamptz`
+        );
     }
 
     if (userId) {
@@ -140,7 +159,7 @@ export function buildProductionSearchWhere(
     if (productionOrderNumber) {
         const v = '%' + escLike(productionOrderNumber) + '%';
         whereParts.push(
-            Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') LIKE ${v} ESCAPE '\\'`
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'productionOrderNumber')} ILIKE ${v} ESCAPE '!'`
         );
     }
     if (salesOrderNumber) {
@@ -148,9 +167,9 @@ export function buildProductionSearchWhere(
         // Nr zamówienia handlowego — w JOIN o.data (orders_studnie_rel) lub fallback w PO data
         whereParts.push(
             Prisma.sql`(
-                json_extract(o.data, '$.orderNumber') LIKE ${v} ESCAPE '\\'
-                OR json_extract(production_orders_rel.data, '$.salesOrderNumber') LIKE ${v} ESCAPE '\\'
-                OR json_extract(production_orders_rel.data, '$.orderNumber') LIKE ${v} ESCAPE '\\'
+                ${jsonTextSql(Prisma.sql`o.data`, 'orderNumber')} ILIKE ${v} ESCAPE '!'
+                OR ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'salesOrderNumber')} ILIKE ${v} ESCAPE '!'
+                OR ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'orderNumber')} ILIKE ${v} ESCAPE '!'
             )`
         );
     }
@@ -170,18 +189,18 @@ export function buildProductionSearchWhere(
     if (q) {
         const v = '%' + escLike(q) + '%';
         const searchParts: Prisma.Sql[] = [
-            Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.wellName') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.projectName') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.obiekt') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.elementName') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.productName') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.snr') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`json_extract(o.data, '$.orderNumber') LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`u1."firstName" LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`u1."lastName" LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`u2."firstName" LIKE ${v} ESCAPE '\\'`,
-            Prisma.sql`u2."lastName" LIKE ${v} ESCAPE '\\'`
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'productionOrderNumber')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'wellName')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'projectName')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'obiekt')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'elementName')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'productName')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'snr')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`${jsonTextSql(Prisma.sql`o.data`, 'orderNumber')} ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`u1."firstName" ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`u1."lastName" ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`u2."firstName" ILIKE ${v} ESCAPE '!'`,
+            Prisma.sql`u2."lastName" ILIKE ${v} ESCAPE '!'`
         ];
         searchWhere =
             whereSql === Prisma.empty

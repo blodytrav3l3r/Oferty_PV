@@ -14,7 +14,7 @@ export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dni (absolute ma
 export const SESSION_ABSOLUTE_MAX_MS = SESSION_MAX_AGE_MS;
 export const SESSION_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1h
 // Throttle dotkniecia lastActivity — zapis max co 5 min, zeby nie dokladac
-// write na kazdy request (SQLite, connection_limit=3).
+// write na każdy request (niepotrzebne obciążenie puli PostgreSQL).
 export const SESSION_TOUCH_THROTTLE_MS = 5 * 60 * 1000;
 export type SessionExpiredReason = 'idle' | 'absolute';
 
@@ -25,6 +25,12 @@ export const SESSION_MAX_PER_USER = 10;
 // Znany wycieknięty sekret 'anim123456' też jest zawsze odrzucany
 // (inline w guardzie, nie stała) — brak cichego tworzenia admina.
 const DEFAULT_ADMIN_PLACEHOLDER_PASSWORD = 'CHANGE_ME_PLEASE';
+
+export function isUnsafeDefaultAdminPassword(password: string | undefined): boolean {
+    return (
+        !password || password === 'anim123456' || password === DEFAULT_ADMIN_PLACEHOLDER_PASSWORD
+    );
+}
 
 export interface Session {
     token: string;
@@ -46,8 +52,8 @@ export interface AuthenticatedRequest extends Request {
     user?: User;
 }
 
-// P1-auth-cache: gorąca ścieżka robiła 2Q per request (sesja + user) na
-// 1 połączeniu SQLite. Cache usera per token hash z krótkim TTL 30 s —
+// P1-auth-cache: gorąca ścieżka robiła 2Q per request (sesja + user).
+// Cache usera per token hash z krótkim TTL 30 s —
 // odświeżenie roli/uprawnień opóźnione max 30 s, akceptowalne dla 100 userów.
 // Unieważniane w deleteSession/deleteUserSessions (wylogowanie/zmiana hasła).
 const AUTH_CACHE_TTL_MS = 30_000;
@@ -424,10 +430,7 @@ export async function ensureAdminExists(): Promise<void> {
             // W1: znane współdzielone sekrety odrzucane w KAŻDYM środowisku
             // (wcześniej dev ostrzegał i tworzył admina). Hasło trzeba
             // ustawić jawnie w env — brak cichego fallbacku.
-            if (
-                defaultPassword === 'anim123456' ||
-                defaultPassword === DEFAULT_ADMIN_PLACEHOLDER_PASSWORD
-            ) {
+            if (isUnsafeDefaultAdminPassword(defaultPassword)) {
                 logger.error(
                     'Auth',
                     'BŁĄD KRYTYCZNY: użyto domyślnego hasła administratora. Ustaw losowe hasło w DEFAULT_ADMIN_PASSWORD.'

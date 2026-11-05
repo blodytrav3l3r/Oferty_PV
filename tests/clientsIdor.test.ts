@@ -5,6 +5,29 @@ import prisma from '../src/prismaClient';
 
 const mockUser: any = { id: 'user-id', role: 'user', subUsers: [] };
 
+function captureSql(query: unknown): { sql: string; values: unknown[] } {
+    const values: unknown[] = [];
+    const render = (part: unknown): string => {
+        if (typeof part !== 'object' || part === null) {
+            values.push(part);
+            return '?';
+        }
+        const sql = part as { strings?: unknown; values?: unknown };
+        const strings = sql.strings;
+        const parts = sql.values;
+        if (!Array.isArray(strings) || !Array.isArray(parts)) {
+            values.push(part);
+            return '?';
+        }
+        return (strings as string[]).reduce(
+            (result: string, fragment: string, index: number) =>
+                result + fragment + (index < parts.length ? render(parts[index]) : ''),
+            ''
+        );
+    };
+    return { sql: render(query), values };
+}
+
 jest.mock('../src/middleware/auth', () => ({
     requireAuth: (req: any, _res: any, next: any) => {
         req.user = { ...mockUser };
@@ -161,13 +184,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                     if (sql.includes('SELECT id')) return [{ id: 'c1', userId: 'userB' }];
                     return [{ id: 'c1' }];
                 }),
-                $queryRawUnsafe: jest
-                    .fn()
-                    .mockImplementation(async (sql: string, ...values: any[]) => {
-                        upserts.push({ sql, values });
-                        return [{ id: 'c1' }];
-                    }),
-                $executeRaw: jest.fn().mockResolvedValue(1),
+                $executeRaw: jest.fn().mockImplementation(async (query: unknown) => {
+                    upserts.push(captureSql(query));
+                    return 1;
+                }),
                 clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
@@ -195,13 +215,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                     if (sql.includes('SELECT id')) return [];
                     return [{ id: 'c-new' }];
                 }),
-                $queryRawUnsafe: jest
-                    .fn()
-                    .mockImplementation(async (sql: string, ...values: any[]) => {
-                        upserts.push({ sql, values });
-                        return [{ id: 'c-new' }];
-                    }),
-                $executeRaw: jest.fn().mockResolvedValue(1),
+                $executeRaw: jest.fn().mockImplementation(async (query: unknown) => {
+                    upserts.push(captureSql(query));
+                    return 1;
+                }),
                 clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
@@ -292,7 +309,6 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             expect(txMock.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
             expect(txMock.$executeRaw).not.toHaveBeenCalled();
             expect(txMock.clients_rel.deleteMany).not.toHaveBeenCalled();
-            expect(txMock.$queryRawUnsafe).not.toHaveBeenCalled();
         });
 
         it('P0: pro-opiekun usuwa klienta podwładnego → 200', async () => {
@@ -334,7 +350,7 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             expect(txMock.clients_rel.deleteMany).toHaveBeenCalledWith({
                 where: { id: { in: ['c-obcy'] } }
             });
-            expect(txMock.$queryRawUnsafe).toHaveBeenCalledTimes(1);
+            expect(txMock.$executeRaw).toHaveBeenCalledTimes(1);
         });
     });
 });

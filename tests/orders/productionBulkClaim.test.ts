@@ -145,7 +145,7 @@ jest.mock('../../src/prismaClient', () => ({
             deleteMany: jest.fn(async () => ({ count: 0 }))
         },
         // P0-B: transakcja interaktywna — brak izolacji między współbieżnymi tx
-        // (jak SQLite bez locka aplikacyjnego): findMany z opóźnieniem wymusza
+        // (bez locka aplikacyjnego): findMany z opóźnieniem wymusza
         // przeplot, deleteMany kasuje warunkowo i zwraca realny count.
         // Rollback: undo-log tylko własnych zmian (jak ROLLBACK w DB —
         // nie rusza commitów innych tx).

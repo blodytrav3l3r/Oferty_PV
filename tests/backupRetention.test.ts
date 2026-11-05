@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import {
     selectBackupsForRetention,
@@ -6,55 +8,54 @@ import {
     canPruneOldBackups,
     classifyVerification,
     planRetention,
-    MAX_BACKUPS
+    MAX_BACKUPS,
+    ensurePrivateBackupDirectory,
+    createPrivateBackupArchive,
+    verifyPrivateBackupArchive
 } from '../scripts/backup';
 import { resolveDataDir, resolveProjectRoot } from '../src/utils/paths';
 
-function files(nSqlite: number, nSha: number) {
+function files(nDumps: number, nSha: number) {
     const out: Array<{ name: string; mtimeMs: number }> = [];
-    for (let i = 0; i < nSqlite; i++) {
-        out.push({ name: `backup_2026-01-01_${i}.sqlite`, mtimeMs: i });
+    for (let i = 0; i < nDumps; i++) {
+        out.push({ name: `backup_2026-01-01_${i}.dump`, mtimeMs: i });
         if (i < nSha) {
-            out.push({ name: `backup_2026-01-01_${i}.sqlite.sha256`, mtimeMs: i });
+            out.push({ name: `backup_2026-01-01_${i}.dump.sha256`, mtimeMs: i });
         }
     }
     return out;
 }
 
 describe('P0.6 retencja backupu', () => {
-    it('limit retencji to 1 kopia (baza kopiowana sposobem zewnętrznym)', () => {
+    it('limit retencji wynosi 1 sprawdzone archiwum', () => {
         expect(MAX_BACKUPS).toBe(1);
     });
 
-    it('domyślny limit: 10 sqlite -> zostaje tylko najnowsza', () => {
+    it('domyślny limit: 10 PostgreSQL -> zostaje tylko najnowsza', () => {
         const toDelete = selectBackupsForRetention(files(10, 10));
         expect(toDelete).toHaveLength(9);
-        expect(toDelete).not.toContain('backup_2026-01-01_9.sqlite');
+        expect(toDelete).not.toContain('backup_2026-01-01_9.dump');
     });
 
-    it('liczy wyłącznie .sqlite: 7 sqlite + 7 sha przy limicie 7 -> usuwa 0', () => {
+    it('liczy wyłącznie .dump: 7 PostgreSQL + 7 sha przy limicie 7 -> usuwa 0', () => {
         expect(selectBackupsForRetention(files(7, 7), 7)).toEqual([]);
     });
 
-    it('9 sqlite + 9 sha przy limicie 7 -> usuwa dokładnie 2 najstarsze .sqlite', () => {
+    it('9 PostgreSQL + 9 sha przy limicie 7 -> usuwa dokładnie 2 najstarsze .dump', () => {
         expect(selectBackupsForRetention(files(9, 9), 7)).toEqual([
-            'backup_2026-01-01_0.sqlite',
-            'backup_2026-01-01_1.sqlite'
+            'backup_2026-01-01_0.dump',
+            'backup_2026-01-01_1.dump'
         ]);
     });
 
-    it('same sidecary bez limitu przekroczenia -> brak usuwania sqlite', () => {
+    it('same sidecary bez limitu przekroczenia -> brak usuwania PostgreSQL', () => {
         expect(selectBackupsForRetention(files(5, 5), 7)).toEqual([]);
     });
 
-    it('wykrywa sieroce sidecary (sha bez pary sqlite)', () => {
+    it('wykrywa sieroce sidecary (sha bez pary PostgreSQL)', () => {
         expect(
-            findOrphanSidecars([
-                'backup_a.sqlite',
-                'backup_a.sqlite.sha256',
-                'backup_b.sqlite.sha256'
-            ])
-        ).toEqual(['backup_b.sqlite.sha256']);
+            findOrphanSidecars(['backup_a.dump', 'backup_a.dump.sha256', 'backup_b.dump.sha256'])
+        ).toEqual(['backup_b.dump.sha256']);
     });
 });
 
@@ -65,11 +66,9 @@ describe('Bramka retencji: stare kopie zostają bez zweryfikowanego backupu', ()
         expect(canPruneOldBackups('unverified')).toBe(false);
     });
 
-    it('klasyfikuje błąd: integralność -> corrupt, brak możliwości sprawdzenia -> unverified', () => {
-        expect(classifyVerification('integrity_check: database disk image is malformed')).toBe(
-            'corrupt'
-        );
-        expect(classifyVerification('EBUSY: resource busy or locked')).toBe('unverified');
+    it('klasyfikuje błąd archiwum lub brak narzędzia walidacyjnego', () => {
+        expect(classifyVerification('pg_restore: unsupported archive version')).toBe('corrupt');
+        expect(classifyVerification('spawn pg_restore ENOENT')).toBe('unverified');
     });
 
     it('plan retencji: 10 kopii przy unverified -> nic nie usuwamy', () => {
@@ -85,19 +84,19 @@ describe('Bramka retencji: stare kopie zostają bez zweryfikowanego backupu', ()
     it('plan retencji: 10 kopii przy ok -> zostaje tylko najnowsza', () => {
         const plan = planRetention(files(10, 10), 'ok');
         expect(plan.toDelete).toHaveLength(9);
-        expect(plan.toDelete).not.toContain('backup_2026-01-01_9.sqlite');
+        expect(plan.toDelete).not.toContain('backup_2026-01-01_9.dump');
     });
 
-    it('plan retencji: sieroty (sha bez pary sqlite) sprzątane niezależnie od weryfikacji', () => {
+    it('plan retencji: sieroty (sha bez pary PostgreSQL) sprzątane niezależnie od weryfikacji', () => {
         const plan = planRetention(
             [
-                { name: 'backup_a.sqlite', mtimeMs: 1 },
-                { name: 'backup_a.sqlite.sha256', mtimeMs: 1 },
-                { name: 'backup_b.sqlite.sha256', mtimeMs: 2 }
+                { name: 'backup_a.dump', mtimeMs: 1 },
+                { name: 'backup_a.dump.sha256', mtimeMs: 1 },
+                { name: 'backup_b.dump.sha256', mtimeMs: 2 }
             ],
             'unverified'
         );
-        expect(plan.orphanSidecars).toEqual(['backup_b.sqlite.sha256']);
+        expect(plan.orphanSidecars).toEqual(['backup_b.dump.sha256']);
         expect(plan.toDelete).toEqual([]);
     });
 });
@@ -117,5 +116,50 @@ describe('P0.1 kontrakt ścieżki backupu', () => {
         expect(path.isAbsolute(dir)).toBe(true);
         expect(dir.split(path.sep)).not.toContain('dist');
         expect(dir.endsWith(`data${path.sep}backups`)).toBe(true);
+    });
+});
+
+describe('Uprawnienia archiwów PostgreSQL', () => {
+    it('tworzy katalog backupu prywatny dla właściciela i odrzuca symlink', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-backup-permissions-'));
+        const directory = path.join(root, 'backups');
+        const target = path.join(root, 'target');
+        fs.mkdirSync(target);
+        try {
+            ensurePrivateBackupDirectory(directory);
+            expect(fs.statSync(directory).isDirectory()).toBe(true);
+            if (process.platform !== 'win32') {
+                fs.chmodSync(directory, 0o777);
+                ensurePrivateBackupDirectory(directory);
+                expect(fs.statSync(directory).mode & 0o077).toBe(0);
+                fs.symlinkSync(target, path.join(root, 'link'), 'dir');
+                expect(() => ensurePrivateBackupDirectory(path.join(root, 'link'))).toThrow(
+                    /symbolic link/
+                );
+            }
+        } finally {
+            fs.rmSync(root, { recursive: true, force: true });
+        }
+    });
+
+    it('tworzy nowe archiwum wyłącznie z prawami właściciela i naprawia zbyt szerokie prawa', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-backup-archive-'));
+        const archive = path.join(root, 'backup.dump');
+        try {
+            createPrivateBackupArchive(archive);
+            fs.writeFileSync(archive, 'fixture', 'utf8');
+            verifyPrivateBackupArchive(archive);
+            if (process.platform !== 'win32') {
+                expect(fs.statSync(archive).mode & 0o077).toBe(0);
+                fs.chmodSync(archive, 0o644);
+                verifyPrivateBackupArchive(archive);
+                expect(fs.statSync(archive).mode & 0o077).toBe(0);
+                const link = path.join(root, 'backup-link.dump');
+                fs.symlinkSync(archive, link);
+                expect(() => verifyPrivateBackupArchive(link)).toThrow(/regular file/);
+            }
+        } finally {
+            fs.rmSync(root, { recursive: true, force: true });
+        }
     });
 });

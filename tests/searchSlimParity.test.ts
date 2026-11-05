@@ -1,9 +1,5 @@
-/**
- * P1-C: parzystość LIST slim vs full — pola kart (ceny, liczniki, nazwy,
- * numery, historia) identyczne, bez pełnego bloba na liście.
- * Projekcja liczona prawdziwym json_extract (node:sqlite), nie mockiem.
- */
-import { DatabaseSync } from 'node:sqlite';
+import { Prisma } from '../generated/prisma-postgres/client';
+import prisma from '../src/prismaClient';
 import { mapOfferRow, RawOfferRow } from '../src/utils/searchUtils';
 
 function fixtureBlob() {
@@ -30,57 +26,7 @@ function fixtureBlob() {
     };
 }
 
-// Stary mapper (full blob) — wyciąg z mapOfferRow sprzed P1-C.
-function oldMap(row: any) {
-    const offer: any = { ...row };
-    offer.type = row._type === 'studnie' ? 'studnia_oferta' : 'offer';
-    offer.number = row.offer_number || '';
-    offer._orderCount = Number(row._orderCount);
-    try {
-        offer.data = JSON.parse(row.data);
-    } catch {
-        offer.data = {};
-    }
-    try {
-        offer.history = JSON.parse(row.history);
-    } catch {
-        offer.history = [];
-    }
-    if (!offer.clientName && !offer.investName) {
-        offer.clientName = offer.data.clientName || '';
-        offer.investName = offer.data.investName || '';
-        offer.clientNip = offer.data.clientNip || '';
-    }
-    offer.clientName = offer.clientName || '';
-    offer.investName = offer.investName || '';
-    offer.clientNip = offer.clientNip || '';
-    return offer;
-}
-
-const PROJ = `json_extract(data,'$.clientName') AS "d_clientName",
-    json_extract(data,'$.investName') AS "d_investName",
-    json_extract(data,'$.investAddress') AS "d_investAddress",
-    json_extract(data,'$.clientNip') AS "d_clientNip",
-    json_extract(data,'$.clientNumber') AS "d_clientNumber",
-    json_extract(data,'$.totalNetto') AS "d_totalNetto",
-    json_extract(data,'$.totalBrutto') AS "d_totalBrutto",
-    json_extract(data,'$.summary') AS "d_summary",
-    json_extract(data,'$.costSummary') AS "d_costSummary",
-    CASE WHEN json_extract(data,'$.wellsExport') IS NULL THEN NULL
-    ELSE (SELECT COALESCE(SUM(value->>'totalPrice'), 0)
-          FROM json_each(data, '$.wellsExport'))
-    END AS "d_wellsExportTotal",
-    json_array_length(data,'$.wells') AS "d_wellsCount",
-    json_array_length(data,'$.items') AS "d_itemsCount",
-    json_extract(data,'$.userName') AS "d_userName",
-    json_extract(data,'$.creatorName') AS "d_creatorName",
-    json_extract(data,'$.createdByUserName') AS "d_createdByUserName",
-    json_extract(data,'$.budowa') AS "d_budowa",
-    json_extract(data,'$.number') AS "d_number",
-    json_extract(data,'$.offerNumber') AS "d_offerNumber"`;
-
 function priceOf(offer: any): number {
-    // Kopia logiki getOfferPrice (kartotekaHelpers.js) po P1-C.
     const preSum = offer.wellsExportTotal ?? offer.data?.wellsExportTotal;
     if (typeof preSum === 'number') return preSum;
     if (offer.type === 'studnia_oferta') {
@@ -102,130 +48,167 @@ function priceOf(offer: any): number {
     return v || 0;
 }
 
-describe('P1-C slim LIST parity', () => {
-    test('karta z pełnego bloba == karta z projekcji', () => {
-        const db = new DatabaseSync(':memory:');
-        const blob = JSON.stringify(fixtureBlob());
-        db.exec('CREATE TABLE t (id TEXT, data TEXT, history TEXT)');
-        db.prepare('INSERT INTO t VALUES (?, ?, ?)').run('o1', blob, JSON.stringify([{ a: 1 }]));
-        const full = db.prepare('SELECT id, data, history FROM t').get() as any;
-        const slim = db.prepare(`SELECT id, history, ${PROJ} FROM t`).get() as any;
-        db.close();
+const PROJECTION_SQL = `
+    data::jsonb ->> 'clientName' AS "d_clientName",
+    data::jsonb ->> 'investName' AS "d_investName",
+    data::jsonb ->> 'investAddress' AS "d_investAddress",
+    data::jsonb ->> 'clientNip' AS "d_clientNip",
+    data::jsonb ->> 'clientNumber' AS "d_clientNumber",
+    data::jsonb ->> 'totalNetto' AS "d_totalNetto",
+    data::jsonb ->> 'totalBrutto' AS "d_totalBrutto",
+    (data::jsonb -> 'summary')::text AS "d_summary",
+    (data::jsonb -> 'costSummary')::text AS "d_costSummary",
+    CASE WHEN jsonb_typeof(data::jsonb -> 'wellsExport') = 'array' THEN (
+        SELECT ROUND(COALESCE(SUM(CASE
+            WHEN (well.value ->> 'totalPrice') ~ '^-?[0-9]+([.][0-9]+)?$'
+            THEN (well.value ->> 'totalPrice')::numeric END), 0), 2)::double precision
+        FROM jsonb_array_elements(data::jsonb -> 'wellsExport') AS well(value)
+    ) ELSE NULL END AS "d_wellsExportTotal",
+    CASE WHEN jsonb_typeof(data::jsonb -> 'wells') = 'array'
+        THEN jsonb_array_length(data::jsonb -> 'wells') ELSE NULL END AS "d_wellsCount",
+    CASE WHEN jsonb_typeof(data::jsonb -> 'items') = 'array'
+        THEN jsonb_array_length(data::jsonb -> 'items') ELSE NULL END AS "d_itemsCount",
+    data::jsonb ->> 'userName' AS "d_userName",
+    data::jsonb ->> 'creatorName' AS "d_creatorName",
+    data::jsonb ->> 'createdByUserName' AS "d_createdByUserName",
+    data::jsonb ->> 'budowa' AS "d_budowa",
+    data::jsonb ->> 'number' AS "d_number",
+    data::jsonb ->> 'offerNumber' AS "d_offerNumber"`;
 
-        const base = {
-            id: 'o1',
-            userId: 'u1',
-            clientId: null,
-            state: 'draft',
-            createdAt: '2026-01-01',
-            updatedAt: '2026-01-02',
-            offer_number: 'O/1',
-            _type: 'studnie',
-            transportCost: 0,
-            _orderCount: 0,
-            clientName: '',
-            investName: '',
-            clientNip: '',
-            clientNumber: ''
-        };
-        const oldRow = { ...base, data: full.data, history: full.history };
-        const newRow = { ...base, history: slim.history } as unknown as RawOfferRow;
-        for (const k of Object.keys(slim)) {
-            if (k.startsWith('d_')) (newRow as any)[k] = (slim as any)[k];
-        }
+async function project(data: unknown, history: unknown = []): Promise<Record<string, unknown>> {
+    const rows = await prisma.$queryRaw<Record<string, unknown>[]>(Prisma.sql`
+        WITH fixture AS (
+            SELECT ${JSON.stringify(data)}::jsonb AS data,
+                   ${JSON.stringify(history)}::jsonb AS history
+        )
+        SELECT COALESCE((SELECT jsonb_agg(jsonb_build_object(
+                   'updatedAt', h.value->'updatedAt', 'timestamp', h.value->'timestamp',
+                   'state', h.value->'state', 'totalBrutto', h.value->'totalBrutto',
+                   'lastEditedBy', h.value->'lastEditedBy', 'userName', h.value->'userName',
+                   'itemsCount', CASE WHEN jsonb_typeof(h.value->'items') = 'array'
+                       THEN jsonb_array_length(h.value->'items') ELSE NULL END
+               ) ORDER BY h.ordinality)::text
+               FROM jsonb_array_elements(history) WITH ORDINALITY AS h(value, ordinality)), '[]') AS history,
+               ${Prisma.raw(PROJECTION_SQL)}
+        FROM fixture
+    `);
+    const row = rows[0];
+    if (!row) throw new Error('PostgreSQL projection returned no row');
+    return row;
+}
 
-        const a = oldMap(oldRow);
-        const b = mapOfferRow(newRow);
+function baseRow(overrides: Partial<RawOfferRow> = {}): RawOfferRow {
+    return {
+        id: 'o1',
+        userId: 'u1',
+        clientId: null,
+        state: 'draft',
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-02',
+        offer_number: 'O/1',
+        pricelistVersionId: null,
+        history: '[]',
+        clientName: '',
+        investName: '',
+        clientNip: '',
+        clientNumber: '',
+        _type: 'studnie',
+        transportCost: 0,
+        _orderCount: 0,
+        _fu_outcome: null,
+        _fu_next: null,
+        _fu_last: null,
+        d_clientName: null,
+        d_investName: null,
+        d_investAddress: null,
+        d_clientNip: null,
+        d_clientNumber: null,
+        d_totalNetto: null,
+        d_totalBrutto: null,
+        d_summary: null,
+        d_costSummary: null,
+        d_wellsExportTotal: null,
+        d_wellsCount: null,
+        d_itemsCount: null,
+        d_userName: null,
+        d_creatorName: null,
+        d_createdByUserName: null,
+        d_budowa: null,
+        d_number: null,
+        d_offerNumber: null,
+        ...overrides
+    };
+}
 
-        // Cena karty (kopie logiki getOfferPrice).
-        expect(priceOf({ ...b, wellsExport: undefined, data: b.data })).toBe(priceOf(a));
-        expect(priceOf(b)).toBe(priceOf(a));
-        // Liczniki.
-        expect(b.data.wellsCount).toBe(a.data.wells.length);
-        expect(b.data.itemsCount).toBe(a.data.items.length);
-        // Nazwy / NIP / adres.
-        expect(b.clientName).toBe(a.clientName || a.data.clientName);
-        expect(b.data.investAddress).toBe(a.data.investAddress);
-        expect(b.data.clientNip).toBe(a.data.clientNip);
-        // Numery i użytkownicy.
-        for (const k of [
-            'userName',
-            'creatorName',
-            'createdByUserName',
-            'budowa',
-            'number',
-            'offerNumber'
-        ]) {
-            expect(b.data[k]).toBe(a.data[k]);
-        }
-        // Historia bez zmian, typ/numer/orderCount bez zmian.
-        expect(b.history).toEqual(a.history);
-        expect(b.type).toBe(a.type);
-        expect(b.number).toBe(a.number);
-        // Slim nie niesie śmieci ani pełnego bloba.
-        expect(JSON.stringify(b).length).toBeLessThan(JSON.stringify(a).length / 5);
-        expect(JSON.stringify(b)).not.toContain('drop me');
-        expect(JSON.stringify(b)).not.toContain('z'.repeat(100));
-    });
+describe('PostgreSQL slim offer-list projection parity', () => {
+    test('slim card values match values from the full JSON payload', async () => {
+        const data = fixtureBlob();
+        const history = [{ updatedAt: '2026-01-01', state: 'draft', items: [{ productId: 'p1' }] }];
+        const slim = await project(data, history);
+        const mapped = mapOfferRow(
+            baseRow({
+                history: String(slim.history),
+                d_clientName: slim.d_clientName as string | null,
+                d_investName: slim.d_investName as string | null,
+                d_investAddress: slim.d_investAddress as string | null,
+                d_clientNip: slim.d_clientNip as string | null,
+                d_clientNumber: slim.d_clientNumber as string | null,
+                d_totalNetto: slim.d_totalNetto as string | null,
+                d_totalBrutto: slim.d_totalBrutto as string | null,
+                d_summary: slim.d_summary as string | null,
+                d_costSummary: slim.d_costSummary as string | null,
+                d_wellsExportTotal: slim.d_wellsExportTotal as number | null,
+                d_wellsCount: slim.d_wellsCount as number | null,
+                d_itemsCount: slim.d_itemsCount as number | null,
+                d_userName: slim.d_userName as string | null,
+                d_creatorName: slim.d_creatorName as string | null,
+                d_createdByUserName: slim.d_createdByUserName as string | null,
+                d_budowa: slim.d_budowa as string | null,
+                d_number: slim.d_number as string | null,
+                d_offerNumber: slim.d_offerNumber as string | null
+            })
+        );
 
-    test('wellsExportTotal: suma z SQL, brak tablicy na liście', () => {
-        const db = new DatabaseSync(':memory:');
-        db.exec('CREATE TABLE w (data TEXT)');
-        const blob = JSON.stringify({
-            totalNetto: 50,
-            wellsExport: [
-                {
-                    id: 'w1',
-                    totalPrice: 100,
-                    config: [{ heavy: 'x'.repeat(5000) }],
-                    przejscia: [1, 2, 3]
-                },
-                { id: 'w2', totalPrice: 200, config: [], przejscia: [] }
-            ]
+        expect(priceOf(mapped)).toBe(303);
+        expect(mapped.data.wellsCount).toBe(data.wells.length);
+        expect(mapped.data.itemsCount).toBe(data.items.length);
+        expect(mapped.data.investAddress).toBe(data.investAddress);
+        expect(mapped.data.clientNip).toBe(data.clientNip);
+        expect(mapped.data.userName).toBe(data.userName);
+        expect(mapped.data.summary).toEqual({
+            totalValue: 999.99,
+            totalNetto: 888.88,
+            totalBrutto: 1077.77
         });
-        db.prepare('INSERT INTO w VALUES (?)').run(blob);
-        db.prepare(`INSERT INTO w VALUES (?)`).run(JSON.stringify({ totalNetto: 50 }));
-        const rows = db
-            .prepare(
-                `SELECT CASE WHEN json_extract(data,'$.wellsExport') IS NULL THEN NULL
-                 ELSE (SELECT COALESCE(SUM(value->>'totalPrice'), 0)
-                       FROM json_each(data, '$.wellsExport'))
-                 END AS "d_wellsExportTotal",
-                 json_extract(data,'$.totalNetto') AS "d_totalNetto" FROM w`
-            )
-            .all() as any[];
-        db.close();
-        const base: any = {
-            id: 'o1',
-            userId: null,
-            clientId: null,
-            state: null,
-            createdAt: null,
-            updatedAt: null,
-            offer_number: null,
-            history: null,
-            _type: 'studnie',
-            transportCost: null,
-            _orderCount: 0,
-            clientName: null,
-            investName: null,
-            clientNip: null,
-            clientNumber: null
-        };
-        const withExport = mapOfferRow({ ...base, ...rows[0] });
-        expect(withExport.data.wellsExportTotal).toBe(300);
-        expect(withExport.data.wellsExport).toBeUndefined();
-        expect(JSON.stringify(withExport).length).toBeLessThan(500);
-        // Brak wellsExport → skalar, jak pełna (cena ze skalarów, nie 0).
-        const withoutExport = mapOfferRow({ ...base, ...rows[1] });
-        expect(withoutExport.data.wellsExportTotal).toBeUndefined();
-        expect(withoutExport.data.totalNetto).toBe(50);
+        expect(mapped.history).toEqual([
+            {
+                updatedAt: '2026-01-01',
+                timestamp: null,
+                state: 'draft',
+                totalBrutto: null,
+                lastEditedBy: null,
+                userName: null,
+                itemsCount: 1
+            }
+        ]);
+        expect(JSON.stringify(mapped)).not.toContain('drop me');
+        expect(JSON.stringify(mapped)).not.toContain('z'.repeat(100));
     });
 
-    test('historia slim: długość + skalary + itemsCount, bez pełnych pozycji', () => {
-        const db = new DatabaseSync(':memory:');
-        db.exec('CREATE TABLE h (history TEXT)');
-        const hist = JSON.stringify([
+    test('well export totals preserve decimal values and missing arrays remain null', async () => {
+        const [withExport, withoutExport] = await Promise.all([
+            project({
+                totalNetto: 50,
+                wellsExport: [{ totalPrice: 100.25 }, { totalPrice: '200.25' }]
+            }),
+            project({ totalNetto: 50 })
+        ]);
+        expect(Number(withExport.d_wellsExportTotal)).toBe(300.5);
+        expect(withoutExport.d_wellsExportTotal).toBeNull();
+    });
+
+    test('history preserves order and scalar types while dropping full items', async () => {
+        const history = [
             {
                 updatedAt: '2026-01-01',
                 state: 'draft',
@@ -238,20 +221,9 @@ describe('P1-C slim LIST parity', () => {
                 }))
             },
             { updatedAt: '2026-01-02', state: 'final', totalBrutto: 200 }
-        ]);
-        db.prepare('INSERT INTO h VALUES (?)').run(hist);
-        const row = db
-            .prepare(
-                `SELECT COALESCE((SELECT json_group_array(json_object(
-                    'updatedAt', value->>'updatedAt', 'timestamp', value->>'timestamp',
-                    'state', value->>'state', 'totalBrutto', value->>'totalBrutto',
-                    'lastEditedBy', value->>'lastEditedBy', 'userName', value->>'userName',
-                    'itemsCount', json_array_length(value, '$.items')))
-                FROM json_each(COALESCE(history, '[]'))), '[]') AS history FROM h`
-            )
-            .get() as any;
-        db.close();
-        const slim = JSON.parse(row.history);
+        ];
+        const row = await project({}, history);
+        const slim = JSON.parse(String(row.history)) as Record<string, unknown>[];
         expect(slim).toHaveLength(2);
         expect(slim[0]).toMatchObject({
             updatedAt: '2026-01-01',
@@ -260,103 +232,56 @@ describe('P1-C slim LIST parity', () => {
             itemsCount: 50
         });
         expect(slim[0].items).toBeUndefined();
-        expect(JSON.stringify(slim).length).toBeLessThan(hist.length / 10);
-        // Popup: długość + licznik jak pełna.
-        const full = JSON.parse(hist);
-        expect(slim.length).toBe(full.length);
-        expect(slim[0].itemsCount).toBe(full[0].items.length);
+        expect(JSON.stringify(slim).length).toBeLessThan(JSON.stringify(history).length / 10);
     });
 
-    test('Prisma zwraca BigInt z funkcji JSON — mapper konwertuje (regresja live)', () => {
-        const base: any = {
-            id: 'o1',
-            userId: null,
-            clientId: null,
-            state: null,
-            createdAt: null,
-            updatedAt: null,
-            offer_number: null,
-            history: '[]',
-            _type: 'studnie',
-            transportCost: null,
-            _orderCount: 0,
-            clientName: null,
-            investName: null,
-            clientNip: null,
-            clientNumber: null,
-            d_wellsCount: BigInt(2317),
-            d_itemsCount: null,
-            d_wellsExportTotal: BigInt(0)
-        };
-        const mapped = mapOfferRow(base);
+    test('mapper normalizes bigint counts before JSON serialization', () => {
+        const mapped = mapOfferRow(
+            baseRow({ d_wellsCount: 2317n, d_itemsCount: null, d_wellsExportTotal: 0n })
+        );
         expect(mapped.data.wellsCount).toBe(2317);
         expect(mapped.data.itemsCount).toBeUndefined();
-        // Wynik serializuje się (żaden BigInt nie dociera do res.json).
         expect(() => JSON.stringify(mapped)).not.toThrow();
     });
 
-    test('licznik rur z offer_items_rel (SSoT), fallback na blob', () => {
-        // Karta "0 poz." mimo ceny: blob po zapisie slim bez items, rel pełny.
-        const db = new DatabaseSync(':memory:');
-        db.exec('CREATE TABLE o (id TEXT, data TEXT)');
-        db.exec('CREATE TABLE offer_items_rel (id TEXT, offerId TEXT)');
-        db.prepare('INSERT INTO o VALUES (?, ?)').run(
-            'wiped',
-            JSON.stringify({ totalNetto: 5850 })
-        );
-        db.prepare('INSERT INTO o VALUES (?, ?)').run(
-            'legacy',
-            JSON.stringify({ items: [{ productId: 'p1' }, { productId: 'p2' }] })
-        );
-        db.prepare('INSERT INTO o VALUES (?, ?)').run(
-            'both',
-            JSON.stringify({ items: [{ productId: 'p1' }] })
-        );
-        const ins = db.prepare('INSERT INTO offer_items_rel VALUES (?, ?)');
-        for (let i = 0; i < 4; i++) ins.run(`w${i}`, 'wiped');
-        for (let i = 0; i < 4; i++) ins.run(`b${i}`, 'both');
-        const rows = db
-            .prepare(
-                `SELECT o.id,
-                    COALESCE(i_rel.item_count, json_array_length(o.data, '$.items')) AS "d_itemsCount"
-                 FROM o
-                 LEFT JOIN (
-                     SELECT "offerId", COUNT(*) as item_count
-                     FROM offer_items_rel
-                     GROUP BY "offerId"
-                 ) i_rel ON i_rel."offerId" = o.id`
+    test('relational item count wins over blob count and blob is fallback', async () => {
+        const rows = await prisma.$queryRaw<
+            { id: string; d_itemsCount: bigint | number | null }[]
+        >(Prisma.sql`
+            WITH offers(id, data) AS (
+                VALUES ('wiped', ${JSON.stringify({ totalNetto: 5850 })}),
+                       ('legacy', ${JSON.stringify({ items: [{ productId: 'p1' }, { productId: 'p2' }] })}),
+                       ('both', ${JSON.stringify({ items: [{ productId: 'p1' }] })})
+            ), item_rows("offerId") AS (
+                VALUES ('wiped'), ('wiped'), ('wiped'), ('wiped'),
+                       ('both'), ('both'), ('both'), ('both')
+            ), counts AS (
+                SELECT "offerId", COUNT(*) AS item_count FROM item_rows GROUP BY "offerId"
             )
-            .all() as any[];
-        db.close();
-        const byId = Object.fromEntries(rows.map((r) => [r.id, r.d_itemsCount]));
-        expect(byId.wiped).toBe(4);
-        expect(byId.legacy).toBe(2);
-        expect(byId.both).toBe(4);
+            SELECT offers.id,
+                   COALESCE(counts.item_count, CASE WHEN jsonb_typeof(offers.data::jsonb -> 'items') = 'array'
+                       THEN jsonb_array_length(offers.data::jsonb -> 'items') ELSE NULL END) AS "d_itemsCount"
+            FROM offers LEFT JOIN counts ON counts."offerId" = offers.id
+        `);
+        const byId = Object.fromEntries(rows.map((row) => [row.id, Number(row.d_itemsCount)]));
+        expect(byId).toEqual({ wiped: 4, legacy: 2, both: 4 });
     });
 
-    test('licznik studni z kolumny wellCount, fallback na blob', () => {
-        const db = new DatabaseSync(':memory:');
-        db.exec('CREATE TABLE s (id TEXT, wellCount INTEGER, data TEXT)');
-        db.prepare('INSERT INTO s VALUES (?, ?, ?)').run(
-            'col',
-            4,
-            JSON.stringify({ wells: [{ id: 'w1' }] })
-        );
-        db.prepare('INSERT INTO s VALUES (?, ?, ?)').run(
-            'legacy',
-            null,
-            JSON.stringify({ wells: [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }] })
-        );
-        const rows = db
-            .prepare(
-                `SELECT id,
-                    COALESCE("wellCount", json_array_length(data, '$.wells')) AS "d_wellsCount"
-                 FROM s`
+    test('wellCount column wins and JSON array is fallback', async () => {
+        const rows = await prisma.$queryRaw<
+            { id: string; d_wellsCount: number | null }[]
+        >(Prisma.sql`
+            WITH studnie(id, "wellCount", data) AS (
+                VALUES ('col', 4, ${JSON.stringify({ wells: [{ id: 'w1' }] })}),
+                       ('legacy', NULL, ${JSON.stringify({ wells: [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }] })})
             )
-            .all() as any[];
-        db.close();
-        const byId = Object.fromEntries(rows.map((r) => [r.id, r.d_wellsCount]));
-        expect(byId.col).toBe(4);
-        expect(byId.legacy).toBe(3);
+            SELECT id, CASE WHEN "wellCount" IS NULL OR "wellCount" = 0
+                THEN CASE WHEN jsonb_typeof(data::jsonb -> 'wells') = 'array'
+                    THEN jsonb_array_length(data::jsonb -> 'wells') ELSE NULL END
+                ELSE "wellCount" END AS "d_wellsCount"
+            FROM studnie
+        `);
+        const byId = Object.fromEntries(rows.map((row) => [row.id, Number(row.d_wellsCount)]));
+        expect(byId).toEqual({ col: 4, legacy: 3 });
     });
 });

@@ -130,6 +130,19 @@ describe('frontend: podgląd wersji', () => {
         expect(overlay.textContent).toContain('Właz');
     });
 
+    it('oznacza bieżące aktywne PRECO jako fallback i ostrzega o możliwej różnicy stawek', async () => {
+        window.pricelistVersions._apiJson.mockResolvedValueOnce({
+            ...preview,
+            precoSource: 'ACTIVE_FALLBACK'
+        });
+        window.pricelistVersions.openPreview('v1', 'studnie');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const overlay = document.getElementById('pv-preview-modal');
+        expect(overlay.textContent).toContain('bieżącego aktywnego PRECO v1');
+        expect(overlay.textContent).toContain('stawki mogą różnić się od historycznych');
+        expect(overlay.querySelector('.pv-note--warn')).not.toBeNull();
+    });
+
     it('pusty stan bez arkuszy', async () => {
         window.pricelistVersions._apiJson.mockResolvedValueOnce({
             ...preview,

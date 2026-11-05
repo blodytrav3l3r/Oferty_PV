@@ -54,13 +54,13 @@ Poza automatem zostaje wyłącznie `CHANGELOG.md` (wpis wymaga treści zmian) �
 
 Numer wersji w dokumentacji: w runbookach i komendach deployu pisz `vX.Y.Z` (placeholder), nigdy konkretnego numeru — `version:check` zgłasza zaszyty numer w `deploy.mjs` / `git checkout v…` / `git tag -a v…` jako błąd.
 
-## Baza danych
+## Schemat bazy danych
 
-Wersja bazy SQLite jest przechowywana w `PRAGMA user_version`:
-
-- `1.0.0` → `10000`
-- `1.0.1` → `10001`
-- `1.1.0` → `10100`
-- `2.0.0` → `20000`
-
-Wersja bazy jest dostępna przez `GET /api/version` → pole `dbVersion`.
+Docelowa historia schematu PostgreSQL jest zarządzana przez wersjonowane
+migracje Prisma w `prisma/migrations-postgresql/`; wdrożeniowa komenda to
+`npx prisma migrate deploy`, a `db push` nie jest wspieraną ścieżką. SQLite
+`PRAGMA user_version` nie jest mechanizmem wersjonowania docelowej bazy i
+pozostaje wyłącznie historycznym szczegółem starszej instalacji. Pole
+`dbVersion` raportowane przez endpoint administracyjny odzwierciedla wersję
+aplikacji, nie numer migracji PostgreSQL. Migracja runtime i jej pełna
+weryfikacja na PostgreSQL 18 nadal trwają; zob. [DEPLOYMENT.md](DEPLOYMENT.md).

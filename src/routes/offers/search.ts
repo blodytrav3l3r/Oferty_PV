@@ -143,49 +143,47 @@ router.get('/', requireAuth, async (req, res) => {
                     "offer_number",
                     -- P1-C: historia na liście w wersji slim (popup: skalary + itemsCount;
                     -- pełna historia tylko w DETAIL). 29 MB history na liście to przeszłość.
-                    COALESCE((SELECT json_group_array(json_object(
-                        'updatedAt', value->>'updatedAt', 'timestamp', value->>'timestamp',
-                        'state', value->>'state', 'totalBrutto', value->>'totalBrutto',
-                        'lastEditedBy', value->>'lastEditedBy', 'userName', value->>'userName',
-                        'itemsCount', json_array_length(value, '$.items')))
-                    FROM json_each(COALESCE(o.history, '[]'))), '[]') AS history,
+                    COALESCE((SELECT jsonb_agg(jsonb_build_object(
+                        'updatedAt', h.value->'updatedAt', 'timestamp', h.value->'timestamp',
+                        'state', h.value->'state', 'totalBrutto', h.value->'totalBrutto',
+                        'lastEditedBy', h.value->'lastEditedBy', 'userName', h.value->'userName',
+                        'itemsCount', CASE WHEN jsonb_typeof(h.value->'items') = 'array'
+                            THEN jsonb_array_length(h.value->'items') ELSE NULL END
+                    ) ORDER BY h.ordinality)::text
+                    FROM jsonb_array_elements(COALESCE(NULLIF(o.history, '')::jsonb, '[]'::jsonb))
+                        WITH ORDINALITY AS h(value, ordinality)), '[]') AS history,
                     "clientName", "investName", "clientNip",
-                    COALESCE(NULLIF(o."clientNumber", ''), json_extract(o.data, '$.clientNumber'), '') AS "clientNumber",
+                    COALESCE(NULLIF(o."clientNumber", ''), o.data::jsonb ->> 'clientNumber', '') AS "clientNumber",
                     'rury' AS "_type",
                     "transportCost",
                     COALESCE(o_rury.order_count, 0) AS "_orderCount",
-                    json_extract(o.data, '$.clientName') AS "d_clientName",
-                    json_extract(o.data, '$.investName') AS "d_investName",
-                    json_extract(o.data, '$.investAddress') AS "d_investAddress",
-                    json_extract(o.data, '$.clientNip') AS "d_clientNip",
-                    json_extract(o.data, '$.clientNumber') AS "d_clientNumber",
-                    -- CAST AS REAL: totalNetto/Brutto bywają number lub stringiem
-                    -- ("29405"); Prisma wnioskuje typ z 1. wiersza i rzuca BigInt
-                    -- przy mieszanych typach. REAL wraca zawsze jako number.
-                    CAST(json_extract(o.data, '$.totalNetto') AS REAL) AS "d_totalNetto",
-                    CAST(json_extract(o.data, '$.totalBrutto') AS REAL) AS "d_totalBrutto",
-                    json_extract(o.data, '$.summary') AS "d_summary",
-                    json_extract(o.data, '$.costSummary') AS "d_costSummary",
-                    -- P1-C: suma wellsExport jako skalar (2317 pełnych kopii = MB).
-                    -- NULL gdy brak (cena liczy się ze skalarów jak dotąd).
-                    -- CAST AS REAL: SUM() bez decltype Prisma mapuje na BigInt
-                    -- i rzuca przy ułamkach (np. 8135347.5) — REAL wraca jako number.
-                    CASE WHEN json_extract(o.data, '$.wellsExport') IS NULL THEN NULL
-                    ELSE (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
-                          FROM json_each(o.data, '$.wellsExport'))
-                    END AS "d_wellsExportTotal",
-                    json_array_length(o.data, '$.wells') AS "d_wellsCount",
-                    -- Licznik pozycji rur z tabeli relacyjnej (SSoT wyceny) —
-                    -- blob miewa wycięte items po zapisach slim (karta: "0 poz."
-                    -- mimo ceny i zamówienia), fallback na blob dla legacy/importów.
-                    COALESCE(i_rel.item_count, json_array_length(o.data, '$.items')) AS "d_itemsCount",
-                    json_extract(o.data, '$.userName') AS "d_userName",
-                    json_extract(o.data, '$.creatorName') AS "d_creatorName",
-                    json_extract(o.data, '$.createdByUserName') AS "d_createdByUserName",
-                    json_extract(o.data, '$.budowa') AS "d_budowa",
-                    json_extract(o.data, '$.number') AS "d_number",
-                    json_extract(o.data, '$.offerNumber') AS "d_offerNumber",
-                    json_extract(o.data, '$.transportSeparate') AS "d_transportSeparate",
+                    o.data::jsonb ->> 'clientName' AS "d_clientName",
+                    o.data::jsonb ->> 'investName' AS "d_investName",
+                    o.data::jsonb ->> 'investAddress' AS "d_investAddress",
+                    o.data::jsonb ->> 'clientNip' AS "d_clientNip",
+                    o.data::jsonb ->> 'clientNumber' AS "d_clientNumber",
+                    o.data::jsonb ->> 'totalNetto' AS "d_totalNetto",
+                    o.data::jsonb ->> 'totalBrutto' AS "d_totalBrutto",
+                    (o.data::jsonb -> 'summary')::text AS "d_summary",
+                    (o.data::jsonb -> 'costSummary')::text AS "d_costSummary",
+                    CASE WHEN jsonb_typeof(o.data::jsonb -> 'wellsExport') = 'array' THEN (
+                        SELECT ROUND(COALESCE(SUM(CASE
+                            WHEN (well.value ->> 'totalPrice') ~ '^-?[0-9]+([.][0-9]+)?$'
+                            THEN (well.value ->> 'totalPrice')::numeric END), 0), 2)::double precision
+                        FROM jsonb_array_elements(o.data::jsonb -> 'wellsExport') AS well(value)
+                    ) ELSE NULL END AS "d_wellsExportTotal",
+                    CASE WHEN jsonb_typeof(o.data::jsonb -> 'wells') = 'array'
+                        THEN jsonb_array_length(o.data::jsonb -> 'wells') ELSE NULL END AS "d_wellsCount",
+                    -- Licznik pozycji rur z tabeli relacyjnej; blob może być slim.
+                    COALESCE(i_rel.item_count, CASE WHEN jsonb_typeof(o.data::jsonb -> 'items') = 'array'
+                        THEN jsonb_array_length(o.data::jsonb -> 'items') ELSE NULL END) AS "d_itemsCount",
+                    o.data::jsonb ->> 'userName' AS "d_userName",
+                    o.data::jsonb ->> 'creatorName' AS "d_creatorName",
+                    o.data::jsonb ->> 'createdByUserName' AS "d_createdByUserName",
+                    o.data::jsonb ->> 'budowa' AS "d_budowa",
+                    o.data::jsonb ->> 'number' AS "d_number",
+                    o.data::jsonb ->> 'offerNumber' AS "d_offerNumber",
+                    o.data::jsonb ->> 'transportSeparate' AS "d_transportSeparate",
                     o."pricelistVersionId" AS "pricelistVersionId"
                     -- Opieka nad ofertą (P0.4): latest follow-up do filtra LOS i badge.
                     ${followUpColumnsSql('rury', 'o')}
@@ -208,48 +206,48 @@ router.get('/', requireAuth, async (req, res) => {
                     s.id, "userId", "clientId", state, "createdAt", "updatedAt",
                     "offer_number",
                     -- P1-C: historia slim jak wyżej (popup studni i tak idzie po audit endpoint).
-                    COALESCE((SELECT json_group_array(json_object(
-                        'updatedAt', value->>'updatedAt', 'timestamp', value->>'timestamp',
-                        'state', value->>'state', 'totalBrutto', value->>'totalBrutto',
-                        'lastEditedBy', value->>'lastEditedBy', 'userName', value->>'userName',
-                        'itemsCount', json_array_length(value, '$.items')))
-                    FROM json_each(COALESCE(s.history, '[]'))), '[]') AS history,
+                    COALESCE((SELECT jsonb_agg(jsonb_build_object(
+                        'updatedAt', h.value->'updatedAt', 'timestamp', h.value->'timestamp',
+                        'state', h.value->'state', 'totalBrutto', h.value->'totalBrutto',
+                        'lastEditedBy', h.value->'lastEditedBy', 'userName', h.value->'userName',
+                        'itemsCount', CASE WHEN jsonb_typeof(h.value->'items') = 'array'
+                            THEN jsonb_array_length(h.value->'items') ELSE NULL END
+                    ) ORDER BY h.ordinality)::text
+                    FROM jsonb_array_elements(COALESCE(NULLIF(s.history, '')::jsonb, '[]'::jsonb))
+                        WITH ORDINALITY AS h(value, ordinality)), '[]') AS history,
                     "clientName", "investName", "clientNip",
-                    COALESCE(NULLIF(s."clientNumber", ''), json_extract(s.data, '$.clientNumber'), '') AS "clientNumber",
+                    COALESCE(NULLIF(s."clientNumber", ''), s.data::jsonb ->> 'clientNumber', '') AS "clientNumber",
                     'studnie' AS "_type",
                     "transportCost",
                     COALESCE(o_stud.order_count, 0) AS "_orderCount",
-                    json_extract(s.data, '$.clientName') AS "d_clientName",
-                    json_extract(s.data, '$.investName') AS "d_investName",
-                    json_extract(s.data, '$.investAddress') AS "d_investAddress",
-                    json_extract(s.data, '$.clientNip') AS "d_clientNip",
-                    json_extract(s.data, '$.clientNumber') AS "d_clientNumber",
-                    -- CAST AS REAL jak wyżej (mieszane typy number/string).
-                    CAST(json_extract(s.data, '$.totalNetto') AS REAL) AS "d_totalNetto",
-                    CAST(json_extract(s.data, '$.totalBrutto') AS REAL) AS "d_totalBrutto",
-                    json_extract(s.data, '$.summary') AS "d_summary",
-                    json_extract(s.data, '$.costSummary') AS "d_costSummary",
-                    -- P1-C: suma wellsExport jako skalar (2317 pełnych kopii = MB).
-                    -- NULL gdy brak (cena liczy się ze skalarów jak dotąd).
-                    -- CAST AS REAL: jak wyżej (BigInt rzuca przy ułamkach).
-                    CASE WHEN json_extract(s.data, '$.wellsExport') IS NULL THEN NULL
-                    ELSE (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
-                          FROM json_each(s.data, '$.wellsExport'))
-                    END AS "d_wellsExportTotal",
-                    -- Licznik studni z kolumny (metadane utrzymywane przy zapisie),
-                    -- fallback na blob dla wierszy legacy/stale (kolumna 0, a blob
-                    -- pelny — COALESCE(0, N) dalby 0, bo 0 nie jest NULL).
+                    s.data::jsonb ->> 'clientName' AS "d_clientName",
+                    s.data::jsonb ->> 'investName' AS "d_investName",
+                    s.data::jsonb ->> 'investAddress' AS "d_investAddress",
+                    s.data::jsonb ->> 'clientNip' AS "d_clientNip",
+                    s.data::jsonb ->> 'clientNumber' AS "d_clientNumber",
+                    s.data::jsonb ->> 'totalNetto' AS "d_totalNetto",
+                    s.data::jsonb ->> 'totalBrutto' AS "d_totalBrutto",
+                    (s.data::jsonb -> 'summary')::text AS "d_summary",
+                    (s.data::jsonb -> 'costSummary')::text AS "d_costSummary",
+                    CASE WHEN jsonb_typeof(s.data::jsonb -> 'wellsExport') = 'array' THEN (
+                        SELECT ROUND(COALESCE(SUM(CASE
+                            WHEN (well.value ->> 'totalPrice') ~ '^-?[0-9]+([.][0-9]+)?$'
+                            THEN (well.value ->> 'totalPrice')::numeric END), 0), 2)::double precision
+                        FROM jsonb_array_elements(s.data::jsonb -> 'wellsExport') AS well(value)
+                    ) ELSE NULL END AS "d_wellsExportTotal",
                     CASE WHEN s."wellCount" IS NULL OR s."wellCount" = 0
-                        THEN json_array_length(s.data, '$.wells')
+                        THEN CASE WHEN jsonb_typeof(s.data::jsonb -> 'wells') = 'array'
+                            THEN jsonb_array_length(s.data::jsonb -> 'wells') ELSE NULL END
                         ELSE s."wellCount" END AS "d_wellsCount",
-                    json_array_length(s.data, '$.items') AS "d_itemsCount",
-                    json_extract(s.data, '$.userName') AS "d_userName",
-                    json_extract(s.data, '$.creatorName') AS "d_creatorName",
-                    json_extract(s.data, '$.createdByUserName') AS "d_createdByUserName",
-                    json_extract(s.data, '$.budowa') AS "d_budowa",
-                    json_extract(s.data, '$.number') AS "d_number",
-                    json_extract(s.data, '$.offerNumber') AS "d_offerNumber",
-                    json_extract(s.data, '$.transportSeparate') AS "d_transportSeparate",
+                    CASE WHEN jsonb_typeof(s.data::jsonb -> 'items') = 'array'
+                        THEN jsonb_array_length(s.data::jsonb -> 'items') ELSE NULL END AS "d_itemsCount",
+                    s.data::jsonb ->> 'userName' AS "d_userName",
+                    s.data::jsonb ->> 'creatorName' AS "d_creatorName",
+                    s.data::jsonb ->> 'createdByUserName' AS "d_createdByUserName",
+                    s.data::jsonb ->> 'budowa' AS "d_budowa",
+                    s.data::jsonb ->> 'number' AS "d_number",
+                    s.data::jsonb ->> 'offerNumber' AS "d_offerNumber",
+                    s.data::jsonb ->> 'transportSeparate' AS "d_transportSeparate",
                     s."pricelistVersionId" AS "pricelistVersionId"
                     -- Opieka nad ofertą (P0.4): jak wyżej (kind studnie).
                     ${followUpColumnsSql('studnie', 's')}

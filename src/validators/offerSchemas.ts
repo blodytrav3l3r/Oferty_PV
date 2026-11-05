@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { roundMoney } from '../utils/money';
 
 // Limity wejścia (security: DoS przez wielkie tablice). Sufit udokumentowany
 // to ~3000 studni (src/mountRoutes.ts); cap 5000 = zapas + zgodny z UI
@@ -69,7 +70,12 @@ export const offerItemSchema = z
         productId: z.string().min(1, 'ID produktu jest wymagane'),
         quantity: z.number().finite().positive('Ilość musi być dodatnia'),
         discount: z.number().min(0).max(100).finite().optional(),
-        price: z.number().finite().nonnegative('Cena nie może być ujemna').optional()
+        price: z
+            .number()
+            .finite()
+            .nonnegative('Cena nie może być ujemna')
+            .transform(roundMoney)
+            .optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
@@ -79,7 +85,7 @@ export const offerCreateSchema = z
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
-        transportCost: z.number().finite().min(0).default(0),
+        transportCost: z.number().finite().min(0).transform(roundMoney).default(0),
         items: z.array(offerItemSchema),
         data: z.record(z.string(), z.unknown()).optional()
     })
@@ -155,9 +161,9 @@ export const offerStudnieCreateSchema = z
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
-        transportCost: z.number().finite().min(0).default(0),
+        transportCost: z.number().finite().min(0).transform(roundMoney).default(0),
         wells: z.array(wellDataSchema).max(MAX_WELLS_PER_OFFER),
-        totalPrice: z.number().finite().nonnegative().optional(),
+        totalPrice: z.number().finite().nonnegative().transform(roundMoney).optional(),
         data: z.record(z.string(), z.unknown()).optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń

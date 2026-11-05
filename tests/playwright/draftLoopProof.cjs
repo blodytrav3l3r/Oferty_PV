@@ -15,7 +15,7 @@
  *   D T6 w draftRecovery.cjs -> POMINIETO (adnotacja w raporcie, nie psuc dzialajacego pliku)
  *
  * Run:
- *   node tests/playwright/draftLoopProof.cjs --spawn   # izolowany serwer :3177 (build+seed)
+ *   node tests/playwright/draftLoopProof.cjs --spawn   # izolowany PostgreSQL :3177
  *   node tests/playwright/draftLoopProof.cjs           # wymaga backendu na :3000
  *
  * Exit code: 0 = OK, 1 = co najmniej jeden scenariusz nie przeszedl.
@@ -23,6 +23,7 @@
 
 const { execFileSync, spawn } = require('child_process');
 const { join, resolve } = require('path');
+const { createIsolatedPostgresSchema } = require('./isolatedPostgres.cjs');
 
 const ROOT = resolve(__dirname, '..', '..');
 const SPAWN = process.argv.includes('--spawn');
@@ -64,44 +65,19 @@ const CHROME_PATH = process.env.CHROME_PATH;
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
 const ORDER_ID = 'e2e-loop-proof-1';
 
-/* ── Spawn serwera (izolowany, port 3177, e2e.sqlite) ── */
+/* ── Spawn serwera na izolowanym schemacie PostgreSQL ── */
 async function startServer() {
-    const { rmSync, existsSync, symlinkSync, mkdirSync } = require('fs');
+    const { existsSync, symlinkSync } = require('fs');
     const { delimiter } = require('path');
-    // Absolutny file: URL — względne ścieżki SQLite CLI i runtime resolvują
-    // różnie (prisma/ vs cwd), stąd rozjazd bazy na CI (wzorzec appNameConsistency).
-    const dbFile = join(ROOT, 'data', 'e2e.sqlite');
-    const dbUrl = 'file:' + dbFile.replace(/\\/g, '/');
-    mkdirSync(join(ROOT, 'data'), { recursive: true });
-    for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
-        if (existsSync(f)) rmSync(f);
-    }
+    const { databaseUrl: dbUrl } = await createIsolatedPostgresSchema('draft_loop');
     const distGen = join(ROOT, 'dist', 'generated');
     if (!existsSync(distGen)) {
         symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
     }
-    // ts-node z `prisma db seed` wymaga node_modules/.bin na PATH;
-    // delimiter zamiast twardego ';' (Linux ':' vs Windows ';').
     const withBin = (extra) => ({
         ...process.env,
         PATH: join(ROOT, 'node_modules', '.bin') + delimiter + (process.env.PATH || ''),
         ...extra
-    });
-    execFileSync(
-        process.execPath,
-        [
-            require.resolve('prisma/build/index.js'),
-            'db',
-            'push',
-            '--skip-generate',
-            '--accept-data-loss'
-        ],
-        { cwd: ROOT, env: withBin({ DATABASE_URL: dbUrl }), stdio: 'pipe' }
-    );
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
-        cwd: ROOT,
-        env: withBin({ DATABASE_URL: dbUrl }),
-        stdio: 'pipe'
     });
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
         cwd: ROOT,

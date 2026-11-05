@@ -5,7 +5,7 @@ Informacje o oprogramowaniu firm trzecich używanym w projekcie
 
 > Plik generowany automatycznie z `package-lock.json` oraz zasobów w `public/` przez `npm run licenses:generate`. Nie edytuj ręcznie — zmień generator `scripts/generate-licenses.mjs`.
 
-Dane na dzień: **2026-11-03**.
+Dane na dzień: **2026-11-05**.
 
 ## 1. Licencja projektu
 
@@ -15,8 +15,8 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 
 ## 2. Model dystrybucji i zakres dokumentu
 
-- Zależności produkcyjne: **222** pakietów — wchodzą do obrazu Docker i artefaktu wdrożenia.
-- Zależności deweloperskie/testowe: **983** pakietów — nie są wymagane w runtime i nie są przedmiotem dystrybucji.
+- Zależności produkcyjne: **325** pakietów — wchodzą do obrazu Docker i artefaktu wdrożenia.
+- Zależności deweloperskie/testowe: **981** pakietów — nie są wymagane w runtime i nie są przedmiotem dystrybucji.
 - Zasoby spoza npm (vendored): SheetJS, font Inter, subset ikon Lucide — są serwowane z `public/` i wymagają atrybucji.
 - Obraz Docker zachowuje `node_modules` (także devDependencies), więc teksty licencji są obecne w obrazie.
 - Oznaczenia `[prod]` / `[dev]` w sekcji 7 określają zakres: `[prod]` = dystrybuowane, `[dev]` = tylko development/CI.
@@ -25,14 +25,14 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 
 | Licencja                | Prod | Dev | Rodzaj                     | Komercyjnie | Atrybucja |
 | ----------------------- | ---: | --: | -------------------------- | :---------: | :-------: |
-| MIT                     |  165 | 827 | Permisywna                 |     tak     |    tak    |
-| ISC                     |   12 |  86 | Permisywna                 |     tak     |    tak    |
+| MIT                     |  233 | 826 | Permisywna                 |     tak     |    tak    |
+| ISC                     |   31 |  85 | Permisywna                 |     tak     |    tak    |
 | BSD-3-Clause            |    5 |  20 | Permisywna                 |     tak     |    tak    |
-| BSD-2-Clause            |    3 |  12 | Permisywna                 |     tak     |    tak    |
+| BSD-2-Clause            |    2 |  12 | Permisywna                 |     tak     |    tak    |
 | MIT AND Zlib            |    1 |   0 | Permisywna                 |     tak     |    tak    |
 | Python-2.0              |    1 |   0 | Permisywna                 |     tak     |    tak    |
 | BSD                     |    0 |   1 | Permisywna                 |     tak     |    tak    |
-| Apache-2.0              |   26 |  22 | Permisywna (NOTICE)        |     tak     |    tak    |
+| Apache-2.0              |   39 |  22 | Permisywna (NOTICE)        |     tak     |    tak    |
 | BlueOak-1.0.0           |    8 |   2 | Permisywna (bez atrybucji) |     tak     |    nie    |
 | 0BSD                    |    0 |   1 | Permisywna (bez atrybucji) |     tak     |    nie    |
 | MIT-0                   |    0 |   1 | Permisywna (bez atrybucji) |     tak     |    nie    |
@@ -43,6 +43,9 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 | CC-BY-3.0               |    0 |   1 | Treści / dane              |     tak     |    tak    |
 | CC-BY-4.0               |    0 |   1 | Treści / dane              |     tak     |    tak    |
 | CC0-1.0                 |    0 |   1 | Domena publiczna           |     tak     |    nie    |
+| Unlicense               |    2 |   0 | Wymaga przeglądu           |     tak     |    nie    |
+| EPL-2.0                 |    1 |   0 | Wymaga przeglądu           |     tak     |    nie    |
+| MIT and ISC             |    1 |   0 | Wymaga przeglądu           |     tak     |    nie    |
 
 ## 4. Obowiązki przy dystrybucji
 
@@ -64,6 +67,9 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 - **CC-BY-3.0** — Podaj autora i źródło danych.
 - **CC-BY-4.0** — Podaj autora i źródło danych.
 - **CC0-1.0** — Brak obowiązku atrybucji.
+- **Unlicense** — Brak deklaracji licencji — zweryfikuj ręcznie przed dystrybucją.
+- **EPL-2.0** — Brak deklaracji licencji — zweryfikuj ręcznie przed dystrybucją.
+- **MIT and ISC** — Brak deklaracji licencji — zweryfikuj ręcznie przed dystrybucją.
 
 - Pełne teksty licencji pakietów npm znajdują się w `node_modules/<pakiet>/LICENSE` (obraz Docker je zawiera).
 - Teksty dla zasobów vendored są w `public/licenses/` i są dostępne pod `/licenses/<plik>` w działającej aplikacji.
@@ -79,19 +85,20 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 
 ## 6. Składniki platformy i wdrożenia
 
-| Składnik                         | Wersja / źródło                          | Licencja                              | Uwagi                                                 |
-| -------------------------------- | ---------------------------------------- | ------------------------------------- | ----------------------------------------------------- |
-| Node.js                          | `>=22.13.0`                              | MIT                                   | Runtime aplikacji; tekst licencji w dystrybucji Node. |
-| SQLite (silnik Prisma)           | biblioteka dołączona do `@prisma/client` | Public Domain                         | https://sqlite.org/copyright.html                     |
-| Obraz bazowy Docker              | `node:22-slim`                           | MIT (Node) + licencje pakietów Debian | Pełne teksty: `/usr/share/doc/*/copyright` w obrazie. |
-| Chromium (Puppeteer)             | pobierany przy `npm ci`                  | BSD-3-Clause + licencje komponentów   | Używany do PDF; lista licencji w binarce Chromium.    |
-| Caddy (opcjonalny reverse proxy) | wdrożenie hosta                          | Apache-2.0                            | Nie jest częścią artefaktu aplikacji.                 |
+| Składnik                              | Wersja / źródło                                                                                      | Licencja                              | Uwagi                                                 |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------- |
+| Node.js                               | `>=22.13.0`                                                                                          | MIT                                   | Runtime aplikacji; tekst licencji w dystrybucji Node. |
+| PostgreSQL 18                         | zewnętrzna usługa bazy danych; obraz `postgres:18-alpine`                                            | PostgreSQL License                    | https://www.postgresql.org/about/licence/             |
+| Docker Engine + Docker Compose plugin | hostowa zależność instalatora Linux z oficjalnego repozytorium; nie są dołączane do artefaktu S.O.K. | Apache-2.0                            | https://docs.docker.com/engine/                       | https://github.com/docker/compose/blob/main/LICENSE |
+| Obraz bazowy Docker                   | `node:22-slim`                                                                                       | MIT (Node) + licencje pakietów Debian | Pełne teksty: `/usr/share/doc/*/copyright` w obrazie. |
+| Chromium (Puppeteer)                  | pobierany przy `npm ci`                                                                              | BSD-3-Clause + licencje komponentów   | Używany do PDF; lista licencji w binarce Chromium.    |
+| Caddy (opcjonalny reverse proxy)      | wdrożenie hosta                                                                                      | Apache-2.0                            | Nie jest częścią artefaktu aplikacji.                 |
 
 ## 7. Pakiety npm według licencji
 
 Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na zakres dystrybucji.
 
-### MIT (992; prod: 165, dev: 827)
+### MIT (1059; prod: 233, dev: 826)
 
 - @apidevtools/json-schema-ref-parser@14.0.1 [prod]
 - @apidevtools/openapi-schemas@2.1.0 [prod]
@@ -317,6 +324,14 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - @paralleldrive/cuid2@2.3.1 [dev]
 - @pkgjs/parseargs@0.11.0 [dev]
 - @pkgr/core@0.3.6 [dev]
+- @radix-ui/primitive@1.1.3 [prod]
+- @radix-ui/react-compose-refs@1.1.2 [prod]
+- @radix-ui/react-primitive@2.1.3 [prod]
+- @radix-ui/react-slot@1.2.3 [prod]
+- @radix-ui/react-toggle@1.1.10 [prod]
+- @radix-ui/react-use-controllable-state@1.2.2 [prod]
+- @radix-ui/react-use-effect-event@0.0.2 [prod]
+- @radix-ui/react-use-layout-effect@1.1.1 [prod]
 - @sentry/conventions@0.16.0 [prod]
 - @sentry/core@10.76.2 [prod]
 - @sentry/node-core@10.76.2 [prod]
@@ -342,10 +357,22 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - @types/connect@3.4.38 [dev]
 - @types/cookie-parser@1.4.10 [dev]
 - @types/cookiejar@2.1.5 [dev]
+- @types/d3-array@3.0.3 [prod]
+- @types/d3-color@3.1.0 [prod]
+- @types/d3-delaunay@6.0.1 [prod]
+- @types/d3-format@3.0.1 [prod]
+- @types/d3-geo@3.1.0 [prod]
+- @types/d3-interpolate@3.0.1 [prod]
+- @types/d3-path@3.1.1 [prod]
+- @types/d3-scale@4.0.2 [prod]
+- @types/d3-shape@3.1.7 [prod]
+- @types/d3-time-format@2.1.0 [prod]
+- @types/d3-time@3.0.0 [prod]
 - @types/esrecurse@4.3.1 [dev]
 - @types/estree@1.0.9 [dev]
 - @types/express-serve-static-core@4.19.9 [dev]
 - @types/express@4.17.25 [dev]
+- @types/geojson@7946.0.16 [prod]
 - @types/http-errors@2.0.5 [dev]
 - @types/istanbul-lib-coverage@2.0.6 [dev]
 - @types/istanbul-lib-report@3.0.3 [dev]
@@ -353,13 +380,16 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - @types/jest@30.0.0 [dev]
 - @types/jsdom@21.1.7 [dev]
 - @types/json-schema@7.0.15 [prod]
+- @types/lodash@4.17.27 [prod]
 - @types/methods@1.1.4 [dev]
 - @types/mime@1.3.5 [dev]
 - @types/minimist@1.2.5 [dev]
 - @types/node@26.6.5 [prod]
 - @types/normalize-package-data@2.4.4 [dev]
+- @types/pg@8.23.1 [prod]
 - @types/qs@6.15.1 [dev]
 - @types/range-parser@1.2.7 [dev]
+- @types/react@19.3.0 [prod]
 - @types/send@0.17.6 [dev]
 - @types/send@1.2.1 [dev]
 - @types/serve-static@1.15.10 [dev]
@@ -405,6 +435,14 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - @unrs/resolver-binding-win32-arm64-msvc@1.12.2 [dev]
 - @unrs/resolver-binding-win32-ia32-msvc@1.12.2 [dev]
 - @unrs/resolver-binding-win32-x64-msvc@1.12.2 [dev]
+- @visx/curve@4.0.1-alpha.0 [prod]
+- @visx/event@4.0.1-alpha.0 [prod]
+- @visx/grid@4.0.1-alpha.0 [prod]
+- @visx/group@4.0.1-alpha.0 [prod]
+- @visx/point@4.0.1-alpha.0 [prod]
+- @visx/responsive@4.0.1-alpha.0 [prod]
+- @visx/scale@4.0.1-alpha.0 [prod]
+- @visx/shape@4.0.1-alpha.0 [prod]
 - accepts@1.3.8 [prod]
 - acorn-jsx@5.3.2 [dev]
 - acorn-walk@8.3.5 [dev]
@@ -452,6 +490,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - arrify@1.0.1 [dev]
 - asap@2.0.6 [dev]
 - asynckit@0.4.0 [dev]
+- aws-ssl-profiles@1.1.2 [prod]
 - babel-jest@30.4.1 [dev]
 - babel-plugin-jest-hoist@30.4.0 [dev]
 - babel-preset-current-node-syntax@1.2.0 [dev]
@@ -466,6 +505,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - balanced-match@1.0.2 [dev]
 - balanced-match@1.0.2 [dev]
 - balanced-match@4.0.4 [prod]
+- better-result@2.10.0 [prod]
 - binary-extensions@2.3.0 [dev]
 - body-parser@1.20.9 [prod]
 - brace-expansion@1.1.21 [dev]
@@ -484,7 +524,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - bser@2.1.2 [dev]
 - buffer-from@1.1.2 [dev]
 - bytes@3.1.2 [prod]
-- c12@3.1.0 [prod]
+- c12@3.3.4 [prod]
 - cacheable@2.5.0 [dev]
 - call-bind-apply-helpers@1.0.2 [prod]
 - call-bound@1.0.4 [prod]
@@ -497,11 +537,10 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - chalk@4.1.2 [dev]
 - char-regex@1.0.2 [dev]
 - chokidar@3.6.0 [dev]
-- chokidar@4.0.3 [prod]
+- chokidar@5.0.0 [prod]
 - ci-info@4.4.0 [dev]
-- citty@0.1.6 [prod]
-- citty@0.2.2 [prod]
 - cjs-module-lexer@2.3.0 [prod]
+- classnames@2.5.1 [prod]
 - co@4.6.0 [dev]
 - collect-v8-coverage@1.0.3 [dev]
 - color-convert@1.9.3 [dev]
@@ -517,8 +556,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - concat-map@0.0.1 [dev]
 - concat-stream@2.0.0 [dev]
 - confbox@0.2.4 [prod]
-- confbox@0.3.1 [prod]
-- consola@3.4.2 [prod]
+- confbox@0.3.2 [prod]
 - content-disposition@0.5.4 [prod]
 - content-type@1.0.5 [prod]
 - conventional-changelog-config-spec@2.1.0 [dev]
@@ -543,6 +581,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - create-require@1.1.1 [dev]
 - cross-spawn@7.0.6 [prod]
 - cssstyle@4.6.0 [dev]
+- csstype@3.2.3 [prod]
 - dargs@7.0.0 [dev]
 - data-urls@5.0.0 [dev]
 - dateformat@3.0.3 [dev]
@@ -579,7 +618,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - dynamic-dedupe@0.3.0 [dev]
 - eastasianwidth@0.2.0 [dev]
 - ee-first@1.1.1 [prod]
-- effect@3.21.0 [prod]
+- effect@3.20.0 [prod]
 - emittery@0.13.1 [dev]
 - emoji-regex@10.6.0 [prod]
 - emoji-regex@8.0.0 [dev]
@@ -587,6 +626,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - empathic@2.0.0 [prod]
 - encodeurl@2.0.0 [prod]
 - env-paths@2.2.1 [dev]
+- env-paths@3.0.0 [prod]
 - error-ex@1.3.4 [dev]
 - es-define-property@1.0.1 [prod]
 - es-errors@1.3.0 [prod]
@@ -610,11 +650,13 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - expect@30.4.1 [dev]
 - expect@30.5.2 [dev]
 - express@4.22.3 [prod]
-- exsolve@1.1.3 [prod]
+- exsolve@1.2.0 [prod]
 - fast-check@3.23.2 [prod]
+- fast-decode-uri-component@1.0.1 [prod]
 - fast-deep-equal@3.1.3 [prod]
 - fast-json-stable-stringify@2.1.0 [dev]
 - fast-levenshtein@2.0.6 [dev]
+- fast-querystring@1.1.2 [prod]
 - fast-safe-stringify@2.1.1 [dev]
 - fb-watchman@2.0.4 [dev]
 - fdir@6.5.0 [dev]
@@ -622,6 +664,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - file-entry-cache@11.1.5 [dev]
 - fill-range@7.1.1 [dev]
 - finalhandler@1.3.2 [prod]
+- find-my-way@9.7.0 [prod]
 - find-up@2.1.0 [dev]
 - find-up@3.0.0 [dev]
 - find-up@4.1.0 [dev]
@@ -635,20 +678,24 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - fresh@0.5.2 [prod]
 - fsevents@2.3.3 [dev]
 - function-bind@1.1.2 [prod]
+- generate-function@2.3.1 [prod]
 - gensync@1.0.0-beta.2 [dev]
 - get-east-asian-width@1.7.0 [prod]
 - get-intrinsic@1.3.0 [prod]
 - get-package-type@0.1.0 [dev]
 - get-pkg-repo@4.2.1 [dev]
+- get-port-please@3.2.0 [prod]
 - get-proto@1.0.1 [prod]
 - get-stream@6.0.1 [dev]
-- giget@2.0.0 [prod]
+- giget@3.3.1 [prod]
 - git-raw-commits@2.0.11 [dev]
 - git-remote-origin-url@2.0.0 [dev]
 - git-semver-tags@4.1.1 [dev]
 - global-directory@5.0.0 [dev]
 - globals@17.13.0 [dev]
 - gopd@1.2.0 [prod]
+- grammex@3.1.13 [prod]
+- graphmatch@1.1.1 [prod]
 - handlebars@4.7.10 [dev]
 - hard-rejection@2.1.0 [dev]
 - has-flag@3.0.0 [dev]
@@ -669,6 +716,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - husky@9.1.7 [dev]
 - iconv-lite@0.4.24 [prod]
 - iconv-lite@0.6.3 [dev]
+- iconv-lite@0.7.3 [prod]
 - ignore@5.3.2 [dev]
 - ignore@7.0.14 [dev]
 - immediate@3.0.6 [prod]
@@ -689,6 +737,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - is-plain-obj@1.1.0 [dev]
 - is-plain-obj@4.1.0 [dev]
 - is-potential-custom-element-name@1.0.1 [dev]
+- is-property@1.0.2 [prod]
 - is-stream@2.0.1 [dev]
 - is-text-path@1.0.1 [dev]
 - isarray@1.0.0 [prod]
@@ -825,7 +874,8 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - lodash.ismatch@4.4.0 [dev]
 - lodash.memoize@4.1.2 [dev]
 - lodash.mergewith@4.6.2 [prod]
-- lodash@4.18.1 [dev]
+- lodash@4.18.1 [prod]
+- lru.min@1.1.5 [prod]
 - make-dir@4.0.0 [dev]
 - map-obj@1.0.1 [dev]
 - map-obj@4.3.0 [dev]
@@ -864,19 +914,19 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - ms@2.1.3 [prod]
 - ms@2.1.3 [prod]
 - ms@2.1.3 [dev]
+- mysql2@3.24.4 [prod]
+- named-placeholders@1.1.6 [prod]
 - nanoid@6.0.2 [prod]
 - napi-postinstall@0.3.7 [dev]
 - natural-compare@1.4.0 [dev]
 - negotiator@0.6.3 [prod]
 - negotiator@0.6.4 [prod]
 - neo-async@2.6.2 [dev]
-- node-fetch-native@1.6.7 [prod]
 - node-int64@0.4.0 [dev]
 - node-releases@2.0.60 [dev]
 - normalize-path@3.0.0 [dev]
 - npm-run-path@4.0.1 [dev]
 - nwsapi@2.2.28 [dev]
-- nypm@0.6.11 [prod]
 - object-inspect@1.13.4 [prod]
 - ohash@2.0.12 [prod]
 - on-finished@2.4.2 [prod]
@@ -912,7 +962,14 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - path-to-regexp@0.1.13 [prod]
 - path-type@3.0.0 [dev]
 - pathe@2.0.3 [prod]
-- perfect-debounce@1.0.0 [prod]
+- perfect-debounce@2.1.0 [prod]
+- pg-cloudflare@1.4.1 [prod]
+- pg-connection-string@2.14.1 [prod]
+- pg-pool@3.14.0 [prod]
+- pg-protocol@1.16.1 [prod]
+- pg-types@2.2.0 [prod]
+- pg@8.23.1 [prod]
+- pgpass@1.0.5 [prod]
 - picomatch@2.3.2 [dev]
 - picomatch@2.3.2 [dev]
 - picomatch@4.0.7 [dev]
@@ -922,6 +979,11 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - pirates@4.0.7 [dev]
 - pkg-dir@4.2.0 [dev]
 - pkg-types@2.4.0 [prod]
+- postgres-array@2.0.0 [prod]
+- postgres-array@3.0.4 [prod]
+- postgres-bytea@1.0.1 [prod]
+- postgres-date@1.0.7 [prod]
+- postgres-interval@1.2.0 [prod]
 - prelude-ls@1.2.1 [dev]
 - prettier@3.9.10 [dev]
 - pretty-format@30.4.1 [dev]
@@ -940,6 +1002,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - pretty-format@30.4.1 [dev]
 - pretty-format@30.5.1 [dev]
 - process-nextick-args@2.0.1 [prod]
+- proper-lockfile@4.1.2 [prod]
 - proxy-addr@2.0.8 [prod]
 - punycode@2.3.1 [dev]
 - pure-rand@6.1.0 [prod]
@@ -949,9 +1012,11 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - quick-lru@4.0.1 [dev]
 - range-parser@1.2.1 [prod]
 - raw-body@2.5.3 [prod]
-- rc9@2.1.2 [prod]
+- rc9@3.1.0 [prod]
+- react-dom@19.3.1 [prod]
 - react-is-18@18.3.1 [dev]
 - react-is-19@19.3.1 [dev]
+- react@19.3.1 [prod]
 - read-pkg-up@3.0.0 [dev]
 - read-pkg-up@7.0.1 [dev]
 - read-pkg@3.0.0 [dev]
@@ -961,8 +1026,9 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - readable-stream@3.6.2 [dev]
 - readable-stream@3.6.2 [dev]
 - readdirp@3.6.0 [dev]
-- readdirp@4.1.2 [prod]
+- readdirp@5.1.1 [prod]
 - redent@3.0.0 [dev]
+- remeda@2.33.4 [prod]
 - require-directory@2.1.1 [dev]
 - require-from-string@2.0.2 [prod]
 - require-in-the-middle@8.0.1 [prod]
@@ -970,11 +1036,15 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - resolve-from@4.0.0 [dev]
 - resolve-from@5.0.0 [dev]
 - resolve@1.22.13 [dev]
+- ret@0.5.1 [prod]
+- retry@0.12.0 [prod]
 - rrweb-cssom@0.8.0 [dev]
 - safe-buffer@5.1.2 [prod]
 - safe-buffer@5.1.2 [prod]
 - safe-buffer@5.2.1 [prod]
+- safe-regex2@5.1.2 [prod]
 - safer-buffer@2.1.2 [prod]
+- scheduler@0.28.0 [prod]
 - send@0.19.2 [prod]
 - serve-static@1.16.3 [prod]
 - setimmediate@1.0.5 [prod]
@@ -988,8 +1058,10 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - source-map-support@0.5.13 [dev]
 - spdx-expression-parse@3.0.1 [dev]
 - split@1.0.1 [dev]
+- sql-escaper@1.5.2 [prod]
 - stack-utils@2.0.6 [dev]
 - statuses@2.0.2 [prod]
+- std-env@3.10.0 [prod]
 - string_decoder@1.1.1 [prod]
 - string-argv@0.3.2 [dev]
 - string-length@4.0.2 [dev]
@@ -1036,7 +1108,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - through@2.3.8 [dev]
 - through2@2.0.5 [dev]
 - through2@4.0.2 [dev]
-- tinyexec@1.3.1 [prod]
+- tinyexec@1.3.1 [dev]
 - tinyglobby@0.2.17 [dev]
 - tldts-core@6.1.86 [dev]
 - tldts@6.1.86 [dev]
@@ -1063,6 +1135,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - util-deprecate@1.0.2 [prod]
 - utils-merge@1.0.1 [prod]
 - v8-compile-cache-lib@3.0.1 [dev]
+- valibot@1.4.2 [prod]
 - vary@1.1.2 [prod]
 - verkit@0.5.0 [dev]
 - w3c-xmlserializer@5.0.0 [dev]
@@ -1077,19 +1150,21 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - wrap-ansi@9.0.2 [prod]
 - ws@8.22.0 [prod]
 - xmlchars@2.2.0 [dev]
-- xtend@4.0.2 [dev]
+- xtend@4.0.2 [prod]
 - yargs@16.2.2 [dev]
 - yargs@16.2.2 [dev]
 - yargs@17.7.3 [dev]
 - yargs@18.2.0 [prod]
 - yn@3.1.1 [dev]
 - yocto-queue@0.1.0 [dev]
+- zeptomatch@2.1.0 [prod]
 - zod@4.6.7 [prod]
 
-### ISC (98; prod: 12, dev: 86)
+### ISC (116; prod: 31, dev: 85)
 
 - @isaacs/cliui@8.0.2 [dev]
 - @istanbuljs/load-nyc-config@1.1.0 [dev]
+- @prisma/dev@0.24.17 [prod]
 - @ungap/structured-clone@1.4.0 [dev]
 - anymatch@3.1.3 [dev]
 - cliui@7.0.4 [dev]
@@ -1108,6 +1183,19 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - conventional-changelog-express@2.0.6 [dev]
 - conventional-changelog-jquery@3.0.11 [dev]
 - conventional-changelog-jshint@2.0.9 [dev]
+- d3-array@3.2.1 [prod]
+- d3-array@3.2.4 [prod]
+- d3-color@3.1.0 [prod]
+- d3-delaunay@6.0.2 [prod]
+- d3-format@3.1.0 [prod]
+- d3-geo@3.1.0 [prod]
+- d3-interpolate@3.0.1 [prod]
+- d3-path@3.1.0 [prod]
+- d3-scale@4.0.2 [prod]
+- d3-shape@3.2.0 [prod]
+- d3-time-format@4.1.0 [prod]
+- d3-time@3.1.0 [prod]
+- delaunator@5.1.0 [prod]
 - dezalgo@1.0.4 [dev]
 - dotgitignore@2.1.0 [dev]
 - electron-to-chromium@1.5.464 [dev]
@@ -1125,7 +1213,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - glob@7.2.3 [dev]
 - glob@7.2.3 [dev]
 - glob@7.2.3 [dev]
-- graceful-fs@4.2.11 [dev]
+- graceful-fs@4.2.11 [prod]
 - hosted-git-info@2.8.9 [dev]
 - hosted-git-info@2.8.9 [dev]
 - hosted-git-info@4.1.0 [dev]
@@ -1133,6 +1221,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - inherits@2.0.4 [prod]
 - ini@1.3.8 [dev]
 - ini@6.0.0 [dev]
+- internmap@2.0.3 [prod]
 - isexe@2.0.0 [prod]
 - json-stringify-safe@5.0.1 [dev]
 - lru-cache@10.4.3 [dev]
@@ -1151,6 +1240,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - minimatch@3.1.5 [dev]
 - minimatch@9.0.9 [dev]
 - once@1.4.0 [dev]
+- pg-int8@1.0.1 [prod]
 - picocolors@1.1.1 [dev]
 - rimraf@2.7.1 [dev]
 - saxes@6.0.0 [dev]
@@ -1163,8 +1253,10 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - semver@7.8.5 [dev]
 - setprototypeof@1.2.0 [prod]
 - signal-exit@3.0.7 [dev]
+- signal-exit@3.0.7 [prod]
 - signal-exit@4.1.0 [prod]
 - split2@3.2.2 [dev]
+- split2@4.2.0 [prod]
 - standard-version@9.5.0 [dev]
 - stringify-package@1.0.1 [dev]
 - test-exclude@6.0.0 [dev]
@@ -1198,7 +1290,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - babel-plugin-istanbul@7.0.1 [dev]
 - babel-plugin-istanbul@7.0.1 [dev]
 - bcryptjs@3.0.3 [prod]
-- deepmerge-ts@7.1.5 [prod]
+- deepmerge-ts@8.0.2 [prod]
 - devtools-protocol@0.0.1704951 [prod]
 - diff@4.0.4 [dev]
 - esquery@1.7.0 [dev]
@@ -1215,9 +1307,8 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - tmpl@1.0.5 [dev]
 - tough-cookie@5.1.2 [dev]
 
-### BSD-2-Clause (15; prod: 3, dev: 12)
+### BSD-2-Clause (14; prod: 2, dev: 12)
 
-- dotenv@16.6.1 [prod]
 - dotenv@17.4.2 [prod]
 - entities@6.0.1 [dev]
 - eslint-scope@9.1.2 [dev]
@@ -1245,8 +1336,11 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 
 - gitconfiglocal@1.0.0 [dev]
 
-### Apache-2.0 (48; prod: 26, dev: 22)
+### Apache-2.0 (61; prod: 39, dev: 22)
 
+- @electric-sql/pglite-socket@0.1.3 [prod]
+- @electric-sql/pglite-tools@0.3.3 [prod]
+- @electric-sql/pglite@0.4.3 [prod]
 - @eslint/config-array@0.23.5 [dev]
 - @eslint/config-helpers@0.7.0 [dev]
 - @eslint/core@1.2.1 [dev]
@@ -1267,13 +1361,22 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - @opentelemetry/sdk-trace@2.12.0 [prod]
 - @opentelemetry/semantic-conventions@1.43.0 [prod]
 - @playwright/test@1.64.1 [dev]
-- @prisma/client@6.19.3 [prod]
-- @prisma/config@6.19.3 [prod]
-- @prisma/debug@6.19.3 [prod]
-- @prisma/engines-version@7.1.1-3.c2990dca591cba766e3b7ef5d9e8a84796e47ab7 [prod]
-- @prisma/engines@6.19.3 [prod]
-- @prisma/fetch-engine@6.19.3 [prod]
-- @prisma/get-platform@6.19.3 [prod]
+- @prisma/adapter-pg@7.10.1 [prod]
+- @prisma/client-runtime-utils@7.10.1 [prod]
+- @prisma/client@7.10.1 [prod]
+- @prisma/config@7.10.1 [prod]
+- @prisma/debug@7.10.1 [prod]
+- @prisma/debug@7.2.0 [prod]
+- @prisma/driver-adapter-utils@7.10.1 [prod]
+- @prisma/engines-version@8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8 [prod]
+- @prisma/engines@7.10.1 [prod]
+- @prisma/fetch-engine@7.10.1 [prod]
+- @prisma/get-platform@7.10.1 [prod]
+- @prisma/get-platform@7.10.1 [prod]
+- @prisma/get-platform@7.2.0 [prod]
+- @prisma/query-plan-executor@7.2.0 [prod]
+- @prisma/streams-local@0.1.11 [prod]
+- @prisma/studio-core@0.33.0 [prod]
 - @puppeteer/browsers@3.2.6 [prod]
 - @scarf/scarf@1.4.0 [prod]
 - baseline-browser-mapping@2.11.32 [dev]
@@ -1283,9 +1386,10 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - eslint-visitor-keys@5.0.1 [dev]
 - human-signals@2.1.0 [dev]
 - import-in-the-middle@3.5.2 [prod]
+- long@5.3.2 [prod]
 - playwright-core@1.64.1 [dev]
 - playwright@1.64.1 [dev]
-- prisma@6.19.3 [prod]
+- prisma@7.10.1 [prod]
 - puppeteer-core@25.16.0 [prod]
 - puppeteer@25.16.0 [prod]
 - spdx-correct@3.2.0 [dev]
@@ -1350,12 +1454,28 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 
 - spdx-license-ids@3.0.24 [dev]
 
+### Unlicense (2; prod: 2, dev: 0)
+
+- postgres@3.4.7 [prod]
+- robust-predicates@3.0.3 [prod]
+
+### EPL-2.0 (1; prod: 1, dev: 0)
+
+- elkjs@0.11.1 [prod]
+
+### MIT and ISC (1; prod: 1, dev: 0)
+
+- @visx/vendor@4.0.0-alpha.0 [prod]
+
 ## 8. Status Apache-2.0 (NOTICE)
 
 Dla pakietów Apache-2.0 w dystrybucji sprawdzono obecność plików `LICENSE` i `NOTICE` w zainstalowanym pakiecie.
 
 | Pakiet                              | Wersja                                           | Plik LICENSE | Plik NOTICE |
 | ----------------------------------- | ------------------------------------------------ | :----------: | :---------: |
+| @electric-sql/pglite-socket         | 0.1.3                                            |     tak      |     nie     |
+| @electric-sql/pglite-tools          | 0.3.3                                            |     tak      |     nie     |
+| @electric-sql/pglite                | 0.4.3                                            |     tak      |     nie     |
 | @opentelemetry/api-logs             | 0.220.0                                          |     tak      |     nie     |
 | @opentelemetry/api                  | 1.9.1                                            |     tak      |     nie     |
 | @opentelemetry/core                 | 2.12.0                                           |     tak      |     nie     |
@@ -1364,26 +1484,36 @@ Dla pakietów Apache-2.0 w dystrybucji sprawdzono obecność plików `LICENSE` i
 | @opentelemetry/sdk-trace-base       | 2.12.0                                           |     tak      |     nie     |
 | @opentelemetry/sdk-trace            | 2.12.0                                           |     tak      |     nie     |
 | @opentelemetry/semantic-conventions | 1.43.0                                           |     tak      |     nie     |
-| @prisma/client                      | 6.19.3                                           |     tak      |     nie     |
-| @prisma/config                      | 6.19.3                                           |     tak      |     nie     |
-| @prisma/debug                       | 6.19.3                                           |     tak      |     nie     |
-| @prisma/engines-version             | 7.1.1-3.c2990dca591cba766e3b7ef5d9e8a84796e47ab7 |     tak      |     nie     |
-| @prisma/engines                     | 6.19.3                                           |     tak      |     nie     |
-| @prisma/fetch-engine                | 6.19.3                                           |     tak      |     nie     |
-| @prisma/get-platform                | 6.19.3                                           |     tak      |     nie     |
+| @prisma/adapter-pg                  | 7.10.1                                           |     tak      |     nie     |
+| @prisma/client-runtime-utils        | 7.10.1                                           |     tak      |     nie     |
+| @prisma/client                      | 7.10.1                                           |     tak      |     nie     |
+| @prisma/config                      | 7.10.1                                           |     tak      |     nie     |
+| @prisma/debug                       | 7.10.1                                           |     tak      |     nie     |
+| @prisma/debug                       | 7.2.0                                            |     tak      |     nie     |
+| @prisma/driver-adapter-utils        | 7.10.1                                           |     tak      |     nie     |
+| @prisma/engines-version             | 8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8 |     tak      |     nie     |
+| @prisma/engines                     | 7.10.1                                           |     tak      |     nie     |
+| @prisma/fetch-engine                | 7.10.1                                           |     tak      |     nie     |
+| @prisma/get-platform                | 7.10.1                                           |     tak      |     nie     |
+| @prisma/get-platform                | 7.10.1                                           |     tak      |     nie     |
+| @prisma/get-platform                | 7.2.0                                            |     tak      |     nie     |
+| @prisma/query-plan-executor         | 7.2.0                                            |     tak      |     nie     |
+| @prisma/streams-local               | 0.1.11                                           |     tak      |     nie     |
+| @prisma/studio-core                 | 0.33.0                                           |     tak      |     tak     |
 | @puppeteer/browsers                 | 3.2.6                                            |     nie      |     nie     |
 | @scarf/scarf                        | 1.4.0                                            |     tak      |     nie     |
 | chromium-bidi                       | 157.0.8090-0                                     |     tak      |     nie     |
 | doctrine                            | 3.0.0                                            |     tak      |     nie     |
 | import-in-the-middle                | 3.5.2                                            |     tak      |     tak     |
-| prisma                              | 6.19.3                                           |     tak      |     nie     |
+| long                                | 5.3.2                                            |     tak      |     nie     |
+| prisma                              | 7.10.1                                           |     tak      |     nie     |
 | puppeteer-core                      | 25.16.0                                          |     nie      |     nie     |
 | puppeteer                           | 25.16.0                                          |     nie      |     nie     |
 | swagger-ui-dist                     | 5.34.0                                           |     tak      |     tak     |
 | typescript                          | 6.0.3                                            |     tak      |     nie     |
 | webdriver-bidi-protocol             | 1.0.1                                            |     tak      |     nie     |
 
-Pakiety z plikiem NOTICE (zachowaj go w dystrybucji): `import-in-the-middle`, `swagger-ui-dist`.
+Pakiety z plikiem NOTICE (zachowaj go w dystrybucji): `@prisma/studio-core`, `import-in-the-middle`, `swagger-ui-dist`.
 
 Pakiety z „nie” w kolumnie LICENSE są wymienione w sekcji 9.
 
@@ -1391,15 +1521,22 @@ Pakiety z „nie” w kolumnie LICENSE są wymienione w sekcji 9.
 
 Pakiety produkcyjne bez pliku `LICENSE`/`COPYING` w zainstalowanym katalogu. Licencja pochodzi z `package.json`; tekst należy zachować z repozytorium upstream (są to zależności pośrednie).
 
-| Pakiet               | Wersja  | Deklarowana licencja | Repozytorium                                                             |
-| -------------------- | ------- | -------------------- | ------------------------------------------------------------------------ |
-| @puppeteer/browsers  | 3.2.6   | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/browsers       |
-| @sentry/server-utils | 10.76.2 | MIT                  | git://github.com/getsentry/sentry-javascript.git                         |
-| cookie-signature     | 1.0.6   | MIT                  | https://github.com/visionmedia/node-cookie-signature.git                 |
-| hash.js              | 1.1.7   | MIT                  | git@github.com:indutny/hash.js                                           |
-| isarray              | 1.0.0   | MIT                  | git://github.com/juliangruber/isarray.git                                |
-| puppeteer-core       | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer-core |
-| puppeteer            | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer      |
+| Pakiet                            | Wersja  | Deklarowana licencja | Repozytorium                                                             |
+| --------------------------------- | ------- | -------------------- | ------------------------------------------------------------------------ |
+| @prisma/dev                       | 0.24.17 | ISC                  | —                                                                        |
+| @puppeteer/browsers               | 3.2.6   | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/browsers       |
+| @radix-ui/react-compose-refs      | 1.1.2   | MIT                  | git+https://github.com/radix-ui/primitives.git                           |
+| @radix-ui/react-use-layout-effect | 1.1.1   | MIT                  | git+https://github.com/radix-ui/primitives.git                           |
+| @sentry/server-utils              | 10.76.2 | MIT                  | git://github.com/getsentry/sentry-javascript.git                         |
+| cookie-signature                  | 1.0.6   | MIT                  | https://github.com/visionmedia/node-cookie-signature.git                 |
+| hash.js                           | 1.1.7   | MIT                  | git@github.com:indutny/hash.js                                           |
+| isarray                           | 1.0.0   | MIT                  | git://github.com/juliangruber/isarray.git                                |
+| pg-types                          | 2.2.0   | MIT                  | git://github.com/brianc/node-pg-types.git                                |
+| pgpass                            | 1.0.5   | MIT                  | https://github.com/hoegaarden/pgpass.git                                 |
+| postgres                          | 3.4.7   | Unlicense            | porsager/postgres                                                        |
+| puppeteer-core                    | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer-core |
+| puppeteer                         | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer      |
+| remeda                            | 2.33.4  | MIT                  | git+https://github.com/remeda/remeda.git                                 |
 
 ## 10. Weryfikacja i aktualizacja
 

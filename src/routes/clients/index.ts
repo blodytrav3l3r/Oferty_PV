@@ -1,5 +1,6 @@
 import express from 'express';
 import crypto from 'crypto';
+import { Prisma } from '../../../generated/prisma-postgres/client';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 
@@ -16,6 +17,19 @@ const router = express.Router();
 router.use('/', contactsRouter);
 
 const writeClientsLimiter = WRITE_LIMITER;
+
+interface ClientWriteRow {
+    docId: string;
+    ownerId: string | null;
+    name: string;
+    nip: string;
+    address: string;
+    contact: string;
+    clientNumber: string;
+    phone: string;
+    email: string;
+    createdAt: string;
+}
 
 // GET /api/clients - Pobiera wszystkich klientów (wspólna baza, widoczna dla każdego zalogowanego użytkownika)
 router.get('/', requireAuth, async (_req, res) => {
@@ -143,7 +157,7 @@ router.put(
                         // Prep bez I/O: docId / owner / createdAt na wiersz. Owner jak
                         // dotąd: istniejący z DB (w tym null = bezpański zostaje
                         // bezpański), edytujący — tylko dla nowych wierszy.
-                        const rows = arr.map(
+                        const rows: ClientWriteRow[] = arr.map(
                             (c: {
                                 id?: string;
                                 createdAt?: string | number | null;
@@ -189,44 +203,35 @@ router.put(
                             }
                         );
 
-                        // Batch (N+1 -> 1): jeden multi-row INSERT ... ON CONFLICT
-                        // (SQLite wspiera od 3.24 — zweryfikowane runtime na silniku
-                        // Prisma). DO UPDATE czyta excluded.* = te same wartości co
+                        // Batch (N+1 -> 1): jeden wielowierszowy INSERT ... ON CONFLICT.
+                        // DO UPDATE czyta EXCLUDED.* = te same wartości co
                         // per-row upsert, w tym owner bez przepisywania. RETURNING
                         // zbędne — docId znamy z prepu (poprzedni kod też ignorował
                         // wynik RETURNING, pushował docId).
-                        const placeholders = rows.map(() => '(?,?,?,?,?,?,?,?,?,?,?)').join(',');
-                        const params: unknown[] = [];
-                        for (const r of rows) {
-                            params.push(
-                                r.docId,
-                                r.ownerId,
-                                r.name,
-                                r.nip,
-                                r.address,
-                                r.contact,
-                                r.clientNumber,
-                                r.phone,
-                                r.email,
-                                r.createdAt,
-                                now
-                            );
-                        }
-                        await tx.$queryRawUnsafe(
-                            `INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)` +
-                                ` VALUES ${placeholders}` +
-                                ` ON CONFLICT(id) DO UPDATE SET` +
-                                ` userId = excluded.userId,` +
-                                ` name = excluded.name,` +
-                                ` nip = excluded.nip,` +
-                                ` address = excluded.address,` +
-                                ` contact = excluded.contact,` +
-                                ` clientNumber = excluded.clientNumber,` +
-                                ` phone = excluded.phone,` +
-                                ` email = excluded.email,` +
-                                ` updatedAt = excluded.updatedAt`,
-                            ...params
+                        const valueRows = rows.map(
+                            (r) => Prisma.sql`(
+                            ${r.docId}, ${r.ownerId}, ${r.name}, ${r.nip}, ${r.address},
+                            ${r.contact}, ${r.clientNumber}, ${r.phone}, ${r.email},
+                            ${r.createdAt}, ${now}
+                        )`
                         );
+                        await tx.$executeRaw(Prisma.sql`
+                            INSERT INTO "clients_rel" (
+                                "id", "userId", "name", "nip", "address", "contact",
+                                "clientNumber", "phone", "email", "createdAt", "updatedAt"
+                            )
+                            VALUES ${Prisma.join(valueRows)}
+                            ON CONFLICT ("id") DO UPDATE SET
+                                "userId" = EXCLUDED."userId",
+                                "name" = EXCLUDED."name",
+                                "nip" = EXCLUDED."nip",
+                                "address" = EXCLUDED."address",
+                                "contact" = EXCLUDED."contact",
+                                "clientNumber" = EXCLUDED."clientNumber",
+                                "phone" = EXCLUDED."phone",
+                                "email" = EXCLUDED."email",
+                                "updatedAt" = EXCLUDED."updatedAt"
+                        `);
                         for (const r of rows) upserted.push({ id: r.docId });
                     }
                 });

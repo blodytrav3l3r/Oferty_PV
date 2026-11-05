@@ -65,22 +65,21 @@ Save-Text "00-meta.txt" ($meta -join "`n")
 
 Log "S.O.K. audit-disconnect (Windows) - start (since=${SinceHours}h, port=$Port, out=$outZip)"
 
-# 1. ENV i DATABASE_URL (trop B) - bez uruchamiania serwera, tylko odczyt plikow
-Save-Command "ENV - .env DATABASE_URL / HOST / PORT / TRUST_PROXY" {
+# 1. ENV metadata — never include connection strings or secret values in the archive
+Save-Command "ENV - PostgreSQL configuration names only" {
     if (Test-Path ".env") {
-        Get-Content ".env" | Select-String -Pattern "DATABASE_URL|HOST|PORT|TRUST_PROXY|NODE_ENV|DEFAULT_ADMIN" | ForEach-Object { $_.Line }
-        ""
-        "--- .env raw DATABASE_URL line ---"
-        (Get-Content ".env" | Select-String "DATABASE_URL").Line
+        Get-Content ".env" | Where-Object { $_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=' } |
+            ForEach-Object { if ($Matches[1] -match '^(DATABASE_URL|BACKUP_DATABASE_URL|HOST|PORT|TRUST_PROXY|NODE_ENV)$') { $Matches[1] } } |
+            Sort-Object -Unique
     } else { ".env: brak pliku" }
     ""
-    "--- process env (PowerShell) ---"
-    Get-ChildItem Env: | Where-Object { $_.Name -match "DATABASE_URL|HOST|PORT|TRUST_PROXY|NODE_ENV" } | ForEach-Object { "$($_.Name)=$($_.Value)" }
+    "--- process env variable names ---"
+    Get-ChildItem Env: | Where-Object { $_.Name -match "^(DATABASE_URL|BACKUP_DATABASE_URL|HOST|PORT|TRUST_PROXY|NODE_ENV)$" } | ForEach-Object { $_.Name }
 } "01-env.txt"
 
-Save-Command "src/prismaClient.ts - default connection_limit/busy_timeout" {
+Save-Command "src/prismaClient.ts PostgreSQL configuration references" {
     if (Test-Path "src/prismaClient.ts") {
-        Select-String -Path "src/prismaClient.ts" -Pattern "connection_limit|busy_timeout|DATABASE_URL" | ForEach-Object { "$($_.Filename):$($_.LineNumber): $($_.Line.Trim())" }
+        Select-String -Path "src/prismaClient.ts" -Pattern "connection_limit|pool_timeout|DATABASE_URL" | ForEach-Object { "$($_.Filename):$($_.LineNumber): $($_.Line.Trim())" }
     }
     if (Test-Path "docker-entrypoint.sh") {
         "--- docker-entrypoint.sh DATABASE_URL ---"
@@ -89,38 +88,33 @@ Save-Command "src/prismaClient.ts - default connection_limit/busy_timeout" {
     }
 } "02-prisma-default.txt"
 
-# 2. PRAGMA journal_mode / busy_timeout / synchronous (trop B - wymaga uruchomionej bazy)
-Save-Command "PRAGMA - sqlite3 lub Node fallback" {
-    $dbCandidates = @("data/app_database.sqlite", "prisma/data/app_database.sqlite", "data\app_database.sqlite")
-    $db = $null
-    foreach ($c in $dbCandidates) { if (Test-Path $c) { $db = (Resolve-Path $c).Path; break } }
-    if (-not $db) { "Baza nie znaleziona w: $($dbCandidates -join ', ')"; return }
-    "DB: $db"
-    $hasSqlite3 = Get-Command sqlite3 -ErrorAction SilentlyContinue
-    if ($hasSqlite3) {
-        "--- sqlite3 PRAGMA ---"
-        & sqlite3 $db "PRAGMA journal_mode; PRAGMA busy_timeout; PRAGMA synchronous;" 2>&1 | Out-String
-    } else {
-        "sqlite3: brak w PATH - uzywam Node fallback"
+# 2. PostgreSQL read-only diagnostics; URL values are read into the process only.
+Save-Command "PostgreSQL connectivity/version/database size" {
+    $rawUrl = $env:DATABASE_URL
+    if (-not $rawUrl -and (Test-Path ".env")) {
+        $line = Get-Content ".env" | Where-Object { $_ -match '^\s*DATABASE_URL\s*=' } | Select-Object -First 1
+        if ($line) { $rawUrl = ($line -replace '^\s*DATABASE_URL\s*=\s*', '').Trim().Trim('"', "'") }
     }
-    "--- Node prisma PRAGMA (fallback, read-only) ---"
-    if (Test-Path "dist/src/prismaClient.js") {
-        $tmpJs = Join-Path $env:TEMP "sok-pragma-$([Guid]::NewGuid().ToString('N').Substring(0,8)).cjs"
-        Set-Content -LiteralPath $tmpJs -Value "require('I:/GitHub/Oferty_PV/node_modules/dotenv').config({path:'I:/GitHub/Oferty_PV/.env'});const c=require('I:/GitHub/Oferty_PV/dist/src/prismaClient.js').default;Promise.all([c.`$queryRawUnsafe('PRAGMA journal_mode'),c.`$queryRawUnsafe('PRAGMA busy_timeout'),c.`$queryRawUnsafe('PRAGMA synchronous')]).then(r=>{console.log(JSON.stringify(r,(k,v)=>typeof v==='bigint'?v.toString():v,2));return c.`$disconnect()}).catch(e=>{console.error('PRAGMA error',e.message);process.exit(1)});" -Encoding utf8
-        try { node $tmpJs 2>&1 | Out-String } finally { Remove-Item $tmpJs -Force -ErrorAction SilentlyContinue }
-    } else {
-        "dist/src/prismaClient.js: brak (uruchom npm run build aby umozliwic Node PRAGMA check)"
-        "Alternatywnie: npx --yes sqlite3 $db 'PRAGMA journal_mode; PRAGMA busy_timeout;'"
-    }
-    ""
-    "--- ls -lh data ---"
-    Get-ChildItem "data" -ErrorAction SilentlyContinue | Format-Table Name, Length, LastWriteTime | Out-String
-    try { (Get-Item $db).Length } catch {}
-} "03-pragma.txt"
+    if (-not $rawUrl) { "DATABASE_URL missing; diagnostics skipped"; return }
+    try {
+        $dbUrl = [Uri]$rawUrl
+        if ($dbUrl.Scheme -notin @("postgres", "postgresql")) { "DATABASE_URL is not PostgreSQL; diagnostics skipped"; return }
+        $env:DATABASE_URL = $rawUrl
+        @'
+const { Client } = require('pg');
+const client = new Client({ connectionString: process.env.DATABASE_URL });
+client.connect()
+  .then(() => client.query('SELECT current_database() AS database, current_setting($1) AS version, pg_database_size(current_database()) AS bytes', ['server_version']))
+  .then(({ rows }) => process.stdout.write(JSON.stringify(rows[0]) + '\n'))
+  .catch(() => { process.stderr.write('PostgreSQL diagnostic failed\n'); process.exitCode = 1; })
+  .finally(() => client.end());
+'@ | node - 2>&1 | Out-String
+    } catch { "PostgreSQL diagnostics unavailable: $($_.Exception.GetType().Name)" }
+} "03-postgres.txt"
 
-# 3. Logi aplikacji - grep A/B/E (trop A: UnhandledRejection, B: SQLITE_BUSY, E: CronService co 15 min)
-Save-Command "Logi - grep UnhandledRejection/SQLITE_BUSY/CronService/429" {
-    $patterns = @("UnhandledRejection","UncaughtException","flushSentry","UnhandledError","SQLITE_BUSY","busy","PRAGMA","P1017","Unable to open","CronService","mlTraining","fullCycle","Retry-After"," 429 ")
+# 3. Logi aplikacji - grep A/B/E (trop A: UnhandledRejection, B: PostgreSQL connectivity, E: CronService)
+Save-Command "Logi - grep runtime/database/CronService/429" {
+    $patterns = @("UnhandledRejection","UncaughtException","flushSentry","UnhandledError","postgres","database","deadlock","pool","timeout","P1001","P1017","Unable to connect","CronService","mlTraining","fullCycle","Retry-After"," 429 ")
     $logFiles = @("data/*.log","logs/*.log","*.log") | ForEach-Object { Get-ChildItem $_ -ErrorAction SilentlyContinue } | Select-Object -ExpandProperty FullName
     if (-not $logFiles) { "Brak plikow logow w data/*.log - przeszukuje caly projekt (bez node_modules)..." }
     $cutoff = (Get-Date).AddHours(-$SinceHours)
@@ -201,7 +195,7 @@ Save-Command "Docker - ps/inspect/logs (jesli Docker Desktop)" {
     docker logs --since "${SinceHours}h" --timestamps $Container 2>&1 | Select-Object -Last 200 | Out-String
     "--- grep rejection/busy/cron w docker logs ---"
     $logs = docker logs --since "${SinceHours}h" --timestamps $Container 2>&1 | Out-String
-    $logs -split "`n" | Select-String -Pattern "UnhandledRejection|UncaughtException|SQLITE_BUSY|busy|CronService|429" | Select-Object -Last 50 | ForEach-Object { $_.Line }
+    $logs -split "`n" | Select-String -Pattern "UnhandledRejection|UncaughtException|postgres|database|deadlock|pool|timeout|CronService|429" | Select-Object -Last 50 | ForEach-Object { $_.Line }
 } "30-docker.txt"
 
 # 6. Host - zasoby, dysk, mount (roznica Windows vs Linux)
@@ -238,11 +232,8 @@ $verdict = @"
 WERDYKT P0 - wskazowki (Windows, bez Dockera - nie rozstrzyga B/C infra)
 ======================================================
 Sprawdz w archiwum:
-  01-env.txt              - DATABASE_URL bez ?busy_timeout na Windows OK (dev fallback ma 30000),
-                           ale w Dockerze brak parametru = trop B
-  03-pragma.txt           - UWAGA per-connection: wartosc z osobnego polaczenia (Node fallback) NIE dowodzi
-                           wartosci w app; brak WARN PRAGMA to dowod posredni; najmocniej: PRAGMA na tym
-                           samym polaczeniu Prisma lub test lock contention
+  01-env.txt              - zawiera wyłącznie nazwy zmiennych; archiwum nie ujawnia connection stringów
+  03-postgres.txt         - read-only status PostgreSQL; wynik z osobnego połączenia nie dowodzi stanu poola aplikacji
   10-logs-grep.txt        - UnhandledRejection/UncaughtException => hipoteza A (exit+restart) WYSOKIE
   20/21-*.txt             - /health 200 + /health/ready 503 => C (readiness); connection refused => serwer nie dziala
   22-ratelimit.txt        - 429 Retry-After => D (tylko przy wielu klientach/NAT)
@@ -250,8 +241,7 @@ Sprawdz w archiwum:
   41-code-refs.txt        - server.ts:41 flushSentryAndExit + app.ts:56 trust proxy + cronService 15 min
 
 Na Windows glownie potwierdzisz A/E (kod) i wykluczysz D (smoke).
-Pelny werdykt wymaga archiwum z Linux (audit-disconnect.sh) - tam 40-env + 41-pragma na tym
-samym polaczeniu lub reprodukcja locka rozstrzyga B definitywnie.
+Pelny werdykt wymaga archiwum z Linux (audit-disconnect.sh) oraz korelacji logów i metryk połączeń PostgreSQL.
 
 Bezpieczenstwo: NIE zmieniaj globalnego handlera unhandledRejection na 'log bez exit'
 przed znalezieniem zrodla - zamieni kontrolowany restart na dzialanie w uszkodzonym stanie.

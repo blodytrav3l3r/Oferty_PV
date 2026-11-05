@@ -28,7 +28,9 @@ beforeEach(() => {
  */
 describe('P0.4 audit error visibility', () => {
     it('błąd zapisu nie rzuca, loguje kontekst i inkrementuje metrykę', async () => {
-        prismaMock.$executeRaw.mockRejectedValueOnce(new Error('SQLITE_BUSY'));
+        prismaMock.$executeRaw.mockRejectedValueOnce(
+            new Error('PostgreSQL serialization failure (SQLSTATE 40001)')
+        );
         await expect(
             logAudit('offer', 'o1', 'u1', 'create', { a: 1 }, null)
         ).resolves.toBeUndefined();

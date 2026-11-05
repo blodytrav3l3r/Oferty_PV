@@ -86,7 +86,7 @@ describe('audit w tx: rollback cofa też audit', () => {
         const failingTx = {
             $queryRaw: jest.fn(async () => []),
             $executeRaw: jest.fn(async () => {
-                throw new Error('SQLITE_BUSY');
+                throw new Error('PostgreSQL serialization failure (SQLSTATE 40001)');
             })
         } as unknown as AuditDb;
         await expect(

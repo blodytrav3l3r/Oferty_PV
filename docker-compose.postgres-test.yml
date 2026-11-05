@@ -1,0 +1,14 @@
+services:
+    postgres-test:
+        image: postgres:18-alpine
+        environment:
+            POSTGRES_USER: sok_test
+            POSTGRES_PASSWORD: ${POSTGRES_TEST_PASSWORD:?Set POSTGRES_TEST_PASSWORD in the environment}
+            POSTGRES_DB: sok_test
+        ports:
+            - '127.0.0.1:${POSTGRES_TEST_PORT:-55432}:5432'
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U sok_test -d sok_test']
+            interval: 5s
+            timeout: 5s
+            retries: 12

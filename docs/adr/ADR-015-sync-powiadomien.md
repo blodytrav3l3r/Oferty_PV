@@ -3,6 +3,11 @@
 **Status:** Zaakceptowany
 **Data:** 2026-10-10
 
+> Historyczny kontekst tej decyzji zakładał pojedynczy proces SQLite. SQLite
+> nie jest już docelowym silnikiem; migracja PostgreSQL trwa i nie została
+> zweryfikowana w pełnym runtime. Założenie single-node poniżej nie jest
+> ograniczeniem wymaganym przez PostgreSQL ani dowodem gotowości produkcyjnej.
+
 ## Kontekst
 
 Centrum powiadomień opieki (`GET /api/care/notifications`) materializuje wiersze
@@ -16,8 +21,8 @@ Sync przy odczycie zostaje:
 
 - powiadomienie to pochodna stanu (jak badge), nie zdarzenie biznesowe — brak
   konsumentów poza skrzynką usera, brak webhooków, brak rozliczeń;
-- brak schedulera w S.O.K. (celowo: SQLite single-node, ADR-001/ADR-012, zero
-  cronów follow-up) — sync per-request zastępuje workera;
+- brak schedulera w S.O.K. (historyczne uzasadnienie: SQLite single-node,
+  ADR-001/ADR-012, zero cronów follow-up) — sync per-request zastępuje workera;
 - idempotentny (unikalność przez sprawdzenie przed INSERT, rerun = 0 wstawek);
 - pauza (snooze/done) i terminale nie generują; wygasły snooze wraca do kandydatów.
 
@@ -37,11 +42,11 @@ Sync przy odczycie zostaje:
 
 ## Alternatywy odrzucone
 
-| Alternatywa              | Powód odrzucenia                                                                  |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| Czysty odczyt bez tabeli | Brak historii/odczytania (badge bez „przeczytane"), liczenie przy każdym pollingu |
-| Osobny POST /sync        | Drugi round-trip co 60 s bez zysku; sync i tak musi biec przed listą              |
-| Cron/worker              | Brak schedulera w projekcie; single-node SQLite, polling wystarcza                |
+| Alternatywa              | Powód odrzucenia                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| Czysty odczyt bez tabeli | Brak historii/odczytania (badge bez „przeczytane"), liczenie przy każdym pollingu          |
+| Osobny POST /sync        | Drugi round-trip co 60 s bez zysku; sync i tak musi biec przed listą                       |
+| Cron/worker              | Brak schedulera w bieżącej implementacji; uzasadnienie single-node SQLite jest historyczne |
 
 ## Suplement 2026-10-11 (decyzja A+C: podgląd repa)
 

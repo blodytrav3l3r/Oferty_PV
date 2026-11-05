@@ -12,6 +12,11 @@ jest.mock('../src/middleware/auth', () => ({
 
 jest.mock('../src/db', () => ({ logAudit: jest.fn() }));
 
+jest.mock('../src/services/pricelistVersionService', () => ({
+    resolveActive: jest.fn(async () => ({ id: 'v-active-test' })),
+    resolveActiveForStamp: jest.fn(async () => ({ failed: false, id: 'v-active-test' }))
+}));
+
 jest.mock('../src/utils/logger', () => ({
     logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() }
 }));
@@ -103,6 +108,7 @@ describe('SQL Injection - scenariusze ataku', () => {
 
     it('POST /studnie z SQL injection w danych nie powoduje błędu bazy', async () => {
         (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(null);
+        (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
 
         const maliciousPayload = {

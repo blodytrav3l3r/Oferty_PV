@@ -4,6 +4,20 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.56.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.3...v1.56.4) (2026-11-05)
+
+### Features
+
+- **prisma:** migracja runtime i schematu aplikacji na PostgreSQL 18
+- **deploy:** instalatory PostgreSQL dla Windows i Linux oraz uruchamianie S.O.K. przez Docker Compose
+- **pricelist:** eksport i import wyłącznie aktywnych cenników podczas cutoveru
+
+### Bug Fixes
+
+- **security:** jednorazowy bootstrap konta administratora bez przekazywania jego sekretu do runtime aplikacji
+- **docker:** generowanie minifikowanego CSS podczas budowania obrazu i uruchamianie kontenera jako użytkownik nieuprzywilejowany
+- **pricelist:** stabilne porównywanie kwot PostgreSQL podczas weryfikacji importu
+
 ### [1.56.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.2...v1.56.3) (2026-11-04)
 
 ### Bug Fixes

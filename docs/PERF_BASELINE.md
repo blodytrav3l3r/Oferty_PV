@@ -1,5 +1,13 @@
 # Baseline wydajności S.O.K. (brama regresji)
 
+> **Zakres porównywalności:** pomiary backendowe i end-to-end zależne od bazy
+> używały SQLite (m.in. `perf-baseline.sqlite` i syntetycznych fixture'ów).
+> Nie porównuj ich bezpośrednio z wynikami PostgreSQL ani nie traktuj jako
+> baseline'u PG18. Czyste pomiary renderowania UI opisują osobny koszt
+> przeglądarki, ale nie potwierdzają wydajności runtime PostgreSQL. Wyniki i
+> metodologię historycznych pomiarów zachowano bez zmian; baseline PG18 wymaga
+> osobnego przebiegu po weryfikacji runtime.
+
 > Nie dokładać mechanizmów „na zapas" — decyzje tylko na podstawie pomiaru lub triggera.
 > Surowe limity (CLAIM_RANGE_MAX, batch 200, limit 50 MB) to safety capy, nie mechanizmy.
 

@@ -1,5 +1,6 @@
 1 Pliki przykładowe
 node_modules
+/generated/prisma-postgres
 dist
 .next
 .cache

@@ -176,7 +176,7 @@ describe('aiMlGuard — semantyka flagi', () => {
     });
 
     it('P0.5 FAIL-CLOSED: błąd DB -> 503, next nie wołane', async () => {
-        (mockFindUnique as any).mockRejectedValue(new Error('SQLITE_BUSY'));
+        (mockFindUnique as any).mockRejectedValue(new Error('PostgreSQL connection pool timeout'));
         const next = jest.fn();
         let status = 0;
         let body: unknown = null;

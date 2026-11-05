@@ -78,7 +78,7 @@ process.on('uncaughtException', (err: Error) => {
     const server = app.listen(PORT, HOST, () => {
         logger.info('Server', `${APP_NAME} — serwer działa na: http://localhost:${PORT}`);
         logger.info('Server', `Tryb: ${NODE_ENV === 'production' ? 'PRODUKCJA' : 'DEVELOPMENT'}`);
-        logger.info('Server', 'Baza: SQLite (lokalna)');
+        logger.info('Server', 'Baza: PostgreSQL');
         if (shouldWarnPublicBind(NODE_ENV, HOST)) {
             logger.warn(
                 'Server',

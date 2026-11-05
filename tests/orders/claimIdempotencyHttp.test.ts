@@ -1,5 +1,5 @@
 /**
- * A2: Idempotency-Key HTTP na realnej izolowanej DB (worker sqlite).
+ * A2: Idempotency-Key HTTP na izolowanym schemacie PostgreSQL workera.
  * - claim ×2 tym samym kluczem + body → IDENTYCZNE numery (replay, licznik +3 raz);
  * - ten sam klucz + inny body → 409 IDEMPOTENCY_KEY_REUSE;
  * - PUT bulk ×2 tym samym payloadem (stabilne client-id) → 3 wiersze, zero dubli
@@ -13,7 +13,7 @@ import prisma from '../../src/prismaClient';
 
 const mockUser: any = { id: 'admin-1', role: 'admin', username: 'admin', subUsers: [] };
 
-// SQLite busy_timeout = 30 s (tests/setupDbIsolation.ts:23, src/utils/writeLock.ts:7),
+// PostgreSQL isolation uses a dedicated schema per Jest worker.
 // a globalny testTimeout to 10 s — pod równoległym obciążeniem workerów retry
 // transakcji przekraczał 10 s (fałszywy timeout, nie regresja wydajności).
 jest.setTimeout(35000);

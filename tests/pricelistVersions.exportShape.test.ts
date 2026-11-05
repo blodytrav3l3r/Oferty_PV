@@ -38,6 +38,7 @@ jest.mock('../src/prismaClient', () => ({
                     orderBy
                 }: {
                     where: {
+                        id?: string;
                         type?: string;
                         seq?: number | { lte?: number };
                         status?: { in?: string[] };
@@ -55,6 +56,7 @@ jest.mock('../src/prismaClient', () => ({
                     const statuses = where.status?.in;
                     const hit = versions.filter(
                         (v) =>
+                            (where.id === undefined || v.id === where.id) &&
                             (where.type === undefined || v.type === where.type) &&
                             (statuses === undefined || statuses.includes(v.status)) &&
                             (where.seq === undefined || v.seq <= maxSeq) &&
@@ -85,6 +87,7 @@ jest.mock('../src/prismaClient', () => ({
                 }
             )
         },
+        settings: { findUnique: jest.fn(async () => null) },
         pricelistItemRury: {
             findMany: jest.fn(async ({ where }: { where: { versionId: string } }) => {
                 return itemsRury.filter((r) => r.versionId === where.versionId);
@@ -120,6 +123,7 @@ import {
     RURY_LIVE_COLUMNS,
     RURY_LIVE_SHEET,
     STUDNIE_LIVE_COLUMNS,
+    cennikMetaSheet,
     getVersionExportSheets,
     liveSanitizeSheetName,
     liveStudnieSheetName,
@@ -533,8 +537,9 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
     });
 
     it('preco same-seq doklejone w kolejności po studni', async () => {
-        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
+        const { sheets, precoIncluded, precoSource } = await getVersionExportSheets('s1');
         expect(precoIncluded).toBe(true);
+        expect(precoSource).toBe('TIMELINE');
         expect(Object.keys(sheets)).toEqual(['DN1000', 'PRECO_Kinety']);
         expect(sheets['PRECO_Kinety']).toEqual([
             {
@@ -546,42 +551,56 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
         ]);
     });
 
-    it.each(['DRAFT'])('PRECO %s nie jest doklejane (D1)', async (status) => {
+    it.each(['DRAFT'])('PRECO %s nie jest dopasowaniem historycznym (D1)', async (status) => {
         const p5 = versions.find((v) => v.id === 'p5');
         if (!p5) throw new Error('brak p5');
         p5.status = status;
-        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
-        expect(precoIncluded).toBe(false);
-        expect(sheets['PRECO_Kinety']).toBeUndefined();
+        const { sheets, precoIncluded, precoSource } = await getVersionExportSheets(
+            's1',
+            '2026-11-04T00:00:00.000Z'
+        );
+        expect(precoIncluded).toBe(true);
+        expect(precoSource).toBe('ACTIVE_FALLBACK');
+        expect(sheets['PRECO_Kinety']).toBeDefined();
     });
 
     it('PRECO APPROVED jest doklejane (D1)', async () => {
         const p5 = versions.find((v) => v.id === 'p5');
         if (!p5) throw new Error('brak p5');
         p5.status = 'APPROVED';
-        const { precoIncluded } = await getVersionExportSheets('s1');
+        const { precoIncluded, precoSource } = await getVersionExportSheets('s1');
         expect(precoIncluded).toBe(true);
+        expect(precoSource).toBe('TIMELINE');
     });
 
-    it('brak preco same-seq → tylko studnie (bez błędu)', async () => {
+    it('brak historycznej PRECO → bieżący aktywny PRECO jako jawny fallback', async () => {
         versions.splice(
             versions.findIndex((v) => v.id === 'p5'),
             1
         );
-        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
-        expect(precoIncluded).toBe(false);
-        expect(Object.keys(sheets)).toEqual(['DN1000']);
+        const { sheets, precoIncluded, precoSource, precoVersion } = await getVersionExportSheets(
+            's1',
+            '2026-11-04T00:00:00.000Z'
+        );
+        expect(precoIncluded).toBe(true);
+        expect(precoSource).toBe('ACTIVE_FALLBACK');
+        expect(precoVersion).toEqual({ id: 'p9', version: 'v9', seq: 9 });
+        expect(Object.keys(sheets)).toEqual(['DN1000', 'PRECO_Kinety']);
     });
 
-    it('nowsza PRECO ignorowana (p9 nie doklejane do s1)', async () => {
+    it('nowsza PRECO nie jest historyczną referencją, ale służy jako fallback', async () => {
         versions.splice(
             versions.findIndex((v) => v.id === 'p5'),
             1
         );
-        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
-        expect(precoIncluded).toBe(false);
-        expect(sheets['PRECO_Kinety']).toBeUndefined();
-        expect(Object.keys(sheets)).toEqual(['DN1000']);
+        const { sheets, precoIncluded, precoSource } = await getVersionExportSheets(
+            's1',
+            '2026-11-04T00:00:00.000Z'
+        );
+        expect(precoIncluded).toBe(true);
+        expect(precoSource).toBe('ACTIVE_FALLBACK');
+        expect(sheets['PRECO_Kinety']).toBeDefined();
+        expect(Object.keys(sheets)).toEqual(['DN1000', 'PRECO_Kinety']);
     });
 
     it('starsza PRECO doklejana (najwyższy seq <= eksportowanego)', async () => {
@@ -637,5 +656,13 @@ describe('Nazwa pliku eksportu wersji (konwencja LIVE)', () => {
 
     it('nieznany typ przechodzi jak jest', () => {
         expect(versionExportFilename('xyz', 'v1')).toBe('Cennik_xyz_v1_Export.xlsx');
+    });
+});
+
+describe('Metadane eksportu PRECO fallback', () => {
+    it('arkusz _Cennik oznacza stawki z bieżącego aktywnego PRECO', () => {
+        const sheet = cennikMetaSheet('Studnie', 'Sv5', { version: 'Pv9', seq: 9 });
+        expect(sheet.rows).toContainEqual(['Źródło PRECO', 'Bieżący aktywny cennik zastępczy']);
+        expect(sheet.rows).toContainEqual(['Numer PRECO', 'Pv9 (nr 9)']);
     });
 });

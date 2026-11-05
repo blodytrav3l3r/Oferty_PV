@@ -1,0 +1,126 @@
+name: PostgreSQL Docker smoke
+
+on:
+    workflow_dispatch:
+    push:
+        paths:
+            - Dockerfile
+            - docker-compose.yml
+            - prisma.config.ts
+            - prisma/schema.prisma
+            - prisma/migrations-postgresql/**
+            - src/utils/searchUtils.ts
+            - scripts/recover-failed-initial-migration.mjs
+            - scripts/docker-db-bootstrap.sh
+            - scripts/bootstrap-admin.ts
+            - scripts/import-active-pricelists.ts
+            - scripts/setup-new-pc.ps1
+            - install-linux-server.sh
+            - docker/postgres/init-roles.sh
+            - scripts/grant-postgres-roles.mjs
+            - scripts/docker-entrypoint.sh
+            - scripts/redact-db-log.mjs
+            - .github/workflows/postgres-docker.yml
+
+jobs:
+    docker-postgres-smoke:
+        name: PostgreSQL 18 container startup and readiness
+        runs-on: ubuntu-latest
+        timeout-minutes: 25
+        services:
+            postgres:
+                image: postgres:18-alpine
+                env:
+                    POSTGRES_DB: sok_test
+                    POSTGRES_USER: sok_test
+                    POSTGRES_PASSWORD: ci-only-p03-test
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U sok_test -d sok_test"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 12
+        env:
+            DATABASE_URL: postgresql://sok_app:ci-only-p03-app@localhost:5432/sok_test?schema=public
+            POSTGRES_ADMIN_URL: postgresql://sok_test:ci-only-p03-test@localhost:5432/sok_test?schema=public
+            MIGRATION_DATABASE_URL: postgresql://sok_migrator:ci-only-p03-migrator@localhost:5432/sok_test?schema=public
+            BACKUP_DATABASE_URL: postgresql://sok_backup:ci-only-p03-backup@localhost:5432/sok_test?schema=public
+            DEFAULT_ADMIN_PASSWORD: p03-ci-only-dummy-password
+            PORT: '3000'
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Build application image
+              run: docker build -t sok-postgres-smoke:ci .
+
+            - name: Provision isolated least-privilege smoke roles
+              run: |
+                  node <<'NODE'
+                  const { Client } = require('pg');
+                  const client = new Client({ connectionString: process.env.POSTGRES_ADMIN_URL });
+                  client.connect()
+                    .then(async () => {
+                      await client.query("CREATE ROLE sok_migrator LOGIN PASSWORD 'ci-only-p03-migrator'");
+                      await client.query("CREATE ROLE sok_app LOGIN PASSWORD 'ci-only-p03-app'");
+                      await client.query("CREATE ROLE sok_backup LOGIN PASSWORD 'ci-only-p03-backup'");
+                      await client.query('GRANT CONNECT, CREATE ON DATABASE sok_test TO sok_migrator');
+                      await client.query('ALTER SCHEMA public OWNER TO sok_migrator');
+                      await client.query('GRANT CONNECT ON DATABASE sok_test TO sok_app, sok_backup');
+                      await client.query('GRANT USAGE ON SCHEMA public TO sok_app, sok_backup');
+                    })
+                    .catch((error) => { console.error(error.message); process.exitCode = 1; })
+                    .finally(() => client.end());
+                  NODE
+
+            - name: Apply PostgreSQL bootstrap once
+              run: |
+                  docker run --rm \
+                    --add-host=host.docker.internal:host-gateway \
+                    --entrypoint /bin/sh \
+                    -e DATABASE_URL='postgresql://sok_app:ci-only-p03-app@host.docker.internal:5432/sok_test?schema=public' \
+                    -e MIGRATION_DATABASE_URL='postgresql://sok_migrator:ci-only-p03-migrator@host.docker.internal:5432/sok_test?schema=public' \
+                    -e DEFAULT_ADMIN_PASSWORD="$DEFAULT_ADMIN_PASSWORD" \
+                    sok-postgres-smoke:ci /app/scripts/docker-db-bootstrap.sh
+
+            - name: Start application with explicit PostgreSQL URL
+              run: |
+                  docker run -d --name sok-postgres-smoke \
+                    --add-host=host.docker.internal:host-gateway \
+                    -p 3000:10000 \
+                    -e DATABASE_URL='postgresql://sok_app:ci-only-p03-app@host.docker.internal:5432/sok_test?schema=public' \
+                    -e BACKUP_DATABASE_URL='postgresql://sok_backup:ci-only-p03-backup@host.docker.internal:5432/sok_test?schema=public' \
+                    sok-postgres-smoke:ci
+
+            - name: Wait for application readiness
+              run: |
+                  for attempt in $(seq 1 48); do
+                    if curl -sf http://localhost:3000/health/ready >/dev/null; then
+                      echo "Application ready on attempt $attempt."
+                      exit 0
+                    fi
+                    sleep 2
+                  done
+                  echo 'Application failed to become ready.' >&2
+                  docker logs --tail=100 sok-postgres-smoke > /tmp/sok-postgres-smoke.log
+                  node scripts/redact-db-log.mjs /tmp/sok-postgres-smoke.log >&2
+                  exit 1
+
+            - name: Verify migrations are registered in PostgreSQL
+              run: |
+                  node <<'NODE'
+                  const { Client } = require('pg');
+                  const client = new Client({ connectionString: process.env.DATABASE_URL });
+                  client.connect()
+                    .then(() => client.query('SELECT count(*)::int AS count FROM public."_prisma_migrations"'))
+                    .then(({ rows }) => {
+                      if (rows[0].count < 1) throw new Error('No PostgreSQL migrations were applied.');
+                      console.log(`PostgreSQL migration records: ${rows[0].count}`);
+                    })
+                    .catch((error) => { console.error(error.message); process.exitCode = 1; })
+                    .finally(() => client.end());
+                  NODE
+
+            - name: Stop application container
+              if: always()
+              run: docker rm -f sok-postgres-smoke || true

@@ -83,7 +83,7 @@ const busyDelta = prev ? (metrics.db?.busy ?? 0) - (prev.busy ?? 0) : 0;
 const rejectedDelta = prev
     ? (metrics.ratelimit?.rejected ?? metrics.rateLimited?.rejected ?? 0) - (prev.rejected ?? 0)
     : 0;
-if (busyDelta > 0) breaches.push(`db.busyDelta=${busyDelta} (contention SQLite w oknie)`);
+if (busyDelta > 0) breaches.push(`db.busyDelta=${busyDelta} (contention bazy danych w oknie)`);
 if (rejectedDelta > 0) breaches.push(`rateLimited.delta=${rejectedDelta} (429 w oknie)`);
 if (metrics.db?.avgMs > TH.dbAvgMs) breaches.push(`db.avgMs=${metrics.db.avgMs} (>100ms)`);
 if (metrics.loopLagMaxMs > TH.loopLagMaxMs)

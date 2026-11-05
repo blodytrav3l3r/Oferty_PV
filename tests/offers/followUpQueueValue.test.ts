@@ -1,94 +1,83 @@
-/*
- * tests/offers/followUpQueueValue.test.ts
- * REGRESJA: oferty studni z totalPrice=0 w kolumnie pokazywały 0,00 PLN
- * w Kolejce opieki mimo żywego totalBrutto w blobie (FE nie wysyła
- * top-level totalPrice; zapis lądował na 0, a COALESCE brał kolumnę).
- */
-import { DatabaseSync } from 'node:sqlite';
-import { ensureLatestFollowupFixture } from './careLatestFixture';
-import type { Prisma } from '../../generated/prisma';
+/* Regression: care queue uses PostgreSQL JSONB fallbacks for well-offer values. */
+import prisma from '../../src/prismaClient';
 import { getCareQueue, type CareUser } from '../../src/services/careService';
 
 const NOW = '2026-10-10T12:00:00.000Z';
-const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
+const testId = `care-queue-value-${process.pid}-${Date.now()}`;
+const userId = `${testId}-user`;
+const U1: CareUser = { id: userId, role: 'user', subUsers: [] };
 
-function freshDb(): DatabaseSync {
-    const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
-        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
-            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
-        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT, note TEXT);`);
-    // P1: cache latest (puste follow-upy, tabela musi istnieć dla JOIN).
-    ensureLatestFollowupFixture(db);
-    const ins = db.prepare(
-        'INSERT INTO offers_studnie_rel (id, "userId", "createdAt", "totalPrice", "data") VALUES (?,?,?,?,?)'
-    );
-    // a: kolumna 0 + żywe totalBrutto w blobie (scenariusz ze zgłoszenia).
-    ins.run('a', 'u1', '2026-10-01T00:00:00.000Z', 0, JSON.stringify({ totalBrutto: 999.99 }));
-    // b: niezerowa kolumna wygrywa z blobem.
-    ins.run('b', 'u1', '2026-10-01T00:00:00.000Z', 500, JSON.stringify({ totalBrutto: 999 }));
-    // c: kolumna 0 + brak totalBrutto, suma wellsExport.
-    ins.run(
-        'c',
-        'u1',
-        '2026-10-01T00:00:00.000Z',
-        0,
-        JSON.stringify({ wellsExport: [{ totalPrice: 100 }, { totalPrice: 50 }] })
-    );
-    // d: kolumna 0 + pusty blob = 0.
-    ins.run('d', 'u1', '2026-10-01T00:00:00.000Z', 0, JSON.stringify({}));
-    return db;
+async function cleanup(): Promise<void> {
+    await prisma.users.deleteMany({ where: { id: userId } });
+    await prisma.offers_rel.deleteMany({ where: { id: { startsWith: testId } } });
+    await prisma.offers_studnie_rel.deleteMany({ where: { id: { startsWith: testId } } });
 }
 
-function fake(db: DatabaseSync) {
-    return {
-        $queryRaw: async <T>(...args: any[]): Promise<T> => {
-            const q = args[0] as Prisma.Sql;
-            const raw = q as unknown as { sql: string; values: unknown[] };
-            return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
-        }
-    };
-}
-
-describe('wartość studni w kolejce (guard 0-kolumny)', () => {
-    it('kolumna 0 + blob.totalBrutto → wartość z bloba', async () => {
-        const db = freshDb();
-        try {
-            const { items } = await getCareQueue(fake(db), U1, { nowIso: NOW, limit: 50 });
-            const byId = new Map(items.map((r) => [r.offerId, r.value]));
-            expect(byId.get('a')).toBeCloseTo(999.99, 2);
-            expect(byId.get('b')).toBe(500);
-            expect(byId.get('c')).toBe(150);
-            expect(byId.get('d')).toBe(0);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
+describe('wartość studni w kolejce (guard 0-kolumny, PostgreSQL)', () => {
+    beforeEach(async () => {
+        await prisma.users.create({
+            data: {
+                id: userId,
+                username: userId,
+                password: 'test-only',
+                role: 'user',
+                firstName: 'Jan',
+                lastName: 'Kowalski'
             }
-            throw e;
-        }
+        });
+    });
+    afterEach(cleanup);
+
+    it('kolumna 0 + blob.totalBrutto → wartość z bloba', async () => {
+        await prisma.offers_studnie_rel.createMany({
+            data: [
+                {
+                    id: `${testId}-a`,
+                    userId,
+                    createdAt: '2026-10-01T00:00:00.000Z',
+                    totalPrice: 0,
+                    data: JSON.stringify({ totalBrutto: 999.99 })
+                },
+                {
+                    id: `${testId}-b`,
+                    userId,
+                    createdAt: '2026-10-01T00:00:00.000Z',
+                    totalPrice: 500,
+                    data: JSON.stringify({ totalBrutto: 999 })
+                },
+                {
+                    id: `${testId}-c`,
+                    userId,
+                    createdAt: '2026-10-01T00:00:00.000Z',
+                    totalPrice: 0,
+                    data: JSON.stringify({ wellsExport: [{ totalPrice: 100 }, { totalPrice: 50 }] })
+                },
+                {
+                    id: `${testId}-d`,
+                    userId,
+                    createdAt: '2026-10-01T00:00:00.000Z',
+                    totalPrice: 0,
+                    data: JSON.stringify({})
+                }
+            ]
+        });
+        const { items } = await getCareQueue(prisma, U1, { nowIso: NOW, limit: 50 });
+        const byId = new Map(items.map((item) => [item.offerId, item.value]));
+        expect(byId.get(`${testId}-a`)).toBeCloseTo(999.99, 2);
+        expect(byId.get(`${testId}-b`)).toBe(500);
+        expect(byId.get(`${testId}-c`)).toBe(150);
+        expect(byId.get(`${testId}-d`)).toBe(0);
     });
 
     it('obiekt i kontakt: kolumna wygrywa, fallback blob/budowa, braki = null', async () => {
-        const db = freshDb();
-        try {
-            db.prepare(
-                'INSERT INTO users (id, username, "firstName", "lastName") VALUES (?,?,?,?)'
-            ).run('u1', 'jkowalski', 'Jan', 'Kowalski');
-            db.prepare(
-                'INSERT INTO offers_rel (id, "userId", "createdAt", "investName", "clientNumber", "data") VALUES (?,?,?,?,?,?)'
-            ).run(
-                'r1',
-                'u1',
-                '2026-10-01T00:00:00.000Z',
-                'Obiekt Kolumna',
-                'K-7',
-                JSON.stringify({
+        await prisma.offers_rel.create({
+            data: {
+                id: `${testId}-r1`,
+                userId,
+                createdAt: '2026-10-01T00:00:00.000Z',
+                investName: 'Obiekt Kolumna',
+                clientNumber: 'K-7',
+                data: JSON.stringify({
                     investName: 'Obiekt Blob',
                     investAddress: 'ul. Testowa 1',
                     contactPerson: 'Jan Kowalski',
@@ -96,53 +85,59 @@ describe('wartość studni w kolejce (guard 0-kolumny)', () => {
                     clientEmail: 'jan@example.com',
                     createdByUserName: 'Ewa Nowak'
                 })
-            );
-            db.prepare(
-                'INSERT INTO offers_studnie_rel (id, "userId", "createdAt", "totalPrice", "investName", "data") VALUES (?,?,?,?,?,?)'
-            ).run(
-                's1',
-                'u1',
-                '2026-10-01T00:00:00.000Z',
-                0,
-                null,
-                JSON.stringify({
+            }
+        });
+        await prisma.offers_studnie_rel.create({
+            data: {
+                id: `${testId}-s1`,
+                userId,
+                createdAt: '2026-10-01T00:00:00.000Z',
+                totalPrice: 0,
+                data: JSON.stringify({
                     budowa: 'Obiekt Budowa',
                     clientContacts: [
                         { name: 'Anna Nowak', phone: '602000222', email: 'anna@example.com' }
                     ]
                 })
-            );
-            const { items } = await getCareQueue(fake(db), U1, { nowIso: NOW, limit: 50 });
-            const byId = new Map(items.map((r) => [r.offerId, r]));
-            const r1 = byId.get('r1');
-            expect(r1?.clientNumber).toBe('K-7');
-            expect(r1?.ownerName).toBe('Jan Kowalski');
-            expect(r1?.authorName).toBe('Ewa Nowak');
-            expect(r1?.investName).toBe('Obiekt Kolumna');
-            expect(r1?.investAddress).toBe('ul. Testowa 1');
-            expect(r1?.contactPerson).toBe('Jan Kowalski');
-            expect(r1?.phone).toBe('601000111');
-            expect(r1?.email).toBe('jan@example.com');
-            const s1 = byId.get('s1');
-            expect(s1?.clientNumber).toBeNull();
-            expect(s1?.investName).toBe('Obiekt Budowa');
-            expect(s1?.investAddress).toBeNull();
-            expect(s1?.contactPerson).toBe('Anna Nowak');
-            expect(s1?.phone).toBe('602000222');
-            expect(s1?.email).toBe('anna@example.com');
-            const a = byId.get('a');
-            expect(a?.investName).toBeNull();
-            expect(a?.investAddress).toBeNull();
-            expect(a?.contactPerson).toBeNull();
-            expect(a?.email).toBeNull();
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
             }
-            throw e;
-        }
+        });
+        await prisma.offers_studnie_rel.create({
+            data: {
+                id: `${testId}-a`,
+                userId,
+                createdAt: '2026-10-01T00:00:00.000Z',
+                totalPrice: 0,
+                data: JSON.stringify({})
+            }
+        });
+        const { items } = await getCareQueue(prisma, U1, { nowIso: NOW, limit: 50 });
+        const byId = new Map(items.map((item) => [item.offerId, item]));
+        const rury = byId.get(`${testId}-r1`);
+        expect(rury).toMatchObject({
+            clientNumber: 'K-7',
+            ownerName: 'Jan Kowalski',
+            authorName: 'Ewa Nowak',
+            investName: 'Obiekt Kolumna',
+            investAddress: 'ul. Testowa 1',
+            contactPerson: 'Jan Kowalski',
+            phone: '601000111',
+            email: 'jan@example.com'
+        });
+        const studnie = byId.get(`${testId}-s1`);
+        expect(studnie).toMatchObject({
+            clientNumber: null,
+            investName: 'Obiekt Budowa',
+            investAddress: null,
+            contactPerson: 'Anna Nowak',
+            phone: '602000222',
+            email: 'anna@example.com'
+        });
+        const empty = byId.get(`${testId}-a`);
+        expect(empty).toMatchObject({
+            investName: null,
+            investAddress: null,
+            contactPerson: null,
+            email: null
+        });
     });
 });

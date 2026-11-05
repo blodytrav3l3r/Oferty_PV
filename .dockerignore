@@ -22,6 +22,11 @@ generated/
 .env
 .env.local
 .env.*.local
+.env.??????
+.sok-postgres-installed
+.sok-postgres-installed.*
+data/install-admin-password.txt
+cutover/
 
 # Database files (template is created in Dockerfile)
 *.sqlite
@@ -29,8 +34,13 @@ generated/
 *.sqlite-wal
 *.db
 data/backup/
+data/backups/
 data/migration_backup/
 local_catalog.db
+
+# Lokalne źródłowe cenniki i firmowe wartości referencyjne nie są używane runtime.
+assets/
+data/price_defaults.json
 
 # OS
 .DS_Store

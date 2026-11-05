@@ -124,7 +124,7 @@ async function openFrame(browser, token, fixture) {
         // eslint-disable-next-line no-global-assign
         wells = d;
     }, fixture);
-    // Pin katalogu do seeda w kształcie API (flagi bool→1/0 jak SQLite, dn numeryczne).
+    // Pin katalogu do seeda w kształcie API (flagi bool→1/0, dn numeryczne).
     // Setter window.studnieProducts robi purge+rebuild mapy (ADR-009) + jawny invalidate.
     await frame.evaluate((seed) => {
         try {

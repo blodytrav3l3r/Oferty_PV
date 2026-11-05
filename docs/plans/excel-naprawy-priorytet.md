@@ -33,7 +33,7 @@ excel-gates:
     - setup-node 22 + cache npm
     - npm ci
     - npx prisma generate
-    - db push --skip-generate + npm run prisma:seed
+    - db push + npm run prisma:seed
     - npx playwright install --with-deps chromium
     - start serwera :3000 w tle (wzorzec load-quick):
         npm run build

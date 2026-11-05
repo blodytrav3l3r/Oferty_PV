@@ -32,7 +32,7 @@ export async function getWellSelections(limit = 500): Promise<WellSelectionsRepo
         take: limit
     });
 
-    // Agregacja w pamieci — dane sa male (brak groupBy w Prisma/SQLite dla tego modelu).
+    // Agregacja w pamięci jest ograniczona do małej próbki wymaganej przez dashboard.
     const byWell = new Map<string, WellSelectionItem>();
 
     for (const log of logs) {

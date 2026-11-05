@@ -64,8 +64,8 @@ function hasFlag(name: string): boolean {
 }
 
 function isInvalidDate(value: string): boolean {
-    // Ten sam predykat co guard migracji (GLOB ...T..:..:..*Z) — preflight
-    // nie może dać EXIT 0, gdy migrate deploy odrzuci offset/lowercase z.
+    // Preflight stosuje ten sam format UTC, którego wymaga walidacja migracji;
+    // nie może dać EXIT 0, gdy migrate deploy odrzuci offset lub małe z.
     return (
         !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$/.test(value) || Number.isNaN(Date.parse(value))
     );
@@ -182,10 +182,10 @@ function formatText(report: PreflightReport): string {
 }
 
 async function hasMigrationHistory(): Promise<boolean> {
-    const rows = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '_prisma_migrations'"
-    );
-    return rows.length > 0;
+    const rows = await prisma.$queryRaw<Array<{ present: boolean }>>`
+        SELECT to_regclass('_prisma_migrations') IS NOT NULL AS present
+    `;
+    return rows[0]?.present === true;
 }
 
 async function main(): Promise<void> {

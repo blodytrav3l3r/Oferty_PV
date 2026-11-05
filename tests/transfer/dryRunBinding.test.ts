@@ -1,5 +1,5 @@
 /**
- * P1-S — binding dry-run ↔ użytkownik (prawdziwa per-worker SQLite).
+ * P1-S — binding dry-run ↔ użytkownik (izolowany schemat PostgreSQL workera).
  * Dry-run użytkownika A nie importuje użytkownik B (403 DRY_RUN_USER_MISMATCH).
  */
 import { describe, expect, it, beforeAll, afterAll, jest } from '@jest/globals';

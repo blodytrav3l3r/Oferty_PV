@@ -2,7 +2,7 @@
  * M: metryki in-process (bez Prometheusa na początek).
  * - request duration per endpoint (ring buffer 512, p50/p95 na odczyt)
  * - DB query count + czas (zasilane z prisma $on query)
- * - SQLITE_BUSY counter (z errorHandler)
+ * - DB contention counter (z errorHandler)
  * - event-loop lag (sampler 1 s), RSS
  * - metryki PDF doklejane w snapshocie (pdfEngine.getPdfMetrics)
  * Bounded: max 300 kluczy endpointów, ring 512 na klucz.
@@ -191,7 +191,8 @@ export function getMetricsSnapshot(
 /**
  * P3: storage do dashboardu operacyjnego — synchroniczny odczyt fs
  * (/metrics jest admin-only i wołany rzadko; brak I/O na gorącej ścieżce).
- * Przy każdym błędzie zwraca nulle/0 zamiast rzucać.
+ * Zwraca liczbę lokalnych dumpów; rozmiar bazy i WAL nie są dostępne lokalnie
+ * dla PostgreSQL i pozostają null. Przy błędzie zwraca wartości puste.
  */
 export function getStorageSnapshot(): StorageSnapshot {
     const empty: StorageSnapshot = {
@@ -209,20 +210,12 @@ export function getStorageSnapshot(): StorageSnapshot {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { resolveDataDir } = require('./paths') as typeof import('./paths');
         const dataDir: string = resolveDataDir();
-        const dbFile = resolveDbFile(fs, path, dataDir);
         const out: StorageSnapshot = { ...empty };
-        if (dbFile) {
-            out.dbBytes = sizeOf(fs, dbFile);
-            // WAL albo SHM — bierzemy istniejący; brak obu to null.
-            const wal = sizeOf(fs, dbFile + '-wal');
-            const shm = sizeOf(fs, dbFile + '-shm');
-            out.walBytes = wal ?? shm ?? null;
-        }
         const backupDir = path.join(dataDir, 'backups');
         try {
             const files: string[] = fs
                 .readdirSync(backupDir)
-                .filter((f: string) => f.endsWith('.sqlite'));
+                .filter((f: string) => f.endsWith('.dump'));
             out.backups = files.length;
             let latest = 0;
             for (const f of files) {
@@ -240,43 +233,6 @@ export function getStorageSnapshot(): StorageSnapshot {
         return out;
     } catch {
         return empty;
-    }
-}
-
-function sizeOf(fs: { statSync(p: string): { size: number } }, p: string): number | null {
-    try {
-        return fs.statSync(p).size;
-    } catch {
-        return null;
-    }
-}
-
-function resolveDbFile(
-    fs: { readdirSync(p: string): string[]; existsSync(p: string): boolean },
-    path: {
-        join(...p: string[]): string;
-        basename(p: string): string;
-        isAbsolute(p: string): boolean;
-    },
-    dataDir: string
-): string | null {
-    try {
-        const url = process.env.DATABASE_URL || '';
-        const m = /^file:(.+?)(\?.*)?$/.exec(url);
-        if (m) {
-            const p = m[1];
-            if (path.isAbsolute(p) && fs.existsSync(p)) return p;
-            const base = path.basename(p);
-            const cand = path.join(dataDir, base);
-            if (fs.existsSync(cand)) return cand;
-        }
-        const Fallback = fs
-            .readdirSync(dataDir)
-            .filter((f: string) => f.endsWith('.sqlite') && !f.endsWith('.bak-ml-labels'));
-        if (Fallback.length > 0) return path.join(dataDir, Fallback[0]);
-        return null;
-    } catch {
-        return null;
     }
 }
 

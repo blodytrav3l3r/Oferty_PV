@@ -1,7 +1,8 @@
 /**
  * P0-D2: współdzielony optimistic locking licznikiem `version`.
- * Predykat jest ZAWSZE w samym zapisie (SQLite nie ma SELECT FOR UPDATE):
- * UPDATE ... SET version = version + 1 WHERE id = ? AND version = ?
+ * Predykat jest ZAWSZE w samym zapisie, aby konkurujące instancje serwera
+ * nie nadpisywały zmian wykonanych od ostatniego odczytu:
+ * UPDATE ... SET version = version + 1 WHERE id = $1 AND version = $2
  * 0 wierszy -> 409 VERSION_CONFLICT. Kolumna wygrywa z blobem JSON.
  */
 

@@ -128,7 +128,7 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
 3. Zsynchronizuj schemat — domyślnie `npx prisma migrate deploy`; `db push` wyłącznie
    dla baz legacy:
     - **Baza legacy utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
-      `npx prisma db push --skip-generate --accept-data-loss`
+      `npx prisma db push --accept-data-loss`
       (komenda `migrate deploy` na niej NIE zadziała — baza nie ma historii migracji).
     - **Baza z historią migracji** (`_prisma_migrations` istnieje):
       `npx prisma migrate deploy`

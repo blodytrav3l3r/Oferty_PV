@@ -1,6 +1,6 @@
 import { User } from '../helpers';
 import { isValidId } from '../helpers';
-import { Prisma } from '../../generated/prisma';
+import { Prisma } from '../../generated/prisma-postgres/client';
 import { getSharedIdsForUser } from './ownership';
 
 /**
@@ -35,7 +35,7 @@ export function buildRoleWhereCondition(
     table?: string
 ): Prisma.Sql {
     if (user.role === 'admin') return Prisma.empty;
-    // ponytail: kwalifikuj kolumnę gdy JOIN wprowadza drugie "userId" (production_orders_rel + orders_studnie_rel) — inaczej SQLite: ambiguous column name
+    // Kwalifikuj kolumnę, gdy JOIN wprowadza drugie "userId".
     const col = table ? Prisma.raw(`"${table}"."userId"`) : Prisma.raw('"userId"');
     if (user.role === 'pro') {
         const allowedIds = [user.id, ...(user.subUsers || [])].filter(isValidId);
@@ -67,8 +67,8 @@ export function buildRoleWhereConditionWithShares(
     const idCol = tbl ? `${tbl}."id"` : '"id"';
     const userIdCol = tbl ? `${tbl}."userId"` : '"userId"';
     // P0.4: wewnętrzna tabela MUSI mieć alias (ds) — gołe "id" w podzapytaniu
-    // SQLite wiązałoby z document_shares.id (PK), nie z ofertą z zewnątrz,
-    // i EXISTS był zawsze false (odbiorca share nigdy nie widział dokumentu).
+    // Wewnętrzna tabela musi mieć alias (ds), aby "id" wskazywało dokument
+    // zewnętrzny, a nie klucz główny tabeli shares.
     const shareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" ds WHERE ds."sharedWithUserId" = ${user.id} AND ds."documentType" = ${documentType} AND ds."documentId" = ${Prisma.raw(idCol)})`;
     if (user.role === 'pro') {
         const allowedIds = [user.id, ...(user.subUsers || [])].filter(isValidId);

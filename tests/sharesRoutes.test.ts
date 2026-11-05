@@ -102,7 +102,7 @@ jest.mock('../src/prismaClient', () => ({
     }
 }));
 
-// Transakcja widzi te same dane (współdzielony store — jak single-conn SQLite).
+// Transakcja widzi te same dane we współdzielonym połączeniu PostgreSQL.
 (global as any).__txPrisma = {
     document_shares: sharesModel
 };

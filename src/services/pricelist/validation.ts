@@ -19,6 +19,8 @@ import {
     productsRuryRowSchema,
     productsStudnieRowSchema
 } from '../../validators/priceDefaultsSchemas';
+import { roundMoney } from '../../utils/money';
+import { decimalMoneyRowsToNumbers } from './moneySerialization';
 import type {
     PrecoKinetyRow,
     PrecoKonfigRow,
@@ -167,6 +169,30 @@ export const STUDNIE_BOOL_FIELDS = [
     'active'
 ] as const;
 
+const RURY_MONEY_FIELDS = ['price', 'transport'] as const;
+const STUDNIE_MONEY_FIELDS = [
+    'price',
+    'transport',
+    'cena1',
+    'cena2',
+    'cena3',
+    'doplataPEHD',
+    'doplataZelbet',
+    'doplataDrabNierdzewna',
+    'malowanieWewnetrzne',
+    'malowanieZewnetrzne'
+] as const;
+const PRECO_KINETY_MONEY_FIELDS = ['cena'] as const;
+
+function roundMoneyFields<T extends object>(row: T, fields: readonly string[]): T {
+    const result = { ...row } as Record<string, unknown>;
+    for (const field of fields) {
+        const value = result[field];
+        if (typeof value === 'number') result[field] = roundMoney(value);
+    }
+    return result as T;
+}
+
 /**
  * Normalizuje legacy shape z GET /api/products-studnie (toLegacy:
  * booleany jako 1/0, dn liczbowe, price null) do canonical zod/Prisma
@@ -244,16 +270,19 @@ export function validateRows(type: PricelistType, rows: unknown): VersionRows {
     if (type === 'rury') {
         const parsed = productsRuryRowSchema.array().safeParse(rows);
         if (!parsed.success) throwRowsError('rury', parsed.error.issues);
-        return parsed.data;
+        return parsed.data.map((row) => roundMoneyFields(row, RURY_MONEY_FIELDS));
     }
     if (type === 'studnie') {
         const parsed = productsStudnieRowSchema.array().safeParse(normalizeStudnieRows(rows));
         if (!parsed.success) throwRowsError('studnie', parsed.error.issues);
-        return parsed.data;
+        return parsed.data.map((row) => roundMoneyFields(row, STUDNIE_MONEY_FIELDS));
     }
     const parsed = precoRowsSchema.safeParse(rows);
     if (!parsed.success) throwRowsError('preco', parsed.error.issues);
-    return parsed.data;
+    return {
+        ...parsed.data,
+        kinety: parsed.data.kinety.map((row) => roundMoneyFields(row, PRECO_KINETY_MONEY_FIELDS))
+    };
 }
 
 /** Guard niemutowalności: APPROVED → 403. */
@@ -469,20 +498,46 @@ export async function loadVersionItems(
         rows as Array<Record<string, unknown>>;
     if (type === 'rury') {
         return {
-            rury: asRecords(await client.pricelistItemRury.findMany({ where: { versionId } }))
+            rury: decimalMoneyRowsToNumbers(
+                asRecords(
+                    await client.pricelistItemRury.findMany({
+                        where: { versionId },
+                        orderBy: { id: 'asc' }
+                    })
+                ),
+                RURY_MONEY_FIELDS
+            )
         };
     }
     if (type === 'studnie') {
         return {
-            studnie: asRecords(await client.pricelistItemStudnie.findMany({ where: { versionId } }))
+            studnie: decimalMoneyRowsToNumbers(
+                asRecords(
+                    await client.pricelistItemStudnie.findMany({
+                        where: { versionId },
+                        orderBy: { id: 'asc' }
+                    })
+                ),
+                STUDNIE_MONEY_FIELDS
+            )
         };
     }
     const [konfig, kinety, zakresy] = await Promise.all([
-        client.pricelistItemPrecoKonfig.findMany({ where: { versionId } }),
-        client.pricelistItemPrecoKinety.findMany({ where: { versionId } }),
-        client.pricelistItemPrecoZakresy.findMany({ where: { versionId } })
+        client.pricelistItemPrecoKonfig.findMany({ where: { versionId }, orderBy: { id: 'asc' } }),
+        client.pricelistItemPrecoKinety.findMany({
+            where: { versionId },
+            orderBy: [{ order: 'asc' }, { id: 'asc' }]
+        }),
+        client.pricelistItemPrecoZakresy.findMany({
+            where: { versionId },
+            orderBy: [{ order: 'asc' }, { id: 'asc' }]
+        })
     ]);
-    return { konfig: asRecords(konfig), kinety: asRecords(kinety), zakresy: asRecords(zakresy) };
+    return {
+        konfig: asRecords(konfig),
+        kinety: decimalMoneyRowsToNumbers(asRecords(kinety), PRECO_KINETY_MONEY_FIELDS),
+        zakresy: asRecords(zakresy)
+    };
 }
 
 /** Źródło eksportu: seed (default), zamrożona ACTIVE albo bieżący szkic. */

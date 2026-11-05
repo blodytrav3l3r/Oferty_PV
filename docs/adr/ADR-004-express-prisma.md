@@ -1,17 +1,20 @@
 # ADR-004: Express + Prisma jako backend
 
-**Status:** Zaakceptowany  
+**Status:** Zaakceptowany dla Express + Prisma; decyzja o SQLite została
+zastąpiona przez migrację do PostgreSQL (w toku).
 **Data:** 2026-06-20  
 **Autor:** Hermes Agent
 
 ## Kontekst
 
 Backend aplikacji potrzebuje REST API do zarządzania ofertami, produktami, klientami
-i użytkownikami. Wymagany ORM dla SQLite i prostota utrzymania.
+i użytkownikami. Pierwotny kontekst wybrał SQLite; ten wybór jest historyczny i
+nie stanowi już aktywnego kierunku.
 
 ## Decyzja
 
-**Express.js (TypeScript)** jako framework HTTP + **Prisma** jako ORM dla SQLite.
+**Express.js (TypeScript)** jako framework HTTP + **Prisma** jako ORM. Docelowym
+silnikiem jest PostgreSQL 18; migracja runtime i testów nie jest jeszcze ukończona.
 
 ## Uzasadnienie
 
@@ -24,7 +27,8 @@ i użytkownikami. Wymagany ORM dla SQLite i prostota utrzymania.
 ## Konsekwencje
 
 - **Singleton Prisma Client** — jeden `prismaClient.ts` dla całej aplikacji, importowany wszędzie.
-- **SQLite busy_timeout** — `PRAGMA busy_timeout = 30000` w prismaClient.ts dla operacji współbieżnych.
+- Wymagania współbieżności, transakcji i ograniczeń muszą być spełnione przez
+  PostgreSQL; nie opieraj nowego kodu na SQLite PRAGMA ani semantyce SQLite.
 - **Rate limiting** — per-route limiter dla wszystkich tras.
 - **Helmet CSP** — `'unsafe-inline'` dozwolone dla legacy inline event handlerów.
   **Aktualizacja 2026-09-30 (CSP-E):** `unsafe-inline` USUNIĘTE ze skryptów
@@ -32,9 +36,10 @@ i użytkownikami. Wymagany ORM dla SQLite i prostota utrzymania.
   blokowane i zastąpione dyspozytorem `data-csp*`; `style-src` zostaje z `unsafe-inline`
   (style="..." nie wykonuje JS). Źródło: `src/app.ts:215-244`.
 - **Logger** — `src/utils/logger.ts` zamiast `console.log`.
-- **Auto-heal indeksów przy starcie** — `src/app.ts` wykonuje idempotentne
-  `CREATE INDEX IF NOT EXISTS` (m.in. `idx_audit_created_at` oraz `idx_logs_well`/
-  `idx_logs_source_well` dla dedup telemetrii AI), bo bazy `db push` nie mają historii migracji.
+- **Historyczna implementacja:** auto-heal indeksów i `db push` były związane
+  ze starszą ścieżką SQLite; nowy schemat PostgreSQL ma być zarządzany wyłącznie
+  wersjonowanymi migracjami Prisma. Nie traktuj tego historycznego opisu jako
+  potwierdzenia ukończonego cutoveru.
 - **Deduplikacja telemetrii AUTO_JS** — `telemetryService.recordConfig` porównuje kanoniczny
   `featureSnapshot` + posortowane `allComponentIds` i przy identycznej konfiguracji robi
   `update` zamiast `create` (nie zawyża wzorców i zbioru treningowego ML).
@@ -98,12 +103,12 @@ src/
 
 ## Alternatywy odrzucone
 
-| Alternatywa | Powód odrzucenia                                                                            |
-| ----------- | ------------------------------------------------------------------------------------------- |
-| NestJS      | Zbyt duży framework dla tak prostej aplikacji, dużo boilerplate'u (modules, decorators, DI) |
-| Fastify     | Szybszy od Express, ale mniejszy ekosystem i brak kompatybilności z niektórymi middleware   |
-| Koa         | Mniejsza społeczność, mniej ready-made middleware                                           |
-| Drizzle ORM | Nowy ORM, mniej stabilny niż Prisma. Brak generowanych typów dla SQLite w wersji 0.x        |
+| Alternatywa | Powód odrzucenia                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| NestJS      | Zbyt duży framework dla tak prostej aplikacji, dużo boilerplate'u (modules, decorators, DI)      |
+| Fastify     | Szybszy od Express, ale mniejszy ekosystem i brak kompatybilności z niektórymi middleware        |
+| Koa         | Mniejsza społeczność, mniej ready-made middleware                                                |
+| Drizzle ORM | Nowy ORM, mniej stabilny niż Prisma; brak generowanych typów w wersji 0.x (historyczny argument) |
 
 ## Amendment 2026-10-19 (P1-6)
 

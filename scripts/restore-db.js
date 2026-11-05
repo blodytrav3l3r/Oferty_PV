@@ -1,237 +1,343 @@
-/* eslint-disable no-console */
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
-
-const SQLITE_MAGIC = Buffer.from('SQLite format 3\u0000', 'binary');
+const { createReadStream } = require('fs');
+const { once } = require('events');
 
 const PRISMA_CLI = path.join(__dirname, '..', 'node_modules', 'prisma', 'build', 'index.js');
 
-/* P1: jawny kontrakt celu restore — brak silent fallback do live DB.
- * Cel musi pochodzić z `--target <ścieżka>` albo RESTORE_DB_PATH.
- * Cel wskazujący live `data/app_database.sqlite` wymaga osobnej flagi `--live`. */
 function parseCliArgs(argv) {
     const args = argv.slice(2);
-    const yes = args.includes('--yes');
-    const live = args.includes('--live');
-    let targetArg = null;
     let sourceArg = null;
-    for (let i = 0; i < args.length; i++) {
-        if (args[i] === '--target') {
-            targetArg = args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : null;
-            i++;
-        } else if (!args[i].startsWith('--') && sourceArg === null) {
-            sourceArg = args[i];
+    for (let index = 0; index < args.length; index++) {
+        const argument = args[index];
+        if (argument === '--target') {
+            throw new Error('Restore target must be provided through RESTORE_DB_URL, not argv');
+        }
+        if (!argument.startsWith('--') && sourceArg === null) {
+            sourceArg = argument;
         }
     }
-    return { yes, live, targetArg, sourceArg };
+    return {
+        yes: args.includes('--yes'),
+        live: args.includes('--live'),
+        targetArg: null,
+        sourceArg
+    };
 }
 
-function liveDbPath() {
-    return path.resolve(__dirname, '..', 'data', 'app_database.sqlite');
-}
-
-function samePath(a, b) {
-    const ra = path.resolve(a);
-    const rb = path.resolve(b);
-    if (process.platform === 'win32') return ra.toLowerCase() === rb.toLowerCase();
-    return ra === rb;
-}
-
-function isLiveDbPath(p) {
+function parseDatabaseUrl(rawUrl) {
+    if (!rawUrl) return null;
     try {
-        return samePath(p, liveDbPath());
-    } catch {
-        return false;
-    }
-}
-
-function resolveTarget({ targetArg, envTarget, live }) {
-    const raw = targetArg || envTarget;
-    if (!raw) return { ok: false, code: 'NO_TARGET' };
-    const target = path.resolve(raw);
-    if (samePath(target, liveDbPath()) && !live) {
-        return { ok: false, code: 'LIVE_REFUSED', target };
-    }
-    return { ok: true, target, live: samePath(target, liveDbPath()) };
-}
-
-function resolvePaths(sourceArg, target) {
-    const sourcePath = path.resolve(sourceArg);
-    const dbPath = target;
-    const prismaDir = process.env.RESTORE_PRISMA_DIR
-        ? path.resolve(process.env.RESTORE_PRISMA_DIR)
-        : path.resolve(__dirname, '..');
-    const env = { ...process.env, DATABASE_URL: 'file:' + dbPath.replace(/\\/g, '/') };
-    return { sourcePath, dbPath, prismaDir, env };
-}
-
-function isSqliteFile(filePath) {
-    try {
-        const fd = fs.openSync(filePath, 'r');
-        try {
-            const buf = Buffer.alloc(16);
-            const bytes = fs.readSync(fd, buf, 0, 16, 0);
-            return bytes === 16 && buf.equals(SQLITE_MAGIC);
-        } finally {
-            fs.closeSync(fd);
+        const url = new URL(rawUrl);
+        if (!['postgres:', 'postgresql:'].includes(url.protocol)) return null;
+        const database = decodeURIComponent(url.pathname.slice(1));
+        if (!url.hostname || !database || !url.username) return null;
+        const sslMode = url.searchParams.get('sslmode');
+        if (sslMode && !['disable', 'verify-full'].includes(sslMode)) {
+            return null;
         }
+        const host = url.hostname.replace(/^\[(.*)\]$/, '$1').toLowerCase();
+        if (
+            !['localhost', '127.0.0.1', '::1', 'postgres'].includes(host) &&
+            sslMode !== 'verify-full'
+        ) {
+            return null;
+        }
+        return {
+            protocol: 'postgresql:',
+            host,
+            port: url.port || '5432',
+            database,
+            schema: url.searchParams.get('schema') || 'public',
+            url
+        };
     } catch {
-        return false;
+        return null;
     }
 }
 
-function integrityCheck(filePath) {
-    const { DatabaseSync } = require('node:sqlite');
-    const db = new DatabaseSync(filePath, { readOnly: true });
-    try {
-        const rows = db.prepare('PRAGMA integrity_check;').all();
-        return rows.length === 1 && rows[0].integrity_check === 'ok';
-    } finally {
-        db.close();
-    }
+function sameDatabase(firstUrl, secondUrl) {
+    const first = parseDatabaseUrl(firstUrl);
+    const second = parseDatabaseUrl(secondUrl);
+    return Boolean(
+        first &&
+        second &&
+        first.protocol === second.protocol &&
+        first.host === second.host &&
+        first.port === second.port &&
+        first.database === second.database
+    );
 }
 
-/* P0-F: weryfikacja SHA-256 backupu (sidecar `<backup>.sha256` z backup.ts).
- * Brak sidecara (starsze backupy) = ostrzeżenie, nie blokada. */
-function verifyChecksum(filePath) {
-    const crypto = require('crypto');
-    const sidecar = filePath + '.sha256';
-    if (!fs.existsSync(sidecar)) {
-        console.warn('[WARN] Brak pliku .sha256 — pomijam weryfikacje sumy (starszy backup).');
-        return true;
+function sameDatabaseRole(firstUrl, secondUrl) {
+    const first = parseDatabaseUrl(firstUrl);
+    const second = parseDatabaseUrl(secondUrl);
+    return Boolean(
+        first &&
+        second &&
+        sameDatabase(firstUrl, secondUrl) &&
+        decodeURIComponent(first.url.username) === decodeURIComponent(second.url.username)
+    );
+}
+
+function resolveTarget({
+    targetArg,
+    envTarget,
+    live,
+    runtimeUrl = process.env.DATABASE_URL,
+    migrationUrl = process.env.MIGRATION_DATABASE_URL
+}) {
+    const rawTarget = targetArg || envTarget;
+    if (!rawTarget) return { ok: false, code: 'NO_TARGET' };
+    const target = parseDatabaseUrl(rawTarget);
+    if (!target) return { ok: false, code: 'INVALID_TARGET' };
+    const matchesRuntime = sameDatabase(rawTarget, runtimeUrl);
+    const matchesMigration = sameDatabase(rawTarget, migrationUrl);
+    const isLive = matchesRuntime || matchesMigration;
+    if (isLive && !live) return { ok: false, code: 'LIVE_REFUSED' };
+    if (live && !isLive) return { ok: false, code: 'LIVE_TARGET_MISMATCH' };
+    if (
+        live &&
+        (!matchesMigration ||
+            sameDatabaseRole(rawTarget, runtimeUrl) ||
+            !sameDatabaseRole(rawTarget, migrationUrl))
+    ) {
+        return { ok: false, code: 'LIVE_ROLE_REQUIRED' };
     }
+    const isLocalTestTarget =
+        ['localhost', '127.0.0.1', '::1', 'postgres'].includes(target.host) &&
+        (target.database.endsWith('_test') || target.database.endsWith('_test_db'));
+    if (!live && !isLive && !isLocalTestTarget) {
+        return { ok: false, code: 'NON_TEST_TARGET_REFUSED' };
+    }
+    return { ok: true, target: rawTarget, live: isLive };
+}
+
+function getCliEnvironment(rawUrl) {
+    const parsed = parseDatabaseUrl(rawUrl);
+    if (!parsed) throw new Error('Restore target must be an explicit PostgreSQL URL');
+    const { url } = parsed;
+    const env = {
+        ...process.env,
+        PGHOST: parsed.host,
+        PGPORT: parsed.port,
+        PGUSER: decodeURIComponent(url.username),
+        PGPASSWORD: decodeURIComponent(url.password),
+        PGDATABASE: parsed.database
+    };
+    const sslMode = url.searchParams.get('sslmode');
+    if (sslMode) env.PGSSLMODE = sslMode;
+    for (const [parameter, variable] of [
+        ['sslrootcert', 'PGSSLROOTCERT'],
+        ['sslcert', 'PGSSLCERT'],
+        ['sslkey', 'PGSSLKEY']
+    ]) {
+        const value = url.searchParams.get(parameter);
+        if (value) env[variable] = value;
+    }
+    for (const key of [
+        'DATABASE_URL',
+        'MIGRATION_DATABASE_URL',
+        'BACKUP_DATABASE_URL',
+        'RESTORE_DB_URL',
+        'POSTGRES_TEST_URL',
+        'PLAYWRIGHT_DATABASE_URL'
+    ]) {
+        delete env[key];
+    }
+    return env;
+}
+
+function buildRestoreArgs(database, archivePath) {
+    return [
+        '--clean',
+        '--if-exists',
+        '--exit-on-error',
+        '--single-transaction',
+        '--no-owner',
+        '--no-acl',
+        '--dbname',
+        database,
+        archivePath
+    ];
+}
+
+async function verifyChecksum(filePath) {
+    const sidecar = `${filePath}.sha256`;
+    if (!fs.existsSync(sidecar)) return false;
     const expected = fs.readFileSync(sidecar, 'utf8').trim().split(/\s+/)[0];
-    const actual = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
-    if (expected !== actual) {
-        console.error(`[BLAD] Suma SHA-256 backupu niezgodna (plik uszkodzony/ podmieniony).`);
-        console.error(`[BLAD] oczekiwano: ${expected}`);
-        console.error(`[BLAD] otrzymano:  ${actual}`);
-        return false;
-    }
-    console.log('[OK] Suma SHA-256 backupu zgodna.');
-    return true;
+    if (!/^[a-f0-9]{64}$/i.test(expected)) return false;
+    const hash = crypto.createHash('sha256');
+    const input = createReadStream(filePath);
+    input.on('data', (chunk) => hash.update(chunk));
+    await once(input, 'end');
+    return expected.toLowerCase() === hash.digest('hex');
 }
 
-function runPrisma(args, prismaDir, env) {
+function verifyArchive(filePath) {
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return false;
+    try {
+        const env = { PATH: process.env.PATH || '' };
+        if (process.env.SystemRoot) env.SystemRoot = process.env.SystemRoot;
+        execFileSync(process.env.PG_RESTORE_BIN || 'pg_restore', ['--list', filePath], {
+            env,
+            stdio: 'pipe'
+        });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function confirm(yes, isLive) {
+    if (yes) return Promise.resolve(true);
+    return new Promise((resolve) => {
+        const prompt = isLive
+            ? 'UWAGA: przywracanie nadpisze obiekty w bazie runtime. Kontynuować? (tak/nie): '
+            : 'Czy przywrócić archiwum PostgreSQL do wskazanej bazy? Obiekty z archiwum mogą zastąpić istniejące. (tak/nie): ';
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        rl.question(prompt, (answer) => {
+            rl.close();
+            resolve(answer.toLowerCase() === 'tak');
+        });
+    });
+}
+
+function runPrisma(args, targetUrl) {
+    const env = { ...process.env, DATABASE_URL: targetUrl };
+    for (const key of [
+        'MIGRATION_DATABASE_URL',
+        'BACKUP_DATABASE_URL',
+        'RESTORE_DB_URL',
+        'POSTGRES_TEST_URL',
+        'PLAYWRIGHT_DATABASE_URL'
+    ]) {
+        delete env[key];
+    }
     return execFileSync(process.execPath, [PRISMA_CLI, ...args], {
-        cwd: prismaDir,
+        cwd: process.env.RESTORE_PRISMA_DIR
+            ? path.resolve(process.env.RESTORE_PRISMA_DIR)
+            : path.resolve(__dirname, '..'),
         encoding: 'utf8',
         env,
         stdio: ['pipe', 'pipe', 'pipe']
     });
 }
 
-function confirm(yes, sourcePath, dbPath, isLive) {
-    if (yes) return Promise.resolve(true);
-    return new Promise((resolve) => {
-        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-        const where = isLive ? `LIVE BAZY ${dbPath}` : `bazy ${dbPath}`;
-        rl.question(
-            `Czy na pewno przywrócić backup ${sourcePath} do ${where}? Obecna baza zostanie nadpisana. (tak/nie): `,
-            (answer) => {
-                rl.close();
-                resolve(answer.toLowerCase() === 'tak');
-            }
-        );
+function runRoleGrants(migrationUrl) {
+    const env = { ...process.env, MIGRATION_DATABASE_URL: migrationUrl };
+    for (const key of [
+        'DATABASE_URL',
+        'BACKUP_DATABASE_URL',
+        'RESTORE_DB_URL',
+        'POSTGRES_TEST_URL',
+        'PLAYWRIGHT_DATABASE_URL'
+    ]) {
+        delete env[key];
+    }
+    return execFileSync(process.execPath, [path.join(__dirname, 'grant-postgres-roles.mjs')], {
+        env,
+        stdio: ['pipe', 'pipe', 'pipe']
     });
 }
 
 async function main() {
-    const { yes, live, targetArg, sourceArg } = parseCliArgs(process.argv);
+    let options;
+    try {
+        options = parseCliArgs(process.argv);
+    } catch {
+        console.error(
+            '[ERROR] Provide the restore target through RESTORE_DB_URL, not command arguments.'
+        );
+        process.exitCode = 1;
+        return;
+    }
+    const { yes, live, targetArg, sourceArg } = options;
     if (!sourceArg) {
         console.error(
-            'Użycie: node scripts/restore-db.js <plik_backupu> --target <plik_docelowy> [--live] [--yes]'
+            'Usage: RESTORE_DB_URL=<postgresql-url> node scripts/restore-db.js <backup.dump> [--live] [--yes]'
         );
-        console.error(
-            '  Cel: --target albo RESTORE_DB_PATH. Bez jawnego celu restore NIE wykona się.'
-        );
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
-    const target = resolveTarget({ targetArg, envTarget: process.env.RESTORE_DB_PATH, live });
-    if (!target.ok && target.code === 'NO_TARGET') {
-        console.error(
-            '[BLAD] Brak jawnego celu restore. Podaj --target <plik> albo RESTORE_DB_PATH.'
-        );
-        console.error(
-            '[BLAD] Restore bez jawnego celu jest zabronione (brak fallback do live DB).'
-        );
-        process.exit(1);
+    const target = resolveTarget({
+        targetArg,
+        envTarget: process.env.RESTORE_DB_URL,
+        live,
+        runtimeUrl: process.env.DATABASE_URL,
+        migrationUrl: process.env.MIGRATION_DATABASE_URL
+    });
+    if (!target.ok) {
+        const messages = {
+            NO_TARGET: 'Explicit PostgreSQL restore target required via RESTORE_DB_URL.',
+            INVALID_TARGET: 'Restore target must be a PostgreSQL URL with host, user and database.',
+            LIVE_REFUSED: 'Runtime database restore requires the explicit --live flag.',
+            LIVE_TARGET_MISMATCH:
+                '--live is valid only when target matches DATABASE_URL or MIGRATION_DATABASE_URL.',
+            LIVE_ROLE_REQUIRED:
+                'Live restore requires RESTORE_DB_URL to use the distinct MIGRATION_DATABASE_URL role.',
+            NON_TEST_TARGET_REFUSED:
+                'Restore targets must be local test databases unless --live targets MIGRATION_DATABASE_URL.'
+        };
+        console.error(`[ERROR] ${messages[target.code]}`);
+        process.exitCode = 1;
+        return;
     }
-    if (!target.ok && target.code === 'LIVE_REFUSED') {
-        console.error(`[BLAD] Cel wskazuje live DB: ${target.target}`);
-        console.error('[BLAD] Odmowa. Użyj osobnego (nie-live) targetu albo dodaj jawne --live.');
-        process.exit(1);
+
+    const sourcePath = path.resolve(sourceArg);
+    if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
+        console.error('[ERROR] PostgreSQL backup archive not found.');
+        process.exitCode = 1;
+        return;
     }
-    const {
-        sourcePath,
-        dbPath: DB_PATH,
-        prismaDir: PRISMA_DIR,
-        env: ENV
-    } = resolvePaths(sourceArg, target.target);
-    if (!fs.existsSync(sourcePath)) {
-        console.error(`Plik backupu nie istnieje: ${sourcePath}`);
-        process.exit(1);
+    if (!(await verifyChecksum(sourcePath))) {
+        console.error('[ERROR] Backup checksum is missing or invalid.');
+        process.exitCode = 1;
+        return;
     }
-    const ok = await confirm(yes, sourcePath, DB_PATH, target.live);
-    if (!ok) {
-        console.log('Anulowano.');
-        process.exit(0);
+    if (!verifyArchive(sourcePath)) {
+        console.error('[ERROR] pg_restore could not read the PostgreSQL archive.');
+        process.exitCode = 1;
+        return;
     }
-    if (!isSqliteFile(sourcePath)) {
-        console.error(`[BLAD] Plik backupu nie jest poprawna baza SQLite: ${sourcePath}`);
-        process.exit(1);
+    if (!(await confirm(yes, target.live))) {
+        console.log('Cancelled.');
+        return;
     }
-    if (!verifyChecksum(sourcePath)) {
-        process.exit(1);
-    }
-    if (!integrityCheck(sourcePath)) {
-        console.error(`[BLAD] Backup nie przeszedl PRAGMA integrity_check: ${sourcePath}`);
-        process.exit(1);
-    }
-    fs.copyFileSync(sourcePath, DB_PATH);
-    for (const suffix of ['-wal', '-shm']) {
-        const sidecar = DB_PATH + suffix;
-        if (fs.existsSync(sidecar)) {
-            fs.unlinkSync(sidecar);
-        }
-    }
-    // P0-F: re-weryfikacja po kopiowaniu (uszkodzony zapis docelowy).
-    if (!integrityCheck(DB_PATH)) {
-        console.error('[BLAD] Przywrocona baza nie przechodzi PRAGMA integrity_check.');
-        process.exit(1);
-    }
-    console.log(`Baza przywrocona z: ${sourcePath}`);
-    console.log('[INFO] Synchronizuje schemat bazy (migrate deploy)...');
+
+    const cliEnv = getCliEnvironment(target.target);
     try {
-        const out = runPrisma(['migrate', 'deploy'], PRISMA_DIR, ENV);
-        console.log(out.trim());
-        console.log('[OK] Schemat zsynchronizowany.');
-    } catch (e) {
-        const stderr =
-            e && e.stderr ? String(e.stderr).trim() : e instanceof Error ? e.message : String(e);
-        // P0-F: komunikat straznika (legacy backup) zachowany, ale restore bez
-        // schematu to nie restore — twardy blad zamiast cichego ostrzezenia.
-        console.warn('[WARN] Nie udalo sie zsynchronizowac schematu.');
-        console.warn('[WARN] Uruchom recznie: npx prisma migrate deploy');
-        console.warn(stderr.split('\n').slice(0, 6).join('\n'));
-        process.exit(1);
+        execFileSync(
+            process.env.PG_RESTORE_BIN || 'pg_restore',
+            buildRestoreArgs(parseDatabaseUrl(target.target).database, sourcePath),
+            { env: cliEnv, stdio: 'pipe' }
+        );
+        const migrationUrl = target.live ? process.env.MIGRATION_DATABASE_URL : target.target;
+        runPrisma(['migrate', 'deploy'], migrationUrl);
+        if (target.live) runRoleGrants(migrationUrl);
+        console.log('PostgreSQL database restored and migrations checked.');
+    } catch {
+        console.error(
+            '[ERROR] PostgreSQL restore failed; inspect the target with the database operator.'
+        );
+        process.exitCode = 1;
     }
 }
 
-// P1.3: guard require.main — import nie uruchamia restore (testy regresji
-// mogą importować guardy isSqliteFile/verifyChecksum/integrityCheck).
-if (require.main === module) {
-    main();
-}
+if (require.main === module) void main();
 
 module.exports = {
-    isSqliteFile,
-    verifyChecksum,
-    integrityCheck,
     parseCliArgs,
+    parseDatabaseUrl,
+    sameDatabase,
+    sameDatabaseRole,
     resolveTarget,
-    isLiveDbPath,
-    liveDbPath
+    verifyChecksum,
+    verifyArchive,
+    buildRestoreArgs
 };

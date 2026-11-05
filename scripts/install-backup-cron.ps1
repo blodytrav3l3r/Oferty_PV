@@ -1,4 +1,4 @@
-# Instaluje Windows Task Scheduler wpis: codzienny backup SQLite o 02:00.
+# Instaluje Windows Task Scheduler wpis: codzienny PostgreSQL backup o 02:00.
 # Uruchom jako administrator:  powershell -ExecutionPolicy Bypass -File install-backup-cron.ps1
 
 $ErrorActionPreference = 'Stop'
@@ -17,6 +17,25 @@ if (-not $npmCmd) {
 
 Write-Host "Projekt: $projectRoot"
 Write-Host "npm:     $npmCmd"
+
+$pgDump = Get-Command pg_dump -ErrorAction SilentlyContinue
+if (-not $pgDump) {
+    Write-Error "Brak pg_dump. Zainstaluj klienta PostgreSQL 18 i dodaj jego katalog bin do PATH."
+    exit 1
+}
+$pgDumpVersionText = & $pgDump.Source --version
+$pgDumpVersionMatch = [regex]::Match($pgDumpVersionText, '\b(\d+)\.')
+$pgDumpVersion = $pgDumpVersionMatch.Groups[1].Value
+if ($pgDumpVersion -ne '18') {
+    Write-Error "Backup wymaga pg_dump 18; znaleziono wersję $pgDumpVersion."
+    exit 1
+}
+$envFile = Join-Path $projectRoot '.env'
+if (-not (Test-Path -LiteralPath $envFile) -or -not (Select-String -Path $envFile -Pattern '^BACKUP_DATABASE_URL=.+$' -Quiet)) {
+    Write-Error "Ustaw BACKUP_DATABASE_URL w .env jako połączenie PostgreSQL rolą backupu."
+    exit 1
+}
+Write-Host "pg_dump:  $((& $pgDump.Source --version).Trim())"
 
 # Sprawdź czy task już istnieje
 $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
@@ -42,7 +61,7 @@ Register-ScheduledTask `
     -Action $action `
     -Trigger $trigger `
     -Settings $settings `
-    -Description "Codzienny backup SQLite (data/app_database.sqlite) dla S.O.K. VACUUM INTO jest WAL-safe - nie blokuje aplikacji." `
+    -Description "Codzienny backup PostgreSQL 18 przez pg_dump custom archive." `
     -RunLevel Highest
 
 Write-Host ""

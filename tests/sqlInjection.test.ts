@@ -18,9 +18,7 @@ describe('SQL Injection Prevention', () => {
         return result;
     }
 
-    // Wyrażenie wywołania $queryRawUnsafe/$executeRawUnsafe (nawiasy wielolinijkowe):
-    // konkatenacja SQL rozciąga się na wiele linii (clients/index.ts:215-229),
-    // skan liniowy jej nie widzi (false negative).
+    // Sprawdź cały zakres wywołań raw SQL, także argumenty rozłożone na wiele linii.
     function unsafeCallSpans(content: string): { line: number; content: string }[] {
         const lines = content.split('\n');
         const out: { line: number; content: string }[] = [];
@@ -81,9 +79,7 @@ describe('SQL Injection Prevention', () => {
                     results.push({ line: i + 1, content: line.trim() });
                 }
             }
-            // 2) Tagged template $queryRaw`...${...join(',')}...` — unsafe, bo wartości
-            //    wklejane do SQL stringa bez parametryzacji (Prisma escapes
-            //    ${var} → ?  ale `${arr.join(',')}` → `${item1},${item2}` wklejone na surowo)
+            // 2) Tagged template raw SQL: reject manually joined lists or concatenated SQL.
             if (line.includes('$queryRaw`') || line.includes('$executeRaw`')) {
                 if (/\.\s*join\s*\(/.test(line) || /\+\s*['"`]/.test(line)) {
                     results.push({ line: i + 1, content: line.trim() });
@@ -114,8 +110,8 @@ describe('SQL Injection Prevention', () => {
 
         // Bezpieczne wzorce:
         //  - $queryRawUnsafe BEZ interpolacji (stałe SQL)
-        //  - $queryRaw`...${singleValue}...` (Prisma parametryzuje ${var} automatycznie)
-        //  - $queryRaw`...${arr.join(',')}...` (UNSAFE — test łapie)
+        //  - $queryRaw`...${singleValue}...` (Prisma binds the value)
+        //  - ręcznie sklejone listy wartości są odrzucane
         expect(totalIssues).toBe(0);
     });
 
@@ -127,9 +123,7 @@ describe('SQL Injection Prevention', () => {
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 if (line.includes('$executeRawUnsafe')) {
-                    // Sprawdź czy to tylko komentarz lub bezpieczny PRAGMA z fixed wartością
-                    const isFts5File = file.endsWith('fts5Sync.ts');
-                    if (!line.trim().startsWith('//') && !line.includes('PRAGMA') && !isFts5File) {
+                    if (!line.trim().startsWith('//')) {
                         throw new Error(
                             `❌ ${path.relative(srcDir, file)}:${i + 1} — ` +
                                 `znaleziono $executeRawUnsafe: "${line.trim()}"`

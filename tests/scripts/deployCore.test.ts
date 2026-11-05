@@ -91,25 +91,39 @@ describe('deploy-core', () => {
                 core.resolveSteps(t, 'v1.16.0').find((s: any) => /Uruchomienie/.test(s.name)).cmd;
             expect(startOf('windows')).toBe('start "" start.bat --prod');
             expect(startOf('linux')).toBe(core.linuxStartCmd());
-            expect(startOf('docker')).toBe('docker compose up -d --build');
+            expect(startOf('docker')).toBe('docker compose up -d app');
         });
 
-        it('docker ma krok prepare-data przed startem (P0.3-B)', () => {
+        it('docker applies migrations through a one-shot Compose bootstrap before app start', () => {
             const steps = core.resolveSteps('docker', 'v1.16.0');
             const names = steps.map((s: any) => s.name);
-            const prep = names.findIndex((n: string) => /Przygotowanie katalogu danych/.test(n));
+            const bootstrap = names.findIndex((name: string) => /Bootstrap PostgreSQL/.test(name));
+            const start = names.findIndex((name: string) => /Uruchomienie/.test(name));
+
+            expect(steps.some((step: any) => step.cmd === 'npx prisma migrate deploy')).toBe(false);
+            expect(steps.some((step: any) => step.cmd === 'docker compose build app')).toBe(true);
+            expect(steps[bootstrap].cmd).toBe('docker compose run --rm db-bootstrap');
+            expect(bootstrap).toBeLessThan(start);
+        });
+
+        it('docker waliduje konfigurację PostgreSQL Compose przed startem', () => {
+            const steps = core.resolveSteps('docker', 'v1.16.0');
+            const names = steps.map((s: any) => s.name);
+            const prep = names.findIndex((n: string) =>
+                /Walidacja konfiguracji Docker PostgreSQL/.test(n)
+            );
             const start = names.findIndex((n: string) => /Uruchomienie/.test(n));
             expect(prep).toBeGreaterThanOrEqual(0);
             expect(prep).toBeLessThan(start);
-            expect(steps[prep].cmd).toBe('bash scripts/docker-prepare-data.sh');
+            expect(steps[prep].cmd).toBe('bash scripts/docker-preflight.sh');
         });
 
-        it('windows i linux NIE maja kroku prepare-data', () => {
+        it('windows i linux NIE maja kroku Docker preflight', () => {
             for (const t of ['windows', 'linux']) {
                 const steps = core.resolveSteps(t, 'v1.16.0');
-                expect(steps.some((s: any) => /Przygotowanie katalogu danych/.test(s.name))).toBe(
-                    false
-                );
+                expect(
+                    steps.some((s: any) => /Walidacja konfiguracji Docker PostgreSQL/.test(s.name))
+                ).toBe(false);
             }
         });
 
@@ -133,7 +147,7 @@ describe('deploy-core', () => {
             apps: Array<Record<string, unknown>>;
         };
         /* eslint-enable @typescript-eslint/no-require-imports */
-        it('jeden proces fork (ADR-012 single-node SQLite)', () => {
+        it('jeden proces fork', () => {
             expect(eco.apps).toHaveLength(1);
             expect(eco.apps[0].name).toBe('sok-oferty');
             expect(eco.apps[0].script).toBe('dist/server.js');
@@ -176,7 +190,7 @@ describe('deploy-core', () => {
                 .resolveSteps('linux', 'v1.16.0')
                 .find((s: any) => /Uruchomienie/.test(s.name)).cmd;
             const rollbackStart = core
-                .rollbackSteps('linux', 'v1.15.1', '/data/backups/x.sqlite')
+                .rollbackSteps('linux', 'v1.15.1', '/data/backups/x.dump')
                 .find((s: any) => /Uruchomienie/.test(s.name)).cmd;
             expect(deployStart).toBe(core.linuxStartCmd());
             expect(rollbackStart).toBe(core.linuxStartCmd());
@@ -263,7 +277,7 @@ describe('deploy-core', () => {
             const steps = core.rollbackSteps(
                 'linux',
                 'v1.15.1',
-                '/data/backups/backup_2026-08-01_1.sqlite'
+                '/data/backups/backup_2026-08-01_1.dump'
             );
             const names = steps.map((s: any) => s.name);
             expect(names[0]).toMatch(/Przywrocenie bazy/);
@@ -272,26 +286,26 @@ describe('deploy-core', () => {
         });
 
         it('restore uruchamia z flaga --yes', () => {
-            const steps = core.rollbackSteps('windows', 'v1.15.1', '/data/backups/x.sqlite');
-            expect(steps[0].cmd).toContain('npm run restore "/data/backups/x.sqlite" -- --yes');
+            const steps = core.rollbackSteps('windows', 'v1.15.1', '/data/backups/x.dump');
+            expect(steps[0].cmd).toContain('npm run restore "/data/backups/x.dump" -- --yes');
         });
 
         it('P0.3: restore/rollback linux+docker przez sudo (DB wlasnoscia node)', () => {
             for (const t of ['linux', 'docker']) {
-                const steps = core.rollbackSteps(t, 'v1.15.1', '/data/backups/x.sqlite');
+                const steps = core.rollbackSteps(t, 'v1.15.1', '/data/backups/x.dump');
                 expect(steps[0].cmd).toBe(
-                    'sudo -E npm run restore "/data/backups/x.sqlite" -- --yes'
+                    'sudo -E npm run restore "/data/backups/x.dump" -- --yes'
                 );
             }
         });
 
         it('P0.3: restore windows bez sudo (natywny model)', () => {
-            const steps = core.rollbackSteps('windows', 'v1.15.1', '/data/backups/x.sqlite');
-            expect(steps[0].cmd).toBe('npm run restore "/data/backups/x.sqlite" -- --yes');
+            const steps = core.rollbackSteps('windows', 'v1.15.1', '/data/backups/x.dump');
+            expect(steps[0].cmd).toBe('npm run restore "/data/backups/x.dump" -- --yes');
         });
 
         it('waliduje poprzedni tag', () => {
-            expect(() => core.rollbackSteps('linux', 'main', '/tmp/x.sqlite')).toThrow(
+            expect(() => core.rollbackSteps('linux', 'main', '/tmp/x.dump')).toThrow(
                 /Niepoprawny tag/
             );
         });
@@ -325,14 +339,14 @@ describe('deploy-core', () => {
             const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-backup-'));
             try {
                 for (const f of [
-                    'backup_2026-08-01_1000.sqlite',
-                    'backup_2026-08-10_2000.sqlite',
+                    'backup_2026-08-01_1000.dump',
+                    'backup_2026-08-10_2000.dump',
                     'not-a-backup.txt'
                 ]) {
                     fs.writeFileSync(path.join(dir, f), 'x');
                 }
                 const picked = core.planRollback(dir);
-                expect(path.basename(picked)).toBe('backup_2026-08-10_2000.sqlite');
+                expect(path.basename(picked)).toBe('backup_2026-08-10_2000.dump');
             } finally {
                 fs.rmSync(dir, { recursive: true, force: true });
             }
@@ -385,18 +399,19 @@ describe('deploy-core', () => {
         });
     });
 
-    describe('docker-compose.yml (bind mount)', () => {
-        it('uzywa bind mount ./data:/var/data zamiast named volume', () => {
+    describe('docker-compose.yml (PostgreSQL)', () => {
+        it('uses PostgreSQL 18, a persistent named volume, and explicit app DATABASE_URL', () => {
             const text = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');
             const doc: any = yaml.load(text);
-            const volumes = doc.services.app.volumes;
-            expect(volumes).toContain('./data:/var/data');
-            expect(
-                volumes.some(
-                    (v: any) => typeof v === 'string' && v.includes(':') && !v.startsWith('./')
-                )
-            ).toBe(false);
-            expect(doc.volumes).toBeUndefined();
+            expect(doc.services.postgres.image).toBe('postgres:18-alpine');
+            expect(doc.services.postgres.volumes).toContain('postgres-data:/var/lib/postgresql');
+            expect(doc.services.postgres.healthcheck.test.join(' ')).toContain('pg_isready');
+            expect(doc.services.app.depends_on.postgres.condition).toBe('service_healthy');
+            expect(doc.services.app.environment.DATABASE_URL).toBe(
+                '${DATABASE_URL:?Set DATABASE_URL in .env}'
+            );
+            expect(doc.services.app.volumes).toContain('sok-backups:/app/data/backups');
+            expect(doc.volumes['postgres-data']).toBeDefined();
         });
     });
 });

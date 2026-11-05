@@ -13,7 +13,7 @@
  * Limity (uzasadnienie: tests/importBatchLimits.test.ts, F0):
  * - XLSX > XLSX_MAX_ROWS (100k) -> odrzuc (podziel na CSV; SheetJS CE
  *   nie streamuje, sheetRows to tylko obciecie prefixu).
- * - 1 oferta = 1 POST sekwencyjnie (jak FE; SQLITE_BUSY, connection_limit=1).
+ * - 1 oferta = 1 POST sekwencyjnie (jak FE; kontrolowany backpressure bazy).
  * - Oferta > MAX_ROWS_OFFER wierszy -> blad rekordu (nie wysylaj).
  *
  * Uzycie:
@@ -397,7 +397,7 @@ class Api {
         idemKey?: string
     ): Promise<{ status: number; json: unknown }> {
         // 429: backoff liniowy (max 3 retry). Wysylamy sekwencyjnie 1 POST
-        // naraz, wiec 429 oznacza contention z innym pisarzem (SQLITE_BUSY).
+        // naraz, więc 429 oznacza contention z innymi zapisami do bazy.
         for (let attempt = 0; attempt < 4; attempt++) {
             const r = await this.req('POST', url, body, idemKey);
             if (r.status !== 429 || attempt === 3) return r;

@@ -1,61 +1,50 @@
-/*
- * tests/migrations/futureMigration.test.ts
- * A4.5: Test przyszlego workflow — legacy -> baseline -> KOLEJNA migracja.
- *
- * Izolowany projekt Prisma:
- *   prisma/schema.prisma  (kopia produkcyjnego schematu)
- *   prisma/migrations/
- *     ├── 20260815000000_baseline/          (kopia baseline)
- *     └── 20260816000000_test_migration/    (dodaje kolumne testowa)
- *
- * Kroki:
- *   1. Temp baza -> db push + insert danych
- *   2. resolve --applied baseline
- *   3. migrate deploy -> testowa migracja wykonana
- *   4. migrate status = up to date
- *   5. Asercje: nowa kolumna istnieje, dane legacy nietkniete
- */
-import { DatabaseSync } from 'node:sqlite';
+import fs from 'node:fs';
+import path from 'node:path';
 import { addMigration, createIsolatedProject } from './helpers';
 
-const BASELINE = '20260815000000_baseline';
-const TEST_MIGRATION = '20260816000000_test_migration';
+const MIGRATIONS_DIR = path.join(__dirname, '..', '..', 'prisma', 'migrations-postgresql');
+const FUTURE_MIGRATION = '9999_test_additive_migration';
 
-describe('A4.5 przyszly workflow migracji', () => {
-    it('kolejna migracja po baseline stosuje sie normalnie, legacy dane nietkniete', () => {
-        const project = createIsolatedProject('future-migration', [BASELINE]);
-        addMigration(
-            project,
-            TEST_MIGRATION,
-            `-- AlterTable\nALTER TABLE "clients_rel" ADD COLUMN "testColumn" TEXT;`
-        );
+function postgresMigrations(): string[] {
+    return fs
+        .readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .filter((entry) => fs.existsSync(path.join(MIGRATIONS_DIR, entry, 'migration.sql')))
+        .sort();
+}
+
+describe('PostgreSQL future migration workflow', () => {
+    it('applies an additive migration without changing existing rows', () => {
+        const project = createIsolatedProject('future-migration', postgresMigrations());
         try {
-            project.runPrisma(['db', 'push', '--skip-generate']);
-
-            const db = new DatabaseSync(project.dbPath);
-            db.exec('PRAGMA foreign_keys = ON');
-            db.prepare('INSERT INTO clients_rel (id, name) VALUES (?, ?)').run(
-                'legacy_client_1',
-                'Klient legacy'
+            project.runPrisma(['migrate', 'deploy']);
+            project.query('INSERT INTO "settings" ("key", "value") VALUES ($1, $2)', [
+                'migration-test',
+                'preserve-me'
+            ]);
+            addMigration(
+                project,
+                FUTURE_MIGRATION,
+                'CREATE TABLE "migration_probe" ("id" TEXT PRIMARY KEY, "created_at" TIMESTAMPTZ NOT NULL DEFAULT now());'
             );
-            db.close();
 
-            project.runPrisma(['migrate', 'resolve', '--applied', BASELINE]);
-            const deployOut = project.runPrisma(['migrate', 'deploy']);
-            expect(deployOut).toContain(TEST_MIGRATION);
-
-            const status = project.runPrisma(['migrate', 'status']);
-            expect(/database schema is up to date/i.test(status)).toBe(true);
-
-            const db2 = new DatabaseSync(project.dbPath, { readOnly: true });
-            const cols = db2.prepare('PRAGMA table_info(clients_rel)').all() as { name: string }[];
-            const rows = db2.prepare('SELECT count(*) AS n FROM clients_rel').get();
-            db2.close();
-
-            expect(cols.some((c) => c.name === 'testColumn')).toBe(true);
-            expect((rows as { n: number }).n).toBe(1);
+            expect(project.runPrisma(['migrate', 'deploy'])).toContain(FUTURE_MIGRATION);
+            expect(project.runPrisma(['migrate', 'status'])).toMatch(/up to date/i);
+            expect(
+                project.query<{ value: string }>(
+                    'SELECT "value" FROM "settings" WHERE "key" = $1',
+                    ['migration-test']
+                )
+            ).toEqual([{ value: 'preserve-me' }]);
+            expect(
+                project.query<{ relation: string | null }>(
+                    `SELECT to_regclass(current_schema() || '.migration_probe')::text AS relation`
+                )[0].relation
+            ).not.toBeNull();
+            expect(project.runPrisma(['migrate', 'deploy'])).toMatch(/no pending migrations/i);
         } finally {
             project.cleanup();
         }
-    }, 180000);
+    }, 180_000);
 });

@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
-import { DatabaseSync } from 'node:sqlite';
 // @ts-ignore - skrypt .cjs bez deklaracji typow
 import { backfillOfferCounts } from '../../scripts/backfill-offer-counts.cjs';
 import { mapOfferRow, toNum } from '../../src/utils/searchUtils';
+import prisma from '../../src/prismaClient';
 
 // Regresja: kartoteka pokazywala "0 poz. / 0 studni" mimo zywych pozycji.
 // Dwa zrodla: (1) search.ts bral stale wellCount=0 znad bloba (COALESCE widzi
@@ -54,25 +54,24 @@ describe('kartotekaHelpers getOfferItemCount (prawdziwa funkcja z vm)', () => {
 });
 
 describe('search.ts d_wellsCount: kolumna 0/NULL nie maskuje bloba', () => {
-    const CASE_SQL = `CASE WHEN s."wellCount" IS NULL OR s."wellCount" = 0
-        THEN json_array_length(s.data, '$.wells')
-        ELSE s."wellCount" END AS "d_wellsCount"`;
-
-    test('semantyka CASE na zywych danych', () => {
-        const db = new DatabaseSync(':memory:');
-        db.exec('CREATE TABLE t ("wellCount" INTEGER, data TEXT)');
-        const ins = db.prepare('INSERT INTO t VALUES (?, ?)');
-        ins.run(0, JSON.stringify({ wells: [{ id: 'a' }, { id: 'b' }] }));
-        ins.run(null, JSON.stringify({ wells: [{ id: 'a' }] }));
-        ins.run(7, JSON.stringify({ wells: [{ id: 'a' }] }));
-        ins.run(0, JSON.stringify({}));
-        const rows = db
-            .prepare(
-                `SELECT ${CASE_SQL.replaceAll('s.', 't.').replaceAll('s."wellCount"', 't."wellCount"')} FROM t`
+    test('semantyka CASE na PostgreSQL', async () => {
+        const rows = await prisma.$queryRaw<Array<{ d_wellsCount: number | null }>>`
+            WITH t("wellCount", data) AS (
+                VALUES
+                    (0, '{"wells":[{"id":"a"},{"id":"b"}]}'::text),
+                    (NULL::integer, '{"wells":[{"id":"a"}]}'::text),
+                    (7, '{"wells":[{"id":"a"}]}'::text),
+                    (0, '{}'::text)
             )
-            .all() as Array<{ d_wellsCount: number | null }>;
-        db.close();
-        expect(rows.map((r) => r.d_wellsCount)).toEqual([2, 1, 7, null]);
+            SELECT CASE
+                WHEN t."wellCount" IS NULL OR t."wellCount" = 0
+                    THEN CASE WHEN jsonb_typeof(t.data::jsonb -> 'wells') = 'array'
+                        THEN jsonb_array_length(t.data::jsonb -> 'wells') ELSE NULL END
+                ELSE t."wellCount"
+            END AS "d_wellsCount"
+            FROM t
+        `;
+        expect(rows.map((row) => row.d_wellsCount)).toEqual([2, 1, 7, null]);
     });
 
     test('search.ts nie zawiera blednego COALESCE dla wellCount', () => {

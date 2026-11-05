@@ -1,5 +1,11 @@
 # Znane błędy — Oferty_PV
 
+> Historyczny kontekst SQLite: pozycje opisujące `SQLITE_BUSY`, `PRAGMA`, FTS5
+> i wydajność pliku SQLite dokumentują przyczyny oraz dawną naprawę. Nie są
+> aktywną instrukcją dla nowego backendu. S.O.K. migruje do PostgreSQL-only;
+> nie przenoś tych mechanizmów do kodu PostgreSQL. Zachowaj numerację i fakty
+> historyczne dla audytu.
+
 > Mapowanie numeracji ↔ `AGENTS.md` §5 (tabela bazy błędów): sekwencje rozeszły się
 > po #22 (osobne dopiski w obu plikach, bez przenumerowania — odnośniki `#3/#24/#39`
 > w kodzie muszą zostać stabilne, nie przenumerowuj żadnej ze stron).

@@ -1,5 +1,5 @@
 // @ts-check
-/* ===== HISTORIA OFERTY STUDNIE (audyt SQLite) ===== */
+/* ===== HISTORIA OFERTY STUDNIE (audyt PostgreSQL) ===== */
 
 function renderAuditLogEntry(log) {
     const data = log.newData || {};

@@ -25,7 +25,7 @@ describe('GET /health/backup', () => {
     it('świeża kopia → 200 z wiekiem i nazwą pliku', async () => {
         mockedRead.mockReturnValue({
             at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-            file: 'backup_2026-01-01_1.sqlite',
+            file: 'backup_2026-01-01_1.dump',
             size: 1024,
             sha256: 'abc',
             verification: 'ok'
@@ -37,7 +37,7 @@ describe('GET /health/backup', () => {
         expect(res.status).toBe(200);
         expect(res.body.status).toBe('ok');
         expect(res.body.ageHours).toBeGreaterThan(0);
-        expect(res.body.file).toBe('backup_2026-01-01_1.sqlite');
+        expect(res.body.file).toBe('backup_2026-01-01_1.dump');
         expect(res.body.maxAgeHours).toBe(26);
     });
 
@@ -56,7 +56,7 @@ describe('GET /health/backup', () => {
     it('kopia starsza niż limit → 503', async () => {
         mockedRead.mockReturnValue({
             at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-            file: 'backup_2026-01-01_1.sqlite',
+            file: 'backup_2026-01-01_1.dump',
             size: 1024,
             sha256: 'abc',
             verification: 'ok'

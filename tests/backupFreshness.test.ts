@@ -12,7 +12,7 @@ import {
 function markerAt(iso: string): BackupMarker {
     return {
         at: iso,
-        file: 'backup_2026-01-01_1.sqlite',
+        file: 'backup_2026-01-01_1.dump',
         size: 1024,
         sha256: 'abc',
         verification: 'ok'

@@ -7,7 +7,8 @@
  * P2.8: single-instance BY DESIGN — `running:Set` chroni tylko w obrębie
  * procesu. Przy 2+ instancjach (cluster/PM2 scale-out) zadania (mlTraining,
  * SelfEvaluation, pricelistDue) dublowałyby się. Wtedy dopiero: job_locks
- * w SQLite (jobName/owner/startedAt/expiresAt + lease). Bez Redisa.
+ * w PostgreSQL advisory lock albo tabeli job_locks
+ * (jobName/owner/startedAt/expiresAt + lease). Bez Redisa.
  */
 
 import { logger } from './logger';
@@ -236,7 +237,7 @@ class CronService {
     }
 
     /**
-     * Backup bazy: `VACUUM INTO` + weryfikacja + retencja + marker świeżości.
+     * Backup PostgreSQL: `pg_dump` + weryfikacja + retencja + marker świeżości.
      *
      * Nie rzuca — awaria backupu nie może zatrzymać aplikacji. Porażka zostaje
      * w logu, a `npm run backup:check` / `/health/backup` pokażą nieświeży marker.

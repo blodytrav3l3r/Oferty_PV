@@ -32,7 +32,9 @@ jest.mock('../src/services/pricelistVersionService', () => {
             sheets: {
                 Rury: [{ Indeks: 'R1', 'Nazwa produktu': 'Rura', 'Cena PLN (netto)': 10 }]
             },
-            precoIncluded: false
+            precoIncluded: false,
+            precoSource: 'NOT_APPLICABLE',
+            precoVersion: null
         }))
     };
 });
@@ -70,6 +72,7 @@ describe('GET /api/pricelist-versions/:id/export', () => {
     it('nazwa pliku = numer cennika', async () => {
         const res = await getExport();
         expect(res.status).toBe(200);
+        expect(res.headers['x-preco-source']).toBe('NOT_APPLICABLE');
         expect(String(res.headers['content-disposition'])).toContain(
             'Cennik_Rury_Rv1-20260927_Export.xlsx'
         );

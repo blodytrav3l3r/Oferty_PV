@@ -4,9 +4,8 @@
  * dedup (offerKind,offerId), ORDER BY bucketWeight/COALESCE(next)/kind/id,
  * cursor base64, limit clamp, max 2 SELECT.
  */
-import { DatabaseSync } from 'node:sqlite';
-import { ensureLatestFollowupFixture } from './careLatestFixture';
-import type { Prisma } from '../../generated/prisma';
+import type { Prisma } from '../../generated/prisma-postgres/client';
+import prisma from '../../src/prismaClient';
 import {
     buildCareEnrichQuery,
     buildCareQueueQueries,
@@ -21,90 +20,96 @@ const NOW = '2026-10-10T00:00:00.000Z';
 const PAST = '2026-10-09T10:00:00.000Z';
 const FUTURE = '2026-10-11T10:00:00.000Z';
 
-const ADMIN: CareUser = { id: 'admin', role: 'admin', subUsers: [] };
-const PRO: CareUser = { id: 'pro1', role: 'pro', subUsers: ['u1'] };
-const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
-const U2: CareUser = { id: 'u2', role: 'user', subUsers: [] };
+const testId = `care-queue-sql-${process.pid}-${Date.now()}`;
+const ADMIN: CareUser = { id: `${testId}-admin`, role: 'admin', subUsers: [] };
+const PRO: CareUser = { id: `${testId}-pro`, role: 'pro', subUsers: [`${testId}-u1`] };
+const U1: CareUser = { id: `${testId}-u1`, role: 'user', subUsers: [] };
+const U2: CareUser = { id: `${testId}-u2`, role: 'user', subUsers: [] };
 
-function freshDb(): DatabaseSync {
-    const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
-        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
-            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
-        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT,
-            "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT,
-            "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT, note TEXT);`);
-    const offer = (kind: string, id: string, userId: string) =>
-        db
-            .prepare(
-                kind === 'rury'
-                    ? 'INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?, ?, ?)'
-                    : 'INSERT INTO offers_studnie_rel (id, "userId", "createdAt") VALUES (?, ?, ?)'
-            )
-            .run(id, userId, '2026-10-01T00:00:00.000Z');
-    // u1: o1 rury OPEN overdue, o2 rury OPEN future (3 wpisy = dedup),
-    //     o3 studnie WON (remis czasow, wyzsze id wygrywa), o4 rury NO_CONTACT.
-    // u2: o9 rury OPEN overdue (niewidoczne dla u1). pro1: o5 rury OPEN overdue.
-    offer('rury', 'o1', 'u1');
-    offer('rury', 'o2', 'u1');
-    offer('studnie', 'o3', 'u1');
-    offer('rury', 'o4', 'u1');
-    offer('rury', 'o9', 'u2');
-    offer('rury', 'o5', 'pro1');
-    const fu = (
-        id: string,
-        kind: string,
-        offerId: string,
-        outcome: string,
-        next: string | null,
-        contacted = PAST
-    ) =>
-        db
-            .prepare(
-                `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
-                 "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)`
-            )
-            .run(id, kind, offerId, 'u1', contacted, contacted, outcome, next);
-    fu('f1', 'rury', 'o1', 'OPEN', PAST);
-    fu('f2a', 'rury', 'o2', 'OPEN', PAST);
-    fu('f2b', 'rury', 'o2', 'OPEN', FUTURE, FUTURE);
-    fu('f2c', 'rury', 'o2', 'OPEN', FUTURE, '2026-10-10T12:00:00.000Z');
-    fu('aaa', 'studnie', 'o3', 'OPEN', PAST);
-    fu('zzz', 'studnie', 'o3', 'WON', PAST);
-    fu('f9', 'rury', 'o9', 'OPEN', PAST);
-    fu('f5', 'rury', 'o5', 'OPEN', PAST);
-    // P1: cache latest (triggery utrzymują przy INSERTach, backfill kryje powyższe).
-    ensureLatestFollowupFixture(db);
-    return db;
+interface TestDb {
+    $queryRaw<T>(query: Prisma.Sql): Promise<T>;
+    close(): Promise<void>;
 }
 
-function rawAll(db: DatabaseSync, q: Prisma.Sql): Record<string, unknown>[] {
-    const raw = q as unknown as { sql: string; values: unknown[] };
-    const params = raw.values as (string | number | bigint | null)[];
-    return db.prepare(raw.sql).all(...params) as Record<string, unknown>[];
+async function freshDb(): Promise<TestDb> {
+    await prisma.offers_rel.createMany({
+        data: [
+            { id: `${testId}-o1`, userId: U1.id, createdAt: '2026-10-01T00:00:00.000Z' },
+            { id: `${testId}-o2`, userId: U1.id, createdAt: '2026-10-01T00:00:00.000Z' },
+            { id: `${testId}-o4`, userId: U1.id, createdAt: '2026-10-01T00:00:00.000Z' },
+            { id: `${testId}-o9`, userId: U2.id, createdAt: '2026-10-01T00:00:00.000Z' },
+            { id: `${testId}-o5`, userId: PRO.id, createdAt: '2026-10-01T00:00:00.000Z' }
+        ]
+    });
+    await prisma.offers_studnie_rel.create({
+        data: { id: `${testId}-o3`, userId: U1.id, createdAt: '2026-10-01T00:00:00.000Z' }
+    });
+    await prisma.offer_follow_ups.createMany({
+        data: (
+            [
+                [`f1`, 'rury', 'o1', 'OPEN', PAST, PAST],
+                [`f2a`, 'rury', 'o2', 'OPEN', PAST, PAST],
+                [`f2b`, 'rury', 'o2', 'OPEN', FUTURE, FUTURE],
+                [`f2c`, 'rury', 'o2', 'OPEN', FUTURE, '2026-10-10T12:00:00.000Z'],
+                [`aaa`, 'studnie', 'o3', 'OPEN', PAST, PAST],
+                [`zzz`, 'studnie', 'o3', 'WON', PAST, PAST],
+                [`f9`, 'rury', 'o9', 'OPEN', PAST, PAST],
+                [`f5`, 'rury', 'o5', 'OPEN', PAST, PAST]
+            ] as const
+        ).map(([id, kind, offer, outcome, next, contacted]) => ({
+            id: `${testId}-${id}`,
+            offerKind: kind,
+            offerId: `${testId}-${offer}`,
+            createdByUserId: U1.id,
+            outcome,
+            nextContactAt: next,
+            contactedAt: contacted,
+            createdAt: contacted,
+            channel: 'PHONE' as const,
+            result: 'CONTACTED' as const
+        }))
+    });
+    return {
+        $queryRaw: <T>(query: Prisma.Sql) => prisma.$queryRaw<T>(query),
+        close: async () => {
+            await prisma.document_shares.deleteMany({ where: { id: { startsWith: testId } } });
+            await prisma.care_states.deleteMany({ where: { offerId: { startsWith: testId } } });
+            await prisma.offer_follow_ups.deleteMany({
+                where: { offerId: { startsWith: testId } }
+            });
+            await prisma.offers_rel.deleteMany({ where: { id: { startsWith: testId } } });
+            await prisma.offers_studnie_rel.deleteMany({ where: { id: { startsWith: testId } } });
+        }
+    };
 }
 
-function dataIds(db: DatabaseSync, user: CareUser, extra = {}): string[] {
+async function rawAll(db: TestDb, q: Prisma.Sql): Promise<Record<string, unknown>[]> {
+    return db.$queryRaw<Record<string, unknown>[]>(q);
+}
+
+async function dataIds(db: TestDb, user: CareUser, extra = {}): Promise<string[]> {
     const { data } = buildCareQueueQueries(user, { nowIso: NOW, ...extra });
-    return rawAll(db, data).map((r) => `${r.offerKind}:${r.offerId}`);
+    return (await rawAll(db, data)).map(
+        (row) => `${row.offerKind}:${String(row.offerId).slice(testId.length + 1)}`
+    );
 }
 
 describe('P0.2 care queue SQL', () => {
-    it('latest: przy remisie czasow wygrywa wyzsze id (o3 = WON, bucket 2)', () => {
-        const db = freshDb();
+    it('latest: przy remisie czasów wygrywa wyższe id (o3 = WON, bucket 2)', async () => {
+        const db = await freshDb();
         try {
             const { data } = buildCareQueueQueries(U1, { nowIso: NOW });
-            const rows = rawAll(db, data);
-            const o3 = rows.find((r) => r.offerId === 'o3') as Record<string, unknown>;
+            const rows = await rawAll(db, data);
+            const o3 = rows.find((row) => row.offerId === `${testId}-o3`) as Record<
+                string,
+                unknown
+            >;
             expect(o3.outcome).toBe('WON');
             expect(Number(o3.bucketWeight)).toBe(2);
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -113,22 +118,22 @@ describe('P0.2 care queue SQL', () => {
     });
 
     it('dedup: o2 z 3 wpisami to 1 wiersz; COUNT DISTINCT = liczba ofert', async () => {
-        const db = freshDb();
+        const db = await freshDb();
         try {
             const fake = {
                 $queryRaw: async <T>(...args: unknown[]): Promise<T> =>
-                    rawAll(db, args[0] as Prisma.Sql) as unknown as T
+                    (await rawAll(db, args[0] as Prisma.Sql)) as unknown as T
             };
             const res = await getCareQueue(fake, U1, { nowIso: NOW });
             expect(res.totalCount).toBe(4);
             expect(res.items).toHaveLength(4);
-            expect(res.items.filter((i) => i.offerId === 'o2')).toHaveLength(1);
+            expect(res.items.filter((i) => i.offerId === `${testId}-o2`)).toHaveLength(1);
             // latest o2 = f2c (najpozniejszy contactedAt) -> OPEN future -> bucket 1.
-            expect(res.items.find((i) => i.offerId === 'o2')?.bucketWeight).toBe(1);
-            db.close();
+            expect(res.items.find((i) => i.offerId === `${testId}-o2`)?.bucketWeight).toBe(1);
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -136,16 +141,16 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 
-    it('ORDER BY bucketWeight, COALESCE(next,9999), kind, id', () => {
-        const db = freshDb();
+    it('ORDER BY bucketWeight, COALESCE(next,9999), kind, id', async () => {
+        const db = await freshDb();
         try {
             // u1: o1 bucket0 PAST, o4 bucket0 NULL(next->9999, ostatnie w buckecie),
             // o2 bucket1 FUTURE, o3 bucket2.
-            expect(dataIds(db, U1)).toEqual(['rury:o1', 'rury:o4', 'rury:o2', 'studnie:o3']);
-            db.close();
+            expect(await dataIds(db, U1)).toEqual(['rury:o1', 'rury:o4', 'rury:o2', 'studnie:o3']);
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -153,13 +158,13 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 
-    it('scope: mine/team/all + 403 dla all bez admin', () => {
-        const db = freshDb();
+    it('scope: mine/team/all + 403 dla all bez admin', async () => {
+        const db = await freshDb();
         try {
-            expect(dataIds(db, U1)).toHaveLength(4);
-            expect(dataIds(db, U1)).not.toContain('rury:o9');
+            expect(await dataIds(db, U1)).toHaveLength(4);
+            expect(await dataIds(db, U1)).not.toContain('rury:o9');
             // team pro1 = pro1 + u1 (bez u2).
-            const team = dataIds(db, PRO, { scope: 'team' });
+            const team = await dataIds(db, PRO, { scope: 'team' });
             expect(team).toContain('rury:o5');
             expect(team).toContain('rury:o1');
             expect(team).not.toContain('rury:o9');
@@ -167,13 +172,13 @@ describe('P0.2 care queue SQL', () => {
             expect(() => buildCareQueueQueries(U2, { nowIso: NOW, scope: 'team' })).toThrow();
             // all admin = wszystko (4x u1 + o5 + o9).
             const { count } = buildCareQueueQueries(ADMIN, { nowIso: NOW, scope: 'all' });
-            expect(Number(rawAll(db, count)[0].c)).toBe(6);
+            expect(Number((await rawAll(db, count))[0].c)).toBe(6);
             // all bez admin = 403.
             expect(() => buildCareQueueQueries(U1, { nowIso: NOW, scope: 'all' })).toThrow();
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -181,17 +186,25 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 
-    it('share: udostępniona oferta u2 widoczna dla u1 (read-only)', () => {
-        const db = freshDb();
+    it('share: udostępniona oferta u2 widoczna dla u1 (read-only)', async () => {
+        const db = await freshDb();
         try {
-            db.prepare(
-                'INSERT INTO document_shares (id, "sharedWithUserId", "documentType", "documentId") VALUES (?,?,?,?)'
-            ).run('sh1', 'u1', 'offer', 'o9');
-            expect(dataIds(db, U1)).toContain('rury:o9');
-            db.close();
+            await prisma.document_shares.create({
+                data: {
+                    id: `${testId}-share`,
+                    sharedWithUserId: U1.id,
+                    documentType: 'offer',
+                    documentId: `${testId}-o9`,
+                    ownerId: U2.id,
+                    createdAt: NOW,
+                    createdBy: U2.id
+                }
+            });
+            expect(await dataIds(db, U1)).toContain('rury:o9');
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -200,28 +213,32 @@ describe('P0.2 care queue SQL', () => {
     });
 
     it('hidePaused w SQL: pełna strona + zgodny count (fix paginacji)', async () => {
-        const db = freshDb();
+        const db = await freshDb();
         try {
-            db.exec(`CREATE TABLE IF NOT EXISTS care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
-                CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));`);
-            db.prepare(
-                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
-            ).run('rury', 'o1', '2026-10-12T00:00:00.000Z', null, 'u1', NOW);
+            await prisma.care_states.create({
+                data: {
+                    offerKind: 'rury',
+                    offerId: `${testId}-o1`,
+                    snoozedUntil: '2026-10-12T00:00:00.000Z',
+                    updatedBy: U1.id,
+                    updatedAt: NOW
+                }
+            });
             const fake = {
-                $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
-                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                $queryRaw: async <T>(query: Prisma.Sql): Promise<T> => {
+                    return (await rawAll(db, query)) as unknown as T;
                 }
             };
             const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10, hidePaused: true });
-            expect(res.items.find((i) => i.offerId === 'o1')).toBeUndefined();
+            expect(res.items.find((i) => i.offerId === `${testId}-o1`)).toBeUndefined();
             expect(res.totalCount).toBe(3);
             expect(res.items).toHaveLength(3);
             const all = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
             expect(all.totalCount).toBe(4);
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -230,32 +247,34 @@ describe('P0.2 care queue SQL', () => {
     });
 
     it('kontekst biznesowy: klient, wartość, telefon, notatka w wierszu', async () => {
-        const db = freshDb();
+        const db = await freshDb();
         try {
-            db.prepare('UPDATE offers_rel SET "clientName" = ?, "data" = ? WHERE id = ?').run(
-                'Budimex',
-                JSON.stringify({ totalBrutto: 4440.3, clientPhone: '601000111' }),
-                'o1'
-            );
-            db.prepare('UPDATE offer_follow_ups SET note = ? WHERE id = ?').run(
-                'Czeka na decyzję',
-                'f1'
-            );
+            await prisma.offers_rel.update({
+                where: { id: `${testId}-o1` },
+                data: {
+                    clientName: 'Budimex',
+                    data: JSON.stringify({ totalBrutto: 4440.3, clientPhone: '601000111' })
+                }
+            });
+            await prisma.offer_follow_ups.update({
+                where: { id: `${testId}-f1` },
+                data: { note: 'Czeka na decyzję' }
+            });
             const fake = {
-                $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
-                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                $queryRaw: async <T>(query: Prisma.Sql): Promise<T> => {
+                    return (await rawAll(db, query)) as unknown as T;
                 }
             };
             const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
-            const o1 = res.items.find((i) => i.offerId === 'o1');
+            const o1 = res.items.find((i) => i.offerId === `${testId}-o1`);
             expect(o1?.clientName).toBe('Budimex');
             expect(o1?.value).toBeCloseTo(4440.3);
             expect(o1?.phone).toBe('601000111');
             expect(o1?.lastNote).toBe('Czeka na decyzję');
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -264,20 +283,20 @@ describe('P0.2 care queue SQL', () => {
     });
 
     it('born: kolejka niesie createdAt oferty (wiek NO_CONTACT)', async () => {
-        const db = freshDb();
+        const db = await freshDb();
         try {
             const fake = {
-                $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
-                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                $queryRaw: async <T>(query: Prisma.Sql): Promise<T> => {
+                    return (await rawAll(db, query)) as unknown as T;
                 }
             };
             const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
-            const o4 = res.items.find((i) => i.offerId === 'o4');
+            const o4 = res.items.find((i) => i.offerId === `${testId}-o4`);
             expect(o4?.createdAt).toBe('2026-10-01T00:00:00.000Z');
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -285,11 +304,11 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 
-    it('cursor: strony lacznie daja calosc bez powtorzen; limit clamp', () => {
-        const db = freshDb();
+    it('cursor: strony łącznie dają całość bez powtórzeń; limit clamp', async () => {
+        const db = await freshDb();
         try {
             const p1 = buildCareQueueQueries(U1, { nowIso: NOW, limit: 2 });
-            const rows1 = rawAll(db, p1.data);
+            const rows1 = await rawAll(db, p1.data);
             expect(rows1).toHaveLength(3); // limit+1 = probka nastepnej strony
             const page1 = rows1.slice(0, 2);
             const last = page1[1] as Record<string, unknown>;
@@ -307,9 +326,11 @@ describe('P0.2 care queue SQL', () => {
             });
             expect(decodeCareCursor('!!!nie-base64!!!')).toBeNull();
             const p2 = buildCareQueueQueries(U1, { nowIso: NOW, limit: 2, cursor });
-            const rows2 = rawAll(db, p2.data);
-            const ids1 = page1.map((r) => `${r.offerKind}:${r.offerId}`);
-            const ids2 = rows2.map((r) => `${r.offerKind}:${r.offerId}`);
+            const rows2 = await rawAll(db, p2.data);
+            const label = (row: Record<string, unknown>) =>
+                `${row.offerKind}:${String(row.offerId).slice(testId.length + 1)}`;
+            const ids1 = page1.map(label);
+            const ids2 = rows2.map(label);
             expect(new Set([...ids1, ...ids2]).size).toBe(4);
             expect(ids1.filter((x) => ids2.includes(x))).toHaveLength(0);
             expect([...ids1, ...ids2].sort()).toEqual(
@@ -318,10 +339,10 @@ describe('P0.2 care queue SQL', () => {
             expect(clampCareLimit(200)).toBe(100);
             expect(clampCareLimit(undefined)).toBe(50);
             expect(clampCareLimit(0)).toBe(1);
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -332,14 +353,14 @@ describe('P0.2 care queue SQL', () => {
     it('getCareQueue: strona + count równolegle, enrich tylko niepustej strony', async () => {
         let calls = 0;
         const seen: string[] = [];
-        const db = freshDb();
+        const db = await freshDb();
         try {
             const fake = {
                 $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
                     calls += 1;
                     const raw = args[0] as Prisma.Sql;
                     seen.push((raw as unknown as { sql: string }).sql.slice(0, 60));
-                    return rawAll(db, raw) as unknown as T;
+                    return (await rawAll(db, raw)) as unknown as T;
                 }
             };
             const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 2 });
@@ -353,10 +374,10 @@ describe('P0.2 care queue SQL', () => {
                 limit: 10
             });
             expect(tail.nextCursor).toBeNull();
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -365,11 +386,11 @@ describe('P0.2 care queue SQL', () => {
     });
 
     it('cursor !!!: INVALID_CURSOR 400 z code (luka #9, poziom serwisu)', async () => {
-        const db = freshDb();
+        const db = await freshDb();
         try {
             const fake = {
                 $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
-                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                    return (await rawAll(db, args[0] as Prisma.Sql)) as unknown as T;
                 }
             };
             let syncErr: unknown;
@@ -382,10 +403,10 @@ describe('P0.2 care queue SQL', () => {
             await expect(
                 getCareQueue(fake, U1, { nowIso: NOW, cursor: '!!!' })
             ).rejects.toMatchObject({ status: 400, code: 'INVALID_CURSOR' });
-            db.close();
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }
@@ -395,11 +416,10 @@ describe('P0.2 care queue SQL', () => {
 });
 
 describe('P0.4 count bez CTE latest (KEEP-guard)', () => {
-    function queueAdapter(db: DatabaseSync) {
+    function queueAdapter(db: TestDb) {
         return {
-            $queryRaw: async <T>(...args: any[]): Promise<T> => {
-                const q = args[0] as Prisma.Sql;
-                return rawAll(db, q) as unknown as T;
+            $queryRaw: async <T>(query: Prisma.Sql): Promise<T> => {
+                return (await rawAll(db, query)) as unknown as T;
             }
         };
     }
@@ -413,7 +433,7 @@ describe('P0.4 count bez CTE latest (KEEP-guard)', () => {
     });
 
     it('parzystość: count = liczba wierszy kolejki (mine/all/hidePaused)', async () => {
-        const db = freshDb();
+        const db = await freshDb();
         try {
             const f = queueAdapter(db);
             const mine = await getCareQueue(f, U1, { nowIso: NOW, scope: 'mine', limit: 50 });
@@ -428,16 +448,21 @@ describe('P0.4 count bez CTE latest (KEEP-guard)', () => {
             const all = await getCareQueue(f, ADMIN, { nowIso: NOW, scope: 'all', limit: 50 });
             expect(all.totalCount).toBe(6);
         } finally {
-            db.close();
+            await db.close();
         }
     });
 
     it('hidePaused wycina spauzowane tak samo w data i count', async () => {
-        const db = freshDb();
+        const db = await freshDb();
         try {
-            db.prepare(
-                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "updatedAt") VALUES (?,?,?,?)'
-            ).run('rury', 'o1', '2026-12-31T00:00:00.000Z', '2026-10-02T00:00:00.000Z');
+            await prisma.care_states.create({
+                data: {
+                    offerKind: 'rury',
+                    offerId: `${testId}-o1`,
+                    snoozedUntil: '2026-12-31T00:00:00.000Z',
+                    updatedAt: '2026-10-02T00:00:00.000Z'
+                }
+            });
             const f = queueAdapter(db);
             const q = await getCareQueue(f, U1, {
                 nowIso: NOW,
@@ -446,9 +471,9 @@ describe('P0.4 count bez CTE latest (KEEP-guard)', () => {
                 hidePaused: true
             });
             expect(q.totalCount).toBe(3);
-            expect(q.items.some((r) => r.offerId === 'o1')).toBe(false);
+            expect(q.items.some((r) => r.offerId === `${testId}-o1`)).toBe(false);
         } finally {
-            db.close();
+            await db.close();
         }
     });
     it('pusta strona: buildCareEnrichQuery([], []) to null (brak zapytania)', () => {
@@ -466,22 +491,34 @@ describe('P0.2 KEEP-guard sortowania i cursora (assert, zero kodu)', () => {
         expect(raw.values).toContain('9999');
     });
 
-    it('cursor tiebreak: ten sam bucket+termin -> kind/id, strony bez dubli', () => {
-        const db = freshDb();
+    it('cursor tiebreak: ten sam bucket+termin -> kind/id, strony bez dubli', async () => {
+        const db = await freshDb();
         try {
             // o0 = bliźniak o1: ten sam bucket 0 i termin PAST -> tiebreak po id.
-            db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?, ?, ?)').run(
-                'o0',
-                'u1',
-                '2026-10-01T00:00:00.000Z'
-            );
-            db.prepare(
-                `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
-                 "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)`
-            ).run('f0', 'rury', 'o0', 'u1', PAST, PAST, 'OPEN', PAST);
-            expect(dataIds(db, U1).slice(0, 2)).toEqual(['rury:o0', 'rury:o1']);
+            await prisma.offers_rel.create({
+                data: {
+                    id: `${testId}-o0`,
+                    userId: U1.id,
+                    createdAt: '2026-10-01T00:00:00.000Z'
+                }
+            });
+            await prisma.offer_follow_ups.create({
+                data: {
+                    id: `${testId}-f0`,
+                    offerKind: 'rury',
+                    offerId: `${testId}-o0`,
+                    createdByUserId: U1.id,
+                    contactedAt: PAST,
+                    createdAt: PAST,
+                    outcome: 'OPEN',
+                    nextContactAt: PAST,
+                    channel: 'PHONE',
+                    result: 'CONTACTED'
+                }
+            });
+            expect((await dataIds(db, U1)).slice(0, 2)).toEqual(['rury:o0', 'rury:o1']);
             const p1 = buildCareQueueQueries(U1, { nowIso: NOW, limit: 1 });
-            const first = rawAll(db, p1.data).slice(0, 1)[0] as Record<string, unknown>;
+            const first = (await rawAll(db, p1.data)).slice(0, 1)[0] as Record<string, unknown>;
             const cursor = encodeCareCursor({
                 w: Number(first.bucketWeight),
                 n: first.next as string | null,
@@ -489,12 +526,14 @@ describe('P0.2 KEEP-guard sortowania i cursora (assert, zero kodu)', () => {
                 i: first.offerId as string
             });
             const p2 = buildCareQueueQueries(U1, { nowIso: NOW, limit: 1, cursor });
-            const second = rawAll(db, p2.data).slice(0, 1)[0] as Record<string, unknown>;
-            expect(`${second.offerKind}:${second.offerId}`).toBe('rury:o1');
-            db.close();
+            const second = (await rawAll(db, p2.data)).slice(0, 1)[0] as Record<string, unknown>;
+            expect(`${second.offerKind}:${String(second.offerId).slice(testId.length + 1)}`).toBe(
+                'rury:o1'
+            );
+            await db.close();
         } catch (e) {
             try {
-                db.close();
+                await db.close();
             } catch {
                 /* ignore */
             }

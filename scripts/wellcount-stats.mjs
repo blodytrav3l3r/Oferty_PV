@@ -1,21 +1,6 @@
 #!/usr/bin/env node
-// F0: rozkład liczby studni na ofertę z realnej bazy (read-only, node:sqlite).
-// Narzędzie produkcyjne — do uruchomienia na snapshocie prod (Q6).
-// Użycie:
-//   node scripts/wellcount-stats.mjs [dbPath] [--json]
-//   WELLCOUNT_DB_PATH=/sciezka node scripts/wellcount-stats.mjs
-// Domyślnie: data/app_database.sqlite (dev). Exit 2 = błąd odczytu.
-import { DatabaseSync } from 'node:sqlite';
-import path from 'node:path';
-import fs from 'node:fs';
-
-const args = process.argv.slice(2);
-const asJson = args.includes('--json');
-const dbArg = args.find((a) => !a.startsWith('--'));
-const DB_PATH =
-    dbArg ||
-    process.env.WELLCOUNT_DB_PATH ||
-    path.resolve(import.meta.dirname, '..', 'data', 'app_database.sqlite');
+// Read-only distribution report for offers_studnie_rel on PostgreSQL.
+import { Client } from 'pg';
 
 const BUCKETS = [
     [0, 0],
@@ -29,127 +14,142 @@ const BUCKETS = [
     [3001, Infinity]
 ];
 
-function pct(sorted, p) {
+function percentile(sorted, percent) {
     if (!sorted.length) return 0;
-    const i = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
-    return sorted[i];
+    const index = Math.min(
+        sorted.length - 1,
+        Math.max(0, Math.ceil((percent / 100) * sorted.length) - 1)
+    );
+    return sorted[index];
 }
 
-function main() {
-    if (!fs.existsSync(DB_PATH)) {
-        console.error('Brak pliku bazy: ' + DB_PATH);
-        process.exit(2);
+function parseDatabaseUrl(rawUrl) {
+    if (!rawUrl) throw new Error('DATABASE_URL is required');
+    const url = new URL(rawUrl);
+    if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+        throw new Error('DATABASE_URL must use PostgreSQL');
     }
-    const db = new DatabaseSync(DB_PATH, { readOnly: true });
-    try {
-        const rows = db
-            .prepare('SELECT wellCount, length(data) AS dataLen FROM offers_studnie_rel')
-            .all();
-        const counts = rows.map((r) => Number(r.wellCount) || 0).sort((a, b) => a - b);
-        const n = counts.length;
-        const sum = counts.reduce((a, b) => a + b, 0);
-        const zeros = counts.filter((c) => c === 0).length;
-        const dataLens = rows.map((r) => Number(r.dataLen) || 0).sort((a, b) => a - b);
-        const distribution = BUCKETS.map(([lo, hi]) => ({
-            range: lo + '-' + (hi === Infinity ? 'inf' : hi),
-            offers: counts.filter((c) => c >= lo && c <= hi).length
-        }));
+    const schema = url.searchParams.get('schema') || 'public';
+    if (!url.hostname || url.pathname.length < 2 || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) {
+        throw new Error('DATABASE_URL must include a valid PostgreSQL host, database and schema');
+    }
+    url.searchParams.delete('schema');
+    return { connectionString: url.toString(), schema, database: url.pathname.slice(1) };
+}
 
-        const sample = db
-            .prepare(
-                'SELECT wellCount, data FROM offers_studnie_rel ORDER BY wellCount DESC LIMIT 8'
-            )
-            .all();
-        const sanity = sample.map((s) => {
-            let real = -1;
+function summarize(rows) {
+    const counts = rows.map((row) => Number(row.wellCount) || 0).sort((a, b) => a - b);
+    const dataLengths = rows.map((row) => Number(row.dataLen) || 0).sort((a, b) => a - b);
+    const total = counts.length;
+    const sum = counts.reduce((accumulator, count) => accumulator + count, 0);
+    const zeros = counts.filter((count) => count === 0).length;
+    const distribution = BUCKETS.map(([min, max]) => ({
+        range: `${min}-${max === Infinity ? 'inf' : max}`,
+        offers: counts.filter((count) => count >= min && count <= max).length
+    }));
+    const sample = [...rows]
+        .sort((a, b) => Number(b.wellCount) - Number(a.wellCount))
+        .slice(0, 8)
+        .map((row) => {
+            let jsonWells = -1;
             try {
-                const j = JSON.parse(s.data || '{}');
-                real = Array.isArray(j.wells) ? j.wells.length : -1;
+                const data = JSON.parse(row.data || '{}');
+                jsonWells = Array.isArray(data.wells) ? data.wells.length : -1;
             } catch {
-                real = -1;
+                jsonWells = -1;
             }
-            return { wellCount: s.wellCount, jsonWells: real, match: real === s.wellCount };
+            return {
+                wellCount: Number(row.wellCount) || 0,
+                jsonWells,
+                match: jsonWells === Number(row.wellCount)
+            };
         });
+    return {
+        offersTotal: total,
+        offersEmpty: zeros,
+        offersNonEmpty: total - zeros,
+        wellsSum: sum,
+        wellsMean: total ? Number((sum / total).toFixed(2)) : 0,
+        min: counts[0] ?? 0,
+        max: counts[total - 1] ?? 0,
+        p50: percentile(counts, 50),
+        p75: percentile(counts, 75),
+        p90: percentile(counts, 90),
+        p95: percentile(counts, 95),
+        p99: percentile(counts, 99),
+        distribution,
+        dataJsonBytes: {
+            p50: percentile(dataLengths, 50),
+            p90: percentile(dataLengths, 90),
+            p99: percentile(dataLengths, 99),
+            max: dataLengths[total - 1] ?? 0
+        },
+        sanity: sample
+    };
+}
 
-        const report = {
-            dbPath: DB_PATH,
-            offersTotal: n,
-            offersEmpty: zeros,
-            offersNonEmpty: n - zeros,
-            wellsSum: sum,
-            wellsMean: n ? Number((sum / n).toFixed(2)) : 0,
-            min: counts[0] ?? 0,
-            max: counts[n - 1] ?? 0,
-            p50: pct(counts, 50),
-            p75: pct(counts, 75),
-            p90: pct(counts, 90),
-            p95: pct(counts, 95),
-            p99: pct(counts, 99),
-            distribution,
-            dataJsonBytes: {
-                p50: pct(dataLens, 50),
-                p90: pct(dataLens, 90),
-                p99: pct(dataLens, 99),
-                max: dataLens[dataLens.length - 1] ?? 0
-            },
-            sanity
-        };
-
-        if (asJson) {
-            console.log(JSON.stringify(report, null, 2));
-        } else {
-            console.log('=== offers_studnie_rel wellCount | ' + DB_PATH + ' ===');
-            console.log(
-                'ofert:',
-                n,
-                '| puste:',
-                zeros,
-                '| niepuste:',
-                n - zeros,
-                '| studnie:',
-                sum,
-                '| mean:',
-                report.wellsMean
-            );
-            console.log(
-                'min:',
-                report.min,
-                'max:',
-                report.max,
-                '| p50:',
-                report.p50,
-                'p75:',
-                report.p75,
-                'p90:',
-                report.p90,
-                'p95:',
-                report.p95,
-                'p99:',
-                report.p99
-            );
-            console.log('rozkład (ofert/oferta):');
-            for (const d of distribution) console.log('  ' + d.range.padEnd(10), d.offers);
-            console.log(
-                'data JSON B | p50:',
-                report.dataJsonBytes.p50,
-                'p90:',
-                report.dataJsonBytes.p90,
-                'p99:',
-                report.dataJsonBytes.p99,
-                'max:',
-                report.dataJsonBytes.max
-            );
-            console.log('sanity (wellCount vs JSON wells.length):');
-            for (const s of sanity)
-                console.log(
-                    '  wellCount=' + s.wellCount,
-                    '| JSON=' + s.jsonWells,
-                    s.match ? 'OK' : 'MISMATCH'
-                );
-        }
-    } finally {
-        db.close();
+function printReport(report, asJson) {
+    if (asJson) {
+        console.log(JSON.stringify(report, null, 2));
+        return;
+    }
+    console.log(`=== offers_studnie_rel wellCount | ${report.database}/${report.schema} ===`);
+    console.log(
+        'ofert:',
+        report.offersTotal,
+        '| puste:',
+        report.offersEmpty,
+        '| niepuste:',
+        report.offersNonEmpty,
+        '| studnie:',
+        report.wellsSum,
+        '| mean:',
+        report.wellsMean
+    );
+    console.log(
+        'percentyle:',
+        `min=${report.min}`,
+        `p50=${report.p50}`,
+        `p75=${report.p75}`,
+        `p90=${report.p90}`,
+        `p95=${report.p95}`,
+        `p99=${report.p99}`,
+        `max=${report.max}`
+    );
+    console.log('rozkład (ofert/oferta):');
+    for (const bucket of report.distribution)
+        console.log(`  ${bucket.range.padEnd(10)} ${bucket.offers}`);
+    console.log('data JSON B:', JSON.stringify(report.dataJsonBytes));
+    console.log('sanity (wellCount vs JSON wells.length):');
+    for (const sample of report.sanity) {
+        console.log(
+            `  wellCount=${sample.wellCount} | JSON=${sample.jsonWells} ${sample.match ? 'OK' : 'MISMATCH'}`
+        );
     }
 }
 
-main();
+async function main() {
+    const database = parseDatabaseUrl(process.env.DATABASE_URL);
+    const client = new Client({ connectionString: database.connectionString });
+    try {
+        await client.connect();
+        const result = await client.query(
+            `SELECT "wellCount", octet_length(COALESCE("data", '')) AS "dataLen", "data" FROM "${database.schema}"."offers_studnie_rel"`
+        );
+        printReport(
+            { database: database.database, schema: database.schema, ...summarize(result.rows) },
+            process.argv.includes('--json')
+        );
+    } finally {
+        await client.end();
+    }
+}
+
+main().catch((error) => {
+    const code =
+        error && typeof error.code === 'string' && /^[A-Z0-9]+$/.test(error.code)
+            ? error.code
+            : 'DATABASE_ERROR';
+    console.error(`[wellcount-stats] PostgreSQL read failed (${code}).`);
+    process.exitCode = 2;
+});

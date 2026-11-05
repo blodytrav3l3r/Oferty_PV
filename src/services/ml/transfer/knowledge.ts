@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import prisma from '../../../prismaClient';
-import type { Prisma } from '../../../../generated/prisma';
+import type { Prisma } from '../../../../generated/prisma-postgres/client';
 import { TransferError } from './transferErrors';
 
 /**

@@ -1,11 +1,17 @@
 FROM node:22-slim
 
-# Instalacja bibliotek systemowych: OpenSSL (Prisma) + zaleznosci Chromium (Puppeteer, generowanie PDF)
+# Instalacja bibliotek systemowych, PostgreSQL 18 client i Chromium (Puppeteer/PDF).
 RUN apt-get update && apt-get install -y \
-    openssl sed \
+    ca-certificates curl gnupg openssl sed \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 \
     libpango-1.0-0 libcairo2 libglib2.0-0 fonts-liberation \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg \
+    && . /etc/os-release \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y postgresql-client-18 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -21,32 +27,23 @@ RUN npm ci --no-audit --no-fund
 
 COPY . .
 
-# Generujemy klienta Prisma (wymaga DATABASE_URL przez prisma.config.ts)
-# Prod Docker: connection_limit=3 — pomiar load-100: limit=1 dawał 5xx/BUSY
-# przy burstach, limit=3 daje 0 5xx (WAL pozwala na równoległe odczyty).
-ENV DATABASE_URL=file:/var/data/app_database.sqlite?connection_limit=3&busy_timeout=30000
-RUN npx prisma generate
+# Build potrzebuje URL ze względu na prisma.config.ts; to syntaktyczny adres
+# bez sekretu i nie jest utrwalany w obrazie. Runtime wymaga DATABASE_URL z Compose.
+RUN DATABASE_URL='postgresql://sok_build:sok_build@127.0.0.1:5432/sok_build?schema=public' npm run build && \
+    npm run minify:css
 
-# Budujemy projekt
-RUN npm run build
-
-# Symlink: compiled code in dist/src/ imports '../generated/prisma' → dist/generated/prisma
-# Actual Prisma client is at /app/generated/prisma — symlink bridges the path
-# rm -rf przed ln: build już kopiuje generated do dist/generated (copy-prisma-client.mjs), więc zwykły ln -sf stworzyłby /app/dist/generated/generated
-RUN rm -rf /app/dist/generated && ln -sf /app/generated /app/dist/generated
+# `npm run build` compiles the PostgreSQL Prisma client into dist/generated/prisma-postgres.
 
 # NIE uruchamiamy npm prune --production - devDeps (ts-node, Prisma CLI)
-# sa potrzebne w runtime do seedowania (prisma/seed.ts) i migrate deploy (docker-entrypoint.sh).
+# są potrzebne w jednorazowym db-bootstrap Compose przed startem aplikacji.
 
-# Tworzymy katalog danych dla trwałego wolumenu Docker (/var/data)
-# chown na node: seed/migrate/zapis DB działają jako USER node
-RUN mkdir -p /var/data /app/data && \
-    chown -R node:node /app /var/data && \
-    chmod -R 755 /var/data
+# Dane PostgreSQL i backupy mają odrębne named volumes w Compose.
+RUN mkdir -p /app/data/backups && \
+    chown -R node:node /app/data
 
 # Skrypt startowy (naprawa znaków końca linii i uprawnienia)
-RUN sed -i 's/\r$//' ./scripts/docker-entrypoint.sh && \
-    chmod +x ./scripts/docker-entrypoint.sh
+RUN sed -i 's/\r$//' ./scripts/docker-entrypoint.sh ./scripts/docker-db-bootstrap.sh && \
+    chmod +x ./scripts/docker-entrypoint.sh ./scripts/docker-db-bootstrap.sh
 
 ENV NODE_ENV=production
 ENV PORT=10000
@@ -57,7 +54,7 @@ ENV COOKIE_SECURE=true
 EXPOSE 10000
 
 # Uruchomienie jako nie-root (node z obrazu node:22-slim).
-# Wszystkie kroki zapisu (migrate/seed/start) w entrypoint działają jako node.
+# Migracje, seed i serwer działają jako node; dane PostgreSQL zapisuje kontener DB.
 USER node
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \

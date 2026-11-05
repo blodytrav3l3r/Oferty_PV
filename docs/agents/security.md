@@ -7,6 +7,13 @@
 
 - Brak sekretów w kodzie (env only); wszystkie wejścia zwalidowane (Zod); Prisma (brak SQL injection); CSRF (same-origin); auth/autoryzacja zweryfikowana; rate limiting; błędy bez wycieków.
 
+## PostgreSQL — baza i poświadczenia
+
+- PostgreSQL jest jedynym docelowym backendem danych. Migracja jest w toku; bieżący runtime nadal nie został przełączony. Nie dodawaj ścieżki SQLite jako fallbacku ani wspieranej opcji.
+- Używaj zweryfikowanego TLS do zdalnej bazy oraz osobnych least-privilege ról dla runtime, migratora i backupu. Konto runtime nie otrzymuje superusera ani DDL.
+- Connection stringi i hasła wyłącznie przez secret manager/env. Nie loguj URL, hosta, parametrów połączenia, query text ani danych ofert; health/readiness pozostaje generyczne.
+- Testy i restore-drille korzystają z izolowanej bazy PostgreSQL. Nigdy nie kieruj ich na produkcyjne poświadczenia; migracje i seed na live wymagają osobnego GO zgodnie z `AGENTS.md`.
+
 ## XSS (najwyższy priorytet na frontendzie)
 
 - Każda interpolacja do `innerHTML` przez `escapeHtml(str)` (błąd #3); pola edytowalne (nazwy produktów, numery zamówień) zawsze (błąd #24).

@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.3
+REM  Wersja: 1.56.4
 REM ===========================================================
 REM  start.bat - Jedno wejscie: caly system
 REM  Uruchamia:
@@ -12,7 +12,7 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set "APP_VERSION=1.56.3"
+set "APP_VERSION=1.56.4"
 
 set "MODE=dev"
 if /i "%1"=="--prod" set "MODE=prod"
@@ -51,7 +51,7 @@ if not exist "node_modules" (
 )
 
 REM ---------- 4. Prisma Client ----------
-if not exist "generated\prisma\index.d.ts" (
+if not exist "generated\prisma-postgres\client.d.ts" (
     echo [INFO] Generuje Prisma Client...
     call npx prisma generate
     if errorlevel 1 (

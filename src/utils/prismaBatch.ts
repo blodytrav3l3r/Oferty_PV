@@ -1,5 +1,5 @@
 /**
- * Chunkowany createMany — baza błędów #1 (seed timeout SQLite).
+ * Chunkowany createMany ogranicza czas i rozmiar pojedynczego zapisu seedów.
  * Abstrahuje TYLKO chunkowanie; transakcję prowadzi caller
  * (delegat tabeli z `tx` przekazany z zewnątrz, model transakcji bez zmian).
  */

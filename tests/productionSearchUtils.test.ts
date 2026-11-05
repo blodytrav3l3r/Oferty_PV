@@ -5,8 +5,11 @@
 import {
     parseSearchParams,
     normalizedCreatedAtSql,
+    jsonTextSql,
+    buildProductionSearchWhere,
     mapProductionOrderRow
 } from '../src/utils/productionSearchUtils';
+import { Prisma } from '../generated/prisma-postgres/client';
 
 describe('parseSearchParams', () => {
     it('puste wejście → bezpieczne defaulty', () => {
@@ -64,11 +67,36 @@ describe('parseSearchParams', () => {
     });
 });
 
-describe('normalizedCreatedAtSql (mieszane ISO/epoch, klasa #38)', () => {
-    it('CASE obsługuje epoch-ms i ISO', () => {
+describe('PostgreSQL expressions for production search', () => {
+    it('normalizes ISO and epoch-ms values as timestamptz', () => {
         const sql = normalizedCreatedAtSql() as unknown as { sql: string };
         expect(sql.sql).toContain('CASE');
-        expect(sql.sql).toContain('unixepoch');
+        expect(sql.sql).toContain('to_timestamp');
+        expect(sql.sql).toContain('timestamptz');
+        expect(sql.sql).not.toMatch(/GLOB|datetime\(|unixepoch/i);
+    });
+
+    it('reads JSON text with PostgreSQL operators and an empty-value guard', () => {
+        const sql = jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status');
+        expect(sql.sql).toContain('::jsonb');
+        expect(sql.sql).toContain('->>');
+        expect(sql.sql).not.toContain('json_extract');
+        expect(sql.values).toContain('status');
+    });
+
+    it('keeps search values parameterized and uses PostgreSQL JSON/date syntax', () => {
+        const params = parseSearchParams({
+            q: "x%' OR 1=1 --",
+            productionOrderNumber: 'PZ_%!'
+        });
+        const { whereSql, searchWhere } = buildProductionSearchWhere(params, Prisma.empty);
+        const sql = Prisma.sql`${whereSql} ${searchWhere}`;
+        expect(sql.sql).toContain('ILIKE');
+        expect(sql.sql).toContain('ESCAPE');
+        expect(sql.sql).toContain('->>');
+        expect(sql.sql).not.toMatch(/json_extract|GLOB|datetime\(/i);
+        expect(sql.values).toContain("%x!%' OR 1=1 --%");
+        expect(sql.sql).not.toContain("x%' OR 1=1 --");
     });
 });
 

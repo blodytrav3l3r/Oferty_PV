@@ -1,6 +1,6 @@
 {
     "name": "sok-oferty",
-    "version": "1.56.3",
+    "version": "1.56.4",
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
@@ -9,12 +9,13 @@
         "bundle:scripts": "node scripts/bundle-scripts.mjs",
         "dev": "npm run dev:backend",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
-        "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc && node scripts/copy-prisma-client.mjs",
+        "build": "prisma generate && node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc && node scripts/copy-prisma-client.mjs",
         "build:watch": "tsc --watch",
-        "test": "jest --coverage --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts && jest tests/pricelistChunk.test.ts --no-coverage --runInBand",
+        "test": "prisma generate && jest --coverage --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts && jest tests/pricelistChunk.test.ts --no-coverage --runInBand",
         "test:watch": "jest --watch",
-        "test:quick": "jest --no-coverage --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts && jest tests/pricelistChunk.test.ts --no-coverage --runInBand",
-        "test:quick:lite": "jest --no-coverage --testPathIgnorePatterns=tests/migrations --testPathIgnorePatterns=git-safety",
+        "test:quick": "prisma generate && jest --no-coverage --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts && jest tests/pricelistChunk.test.ts --no-coverage --runInBand && npm run test:installer-linux",
+        "test:quick:lite": "jest --no-coverage --testPathIgnorePatterns=tests/migrations --testPathIgnorePatterns=git-safety && npm run test:installer-linux",
+        "test:installer-linux": "node tests/scripts/installLinuxServer.test.cjs && node tests/scripts/recoverFailedInitialMigration.test.cjs && node tests/scripts/postgresOnlySurface.test.cjs",
         "test:git-safety": "jest --selectProjects git-safety --runInBand --no-coverage",
         "test:alignment": "node tests/playwright/excelEmptyRowAlignment.cjs",
         "test:parity": "node tests/playwright/excelVirtualParity.cjs",
@@ -49,17 +50,17 @@
         "ai:setup": "ts-node scripts/setupAi.ts",
         "backup:install-cron": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-backup-cron.ps1",
         "backup:uninstall-cron": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-backup-cron.ps1",
-        "prisma:seed": "ts-node prisma/seed.ts",
+        "prisma:seed": "prisma db seed",
         "export:seed": "node scripts/export-settings-to-seed.mjs",
         "prices:verify": "ts-node scripts/prices-verify.ts",
         "pricelist:preflight": "ts-node scripts/pricelist-preflight.ts",
         "pricelist:health": "ts-node scripts/check-pricelist-health.ts",
         "import:offers": "ts-node scripts/import-offers.ts",
         "prisma:generate": "prisma generate",
-        "prisma:migrate": "prisma migrate dev",
+        "prisma:migrate": "prisma migrate dev && prisma generate",
         "prisma:deploy": "prisma migrate deploy",
         "prisma:status": "prisma migrate status",
-        "prisma:reset": "prisma migrate reset",
+        "prisma:reset": "prisma migrate reset && prisma generate && prisma db seed",
         "prisma:studio": "prisma studio",
         "release": "standard-version --commit-all",
         "version:check": "node scripts/check-version.mjs",
@@ -127,7 +128,8 @@
     "license": "SEE LICENSE IN LICENSE",
     "description": "S.O.K. - System Ofert i Kalkulacji (TypeScript + Prisma)",
     "dependencies": {
-        "@prisma/client": "^6.0.0",
+        "@prisma/adapter-pg": "7.10.1",
+        "@prisma/client": "7.10.1",
         "@sentry/node": "^10.59.0",
         "bcryptjs": "^3.0.3",
         "compression": "^1.8.2",
@@ -137,6 +139,7 @@
         "express": "^4.22.3",
         "helmet": "^8.3.0",
         "jszip": "^3.10.2",
+        "pg": "8.23.1",
         "puppeteer": "^25.16.0",
         "swagger-jsdoc": "^6.3.0",
         "swagger-ui-express": "^5.0.1",
@@ -154,6 +157,7 @@
         "@types/express": "^4.17.25",
         "@types/jest": "^30.0.0",
         "@types/node": "^26.6.2",
+        "@types/pg": "8.23.1",
         "@types/supertest": "^7.2.1",
         "@types/swagger-jsdoc": "^6.0.4",
         "@types/swagger-ui-express": "^4.1.8",
@@ -168,7 +172,7 @@
         "lint-staged": "^17.5.1",
         "playwright": "^1.62.1",
         "prettier": "^3.9.4",
-        "prisma": "^6.0.0",
+        "prisma": "7.10.1",
         "standard-version": "^9.5.0",
         "supertest": "^7.2.2",
         "ts-jest": "^29.4.15",
@@ -193,5 +197,9 @@
         "*.{html,css,js,ts,json,md,yml,yaml,sql,xml,mjs,cjs}": [
             "node scripts/encoding-integrity.js staged"
         ]
+    },
+    "allowScripts": {
+        "@prisma/engines@7.10.1": true,
+        "prisma@7.10.1": true
     }
 }

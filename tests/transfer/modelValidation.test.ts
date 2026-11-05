@@ -1,7 +1,7 @@
 /**
  * P2 — dry-run i import dzielą SSoT walidacji artefaktu (parseModelArtifact).
  * Skorumpowany artefakt → MODEL_INVALID (fail fast), nie BLOCKED z castu.
- * Prawdziwa per-worker SQLite, bez mocków DB.
+ * PostgreSQL per-worker, bez mocków DB.
  */
 import { describe, expect, it, beforeAll, afterAll, jest } from '@jest/globals';
 import crypto from 'crypto';

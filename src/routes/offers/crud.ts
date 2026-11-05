@@ -10,6 +10,10 @@ import { enqueueFtsRemove } from '../../utils/fts5Queue';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
+import {
+    decimalMoneyValueToNumber,
+    decimalMoneyRowsToNumbers
+} from '../../services/pricelist/moneySerialization';
 
 const router = express.Router();
 
@@ -77,7 +81,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const itemsRaw = await prisma.offer_items_rel.findMany({
             where: { offerId: offer.id }
         });
-        const items = itemsRaw.map((i) => ({
+        const items = decimalMoneyRowsToNumbers(itemsRaw, ['price']).map((i) => ({
             id: i.id,
             productId: i.productId,
             quantity: i.quantity,
@@ -124,7 +128,7 @@ router.get('/:id', requireAuth, async (req, res) => {
             updatedAt: offer.updatedAt || offer.createdAt,
             lastEditedBy: offer.userId,
             items: mergedItems,
-            transportCost: offer.transportCost || 0,
+            transportCost: decimalMoneyValueToNumber(offer.transportCost) ?? 0,
             // F3 freeze (null = legacy).
             pricelistVersionId: offer.pricelistVersionId ?? null,
             history: ruryHistory,
@@ -243,13 +247,16 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
         }
 
-        const oldItems = await prisma.offer_items_rel.findMany({
-            where: { offerId: id }
-        });
+        const oldItems = decimalMoneyRowsToNumbers(
+            await prisma.offer_items_rel.findMany({
+                where: { offerId: id }
+            }),
+            ['price']
+        );
         const oldSnapshot = {
             offer_number: offer.offer_number,
             state: offer.state,
-            transportCost: offer.transportCost,
+            transportCost: decimalMoneyValueToNumber(offer.transportCost),
             items: oldItems.map((i) => ({
                 productId: i.productId,
                 quantity: i.quantity,

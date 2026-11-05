@@ -45,10 +45,17 @@ describe('D-017 E2E isolation: playwright webServer', () => {
         expect(PW).not.toMatch(/reuseExistingServer:\s*true/);
     });
 
-    it('webServer.env wskazuje izolowany plik DB testowej', () => {
-        expect(PW).toMatch(/DATABASE_URL/);
-        expect(PW).not.toMatch(/app_database\.sqlite/);
-        expect(PW).toMatch(/test-playwright\.sqlite|PLAYWRIGHT_DATABASE_URL/);
+    it('webServer wymaga PostgreSQL i tworzy izolowany schemat', () => {
+        expect(PW).toMatch(/PLAYWRIGHT_DATABASE_URL/);
+        expect(PW).not.toMatch(/file:|\.sqlite|app_database/);
+        expect(PW).toMatch(/postgresServer\.cjs/);
+        const server = fs.readFileSync(
+            path.join(ROOT, 'tests', 'playwright', 'postgresServer.cjs'),
+            'utf8'
+        );
+        expect(server).toMatch(/sok_playwright_/);
+        expect(server).toMatch(/migrate', 'deploy/);
+        expect(server).toMatch(/DROP SCHEMA/);
     });
 });
 
@@ -77,10 +84,10 @@ describe('D-017 E2E isolation: skrypty .cjs nie walą w dev :3000', () => {
 });
 
 describe('D-017 E2E isolation: CI jobs', () => {
-    it('e2e-smoke przygotowuje izolowana DB (nie wspoldzieli dev)', () => {
+    it('e2e-smoke przekazuje izolowane PostgreSQL do Playwright', () => {
         const section = e2eJobSection('e2e-smoke');
-        expect(section).toMatch(/test-playwright\.sqlite|PLAYWRIGHT_DATABASE_URL/);
-        expect(section).not.toMatch(/app_database\.sqlite/);
+        expect(section).toMatch(/PLAYWRIGHT_DATABASE_URL/);
+        expect(section).not.toMatch(/file:|\.sqlite|app_database/);
     });
 
     it('e2e-extended NIE startuje serwera na :3000', () => {

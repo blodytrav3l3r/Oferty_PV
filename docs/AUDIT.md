@@ -1,5 +1,10 @@
 # Raport audytu projektu — S.O.K. — System Ofert i Kalkulacji
 
+> **Dokument historyczny:** audyt opisuje ówczesną implementację SQLite, jej
+> schemat i narzędzia. Nie stanowi opisu bieżącego runtime ani konfiguracji
+> PostgreSQL i nie należy używać jego ocen/statusów jako dowodu obecnej zgodności.
+> Zachowano wyniki i wnioski z audytu bez przepisywania ich.
+
 > **Stan na 2026-08-24:** po audycie 2026-07-09 wdrożono kolejne fale napraw —
 > dedup telemetrii AUTO_JS + indeksy (migracja `20260805100000_telemetry_well_dedup`),
 > TrainingPipeline sliding window, auto-heal indeksów i FTS5, a następnie pełny plan
@@ -13,7 +18,7 @@
 > Poniższy raport pozostaje historycznym zapisem stanu z daty audytu,
 > zaktualizowanym o realne liczby na dzień 2026-08-24.
 
-**Wersja projektu:** 1.56.3  
+**Wersja projektu:** 1.56.4  
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research
 

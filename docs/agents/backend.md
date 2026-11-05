@@ -1,12 +1,16 @@
-# S.O.K. — Agent: backend (TypeScript + Express + Prisma)
+# S.O.K. — Agent: backend (TypeScript + Express + Prisma + PostgreSQL)
 
 > Szczegółowy przewodnik domenowy. Root: `AGENTS.md` (mapa + bramy).
+
+## Kierunek bazy danych
+
+PostgreSQL jest jedynym docelowym i wspieranym silnikiem danych S.O.K. Migracja jest w toku: bieżący runtime nadal korzysta z SQLite, więc nie zakładaj, że aplikacja została już przełączona. Nowy i zmieniany kod ma przygotowywać pełne działanie na PostgreSQL; nie dodawaj nowych zależności, ścieżek runtime ani instrukcji wspierających SQLite.
 
 ## Architektura
 
 Warstwy: `routes` → `validators` → `services` → `Prisma` (+ `auth`, `ownership`, `rate limit`, `locks`, `audit`, `idempotency`, `Sentry`). Monolit celowy — bez mikroserwisów, GraphQL, event busa.
 
-Decyzje (szczegóły w `docs/adr/`): ADR-001 SQLite produkcyjnie; ADR-002 Vanilla JS SPA; ADR-004 Express + Prisma; ADR-005 Express jedynym serwerem (Vite wycofany); ADR-006 HTTPS przez reverse proxy; ADR-007 ujednolicony cennik; ADR-008 modularyzacja frontendu; ADR-009 mapa produktów studni (`Map<string,Product>` + kontrakt `window.studnieProducts` + `__assertStudnieMapFresh`).
+Decyzje (szczegóły w `docs/adr/`): ADR-001 i ADR-012 opisują historyczny wybór SQLite, nie aktywny kierunek; docelowy backend to PostgreSQL. Pozostałe: ADR-002 Vanilla JS SPA; ADR-004 Express + Prisma; ADR-005 Express jedynym serwerem (Vite wycofany); ADR-006 HTTPS przez reverse proxy; ADR-007 ujednolicony cennik; ADR-008 modularyzacja frontendu; ADR-009 mapa produktów studni (`Map<string,Product>` + kontrakt `window.studnieProducts` + `__assertStudnieMapFresh`).
 
 Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-013) — przeczytaj przed zmianą logiki biznesowej.
 
@@ -31,6 +35,6 @@ Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-013) — przeczytaj 
 
 ## Czego nie robić
 
-- Bez React/PostgreSQL/mikroserwisów/Redis/BullMQ/Kafka/Pact/OpenTelemetry (decyzja architektoniczna, nie zaległość).
+- Bez React/mikroserwisów/Redis/BullMQ/Kafka/Pact/OpenTelemetry (decyzje architektoniczne, nie zaległości). PostgreSQL jest wymaganym celem migracji.
 - Bez globalnego cleanup Excel; bez masowego przepisywania `window.*`/`onclick`.
 - Bez zmiany kontraktów API, logiki cenowej i solvera bez testów inwariantów.

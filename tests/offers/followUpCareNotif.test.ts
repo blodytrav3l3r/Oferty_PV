@@ -1,10 +1,5 @@
-/*
- * tests/offers/followUpCareNotif.test.ts
- * P2: sync powiadomień (typy, dedup, auto-read) + lista/odczyt.
- */
-import { DatabaseSync } from 'node:sqlite';
-import { ensureLatestFollowupFixture } from './careLatestFixture';
-import type { Prisma } from '../../generated/prisma';
+/* P2 notification sync, retention, partial uniqueness and inbox behavior on PostgreSQL. */
+import prisma from '../../src/prismaClient';
 import {
     syncCareNotifications,
     listCareNotifications,
@@ -15,556 +10,488 @@ import {
     type CareUser
 } from '../../src/services/careService';
 
-// P0.3: throttle trzyma stan w module (per skrzynka) — izolacja testów.
-beforeEach(() => {
-    resetCareSyncThrottleForTests();
-});
-
 const NOW = '2026-10-10T12:00:00.000Z';
-const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
-
-function freshDb(): DatabaseSync {
-    const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
-        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
-            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
-        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
-            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
-        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
-    // o1: OPEN overdue 10d -> SLA_BREACH (też ESCALATION-kandydat, CASE wybiera pierwszy).
-    // o2: OPEN termin za 2h -> CALLBACK_DUE. o3: brak historii -> CALLBACK_DUE.
-    // o4: WON -> nic. o5: OPEN overdue ale snoozed -> nic.
-    db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-        'o1',
-        'u1',
-        '2026-09-01T00:00:00.000Z'
-    );
-    db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-        'o2',
-        'u1',
-        '2026-10-09T00:00:00.000Z'
-    );
-    db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-        'o3',
-        'u1',
-        '2026-10-10T00:00:00.000Z'
-    );
-    db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-        'o4',
-        'u1',
-        '2026-10-09T00:00:00.000Z'
-    );
-    db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-        'o5',
-        'u1',
-        '2026-10-09T00:00:00.000Z'
-    );
-    db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-        'o6',
-        'u1',
-        '2026-09-01T00:00:00.000Z'
-    );
-    const fu = (
-        id: string,
-        offerId: string,
-        outcome: string,
-        next: string | null,
-        contacted: string
-    ) =>
-        db
-            .prepare(
-                'INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId", "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)'
-            )
-            .run(id, 'rury', offerId, 'u1', contacted, contacted, outcome, next);
-    fu('f1', 'o1', 'OPEN', '2026-09-30T10:00:00.000Z', '2026-09-30T10:00:00.000Z');
-    fu('f2', 'o2', 'OPEN', '2026-10-10T14:00:00.000Z', '2026-10-09T10:00:00.000Z');
-    fu('f4', 'o4', 'WON', null, '2026-10-09T10:00:00.000Z');
-    fu('f5', 'o5', 'OPEN', '2026-09-30T10:00:00.000Z', '2026-09-30T10:00:00.000Z');
-    fu('f6', 'o6', 'OPEN', '2026-09-30T10:00:00.000Z', '2026-09-30T10:00:00.000Z');
-    db.prepare(
-        'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
-    ).run('rury', 'o5', '2026-10-12T00:00:00.000Z', null, 'u1', NOW);
-    // o6: snooze wygasły wczoraj -> wraca do kandydatów.
-    db.prepare(
-        'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
-    ).run('rury', 'o6', '2026-10-09T10:00:00.000Z', null, 'u1', NOW);
-    // P1: cache latest (triggery + backfill).
-    ensureLatestFollowupFixture(db);
-    return db;
-}
-
-function fake(db: DatabaseSync) {
-    return {
-        $queryRaw: async <T>(...args: any[]): Promise<T> => {
-            const q = args[0] as Prisma.Sql;
-            const raw = q as unknown as { sql: string; values: unknown[] };
-            return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
-        }
-    };
-}
-
+const testId = `care-notif-${process.pid}-${Date.now()}`;
+const userId = `${testId}-user`;
+const user: CareUser = { id: userId, role: 'user', subUsers: [] };
+const admin: CareUser = { id: `${testId}-admin`, role: 'admin', subUsers: [] };
 const SLA = { firstContactH: 24, staleD: 7, escalationH: 72 };
 
-describe('P2 sync powiadomień', () => {
-    // P0.3: throttle trzyma stan w module (per skrzynka) — izolacja testów.
-    beforeEach(() => {
-        resetCareSyncThrottleForTests();
+async function seedBase(): Promise<void> {
+    await prisma.offers_rel.createMany({
+        data: [
+            { id: `${testId}-o1`, userId, createdAt: '2026-09-01T00:00:00.000Z' },
+            { id: `${testId}-o2`, userId, createdAt: '2026-10-09T00:00:00.000Z' },
+            { id: `${testId}-o3`, userId, createdAt: '2026-10-10T00:00:00.000Z' },
+            { id: `${testId}-o4`, userId, createdAt: '2026-10-09T00:00:00.000Z' },
+            { id: `${testId}-o5`, userId, createdAt: '2026-10-09T00:00:00.000Z' },
+            { id: `${testId}-o6`, userId, createdAt: '2026-09-01T00:00:00.000Z' }
+        ]
+    });
+    await prisma.offer_follow_ups.createMany({
+        data: [
+            {
+                id: `${testId}-f1`,
+                offerKind: 'rury',
+                offerId: `${testId}-o1`,
+                createdByUserId: userId,
+                contactedAt: '2026-09-30T10:00:00.000Z',
+                createdAt: '2026-09-30T10:00:00.000Z',
+                channel: 'PHONE',
+                result: 'CONTACTED',
+                outcome: 'OPEN',
+                nextContactAt: '2026-09-30T10:00:00.000Z'
+            },
+            {
+                id: `${testId}-f2`,
+                offerKind: 'rury',
+                offerId: `${testId}-o2`,
+                createdByUserId: userId,
+                contactedAt: '2026-10-09T10:00:00.000Z',
+                createdAt: '2026-10-09T10:00:00.000Z',
+                channel: 'PHONE',
+                result: 'CONTACTED',
+                outcome: 'OPEN',
+                nextContactAt: '2026-10-10T14:00:00.000Z'
+            },
+            {
+                id: `${testId}-f4`,
+                offerKind: 'rury',
+                offerId: `${testId}-o4`,
+                createdByUserId: userId,
+                contactedAt: '2026-10-09T10:00:00.000Z',
+                createdAt: '2026-10-09T10:00:00.000Z',
+                channel: 'PHONE',
+                result: 'CONTACTED',
+                outcome: 'WON'
+            },
+            {
+                id: `${testId}-f5`,
+                offerKind: 'rury',
+                offerId: `${testId}-o5`,
+                createdByUserId: userId,
+                contactedAt: '2026-09-30T10:00:00.000Z',
+                createdAt: '2026-09-30T10:00:00.000Z',
+                channel: 'PHONE',
+                result: 'CONTACTED',
+                outcome: 'OPEN',
+                nextContactAt: '2026-09-30T10:00:00.000Z'
+            },
+            {
+                id: `${testId}-f6`,
+                offerKind: 'rury',
+                offerId: `${testId}-o6`,
+                createdByUserId: userId,
+                contactedAt: '2026-09-30T10:00:00.000Z',
+                createdAt: '2026-09-30T10:00:00.000Z',
+                channel: 'PHONE',
+                result: 'CONTACTED',
+                outcome: 'OPEN',
+                nextContactAt: '2026-09-30T10:00:00.000Z'
+            }
+        ]
+    });
+    await prisma.care_states.createMany({
+        data: [
+            {
+                offerKind: 'rury',
+                offerId: `${testId}-o5`,
+                snoozedUntil: '2026-10-12T00:00:00.000Z',
+                updatedBy: userId,
+                updatedAt: NOW
+            },
+            {
+                offerKind: 'rury',
+                offerId: `${testId}-o6`,
+                snoozedUntil: '2026-10-09T10:00:00.000Z',
+                updatedBy: userId,
+                updatedAt: NOW
+            }
+        ]
+    });
+}
+
+async function cleanup(): Promise<void> {
+    await prisma.care_notifications.deleteMany({ where: { id: { startsWith: testId } } });
+    await prisma.care_states.deleteMany({ where: { offerId: { startsWith: testId } } });
+    await prisma.offer_follow_ups.deleteMany({ where: { offerId: { startsWith: testId } } });
+    await prisma.offers_rel.deleteMany({ where: { id: { startsWith: testId } } });
+    await prisma.users.deleteMany({ where: { id: { startsWith: testId } } });
+}
+
+beforeEach(() => resetCareSyncThrottleForTests());
+afterEach(cleanup);
+
+describe('P2 sync powiadomień (PostgreSQL)', () => {
+    it('tworzy typy, respektuje pauzę i terminal, rerun nie dubluje', async () => {
+        await seedBase();
+        const first = await syncCareNotifications(prisma, user, 'mine', NOW, SLA);
+        expect(first.inserted).toBe(4);
+        const items = (
+            await listCareNotifications(prisma, userId, { unreadOnly: false, limit: 50 })
+        ).items;
+        expect(items.find((item) => item.offerId === `${testId}-o1`)?.type).toBe('SLA_BREACH');
+        expect(items.find((item) => item.offerId === `${testId}-o2`)?.type).toBe('CALLBACK_DUE');
+        expect(items.find((item) => item.offerId === `${testId}-o3`)?.type).toBe('CALLBACK_DUE');
+        expect(items.find((item) => item.offerId === `${testId}-o4`)).toBeUndefined();
+        expect(items.find((item) => item.offerId === `${testId}-o5`)).toBeUndefined();
+        expect(items.find((item) => item.offerId === `${testId}-o6`)?.type).toBe('SLA_BREACH');
+
+        await prisma.offers_rel.update({
+            where: { id: `${testId}-o1` },
+            data: { clientName: 'Budimex', offer_number: 'OF-1' }
+        });
+        const enriched = (
+            await listCareNotifications(prisma, userId, { unreadOnly: false, limit: 50 })
+        ).items;
+        expect(enriched.find((item) => item.offerId === `${testId}-o1`)).toMatchObject({
+            clientName: 'Budimex',
+            number: 'OF-1'
+        });
+        const second = await syncCareNotifications(
+            prisma,
+            user,
+            'mine',
+            '2026-10-10T12:01:00.000Z',
+            SLA
+        );
+        expect(second.inserted).toBe(0);
     });
 
-    it('tworzy typy, pauza/terminal nic, rerun bez duplikatów', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            const r1 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            expect(r1.inserted).toBe(4);
-            const types = (await listCareNotifications(f, 'u1', { unreadOnly: false, limit: 50 }))
-                .items;
-            expect(types.find((t) => t.offerId === 'o1')?.type).toBe('SLA_BREACH');
-            expect(types.find((t) => t.offerId === 'o2')?.type).toBe('CALLBACK_DUE');
-            expect(types.find((t) => t.offerId === 'o3')?.type).toBe('CALLBACK_DUE');
-            expect(types.find((t) => t.offerId === 'o4')).toBeUndefined();
-            expect(types.find((t) => t.offerId === 'o5')).toBeUndefined();
-            // o6: wygasły snooze wraca do pilnowania.
-            expect(types.find((t) => t.offerId === 'o6')?.type).toBe('SLA_BREACH');
-            // Wzbogacenie: klient zamiast surowego ID.
-            db.prepare(
-                'UPDATE offers_rel SET "clientName" = ?, "offer_number" = ? WHERE id = ?'
-            ).run('Budimex', 'OF-1', 'o1');
-            const enriched = (
-                await listCareNotifications(f, 'u1', { unreadOnly: false, limit: 50 })
-            ).items;
-            expect(enriched.find((t) => t.offerId === 'o1')?.clientName).toBe('Budimex');
-            expect(enriched.find((t) => t.offerId === 'o1')?.number).toBe('OF-1');
-            // Rerun z późniejszym nowIso (licznik wstawek liczony po createdAt).
-            const r2 = await syncCareNotifications(f, U1, 'mine', '2026-10-10T12:01:00.000Z', SLA);
-            expect(r2.inserted).toBe(0);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+    it('partial unique constraint odrzuca duplikat unread, po read pozwala na nowy', async () => {
+        const data = {
+            userId,
+            offerKind: 'rury',
+            offerId: `${testId}-constraint-offer`,
+            type: 'SLA_BREACH',
+            readAt: null,
+            createdAt: NOW
+        };
+        await prisma.care_notifications.create({ data: { id: `${testId}-a`, ...data } });
+        await expect(
+            prisma.care_notifications.create({ data: { id: `${testId}-b`, ...data } })
+        ).rejects.toMatchObject({ code: 'P2002' });
+        await prisma.care_notifications.update({
+            where: { id: `${testId}-a` },
+            data: { readAt: NOW }
+        });
+        await expect(
+            prisma.care_notifications.create({ data: { id: `${testId}-c`, ...data } })
+        ).resolves.toMatchObject({ id: `${testId}-c` });
     });
 
-    it('uq_carenotif_unread_per_offer: duplikat odrzucany przez constraint', async () => {
-        const db = freshDb();
-        try {
-            db.exec(
-                'CREATE UNIQUE INDEX "uq_carenotif_unread_per_offer" ON "care_notifications"("userId", "offerKind", "offerId", "type") WHERE "readAt" IS NULL;'
-            );
-            db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            ).run('a', 'u1', 'rury', 'o1', 'SLA_BREACH', null, NOW);
-            expect(() =>
-                db
-                    .prepare(
-                        'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-                    )
-                    .run('b', 'u1', 'rury', 'o1', 'SLA_BREACH', null, NOW)
-            ).toThrow(/UNIQUE constraint failed/i);
-            // Po oznaczeniu jako przeczytane ten sam typ może powstać na nowo.
-            db.prepare('UPDATE care_notifications SET "readAt" = ? WHERE "id" = ?').run(NOW, 'a');
-            db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            ).run('c', 'u1', 'rury', 'o1', 'SLA_BREACH', null, NOW);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
+    it('retencja usuwa stare read i przycina najstarsze read do limitu', async () => {
+        await seedBase();
+        const readRows = Array.from({ length: 505 }, (_, index) => ({
+            id: `${testId}-read-${index}`,
+            userId,
+            offerKind: 'rury',
+            offerId: `${testId}-read-offer-${index}`,
+            type: 'CALLBACK_DUE',
+            readAt: NOW,
+            createdAt: new Date(Date.parse('2026-10-01T00:00:00.000Z') + index * 1000).toISOString()
+        }));
+        await prisma.care_notifications.create({
+            data: {
+                id: `${testId}-old`,
+                userId,
+                offerKind: 'rury',
+                offerId: `${testId}-old-offer`,
+                type: 'SLA_BREACH',
+                readAt: '2026-01-01T00:00:00.000Z',
+                createdAt: '2026-01-01T00:00:00.000Z'
             }
-            throw e;
-        }
-    });
-
-    it('retencja leniwa: stare przeczytane precz, cap 500 tnie najstarsze', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            const ins = db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            );
-            ins.run(
-                'old1',
-                'u1',
-                'rury',
-                'ox',
-                'SLA_BREACH',
-                '2026-01-01T00:00:00.000Z',
-                '2026-01-01T00:00:00.000Z'
-            );
-            // 505 PRZECZYTANYCH z rozstrzygniętym createdAt (deterministyczny cap).
-            for (let i = 0; i < 505; i++) {
-                const ts = new Date(Date.parse('2026-10-01T00:00:00.000Z') + i * 1000)
-                    .toISOString()
-                    .replace('.000Z', 'Z');
-                ins.run('u' + i, 'u1', 'rury', 'o' + i, 'CALLBACK_DUE', NOW, ts);
-            }
-            await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            // old1 (90d) precz; cap tnie najstarsze PRZECZYTANE (u0 gone,
-            // u499 zostaje — wstawki sync z NOW są nowsze i nie kolidują).
-            const old = db
-                .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "id" = ?')
-                .get('old1') as { c: number };
-            expect(old.c).toBe(0);
-            expect(
-                (
-                    db
-                        .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "id" = ?')
-                        .get('u0') as { c: number }
-                ).c
-            ).toBe(0);
-            expect(
-                (
-                    db
-                        .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "id" = ?')
-                        .get('u499') as { c: number }
-                ).c
-            ).toBe(1);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+        });
+        await prisma.care_notifications.createMany({ data: readRows });
+        await syncCareNotifications(prisma, user, 'mine', NOW, SLA);
+        expect(await prisma.care_notifications.count({ where: { id: `${testId}-old` } })).toBe(0);
+        expect(await prisma.care_notifications.count({ where: { id: `${testId}-read-0` } })).toBe(
+            0
+        );
+        expect(await prisma.care_notifications.count({ where: { id: `${testId}-read-499` } })).toBe(
+            1
+        );
     });
 
     it('lista unread + odczyt własnego, cudze 0', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            const { unreadCount } = await listCareNotifications(f, 'u1', {
-                unreadOnly: true,
-                limit: 50
-            });
-            expect(unreadCount).toBe(4);
-            const first = (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 1 }))
-                .items[0];
-            expect(await markCareNotificationRead(f, 'u1', first.id, NOW)).toBe(1);
-            expect(await markCareNotificationRead(f, 'u9', first.id, NOW)).toBe(0);
-            expect(
-                (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 })).unreadCount
-            ).toBe(3);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+        await seedBase();
+        await syncCareNotifications(prisma, user, 'mine', NOW, SLA);
+        expect(
+            (await listCareNotifications(prisma, userId, { unreadOnly: true, limit: 50 }))
+                .unreadCount
+        ).toBe(4);
+        const first = (await listCareNotifications(prisma, userId, { unreadOnly: true, limit: 1 }))
+            .items[0];
+        expect(await markCareNotificationRead(prisma, userId, first.id, NOW)).toBe(1);
+        expect(await markCareNotificationRead(prisma, `${testId}-intruder`, first.id, NOW)).toBe(0);
+        expect(
+            (await listCareNotifications(prisma, userId, { unreadOnly: true, limit: 50 }))
+                .unreadCount
+        ).toBe(3);
     });
 
-    it('zbiorczy odczyt: własne zamyka, cudze pomija, puste 0', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            const all = (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 }))
-                .items;
-            expect(all.length).toBe(4);
-            // Cudzy wiersz nie do ruszenia przez u1.
-            db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            ).run('alien', 'u9', 'rury', 'o1', 'SLA_BREACH', null, NOW);
-            const read = await markCareNotificationsRead(
-                f,
-                'u1',
-                [all[0].id, all[1].id, 'alien', 'brak'],
+    it('zbiorczy odczyt zamyka tylko własne i puste wejście daje 0', async () => {
+        await seedBase();
+        await syncCareNotifications(prisma, user, 'mine', NOW, SLA);
+        const all = (await listCareNotifications(prisma, userId, { unreadOnly: true, limit: 50 }))
+            .items;
+        expect(all).toHaveLength(4);
+        await prisma.care_notifications.create({
+            data: {
+                id: `${testId}-alien`,
+                userId: `${testId}-intruder`,
+                offerKind: 'rury',
+                offerId: `${testId}-o1`,
+                type: 'SLA_BREACH',
+                readAt: null,
+                createdAt: NOW
+            }
+        });
+        expect(
+            await markCareNotificationsRead(
+                prisma,
+                userId,
+                [all[0].id, all[1].id, `${testId}-alien`, `${testId}-missing`],
                 NOW
-            );
-            expect(read).toBe(2);
-            expect(
-                (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 })).unreadCount
-            ).toBe(2);
-            expect(await markCareNotificationsRead(f, 'u1', [], NOW)).toBe(0);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+            )
+        ).toBe(2);
+        expect(
+            (await listCareNotifications(prisma, userId, { unreadOnly: true, limit: 50 }))
+                .unreadCount
+        ).toBe(2);
+        expect(await markCareNotificationsRead(prisma, userId, [], NOW)).toBe(0);
     });
 
-    it('daty ISO-UTC przechodzą verbatim (kontrakt String, nie DateTime)', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            const rows = db
-                .prepare('SELECT DISTINCT "createdAt" AS c FROM "care_notifications"')
-                .all() as Array<{ c: string }>;
-            expect(rows).toHaveLength(1);
-            expect(rows[0].c).toBe(NOW);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+    it('ISO-UTC createdAt przechodzi verbatim jako String', async () => {
+        await seedBase();
+        await syncCareNotifications(prisma, user, 'mine', NOW, SLA);
+        const rows = await prisma.care_notifications.findMany({
+            where: { userId },
+            distinct: ['createdAt'],
+            select: { createdAt: true }
+        });
+        expect(rows).toHaveLength(1);
+        expect(rows[0].createdAt).toBe(NOW);
     });
 
-    it('repOwner: podgląd nie zamyka wierszy spoza filtra', async () => {
-        const ADMIN: CareUser = { id: 'admin', role: 'admin', subUsers: [] };
-        const db = new DatabaseSync(':memory:');
-        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
-        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
-            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
-        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
-            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
-        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
-        // P1: cache latest (triggery utrzymują wstawiane niżej follow-upy).
-        ensureLatestFollowupFixture(db);
-        try {
-            const f = fake(db);
-            const past = '2026-09-30T10:00:00.000Z';
-            // oA (u1, OPEN due) + oB (u2, OPEN due ale done = stale).
-            db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-                'oA',
-                'u1',
-                past
-            );
-            db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
-                'oB',
-                'u2',
-                past
-            );
-            for (const [fid, oid] of [
-                ['fA', 'oA'],
-                ['fB', 'oB']
-            ]) {
-                db.prepare(
-                    'INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId", "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)'
-                ).run(fid, 'rury', oid, 'u1', past, past, 'OPEN', past);
+    it('repOwner preview nie zamyka powiadomienia spoza filtra', async () => {
+        const past = '2026-09-30T10:00:00.000Z';
+        const offerA = `${testId}-rep-a`;
+        const offerB = `${testId}-rep-b`;
+        await prisma.offers_rel.createMany({
+            data: [
+                { id: offerA, userId, createdAt: past },
+                { id: offerB, userId: `${testId}-other`, createdAt: past }
+            ]
+        });
+        await prisma.offer_follow_ups.createMany({
+            data: [offerA, offerB].map((offerId, index) => ({
+                id: `${testId}-rep-f${index}`,
+                offerKind: 'rury',
+                offerId,
+                createdByUserId: userId,
+                contactedAt: past,
+                createdAt: past,
+                channel: 'PHONE' as const,
+                result: 'CONTACTED' as const,
+                outcome: 'OPEN',
+                nextContactAt: past
+            }))
+        });
+        await prisma.care_states.create({
+            data: {
+                offerKind: 'rury',
+                offerId: offerB,
+                doneAt: NOW,
+                updatedBy: userId,
+                updatedAt: NOW
             }
-            db.prepare(
-                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
-            ).run('rury', 'oB', null, NOW, 'u2', NOW);
-            const old = '2026-10-09T00:00:00.000Z';
-            db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            ).run('nA', 'admin', 'rury', 'oA', 'CALLBACK_DUE', null, old);
-            db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            ).run('nB', 'admin', 'rury', 'oB', 'CALLBACK_DUE', null, old);
-            // Podgląd repa u1: wiersz oB (stale, spoza filtra) ZOSTAJE nieprzeczytany.
-            await syncCareNotifications(f, ADMIN, 'all', NOW, SLA, { repOwner: 'u1' });
-            const unreadAfterRep = (
-                await listCareNotifications(f, 'admin', { unreadOnly: true, limit: 50 })
-            ).items.map((n) => n.offerId);
-            expect(unreadAfterRep).toContain('oA');
-            expect(unreadAfterRep).toContain('oB');
-            // Pełny sync bez filtra: stale oB zamyka, żywe oA zostaje.
-            await syncCareNotifications(f, ADMIN, 'all', '2026-10-10T13:00:00.000Z', SLA);
-            const unreadAfterFull = (
-                await listCareNotifications(f, 'admin', { unreadOnly: true, limit: 50 })
-            ).items.map((n) => n.offerId);
-            expect(unreadAfterFull).toContain('oA');
-            expect(unreadAfterFull).not.toContain('oB');
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+        });
+        await prisma.care_notifications.createMany({
+            data: [offerA, offerB].map((offerId, index) => ({
+                id: `${testId}-rep-n${index}`,
+                userId: admin.id,
+                offerKind: 'rury',
+                offerId,
+                type: 'CALLBACK_DUE',
+                readAt: null,
+                createdAt: '2026-10-09T00:00:00.000Z'
+            }))
+        });
+        await syncCareNotifications(prisma, admin, 'all', NOW, SLA, { repOwner: userId });
+        const afterPreview = (
+            await listCareNotifications(prisma, admin.id, { unreadOnly: true, limit: 50 })
+        ).items;
+        expect(afterPreview.map((item) => item.offerId)).toEqual(
+            expect.arrayContaining([offerA, offerB])
+        );
+        await syncCareNotifications(prisma, admin, 'all', '2026-10-10T13:00:00.000Z', SLA);
+        const afterFull = (
+            await listCareNotifications(prisma, admin.id, { unreadOnly: true, limit: 50 })
+        ).items;
+        expect(afterFull.map((item) => item.offerId)).toContain(offerA);
+        expect(afterFull.map((item) => item.offerId)).not.toContain(offerB);
     });
 
-    it('cap 500: tnie tylko przeczytane, nieprzeczytane nietknięte', async () => {
-        const db = new DatabaseSync(':memory:');
-        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
-        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
-            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
-        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
-            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
-        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
-        // P1: cache latest (triggery utrzymują wstawiane niżej follow-upy).
-        ensureLatestFollowupFixture(db);
-        try {
-            const f = fake(db);
-            const past = '2026-09-30T10:00:00.000Z';
-            const insOffer = db.prepare(
-                'INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)'
-            );
-            const insFu = db.prepare(
-                'INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId", "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)'
-            );
-            const insNotif = db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            );
-            // 502 oferty OPEN due (żywi kandydaci: wiersze zostają
-            // nieprzeczytane; cap nie rusza nieprzeczytanych).
-            // Typ SLA_BREACH = ten sam, który sync by wstawił (brak duplikatów).
-            // createdAt stare: licznik wstawek (createdAt = nowIso) ma być 0.
-            const seedTs = '2026-10-09T00:00:00.000Z';
-            for (let i = 0; i < 502; i++) {
-                const oid = 'o' + i;
-                insOffer.run(oid, 'u1', past);
-                insFu.run('f' + i, 'rury', oid, 'u1', past, past, 'OPEN', past);
-                insNotif.run('n' + i, 'u1', 'rury', oid, 'SLA_BREACH', null, seedTs);
-            }
-            const r = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            expect(r.inserted).toBe(0);
-            // R2A: licznik capped na 101 (CAP 100 + 1) zamiast pełnych 502 —
-            // badge ma 99+, a retencja dalej nie rusza nieprzeczytanych
-            // (surowy COUNT to dowód braku kasowania, nie lista).
-            expect(
-                (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 100 })).unreadCount
-            ).toBe(101);
-            const raw = db
-                .prepare(
-                    'SELECT COUNT(*) AS c FROM "care_notifications" WHERE "userId" = ? AND "readAt" IS NULL'
-                )
-                .get('u1') as unknown as { c: number };
-            expect(raw.c).toBe(502);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+    it('cap 500 zachowuje wszystkie 502 nieprzeczytane i capped badge na 101', async () => {
+        const offers = Array.from({ length: 502 }, (_, index) => `${testId}-cap-offer-${index}`);
+        await prisma.offers_rel.createMany({
+            data: offers.map((id) => ({
+                id,
+                userId,
+                createdAt: '2026-09-30T10:00:00.000Z'
+            }))
+        });
+        await prisma.offer_follow_ups.createMany({
+            data: offers.map((offerId, index) => ({
+                id: `${testId}-cap-f${index}`,
+                offerKind: 'rury',
+                offerId,
+                createdByUserId: userId,
+                contactedAt: '2026-09-30T10:00:00.000Z',
+                createdAt: '2026-09-30T10:00:00.000Z',
+                channel: 'PHONE' as const,
+                result: 'CONTACTED' as const,
+                outcome: 'OPEN',
+                nextContactAt: '2026-09-30T10:00:00.000Z'
+            }))
+        });
+        await prisma.care_notifications.createMany({
+            data: offers.map((offerId, index) => ({
+                id: `${testId}-cap-n${index}`,
+                userId,
+                offerKind: 'rury',
+                offerId,
+                type: 'SLA_BREACH',
+                readAt: null,
+                createdAt: '2026-10-09T00:00:00.000Z'
+            }))
+        });
+        expect((await syncCareNotifications(prisma, user, 'mine', NOW, SLA)).inserted).toBe(0);
+        expect(
+            (await listCareNotifications(prisma, userId, { unreadOnly: true, limit: 100 }))
+                .unreadCount
+        ).toBe(101);
+        expect(await prisma.care_notifications.count({ where: { userId, readAt: null } })).toBe(
+            502
+        );
     });
 
-    it('R2A: granice capa licznika (0/1/100/101)', async () => {
-        const db = new DatabaseSync(':memory:');
-        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
-            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));`);
-        try {
-            const f = fake(db);
-            const ins = db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            );
-            const count = async () =>
-                (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 100 }))
-                    .unreadCount;
-            expect(await count()).toBe(0);
-            for (let i = 0; i < 100; i++) {
-                ins.run('n' + i, 'u1', 'rury', 'o' + i, 'CALLBACK_DUE', null, NOW);
+    it('badge count boundaries: 0, 100 and capped 101', async () => {
+        const count = async () =>
+            (
+                await listCareNotifications(prisma, userId, {
+                    unreadOnly: true,
+                    limit: 100
+                })
+            ).unreadCount;
+        expect(await count()).toBe(0);
+        await prisma.care_notifications.createMany({
+            data: Array.from({ length: 100 }, (_, index) => ({
+                id: `${testId}-boundary-${index}`,
+                userId,
+                offerKind: 'rury',
+                offerId: `${testId}-boundary-offer-${index}`,
+                type: 'CALLBACK_DUE',
+                readAt: null,
+                createdAt: NOW
+            }))
+        });
+        expect(await count()).toBe(100);
+        await prisma.care_notifications.create({
+            data: {
+                id: `${testId}-boundary-100`,
+                userId,
+                offerKind: 'rury',
+                offerId: `${testId}-boundary-offer-100`,
+                type: 'CALLBACK_DUE',
+                readAt: null,
+                createdAt: NOW
             }
-            expect(await count()).toBe(100);
-            ins.run('n100', 'u1', 'rury', 'o100', 'CALLBACK_DUE', null, NOW);
-            expect(await count()).toBe(101);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+        });
+        expect(await count()).toBe(101);
     });
 
     it('lista niesie obiekt i kontakt z oferty (kolumna + blob)', async () => {
-        const db = new DatabaseSync(':memory:');
-        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
-        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
-        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
-            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));`);
-        try {
-            const f = fake(db);
-            db.prepare(
-                'INSERT INTO offers_rel (id, "userId", "createdAt", "clientName", "clientNumber", "investName", "data") VALUES (?,?,?,?,?,?,?)'
-            ).run(
-                'o1',
-                'u1',
-                '2026-10-01T00:00:00.000Z',
-                'Klient SA',
-                'K-7',
-                'Obiekt Kolumna',
-                JSON.stringify({
+        await prisma.users.create({
+            data: {
+                id: userId,
+                username: userId,
+                password: 'test-only',
+                role: 'user',
+                firstName: 'Adam',
+                lastName: 'Klos'
+            }
+        });
+        const offerId = `${testId}-enriched`;
+        await prisma.offers_rel.create({
+            data: {
+                id: offerId,
+                userId,
+                createdAt: '2026-10-01T00:00:00.000Z',
+                clientName: 'Klient SA',
+                clientNumber: 'K-7',
+                investName: 'Obiekt Kolumna',
+                data: JSON.stringify({
                     totalBrutto: 18469.68,
                     investAddress: 'ul. Testowa 1',
                     contactPerson: 'Jan Kowalski',
                     clientPhone: '601000111',
                     clientEmail: 'jan@example.com'
                 })
-            );
-            db.prepare(
-                'INSERT INTO users (id, username, "firstName", "lastName") VALUES (?,?,?,?)'
-            ).run('u1', 'handlowiec', 'Adam', 'Klos');
-            db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            ).run('n1', 'u1', 'rury', 'o1', 'CALLBACK_DUE', null, NOW);
-            const { items } = await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 });
-            expect(items).toHaveLength(1);
-            expect(items[0].ownerName).toBe('Adam Klos');
-            expect(items[0].clientName).toBe('Klient SA');
-            expect(items[0].clientNumber).toBe('K-7');
-            expect(items[0].value).toBeCloseTo(18469.68, 2);
-            expect(items[0].investName).toBe('Obiekt Kolumna');
-            expect(items[0].investAddress).toBe('ul. Testowa 1');
-            expect(items[0].contactPerson).toBe('Jan Kowalski');
-            expect(items[0].phone).toBe('601000111');
-            expect(items[0].email).toBe('jan@example.com');
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
             }
-            throw e;
-        }
+        });
+        await prisma.care_notifications.create({
+            data: {
+                id: `${testId}-enriched-n`,
+                userId,
+                offerKind: 'rury',
+                offerId,
+                type: 'CALLBACK_DUE',
+                readAt: null,
+                createdAt: NOW
+            }
+        });
+        const { items } = await listCareNotifications(prisma, userId, {
+            unreadOnly: true,
+            limit: 50
+        });
+        expect(items).toHaveLength(1);
+        expect(items[0]).toMatchObject({
+            ownerName: 'Adam Klos',
+            clientName: 'Klient SA',
+            clientNumber: 'K-7',
+            investName: 'Obiekt Kolumna',
+            investAddress: 'ul. Testowa 1',
+            contactPerson: 'Jan Kowalski',
+            phone: '601000111',
+            email: 'jan@example.com'
+        });
+        expect(items[0].value).toBeCloseTo(18469.68, 2);
     });
 
-    it('unread cofa odczyt własny, cudzy 0 (self-only)', async () => {
-        const db = freshDb();
-        try {
-            const f = fake(db);
-            db.prepare(
-                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
-            ).run('n1', 'u1', 'rury', 'o1', 'CALLBACK_DUE', NOW, NOW);
-            expect(await markCareNotificationUnread(f, 'u1', 'n1')).toBe(1);
-            expect(await markCareNotificationUnread(f, 'u1', 'n1')).toBe(0);
-            expect(await markCareNotificationUnread(f, 'u2', 'n1')).toBe(0);
-            expect(await markCareNotificationUnread(f, 'u1', 'nx')).toBe(0);
-            const { unreadCount } = await listCareNotifications(f, 'u1', {
-                unreadOnly: true,
-                limit: 50
-            });
-            expect(unreadCount).toBe(1);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
+    it('unread cofa odczyt własny, cudzy i brakujący wiersz dają 0', async () => {
+        const notificationId = `${testId}-unread`;
+        await prisma.care_notifications.create({
+            data: {
+                id: notificationId,
+                userId,
+                offerKind: 'rury',
+                offerId: `${testId}-unread-offer`,
+                type: 'CALLBACK_DUE',
+                readAt: NOW,
+                createdAt: NOW
             }
-            throw e;
-        }
+        });
+        expect(await markCareNotificationUnread(prisma, userId, notificationId)).toBe(1);
+        expect(await markCareNotificationUnread(prisma, userId, notificationId)).toBe(0);
+        expect(await markCareNotificationUnread(prisma, `${testId}-intruder`, notificationId)).toBe(
+            0
+        );
+        expect(await markCareNotificationUnread(prisma, userId, `${testId}-missing`)).toBe(0);
+        expect(
+            (await listCareNotifications(prisma, userId, { unreadOnly: true, limit: 50 }))
+                .unreadCount
+        ).toBe(1);
     });
 });

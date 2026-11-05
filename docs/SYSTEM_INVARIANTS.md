@@ -47,22 +47,23 @@
 
 ## I-005 — Baza produkcyjna odtwarzalna z migracji
 
-- **Invariant:** `migrate deploy` na pustej bazie + seed daje schemat
-  bez driftu; release CI testuje ścieżkę migracyjną (nie `db push`).
+- **Invariant:** docelowo `prisma migrate deploy` na pustej bazie PostgreSQL
+    - seed daje schemat bez driftu; `db push` nie jest ścieżką wdrożeniową.
 - **Owner:** backend/CI.
-- **Enforcement:** `drift-check` + `migrate-deploy-verify` (blokują),
-  `release.yml` na `migrate deploy`; `npm run measure:telemetry` (monitor).
-- **Tests:** `tests/migrations/*`, `tests/backupRetention.test.ts`.
+- **Enforcement:** bramki migracji PostgreSQL są wdrażane; ich pełne działanie
+  na PostgreSQL 18 pozostaje do potwierdzenia przed uznaniem cutoveru.
+- **Tests:** testy migracji i integracji PostgreSQL 18 muszą przejść przed
+  wdrożeniem; status bieżący: [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## I-006 — Backup nadaje się do odtworzenia
 
-- **Invariant:** backup przez `VACUUM INTO` + sidecar sha256; restore weryfikuje
-  nagłówek, `integrity_check` i czyści WAL/SHM.
+- **Invariant:** docelowo backup PostgreSQL jest archiwum `pg_dump` w formacie
+  custom z SHA-256; restore wymaga jawnego celu i walidacji archiwum.
 - **Owner:** backend (scripts/backup.ts, restore-db.js).
-- **Enforcement:** `scripts/audit-integrity.mjs` (gate JSON),
-  `tests/migrations/restoreRoundtrip.test.ts`.
-- **Tests:** `tests/migrations/restoreRoundtrip.test.ts`,
-  `tests/backupRetention.test.ts`.
+- **Enforcement:** implementacja narzędzi PG jest w toku; drill restore na
+  PostgreSQL 18 jest wymagany przed produkcyjnym cutoverem.
+- **Tests:** testy roundtrip/retencji oraz rzeczywisty restore drill PostgreSQL
+  18 muszą przejść; status: [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## I-007 — ML nigdy nie omija walidacji deterministycznej
 

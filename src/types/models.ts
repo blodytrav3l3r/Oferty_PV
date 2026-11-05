@@ -2,7 +2,7 @@
  * Modele domenowe - interfejsy dla encji aplikacji
  *
  * Odpowiadają strukturom z Prisma schema, ale dostosowane do potrzeb API.
- * Wszystkie pola opcjonalne (?) pochodzą z bazy SQLite która pozwala na NULL.
+ * Wszystkie pola opcjonalne (?) pochodzą z kolumn, które mogą zawierać NULL.
  */
 
 // =============================================================================

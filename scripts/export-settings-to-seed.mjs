@@ -25,8 +25,9 @@ const require = createRequire(import.meta.url);
 
 import dotenv from 'dotenv';
 dotenv.config({ path: resolve(__dirname, '..', '.env') });
-
-const { PrismaClient } = require('../generated/prisma/index.js');
+require('ts-node/register');
+const { default: prisma } = require('../src/prismaClient.ts');
+const { decimalMoneyRowsToNumbers } = require('../src/services/pricelist/moneySerialization.ts');
 
 const ALL_KEYS = ['pricelist_rury', 'pricelist_studnie', 'preco_pricing'];
 
@@ -219,7 +220,6 @@ async function main() {
         }
     }
 
-    const prisma = new PrismaClient();
     let results;
 
     try {
@@ -238,15 +238,16 @@ async function main() {
         }
 
         /** Pozycje wersji bez klucza wersji (id = oryginalny indeks produktu). */
-        async function activeItems(type, delegate) {
+        async function activeItems(type, delegate, moneyFields = []) {
             const versionId = await activeVersionId(type);
             if (!versionId) return [];
             const rows = await delegate.findMany({ where: { versionId } });
-            return rows.map((row) => {
+            const items = rows.map((row) => {
                 const { versionId: _v, ...rest } = row;
                 const rawId = String(row.id);
                 return { ...rest, id: rawId.slice(rawId.lastIndexOf(':') + 1) };
             });
+            return decimalMoneyRowsToNumbers(items, moneyFields);
         }
 
         const wantRury = keys.includes('pricelist_rury');
@@ -256,17 +257,28 @@ async function main() {
         results = {};
         if (wantRury)
             results.pricelist_rury = processPricelist(
-                await activeItems('rury', prisma.pricelistItemRury)
+                await activeItems('rury', prisma.pricelistItemRury, ['price', 'transport'])
             );
         if (wantStudnie) {
             results.pricelist_studnie = processPricelist(
-                await activeItems('studnie', prisma.pricelistItemStudnie)
+                await activeItems('studnie', prisma.pricelistItemStudnie, [
+                    'price',
+                    'transport',
+                    'cena1',
+                    'cena2',
+                    'cena3',
+                    'doplataPEHD',
+                    'doplataZelbet',
+                    'doplataDrabNierdzewna',
+                    'malowanieWewnetrzne',
+                    'malowanieZewnetrzne'
+                ])
             );
         }
         if (wantPreco) {
             results.preco_pricing = processPreco(
                 await activeItems('preco', prisma.pricelistItemPrecoKonfig),
-                await activeItems('preco', prisma.pricelistItemPrecoKinety),
+                await activeItems('preco', prisma.pricelistItemPrecoKinety, ['cena']),
                 await activeItems('preco', prisma.pricelistItemPrecoZakresy)
             );
         }

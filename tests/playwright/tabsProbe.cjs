@@ -2,8 +2,9 @@
  * Loguje bledy konsoli przegladarki + violations CSP + stan po kliku.
  * Run: node tests/playwright/tabsProbe.cjs --spawn
  */
-const { execFileSync, spawn } = require('child_process');
+const { spawn } = require('child_process');
 const { join, resolve } = require('path');
+const { createIsolatedPostgresSchema } = require('./isolatedPostgres.cjs');
 
 const ROOT = resolve(__dirname, '..', '..');
 const BASE = 'http://localhost:3178';
@@ -44,32 +45,16 @@ async function pollHealth(url, tries = 30) {
 }
 
 async function main() {
-    const { rmSync, existsSync, mkdirSync } = require('fs');
-    const { delimiter } = require('path');
-    const withBin = (extra) => ({
-        ...process.env,
-        PATH: join(ROOT, 'node_modules', '.bin') + delimiter + (process.env.PATH || ''),
-        ...extra
-    });
-    const dbFile = join(ROOT, 'data', 'e2e-tabs.sqlite');
-    const dbUrl = 'file:' + dbFile.replace(/\\/g, '/');
-    mkdirSync(join(ROOT, 'data'), { recursive: true });
-    for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
-        if (existsSync(f)) rmSync(f);
-    }
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'push', '--skip-generate', '--accept-data-loss'], {
-        cwd: ROOT,
-        env: withBin({ DATABASE_URL: dbUrl }),
-        stdio: 'pipe'
-    });
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
-        cwd: ROOT,
-        env: withBin({ DATABASE_URL: dbUrl }),
-        stdio: 'pipe'
-    });
+    const dbUrl = (await createIsolatedPostgresSchema('tabs_probe')).databaseUrl;
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
         cwd: ROOT,
-        env: { ...process.env, PORT: '3178', DATABASE_URL: dbUrl, DEFAULT_ADMIN_PASSWORD: ADMIN_PASSWORD, NODE_ENV: 'development' },
+        env: {
+            ...process.env,
+            PORT: '3178',
+            DATABASE_URL: dbUrl,
+            DEFAULT_ADMIN_PASSWORD: ADMIN_PASSWORD,
+            NODE_ENV: 'development'
+        },
         stdio: 'pipe'
     });
     const ok = await pollHealth(`${BASE}/health`);
@@ -86,7 +71,8 @@ async function main() {
     });
     page.on('pageerror', (e) => errors.push('[pageerror] ' + String(e && e.message).slice(0, 300)));
     page.on('response', (r) => {
-        if (r.status() >= 400 && !r.url().includes('favicon')) errors.push(`[http${r.status()}] ${r.url().slice(0, 120)}`);
+        if (r.status() >= 400 && !r.url().includes('favicon'))
+            errors.push(`[http${r.status()}] ${r.url().slice(0, 120)}`);
     });
 
     await page.goto(`${BASE}/index.html`);
@@ -115,7 +101,9 @@ async function main() {
             await sleep(2000);
             const so = await sf.evaluate(() => ({
                 offerActive: !!document.querySelector('#nav-offer.active'),
-                sections: [...document.querySelectorAll('.section')].map((s) => s.id + '=' + (s.classList.contains('active') ? 'A' : '-')).join(',')
+                sections: [...document.querySelectorAll('.section')]
+                    .map((s) => s.id + '=' + (s.classList.contains('active') ? 'A' : '-'))
+                    .join(',')
             }));
             console.log('STUDNIE nav-offer: ' + JSON.stringify(so));
         }
@@ -126,11 +114,15 @@ async function main() {
             await sleep(2000);
             const sp = await sf.evaluate(() => ({
                 pricelistActive: !!document.querySelector('#nav-pricelist.active'),
-                prodRows: document.querySelectorAll('#studnie-pricelist-tbody tr, .studnie-product-row').length
+                prodRows: document.querySelectorAll(
+                    '#studnie-pricelist-tbody tr, .studnie-product-row'
+                ).length
             }));
             console.log('STUDNIE nav-pricelist: ' + JSON.stringify(sp));
         }
-        const tabs = await sf.$$eval('.cennik-tab', (els) => els.map((e) => e.getAttribute('data-tab')));
+        const tabs = await sf.$$eval('.cennik-tab', (els) =>
+            els.map((e) => e.getAttribute('data-tab'))
+        );
         console.log('CENNIK TABS: ' + JSON.stringify(tabs));
         if (tabs.length > 1) {
             const vis = await sf.$eval('.cennik-tab[data-tab="dn1200"]', (e) => {
@@ -155,7 +147,8 @@ async function main() {
                 active: (document.querySelector('.cennik-tab.active') || {}).getAttribute
                     ? document.querySelector('.cennik-tab.active').getAttribute('data-tab')
                     : '?',
-                rows: document.querySelectorAll('#preco-tbody tr, .preco-row, [data-preco-id]').length,
+                rows: document.querySelectorAll('#preco-tbody tr, .preco-row, [data-preco-id]')
+                    .length,
                 text: document.body.innerText.slice(0, 120)
             }));
             console.log('PO KLIKU preco: ' + JSON.stringify(preco));
@@ -168,12 +161,20 @@ async function main() {
                 e.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
             );
             await sleep(2000);
-            const disp = await sf.$eval('#bcontent-transitions', (e) => e.style.display).catch(() => 'BRAK');
-            const activeB = await sf.$eval('#btab-transitions.active', () => 'tak').catch(() => 'nie');
+            const disp = await sf
+                .$eval('#bcontent-transitions', (e) => e.style.display)
+                .catch(() => 'BRAK');
+            const activeB = await sf
+                .$eval('#btab-transitions.active', () => 'tak')
+                .catch(() => 'nie');
             console.log('PO KLIKU transitions: display=' + disp + ' active=' + activeB);
         }
         // 3) CSP w naglowku enforce
-        const csp = await sf.evaluate(() => document.querySelector('meta[http-equiv="Content-Security-Policy"]') ? 'meta' : 'header-only');
+        const csp = await sf.evaluate(() =>
+            document.querySelector('meta[http-equiv="Content-Security-Policy"]')
+                ? 'meta'
+                : 'header-only'
+        );
         console.log('CSP-MODE: ' + csp);
     }
     // 4) RURY: nawigacja Oferta/Cennik z partial-header
@@ -203,7 +204,9 @@ async function main() {
         await sleep(2000);
         const st2 = await rf.evaluate(() => ({
             pricelistActive: !!document.querySelector('#nav-pricelist.active'),
-            productsCount: document.querySelectorAll('#pricelist-tbody tr, .pricelist-row, [data-product-id]').length,
+            productsCount: document.querySelectorAll(
+                '#pricelist-tbody tr, .pricelist-row, [data-product-id]'
+            ).length,
             offerItems: document.querySelectorAll('#offer-items-body tr, .offer-item').length,
             bodyText: document.body.innerText.slice(0, 200)
         }));
@@ -216,6 +219,6 @@ async function main() {
 }
 
 main().catch((e) => {
-    console.error('PROBE-FAIL: ' + (e && e.stack || e));
+    console.error('PROBE-FAIL: ' + ((e && e.stack) || e));
     process.exit(1);
 });

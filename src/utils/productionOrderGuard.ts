@@ -6,6 +6,8 @@
  *  - PZ przypisane do oferty studni: przez zamówienia oferty (offerStudnieId) + legacy po data.offerId
  */
 import prisma from '../prismaClient';
+import { Prisma } from '../../generated/prisma-postgres/client';
+import { jsonTextSql } from './productionSearchUtils';
 
 type CountRow = Array<{ cnt: number | bigint }>;
 
@@ -23,7 +25,7 @@ export async function countProductionOrdersForOrder(
         WHERE "orderId" = ${orderId}
            OR (${offerId || ''} <> ''
                AND ("orderId" IS NULL OR "orderId" = '')
-               AND json_extract(data, '$.offerId') = ${offerId || ''})`;
+               AND ${jsonTextSql(Prisma.sql`data`, 'offerId')} = ${offerId || ''})`;
     return Number(rows?.[0]?.cnt ?? 0);
 }
 
@@ -36,6 +38,6 @@ export async function hasProductionOrdersForOffer(
         SELECT COUNT(*) as cnt
         FROM production_orders_rel po
         WHERE po."orderId" IN (SELECT o.id FROM orders_studnie_rel o WHERE o."offerStudnieId" = ${offerId})
-           OR json_extract(po.data, '$.offerId') = ${offerId}`;
+           OR ${jsonTextSql(Prisma.sql`po.data`, 'offerId')} = ${offerId}`;
     return Number(rows?.[0]?.cnt ?? 0) > 0;
 }

@@ -1,23 +1,6 @@
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
-
-// Ścieżka DB jak backend (src/prismaClient.ts normalizeDatabaseUrl):
-// DATABASE_URL file: absolutne wprost; względne wobec katalogu prisma/
-// (semantyka Prisma); brak/zły format -> klasyczne ./data/*.sqlite.
-function resolveDbPath() {
-    const fallback = path.resolve(__dirname, '..', 'data', 'app_database.sqlite');
-    const raw = process.env.DATABASE_URL || '';
-    if (!raw.startsWith('file:')) return fallback;
-    const rest = raw.slice('file:'.length);
-    const q = rest.indexOf('?');
-    const rel = q === -1 ? rest : rest.slice(0, q);
-    if (!rel || path.isAbsolute(rel)) return rel || fallback;
-    return path.resolve(__dirname, '..', 'prisma', rel);
-}
-
-const DB_PATH = resolveDbPath();
+const { Client } = require('pg');
 
 const REQUIRED_TABLES = [
     'ai_telemetry_logs',
@@ -28,7 +11,6 @@ const REQUIRED_TABLES = [
     'ai_knowledge_base',
     'ai_recommendations'
 ];
-
 const PRODUCT_TABLES = [
     'PricelistVersion',
     'PricelistItemRury',
@@ -38,153 +20,97 @@ const PRODUCT_TABLES = [
     'PricelistItemPrecoZakresy',
     'AiModel'
 ];
-
-// Indeksy wymagane do sprawnej deduplikacji telemetrii AI (dedup AUTO_JS).
-// Ich brak nie blokuje aplikacji, ale powoduje pełne skanowanie tabeli
-// ai_telemetry_logs przy każdej konfiguracji AUTO_JS.
-const REQUIRED_INDEXES = [
-    { index: 'idx_logs_well', table: 'ai_telemetry_logs' },
-    { index: 'idx_logs_source_well', table: 'ai_telemetry_logs' }
-];
-
-// Tabele, ktore musza zawierac dane po udanym seedzie.
-// Etap 2: cennik nie jest seedowany (wersje bazowe tworzy bootstrap startu),
-// zostaje startowy model ML, zeby predykcje mialy czym odpowiedziec.
+const REQUIRED_INDEXES = ['idx_logs_well', 'idx_logs_source_well'];
 const PRODUCT_DATA_CHECKS = [{ table: 'AiModel', minRows: 1 }];
 
-if (!fs.existsSync(DB_PATH)) {
-    console.error('[check-db] Brak pliku bazy: ' + DB_PATH);
-    process.exit(1);
-}
-
-function checkWithNodeSqlite() {
-    const sqlite = require('node:sqlite');
-    const db = new sqlite.DatabaseSync(DB_PATH, { readOnly: true });
-    try {
-        const stmt = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?");
-        const missingAI = [];
-        const existingAI = [];
-        for (const tbl of REQUIRED_TABLES) {
-            const row = stmt.get(tbl);
-            if (!row) missingAI.push(tbl);
-            else existingAI.push(tbl);
-        }
-
-        const missingProduct = [];
-        const existingProduct = [];
-        for (const tbl of PRODUCT_TABLES) {
-            const row = stmt.get(tbl);
-            if (!row) missingProduct.push(tbl);
-            else existingProduct.push(tbl);
-        }
-
-        const emptyProduct = [];
-        for (const check of PRODUCT_DATA_CHECKS) {
-            if (!existingProduct.includes(check.table)) continue;
-            const row = db.prepare('SELECT COUNT(*) as cnt FROM "' + check.table + '"').get();
-            if (!row || row.cnt < check.minRows) emptyProduct.push(check.table);
-        }
-
-        const missingIndexes = [];
-        for (const { index, table } of REQUIRED_INDEXES) {
-            if (!existingAI.includes(table)) continue;
-            const row = db
-                .prepare(
-                    "SELECT name FROM sqlite_master WHERE type='index' AND name = ? AND tbl_name = ?"
-                )
-                .get(index, table);
-            if (!row) missingIndexes.push(index);
-        }
-
-        return { missingAI, missingProduct, emptyProduct, missingIndexes };
-    } finally {
-        db.close();
+function parseDatabaseUrl(rawUrl) {
+    if (!rawUrl) throw new Error('DATABASE_URL is required');
+    const url = new URL(rawUrl);
+    if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+        throw new Error('DATABASE_URL must use PostgreSQL');
     }
-}
-
-function checkWithCli() {
-    const { execSync } = require('child_process');
-    const missing = [];
-
-    const allTables = [...REQUIRED_TABLES, ...PRODUCT_TABLES];
-    for (const tbl of allTables) {
-        try {
-            const out = execSync(
-                `sqlite3 "${DB_PATH}" "SELECT name FROM sqlite_master WHERE type='table' AND name='${tbl}' LIMIT 1"`,
-                { stdio: 'pipe' }
-            );
-            if (!out.toString().trim()) missing.push(tbl);
-        } catch (e) {
-            missing.push(tbl);
-        }
+    if (!url.hostname || url.pathname.length < 2) {
+        throw new Error('DATABASE_URL must include a PostgreSQL host and database');
     }
-    const missingIndexes = [];
-    for (const { index, table } of REQUIRED_INDEXES) {
-        if (!allTables.includes(table) || missing.includes(table)) continue;
-        try {
-            const out = execSync(
-                `sqlite3 "${DB_PATH}" "SELECT name FROM sqlite_master WHERE type='index' AND name='${index}' AND tbl_name='${table}' LIMIT 1"`,
-                { stdio: 'pipe' }
-            );
-            if (!out.toString().trim()) missingIndexes.push(index);
-        } catch (e) {
-            missingIndexes.push(index);
-        }
+    const schema = url.searchParams.get('schema') || 'public';
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) {
+        throw new Error('DATABASE_URL schema is invalid');
     }
-    return {
-        missingAI: missing.filter((t) => REQUIRED_TABLES.includes(t)),
-        missingProduct: missing.filter((t) => PRODUCT_TABLES.includes(t)),
-        emptyProduct: [],
-        missingIndexes
-    };
+    url.searchParams.delete('schema');
+    return { connectionString: url.toString(), schema };
 }
 
-function check() {
-    try {
-        return checkWithNodeSqlite();
-    } catch (e) {
-        if (
-            e.code === 'ERR_BROWSER_NOT_SUPPORTED' ||
-            e.code === 'MODULE_NOT_FOUND' ||
-            e.code === 'ERR_UNKNOWN_BUILTIN_MODULE'
-        ) {
-            try {
-                return checkWithCli();
-            } catch (cliErr) {
-                console.error(
-                    '[check-db] Wymagany Node.js >= 22.13.0 (node:sqlite) lub sqlite3 CLI.'
-                );
-                console.error(
-                    '[check-db] Zainstaluj Node.js >= 22.13.0 lub dodaj sqlite3 do PATH.'
-                );
-                process.exit(4);
-            }
-        }
-        throw e;
-    }
-}
-
-const result = check();
-
-if (result.missingAI.length > 0 || result.missingProduct.length > 0) {
-    const allMissing = [...result.missingAI, ...result.missingProduct];
-    console.error('[check-db] BRAK TABEL: ' + allMissing.join(', '));
-    process.exit(1);
-}
-
-if (result.missingIndexes && result.missingIndexes.length > 0) {
-    console.error('[check-db] BRAK INDEKSOW: ' + result.missingIndexes.join(', '));
-    console.error(
-        '[check-db] Wymagany prisma db push — synchronizacja schematu (indeksy telemetrii AI).'
+async function checkDatabase(client, schema) {
+    const { rows: tableRows } = await client.query(
+        `SELECT table_name FROM information_schema.tables
+         WHERE table_schema = $1 AND table_type = 'BASE TABLE'`,
+        [schema]
     );
-    process.exit(1);
+    const tables = new Set(tableRows.map((row) => row.table_name));
+    const missingAI = REQUIRED_TABLES.filter((table) => !tables.has(table));
+    const missingProduct = PRODUCT_TABLES.filter((table) => !tables.has(table));
+    const emptyProduct = [];
+    for (const check of PRODUCT_DATA_CHECKS) {
+        if (!tables.has(check.table)) continue;
+        const result = await client.query(
+            `SELECT COUNT(*)::bigint AS count FROM "${schema}"."${check.table}"`
+        );
+        if (Number(result.rows[0]?.count ?? 0) < check.minRows) emptyProduct.push(check.table);
+    }
+
+    const { rows: indexRows } = await client.query(
+        `SELECT indexname FROM pg_catalog.pg_indexes WHERE schemaname = $1`,
+        [schema]
+    );
+    const indexes = new Set(indexRows.map((row) => row.indexname));
+    const missingIndexes = REQUIRED_INDEXES.filter((index) => !indexes.has(index));
+    return { missingAI, missingProduct, emptyProduct, missingIndexes };
 }
 
-if (result.emptyProduct.length > 0) {
-    console.error('[check-db] BRAK DANYCH STARTOWYCH: ' + result.emptyProduct.join(', '));
-    console.error('[check-db] Wymagany seed — uruchom npx ts-node prisma/seed.ts');
-    process.exit(2);
+async function main() {
+    let connection;
+    try {
+        connection = parseDatabaseUrl(process.env.DATABASE_URL);
+        const client = new Client({ connectionString: connection.connectionString });
+        await client.connect();
+        try {
+            const result = await checkDatabase(client, connection.schema);
+            if (result.missingAI.length || result.missingProduct.length) {
+                console.error(
+                    '[check-db] MISSING TABLES: ' +
+                        [...result.missingAI, ...result.missingProduct].join(', ')
+                );
+                process.exitCode = 1;
+                return;
+            }
+            if (result.missingIndexes.length) {
+                console.error('[check-db] MISSING INDEXES: ' + result.missingIndexes.join(', '));
+                console.error('[check-db] Apply PostgreSQL migrations before starting S.O.K.');
+                process.exitCode = 1;
+                return;
+            }
+            if (result.emptyProduct.length) {
+                console.error(
+                    '[check-db] MISSING REQUIRED STARTER DATA: ' + result.emptyProduct.join(', ')
+                );
+                process.exitCode = 2;
+                return;
+            }
+            console.log('[check-db] OK — PostgreSQL tables, indexes and starter data are present.');
+        } finally {
+            await client.end();
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown error';
+        const safeMessage = message.replace(
+            /postgres(?:ql)?:\/\/[^\s]+/gi,
+            '[redacted PostgreSQL URL]'
+        );
+        console.error('[check-db] PostgreSQL check failed: ' + safeMessage);
+        process.exitCode = 1;
+    }
 }
 
-console.log('[check-db] OK — wszystkie tabele i indeksy obecne (wersje cennika: bootstrap).');
-process.exit(0);
+if (require.main === module) void main();
+
+module.exports = { checkDatabase, parseDatabaseUrl };

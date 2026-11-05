@@ -2,7 +2,7 @@
 /**
  * StorageService.js
  * Ujednolicona usługa do zarządzania wszystkimi typami ofert (Rury i Studnie).
- * Oparta na bezpośrednich wywołaniach REST backendu SQLite/NodeJS.
+ * Oparta na bezpośrednich wywołaniach REST backendu PostgreSQL/Node.js.
  */
 
 class StorageService {
@@ -217,7 +217,7 @@ class StorageService {
             }
 
             if (res.status === 500) {
-                // 500 = oferta mogła być już usunięta z DB (błąd FTS5/cache)
+                // 500 = oferta mogła być już usunięta z DB (błąd indeksu wyszukiwania/cache)
                 logger.warn(
                     'StorageService',
                     `[StorageService] DELETE ${url} zwrócił 500, próbuję drugi endpoint...`

@@ -18,6 +18,7 @@ jest.mock('../src/db', () => ({
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
+    Prisma: jest.requireActual('../generated/prisma-postgres/client').Prisma,
     default: {
         orders_studnie_rel: {
             findMany: jest.fn(),

@@ -79,6 +79,11 @@ wymaga odświeżania.
 
 ## 5. Dokumenty poza SSoT
 
+- Baseline'y wydajnościowe z `docs/plans/` opisują pomiary historyczne. Jeśli
+  artefakt wskazuje bazę SQLite, traktuj wynik wyłącznie jako punkt odniesienia
+  dla ówczesnej instalacji, nie jako baseline PostgreSQL ani dowód równoważnej
+  wydajności. Baseline PostgreSQL 18 wymaga osobnego pomiaru po zakończeniu
+  konwersji runtime i walidacji danych.
 - `docs/AUDIT.md` — **migawka historyczna** (stan 2026-08-24). Liczby zostają jako
   zapis z daty audytu; nie aktualizować.
 - `docs/plans/` — wpisy historyczne, wartości mogą zostać jako zapis stanu z daty.

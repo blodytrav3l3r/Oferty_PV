@@ -18,6 +18,7 @@ import {
 import { buildOrderListWhereWithOfferShare } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { normalizedDateTimeSql } from '../../utils/productionSearchUtils';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
@@ -111,9 +112,7 @@ router.get('/', requireAuth, async (req, res) => {
                 data: string | null;
             }>
         >`SELECT id, "userId", "offerStudnieId", status, data, version, "pricelistVersionId",
-            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "createdAt" END as "createdAt"
+            ${normalizedDateTimeSql(Prisma.sql`"createdAt"`)} as "createdAt"
          FROM orders_studnie_rel o ${whereCondition}`;
 
         const mapped = orders.map((o) => {

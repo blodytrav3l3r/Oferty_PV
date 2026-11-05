@@ -1,5 +1,5 @@
 import prisma from '../../../prismaClient';
-import type { Prisma } from '../../../../generated/prisma';
+import type { Prisma } from '../../../../generated/prisma-postgres/client';
 import { ML_CONSTANTS } from '../../../config/mlConstants';
 import { computeDatasetFingerprint } from '../TrainingPipeline';
 import { SOKML_DATASET_SCHEMA_VERSION } from './transferConstants';
@@ -180,7 +180,7 @@ export async function importDatasetRows(
     const existingIds = new Set(existing.map((e) => e.id));
     const fresh = rows.filter((r) => !existingIds.has(r.id));
     if (fresh.length > 0) {
-        // Bez skipDuplicates (SQLite): istniejące odfiltrowane wyżej.
+        // Istniejące rekordy odfiltrowano wyżej, więc skipDuplicates nie jest potrzebne.
         await db.aiFeature.createMany({ data: fresh });
     }
     return { inserted: fresh.length, skipped: rows.length - fresh.length };

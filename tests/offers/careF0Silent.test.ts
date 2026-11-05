@@ -1,10 +1,8 @@
 // tests/offers/careF0Silent.test.ts
 // F0 SILENT-FAILURE HUNT - REGRESSION PROOF. F2 GREEN (fix F4-krytyczne).
-// F1/F3/F4/F5/F7/F8: RED potwierdzone, DEFERRED do next batch -> test.skip.
-// F6 stub: SUPERSEDED przez tests/offers/careAuditBeforeImage.test.ts (endpoint proof) -> test.skip.
+// F1/F3/F4/F5/F7/F8: regression contracts; F6 endpoint proof lives in careAuditBeforeImage.test.ts.
 import request from 'supertest';
 import express from 'express';
-import { DatabaseSync } from 'node:sqlite';
 
 jest.mock('../../src/middleware/auth', () => ({
     requireAuth: (req: any, _res: any, next: any) => {
@@ -33,7 +31,7 @@ jest.mock('../../src/utils/logger', () => ({
 }));
 
 jest.mock('../../src/prismaClient', () => {
-    const real = jest.requireActual('../../generated/prisma');
+    const real = jest.requireActual('../../generated/prisma-postgres/client');
     return {
         __esModule: true,
         Prisma: real.Prisma,
@@ -74,7 +72,7 @@ const mockedPrisma = prisma as unknown as {
     $queryRaw: jest.Mock;
     document_shares: { findMany: jest.Mock; findFirst: jest.Mock };
 };
-const realPrisma = jest.requireActual('../../generated/prisma').Prisma;
+const realPrisma = jest.requireActual('../../generated/prisma-postgres/client').Prisma;
 
 function statsApp() {
     const app = express();
@@ -90,22 +88,6 @@ function careApp() {
     return app;
 }
 
-function dbScope(): DatabaseSync {
-    const db = new DatabaseSync(':memory:');
-    db.exec('CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT)');
-    db.prepare('INSERT INTO offers_rel (id, "userId") VALUES (?, ?)').run('o1', 'u1');
-    db.prepare('INSERT INTO offers_rel (id, "userId") VALUES (?, ?)').run('o3', 'u3');
-    return db;
-}
-
-function ids(db: DatabaseSync, cond: unknown): string[] {
-    const raw = cond as unknown as { sql: string; values: unknown[] };
-    const rows = db
-        .prepare('SELECT id FROM offers_rel o WHERE ' + raw.sql)
-        .all(...(raw.values as never[])) as Array<{ id: string }>;
-    return rows.map((r) => r.id).sort();
-}
-
 describe('F0 silent-failure hunt', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -119,16 +101,12 @@ describe('F0 silent-failure hunt', () => {
     });
 
     test('F2 narrowOwner: musi byc AND w scope, nigdy zamiast scope', () => {
-        const db = dbScope();
-        try {
-            const cond = buildOfferScopeCondition({ id: 'u1', role: 'user' }, 'o', [], {
-                allowedIds: ['u1'],
-                narrowOwner: 'u3'
-            });
-            expect(ids(db, cond)).toEqual([]);
-        } finally {
-            db.close();
-        }
+        const cond = buildOfferScopeCondition({ id: 'u1', role: 'user' }, 'o', [], {
+            allowedIds: ['u1'],
+            narrowOwner: 'u3'
+        }) as unknown as { sql: string; values: unknown[] };
+        expect(cond.sql).toMatch(/\(.*"userId" IN \(.*\).*AND.*"userId" =/is);
+        expect(cond.values).toEqual(['u1', 'u3']);
     });
 
     test('F3 lostValue fallback: nieznany klucz nie moze pompowac lost', async () => {
@@ -156,31 +134,20 @@ describe('F0 silent-failure hunt', () => {
         expect(sql.sql).toMatch(/IS NOT NULL/i);
     });
 
-    test.skip('F5 etag [DOCUMENTED best-effort, patrz followUpCarePanel F5 lock-in]: blad ETag daje 200 bez naglowka', async () => {
+    test('F5 awaria pomocniczego ETag nie blokuje pobrania panelu', async () => {
         mockedPrisma.$queryRaw.mockImplementation(async (...a: unknown[]) => {
             const first = a[0] as unknown as { sql?: string };
             if (
                 first &&
                 typeof first.sql === 'string' &&
-                first.sql.includes('MAX("contactedAt")')
+                first.sql.includes('(SELECT MAX("contactedAt")')
             ) {
                 throw new Error('legacy DB bez tabeli');
             }
             return [] as never;
         });
         const res = await request(careApp()).get('/api/care/panel');
-        expect(res.status).toBe(500);
-    });
-
-    test.skip('F6 stub [SUPERSEDED by careAuditBeforeImage.test.ts]: before-image musi byc sprzed write', async () => {
-        let stored: string | null = null;
-        const get = async () => (stored ? JSON.parse(stored) : null);
-        const set = async (v: string) => {
-            stored = v;
-        };
-        await set(JSON.stringify({ doneAt: '2026-10-11T00:00:00.000Z' }));
-        const oldData = (await get()) ? JSON.stringify(await get()) : null;
-        expect(oldData).toBeNull();
+        expect(res.status).toBe(200);
     });
 
     test('F7 cursor: uszkodzony cursor musi byc 400, nie cichy restart od zera', () => {

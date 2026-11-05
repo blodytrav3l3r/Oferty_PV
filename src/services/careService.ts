@@ -10,7 +10,7 @@
  * (offerKind,offerId), deterministyczna paginacja cursorem (nie OFFSET).
  * getCareQueue wykonuje max 2 SELECT (data + COUNT).
  */
-import { Prisma } from '../../generated/prisma';
+import { Prisma } from '../../generated/prisma-postgres/client';
 import type { User } from '../helpers';
 import { buildRoleWhereClause } from '../utils/roleFilter';
 import { getFollowUpState, isEscalated } from '../utils/careStatus';
@@ -227,7 +227,7 @@ export function buildCareQueueQueries(
     // id DESC), parzystość pilnuje tests/offers/careLatestParity.test.ts.
     // followUpStats.ts i searchUtils.ts liczą latest po staremu (osobny kontrakt).
     // P2.2: baza niesie tylko skalary sortowania/filtra; drogie kolumny
-    // (json_extract, users, note) dokłada faza 2 dla ≤51 wierszy strony
+    // (JSONB pola, users, note) dokłada faza 2 dla ≤51 wierszy strony
     // (buildCareEnrichQuery niżej) — ta sama treść, inny moment.
     const withSql = Prisma.sql`WITH base AS (
         SELECT 'rury' AS "offerKind", o."id" AS "offerId", lf."outcome" AS "outcome",
@@ -313,6 +313,48 @@ export interface CareEnrichRow {
     email: string | null;
 }
 
+type CareDataAlias = 'o' | 's';
+type CareJsonPath =
+    | 'createdByUserName'
+    | 'totalBrutto'
+    | 'clientPhone'
+    | 'investName'
+    | 'budowa'
+    | 'investAddress'
+    | 'contactPerson'
+    | 'clientEmail';
+
+function offerDataJson(alias: CareDataAlias): Prisma.Sql {
+    return Prisma.raw(`${alias}."data"::jsonb`);
+}
+
+function offerJsonText(alias: CareDataAlias, path: CareJsonPath): Prisma.Sql {
+    return Prisma.sql`${offerDataJson(alias)} #>> ${Prisma.raw(`'{${path}}'`)}`;
+}
+
+function safeNumericSql(value: Prisma.Sql): Prisma.Sql {
+    return Prisma.sql`CASE WHEN ${value} ~ '^[+-]?[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?$' THEN (${value})::double precision END`;
+}
+
+function wellsExportTotalSql(alias: CareDataAlias): Prisma.Sql {
+    const data = offerDataJson(alias);
+    return Prisma.sql`(
+        SELECT ROUND(COALESCE(SUM(CASE
+            WHEN well.value->>'totalPrice' ~ '^[+-]?[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?$'
+            THEN (well.value->>'totalPrice')::numeric END), 0), 2)::double precision
+        FROM jsonb_array_elements(
+            CASE WHEN jsonb_typeof(${data}->'wellsExport') = 'array'
+                THEN ${data}->'wellsExport' ELSE '[]'::jsonb END
+        ) AS well(value)
+    )`;
+}
+
+function offerValueSql(alias: 'o' | 's'): Prisma.Sql {
+    if (alias === 'o') return safeNumericSql(offerJsonText(alias, 'totalBrutto'));
+    return Prisma.sql`COALESCE(NULLIF(s."totalPrice", 0)::double precision,
+        ${safeNumericSql(offerJsonText(alias, 'totalBrutto'))}, ${wellsExportTotalSql(alias)})`;
+}
+
 /**
  * P2.2, faza 2: drogie kolumny prezentacyjne TYLKO dla par (kind,id) ze
  * strony (≤51). Wyrażenia 1:1 z dawnym base CTE (guard 0-kolumny studni
@@ -327,14 +369,14 @@ export function buildCareEnrichQuery(ruryIds: string[], studnieIds: string[]): P
             o."offer_number" AS "number", o."clientName" AS "client",
             o."clientNumber" AS "clientNumber",
             COALESCE(NULLIF(TRIM(COALESCE(ou."firstName", '') || ' ' || COALESCE(ou."lastName", '')), ''), ou."username") AS "owner",
-            json_extract(o."data", '$.createdByUserName') AS "author",
-            CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
-            COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone')) AS "phone",
+            ${offerJsonText('o', 'createdByUserName')} AS "author",
+            ${offerValueSql('o')} AS "value",
+            COALESCE(${offerJsonText('o', 'clientPhone')}, o."data"::jsonb #>> '{clientContacts,0,phone}') AS "phone",
             lf."note" AS "note",
-            COALESCE(NULLIF(o."investName", ''), json_extract(o."data", '$.investName'), json_extract(o."data", '$.budowa')) AS "invest",
-            json_extract(o."data", '$.investAddress') AS "address",
-            COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name')) AS "contact",
-            COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email')) AS "email"
+            COALESCE(NULLIF(o."investName", ''), ${offerJsonText('o', 'investName')}, ${offerJsonText('o', 'budowa')}) AS "invest",
+            ${offerJsonText('o', 'investAddress')} AS "address",
+            COALESCE(${offerJsonText('o', 'contactPerson')}, o."data"::jsonb #>> '{clientContacts,0,name}') AS "contact",
+            COALESCE(${offerJsonText('o', 'clientEmail')}, o."data"::jsonb #>> '{clientContacts,0,email}') AS "email"
         FROM offers_rel o LEFT JOIN latest_followup lf
             ON lf."offerKind" = 'rury' AND lf."offerId" = o."id"
         LEFT JOIN users ou ON ou."id" = o."userId"
@@ -345,18 +387,16 @@ export function buildCareEnrichQuery(ruryIds: string[], studnieIds: string[]): P
             s."offer_number" AS "number", s."clientName" AS "client",
             s."clientNumber" AS "clientNumber",
             COALESCE(NULLIF(TRIM(COALESCE(su."firstName", '') || ' ' || COALESCE(su."lastName", '')), ''), su."username") AS "owner",
-            json_extract(s."data", '$.createdByUserName') AS "author",
+            ${offerJsonText('s', 'createdByUserName')} AS "author",
             -- Guard 0-kolumny (zapis studni bez totalPrice): niezerowa kolumna
             -- > blob.totalBrutto > suma wellsExport (jak search.ts d_wellsExportTotal).
-            CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
-                (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
-                    FROM json_each(s."data", '$.wellsExport'))) AS REAL) AS "value",
-            COALESCE(json_extract(s."data", '$.clientPhone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone",
+            ${offerValueSql('s')} AS "value",
+            COALESCE(${offerJsonText('s', 'clientPhone')}, s."data"::jsonb #>> '{clientContacts,0,phone}') AS "phone",
             lf."note" AS "note",
-            COALESCE(NULLIF(s."investName", ''), json_extract(s."data", '$.investName'), json_extract(s."data", '$.budowa')) AS "invest",
-            json_extract(s."data", '$.investAddress') AS "address",
-            COALESCE(json_extract(s."data", '$.contactPerson'), json_extract(s."data", '$.clientContacts[0].name')) AS "contact",
-            COALESCE(json_extract(s."data", '$.clientEmail'), json_extract(s."data", '$.clientContacts[0].email')) AS "email"
+            COALESCE(NULLIF(s."investName", ''), ${offerJsonText('s', 'investName')}, ${offerJsonText('s', 'budowa')}) AS "invest",
+            ${offerJsonText('s', 'investAddress')} AS "address",
+            COALESCE(${offerJsonText('s', 'contactPerson')}, s."data"::jsonb #>> '{clientContacts,0,name}') AS "contact",
+            COALESCE(${offerJsonText('s', 'clientEmail')}, s."data"::jsonb #>> '{clientContacts,0,email}') AS "email"
         FROM offers_studnie_rel s LEFT JOIN latest_followup lf
             ON lf."offerKind" = 'studnie' AND lf."offerId" = s."id"
         LEFT JOIN users su ON su."id" = s."userId"
@@ -629,11 +669,12 @@ export function buildCareQueueView(
     });
 }
 
-/** ETag panelu: znaczniki a-m, glowny SELECT + guarded m (scope + user w haśle route).
+/** ETag panelu: znaczniki a-m, główny SELECT + guarded m (scope + user w haśle route).
  * Nadmiarowy (globalne maksy) — fałszywy 200 nieszkodliwy, brakujący 304 nie istnieje.
  * j/k: MAX(updatedAt) ofert — każda edycja (w tym zmiana opiekuna) unieważnia 304.
- * l: COUNT shares — nadanie/odebranie udostępnienia unieważnia 304
- * (udziałowiec widzi nowy wiersz w kolejce). */
+ * l: hash udostępnień odbiorcy — grant/revoke/edycja unieważnia 304. Hash
+ * jest liczony dla jednego użytkownika, więc nie skanuje udostępnień całej
+ * organizacji i wykrywa także podmianę wiersza bez zmiany jego liczby. */
 export async function getCareEtagInput(
     db: QueryRawDb,
     userId: string
@@ -651,11 +692,8 @@ export async function getCareEtagInput(
             (SELECT MAX("updatedAt") FROM "care_sla_scopes") AS "i",
             (SELECT MAX("updatedAt") FROM "offers_rel") AS "j",
             (SELECT MAX("updatedAt") FROM "offers_studnie_rel") AS "k",
-            -- COUNT jako TEXT: sterownik zwraca BigInt/number, a JSON.stringify
-            -- w haśle ETag (care.ts) rzuca na BigInt — TEXT zawsze string.
-            -- Para COUNT + MAX(rowid): sam COUNT aliasuje swap grant+revoke
-            -- (netto 0 → fałszywy 304); rowid rośnie z każdym INSERTem.
-            (SELECT CAST(COUNT(*) AS TEXT) || '|' || COALESCE(CAST(MAX(rowid) AS TEXT), '0') FROM "document_shares") AS "l"`
+            (SELECT md5(COALESCE(string_agg(to_jsonb(ds)::text, E'\\n' ORDER BY ds."id"), ''))
+                FROM "document_shares" ds WHERE ds."sharedWithUserId" = ${userId}) AS "l"`
     )) as Array<Record<string, string | null>>;
     const r = rows[0] ?? {};
     // R3: marker m = MAX(updatedAt) follow-upow - edycja wpisu w miejscu
@@ -892,7 +930,7 @@ export async function ensureSlaConfigRow(
         Prisma.sql`SELECT "scopeType", "scopeId", "firstContactH", "staleD", "escalationH" FROM "care_sla_scopes"`
     );
     let scopedRepaired = 0;
-    // Sekwencyjnie: równoległe zapisy do SQLite = SQLITE_BUSY.
+    // Sekwencyjnie: ogranicza contention przy równoległych zapisach do PostgreSQL.
     for (const row of scopedRows) {
         const fixes = slaFieldFixes(row);
         if (fixes.length === 0) continue;
@@ -1192,11 +1230,12 @@ function insertMissingSql(
     forCount: boolean
 ): Prisma.Sql {
     const returning = forCount ? Prisma.sql` RETURNING "id"` : Prisma.empty;
-    return Prisma.sql`INSERT OR IGNORE INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt")
-SELECT lower(hex(randomblob(16))), ${uid}, c."offerKind", c."offerId", c."ntype", NULL, ${nowIso}
+    return Prisma.sql`INSERT INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt")
+SELECT gen_random_uuid()::text, ${uid}, c."offerKind", c."offerId", c."ntype", NULL, ${nowIso}
 FROM (${cand}) AS c
 WHERE c."ntype" IS NOT NULL
-AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} AND n."offerKind" = c."offerKind" AND n."offerId" = c."offerId" AND n."type" = c."ntype" AND n."readAt" IS NULL)${returning}`;
+AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} AND n."offerKind" = c."offerKind" AND n."offerId" = c."offerId" AND n."type" = c."ntype" AND n."readAt" IS NULL)
+ON CONFLICT ("userId", "offerKind", "offerId", "type") WHERE "readAt" IS NULL DO NOTHING${returning}`;
 }
 
 /** UPDATE zliczany: RETURNING, potem $executeRaw (changes), potem 0.
@@ -1385,15 +1424,12 @@ export async function listCareNotifications(
         COALESCE(NULLIF(o."clientNumber", ''), NULLIF(s."clientNumber", '')) AS "clientNumber",
         COALESCE(o."offer_number", s."offer_number") AS "number",
         COALESCE(NULLIF(TRIM(COALESCE(ou."firstName", '') || ' ' || COALESCE(ou."lastName", '')), ''), ou."username", NULLIF(TRIM(COALESCE(su."firstName", '') || ' ' || COALESCE(su."lastName", '')), ''), su."username") AS "ownerName",
-        COALESCE(CAST(json_extract(o."data", '$.totalBrutto') AS REAL),
-            CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
-                (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
-                    FROM json_each(s."data", '$.wellsExport'))) AS REAL)) AS "value",
-        COALESCE(NULLIF(o."investName", ''), NULLIF(s."investName", ''), json_extract(o."data", '$.investName'), json_extract(s."data", '$.investName'), json_extract(o."data", '$.budowa'), json_extract(s."data", '$.budowa')) AS "investName",
-        COALESCE(json_extract(o."data", '$.investAddress'), json_extract(s."data", '$.investAddress')) AS "investAddress",
-        COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(s."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name'), json_extract(s."data", '$.clientContacts[0].name')) AS "contactPerson",
-        COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(s."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone",
-        COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(s."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email'), json_extract(s."data", '$.clientContacts[0].email')) AS "email"
+        COALESCE(${offerValueSql('o')}, ${offerValueSql('s')}) AS "value",
+        COALESCE(NULLIF(o."investName", ''), NULLIF(s."investName", ''), ${offerJsonText('o', 'investName')}, ${offerJsonText('s', 'investName')}, ${offerJsonText('o', 'budowa')}, ${offerJsonText('s', 'budowa')}) AS "investName",
+        COALESCE(${offerJsonText('o', 'investAddress')}, ${offerJsonText('s', 'investAddress')}) AS "investAddress",
+        COALESCE(${offerJsonText('o', 'contactPerson')}, ${offerJsonText('s', 'contactPerson')}, o."data"::jsonb #>> '{clientContacts,0,name}', s."data"::jsonb #>> '{clientContacts,0,name}') AS "contactPerson",
+        COALESCE(${offerJsonText('o', 'clientPhone')}, ${offerJsonText('s', 'clientPhone')}, o."data"::jsonb #>> '{clientContacts,0,phone}', s."data"::jsonb #>> '{clientContacts,0,phone}') AS "phone",
+        COALESCE(${offerJsonText('o', 'clientEmail')}, ${offerJsonText('s', 'clientEmail')}, o."data"::jsonb #>> '{clientContacts,0,email}', s."data"::jsonb #>> '{clientContacts,0,email}') AS "email"
         FROM "care_notifications" n
         LEFT JOIN offers_rel o ON n."offerKind" = 'rury' AND o."id" = n."offerId"
         LEFT JOIN offers_studnie_rel s ON n."offerKind" = 'studnie' AND s."id" = n."offerId"

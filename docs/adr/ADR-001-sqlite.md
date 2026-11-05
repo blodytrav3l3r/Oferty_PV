@@ -1,7 +1,9 @@
 # ADR-001: SQLite jako baza produkcyjna
 
-**Status:** Zaakceptowany  
-**Data:** 2026-06-20  
+**Status:** Historyczny — SQLite jest legacy; PostgreSQL został wskazany jako jedyny docelowy backend, a migracja implementacyjna jest w toku. Ten ADR zachowuje wyłącznie kontekst historyczny.
+
+**Data:** 2026-06-20
+
 **Autor:** Hermes Agent
 
 ## Kontekst

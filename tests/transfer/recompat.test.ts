@@ -4,7 +4,7 @@
  * dry-run przy targecie A → cel zmienia się na B → import musi wykryć
  * DATASET_FINGERPRINT_DIFFERS w świeżym raporcie. Stary kod robił re-compat
  * z target null (UNVERIFIED) i zmiany datasetu nie widział.
- * Prawdziwa per-worker SQLite, bez mocków (wzorzec roundTrip.test.ts).
+ * PostgreSQL per-worker, bez mocków (wzorzec roundTrip.test.ts).
  */
 import { describe, expect, it, beforeAll, afterAll, jest } from '@jest/globals';
 import crypto from 'crypto';

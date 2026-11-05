@@ -124,7 +124,8 @@ jest.mock('../src/prismaClient', () => ({
         pricelistItemStudnie: studnieDelegate,
         pricelistItemPrecoKonfig: konfigDelegate,
         pricelistItemPrecoKinety: kinetyDelegate,
-        pricelistItemPrecoZakresy: zakresyDelegate
+        pricelistItemPrecoZakresy: zakresyDelegate,
+        settings: { findUnique: jest.fn(async () => null) }
     }
 }));
 
@@ -284,13 +285,14 @@ describe('GET /api/pricelist-versions/:id/preview — kształt', () => {
         expect(sheetNames).not.toContain('PRECO_Kinety');
     });
 
-    test('studnie bez kwalifikującej się PRECO: false + null', async () => {
+    test('studnie bez historycznej PRECO używa bieżącej aktywnej PRECO jako fallbacku', async () => {
         const res = await request(app)
             .get('/api/pricelist-versions/studnie-nopreco/preview')
             .set(ADMIN);
         expect(res.status).toBe(200);
-        expect(res.body.precoIncluded).toBe(false);
-        expect(res.body.precoVersion).toBeNull();
+        expect(res.body.precoIncluded).toBe(true);
+        expect(res.body.precoVersion).toEqual({ id: 'preco-1', version: 'v1', seq: 1 });
+        expect(res.body.precoSource).toBe('ACTIVE_FALLBACK');
     });
 
     test('studnie: DRAFT PRECO nie jest referencją (D1)', async () => {
@@ -330,6 +332,7 @@ describe('GET /api/pricelist-versions/:id/preview — kształt', () => {
         expect(res.status).toBe(200);
         expect(res.body.precoIncluded).toBe(false);
         expect(res.body.precoVersion).toBeNull();
+        expect(res.body.precoSource).toBe('NONE');
     });
 
     test('preco: arkusze PRECO, pola preco* pominięte', async () => {

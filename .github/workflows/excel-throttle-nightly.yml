@@ -15,8 +15,22 @@ jobs:
         name: Excel throttle-x4 (parity + bench + golden, advisory)
         runs-on: ubuntu-latest
         timeout-minutes: 30
+        services:
+            postgres:
+                image: postgres:18-alpine
+                env:
+                    POSTGRES_USER: sok_test
+                    POSTGRES_PASSWORD: ci-only-sok-test
+                    POSTGRES_DB: sok_test
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U sok_test -d sok_test"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 12
         env:
-            DATABASE_URL: file:./test-throttle.sqlite?connection_limit=1&busy_timeout=30000
+            DATABASE_URL: postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test?schema=public
             TEST_ADMIN_PASSWORD: test-admin-pass
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
             PORT: 3000
@@ -35,8 +49,8 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
 
-            - name: Przygotuj testowa baze SQLite
-              run: npx prisma db push --skip-generate
+            - name: Apply PostgreSQL migrations
+              run: npx prisma migrate deploy
 
             - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
@@ -52,7 +66,7 @@ jobs:
             - name: Start serwera :3000 w tle
               run: |
                   npm run build
-                  PORT=3000 NODE_ENV=test DATABASE_URL=file:./test-throttle.sqlite?connection_limit=1&busy_timeout=30000 nohup node dist/server.js > excel-throttle-server.log 2>&1 &
+                  PORT=3000 NODE_ENV=test DATABASE_URL=postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test?schema=public nohup node dist/server.js > excel-throttle-server.log 2>&1 &
                   echo $! > /tmp/excel-throttle-server.pid
 
             - name: Czekaj na /health/ready (brak serwera = FAIL)

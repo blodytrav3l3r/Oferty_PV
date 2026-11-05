@@ -6,7 +6,7 @@
 
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
-import type { PricelistVersion } from '../../../generated/prisma';
+import type { PricelistVersion } from '../../../generated/prisma-postgres/client';
 import {
     PRICELIST_TYPES,
     RESOLVABLE_STATUSES,

@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-const src = path.resolve('generated/prisma');
-const dest = path.resolve('dist/generated/prisma');
+const src = path.resolve('generated/prisma-postgres');
+const dest = path.resolve('dist/generated/prisma-postgres');
 
 if (!fs.existsSync(src)) {
     console.warn(`[copy-prisma-client] skip — src missing: ${src} (run npx prisma generate first)`);

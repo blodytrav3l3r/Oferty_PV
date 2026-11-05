@@ -54,7 +54,7 @@ describe('shares helpers', () => {
 describe('roleFilter with shares', () => {
     test('buildRoleWhereConditionWithShares for admin is empty', async () => {
         const { buildRoleWhereConditionWithShares } = await import('../src/utils/roleFilter');
-        const { Prisma } = await import('../generated/prisma');
+        const { Prisma } = await import('../generated/prisma-postgres/client');
         const sql = buildRoleWhereConditionWithShares(
             { role: 'admin', id: 'a', subUsers: [] },
             'offer'

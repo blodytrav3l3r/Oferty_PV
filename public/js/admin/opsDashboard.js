@@ -208,7 +208,7 @@
                 'Readiness (DB)',
                 'niedostępna',
                 'ERROR',
-                'Baza nie odpowiada (SELECT 1 nie przeszedł). Sprawdź plik SQLite, dysk i backup.'
+                'Baza PostgreSQL nie odpowiada (SELECT 1 nie przeszedł). Sprawdź usługę i backup.'
             );
         }
         html += '</div>';
@@ -256,7 +256,7 @@
                     ' / ' +
                     esc(String((metrics.db && metrics.db.busy) || 0)),
                 (metrics.db && metrics.db.busy) > 0 ? 'WARNING' : 'OK',
-                'Zapytania DB vs blokady SQLITE_BUSY (konkurencja o SQLite). busy >0 = równoległe zapisy czekają — sprawdź WAL i obciążenie.'
+                'Zapytania DB i zgłoszone problemy z dostępnością bazy. busy >0 oznacza błąd zaklasyfikowany jako konflikt lub timeout.'
             );
             html += row(
                 'Błędy audytu',
@@ -266,12 +266,10 @@
             );
             if (metrics.storage) {
                 html += row(
-                    'Baza / WAL',
-                    esc(fmtBytes(metrics.storage.dbBytes)) +
-                        ' / ' +
-                        esc(fmtBytes(metrics.storage.walBytes)),
-                    'OK',
-                    'Rozmiar pliku bazy i dziennika WAL. Szybki wzrost WAL = niezamknięte transakcje lub duży import.'
+                    'Rozmiar bazy PostgreSQL',
+                    esc(fmtBytes(metrics.storage.dbBytes)),
+                    'UNKNOWN',
+                    'Rozmiar PostgreSQL nie jest zbierany przez endpoint metryk. Użyj pg_database_size w monitoringu bazy.'
                 );
                 html += row(
                     'Backupy',

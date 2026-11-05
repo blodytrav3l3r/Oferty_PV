@@ -1,5 +1,5 @@
 /**
- * B1: kolejka FTS5 w tle (in-process, single-process per ADR-012).
+ * B1: kolejka zgodności API indeksu wyszukiwania PostgreSQL.
  *
  * DOWÓD BEZPIECZEŃSTWA (nie założenie):
  * - sync FTS dzieje się PO commicie Tx (ruryCrud:524-528, studnieCrud:1203-1206)
@@ -124,7 +124,7 @@ export async function reconcileFts5(maxRounds = 5): Promise<number> {
         for (const m of status.missingIds) {
             const table = m.type === 'rury' ? 'offers_rel' : 'offers_studnie_rel';
             const rows = (await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
-                `SELECT id, offer_number, clientName, investName, clientNumber FROM "${table}" WHERE id = ?`,
+                `SELECT "id", "offer_number", "clientName", "investName", "clientNumber" FROM "${table}" WHERE "id" = $1`,
                 m.id
             )) as Array<Record<string, unknown>>;
             const row = rows[0];

@@ -1,149 +1,156 @@
-/**
- * P1.3: regresja guardów restore-db.js (F-001).
- * Import NIE uruchamia restore (guard require.main w skrypcie).
- * Wszystkie pliki w os.tmpdir — zero dotykania prod DB.
- */
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { execFileSync } from 'child_process';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const restoreDb = require('../scripts/restore-db.js');
-const {
-    isSqliteFile,
-    verifyChecksum,
-    integrityCheck,
-    parseCliArgs,
-    resolveTarget,
-    isLiveDbPath,
-    liveDbPath
-} = restoreDb;
 
-function tmpFile(name: string): string {
-    return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'p13-')), name);
+function temporaryFile(name: string): string {
+    return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pg-restore-')), name);
 }
 
-function makeDb(): string {
-    const p = tmpFile('g.sqlite');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { DatabaseSync } = require('node:sqlite');
-    const db = new DatabaseSync(p);
-    db.exec('CREATE TABLE t(id TEXT PRIMARY KEY, v TEXT)');
-    db.prepare('INSERT INTO t VALUES (?, ?)').run('a', 'b');
-    db.close();
-    return p;
-}
-
-describe('restore guards (P1.3 / F-001)', () => {
-    test('isSqliteFile: prawdziwy sqlite → true, tekst → false, brak pliku → false', () => {
-        const db = makeDb();
-        expect(isSqliteFile(db)).toBe(true);
-        const txt = tmpFile('t.txt');
-        fs.writeFileSync(txt, 'nie baza', 'utf8');
-        expect(isSqliteFile(txt)).toBe(false);
-        expect(isSqliteFile(txt + '.missing')).toBe(false);
+describe('PostgreSQL restore guards', () => {
+    test('requires a valid explicit PostgreSQL URL', () => {
+        expect(restoreDb.parseDatabaseUrl('file:./app.sqlite')).toBeNull();
+        expect(restoreDb.parseDatabaseUrl('postgresql:///sok_test')).toBeNull();
+        expect(
+            restoreDb.parseDatabaseUrl('postgresql://user:password@localhost/sok_test')
+        ).not.toBeNull();
     });
 
-    test('integrityCheck: spójna baza → true', () => {
-        expect(integrityCheck(makeDb())).toBe(true);
+    test('same database is live even if URL alias or password differs', () => {
+        expect(
+            restoreDb.sameDatabase(
+                'postgres://user:one@localhost:5432/sok?schema=public',
+                'postgresql://user:two@localhost:5432/sok?schema=other'
+            )
+        ).toBe(true);
     });
 
-    test('verifyChecksum: zgodny sidecar → true, podmieniony plik → false', () => {
-        const db = makeDb();
-        const hash = crypto.createHash('sha256').update(fs.readFileSync(db)).digest('hex');
-        fs.writeFileSync(db + '.sha256', `${hash}  g.sqlite\n`, 'utf8');
-        expect(verifyChecksum(db)).toBe(true);
-        // podmiana 1 bajta (jak w E2E p13-corrupt)
-        const fd = fs.openSync(db, 'r+');
-        const b = Buffer.alloc(1);
-        fs.readSync(fd, b, 0, 1, 100);
-        b[0] ^= 0xff;
-        fs.writeSync(fd, b, 0, 1, 100);
-        fs.closeSync(fd);
-        expect(verifyChecksum(db)).toBe(false);
+    test('requires --live and the migration role for live restore', () => {
+        const runtimeUrl = 'postgresql://user:secret@localhost:5432/sok_test';
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: 'postgres://user:secret@localhost:5432/sok_test',
+                live: false,
+                runtimeUrl
+            })
+        ).toEqual({ ok: false, code: 'LIVE_REFUSED' });
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: 'postgresql://user:secret@localhost:5432/isolated_test',
+                live: true,
+                runtimeUrl
+            })
+        ).toEqual({ ok: false, code: 'LIVE_TARGET_MISMATCH' });
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: 'postgresql://user:secret@localhost:5432/sok_test',
+                live: true,
+                runtimeUrl
+            })
+        ).toEqual({ ok: false, code: 'LIVE_ROLE_REQUIRED' });
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: 'postgresql://user:secret@localhost:5432/isolated_test',
+                live: true,
+                runtimeUrl,
+                migrationUrl: 'postgresql://migrator:secret@localhost:5432/sok_test'
+            })
+        ).toEqual({ ok: false, code: 'LIVE_TARGET_MISMATCH' });
     });
 
-    test('verifyChecksum: brak sidecara (legacy) → true z ostrzeżeniem', () => {
-        expect(verifyChecksum(makeDb())).toBe(true);
+    test('accepts only the separate migration role URL for live restore', () => {
+        const runtimeUrl =
+            'postgresql://app:secret@db.example.com:5432/sok_prod?sslmode=verify-full';
+        const migrationUrl =
+            'postgresql://migrator:secret@db.example.com:5432/sok_prod?sslmode=verify-full';
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: migrationUrl,
+                live: false,
+                runtimeUrl:
+                    'postgresql://app:secret@db.example.com:5432/sok_prod?sslmode=verify-full',
+                migrationUrl
+            })
+        ).toEqual({ ok: false, code: 'LIVE_REFUSED' });
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: migrationUrl,
+                live: true,
+                runtimeUrl,
+                migrationUrl
+            })
+        ).toMatchObject({ ok: true, live: true });
+        expect(restoreDb.sameDatabaseRole(runtimeUrl, migrationUrl)).toBe(false);
+        expect(
+            restoreDb.resolveTarget({ targetArg: runtimeUrl, live: true, runtimeUrl, migrationUrl })
+        ).toEqual({ ok: false, code: 'LIVE_ROLE_REQUIRED' });
     });
-});
 
-describe('restore target guard (P1: brak silent fallback do live DB)', () => {
-    test('resolveTarget: brak --target i brak env → NO_TARGET (żadnego fallback)', () => {
-        expect(resolveTarget({ targetArg: null, envTarget: undefined, live: false })).toEqual({
-            ok: false,
-            code: 'NO_TARGET'
+    test('refuses remote or non-test restore targets without the explicit runtime GO', () => {
+        expect(
+            restoreDb.resolveTarget({
+                targetArg:
+                    'postgresql://user:secret@db.example.com:5432/other_prod?sslmode=verify-full',
+                live: false,
+                runtimeUrl: 'postgresql://user:secret@localhost:5432/sok_test'
+            })
+        ).toEqual({ ok: false, code: 'NON_TEST_TARGET_REFUSED' });
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: 'postgresql://user:secret@localhost:5432/sok_dev',
+                live: false,
+                runtimeUrl: 'postgresql://user:secret@localhost:5432/sok_test'
+            })
+        ).toEqual({ ok: false, code: 'NON_TEST_TARGET_REFUSED' });
+    });
+
+    test('requires a sidecar and verifies its SHA-256 asynchronously', async () => {
+        const archive = temporaryFile('backup.dump');
+        fs.writeFileSync(archive, 'synthetic custom archive fixture');
+        expect(await restoreDb.verifyChecksum(archive)).toBe(false);
+        const digest = crypto.createHash('sha256').update(fs.readFileSync(archive)).digest('hex');
+        fs.writeFileSync(`${archive}.sha256`, `${digest}  backup.dump\n`);
+        expect(await restoreDb.verifyChecksum(archive)).toBe(true);
+        fs.appendFileSync(archive, 'tamper');
+        expect(await restoreDb.verifyChecksum(archive)).toBe(false);
+    });
+
+    test('parses target URLs without exposing them as a fallback', () => {
+        expect(
+            restoreDb.resolveTarget({ targetArg: null, envTarget: undefined, live: false })
+        ).toEqual({ ok: false, code: 'NO_TARGET' });
+        expect(
+            restoreDb.resolveTarget({
+                targetArg: 'file:./restore.sqlite',
+                envTarget: undefined,
+                live: false
+            })
+        ).toEqual({ ok: false, code: 'INVALID_TARGET' });
+    });
+
+    test('rejects URL target arguments to prevent process-list disclosure', () => {
+        expect(() =>
+            restoreDb.parseCliArgs([
+                'node',
+                'restore-db.js',
+                'backup.dump',
+                '--target',
+                'postgresql://user:secret@localhost/target_test'
+            ])
+        ).toThrow(/RESTORE_DB_URL/);
+    });
+
+    test('parses PostgreSQL restore CLI arguments without a target URL', () => {
+        expect(
+            restoreDb.parseCliArgs(['node', 'restore-db.js', 'backup.dump', '--live', '--yes'])
+        ).toEqual({
+            yes: true,
+            live: true,
+            targetArg: null,
+            sourceArg: 'backup.dump'
         });
     });
-
-    test('resolveTarget: cel live bez --live → LIVE_REFUSED', () => {
-        const r = resolveTarget({ targetArg: liveDbPath(), envTarget: undefined, live: false });
-        expect(r.ok).toBe(false);
-        expect(r.code).toBe('LIVE_REFUSED');
-    });
-
-    test('resolveTarget: cel live z --live → dozwolony, oznaczony live', () => {
-        const r = resolveTarget({ targetArg: liveDbPath(), envTarget: undefined, live: true });
-        expect(r.ok).toBe(true);
-        expect(r.live).toBe(true);
-    });
-
-    test('resolveTarget: jawny cel poza live → dozwolony, nie live', () => {
-        const t = tmpFile('cel.sqlite');
-        const r = resolveTarget({ targetArg: t, envTarget: undefined, live: false });
-        expect(r.ok).toBe(true);
-        expect(r.live).toBe(false);
-    });
-
-    test('isLiveDbPath: wykrywa live i odrzuca inne ścieżki', () => {
-        expect(isLiveDbPath(liveDbPath())).toBe(true);
-        expect(isLiveDbPath(tmpFile('inny.sqlite'))).toBe(false);
-    });
-
-    test('parseCliArgs: parsuje --target i --live, źródło to pierwszy pozycyjny', () => {
-        const p = parseCliArgs([
-            'node',
-            'restore-db.js',
-            'b.sqlite',
-            '--target',
-            'c.sqlite',
-            '--live'
-        ]);
-        expect(p).toEqual({ yes: false, live: true, targetArg: 'c.sqlite', sourceArg: 'b.sqlite' });
-    });
-
-    // Dowód bez czytania całości: odmowa następuje PRZED jakimkolwiek
-    // copyFileSync, więc rozmiar+mtime wystarczą (hash 1,3 GB live DB
-    // przekraczał timeout pod obciążeniem workerów — flaky fail hooka).
-    test('CLI bez celu NIE rusza live DB (fail-closed, exit != 0)', async () => {
-        const script = path.join(__dirname, '..', 'scripts', 'restore-db.js');
-        // Hermetyczność CI: live DB może nie istnieć (runner używa test-ci.sqlite).
-        // Brak pliku też dowodzi fail-closed; porównanie tylko gdy istnieje.
-        const statOf = (p: string): string | null => {
-            try {
-                const s = fs.statSync(p);
-                return `${s.size}:${s.mtimeMs}`;
-            } catch {
-                return null;
-            }
-        };
-        const before = statOf(liveDbPath());
-        const env = { ...process.env };
-        delete env.RESTORE_DB_PATH;
-        let code = 0;
-        let stderr = '';
-        try {
-            execFileSync(process.execPath, [script, makeDb()], { encoding: 'utf8', env });
-        } catch (e) {
-            code = (e as { status?: number }).status ?? 1;
-            stderr = String((e as { stderr?: unknown }).stderr ?? (e as Error).message);
-        }
-        expect(code).not.toBe(0);
-        expect(stderr).toMatch(/jawnego celu/i);
-        if (before !== null) {
-            expect(statOf(liveDbPath())).toBe(before);
-        }
-    }, 60000);
 });

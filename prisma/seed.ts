@@ -1,7 +1,7 @@
-import { PrismaClient } from '../generated/prisma';
+import prisma from '../src/prismaClient';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../src/config/mlConstants';
 
-const prisma = new PrismaClient();
+const SEED_LOCK_NAMESPACE = 1_987_041_106;
 
 /**
  * Seed po etapie 2 nie zapisuje cennika: tabele LIVE i `*_Default` nie istnieją,
@@ -15,6 +15,7 @@ async function main() {
     console.log('Seed: startowy model ML...');
 
     const existingAiModel = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(${SEED_LOCK_NAMESPACE}, 1)::text`;
         const count = await tx.aiModel.count();
         if (count > 0) return count;
 

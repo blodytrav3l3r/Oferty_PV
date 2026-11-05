@@ -33,6 +33,11 @@ import {
 import { recordDbBusy } from '../../utils/metrics';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import { resolveActive, resolveActiveForStamp } from '../../services/pricelistVersionService';
+import {
+    decimalMoneyValueToNumber,
+    decimalMoneyRowsToNumbers
+} from '../../services/pricelist/moneySerialization';
+import { roundMoney } from '../../utils/money';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -72,9 +77,12 @@ router.get('/', requireAuth, async (req, res) => {
         ]);
 
         const offerIds = offers.map((o) => o.id);
-        const allItemsRaw = await prisma.offer_items_rel.findMany({
-            where: { offerId: { in: offerIds } }
-        });
+        const allItemsRaw = decimalMoneyRowsToNumbers(
+            await prisma.offer_items_rel.findMany({
+                where: { offerId: { in: offerIds } }
+            }),
+            ['price']
+        );
         const itemsByOffer = new Map<string, typeof allItemsRaw>();
         for (const item of allItemsRaw) {
             if (!item.offerId) continue;
@@ -109,7 +117,7 @@ router.get('/', requireAuth, async (req, res) => {
                 investName: offer.investName,
                 clientNumber: offer.clientNumber,
                 items: items,
-                transportCost: offer.transportCost || 0,
+                transportCost: decimalMoneyValueToNumber(offer.transportCost) ?? 0,
                 // F3 freeze: wersja cennika z chwili utworzenia (null = legacy).
                 pricelistVersionId: offer.pricelistVersionId ?? null,
                 // P0-D2: baza optimistic lockingu (round-trip bez zmian frontu).
@@ -378,12 +386,12 @@ router.post(
                     const snapshot = {
                         updatedAt: old.updatedAt || old.createdAt,
                         state: old.state,
-                        transportCost: old.transportCost,
+                        transportCost: decimalMoneyValueToNumber(old.transportCost),
                         items: oldItems.map((i) => ({
                             productId: i.productId,
                             quantity: i.quantity,
                             discount: i.discount,
-                            price: i.price
+                            price: decimalMoneyValueToNumber(i.price)
                         }))
                     };
                     newHistory.unshift(snapshot);
@@ -537,10 +545,11 @@ router.post(
                                     productId: item.productId,
                                     quantity: item.quantity || 0,
                                     discount: item.discount || 0,
-                                    price:
+                                    price: roundMoney(
                                         item.unitPrice !== undefined
                                             ? item.unitPrice
                                             : item.price || 0
+                                    )
                                 }))
                             });
                         }
@@ -655,7 +664,10 @@ router.put(
                     })) || [];
                 for (const d of existingDocs) {
                     putVersions.set(d.id, d.version ?? 1);
-                    putOldDocs.set(d.id, d);
+                    putOldDocs.set(d.id, {
+                        ...d,
+                        transportCost: decimalMoneyValueToNumber(d.transportCost)
+                    });
                 }
                 for (const d of existingDocs) {
                     if (d.userId) putUserIds.set(d.id, d.userId);
@@ -671,7 +683,7 @@ router.put(
                             price: true
                         }
                     })) || [];
-                for (const it of oldItemRows) {
+                for (const it of decimalMoneyRowsToNumbers(oldItemRows, ['price'])) {
                     if (!it.offerId) continue;
                     const list = putOldItems.get(it.offerId) || [];
                     list.push(it);
@@ -793,7 +805,7 @@ router.put(
                             productId: i.productId,
                             quantity: i.quantity,
                             discount: i.discount,
-                            price: i.price
+                            price: decimalMoneyValueToNumber(i.price)
                         }))
                     };
                     historyArr.unshift(auditOld);
@@ -939,10 +951,11 @@ router.put(
                                     productId: item.productId,
                                     quantity: item.quantity || 0,
                                     discount: item.discount || 0,
-                                    price:
+                                    price: roundMoney(
                                         item.unitPrice !== undefined
                                             ? item.unitPrice
                                             : item.price || 0
+                                    )
                                 }))
                             });
                         }
@@ -1058,7 +1071,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                     clientNumber: dupClientNumber,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
-                    transportCost: source.transportCost ?? 0,
+                    transportCost: roundMoney(source.transportCost),
                     history: '[]',
                     data: source.data || '{}',
                     // F3 freeze: duplikat dziedziczy wersję źródła (snapshot w JSON).
@@ -1075,7 +1088,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                         productId: item.productId,
                         quantity: item.quantity,
                         discount: item.discount,
-                        price: item.price
+                        price: roundMoney(item.price)
                     }))
                 });
             }

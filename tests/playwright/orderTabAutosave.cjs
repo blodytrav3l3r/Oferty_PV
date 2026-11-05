@@ -26,6 +26,7 @@
 
 const { execFileSync, spawn } = require('child_process');
 const { join, resolve } = require('path');
+const { createIsolatedPostgresSchema } = require('./isolatedPostgres.cjs');
 
 const ROOT = resolve(__dirname, '..', '..');
 const SPAWN = process.argv.includes('--spawn');
@@ -70,41 +71,14 @@ const CONTACT_A = { name: 'Jan Kontaktowy', phone: '600100200', email: 'jan@exam
 const CONTACT_B = { name: 'Jan Kontaktowy', phone: '600100201', email: 'jan@example.com' };
 const TARGET_HASH = '#/rury';
 
-/* ── Spawn serwera (izolowany, port 3177, e2e.sqlite) ── */
+/* ── Spawn serwera (izolowany schemat PostgreSQL, port 3177) ── */
 async function startServer() {
-    const { rmSync, existsSync, symlinkSync, mkdirSync } = require('fs');
-    const { delimiter } = require('path');
-    const dbFile = join(ROOT, 'data', 'e2e.sqlite');
-    const dbUrl = 'file:' + dbFile.replace(/\\/g, '/');
-    mkdirSync(join(ROOT, 'data'), { recursive: true });
-    for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
-        if (existsSync(f)) rmSync(f);
-    }
+    const { existsSync, symlinkSync } = require('fs');
+    const { databaseUrl: dbUrl } = await createIsolatedPostgresSchema('order_tab_autosave');
     const distGen = join(ROOT, 'dist', 'generated');
     if (!existsSync(distGen)) {
         symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
     }
-    const withBin = (extra) => ({
-        ...process.env,
-        PATH: join(ROOT, 'node_modules', '.bin') + delimiter + (process.env.PATH || ''),
-        ...extra
-    });
-    execFileSync(
-        process.execPath,
-        [
-            require.resolve('prisma/build/index.js'),
-            'db',
-            'push',
-            '--skip-generate',
-            '--accept-data-loss'
-        ],
-        { cwd: ROOT, env: withBin({ DATABASE_URL: dbUrl }), stdio: 'pipe' }
-    );
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
-        cwd: ROOT,
-        env: withBin({ DATABASE_URL: dbUrl }),
-        stdio: 'pipe'
-    });
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
         cwd: ROOT,
         env: {

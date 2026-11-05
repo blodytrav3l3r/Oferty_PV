@@ -40,6 +40,7 @@ jest.mock('../../src/utils/searchCache', () => ({
 }));
 
 jest.mock('../../src/utils/productionSearchUtils', () => ({
+    ...jest.requireActual('../../src/utils/productionSearchUtils'),
     mapProductionOrderRow: (o: any) => o
 }));
 

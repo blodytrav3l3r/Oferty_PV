@@ -19,7 +19,7 @@ import { ensureAdminExists } from './middleware/auth';
 import { requireAuth, requireAdmin } from './middleware/auth';
 import { getMetricsSnapshot } from './utils/metrics';
 import { getPdfMetrics } from './services/pdf/pdfEngine';
-import { getFtsQueueMetrics, reconcileFts5 } from './utils/fts5Queue';
+import { getFtsQueueMetrics } from './utils/fts5Queue';
 import healthPdfRouter from './routes/healthPdf';
 import { isBackupStale, readBackupMarker, MAX_BACKUP_AGE_MS } from '../scripts/backup';
 import {
@@ -390,12 +390,11 @@ const apiLimiter = createRateLimiter({
 
 /* ===== ŚCIEŻKI (ROUTES) — BE-01: montowanie w src/mountRoutes.ts ===== */
 import { mountRoutes } from './mountRoutes';
-import { initDatabasePragmas, ensureDatabaseIndexes } from './initDatabase';
 
 mountRoutes(app, apiLimiter);
 
 /**
- * Inicjalizacja aplikacji — administracja i PRAGMA user_version.
+ * Inicjalizacja aplikacji — wymagane schematy są nakładane przez migracje.
  */
 export async function initApp(): Promise<void> {
     // Fail-fast: jeśli baza jest niedostępna (np. brak katalogu data/ na świeżej
@@ -406,14 +405,11 @@ export async function initApp(): Promise<void> {
     } catch (err) {
         logger.error(
             'Server',
-            'Nie można otworzyć bazy danych. Sprawdź, czy katalog data/ istnieje i ma uprawnienia do zapisu (uruchom start.bat):',
+            'Nie można połączyć się z PostgreSQL. Sprawdź DATABASE_URL, dostępność serwera i uprawnienia roli aplikacji.',
             err instanceof Error ? err.message : String(err)
         );
         throw err;
     }
-
-    // WAL + synchronous=NORMAL + busy_timeout — BE-01: szczegóły w src/initDatabase.ts
-    await initDatabasePragmas();
 
     // Admin — błąd nie może crashować serwera (ts-node-dev --respawn pętliłby się w nieskończoność).
     try {
@@ -450,19 +446,6 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Auto-heal schematu (indeksy, shares, FTS5) — BE-01: szczegóły w src/initDatabase.ts
-    await ensureDatabaseIndexes();
-    // B1: reconcile FTS po restarcie (utracona kolejka in-memory) — bounded,
-    // nie blokuje startu przy dużej rozbieżności (max 5 rund × 20).
-    try {
-        await reconcileFts5();
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Reconcile FTS nie powiódł się (search działa na LIKE-fallback):',
-            err instanceof Error ? err.message : String(err)
-        );
-    }
     // Model ML — auto-heal: upewnij się, że w bazie istnieje aktywny model ML dla bieżącej wersji cech
     try {
         await modelRegistry.ensureStarterModelExists();
@@ -476,7 +459,7 @@ export async function initApp(): Promise<void> {
 
     // Feature flag import/export — domyslnie wlaczona. Migracja
     // 20260705000000_feature_import_export dziala tylko na instalacjach z historia
-    // migracji; instalacje z 'prisma db push' nie maja tej flagi w settings,
+    // migracji; starsze instalacje mogły nie mieć tej flagi w settings,
     // wiec auto-heal upsertem (bez nadpisywania wartosci zmienionej przez uzytkownika).
     try {
         await prisma.settings.upsert({
@@ -508,9 +491,7 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Auto-heal: tabela shares + FTS5 — BE-01: w ensureDatabaseIndexes() powyżej.
-    // Czyszczenie starych logów audytowych (sekwencyjnie — unikamy równoległych zapisów do SQLite;
-    // funkcja sama łapie błędy wewnątrz, więc nie zablokuje startu)
+    // Czyszczenie starych logów audytowych; helper obsługuje własne błędy.
     await cleanupAuditLogs();
 
     // Retencja rejestru modeli ML — przycięcie starych modeli do polityki z ML_CONFIG

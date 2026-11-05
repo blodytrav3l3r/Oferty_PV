@@ -24,8 +24,22 @@ jobs:
         name: Load — sustained (~15 min, ręcznie/nightly)
         runs-on: ubuntu-latest
         timeout-minutes: 30
+        services:
+            postgres:
+                image: postgres:18-alpine
+                env:
+                    POSTGRES_USER: sok_test
+                    POSTGRES_PASSWORD: ci-only-sok-test
+                    POSTGRES_DB: sok_test
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U sok_test -d sok_test"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 12
         env:
-            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            DATABASE_URL: 'postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test?schema=public'
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
             PORT: '3000'
         steps:
@@ -43,8 +57,8 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
 
-            - name: Przygotuj testową bazę SQLite
-              run: npx prisma db push --skip-generate
+            - name: Apply PostgreSQL migrations
+              run: npx prisma migrate deploy
 
             - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed

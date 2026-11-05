@@ -2,8 +2,9 @@
  * Debug v2 — dlaczego brak iframe: URL po loadzie, auth/me status,
  * stan #spa-main, bezpośrednie studnie.html poza SPA.
  */
-const { execFileSync, spawn } = require('child_process');
+const { spawn } = require('child_process');
 const { join, resolve } = require('path');
+const { createIsolatedPostgresSchema } = require('./isolatedPostgres.cjs');
 const ROOT = resolve(__dirname, '..', '..');
 const BASE = 'http://localhost:3177';
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
@@ -31,7 +32,7 @@ function resolvePlaywright() {
     throw new Error('playwright not found');
 }
 const { chromium } = resolvePlaywright();
-const { rmSync, existsSync, symlinkSync } = require('fs');
+const { existsSync, symlinkSync } = require('fs');
 function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
 }
@@ -46,11 +47,7 @@ async function pollHealth(url, tries = 30) {
     return false;
 }
 (async () => {
-    const dbUrl = 'file:./data/e2e.sqlite';
-    const dbFile = join(ROOT, 'prisma', 'data', 'e2e.sqlite');
-    for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
-        if (existsSync(f)) rmSync(f);
-    }
+    const { databaseUrl: dbUrl } = await createIsolatedPostgresSchema('debug_empty');
     const distGen = join(ROOT, 'dist', 'generated');
     if (!existsSync(distGen)) symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
     const env = {
@@ -58,22 +55,6 @@ async function pollHealth(url, tries = 30) {
         DATABASE_URL: dbUrl,
         PATH: join(ROOT, 'node_modules', '.bin') + ';' + process.env.PATH
     };
-    execFileSync(
-        process.execPath,
-        [
-            require.resolve('prisma/build/index.js'),
-            'db',
-            'push',
-            '--skip-generate',
-            '--accept-data-loss'
-        ],
-        { cwd: ROOT, env, stdio: 'pipe' }
-    );
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
-        cwd: ROOT,
-        env,
-        stdio: 'pipe'
-    });
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
         cwd: ROOT,
         env: {

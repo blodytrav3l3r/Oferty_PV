@@ -32,7 +32,8 @@ import {
     getSession,
     SESSION_MAX_AGE_MS,
     ensureAdminExists,
-    hashToken
+    hashToken,
+    isUnsafeDefaultAdminPassword
 } from '../src/middleware/auth';
 
 // ─── getSession ─────────────────────────────────────────────────────
@@ -325,4 +326,17 @@ describe('ensureAdminExists', () => {
             expect(mockPrisma.users.create).not.toHaveBeenCalled();
         }
     );
+});
+
+describe('isUnsafeDefaultAdminPassword', () => {
+    it.each(['anim123456', 'CHANGE_ME_PLEASE', ''])(
+        'rejects a default or missing admin password',
+        (password) => {
+            expect(isUnsafeDefaultAdminPassword(password)).toBe(true);
+        }
+    );
+
+    it('accepts a generated administrator password', () => {
+        expect(isUnsafeDefaultAdminPassword('a'.repeat(48))).toBe(false);
+    });
 });

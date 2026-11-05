@@ -10,6 +10,8 @@ import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { searchCache } from '../../utils/searchCache';
 import { encodeAuditPayload } from '../../services/auditPayload';
+import { roundMoney } from '../../utils/money';
+import { decimalMoneyRowsToNumbers } from '../../services/pricelist/moneySerialization';
 
 const router = express.Router();
 
@@ -62,7 +64,7 @@ const followUpFields = {
     outcome: z.enum(['OPEN', 'WON', 'LOST_COMPETITION', 'LOST_OTHER', 'ABANDONED']).default('OPEN'),
     loseReason: z.string().max(200).nullish(),
     competitor: z.string().max(200).nullish(),
-    competitorPrice: z.number().finite().min(0).nullish()
+    competitorPrice: z.number().finite().min(0).transform(roundMoney).nullish()
 };
 
 // P2 twarde domknięcie: LOST_* wymaga powodu (miękkie z P0/P1 zaostrzone).
@@ -449,7 +451,7 @@ router.get('/:kind/:id/followups', requireAuth, READ_LIMITER, async (req, res) =
             where: { offerKind: kind, offerId: id },
             orderBy: [{ contactedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }]
         });
-        return res.json({ ok: true, items });
+        return res.json({ ok: true, items: decimalMoneyRowsToNumbers(items, ['competitorPrice']) });
     } catch (e) {
         if (mapPrismaError(res, e)) return;
         logger.error('FollowUps', 'Błąd odczytu kontaktów', {

@@ -97,7 +97,7 @@ export async function logAudit(
         const oldDataStr = encodeAuditPayload(oldData);
         const newDataStr = encodeAuditPayload(newData);
         await db.$executeRaw`
-            INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
+            INSERT INTO "audit_logs" ("id", "entityType", "entityId", "userId", "action", "oldData", "newData", "createdAt")
             VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, ${action}, ${oldDataStr}, ${newDataStr}, ${now})
         `;
     } catch (e: unknown) {
@@ -137,9 +137,9 @@ async function logUpdateWithDebounce(
 
     // Użyj raw query dla find (obsługa błędnych dat w bazie)
     const recentRows = await db.$queryRaw<Array<{ id: string; newData: string | null }>>`
-        SELECT id, newData FROM audit_logs WHERE entityType = ${entityType} AND entityId = ${entityId}
-        AND userId = ${userId} AND action = 'update' AND createdAt > ${cutoff}
-        ORDER BY createdAt DESC LIMIT 1
+        SELECT "id", "newData" FROM "audit_logs" WHERE "entityType" = ${entityType} AND "entityId" = ${entityId}
+        AND "userId" = ${userId} AND "action" = 'update' AND "createdAt" > ${cutoff}
+        ORDER BY "createdAt" DESC LIMIT 1
     `;
     const recent = recentRows[0];
 
@@ -162,7 +162,7 @@ async function logUpdateWithDebounce(
         }
         const newDataStr = encodeAuditPayload({ ...merged, ...diff.changed, _diffMode: true });
         await db.$executeRaw`
-            UPDATE audit_logs SET newData = ${newDataStr}, createdAt = ${now} WHERE id = ${recent.id}
+            UPDATE "audit_logs" SET "newData" = ${newDataStr}, "createdAt" = ${now} WHERE "id" = ${recent.id}
         `;
         return;
     }
@@ -172,7 +172,7 @@ async function logUpdateWithDebounce(
     const auditId = generateAuditId();
     const oldDataStr = encodeAuditPayload({ ...diff.old, _diffMode: true });
     await db.$executeRaw`
-        INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
+        INSERT INTO "audit_logs" ("id", "entityType", "entityId", "userId", "action", "oldData", "newData", "createdAt")
         VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, 'update', ${oldDataStr}, ${newDataStr}, ${now})
     `;
 }

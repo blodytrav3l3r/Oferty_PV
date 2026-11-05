@@ -1,6 +1,6 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.56.3  
+**Wersja:** 1.56.4  
 **Ostatnia aktualizacja:** 2026-09-30
 
 > Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
@@ -195,9 +195,13 @@ fragmentów z ikonami Lucide wywoływana jest inicjalizacja `lucide.createIcons(
 
 ## 6. Ochrona przed SQL Injection
 
-- **Prisma ORM** automatycznie parametryzuje zapytania SQL
-- Wszystkie zapytania do bazy przechodzą przez Prisma Client
-- Jedyny wyjątek: `VACUUM INTO` w backupie — ale ścieżka jest kontrolowana przez aplikację
+- **Prisma ORM** parametryzuje typowane zapytania; zapytania raw muszą używać
+  parametrów, nie konkatenacji danych wejściowych.
+- Docelowym silnikiem runtime jest PostgreSQL; SQLite nie jest wspieranym
+  silnikiem aplikacji.
+- Narzędzia administracyjne PostgreSQL (`pg_dump`, `pg_restore`) otrzymują
+  połączenie ze zmiennych środowiskowych; nie przekazuj URL ani haseł w argv
+  ani logach. Pełna weryfikacja narzędzi i runtime na PostgreSQL 18 trwa.
 
 ---
 
@@ -321,13 +325,18 @@ if (process.env.SENTRY_DSN) {
 
 ---
 
-## 13. Bezpieczeństwo przy przenoszeniu bazy danych
+## 13. Bezpieczeństwo przy przenoszeniu danych
 
-Podczas przenoszenia bazy SQLite między urządzeniami należy zachować środki ostrożności:
+Zwykły backup PostgreSQL nie jest formatem migracji ze starszej instalacji
+SQLite. Jednorazowy cutover przenosi wyłącznie aktywne cenniki rur, studni i
+PRECO; pozostałe dane nie są przenoszone. Procedura jest opisana w
+[`cutover/active-pricelists.md`](cutover/active-pricelists.md), a cutover wymaga
+osobnej zgody i pełnej walidacji na PostgreSQL 18.
 
 ### Przed transportem
 
-- Wykonaj backup za pomocą `npm run backup` (skrypt używa `VACUUM INTO`, który jest bezpieczny nawet podczas działania serwera, ale dla pewności zatrzymaj serwer)
+- Wykonaj PostgreSQL backup przez `npm run backup` po skonfigurowaniu
+  `BACKUP_DATABASE_URL`; obecna implementacja używa archiwum `pg_dump` custom.
 - Upewnij się, że backup nie zawiera danych wrażliwych, które nie powinny opuszczać urządzenia
 - W przypadku transportu przez sieć rozważ zaszyfrowanie pliku backupu (np. 7-Zip z hasłem)
 
@@ -335,8 +344,8 @@ Podczas przenoszenia bazy SQLite między urządzeniami należy zachować środki
 
 - Zweryfikuj integralność bazy: sprawdź czy endpoint `/health` działa
 - Upewnij się, że hasło `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją
-- Jeśli schemat bazy uległ zmianie, uruchom `npx prisma migrate deploy`
-  (legacy: `npx prisma db push --skip-generate`)
+- Schemat PostgreSQL aktualizuj wersjonowanymi migracjami przez
+  `npx prisma migrate deploy`; `prisma db push` nie jest wspieraną ścieżką.
 
 ### Co NIE jest przenoszone
 

@@ -262,7 +262,14 @@
             extra +=
                 '<p class="pv-note pv-note--warn">Podgląd ucięty do 5000 wierszy na arkusz — pełne dane w eksporcie XLSX.</p>';
         }
-        if (preview.precoVersion) {
+        if (preview.precoSource === 'ACTIVE_FALLBACK' && preview.precoVersion) {
+            extra +=
+                '<p class="pv-note pv-note--warn">Brak historycznej PRECO dla daty tej studni. Użyto bieżącego aktywnego PRECO ' +
+                esc(preview.precoVersion.version) +
+                ' (nr ' +
+                esc(String(preview.precoVersion.seq)) +
+                '); stawki mogą różnić się od historycznych.</p>';
+        } else if (preview.precoVersion) {
             extra +=
                 '<p class="pv-note">Do wersji dołączona PRECO ' +
                 esc(preview.precoVersion.version) +
@@ -271,7 +278,7 @@
                 ').</p>';
         } else if (preview.precoIncluded === false) {
             extra +=
-                '<p class="pv-note">Brak kwalifikującej się wersji PRECO — eksport obejmie tylko studnie.</p>';
+                '<p class="pv-note pv-note--warn">Brak historycznej i bieżącej aktywnej wersji PRECO — eksport obejmie tylko studnie.</p>';
         }
         return (
             '<div class="pv-meta" role="group" aria-label="Metadane wersji">' +

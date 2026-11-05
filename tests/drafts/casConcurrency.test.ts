@@ -1,6 +1,6 @@
-﻿/**
+/**
  * H-1 (L2): dowód, że `updateMany` z predykatem wersji jest bezpiecznym CAS
- * w SQLite pod Prismą przy RÓWNOLEGŁYCH zapisach.
+ * w PostgreSQL przez Prisma przy równoległych zapisach.
  *
  * Dotychczasowy stan (przed L2): `tests/versionInvariant.test.ts` pokrywa
  * 6 przypadków sekwencyjnych, zero równoległych — bezpieczeństwo współbieżne
@@ -13,16 +13,14 @@
  * Kontrakt: dokładnie jeden zapis wygrywa, drugi dostaje count === 0
  * (w trasie draftu → 409), wersja rośnie dokładnie o 1.
  */
-import { PrismaClient } from '../../generated/prisma';
-import prisma from '../../src/prismaClient';
+import { PrismaClient } from '../../generated/prisma-postgres/client';
+import prisma, { createPrismaClient } from '../../src/prismaClient';
 import { versionedWrite } from '../../src/utils/versionWrite';
 
 const DOC_ID = 'cas-proof-l2';
 
 function newClient(): PrismaClient {
-    return new PrismaClient({
-        datasources: { db: { url: process.env.DATABASE_URL } }
-    });
+    return createPrismaClient();
 }
 
 async function seedDoc(): Promise<void> {

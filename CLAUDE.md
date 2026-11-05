@@ -6,7 +6,7 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 
 ## Stack
 
-- **Backend**: TypeScript + Express + Prisma + SQLite; `server.ts`, `src/`, `scripts/`, `tests/`
+- **Backend**: TypeScript + Express + Prisma + PostgreSQL; `server.ts`, `src/`, `scripts/`, `tests/` (migracja implementacyjna w toku; nie wszystkie zapytania/narzędzia są jeszcze zgodne)
 - **Frontend**: Vanilla JS (bez frameworka), serwowany przez Express z `public/`; moduły w `public/js/rury/` i `public/js/studnie/`
 - **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
 - **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
@@ -60,16 +60,14 @@ Jedynym źródłem prawdy jest sekcja „Wersjonowanie i Release Flow (Single So
 - Wzorzec: na końcu pliku `window.foo = foo;`
 - `lucide.createIcons({root: container})` po każdym `innerHTML = ...` z `data-lucide`
 
-### 8. Baza danych (SQLite + Prisma)
+### 8. Baza danych (PostgreSQL + Prisma)
 
-- **Plik:** `data/app_database.sqlite` (SQLite, `DATABASE_URL` w `.env`); migracje w `prisma/migrations/`
-- **Synchronizacja schematu (instalacja/aktualizacja) zależy od typu bazy:**
-    - domyślnie (baza z historią migracji / świeża): `npm run prisma:deploy` (`npx prisma migrate deploy`)
-    - baza legacy tworzona przez `db push` (brak `_prisma_migrations`): `npx prisma db push --skip-generate --accept-data-loss` — na niej `migrate deploy` ZAWODZI (tylko ta ścieżka używa `db push`; automatyczny fallback w `install.*` warunkowany przez `scripts/check-legacy-db.js`)
-    - sprawdzenie typu: `npx prisma migrate status` — wszystkie migracje „niezastosowane" mimo działającej aplikacji = baza typu `db push`
-    - `npx prisma migrate dev` to wyłącznie narzędzie deweloperskie do tworzenia NOWYCH migracji (`npm run prisma:migrate`)
-- **`scripts/check-db.js`:** weryfikacja schematu przy starcie (`start.bat`/`dev.sh`) — sprawdza tabele, dane produktów ORAZ wymagane indeksy dedup telemetrii (`idx_logs_well`, `idx_logs_source_well`); brak → exit 1 → `migrate deploy` (ensure-db.bat)
-- **Auto-heal przy starcie serwera (`src/app.ts`):** idempotentne `CREATE INDEX IF NOT EXISTS` dla indeksów dedup i `idx_audit_created_at`; pełny schemat FTS5 (`offers_search_fts`) tworzony/backfillowany przez `src/utils/fts5Sync.ts` (gdy tabeli brak lub brakuje kolumny `clientNumber`)
+- PostgreSQL 18 jest jedynym docelowym i wspieranym silnikiem. Provider Prisma i adapter `@prisma/adapter-pg` są przełączeni, lecz migracja nie jest gotowa do wdrożenia: część zapytań runtime, FTS, testów i narzędzi operacyjnych nadal wymaga konwersji oraz weryfikacji na serwerze PG18.
+- `DATABASE_URL` musi być jawny i używać protokołu `postgresql://` lub `postgres://`; zakaz fallbacku do lokalnej bazy i `db push` w aktywnych ścieżkach.
+- Aktywna historia migracji PostgreSQL: `prisma/migrations-postgresql/`; wdrożenie przez `prisma migrate deploy`. Historyczne `prisma/migrations/` nie są historią PostgreSQL.
+- Testy backendowe wymagają osobnego `POSTGRES_TEST_URL` do izolowanej bazy testowej. Harness tworzy schemat per worker; URL musi wskazywać lokalny host testowy i bazę o nazwie kończącej się `_test` lub `_test_db`.
+- Nie uznawaj runtime za gotowy, dopóki nie usunięto SQLite-owego SQL/DDL, FTS5, testów i narzędzi operacyjnych oraz nie przejdą testy PostgreSQL.
+- Jedyny jednorazowy wyjątek SQLite to read-only eksport aktywnych cenników w `scripts/export-active-pricelists.py`; nie jest częścią aplikacji ani runtime.
 
 ---
 
@@ -226,4 +224,4 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 | `npm run restore <plik-backupu>`                               | Przywróć bazę z backupu (automatycznie synchronizuje schemat)                                                          |
 | `npm run deploy` / `npm run rollback` / `npm run deploy:check` | Bezpieczny deploy produkcji / rollback / smoke check (patrz `docs/DEPLOY_UPDATE.md`)                                   |
 | `npm run prisma:deploy`                                        | Zastosuj migracje (baza z `_prisma_migrations`)                                                                        |
-| `npx prisma db push --skip-generate --accept-data-loss`        | Sync schematu TYLKO dla baz legacy bez `_prisma_migrations`                                                            |
+| `npx prisma db push --accept-data-loss`                        | Sync schematu TYLKO dla baz legacy bez `_prisma_migrations`                                                            |

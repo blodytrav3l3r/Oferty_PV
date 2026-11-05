@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.56.3  
+**Wersja:** 1.56.4  
 **Ostatnia aktualizacja:** 2026-10-03  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne (surowy JSON: `GET /api/docs.json`)
 
@@ -33,7 +33,7 @@ Publiczny numer wersji aplikacji.
 **Odpowiedź:**
 
 ```json
-{ "version": "1.56.3" }
+{ "version": "1.56.4" }
 ```
 
 ### `GET /health/live`
@@ -64,12 +64,12 @@ Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `
 
 ```json
 {
-    "version": "1.56.3",
+    "version": "1.56.4",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.56.3",
+    "dbVersion": "1.56.4",
     "uptime": 123.45,
     "memory": { ... }
 }
@@ -359,7 +359,7 @@ Wymaga autoryzacji.
 
 > **Uwaga (P2 audytu 2026-10-19):** `GET /api/orders-studnie/production` ciągnie pełną kolumnę
 > `data` (blob na wiersz) — przy dużych tabelach to MB zamiast KB. Do list/scrolla używaj
-> `GET .../production/index` albo `GET .../production/search` (lekkie, `json_extract`).
+> `GET .../production/index` albo `GET .../production/search`, które zwracają lekką projekcję.
 > Zewnętrzni konsumenci listy: brak zidentyfikowanych w repo; kontrakt bez zmian.
 
 ## Wyszukiwanie produkcji (`/api/orders-studnie/production/search`)
@@ -678,8 +678,9 @@ Sonda CSP dashboardu Operacje czyta `Content-Security-Policy` z `/api/telemetry/
 
 Kontrakt w `docs/OPIEKA.md` + Swagger `/api/docs` (autorytatywny).
 `GET /queue`, `GET /panel`, `GET /notifications` zwracają dodatkowo
-`investName/investAddress/contactPerson/phone/email` (derived z `offers_*.data`
-via `json_extract`, `null` gdy brak; zero migracji). Szczegóły pól: `docs/OPIEKA.md §Payload`.
+`investName/investAddress/contactPerson/phone/email` wyprowadzone z payloadu
+`offers_*.data`; wartość wynosi `null`, jeśli jej nie ma. Szczegóły pól:
+`docs/OPIEKA.md §Payload`.
 Obiekt `sync` w odpowiedziach panelu/skrzynki: `{inserted, resolved, deleted}` plus
 `skipped: 'rep-preview'` (podgląd cudzej skrzynki) lub `'throttled'` (sync <60 s temu, P0.3).
 

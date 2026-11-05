@@ -5,7 +5,7 @@
  * Czyta package-lock.json (pole `packages`) i buduje listę wszystkich pakietów
  * w drzewie zależności (nazwa@wersja — licencja, zakres prod/dev), pogrupowaną
  * po licencji i rodzinie licencyjnej. Dodatkowo wykrywa zasoby spoza npm
- * (vendored: SheetJS, Inter, Lucide) oraz składniki platformy (Node, SQLite,
+ * (vendored: SheetJS, Inter, Lucide) oraz składniki platformy (Node, PostgreSQL,
  * obraz Docker), żeby dokument pokrywał całość dystrybucji.
  *
  * Zapis: UTF-8 bez BOM, zakończenia linii LF (spójne z encoding policy + Prettier).
@@ -275,7 +275,10 @@ function buildPlatform(platform) {
         `| Node.js | \`${platform.nodeEngine}\` | MIT | Runtime aplikacji; tekst licencji w dystrybucji Node. |`
     );
     lines.push(
-        '| SQLite (silnik Prisma) | biblioteka dołączona do `@prisma/client` | Public Domain | https://sqlite.org/copyright.html |'
+        '| PostgreSQL 18 | zewnętrzna usługa bazy danych; obraz `postgres:18-alpine` | PostgreSQL License | https://www.postgresql.org/about/licence/ |'
+    );
+    lines.push(
+        '| Docker Engine + Docker Compose plugin | hostowa zależność instalatora Linux z oficjalnego repozytorium; nie są dołączane do artefaktu S.O.K. | Apache-2.0 | https://docs.docker.com/engine/ | https://github.com/docker/compose/blob/main/LICENSE |'
     );
     lines.push(
         `| Obraz bazowy Docker | \`${platform.baseImage}\` | MIT (Node) + licencje pakietów Debian | Pełne teksty: \`/usr/share/doc/*/copyright\` w obrazie. |`

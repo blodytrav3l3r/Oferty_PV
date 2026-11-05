@@ -1,37 +1,56 @@
-version: '3.8'
-
 services:
+    postgres:
+        image: postgres:18-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+            POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+            SOK_MIGRATOR_PASSWORD: ${SOK_MIGRATOR_PASSWORD:?Set SOK_MIGRATOR_PASSWORD in .env}
+            SOK_APP_PASSWORD: ${SOK_APP_PASSWORD:?Set SOK_APP_PASSWORD in .env}
+            SOK_BACKUP_PASSWORD: ${SOK_BACKUP_PASSWORD:?Set SOK_BACKUP_PASSWORD in .env}
+        volumes:
+            - postgres-data:/var/lib/postgresql
+            - ./docker/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-init-roles.sh:ro
+        networks:
+            - sok-network
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+            interval: 5s
+            timeout: 5s
+            retries: 12
+            start_period: 10s
+
     app:
+        image: sok-app:latest
         build:
             context: .
             dockerfile: Dockerfile
         container_name: sok-oferty
         restart: unless-stopped
+        depends_on:
+            postgres:
+                condition: service_healthy
         ports:
-            - '3000:10000'
+            - '127.0.0.1:3000:10000'
         environment:
-            - NODE_ENV=production
-            - PORT=10000
-            - HOST=0.0.0.0
-            # Wymagane przy pierwszym starcie - bez tej zmiennej konto admina nie zostanie utworzone (wyjatek jest logowany, start kontynuowany)
-            - 'DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}'
-            # Opcjonalne dostrojenie bez rebuildu (defaulty = wartosci wbudowane w obraz):
-            - 'SENTRY_DSN=${SENTRY_DSN:-}'
-            - 'TRUST_PROXY=${TRUST_PROXY:-1}'
-            - 'COOKIE_SECURE=${COOKIE_SECURE:-true}'
-        # /dev/shm dla Chromium (generowanie PDF) — domyślne 64 MB
-        # wywala duże dokumenty (oferta łączna); 512 MB z zapasem.
+            NODE_ENV: production
+            PORT: '10000'
+            HOST: 0.0.0.0
+            DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+            BACKUP_DATABASE_URL: ${BACKUP_DATABASE_URL:?Set BACKUP_DATABASE_URL in .env}
+            SENTRY_DSN: ${SENTRY_DSN:-}
+            TRUST_PROXY: ${TRUST_PROXY:-1}
+            HTTPS_ENABLED: ${HTTPS_ENABLED:-true}
+            COOKIE_SECURE: ${COOKIE_SECURE:-true}
+        volumes:
+            - sok-backups:/app/data/backups
         shm_size: '512m'
         logging:
             driver: json-file
             options:
                 max-size: '10m'
                 max-file: '3'
-        volumes:
-            # Bind mount zamiast named volume: baza i backupy widoczne na hoscie,
-            # dzieki czemu backup/restore dziala identycznie jak na bare-metal
-            # (npm run backup / npm run restore wprost na hoscie).
-            - ./data:/var/data
         networks:
             - sok-network
         healthcheck:
@@ -45,8 +64,29 @@ services:
             interval: 30s
             timeout: 10s
             retries: 3
-            start_period: 30s
+            start_period: 60s
+
+    db-bootstrap:
+        image: sok-app:latest
+        profiles: ['ops']
+        restart: 'no'
+        depends_on:
+            postgres:
+                condition: service_healthy
+        entrypoint: ['/bin/sh', '/app/scripts/docker-db-bootstrap.sh']
+        environment:
+            NODE_ENV: production
+            DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+            MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:?Set MIGRATION_DATABASE_URL in .env}
+            DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?Set DEFAULT_ADMIN_PASSWORD in .env}
+            RESET_ADMIN_PASSWORD_ON_BOOTSTRAP: ${RESET_ADMIN_PASSWORD_ON_BOOTSTRAP:-false}
+        networks:
+            - sok-network
 
 networks:
     sok-network:
         driver: bridge
+
+volumes:
+    postgres-data:
+    sok-backups:

@@ -1,14 +1,4 @@
-/*
- * tests/migrations/helpers.ts
- * Helper do izolowanych testow migracji Prisma.
- *
- * Tworzy tymczasowy projekt Prisma w tests/tmp/<name>/ z wlasnym
- * prisma.config.ts, schema.prisma (kopia produkcyjnego) i wybranymi
- * migracjami. Testy NIE modyfikuja prisma/migrations w repo.
- *
- * TestTimeout w jest.config.ts to 10000 ms — operacje Prisma CLI
- * (db push, migrate deploy) wymagaja wiecej; uzyj testTimeout w opisie.
- */
+import { randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,155 +6,183 @@ import path from 'node:path';
 const ROOT = path.resolve(__dirname, '..', '..');
 const TMP_ROOT = path.join(ROOT, 'tests', 'tmp');
 const PRISMA_CLI = path.join(ROOT, 'node_modules', 'prisma', 'build', 'index.js');
-
-const SCHEMA_SRC = path.join(ROOT, 'prisma', 'schema.prisma');
-const MIGRATIONS_SRC = path.join(ROOT, 'prisma', 'migrations');
-
-/** Katalog zastępczy dla cleanup rename-away (DX-01). */
-function deadDir(dir: string): string {
-    return dir + '.dead';
-}
-
-/** Blokujące odczekanie ms (bez event loop — helper testowy, nie prod). */
-function sleepSync(ms: number): void {
-    try {
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-    } catch {
-        /* brak SharedArrayBuffer — bez czekania */
-    }
-}
-
-/**
- * Best-effort rmSync z retry — zwraca true gdy katalog nie istnieje (usunięty).
- * Na Windows proces wnuk Prisma CLI potrafi trzymać uchwyt jeszcze ~1-2 s
- * po wyjściu execFileSync (EPERM/EBUSY przy pierwszej próbie), więc przed
- * rename-away ponawiamy z odczekaniem. Koszt tylko na ścieżce błędu.
- */
-function removeDirBestEffort(dir: string, retries = 5): boolean {
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            fs.rmSync(dir, { recursive: true, force: true, maxRetries: 30, retryDelay: 250 });
-        } catch {
-            /* flaky EPERM/EBUSY na Windows — retry poniżej */
-        }
-        if (!fs.existsSync(dir)) return true;
-        if (attempt < retries) sleepSync(1000);
-    }
-    return !fs.existsSync(dir);
-}
+const MIGRATIONS_SRC = path.join(ROOT, 'prisma', 'migrations-postgresql');
+const ALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '::1', 'postgres']);
 
 export interface IsolatedProject {
     dir: string;
-    dbPath: string;
+    schemaName: string;
+    databaseUrl: string;
     schemaPath: string;
     migrationsDir: string;
     env: NodeJS.ProcessEnv;
     runPrisma: (args: string[]) => string;
+    query: <T extends Record<string, unknown>>(sql: string, values?: unknown[]) => T[];
     cleanup: () => void;
 }
 
-/**
- * Tworzy izolowany projekt Prisma z wybranymi migracjami.
- * @param name unikalna nazwa projektu (podkatalog tests/tmp/)
- * @param migrations lista nazw migracji do skopiowania (np. ['20260815000000_baseline'])
- */
+function getValidatedTestUrl(): URL {
+    if (process.env.NODE_ENV !== 'test') {
+        throw new Error('Isolated migration tests require NODE_ENV=test');
+    }
+    const rawUrl = process.env.POSTGRES_TEST_URL;
+    if (!rawUrl) throw new Error('POSTGRES_TEST_URL is required for isolated migration tests');
+
+    const url = new URL(rawUrl);
+    const database = decodeURIComponent(url.pathname.slice(1)).toLowerCase();
+    if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+        throw new Error('Isolated migration tests require PostgreSQL');
+    }
+    if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase())) {
+        throw new Error('Isolated migration tests require a local PostgreSQL host');
+    }
+    if (!database.endsWith('_test') && !database.endsWith('_test_db')) {
+        throw new Error('Isolated migration test database name must end in _test or _test_db');
+    }
+    url.searchParams.delete('schema');
+    return url;
+}
+
+function runPgScript(
+    connectionString: string,
+    schemaName: string,
+    mode: 'create' | 'drop' | 'query',
+    payload?: string
+): string {
+    const script = [
+        "const { Client } = require('pg');",
+        'const client = new Client({ connectionString: process.argv[1] });',
+        '(async () => {',
+        '  await client.connect();',
+        '  const schema = process.argv[2];',
+        '  await client.query(`SET search_path TO "${schema}"`);',
+        '  if (process.argv[3] === "create") { await client.query(`CREATE SCHEMA "${schema}"`); return; }',
+        '  if (process.argv[3] === "drop") { await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`); return; }',
+        '  const payload = JSON.parse(require("node:fs").readFileSync(0, "utf8"));',
+        '  const result = await client.query(payload.sql, payload.values);',
+        '  process.stdout.write(JSON.stringify(result.rows));',
+        '})().catch(() => { console.error("Isolated PostgreSQL migration query failed"); process.exitCode = 1; }).finally(() => client.end());'
+    ].join('\n');
+
+    return execFileSync(process.execPath, ['-e', script, connectionString, schemaName, mode], {
+        cwd: ROOT,
+        encoding: 'utf8',
+        input: payload,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: 30_000
+    });
+}
+
 export function createIsolatedProject(name: string, migrations: string[]): IsolatedProject {
-    const dir = path.join(TMP_ROOT, name);
-    removeDirBestEffort(dir);
-    removeDirBestEffort(deadDir(dir));
-    fs.mkdirSync(path.join(dir, 'prisma', 'migrations'), { recursive: true });
-
+    const testUrl = getValidatedTestUrl();
+    const suffix = randomBytes(5).toString('hex');
+    const safeName = name
+        .replace(/[^a-z0-9_]/gi, '_')
+        .toLowerCase()
+        .slice(0, 16);
+    const schemaName = `sok_mig_${safeName}_${process.pid}_${suffix}`;
+    const schemaUrl = new URL(testUrl);
+    schemaUrl.searchParams.set('schema', schemaName);
+    const databaseUrl = schemaUrl.toString();
+    const pgConnectionUrl = new URL(schemaUrl);
+    pgConnectionUrl.searchParams.delete('schema');
+    const dir = path.join(TMP_ROOT, `${safeName}-${process.pid}-${suffix}`);
+    const migrationsDir = path.join(dir, 'prisma', 'migrations-postgresql');
     const schemaPath = path.join(dir, 'prisma', 'schema.prisma');
-    const migrationsDir = path.join(dir, 'prisma', 'migrations');
-    fs.copyFileSync(SCHEMA_SRC, schemaPath);
 
-    for (const m of migrations) {
-        const srcDir = path.join(MIGRATIONS_SRC, m);
-        if (!fs.existsSync(path.join(srcDir, 'migration.sql'))) {
-            throw new Error(`Migration ${m} does not exist in repo`);
+    fs.mkdirSync(migrationsDir, { recursive: true });
+    fs.copyFileSync(path.join(ROOT, 'prisma', 'schema.prisma'), schemaPath);
+    fs.copyFileSync(
+        path.join(MIGRATIONS_SRC, 'migration_lock.toml'),
+        path.join(migrationsDir, 'migration_lock.toml')
+    );
+    for (const migration of migrations) {
+        const source = path.join(MIGRATIONS_SRC, migration);
+        if (!fs.existsSync(path.join(source, 'migration.sql'))) {
+            throw new Error(`PostgreSQL migration ${migration} does not exist`);
         }
-        fs.cpSync(srcDir, path.join(migrationsDir, m), { recursive: true });
+        fs.cpSync(source, path.join(migrationsDir, migration), { recursive: true });
     }
 
-    const config = `import 'dotenv/config';\nimport { defineConfig, env } from 'prisma/config';\n\nexport default defineConfig({\n    schema: 'prisma/schema.prisma',\n    migrations: {\n        path: 'prisma/migrations',\n        seed: 'ts-node prisma/seed.ts'\n    },\n    datasource: {\n        url: env('DATABASE_URL')\n    }\n});\n`;
+    const config = `import 'dotenv/config';\nimport { defineConfig, env } from 'prisma/config';\n\nexport default defineConfig({\n    schema: 'prisma/schema.prisma',\n    migrations: { path: 'prisma/migrations-postgresql', seed: 'ts-node prisma/seed.ts' },\n    datasource: { url: env('DATABASE_URL') }\n});\n`;
     fs.writeFileSync(path.join(dir, 'prisma.config.ts'), config, 'utf8');
+    runPgScript(testUrl.toString(), schemaName, 'create');
 
-    const dbPath = path.join(dir, 'test.db');
-
-    const env = {
-        ...process.env,
-        DATABASE_URL: 'file:' + dbPath.replace(/\\/g, '/')
-    };
-
-    function runPrisma(args: string[]): string {
-        return execFileSync(process.execPath, [PRISMA_CLI, ...args], {
+    const env = { ...process.env, DATABASE_URL: databaseUrl };
+    const runPrisma = (args: string[]) =>
+        execFileSync(process.execPath, [PRISMA_CLI, ...args], {
             cwd: dir,
             encoding: 'utf8',
             env,
-            stdio: ['ignore', 'pipe', 'pipe']
+            stdio: ['ignore', 'pipe', 'pipe'],
+            timeout: 120_000
         });
-    }
-
-    function cleanup() {
-        // DX-01: na Windows silnik Prisma (proces wnuk CLI) potrafi trzymać
-        // uchwyt katalogu długo po wyjściu execFileSync — flaky EPERM nie może
-        // wyrzucać poprawnego testu. Strategia: rename-away (przeniesienie
-        // katalogu zwykle udaje się mimo uchwytu) + rmSync celu zastępczego.
-        // Resztka .dead jest sprzątana przy następnym createIsolatedProject.
-        if (removeDirBestEffort(dir)) return;
-        try {
-            const dead = deadDir(dir);
-            removeDirBestEffort(dead);
-            fs.renameSync(dir, dead);
-            if (!removeDirBestEffort(dead)) {
-                console.warn(`[migrations-helpers] cleanup deferred for ${dir} (dead: ${dead})`);
-            }
-        } catch (err) {
-            console.warn(
-                `[migrations-helpers] cleanup failed for ${dir}: ${(err as Error)?.message ?? String(err)}`
-            );
+    const query = <T extends Record<string, unknown>>(sql: string, values: unknown[] = []): T[] =>
+        JSON.parse(
+            runPgScript(
+                pgConnectionUrl.toString(),
+                schemaName,
+                'query',
+                JSON.stringify({ sql, values })
+            )
+        ) as T[];
+    const cleanup = () => {
+        const resolvedDir = path.resolve(dir);
+        const relativeDir = path.relative(TMP_ROOT, resolvedDir);
+        if (
+            !relativeDir ||
+            relativeDir === '..' ||
+            relativeDir.startsWith(`..${path.sep}`) ||
+            path.isAbsolute(relativeDir)
+        ) {
+            throw new Error('Refusing to remove a migration fixture outside tests/tmp.');
         }
-    }
+        try {
+            runPgScript(testUrl.toString(), schemaName, 'drop');
+        } finally {
+            if (process.platform === 'win32') {
+                execFileSync(
+                    'powershell.exe',
+                    [
+                        '-NoLogo',
+                        '-NoProfile',
+                        '-NonInteractive',
+                        '-Command',
+                        'Remove-Item -LiteralPath $env:SOK_MIGRATION_TMP_PATH -Recurse -Force'
+                    ],
+                    {
+                        stdio: 'pipe',
+                        timeout: 30_000,
+                        env: { ...process.env, SOK_MIGRATION_TMP_PATH: resolvedDir }
+                    }
+                );
+            } else {
+                fs.rmSync(resolvedDir, {
+                    recursive: true,
+                    force: true,
+                    maxRetries: 10,
+                    retryDelay: 250
+                });
+            }
+        }
+    };
 
-    return { dir, dbPath, schemaPath, migrationsDir, env, runPrisma, cleanup };
+    return {
+        dir,
+        schemaName,
+        databaseUrl,
+        schemaPath,
+        migrationsDir,
+        env,
+        runPrisma,
+        query,
+        cleanup
+    };
 }
 
-/**
- * Kopiuje dodatkowa migracje (np. testowa) do projektu.
- * @param project projekt izolowany
- * @param migrationName nazwa katalogu migracji w repo
- * @param overrides opcjonalne nadpisanie zawartosci migration.sql
- */
-export function copyMigration(
-    project: IsolatedProject,
-    migrationName: string,
-    overrides?: { migrationSql?: string; needsSeed?: boolean }
-): string {
-    const srcDir = path.join(MIGRATIONS_SRC, migrationName);
-    const destDir = path.join(project.migrationsDir, migrationName);
-    if (fs.existsSync(path.join(srcDir, 'migration.sql'))) {
-        fs.cpSync(srcDir, destDir, { recursive: true });
-    } else {
-        fs.mkdirSync(destDir, { recursive: true });
-    }
-    if (overrides?.migrationSql) {
-        fs.writeFileSync(path.join(destDir, 'migration.sql'), overrides.migrationSql, 'utf8');
-    }
-    return destDir;
-}
-
-/** Tworzy dowolny katalog migracji w projekcie z podanym SQL. */
 export function addMigration(project: IsolatedProject, migrationName: string, sql: string): string {
-    const destDir = path.join(project.migrationsDir, migrationName);
-    fs.mkdirSync(destDir, { recursive: true });
-    fs.writeFileSync(path.join(destDir, 'migration.sql'), sql, 'utf8');
-    return destDir;
-}
-
-export function tempDb(project: IsolatedProject, name: string): string {
-    return path.join(project.dir, name);
-}
-
-export function dbPathWithParams(dbPath: string): string {
-    return 'file:' + dbPath.replace(/\\/g, '/') + '?connection_limit=1&busy_timeout=30000';
+    const destination = path.join(project.migrationsDir, migrationName);
+    fs.mkdirSync(destination, { recursive: true });
+    fs.writeFileSync(path.join(destination, 'migration.sql'), sql, 'utf8');
+    return destination;
 }

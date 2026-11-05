@@ -39,7 +39,7 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
         }
     }
     if (!res.headersSent && mapPrismaError(res, err, { requestId })) return;
-    // M: licznik SQLITE_BUSY/lock — contention pisarzy na 1 DB.
+    // M: licznik błędów przeciążenia lub contention bazy danych.
     // Heavy-write: zamiast mylącego 500 zwróć 429 + Retry-After (backpressure,
     // klient/load-100 ponawia po odczekaniu; 5xx==0 w DoD).
     if (/locked|busy|timeout/i.test(err.message || '')) {

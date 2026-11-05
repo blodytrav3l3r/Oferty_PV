@@ -5,6 +5,11 @@ Tryb awaryjny bez TLS opisuje ADR-017 (`HTTPS_ENABLED=false`) — sekcja 3C.
 
 Zakres: konfiguracja serwera produkcyjnego. Nie zmienia logiki ofert, cen ani bazy.
 
+> **Status bazy danych:** wymaganym silnikiem jest PostgreSQL 18. Migracja aplikacji
+> i pełna weryfikacja CI/Compose trwają; poniższe kroki HTTPS nie oznaczają zgody
+> ani gotowości do produkcyjnego cutoveru. Przed wdrożeniem wymagane są zielone
+> bramki z `docs/DEPLOYMENT.md` i osobne GO na cutover.
+
 ---
 
 ## 1. Zanim cokolwiek zrobicie: ustalcie 5 faktów
@@ -186,8 +191,9 @@ node scripts\deploy.mjs windows vX.Y.Z
 
 Skrypt zatrzymuje usługę, podmienia pliki, robi backup bazy, startuje i sprawdza health.
 
-**Przed każdym deployem:** `npm run backup` (albo równoważny skrypt na hoście).
-Baza to `data/app_database.sqlite`.
+**Przed każdym deployem:** po zakończeniu migracji wykonaj i zweryfikuj backup
+PostgreSQL przez `npm run backup`. Aplikacja łączy się przez jawny `DATABASE_URL`;
+plik bazy nie znajduje się w katalogu projektu.
 
 ---
 

@@ -1,6 +1,5 @@
 import request from 'supertest';
 import express from 'express';
-import { DatabaseSync } from 'node:sqlite';
 import offerRoutes from '../../src/routes/offers/index';
 import { buildOfferScopeCondition } from '../../src/routes/offers/followUpStats';
 import prisma from '../../src/prismaClient';
@@ -26,7 +25,7 @@ jest.mock('../../src/utils/ownership', () => ({
 
 jest.mock('../../src/prismaClient', () => {
     // Prawdziwy Prisma.sql/join do budowy zapytań (moku jemy tylko wykonanie).
-    const real = jest.requireActual('../../generated/prisma');
+    const real = jest.requireActual('../../generated/prisma-postgres/client');
     return {
         __esModule: true,
         Prisma: real.Prisma,
@@ -350,83 +349,37 @@ describe('P3 GET /followups/stats', () => {
     });
 });
 
-describe('buildOfferScopeCondition (wykonanie SQL)', () => {
-    function dbWithOffers(): DatabaseSync {
-        const db = new DatabaseSync(':memory:');
-        db.exec('CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT)');
-        db.prepare('INSERT INTO offers_rel (id, "userId") VALUES (?, ?)').run('o1', 'u1');
-        db.prepare('INSERT INTO offers_rel (id, "userId") VALUES (?, ?)').run('o2', 'u2');
-        return db;
-    }
-
-    function ids(db: DatabaseSync, cond: unknown): string[] {
-        const raw = cond as unknown as { sql: string; values: unknown[] };
-        const rows = db
-            .prepare(`SELECT id FROM offers_rel o WHERE ${raw.sql}`)
-            .all(...(raw.values as never[])) as Array<{ id: string }>;
-        return rows.map((r) => r.id).sort();
-    }
-
-    test('narrowOwner: tylko 1 wlasciciel', () => {
-        const db = dbWithOffers();
-        try {
-            expect(
-                ids(
-                    db,
-                    buildOfferScopeCondition({ id: 'a', role: 'admin' }, 'o', [], {
-                        allowedIds: null,
-                        narrowOwner: 'u1'
-                    })
-                )
-            ).toEqual(['o1']);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+describe('buildOfferScopeCondition (SQL builder)', () => {
+    test('narrowOwner dokłada warunek właściciela zamiast poszerzać scope', () => {
+        const condition = buildOfferScopeCondition({ id: 'a', role: 'admin' }, 'o', [], {
+            allowedIds: null,
+            narrowOwner: 'u1'
+        }) as unknown as { sql: string; values: unknown[] };
+        expect(condition.sql).toContain('o."userId" = ?');
+        expect(condition.values).toEqual(['u1']);
     });
 
-    test('admin: domyslnie wszystko (1=1)', () => {
-        const db = dbWithOffers();
-        try {
-            expect(ids(db, buildOfferScopeCondition({ id: 'a', role: 'admin' }, 'o', []))).toEqual([
-                'o1',
-                'o2'
-            ]);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+    test('admin bez ograniczeń otrzymuje jawne 1=1', () => {
+        const condition = buildOfferScopeCondition(
+            { id: 'a', role: 'admin' },
+            'o',
+            []
+        ) as unknown as {
+            sql: string;
+            values: unknown[];
+        };
+        expect(condition.sql).toBe('1=1');
+        expect(condition.values).toEqual([]);
     });
 
-    test('mine: tylko wlasne (bez subUsers pro)', () => {
-        const db = dbWithOffers();
-        try {
-            expect(
-                ids(
-                    db,
-                    buildOfferScopeCondition({ id: 'u1', role: 'pro', subUsers: ['u2'] }, 'o', [], {
-                        allowedIds: ['u1']
-                    })
-                )
-            ).toEqual(['o1']);
-            db.close();
-        } catch (e) {
-            try {
-                db.close();
-            } catch {
-                /* ignore */
-            }
-            throw e;
-        }
+    test('mine zawęża do właściciela mimo subUsers roli pro', () => {
+        const condition = buildOfferScopeCondition(
+            { id: 'u1', role: 'pro', subUsers: ['u2'] },
+            'o',
+            [],
+            { allowedIds: ['u1'] }
+        ) as unknown as { sql: string; values: unknown[] };
+        expect(condition.sql).toContain('o."userId" IN (?)');
+        expect(condition.values).toEqual(['u1']);
     });
 });

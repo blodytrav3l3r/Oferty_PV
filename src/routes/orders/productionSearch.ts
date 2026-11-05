@@ -6,7 +6,9 @@ import {
     parseSearchParams,
     mapProductionOrderRow,
     buildProductionSearchWhere,
-    normalizedCreatedAtSql
+    normalizedCreatedAtSql,
+    normalizedDateTimeSql,
+    jsonTextSql
 } from '../../utils/productionSearchUtils';
 import { searchCache } from '../../utils/searchCache';
 import { logger } from '../../utils/logger';
@@ -33,10 +35,10 @@ router.get('/', requireAuth, async (req, res) => {
     // ORDER BY zgodny z nowym sort (wariant B: createdAt | updatedAt | productionOrderNumber)
     const orderBySql =
         params.sort === 'productionOrderNumber'
-            ? Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`
+            ? Prisma.sql`${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'productionOrderNumber')} ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`
             : params.sort === 'updatedAt'
-              ? Prisma.sql`production_orders_rel."updatedAt" ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`
-              : Prisma.sql`production_orders_rel."createdAt" ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`;
+              ? Prisma.sql`${normalizedDateTimeSql(Prisma.sql`production_orders_rel."updatedAt"`)} ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`
+              : Prisma.sql`${normalizedCreatedAtSql()} ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`;
 
     const { whereSql, searchWhere } = buildProductionSearchWhere(params, roleSql);
 
@@ -49,20 +51,16 @@ router.get('/', requireAuth, async (req, res) => {
                    production_orders_rel."elementIndex",
                    production_orders_rel."elementKey",
                    production_orders_rel.data,
-                   CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                       THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER)/1000, 'unixepoch')
-                       ELSE production_orders_rel."createdAt" END as "createdAt",
-                   CASE WHEN production_orders_rel."updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                       THEN datetime(CAST(production_orders_rel."updatedAt" AS INTEGER)/1000, 'unixepoch')
-                       ELSE production_orders_rel."updatedAt" END as "updatedAt",
+                   ${normalizedCreatedAtSql()} as "createdAt",
+                   ${normalizedDateTimeSql(Prisma.sql`production_orders_rel."updatedAt"`)} as "updatedAt",
                    u1."firstName" as "handlerFirstName",
                    u1."lastName" as "handlerLastName",
                    u1.username as "handlerUsername",
                    u2."firstName" as "creatorFirstName",
                    u2."lastName" as "creatorLastName",
                    u2.username as "creatorUsername",
-                   -- ponytail: tylko orderNumber przez json_extract; pełne o.data (MB) × N wierszy rozwalało napi ("Failed to convert rust String")
-                   json_extract(o.data, '$.orderNumber') as "dbSalesOrderNumber",
+                   -- Select only the required order number; full order JSON can be large.
+                   ${jsonTextSql(Prisma.sql`o.data`, 'orderNumber')} as "dbSalesOrderNumber",
                    o.id as "dbSalesOrderId"
             FROM production_orders_rel
             LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
@@ -106,10 +104,9 @@ router.get('/', requireAuth, async (req, res) => {
             // (rola użytkownika + aktywne filtry) identycznie z głównym search.
             const statsSql = Prisma.sql`
                 SELECT COUNT(*) as total,
-                       SUM(CASE WHEN json_extract(production_orders_rel.data, '$.status') = 'accepted' THEN 1 ELSE 0 END) as accepted,
-                       SUM(CASE WHEN production_orders_rel.data IS NULL
-                                OR json_extract(production_orders_rel.data, '$.status') IS NOT 'accepted' THEN 1 ELSE 0 END) as draft,
-                       SUM(CASE WHEN ${normalizedCreatedAtSql()} >= datetime('now', 'start of day') THEN 1 ELSE 0 END) as today
+                       COUNT(*) FILTER (WHERE ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status')} = 'accepted') as accepted,
+                       COUNT(*) FILTER (WHERE ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status')} IS DISTINCT FROM 'accepted') as draft,
+                       COUNT(*) FILTER (WHERE ${normalizedCreatedAtSql()} >= (CURRENT_DATE::timestamp AT TIME ZONE 'UTC')) as today
                 FROM production_orders_rel
                 LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
                 LEFT JOIN users u2 ON production_orders_rel."creatorId" = u2.id

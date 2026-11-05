@@ -13,10 +13,25 @@ jobs:
     release:
         name: Release
         runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:18-alpine
+                env:
+                    POSTGRES_DB: sok_test
+                    POSTGRES_USER: sok_test
+                    POSTGRES_PASSWORD: ci-only-sok-test
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U sok_test -d sok_test"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 12
         permissions:
             contents: write
         env:
-            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            DATABASE_URL: 'postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test?schema=public'
+            POSTGRES_TEST_URL: 'postgresql://sok_test:ci-only-sok-test@localhost:5432/sok_test?schema=public'
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
         steps:
             - name: Checkout repository
@@ -33,18 +48,25 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            - name: Install PostgreSQL 18 client tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y ca-certificates curl gnupg
+                  sudo install -d /usr/share/postgresql-common/pgdg
+                  curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg > /dev/null
+                  echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+                  sudo apt-get update
+                  sudo apt-get install -y postgresql-client-18
+                  pg_dump --version
+
             - name: Generate Prisma client
               run: npx prisma generate
 
             - name: Typecheck
               run: npm run typecheck
 
-            # P0.5: parity ze ścieżką produkcyjną — release testuje MIGRACJE,
-            # nie db push. Legacy/schema-compat (db push) zostaje w jobach
-            # test/flaky/axe/e2e/load w ci.yml oraz drift-check + migrate-deploy-verify.
             - name: Fresh DB — migrate deploy (ścieżka produkcyjna)
               run: |
-                  rm -f test-ci.sqlite test-ci.sqlite-wal test-ci.sqlite-shm
                   npx prisma migrate deploy
                   npx prisma migrate status
 
