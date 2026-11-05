@@ -1,15 +1,20 @@
-# Baza danych S.O.K. — docelowy standard PostgreSQL
+# Baza danych S.O.K. — PostgreSQL 18
 
 **Docelowy silnik:** PostgreSQL 18
 
 **ORM:** Prisma ORM 7
 
-**Status:** provider, kanoniczne migracje, ścieżki operacyjne backup/restore i import cenników oraz konfiguracja CI/Compose są przełączone na PostgreSQL. Pozostają SQLite-owe test fixtures, a pełna integracja aplikacji i testów na PostgreSQL 18 nie została potwierdzona; brak tej weryfikacji blokuje status produkcyjny.
+**Status:** PostgreSQL 18 jest jedynym providerem runtime, development, CI i
+aktywnych testów. W wydaniu 1.56.4 migracje, Docker/Compose, instalatory,
+operacje backup/restore oraz import wyłącznie aktywnych cenników działają w
+ścieżce PostgreSQL.
 
-> Kod i narzędzia PostgreSQL są już obecne w working tree. Obecność konfiguracji
-> CI/Compose ani testu startu kontenera nie dowodzi jeszcze, że wszystkie ścieżki
-> runtime i aktywne testy działają na PostgreSQL 18. Nie uznawaj cutoveru za
-> zweryfikowany bez przejścia pełnej wymaganej walidacji.
+**Potwierdzona walidacja (2026-11-05):** lokalna instancja PostgreSQL 18.6,
+aplikacja `/health/ready` HTTP 200, `prices:verify` dla trzech aktywnych list
+(1 023 pozycje), smoke backup/restore oraz pełne bramki pre-push:
+573 zestawy / 5 734 testy i 23 testy Git safety. Nie wykonano produkcyjnego
+cutoveru ani czystej instalacji na Ubuntu/Debian; są to odrębne działania
+operacyjne i nie wynikają z lokalnej walidacji.
 
 ## 1. Zasady docelowego schematu
 
@@ -55,26 +60,29 @@
 5. Po imporcie sprawdź `prices:verify`, schema drift, role/uprawnienia i
    kontraktowe przepływy ofert przed readiness lub przełączeniem ruchu.
 
-**Status wykonania:** PostgreSQL schema, migracje, importer aktywnych cenników,
-preflight i narzędzia porównania migracji są zaimplementowane. Runbook cutover
-pozostaje roboczy; migracje/import nie są równoznaczne z dowodem poprawności
-całego runtime. Pełna integracja na PostgreSQL 18 i walidacja cutoveru nie są
-potwierdzone.
+**Status wykonania:** schemat PostgreSQL, kanoniczne migracje, bootstrap ról,
+importer aktywnych cenników, preflight oraz narzędzia operacyjne są
+zaimplementowane i przeszły lokalną walidację na PostgreSQL 18. Runbook
+[`cutover/active-pricelists.md`](cutover/active-pricelists.md) opisuje
+powtarzalną procedurę dla starej instalacji. Produkcyjny cutover nie został
+wykonany i wymaga osobnej akceptacji oraz walidacji konkretnego środowiska.
 
 ## 3. Testy bazy
 
-- Test harness wymaga jawnego PostgreSQL URL, a brak połączenia jest błędem.
-  Część aktywnych fixtures SQL nadal korzysta z `node:sqlite`; ich konwersja na
-  PostgreSQL jest główną pozostałą pracą w testach. Pełny suite integracyjny nie
-  został jeszcze potwierdzony na PostgreSQL 18.
+- Test harness wymaga jawnego `POSTGRES_TEST_URL`, a brak połączenia jest
+  błędem. Każdy worker działa w odizolowanym schemacie PostgreSQL; Playwright
+  otrzymuje osobny URL testowy. SQLite nie jest providerem aktywnych testów
+  aplikacji. Wyjątek stanowią wyłącznie testy jednorazowego eksportera starego
+  pliku cenników.
 - Testuj migrate deploy na pustej bazie, ponowny deploy, drift, constraints,
   FTS/search, JSON, null ordering, Decimal round-trip, transakcje, CAS,
   idempotency i konkurencyjne zapisy.
 - Testy API/E2E weryfikują zawartość ofert oraz eksportów CSV/XLSX/PDF/DOCX.
   Zachowaj inwarianty `docs/SYSTEM_INVARIANTS.md`, w szczególności I-001,
   I-003–I-006, I-009, I-013 i I-014.
-- Obecne zielone testy SQLite nie dowodzą zgodności z PostgreSQL. Nie uznawaj
-  migracji za zakończoną przed uruchomieniem wymaganych suite’ów na PostgreSQL.
+- Testy PostgreSQL sprawdzają semantykę `Decimal`, transakcji, ograniczeń,
+  wyszukiwania i izolacji. Przy zmianach schematu zachowaj suite’y migracji
+  i drift check na PostgreSQL 18.
 
 ## 4. Backup i restore
 
@@ -93,20 +101,21 @@ smoke aplikacji. Restore do live wymaga jawnej osobnej zgody.
 `npm run restore` przyjmuje cel przez `RESTORE_DB_URL`, a narzędzia wspierają
 role/guards PostgreSQL. Live restore wymaga osobnej roli migracyjnej i po
 odtworzeniu ponownie stosuje granty dla runtime. Format archiwum, checksum,
-walidacja archiwum i logika
-retencji są zaimplementowane; pełny backup/restore drill oraz integracja
-PostgreSQL 18 nie zostały potwierdzone. Wymagania bezpieczeństwa i bieżące
-kontrakty komend są w [`DEPLOYMENT.md`](DEPLOYMENT.md).
+walidacja archiwum i retencja są zaimplementowane; lokalny smoke
+`pg_dump`/`pg_restore` na PostgreSQL 18 przeszedł. Przed produkcyjnym rolloutem
+wymagany jest osobny restore drill do izolowanego celu, z oceną RPO/RTO.
+Wymagania bezpieczeństwa i kontrakty komend są w [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## 5. Dane i historia migracji
 
-Dotychczasowy schemat obejmuje 56 modeli, w tym `PricelistVersion` i pięć rodzin
-pozycji cennikowych, oferty, zamówienia, audyt, ML/telemetrię, blokady oraz
-udostępnienia. Kanoniczne mapowanie każdego modelu powstanie przy nowym
-PostgreSQL schema review; opis kolumn bieżącego SQLite schema nie jest
-specyfikacją docelowych typów.
+Kanoniczny model Prisma znajduje się w `prisma/schema.prisma`, a źródłem zmian
+schematu jest `prisma/migrations-postgresql/`. Modele obejmują m.in.
+`PricelistVersion` i pozycje cennikowe, oferty, zamówienia, audyt,
+ML/telemetrię, blokady oraz udostępnienia. Schemat PostgreSQL, typy kwotowe,
+constraints i indeksy zmieniaj addytywnie, przez wersjonowane migracje.
 
-Historyczne decyzje SQLite, wcześniejszy model oraz opis ograniczeń zachowują
-`docs/adr/ADR-001-sqlite.md`, `docs/adr/ADR-012-single-node-sqlite.md` i
-`docs/errors-known.md` wyłącznie jako kontekst legacy. Nie są instrukcją
-konfiguracji ani eksploatacji docelowej bazy.
+Historyczne decyzje SQLite i wcześniejszy model zachowują
+`docs/adr/ADR-001-sqlite.md`, `docs/adr/ADR-012-single-node-sqlite.md` oraz
+`prisma/migrations/` wyłącznie jako kontekst legacy. Nie są instrukcją
+konfiguracji ani eksploatacji docelowej bazy. Jedyny wspierany wyjątek
+odczytujący stary SQLite to jednorazowy, read-only eksport aktywnych cenników.

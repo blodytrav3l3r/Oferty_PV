@@ -62,5 +62,6 @@ migracje Prisma w `prisma/migrations-postgresql/`; wdrożeniowa komenda to
 `PRAGMA user_version` nie jest mechanizmem wersjonowania docelowej bazy i
 pozostaje wyłącznie historycznym szczegółem starszej instalacji. Pole
 `dbVersion` raportowane przez endpoint administracyjny odzwierciedla wersję
-aplikacji, nie numer migracji PostgreSQL. Migracja runtime i jej pełna
-weryfikacja na PostgreSQL 18 nadal trwają; zob. [DEPLOYMENT.md](DEPLOYMENT.md).
+aplikacji, nie numer migracji PostgreSQL. Runtime i aktywne testy korzystają z
+PostgreSQL 18; historia migracji jest niezależna od wersji aplikacji. Status
+wdrożeń i zakres walidacji opisuje [DEPLOYMENT.md](DEPLOYMENT.md).

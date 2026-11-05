@@ -1,7 +1,7 @@
 # ADR-004: Express + Prisma jako backend
 
-**Status:** Zaakceptowany dla Express + Prisma; decyzja o SQLite została
-zastąpiona przez migrację do PostgreSQL (w toku).
+**Status:** Zaakceptowany dla Express + Prisma; pierwotna decyzja o SQLite została
+zastąpiona. PostgreSQL 18 jest jedynym runtime providerem.
 **Data:** 2026-06-20  
 **Autor:** Hermes Agent
 
@@ -13,8 +13,9 @@ nie stanowi już aktywnego kierunku.
 
 ## Decyzja
 
-**Express.js (TypeScript)** jako framework HTTP + **Prisma** jako ORM. Docelowym
-silnikiem jest PostgreSQL 18; migracja runtime i testów nie jest jeszcze ukończona.
+**Express.js (TypeScript)** jako framework HTTP + **Prisma** jako ORM; runtime
+oraz aktywne testy używają PostgreSQL 18. Zasady schematu i migracji opisuje
+[`docs/DATABASE.md`](../DATABASE.md).
 
 ## Uzasadnienie
 
@@ -37,9 +38,8 @@ silnikiem jest PostgreSQL 18; migracja runtime i testów nie jest jeszcze ukońc
   (style="..." nie wykonuje JS). Źródło: `src/app.ts:215-244`.
 - **Logger** — `src/utils/logger.ts` zamiast `console.log`.
 - **Historyczna implementacja:** auto-heal indeksów i `db push` były związane
-  ze starszą ścieżką SQLite; nowy schemat PostgreSQL ma być zarządzany wyłącznie
-  wersjonowanymi migracjami Prisma. Nie traktuj tego historycznego opisu jako
-  potwierdzenia ukończonego cutoveru.
+  ze starszą ścieżką SQLite; schemat PostgreSQL jest zarządzany wyłącznie
+  wersjonowanymi migracjami Prisma.
 - **Deduplikacja telemetrii AUTO_JS** — `telemetryService.recordConfig` porównuje kanoniczny
   `featureSnapshot` + posortowane `allComponentIds` i przy identycznej konfiguracji robi
   `update` zamiast `create` (nie zawyża wzorców i zbioru treningowego ML).

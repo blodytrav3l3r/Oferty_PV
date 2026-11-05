@@ -1,7 +1,10 @@
 # Aktualizacja wdrożenia S.O.K.
 
 **Wersja:** 1.56.4<br>
-**Status:** migracja PostgreSQL 18 w toku; brak gotowości do produkcyjnego cutoveru.
+**Status:** PostgreSQL 18 jest jedynym backendem S.O.K. Wydanie 1.56.4 przeszło
+lokalne bramki i testy PG18; rollout produkcyjny nadal wymaga zatwierdzonego GO,
+backup/restore planu dla konkretnego środowiska oraz odrębnej walidacji instalacji
+Linux.
 
 Ten dokument zastępuje dawną procedurę opartą o lokalny plik bazy. Kanoniczna
 instrukcja wdrożeń i bramek migracji znajduje się w
@@ -10,7 +13,7 @@ komend deployu i rollbacku opartych o kopiowanie lokalnego pliku ani `db push`.
 
 ## Docelowa ścieżka aktualizacji
 
-Po ukończeniu migracji i uzyskaniu zgody na wdrożenie:
+Po zatwierdzeniu konkretnego wdrożenia:
 
 1. Potwierdź zielone `npm run version:check`, `npm run validate`, `npm run format`
    oraz workflow PostgreSQL 18 na dokładnym commicie.

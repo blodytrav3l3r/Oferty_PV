@@ -47,23 +47,25 @@
 
 ## I-005 — Baza produkcyjna odtwarzalna z migracji
 
-- **Invariant:** docelowo `prisma migrate deploy` na pustej bazie PostgreSQL
+- **Invariant:** `prisma migrate deploy` na pustej bazie PostgreSQL
     - seed daje schemat bez driftu; `db push` nie jest ścieżką wdrożeniową.
 - **Owner:** backend/CI.
-- **Enforcement:** bramki migracji PostgreSQL są wdrażane; ich pełne działanie
-  na PostgreSQL 18 pozostaje do potwierdzenia przed uznaniem cutoveru.
-- **Tests:** testy migracji i integracji PostgreSQL 18 muszą przejść przed
-  wdrożeniem; status bieżący: [DEPLOYMENT.md](DEPLOYMENT.md).
+- **Enforcement:** kanoniczna historia `prisma/migrations-postgresql/`; runtime
+  nie wykonuje DDL. Lokalna walidacja PG18.6 przeszła; produkcyjny rollout nadal
+  wymaga zatwierdzenia środowiska.
+- **Tests:** testy migracji, driftu i integracji PostgreSQL 18; status:
+  [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## I-006 — Backup nadaje się do odtworzenia
 
-- **Invariant:** docelowo backup PostgreSQL jest archiwum `pg_dump` w formacie
+- **Invariant:** backup PostgreSQL jest archiwum `pg_dump` w formacie
   custom z SHA-256; restore wymaga jawnego celu i walidacji archiwum.
 - **Owner:** backend (scripts/backup.ts, restore-db.js).
-- **Enforcement:** implementacja narzędzi PG jest w toku; drill restore na
-  PostgreSQL 18 jest wymagany przed produkcyjnym cutoverem.
-- **Tests:** testy roundtrip/retencji oraz rzeczywisty restore drill PostgreSQL
-  18 muszą przejść; status: [DEPLOYMENT.md](DEPLOYMENT.md).
+- **Enforcement:** narzędzia `pg_dump`/`pg_restore` i checksum są
+  zaimplementowane; lokalny smoke round-trip przeszedł. Restore drill na
+  środowisku odpowiadającym celowi jest wymagany przed produkcją.
+- **Tests:** testy roundtrip/retencji i restore drill; status:
+  [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## I-007 — ML nigdy nie omija walidacji deterministycznej
 

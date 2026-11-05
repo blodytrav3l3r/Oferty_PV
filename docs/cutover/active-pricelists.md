@@ -1,9 +1,9 @@
 # Jednorazowy cutover aktywnych cenników
 
-> **Status:** runbook roboczy, nie zatwierdzona procedura produkcyjna. Pełna
-> weryfikacja aplikacji na PostgreSQL 18 i rozdzielenie ról bootstrap/migrator/runtime
-> w Compose są nadal w toku. Nie wykonuj produkcyjnego cutoveru przed potwierdzeniem
-> obu bramek i osobnym GO.
+> **Status:** mechanizm eksportu/importu i lokalna ścieżka PostgreSQL 18 są
+> zaimplementowane oraz zweryfikowane na 1.56.4. Runbook pozostaje procedurą
+> operacyjną dla konkretnego przejścia ze starej instalacji; produkcyjny
+> cutover nie został wykonany i wymaga osobnego GO oraz preflightu celu.
 
 Ten mechanizm służy wyłącznie do zachowania aktualnie obowiązujących cenników podczas przejścia ze starego pliku SQLite na PostgreSQL. Eksporter używa wyłącznie Python `sqlite3` w trybie `mode=ro` i nie jest importowany przez aplikację. Nie eksportuje ofert, zamówień, użytkowników, sesji, draftów ani wersji archiwalnych lub przyszłych.
 

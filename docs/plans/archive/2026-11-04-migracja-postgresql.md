@@ -1,9 +1,16 @@
 # Plan: migracja S.O.K. z SQLite do PostgreSQL
 
-**Status:** implementacja w toku; GO produkcyjnego cutover nadal wymagane  
-**Data:** 2026-11-04  
+**Status:** ZAKOŃCZONO — implementacja i lokalna walidacja PostgreSQL 18 w wydaniu 1.56.4 (`2ef5d907`). Produkcyjny cutover nie był zakresem wykonanego wdrożenia i nadal wymaga osobnego GO, planu restore oraz weryfikacji hosta docelowego.
+
+**Data zamknięcia:** 2026-11-05
 **Zakres:** kompletna zmiana jedynego silnika bazy danych aplikacji na PostgreSQL.  
 **Cel danych:** zachować wyłącznie aktualnie aktywne wersje cenników i ich pozycje; pozostałe dane aplikacyjne odtworzyć jako świeży stan zgodnie z uzgodnionym seedem i onboardingiem.
+
+> Ten plik zachowuje pierwotny plan i kolejne checkpointy. Twierdzenia w sekcjach
+> „Stan potwierdzony” i datowanych raportach opisują stan z chwili ich powstania,
+> nie końcowy rezultat. Bieżący stan oraz zakres walidacji: [`docs/DATABASE.md`](../DATABASE.md)
+> i [`docs/DEPLOYMENT.md`](../DEPLOYMENT.md). Lokalne testy nie oznaczają, że
+> produkcyjna baza została zmieniona.
 
 ## Primary goal
 

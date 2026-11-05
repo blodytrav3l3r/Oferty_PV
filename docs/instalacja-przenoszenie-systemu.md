@@ -1,9 +1,12 @@
 # Instalacja i przenoszenie danych S.O.K.
 
 **Wersja:** 1.56.4<br>
-**Data aktualizacji:** 2026-11-04
+**Data aktualizacji:** 2026-11-05
 
-> **Status migracji:** PostgreSQL 18 jest jedynym docelowym silnikiem. Provider Prisma, konfiguracja CI/Compose i część runtime zostały przełączone, ale konwersja wszystkich zapytań, skryptów i testów nadal trwa. Ta instrukcja dokumentuje docelowy przepływ; nie jest potwierdzeniem gotowości produkcyjnej. Przed wdrożeniem muszą przejść wszystkie bramki PG18 opisane w [docs/DEPLOYMENT.md](DEPLOYMENT.md), a cutover wymaga osobnego GO.
+> **Status:** PostgreSQL 18 jest jedynym silnikiem runtime i testów. Wydanie
+> 1.56.4 przeszło lokalną walidację PG18 oraz test instalacji Windows. Czysta
+> instalacja Ubuntu/Debian i produkcyjny cutover pozostają do wykonania na
+> docelowym serwerze; cutover wymaga osobnego GO.
 
 ## Wymagania
 
@@ -12,13 +15,25 @@
 - Jawny `DATABASE_URL` w protokole `postgresql://` albo `postgres://`. Nie ma domyślnej bazy ani fallbacku do innego silnika.
 - W produkcji przechowuj poświadczenia w secret managerze, ogranicz dostęp sieciowy do DB i skonfiguruj TLS dla połączeń poza zaufaną siecią.
 
-## Nowa instalacja przez Docker Compose
+## Nowa instalacja serwerowa
 
-1. Skopiuj `.env.example` do `.env`, ustaw unikalne silne sekrety `POSTGRES_PASSWORD` i `DEFAULT_ADMIN_PASSWORD`, oraz dopasuj dane w `DATABASE_URL`. Nie zapisuj sekretów w repozytorium.
-2. Zbuduj i uruchom zestaw:
+Na Ubuntu/Debian użyj wspieranego instalatora `install-linux-server.sh` zgodnie
+z krokami z [README](../README.md). Instalator przygotowuje sekrety,
+uruchamia PostgreSQL 18, wykonuje migracje i seed przez jednorazowy bootstrap,
+importuje wyłącznie aktywne cenniki z przekazanego artefaktu, a potem uruchamia
+aplikację. Czystą instalację zweryfikuj na docelowym OS przed dopuszczeniem
+użytkowników.
+
+Ręczna ścieżka Compose jest przeznaczona dla administratorów znających Docker:
+
+1. Skonfiguruj wymagane sekrety w lokalnym `.env`; nie zapisuj ich w repozytorium.
+2. Zbuduj obraz, uruchom DB, wykonaj jednorazowy bootstrap i dopiero wtedy aplikację:
 
     ```sh
-    docker compose up --build -d
+    docker compose build app
+    docker compose up -d --wait postgres
+    docker compose run --rm db-bootstrap
+    docker compose up -d --wait app
     docker compose ps
     ```
 
@@ -29,7 +44,7 @@
     docker compose logs --tail=100 app
     ```
 
-Compose używa osobnego serwisu PostgreSQL 18 i nazwanego wolumenu danych. Aplikacja łączy się z hostem `postgres` w prywatnej sieci Compose; port PostgreSQL nie jest wystawiany publicznie. Aktualna gałąź pozostaje w fazie migracji i nie powinna być wdrażana produkcyjnie, dopóki testy aplikacji na PostgreSQL 18 nie przejdą.
+Compose używa osobnego serwisu PostgreSQL 18 i nazwanego wolumenu danych. Aplikacja łączy się z hostem `postgres` w prywatnej sieci Compose; port PostgreSQL nie jest wystawiany publicznie. `db-bootstrap` stosuje migracje, granty i seed; runtime nie dostaje sekretu migratora.
 
 ## Uruchomienie developerskie poza Dockerem
 

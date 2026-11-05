@@ -1,5 +1,10 @@
 # Plan: instalator S.O.K. na nowym komputerze Windows
 
+**Status:** ZAKOŃCZONO w 1.56.4 — instalator i launcher zostały zaimplementowane,
+przetestowane, a lokalne uruchomienie z PostgreSQL 18 i aktywnymi cennikami
+zweryfikowane. Plan zachowano do historii; bieżąca instrukcja użytkownika:
+[`docs/instalacja-krok-po-kroku-dla-laika.md`](../../instalacja-krok-po-kroku-dla-laika.md).
+
 ## Primary goal
 
 Osoba uruchamiająca S.O.K. na nowym komputerze Windows dostaje działającą aplikację z PostgreSQL 18 i może zachować wyłącznie aktywne cenniki ze starej instalacji.

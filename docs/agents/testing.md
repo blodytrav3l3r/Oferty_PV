@@ -4,7 +4,7 @@
 
 ## Kierunek bazy i status migracji
 
-PostgreSQL 18 jest jedynym docelowym backendem testowym i produkcyjnym. Provider Prisma, CI i Compose są przełączane na PostgreSQL, ale w kodzie runtime, aktywnych narzędziach i testach pozostają jeszcze nieprzepisane zależności SQLite; pełne uruchomienie aplikacji na PostgreSQL 18 nie zostało potwierdzone. Nie dodawaj obsługi SQLite. Jednorazowy read-only eksporter aktywnych cenników ze starej bazy może mieć test fixture; SQLite nie może być providerem testów aplikacji ani zależnością runtime. Przed uznaniem migracji za zakończoną wszystkie testy kontraktowe, integracyjne, migracyjne, security i E2E korzystające z DB muszą działać na izolowanym PostgreSQL 18.
+PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integracyjne oraz migracyjne korzystają z jawnego `POSTGRES_TEST_URL`, a harness izoluje workerów w osobnych schematach. Nie dodawaj SQLite jako providera testowego. Jednorazowy read-only eksporter aktywnych cenników ze starej bazy może używać SQLite tylko we własnych testach kontraktowych, poza harnessami aplikacji. Ostatnia potwierdzona pełna walidacja release 1.56.4: 5734 testy PASS oraz 23 testy Git safety PASS; przed każdym kolejnym wydaniem uruchamiaj aktualne bramki z `AGENTS.md`.
 
 ## Poziomy i izolacja
 
@@ -31,4 +31,4 @@ PostgreSQL 18 jest jedynym docelowym backendem testowym i produkcyjnym. Provider
 
 ## Playwright — baza i konto testowe
 
-Aktywne scenariusze Playwright są przenoszone na własny serwer i izolowany schemat PostgreSQL przekazany przez `PLAYWRIGHT_DATABASE_URL`. Do zakończenia tej konwersji nie zakładaj, że wszystkie harnessy korzystają z PG ani że E2E zostały wykonane na serwerze PostgreSQL. Nie używaj `prisma db push`, ścieżek `file:`, plików SQLite ani produkcyjnych danych. Brak PostgreSQL oznacza test nieuruchomiony, a nie zaliczony.
+Aktywne scenariusze Playwright uruchamiają własny serwer i izolowany schemat PostgreSQL przekazany przez `PLAYWRIGHT_DATABASE_URL`. Nie używaj `prisma db push`, ścieżek `file:`, plików SQLite ani produkcyjnych danych. Brak PostgreSQL oznacza test nieuruchomiony, a nie zaliczony.

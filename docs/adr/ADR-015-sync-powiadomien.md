@@ -3,10 +3,10 @@
 **Status:** Zaakceptowany
 **Data:** 2026-10-10
 
-> Historyczny kontekst tej decyzji zakładał pojedynczy proces SQLite. SQLite
-> nie jest już docelowym silnikiem; migracja PostgreSQL trwa i nie została
-> zweryfikowana w pełnym runtime. Założenie single-node poniżej nie jest
-> ograniczeniem wymaganym przez PostgreSQL ani dowodem gotowości produkcyjnej.
+> Historyczny kontekst tej decyzji zakładał pojedynczy proces SQLite. Bieżący
+> runtime używa PostgreSQL 18; założenia o SQLite poniżej nie opisują silnika
+> bazy. Ograniczenia procesu i ich aktualna implementacja są opisane w
+> `docs/ARCHITECTURE.md`.
 
 ## Kontekst
 

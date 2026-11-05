@@ -4,7 +4,7 @@
 
 ## Kierunek i status
 
-PostgreSQL 18 jest jedynym docelowym i wspieranym silnikiem danych we wszystkich środowiskach. Provider i klient Prisma są przełączeni, CI/Compose są konwertowane, ale migracja trwa: część runtime SQL, aktywnych testów i narzędzi nadal zawiera nieprzepisane zależności SQLite, a działanie całej aplikacji na PostgreSQL 18 nie zostało zweryfikowane. Nie uznawaj cutoveru za wykonany, dopóki schemat, runtime, migracje, narzędzia, CI i testy nie działają na PostgreSQL. Nie dodawaj nowej obsługi SQLite. Jedynym dozwolonym wyjątkiem jest jednorazowy, read-only odczyt starej bazy w celu wyeksportowania aktywnych cenników; nie może wejść do runtime.
+PostgreSQL 18 jest jedynym wspieranym silnikiem danych runtime i aktywnych testów. Schemat i kanoniczna historia migracji są w `prisma/schema.prisma` i `prisma/migrations-postgresql/`; klient, runtime, narzędzia operacyjne, CI i Compose używają PostgreSQL. Wydanie 1.56.4 przeszło lokalne walidacje na PostgreSQL 18.6. To nie oznacza produkcyjnego cutoveru: przed live wymagane są osobny GO, zatwierdzenie planu backup/restore oraz weryfikacja docelowego środowiska. Nie dodawaj nowej obsługi SQLite. Jedyny wyjątek to jednorazowy, read-only eksport aktywnych cenników ze starego pliku, poza runtime i test harnessami aplikacji.
 
 ## Standard schematu
 
@@ -33,4 +33,4 @@ PostgreSQL 18 jest jedynym docelowym i wspieranym silnikiem danych we wszystkich
 
 - Wersje i aktywność cennika zgodnie z `src/services/pricelist/` oraz I-014; ceny ofert i snapshoty zgodnie z I-001.
 - Ownership, numeracja/idempotencja i CAS zgodnie z I-003/I-004/I-009/I-013; nie zastępuj gwarancji przez cache ani lock aplikacyjny.
-- Backup/restore muszą spełniać I-005/I-006. Dotychczasowy test `tests/migrations/restoreRoundtrip.test.ts` należy przenieść na PostgreSQL — nie uznawać dawnej bazy SQLite za test docelowego restore.
+- Backup/restore muszą spełniać I-005/I-006. `tests/migrations/restoreRoundtrip.test.ts` weryfikuje archiwum `pg_dump` i restore przez `pg_restore` do izolowanej bazy PostgreSQL; scenariusz wymaga dostępnych binariów klienta PostgreSQL i nie może być zastąpiony testem dawnej bazy SQLite.

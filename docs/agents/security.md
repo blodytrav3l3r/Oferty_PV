@@ -9,7 +9,7 @@
 
 ## PostgreSQL — baza i poświadczenia
 
-- PostgreSQL jest jedynym docelowym backendem danych. Migracja jest w toku; bieżący runtime nadal nie został przełączony. Nie dodawaj ścieżki SQLite jako fallbacku ani wspieranej opcji.
+- PostgreSQL 18 jest jedynym backendem runtime i testów. Nie dodawaj ścieżki SQLite jako fallbacku ani wspieranej opcji. Jednorazowy read-only eksport aktywnych cenników ze starej bazy jest poza runtime i nie może stać się ogólnym importerem SQLite.
 - Używaj zweryfikowanego TLS do zdalnej bazy oraz osobnych least-privilege ról dla runtime, migratora i backupu. Konto runtime nie otrzymuje superusera ani DDL.
 - Connection stringi i hasła wyłącznie przez secret manager/env. Nie loguj URL, hosta, parametrów połączenia, query text ani danych ofert; health/readiness pozostaje generyczne.
 - Testy i restore-drille korzystają z izolowanej bazy PostgreSQL. Nigdy nie kieruj ich na produkcyjne poświadczenia; migracje i seed na live wymagają osobnego GO zgodnie z `AGENTS.md`.

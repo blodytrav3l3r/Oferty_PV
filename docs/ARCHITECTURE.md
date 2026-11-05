@@ -4,7 +4,7 @@
 **Ostatnia aktualizacja:** 2026-11-04<br>
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline
 
-> **Status:** provider Prisma i środowiska CI/Compose zostały przełączone na PostgreSQL, ale konwersja runtime SQL, narzędzi i testów trwa. Nie traktuj tej gałęzi jako zweryfikowanego wdrożenia produkcyjnego, dopóki workflow PostgreSQL 18 nie przejdzie pełnej ścieżki aplikacji.
+> **Status (1.56.4):** PostgreSQL 18 jest jedynym silnikiem runtime i aktywnych testów. Lokalna walidacja PG18.6, instalacji Windows, cenników, backup/restore smoke i readiness przeszła. Produkcyjny cutover oraz czysta instalacja Linux pozostają odrębnymi bramkami operacyjnymi.
 
 ---
 
@@ -14,7 +14,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 
 - **Backend API** — Express.js (TypeScript) obsługujący logikę biznesową i dane
 - **Frontend SPA** — Vanilla JavaScript z osobnymi widokami HTML (bez frameworka)
-- **Baza danych** — PostgreSQL 18 przez Prisma ORM; provider docelowy, migracja aplikacji w toku
+- **Baza danych** — PostgreSQL 18 przez Prisma ORM; jedyny provider runtime i aktywnych testów
 - **Serwer** — Express jako jedyny serwer (dev i prod), serwuje API i `public/`
 - **Model procesu** — single-node, jednodprocesowy: stan ulotny w `Map` w pamięci
   (`predictionCache`, `dryRunStore`, flaga `trainingRunning`) znika przy restarcie.
@@ -364,7 +364,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Kanoniczne migracje są w `prisma/migrations-postgresql/` i powstają od pustej bazy.
 - Aplikacja nie powinna wykonywać DDL przy starcie; schemat zmienia się przez `prisma migrate deploy`.
 - Backup/restore używa `pg_dump`/`pg_restore` w formacie custom archive; nie kopiuje pliku bazy.
-- Migracja runtime i testów jest w toku; nie wdrażaj tej wersji produkcyjnie przed pełnym testem PostgreSQL 18.
+- SQLite występuje poza runtime wyłącznie w historycznych migracjach oraz jednorazowym, read-only eksporcie aktywnych cenników ze starej instalacji. Zasady produkcyjnego rollout’u opisuje `docs/DEPLOYMENT.md`.
 
 ### Modele (56)
 

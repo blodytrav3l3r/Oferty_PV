@@ -4,7 +4,7 @@
 
 ## Kierunek bazy danych
 
-PostgreSQL jest jedynym docelowym i wspieranym silnikiem danych S.O.K. Migracja jest w toku: bieżący runtime nadal korzysta z SQLite, więc nie zakładaj, że aplikacja została już przełączona. Nowy i zmieniany kod ma przygotowywać pełne działanie na PostgreSQL; nie dodawaj nowych zależności, ścieżek runtime ani instrukcji wspierających SQLite.
+PostgreSQL 18 jest jedynym wspieranym providerem dla runtime i aktywnych testów S.O.K. Kanoniczny schema i migracje znajdują się w `prisma/schema.prisma` oraz `prisma/migrations-postgresql/`. Nie dodawaj zależności, ścieżek runtime, test harnessów ani instrukcji obsługujących SQLite. Dopuszczony wyjątek to izolowany read-only eksport aktywnych cenników ze starego pliku przez `scripts/export-active-pricelists.py`; nie jest to część runtime.
 
 ## Architektura
 

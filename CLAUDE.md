@@ -6,7 +6,7 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 
 ## Stack
 
-- **Backend**: TypeScript + Express + Prisma + PostgreSQL; `server.ts`, `src/`, `scripts/`, `tests/` (migracja implementacyjna w toku; nie wszystkie zapytania/narzędzia są jeszcze zgodne)
+- **Backend**: TypeScript + Express + Prisma + PostgreSQL 18; `server.ts`, `src/`, `scripts/`, `tests/` (PostgreSQL jest jedynym runtime i testowym providerem; SQLite występuje wyłącznie w archiwalnych artefaktach i jednorazowym eksporterze aktywnych cenników)
 - **Frontend**: Vanilla JS (bez frameworka), serwowany przez Express z `public/`; moduły w `public/js/rury/` i `public/js/studnie/`
 - **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
 - **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
@@ -62,11 +62,11 @@ Jedynym źródłem prawdy jest sekcja „Wersjonowanie i Release Flow (Single So
 
 ### 8. Baza danych (PostgreSQL + Prisma)
 
-- PostgreSQL 18 jest jedynym docelowym i wspieranym silnikiem. Provider Prisma i adapter `@prisma/adapter-pg` są przełączeni, lecz migracja nie jest gotowa do wdrożenia: część zapytań runtime, FTS, testów i narzędzi operacyjnych nadal wymaga konwersji oraz weryfikacji na serwerze PG18.
+- PostgreSQL 18 jest jedynym wspieranym runtime i providerem testów. Aktywne zapytania, FTS, narzędzia operacyjne, CI i Compose używają PostgreSQL. Lokalna walidacja wydania 1.56.4 na PG18.6 przeszła; to nie oznacza produkcyjnego cutoveru ani potwierdzenia czystej instalacji Linux.
 - `DATABASE_URL` musi być jawny i używać protokołu `postgresql://` lub `postgres://`; zakaz fallbacku do lokalnej bazy i `db push` w aktywnych ścieżkach.
 - Aktywna historia migracji PostgreSQL: `prisma/migrations-postgresql/`; wdrożenie przez `prisma migrate deploy`. Historyczne `prisma/migrations/` nie są historią PostgreSQL.
 - Testy backendowe wymagają osobnego `POSTGRES_TEST_URL` do izolowanej bazy testowej. Harness tworzy schemat per worker; URL musi wskazywać lokalny host testowy i bazę o nazwie kończącej się `_test` lub `_test_db`.
-- Nie uznawaj runtime za gotowy, dopóki nie usunięto SQLite-owego SQL/DDL, FTS5, testów i narzędzi operacyjnych oraz nie przejdą testy PostgreSQL.
+- Ostatnia potwierdzona walidacja PostgreSQL 18: release 1.56.4, pełne testy 5734 PASS i lokalny readiness HTTP 200. To nie potwierdza produkcyjnego cutoveru ani czystej instalacji Linux.
 - Jedyny jednorazowy wyjątek SQLite to read-only eksport aktywnych cenników w `scripts/export-active-pricelists.py`; nie jest częścią aplikacji ani runtime.
 
 ---
@@ -189,7 +189,7 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 
 ### W trakcie
 
-3. Przestrzegaj ADR-ów (vanilla JS, SQLite, Express+Prisma)
+3. Przestrzegaj ADR-ów (Vanilla JS, PostgreSQL, Express+Prisma; ADR SQLite są historyczne)
 4. frontend JS: dodaj `window.X = X` na końcu pliku
 5. Po `innerHTML` = wywołaj `lucide.createIcons({root: container})`
 6. Zabezpiecz DOM queries: `if (el) el.addEventListener(...)`

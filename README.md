@@ -17,7 +17,7 @@ S.O.K. — System Ofert i Kalkulacji to aplikacja webowa do generowania ofert ha
 
 Nazwa aplikacji wyświetlana na pulpicie i stronie logowania: **S.O.K. (System Ofert i Kalkulacji)** (rebranding z 2026-08-09, commit `a4b853f`).
 
-Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i docelową bazą PostgreSQL 18. Migracja runtime i testów trwa; do czasu przejścia pełnej walidacji PostgreSQL 18 repozytorium nie jest gotowe do wdrożenia produkcyjnego. Aktualny stan i procedura cutoveru: [docs/DATABASE.md](docs/DATABASE.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) i [plan migracji](docs/plans/2026-11-04-migracja-postgresql.md).
+Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i PostgreSQL 18 jako jedyną bazą runtime oraz testów. Wydanie 1.56.4 przeszło lokalne bramki PostgreSQL 18, w tym integracyjne i health check. Wdrożenie produkcyjne wymaga osobnej akceptacji, backup/restore planu oraz walidacji docelowego serwera Linux. Szczegóły: [docs/DATABASE.md](docs/DATABASE.md) i [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
@@ -89,7 +89,7 @@ Instalacja wymaga `active-pricelists.json` wyeksportowanego ze starej bazy. Na s
 
 `install.bat` pozostaje instalatorem developerskim z zależnościami Node.js; nie służy do nowego komputera bez przygotowanej bazy. Jeśli poprzednia instalacja została przerwana po utworzeniu wolumenu, wznowienie wymaga `install-new-pc.bat -ResumeExistingVolume`, potwierdzenia `RESUME` oraz osobnej zgody `MIGRATE AND SEED` na migracje i seed w istniejącej bazie.
 
-**Status migracji:** pełne działanie wszystkich ścieżek S.O.K. na PostgreSQL 18 nadal wymaga potwierdzenia testami integracyjnymi; nie używaj tej konfiguracji jako wdrożenia produkcyjnego przed przejściem bram projektu.
+**Status:** lokalne działanie S.O.K. na PostgreSQL 18 zostało zweryfikowane. Ta instalacja Windows służy do testów i nie jest dowodem poprawnego produkcyjnego wdrożenia.
 
 #### 3. Linux — serwer firmowy
 
@@ -105,7 +105,7 @@ Docker Engine i PostgreSQL są używane na licencjach open source bez opłaty za
 
 Instalator Linux wymaga Ubuntu/Debian z systemd i dostępu do oficjalnych repozytoriów pakietów. Nie usuwa istniejących baz ani wolumenów; istniejący wolumen musi być oznaczony jako należący do projektu Compose S.O.K., a wznowienie wymaga `--resume-existing-volume`, wpisania `RESUME` i osobnego `MIGRATE AND SEED`. Wymaga też zachowanego `.env` z hasłami tej bazy. Uruchomienie z `--help` pokazuje składnię.
 
-**Status wdrożenia:** kod instalatora nie jest dowodem gotowości produkcyjnej. Pełne działanie S.O.K. na PostgreSQL 18, test czystej instalacji na Ubuntu/Debian, import cenników, oferty, eksporty oraz backup/restore muszą przejść bramy projektu przed produkcją.
+**Status wdrożenia:** instalator Linux jest zaimplementowany, ale czysta instalacja end-to-end na Ubuntu/Debian nie została jeszcze potwierdzona. Przed produkcją zweryfikuj instalację, backup/restore i przepływy ofert na docelowym serwerze; produkcyjny cutover wymaga osobnego GO.
 
 #### 4. Ręczna instalacja developerska (alternatywa)
 
@@ -182,11 +182,11 @@ bash dev.sh    # Development (hot-reload)
 bash prod.sh   # Production (npm start; automatycznie buduje dist, jeśli brak)
 ```
 
-Instalator `install.sh` — tak samo jak `install.bat` — wygeneruje losowe hasło
-administratora, zastosuje wersjonowane migracje PostgreSQL i uruchomi seed.
-Wymaga jawnego `DATABASE_URL` wskazującego PostgreSQL 18. Migracja aplikacji i
-testów nie jest jeszcze zakończona; nie używaj instalatora do produkcyjnego
-cutoveru przed przejściem pełnej walidacji opisanej w dokumentacji migracji.
+Instalatory developerskie `install.sh` i `install.bat` wygenerują losowe hasło
+administratora, zastosują wersjonowane migracje PostgreSQL i uruchomią seed.
+Wymagają jawnego `DATABASE_URL` wskazującego PostgreSQL 18. Do instalacji
+serwerowej użyj `install-linux-server.sh`, który konfiguruje Compose i
+kontrolowany bootstrap PostgreSQL.
 
 **Wariant B — kroki ręczne:**
 
@@ -230,7 +230,10 @@ Aplikacja: **http://TWOJ_ADRES_IP:3000**
 ### Instalacja przez Docker
 
 ```bash
-docker compose up --build -d
+docker compose build app
+docker compose up -d postgres
+docker compose run --rm db-bootstrap
+docker compose up -d app
 ```
 
 Aplikacja: **http://localhost:3000** (port zgodny z konfiguracją w `.env`)
@@ -243,11 +246,11 @@ Przy przejściu ze starszej instalacji zachowuj wyłącznie aktualnie aktywne ce
 
 Eksport wykonuje jednorazowy skrypt read-only, a import zapisuje wyłącznie aktywne wersje z zatwierdzonego artefaktu. Pełna procedura, walidacja hash/count, wymagane kolejności i komendy Docker Compose są opisane w [docs/cutover/active-pricelists.md](docs/cutover/active-pricelists.md). Import musi nastąpić po migracjach i przed pierwszym startem serwera, który tworzy fabryczny baseline cenników.
 
-Procedury produkcyjnej nie uruchamiaj bez odrębnego GO na cutover. Aktualna implementacja PostgreSQL jest w toku; najpierw wymagane są zielone testy na PostgreSQL 18 oraz kompletna kontrola migracji, runtime, eksportów i backup/restore.
+Procedury produkcyjnej nie uruchamiaj bez odrębnego GO na cutover. Lokalna walidacja PG18 jest zielona; przed ruchem produkcyjnym zweryfikuj procedurę na docelowym serwerze, w tym restore drill oraz logowanie, zapisy ofert i eksporty.
 
 ### Aktualizacja istniejącej instalacji
 
-Aplikacja używa jednej kanonicznej historii migracji PostgreSQL. Po uzyskaniu gotowej i zatwierdzonej wersji aktualizację wykonuj przez backup PostgreSQL, `npm ci`, `npx prisma migrate deploy` i smoke test. Nie używaj `prisma db push`, nie kopiuj plików bazy i nie stosuj narzędzi legacy do istniejącej bazy. Obecny stan migracji oraz bramki cutoveru są opisane w [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Aplikacja używa jednej kanonicznej historii migracji PostgreSQL. Aktualizację wykonuj przez zweryfikowany backup PostgreSQL, `npm ci`, kontrolowany bootstrap/migracje i smoke test. Nie używaj `prisma db push`, nie kopiuj plików bazy i nie stosuj narzędzi legacy do istniejącej bazy. Szczegóły opisuje [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Konfiguracja (.env)
 

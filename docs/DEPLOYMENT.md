@@ -2,14 +2,15 @@
 
 **Docelowa architektura:** Node.js + Express + Prisma + PostgreSQL 18 + Vanilla JS SPA.
 
-**Status:** migracja w toku. Prisma provider, kanoniczne migracje PostgreSQL, część runtime SQL, backup/restore oraz konfiguracja CI/Compose są przełączane na PostgreSQL 18. Pozostają nieprzepisane ścieżki runtime, aktywne testy i narzędzia, a pełna aplikacja nie została jeszcze zweryfikowana na działającym PostgreSQL 18. Nie wdrażaj produkcyjnie przed zakończeniem konwersji, pełnymi testami i odrębnym GO.
+**Status:** runtime S.O.K. używa PostgreSQL 18. Wydanie 1.56.4 przeszło lokalne
+bramki oraz testy na PostgreSQL 18.6; lokalnie potwierdzono readiness, aktywne
+cenniki i smoke backup/restore. Dokument opisuje wspieraną architekturę i
+kontrolowany rollout. Produkcyjny cutover nie został wykonany; wymaga osobnego
+GO oraz walidacji docelowego hosta, backupu, sieci i procedury odzyskiwania.
 
-> To jest docelowy kontrakt wdrożeniowy, nie gotowa instrukcja produkcyjna.
-> Provider, migracje, backup/restore oraz część konfiguracji kontenerów i CI są
-> już przełączane; brak jeszcze pełnej konwersji i wykonania weryfikacji
-> integracyjnej na PostgreSQL 18. Nie wykonuj
-> PostgreSQL cutoveru na podstawie tego dokumentu przed zielonymi bramami i
-> odrębną zgodą na operację live.
+Instalator Windows został sprawdzony lokalnie na Docker Desktop. Czysta
+instalacja Linux na serwerze Ubuntu/Debian nie została jeszcze potwierdzona
+end-to-end; zweryfikuj ją na docelowym systemie przed produkcją.
 
 ## 1. Celowa topologia
 
@@ -41,9 +42,8 @@
 | `SENTRY_DSN`                                                       | Endpoint telemetryczny błędów, jeśli używany       | Tylko sekret/env; scrub danych klienta i connection stringów.                              |
 
 Aktualny `DATABASE_URL` runtime musi używać jawnego URL PostgreSQL. Nie ma
-fallbacku do innego silnika. Brak, błąd TLS lub brak połączenia musi blokować
-readiness bez ujawnienia szczegółów w publicznej odpowiedzi. Do czasu zakończenia
-pozostałej konwersji i testów nie uznawaj tego checkoutu za wdrażalny.
+fallbacku do innego silnika. Brak, błąd TLS lub brak połączenia blokuje
+readiness bez ujawnienia szczegółów w publicznej odpowiedzi.
 
 Compose inicjalizuje role `sok_migrator`, `sok_app` i `sok_backup` przez
 `docker/postgres/init-roles.sh`; `POSTGRES_USER` jest superuserem jednorazowej
@@ -54,10 +54,9 @@ następnie seed/import używa
 `DATABASE_URL` roli `sok_app`. Backup używa `BACKUP_DATABASE_URL`. Compose wymaga
 wszystkich tych zmiennych i sekretów.
 
-## 3. Docelowa sekwencja release
+## 3. Sekwencja wdrożenia release
 
-Po zakończeniu implementacji i akceptacji release przebiega w następującej
-kolejności:
+Po zatwierdzeniu wdrożenia release przebiega w następującej kolejności:
 
 1. Provision PostgreSQL 18 w prywatnej sieci; ustaw TLS, retencję, monitoring,
    połączenia/pool limits oraz role runtime, migration i backup.
@@ -78,17 +77,20 @@ kolejności:
 7. Dopiero po zielonych CI, testach migracji i backup/restore drill oraz osobnym
    GO na live przełącz ruch. Nie wykonuj dual-write.
 
-**Stan niezweryfikowany:** pełny runtime SQL, wszystkie testy integracyjne i
-Playwright, aktywne narzędzia oraz kompletne smoke testy nie przeszły jeszcze na
-działającej instancji PostgreSQL 18. CI i Compose zawierają konfigurację PG18,
-ale sama obecność konfiguracji ani statyczne testy nie potwierdzają udanego
-cutoveru. Nie wykonuj poleceń migracji/seed/importu na produkcji bez osobnego GO.
+**Stan walidacji:** commit `2ef5d907` (1.56.4) przeszedł lokalne bramki
+pre-push: wersja, kodowanie, licencje, collisions, ratchet i cenniki; backend i
+frontend lint/typecheck; 573 zestawy / 5 734 testy oraz 23 testy Git safety.
+Lokalna aplikacja PostgreSQL 18.6 zwraca `/health/ready` HTTP 200; import
+aktywnego zestawu i backup/restore smoke zostały sprawdzone. To nie zastępuje
+produkcyjnej zgody, testu czystej instalacji Linux ani restore drillu
+dopasowanego do wymaganego RPO/RTO.
 
 ## 4. Backup, restore i rollback
 
-- Backup implementowany jest przez `pg_dump` custom archive i dedykowaną rolę
-  backupu; checksum i archiwum są weryfikowane przed restore. Nadal wymagane są
-  restore drill oraz weryfikacja pełnej retencji, świeżości i monitoringu na PG18.
+- Backup używa `pg_dump` custom archive i dedykowanej roli backupu; checksum i
+  archiwum są weryfikowane przed restore. Lokalny round-trip smoke przeszedł;
+  przed live wymagane są restore drill oraz zatwierdzenie retencji, świeżości,
+  monitoringu i RPO/RTO dla serwera docelowego.
 - Restore najpierw do izolowanego celu; sprawdź checksum, PostgreSQL/schema
   version, `migrate deploy`, `prices:verify` i aplikacyjne smoke. Restore do
   live wymaga osobnego GO.

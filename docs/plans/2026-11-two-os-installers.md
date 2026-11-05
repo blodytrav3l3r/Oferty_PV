@@ -1,5 +1,10 @@
 # Plan: instalatory S.O.K. dla Windows testowego i Linux serwerowego
 
+**Stan:** kod obu instalatorów oraz testy polityk są gotowe w 1.56.4. Instalacja
+Windows została uruchomiona lokalnie. Pozostało end-to-end sprawdzenie czystej
+instalacji Linux na Ubuntu/Debian; do tego czasu nie deklaruj pełnej gotowości
+serwera Linux.
+
 ## Primary goal
 
 Administrator może uruchomić S.O.K. testowo na Windows oraz wdrożyć go na firmowym serwerze Linux bez Docker Desktop, płatnych usług bazodanowych i pomijania bezpiecznego importu aktywnych cenników.
