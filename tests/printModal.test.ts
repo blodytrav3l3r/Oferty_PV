@@ -15,6 +15,8 @@ function loadPrintModalInSandbox() {
     const showToastCalls: Array<{ msg: string; type: string }> = [];
     const createIconsCalls: string[] = [];
     const registeredListeners: Array<(ev: any) => void> = [];
+    const registeredChangeListeners: Array<(ev: any) => void> = [];
+    const fetchCalls: string[] = [];
 
     const bodyEl: any = {
         insertedHtml: '',
@@ -29,8 +31,12 @@ function loadPrintModalInSandbox() {
         getElementById(id: string) {
             return this._elements[id] || null;
         },
+        createElement() {
+            return {};
+        },
         addEventListener(event: string, listener: any) {
             if (event === 'click') registeredListeners.push(listener);
+            if (event === 'change') registeredChangeListeners.push(listener);
         },
         body: bodyEl
     };
@@ -50,7 +56,12 @@ function loadPrintModalInSandbox() {
         document: documentMock,
         window: {} as any,
         setTimeout: (cb: () => void) => cb(),
-        setImmediate: (cb: () => void) => cb()
+        setImmediate: (cb: () => void) => cb(),
+        URLSearchParams,
+        fetch: async (url: string) => {
+            fetchCalls.push(url);
+            return { ok: true, json: async () => ({ data: [] }) };
+        }
     };
     sandbox.window = sandbox;
     sandbox.window.escapeHtml = escapeHtml;
@@ -81,8 +92,42 @@ function loadPrintModalInSandbox() {
         calls,
         showToastCalls,
         createIconsCalls,
-        registeredListeners
+        registeredListeners,
+        registeredChangeListeners,
+        fetchCalls
     };
+}
+
+function createCombinedModal() {
+    const fields: Record<string, any> = {
+        rury: { value: '', placeholder: '', _upmItems: [] },
+        studnie: { value: '', placeholder: '', _upmItems: [] },
+        dateFrom: {
+            value: '',
+            setAttribute: jest.fn(),
+            removeAttribute: jest.fn(),
+            focus: jest.fn()
+        },
+        dateTo: { value: '' },
+        status: { textContent: '' },
+        ruryList: { innerHTML: '', appendChild: jest.fn() },
+        studnieList: { innerHTML: '', appendChild: jest.fn() }
+    };
+    const modal: any = {
+        contains: () => true,
+        remove: jest.fn(),
+        querySelector(selector: string) {
+            if (selector === '[data-combined-field="rury"]') return fields.rury;
+            if (selector === '[data-combined-field="studnie"]') return fields.studnie;
+            if (selector === '#upm-rury-list') return fields.ruryList;
+            if (selector === '#upm-studnie-list') return fields.studnieList;
+            if (selector === '[data-combined-filter="dateFrom"]') return fields.dateFrom;
+            if (selector === '[data-combined-filter="dateTo"]') return fields.dateTo;
+            if (selector === '[data-combined-filter-status]') return fields.status;
+            return null;
+        }
+    };
+    return { modal, fields };
 }
 
 describe('printModal helper (public/js/shared/printModal.js)', () => {
@@ -226,14 +271,128 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
                 combinedSection: { title: 'Wydruk łączny' }
             });
             expect(bodyEl.insertedHtml).toMatch(
-                /<input type="text" class="upm-combined-select" data-combined-field="rury"/
+                /<input type="text" class="form-input upm-combined-select" data-combined-field="rury"/
             );
             expect(bodyEl.insertedHtml).toMatch(
-                /<input type="text" class="upm-combined-select" data-combined-field="studnie"/
+                /<input type="text" class="form-input upm-combined-select" data-combined-field="studnie"/
             );
+            expect(bodyEl.insertedHtml).toMatch(/class="form-select upm-combined-select"/);
             expect(bodyEl.insertedHtml).toMatch(/<datalist id="upm-rury-list"><\/datalist>/);
             expect(bodyEl.insertedHtml).toMatch(/<datalist id="upm-studnie-list"><\/datalist>/);
             expect(bodyEl.insertedHtml).not.toMatch(/data-combined-filter="q"/);
+        });
+
+        it('wymaga daty początkowej, a data końcowa pozostaje opcjonalna', () => {
+            const { sandbox, bodyEl } = loadPrintModalInSandbox();
+            sandbox.window.showUniversalPrintModal({ combinedSection: { title: 'Wydruk łączny' } });
+
+            expect(bodyEl.insertedHtml).toMatch(
+                /type="date"[^>]*data-combined-filter="dateFrom"[^>]*required/
+            );
+            expect(bodyEl.insertedHtml).toMatch(
+                /type="date"[^>]*data-combined-filter="dateTo"(?![^>]*required)/
+            );
+        });
+
+        it('nie pobiera ofert przy otwieraniu modala ani po zmianie daty', async () => {
+            const { sandbox, documentMock, fetchCalls, registeredChangeListeners } =
+                loadPrintModalInSandbox();
+            const { modal, fields } = createCombinedModal();
+            documentMock._elements['universal-print-modal'] = modal;
+
+            sandbox.window.showUniversalPrintModal({ combinedSection: { title: 'Wydruk łączny' } });
+            expect(fetchCalls).toHaveLength(0);
+
+            fields.dateFrom.value = '2026-11-01';
+            registeredChangeListeners.forEach((listener) =>
+                listener({
+                    target: {
+                        closest: () => ({
+                            getAttribute: () => 'dateFrom'
+                        })
+                    }
+                })
+            );
+            await Promise.resolve();
+            expect(fetchCalls).toHaveLength(0);
+        });
+
+        it('nie wysyła zapytań bez daty początkowej', async () => {
+            const { sandbox, documentMock, fetchCalls, registeredChangeListeners } =
+                loadPrintModalInSandbox();
+            const { modal, fields } = createCombinedModal();
+            documentMock._elements['universal-print-modal'] = modal;
+            sandbox.window.showUniversalPrintModal({ combinedSection: { title: 'Wydruk łączny' } });
+
+            await sandbox.window.combinedFilter_action();
+
+            expect(fetchCalls).toHaveLength(0);
+            expect(fields.status.textContent).toMatch(/datę początkową/i);
+            expect(fields.dateFrom.setAttribute).toHaveBeenCalledWith('aria-invalid', 'true');
+
+            registeredChangeListeners.forEach((listener) =>
+                listener({ target: { closest: () => ({}) } })
+            );
+            expect(fields.dateFrom.removeAttribute).not.toHaveBeenCalled();
+        });
+
+        it('pobiera obie listy dopiero po filtruj, przy dacie końcowej opcjonalnej', async () => {
+            const { sandbox, documentMock, fetchCalls } = loadPrintModalInSandbox();
+            const { modal, fields } = createCombinedModal();
+            documentMock._elements['universal-print-modal'] = modal;
+            sandbox.window.showUniversalPrintModal({ combinedSection: { title: 'Wydruk łączny' } });
+            fields.dateFrom.value = '2026-11-01';
+
+            await sandbox.window.combinedFilter_action();
+
+            expect(fields.status.textContent).toBe('Wczytano 0 ofert rur i 0 ofert studni.');
+            expect(fetchCalls).toHaveLength(2);
+            expect(fetchCalls.every((url) => url.includes('dateFrom=2026-11-01'))).toBe(true);
+            expect(fetchCalls.every((url) => !url.includes('dateTo='))).toBe(true);
+
+            fields.dateTo.value = '2026-11-30';
+            await sandbox.window.combinedFilter_action();
+            expect(fetchCalls).toHaveLength(4);
+            expect(fetchCalls.slice(2).every((url) => url.includes('dateTo=2026-11-30'))).toBe(
+                true
+            );
+        });
+
+        it('odrzuca wyniki żądania, gdy użytkownik zmieni daty przed odpowiedzią', async () => {
+            const { sandbox, documentMock, fetchCalls, registeredChangeListeners } =
+                loadPrintModalInSandbox();
+            const { modal, fields } = createCombinedModal();
+            documentMock._elements['universal-print-modal'] = modal;
+            sandbox.window.showUniversalPrintModal({ combinedSection: { title: 'Wydruk łączny' } });
+
+            const resolvers: Array<(response: any) => void> = [];
+            sandbox.fetch = (url: string) => {
+                fetchCalls.push(url);
+                return new Promise((resolve) => resolvers.push(resolve));
+            };
+            fields.dateFrom.value = '2026-11-01';
+            const pendingFilter = sandbox.window.combinedFilter_action();
+            await Promise.resolve();
+            expect(resolvers).toHaveLength(2);
+
+            fields.dateFrom.value = '2026-11-02';
+            registeredChangeListeners.forEach((listener) =>
+                listener({ target: { closest: () => ({}) } })
+            );
+            resolvers.forEach((resolve) =>
+                resolve({
+                    ok: true,
+                    json: async () => ({
+                        data: [{ id: 'stale', number: 'OLD-1', createdAt: '2026-11-01' }]
+                    })
+                })
+            );
+            await pendingFilter;
+
+            expect(fields.status.textContent).toMatch(/Zakres zmieniony/);
+            expect(fields.rury.value).toBe('');
+            expect(fields.rury._upmItems).toEqual([]);
+            expect(fields.ruryList.innerHTML).toBe('');
         });
     });
 

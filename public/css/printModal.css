@@ -225,6 +225,12 @@
     background: rgba(var(--white-rgb), 0.02);
 }
 
+.upm-combined-filter-status {
+    margin: 0;
+    color: var(--upm-text-muted);
+    font-size: var(--fs-sm);
+}
+
 .upm-combined-field {
     display: flex;
     flex-direction: column;

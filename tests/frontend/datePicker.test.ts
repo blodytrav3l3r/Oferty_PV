@@ -146,6 +146,14 @@ describe('kalendarz: styl i zasięg (wszystkie moduły)', () => {
         expect(responsive).not.toMatch(/\.sok-datepicker[^{]*\{[^}]*#[0-9a-fA-F]{3,8}/);
     });
 
+    it('popover pozostaje nad modalem, który otworzył pole daty', () => {
+        const block = responsive.slice(
+            responsive.indexOf('.sok-datepicker {'),
+            responsive.indexOf('.sok-datepicker[hidden]')
+        );
+        expect(block).toMatch(/z-index:\s*calc\(var\(--z-overlay\)\s*\+\s*1\)/);
+    });
+
     it('skrypt dołączony do wszystkich stron z polem daty', () => {
         ['kartoteka.html', 'studnie.html', 'rury.html', 'zlecenia.html'].forEach((page) => {
             expect(read(`public/${page}`)).toContain('js/shared/datePicker.js?v=');

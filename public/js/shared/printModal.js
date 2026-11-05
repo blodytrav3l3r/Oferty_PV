@@ -24,8 +24,10 @@
 
 (function () {
     const MODAL_ID = 'universal-print-modal';
+    let combinedFilterRequestId = 0;
 
     function close() {
+        combinedFilterRequestId += 1;
         const m = document.getElementById(MODAL_ID);
         if (m) {
             if (typeof untrapFocus === 'function') untrapFocus(m);
@@ -168,16 +170,19 @@
             <div class="upm-combined-filters">
                 <label class="upm-combined-field">
                     <span>Data od</span>
-                    <input type="date" class="upm-combined-select" data-combined-filter="dateFrom" />
+                    <input type="date" class="form-input upm-combined-select" data-combined-filter="dateFrom" required aria-describedby="upm-combined-filter-status" />
                 </label>
                 <label class="upm-combined-field">
                     <span>Data do</span>
-                    <input type="date" class="upm-combined-select" data-combined-filter="dateTo" />
+                    <input type="date" class="form-input upm-combined-select" data-combined-filter="dateTo" aria-describedby="upm-combined-filter-status" />
                 </label>
                 ${userField}
                 <button class="upm-btn upm-btn-sm" data-action="combinedFilter_action" type="button">
                     Filtruj
                 </button>
+                <p class="upm-combined-filter-status" data-combined-filter-status role="status" aria-live="polite">
+                    Wybierz datę początkową i kliknij „Filtruj”, aby wczytać oferty.
+                </p>
             </div>`;
     }
 
@@ -195,17 +200,17 @@
                 <div class="upm-combined-form">
                     <label class="upm-combined-field">
                         <span>Oferta rur</span>
-                        <input type="text" class="upm-combined-select" data-combined-field="rury" list="upm-rury-list" placeholder="Wpisz numer oferty rur..." autocomplete="off" />
+                        <input type="text" class="form-input upm-combined-select" data-combined-field="rury" list="upm-rury-list" placeholder="Wybierz datę i kliknij Filtruj..." autocomplete="off" />
                         <datalist id="upm-rury-list"></datalist>
                     </label>
                     <label class="upm-combined-field">
                         <span>Oferta studni</span>
-                        <input type="text" class="upm-combined-select" data-combined-field="studnie" list="upm-studnie-list" placeholder="Wpisz numer oferty studni..." autocomplete="off" />
+                        <input type="text" class="form-input upm-combined-select" data-combined-field="studnie" list="upm-studnie-list" placeholder="Wybierz datę i kliknij Filtruj..." autocomplete="off" />
                         <datalist id="upm-studnie-list"></datalist>
                     </label>
                     <label class="upm-combined-field">
                         <span>Format</span>
-                        <select class="upm-combined-select" data-combined-field="format">
+                        <select class="form-select upm-combined-select" data-combined-field="format">
                             <option value="pdf">PDF</option>
                             <option value="docx">Word (DOCX)</option>
                         </select>
@@ -294,7 +299,23 @@
         return byLabel ? byLabel.id : '';
     }
 
-    async function populateCombinedSection(modal, cfg) {
+    function clearCombinedResults(modal) {
+        const fields = [
+            ['rury', '#upm-rury-list'],
+            ['studnie', '#upm-studnie-list']
+        ];
+        for (const [name, listSelector] of fields) {
+            const input = modal.querySelector(`[data-combined-field="${name}"]`);
+            const list = modal.querySelector(listSelector);
+            if (input) {
+                input.value = '';
+                input._upmItems = [];
+            }
+            if (list) list.innerHTML = '';
+        }
+    }
+
+    async function populateCombinedSection(modal, cfg, requestId) {
         if (!modal || !cfg) return;
         const ruryInput = modal.querySelector('[data-combined-field="rury"]');
         const studnieInput = modal.querySelector('[data-combined-field="studnie"]');
@@ -314,22 +335,46 @@
                 fetchOfferList(buildSearchUrl('offer', filters)),
                 fetchOfferList(buildSearchUrl('studnia_oferta', filters))
             ]);
+            if (requestId !== combinedFilterRequestId) return;
             fillOfferInput(ruryInput, ruryList, ruryOffers);
             fillOfferInput(studnieInput, studnieList, studnieOffers);
             await populateUserFilter(modal);
+            if (requestId !== combinedFilterRequestId) return;
+            const status = modal.querySelector('[data-combined-filter-status]');
+            if (status) {
+                status.textContent = `Wczytano ${ruryOffers.length} ofert rur i ${studnieOffers.length} ofert studni.`;
+            }
         } catch (e) {
+            if (requestId !== combinedFilterRequestId) return;
             if (typeof logger !== 'undefined') {
                 logger.error('printModal', 'Błąd ładowania list ofert (wydruk łączny)', e);
             }
             showFallback(ruryInput);
             showFallback(studnieInput);
+            const status = modal.querySelector('[data-combined-filter-status]');
+            if (status) status.textContent = 'Nie udało się wczytać ofert. Spróbuj ponownie.';
         }
     }
 
     window.combinedFilter_action = async function () {
         const modal = document.getElementById(MODAL_ID);
         if (!modal) return;
-        await populateCombinedSection(modal, window.__upmCombinedCfg || {});
+        const filters = readCombinedFilters(modal);
+        const dateFrom = modal.querySelector('[data-combined-filter="dateFrom"]');
+        const status = modal.querySelector('[data-combined-filter-status]');
+        const requestId = ++combinedFilterRequestId;
+        clearCombinedResults(modal);
+        if (!filters.dateFrom) {
+            if (dateFrom) {
+                dateFrom.setAttribute('aria-invalid', 'true');
+                dateFrom.focus();
+            }
+            if (status) status.textContent = 'Wybierz datę początkową, aby wczytać listy ofert.';
+            return;
+        }
+        if (dateFrom) dateFrom.removeAttribute('aria-invalid');
+        if (status) status.textContent = 'Wczytywanie ofert…';
+        await populateCombinedSection(modal, window.__upmCombinedCfg || {}, requestId);
     };
 
     async function combinedExport_action() {
@@ -470,7 +515,10 @@
     window.showUniversalPrintModal = function (config) {
         config = config || {};
         const existing = document.getElementById(MODAL_ID);
-        if (existing) existing.remove();
+        if (existing) {
+            combinedFilterRequestId += 1;
+            existing.remove();
+        }
 
         const sectionsHtml =
             renderOfferSection(config.offerSection) +
@@ -550,10 +598,7 @@
                 }
             });
         }
-        if (config.combinedSection) {
-            window.__upmCombinedCfg = config.combinedSection;
-            populateCombinedSection(document.getElementById(MODAL_ID), config.combinedSection);
-        }
+        if (config.combinedSection) window.__upmCombinedCfg = config.combinedSection;
     };
 
     window.__upmHelperShow = window.showUniversalPrintModal;
@@ -568,9 +613,21 @@
             if (!el) return;
             const modal = document.getElementById(MODAL_ID);
             if (!modal || !modal.contains(el)) return;
-            if (typeof window.combinedFilter_action === 'function') {
-                window.combinedFilter_action();
+            combinedFilterRequestId += 1;
+            clearCombinedResults(modal);
+            const dateFrom = modal.querySelector('[data-combined-filter="dateFrom"]');
+            const status = modal.querySelector('[data-combined-filter-status]');
+            const filters = readCombinedFilters(modal);
+            if (!filters.dateFrom) {
+                if (dateFrom) dateFrom.setAttribute('aria-invalid', 'true');
+                if (status)
+                    status.textContent = 'Wybierz datę początkową, aby wczytać listy ofert.';
+                return;
             }
+            if (dateFrom) dateFrom.removeAttribute('aria-invalid');
+            if (status)
+                status.textContent =
+                    'Zakres zmieniony. Kliknij „Filtruj”, aby odświeżyć listy ofert.';
         });
         window.__upmFilterListenerInstalled = true;
     }
