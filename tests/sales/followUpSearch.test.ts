@@ -1,5 +1,6 @@
 import {
     parseSearchParams,
+    buildSearchOrderBy,
     buildFollowUpConditions,
     buildFollowUpOrderBy,
     buildOffersCountSql,
@@ -56,6 +57,15 @@ const base = {
 };
 const render = (conds: any[]): string =>
     conds.map((c) => (c && c.render ? c.render() : String(c))).join(' AND ');
+
+describe('buildSearchOrderBy — identyfikatory zgodne z PostgreSQL', () => {
+    it.each([
+        ['createdAt', 'desc', '"createdAt" DESC, "id" DESC'],
+        ['offer_number', 'asc', '"offer_number" ASC, "id" ASC']
+    ] as const)('sortuje po %s %s', (sort, order, expected) => {
+        expect((buildSearchOrderBy(sort, order) as any).render()).toBe(expected);
+    });
+});
 
 describe('P0.4 parseSearchParams — nowe filtry', () => {
     it('domyslnie: followupStatus all, overdueOnly false, sort createdAt (regresja)', () => {

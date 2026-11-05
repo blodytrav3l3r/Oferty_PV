@@ -10,6 +10,7 @@ import { searchCache } from '../../utils/searchCache';
 import { parseJsonField } from '../../helpers';
 import {
     parseSearchParams,
+    buildSearchOrderBy,
     buildWhereParts,
     buildOrderStatusSql,
     buildFollowUpConditions,
@@ -127,13 +128,10 @@ router.get('/', requireAuth, async (req, res) => {
                     : Prisma.sql`WHERE ${followupSql}`;
         }
 
-        const sortDir = params.order === 'asc' ? 'ASC' : 'DESC';
-        const allowedSort = ['createdAt', 'offer_number'];
-        const sortCol = allowedSort.includes(params.sort) ? params.sort : 'createdAt';
         const orderBySql =
             params.sort === 'followup'
                 ? buildFollowUpOrderBy(nowIso)
-                : Prisma.sql`${Prisma.raw(sortCol)} ${Prisma.raw(sortDir)}, id ${Prisma.raw(sortDir)}`;
+                : buildSearchOrderBy(params.sort, params.order);
         const limitVal = Math.min(params.limit, SEARCH_LIMIT_MAX);
 
         const sql = Prisma.sql`

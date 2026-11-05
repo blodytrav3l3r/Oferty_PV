@@ -97,6 +97,16 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
     };
 }
 
+export function buildSearchOrderBy(
+    sort: SearchParams['sort'],
+    order: SearchParams['order']
+): Prisma.Sql {
+    const sortColumn =
+        sort === 'offer_number' ? Prisma.raw('"offer_number"') : Prisma.raw('"createdAt"');
+    const sortDirection = order === 'asc' ? Prisma.raw('ASC') : Prisma.raw('DESC');
+    return Prisma.sql`${sortColumn} ${sortDirection}, "id" ${sortDirection}`;
+}
+
 export interface OrderRef {
     /** Tabela zamówień, np. 'orders_rury_rel'. */
     table: string;
