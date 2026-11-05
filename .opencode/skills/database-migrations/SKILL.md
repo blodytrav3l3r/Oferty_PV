@@ -1,19 +1,21 @@
 ---
 name: database-migrations
-description: Database migration best practices for schema changes, data migrations, rollbacks, and safe deploys. Zadaptowano pod S.O.K. (Prisma + SQLite, workflow db push / migrate deploy).
+description: Database migration best practices for schema changes, data migrations, rollbacks, and safe deploys. Zadaptowano pod S.O.K. (Prisma + PostgreSQL 18, migrate deploy).
 metadata:
-    origin: ECC (zaadaptowano pod S.O.K. / SQLite)
+    origin: ECC (zaadaptowano pod S.O.K. / PostgreSQL 18)
 ---
 
 # Database Migration Patterns
 
 Bezpieczne, odwracalne zmiany schematu bazy w systemach produkcyjnych.
 
-> S.O.K.: Prisma + SQLite. Sposob synchronizacji schematu zalezy od historii bazy:
+> S.O.K.: Prisma + PostgreSQL 18. Zmiany schematu przechodza wyłącznie przez
+> reviewowane migracje w `prisma/migrations-postgresql/`:
 >
-> - **Baza utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`): `npx prisma db push --accept-data-loss`
-> - **Baza z historia migracji**: `npx prisma migrate deploy`
-> - Jak sprawdzic: `npx prisma migrate status`
+> - **Development:** `npx prisma migrate dev` na izolowanej bazie developerskiej.
+> - **Instalacja/release:** `npx prisma migrate deploy`.
+> - **Weryfikacja:** `npx prisma migrate status` i kontrola driftu PostgreSQL.
+> - Nie używaj `db push` w instalatorach ani wdrożeniach.
 
 ## When to Activate
 

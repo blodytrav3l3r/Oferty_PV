@@ -129,7 +129,8 @@ jobs:
                   echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
                   sudo apt-get update
                   sudo apt-get install -y postgresql-client-18
-                  pg_dump --version
+                  pg_dump --version | grep -E ' 18(\.|$)'
+                  pg_restore --version | grep -E ' 18(\.|$)'
 
             - name: Apply PostgreSQL migrations
               run: npx prisma migrate deploy
@@ -183,6 +184,18 @@ jobs:
 
             - name: Install dependencies
               run: npm ci
+
+            - name: Install PostgreSQL 18 client tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y ca-certificates curl gnupg
+                  sudo install -d /usr/share/postgresql-common/pgdg
+                  curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg > /dev/null
+                  echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+                  sudo apt-get update
+                  sudo apt-get install -y postgresql-client-18
+                  pg_dump --version | grep -E ' 18(\.|$)'
+                  pg_restore --version | grep -E ' 18(\.|$)'
 
             - name: Generate Prisma client
               run: npx prisma generate

@@ -9,16 +9,16 @@ import { parseIfMatch } from '../src/services/pricelist/writeTarget';
 const MIGRATION = path.join(
     process.cwd(),
     'prisma',
-    'migrations',
-    '20261023000000_pricelist_one_draft',
+    'migrations-postgresql',
+    '0003_partial_unique_invariants',
     'migration.sql'
 );
 
 describe('migracja: jeden DRAFT na typ', () => {
     it('tworzy unikalny indeks częściowy na (type) WHERE status = DRAFT', () => {
         const sql = fs.readFileSync(MIGRATION, 'utf-8');
-        expect(sql).toContain('CREATE UNIQUE INDEX IF NOT EXISTS "ux_pricelist_version_one_draft"');
-        expect(sql).toContain('ON "PricelistVersion"("type")');
+        expect(sql).toContain('CREATE UNIQUE INDEX "ux_pricelist_version_one_draft"');
+        expect(sql).toMatch(/ON\s+"PricelistVersion"\s+\("type"\)/);
         expect(sql).toContain(`WHERE "status" = 'DRAFT'`);
     });
 

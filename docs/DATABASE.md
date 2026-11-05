@@ -22,8 +22,7 @@ operacyjne i nie wynikają z lokalnej walidacji.
   release i produkcji. Nie utrzymujemy równoległego runtime SQLite ani fallbacku
   do lokalnego pliku bazy.
 - Utrzymuj jedną kanoniczną historię migracji PostgreSQL, tworzoną od pustej
-  bazy. Historyczne migracje SQLite nie są migracjami PostgreSQL i nie mogą być
-  uruchamiane na nowym providerze.
+  bazy. Dawna historia migracji SQLite pozostaje wyłącznie w historii Git.
 - Relacje modeluj przy użyciu nazwanych PK/FK, jawnych reguł `ON DELETE`,
   `UNIQUE`/`CHECK` oraz indeksów uzasadnionych rzeczywistymi zapytaniami. Nie
   przenoś runtime DDL ani schema auto-heal do aplikacji.
@@ -52,19 +51,19 @@ operacyjne i nie wynikają z lokalnej walidacji.
    poza startem każdej repliki.
 3. Seed twórz tylko dla pustej bazy i bez przenoszenia haseł, sesji ani sekretów.
    Nie uruchamiaj automatycznego DDL przy starcie aplikacji.
-4. Aktywne cenniki eksportuj ze źródłowej bazy jednorazowym, read-only
-   eksporterem. Artefakt allowlistuje wyłącznie resolved aktywne wersje, ich
-   pozycje i konieczny override; zawiera schema version, liczności i SHA-256.
-   Import do PostgreSQL odrzuć przy niezgodnym hash/count albo niejednoznacznej
-   aktywności. Historia ofert i pozostałe dane nie są przenoszone.
+4. Nowe instalacje importują zatwierdzone aktywne cenniki z
+   `data/pricelists/active-pricelists.json`. Pakiet allowlistuje jedną wersję
+   każdego typu i jej pozycje; zawiera liczniki oraz SHA-256 wersji i całości.
+   Import odrzuć przy niezgodności pakietu albo niepustym zakresie cenników.
+   Historia ofert i pozostałe dane nie są przenoszone.
 5. Po imporcie sprawdź `prices:verify`, schema drift, role/uprawnienia i
    kontraktowe przepływy ofert przed readiness lub przełączeniem ruchu.
 
 **Status wykonania:** schemat PostgreSQL, kanoniczne migracje, bootstrap ról,
 importer aktywnych cenników, preflight oraz narzędzia operacyjne są
 zaimplementowane i przeszły lokalną walidację na PostgreSQL 18. Runbook
-[`cutover/active-pricelists.md`](cutover/active-pricelists.md) opisuje
-powtarzalną procedurę dla starej instalacji. Produkcyjny cutover nie został
+[`cutover/active-pricelists.md`](cutover/active-pricelists.md) opisuje pakiet
+cen i jego automatyczny import przez instalatory. Produkcyjny rollout nie został
 wykonany i wymaga osobnej akceptacji oraz walidacji konkretnego środowiska.
 
 ## 3. Testy bazy
@@ -72,8 +71,7 @@ wykonany i wymaga osobnej akceptacji oraz walidacji konkretnego środowiska.
 - Test harness wymaga jawnego `POSTGRES_TEST_URL`, a brak połączenia jest
   błędem. Każdy worker działa w odizolowanym schemacie PostgreSQL; Playwright
   otrzymuje osobny URL testowy. SQLite nie jest providerem aktywnych testów
-  aplikacji. Wyjątek stanowią wyłącznie testy jednorazowego eksportera starego
-  pliku cenników.
+  aplikacji. Importer aktywnych cenników używa pakietu S.O.K., nie starej bazy.
 - Testuj migrate deploy na pustej bazie, ponowny deploy, drift, constraints,
   FTS/search, JSON, null ordering, Decimal round-trip, transakcje, CAS,
   idempotency i konkurencyjne zapisy.
@@ -114,8 +112,6 @@ schematu jest `prisma/migrations-postgresql/`. Modele obejmują m.in.
 ML/telemetrię, blokady oraz udostępnienia. Schemat PostgreSQL, typy kwotowe,
 constraints i indeksy zmieniaj addytywnie, przez wersjonowane migracje.
 
-Historyczne decyzje SQLite i wcześniejszy model zachowują
-`docs/adr/ADR-001-sqlite.md`, `docs/adr/ADR-012-single-node-sqlite.md` oraz
-`prisma/migrations/` wyłącznie jako kontekst legacy. Nie są instrukcją
-konfiguracji ani eksploatacji docelowej bazy. Jedyny wspierany wyjątek
-odczytujący stary SQLite to jednorazowy, read-only eksport aktywnych cenników.
+Historyczne decyzje o silniku bazy zachowują ADR-y i `docs/DELETION_LOG.md`
+wyłącznie jako kontekst. Nie są instrukcją konfiguracji ani eksploatacji
+docelowej bazy.

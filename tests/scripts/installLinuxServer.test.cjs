@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
@@ -15,16 +16,78 @@ const migrationSql = fs.readFileSync(
 );
 const searchUtils = fs.readFileSync(path.join(root, 'src', 'utils', 'searchUtils.ts'), 'utf8');
 const dockerIgnore = fs.readFileSync(path.join(root, '.dockerignore'), 'utf8');
+const backupScript = fs.readFileSync(path.join(root, 'scripts', 'backup.ts'), 'utf8');
+const pricelistPackage = JSON.parse(
+    fs.readFileSync(path.join(root, 'data', 'pricelists', 'active-pricelists.json'), 'utf8')
+);
+
+function stableJson(value) {
+    if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+    if (value && typeof value === 'object') {
+        return `{${Object.keys(value)
+            .sort()
+            .map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`)
+            .join(',')}}`;
+    }
+    return JSON.stringify(value);
+}
+
+const { sha256: packageHash, ...packagePayload } = pricelistPackage;
+assert.equal(pricelistPackage.sourceSchema, 'sok-bundled-active-pricelists-v1');
+assert.equal(
+    crypto.createHash('sha256').update(stableJson(packagePayload), 'utf8').digest('hex'),
+    packageHash,
+    'the bundled active-pricelist package checksum must be valid'
+);
+const validatePackage = spawnSync(
+    process.execPath,
+    [
+        path.join(root, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+        'scripts/import-active-pricelists.ts',
+        'data/pricelists/active-pricelists.json',
+        '--validate-only'
+    ],
+    {
+        cwd: root,
+        encoding: 'utf8',
+        env: {
+            ...process.env,
+            DATABASE_URL: 'postgresql://sok_test:sok_test@127.0.0.1:5432/sok_test?schema=public'
+        }
+    }
+);
+assert.equal(
+    validatePackage.status,
+    0,
+    `active-pricelist package validation failed: ${validatePackage.stderr}`
+);
+assert.match(validatePackage.stdout, /3 aktywne wersje, 1023 pozycji/);
+assert.deepEqual(
+    Object.values(pricelistPackage.versions).map((version) => version.status),
+    ['APPROVED', 'APPROVED', 'APPROVED']
+);
+assert.ok(
+    Object.values(pricelistPackage.versions).every(
+        (version) => version.createdBy === null && version.approvedBy === null
+    ),
+    'the bundled price data must not disclose source user identifiers'
+);
+assert.equal(
+    Object.values(pricelistPackage.counts).reduce((total, count) => total + count, 0),
+    1023
+);
+assert.doesNotMatch(
+    backupScript,
+    /\['--format=custom', '--no-owner', '--no-acl', '--exit-on-error'/
+);
+assert.match(backupScript, /\['--format=custom', '--no-owner', '--no-acl', '--file'/);
 
 assert.match(
     linuxInstaller,
     /docker-ce docker-ce-cli containerd\.io docker-buildx-plugin docker-compose-plugin/
 );
-assert.match(linuxInstaller, /--volume "\$mount"/);
-assert.match(
-    linuxInstaller,
-    /source=\$ARTIFACT_PATH|\$ARTIFACT_PATH:\/tmp\/active-pricelists\.json:ro/
-);
+assert.match(linuxInstaller, /data\/pricelists\/active-pricelists\.json/);
+assert.doesNotMatch(linuxInstaller, /--artifact|ARTIFACT_PATH|exportuj aktywne cenniki/i);
 assert.match(linuxInstaller, /MIGRATE AND SEED/);
 assert.match(linuxInstaller, /compose run --rm --no-deps db-bootstrap/);
 assert.match(linuxInstaller, /isUnsafeDefaultAdminPassword/);
@@ -47,7 +110,8 @@ assert.doesNotMatch(
     linuxInstaller,
     /docker\s+compose\s+down\s+-v|docker\s+volume\s+(?:rm|prune)|curl[^\n]*\|\s*(?:sudo\s+)?(?:bash|sh)/i
 );
-assert.match(windowsInstaller, /--volume', \$mount/);
+assert.match(windowsInstaller, /--validate-only/);
+assert.doesNotMatch(windowsInstaller, /--volume.*active-pricelists/);
 assert.match(windowsInstaller, /MIGRATE AND SEED/);
 assert.match(windowsInstaller, /volume ls --quiet/);
 assert.match(windowsInstaller, /-ceq 'sok_postgres-data'/);
@@ -105,7 +169,12 @@ assert.ok(
     envTempWriteIndex > envTempAclIndex,
     'secrets must be written only after the temporary environment ACL is restricted'
 );
-assert.doesNotMatch(windowsInstaller, /target=\/cutover|\$artifactDirectory/);
+assert.doesNotMatch(
+    windowsInstaller,
+    /target=\/cutover|\$artifactDirectory|Read-Host 'Path to active-pricelists/i
+);
+assert.match(windowsInstaller, /data\\pricelists\\active-pricelists\.json/);
+assert.doesNotMatch(windowsInstaller, /Path to active-pricelists\.json|export the active lists/i);
 assert.match(dockerIgnore, /^assets\/$/m);
 assert.match(dockerIgnore, new RegExp('^data/price_' + 'defaults\\.json$', 'm'));
 assert.match(windowsInstaller, /'run', '--rm', '--no-deps', 'db-bootstrap'/);
@@ -126,7 +195,7 @@ assert.doesNotMatch(
     /docker\s+compose\s+down\s+-v|docker\s+volume\s+(?:rm|prune)|import-active-pricelists|migrate\s+(?:resolve|deploy|reset)|db\s+seed|RESET FAILED SCHEMA/i
 );
 const windowsImportIndex = windowsInstaller.indexOf(
-    "Invoke-Compose -Arguments @('run', '--rm', '--no-deps', '--volume', $mount, '--entrypoint', 'sh', 'app', '-ec', $apply)"
+    "Invoke-Compose -Arguments @('run', '--rm', '--no-deps', '--entrypoint', 'sh', 'app', '-ec', $apply)"
 );
 const windowsMarkerIndex = windowsInstaller.lastIndexOf('Write-PostgresInstallMarker');
 const windowsReadinessIndex = windowsInstaller.indexOf(
@@ -135,9 +204,7 @@ const windowsReadinessIndex = windowsInstaller.indexOf(
 const windowsMarkerClearIndex = windowsInstaller.indexOf(
     'Remove-Item -LiteralPath $markerPath -Force'
 );
-const windowsDatabaseSetupIndex = windowsInstaller.indexOf(
-    'Invoke-DatabaseSetup -ArtifactPath $artifactPath'
-);
+const windowsDatabaseSetupIndex = windowsInstaller.lastIndexOf('Invoke-DatabaseSetup');
 assert.ok(windowsImportIndex >= 0, 'Windows installer must import active pricelists');
 assert.ok(
     windowsMarkerClearIndex < windowsDatabaseSetupIndex,
@@ -151,9 +218,7 @@ assert.ok(
     windowsMarkerIndex > windowsReadinessIndex,
     'Windows readiness marker must follow app readiness'
 );
-const linuxImportIndex = linuxInstaller.indexOf(
-    'compose run --rm --no-deps --volume "$mount" --entrypoint sh app -ec "$apply_import"'
-);
+const linuxImportIndex = linuxInstaller.indexOf("'$pricelist_package' --apply");
 const linuxMarkerIndex = linuxInstaller.indexOf('mv -T -- "$MARKER_TEMP" "$INSTALL_MARKER"');
 const linuxReadinessIndex = linuxInstaller.indexOf(
     'compose up --detach --wait --wait-timeout 300 app'
@@ -217,7 +282,7 @@ if (!bashCommand) {
     });
     assert.equal(help.status, 0, `Installer help failed: ${help.stderr}`);
     assert.match(help.stdout, /Ubuntu\/Debian/);
-    assert.match(help.stdout, /active-pricelists\.json/);
+    assert.doesNotMatch(help.stdout, /active-pricelists\.json|--artifact/);
 }
 
 process.stdout.write('Linux and Windows installer policy checks passed.\n');

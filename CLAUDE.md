@@ -6,7 +6,7 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 
 ## Stack
 
-- **Backend**: TypeScript + Express + Prisma + PostgreSQL 18; `server.ts`, `src/`, `scripts/`, `tests/` (PostgreSQL jest jedynym runtime i testowym providerem; SQLite występuje wyłącznie w archiwalnych artefaktach i jednorazowym eksporterze aktywnych cenników)
+- **Backend**: TypeScript + Express + Prisma + PostgreSQL 18; `server.ts`, `src/`, `scripts/`, `tests/` (PostgreSQL jest jedynym runtime i testowym providerem; aktywne cenniki świeżej instalacji pochodzą z wersjonowanego pakietu w repozytorium)
 - **Frontend**: Vanilla JS (bez frameworka), serwowany przez Express z `public/`; moduły w `public/js/rury/` i `public/js/studnie/`
 - **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
 - **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
@@ -64,10 +64,10 @@ Jedynym źródłem prawdy jest sekcja „Wersjonowanie i Release Flow (Single So
 
 - PostgreSQL 18 jest jedynym wspieranym runtime i providerem testów. Aktywne zapytania, FTS, narzędzia operacyjne, CI i Compose używają PostgreSQL. Lokalna walidacja wydania 1.56.4 na PG18.6 przeszła; to nie oznacza produkcyjnego cutoveru ani potwierdzenia czystej instalacji Linux.
 - `DATABASE_URL` musi być jawny i używać protokołu `postgresql://` lub `postgres://`; zakaz fallbacku do lokalnej bazy i `db push` w aktywnych ścieżkach.
-- Aktywna historia migracji PostgreSQL: `prisma/migrations-postgresql/`; wdrożenie przez `prisma migrate deploy`. Historyczne `prisma/migrations/` nie są historią PostgreSQL.
+- Aktywna historia migracji PostgreSQL: `prisma/migrations-postgresql/`; wdrożenie przez `prisma migrate deploy`. Dawna historia SQLite znajduje się wyłącznie w historii Git i nigdy nie jest uruchamiana.
 - Testy backendowe wymagają osobnego `POSTGRES_TEST_URL` do izolowanej bazy testowej. Harness tworzy schemat per worker; URL musi wskazywać lokalny host testowy i bazę o nazwie kończącej się `_test` lub `_test_db`.
 - Ostatnia potwierdzona walidacja PostgreSQL 18: release 1.56.4, pełne testy 5734 PASS i lokalny readiness HTTP 200. To nie potwierdza produkcyjnego cutoveru ani czystej instalacji Linux.
-- Jedyny jednorazowy wyjątek SQLite to read-only eksport aktywnych cenników w `scripts/export-active-pricelists.py`; nie jest częścią aplikacji ani runtime.
+- SQLite nie jest wspierane w runtime, instalatorach, narzędziach ani testach aplikacji. Instalatory importują aktywne cenniki z `data/pricelists/active-pricelists.json`.
 
 ---
 

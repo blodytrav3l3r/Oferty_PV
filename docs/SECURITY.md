@@ -197,8 +197,7 @@ fragmentów z ikonami Lucide wywoływana jest inicjalizacja `lucide.createIcons(
 
 - **Prisma ORM** parametryzuje typowane zapytania; zapytania raw muszą używać
   parametrów, nie konkatenacji danych wejściowych.
-- Docelowym silnikiem runtime jest PostgreSQL; SQLite nie jest wspieranym
-  silnikiem aplikacji.
+- Silnikiem runtime i instalacji jest PostgreSQL 18.
 - Narzędzia administracyjne PostgreSQL (`pg_dump`, `pg_restore`) otrzymują
   połączenie ze zmiennych środowiskowych; nie przekazuj URL ani haseł w argv
   ani logach. Pełna weryfikacja narzędzi i runtime na PostgreSQL 18 trwa.
@@ -327,9 +326,9 @@ if (process.env.SENTRY_DSN) {
 
 ## 13. Bezpieczeństwo przy przenoszeniu danych
 
-Zwykły backup PostgreSQL nie jest formatem migracji ze starszej instalacji
-SQLite. Jednorazowy cutover przenosi wyłącznie aktywne cenniki rur, studni i
-PRECO; pozostałe dane nie są przenoszone. Procedura jest opisana w
+Zwykły backup PostgreSQL jest przeznaczony do odtworzenia tej samej instalacji.
+Nowe instalacje otrzymują wyłącznie aktywne cenniki rur, studni i PRECO z
+pakietu S.O.K.; pozostałe dane nie są przenoszone. Procedura jest opisana w
 [`cutover/active-pricelists.md`](cutover/active-pricelists.md), a cutover wymaga
 osobnej zgody i pełnej walidacji na PostgreSQL 18.
 

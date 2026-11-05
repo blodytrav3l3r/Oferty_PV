@@ -41,8 +41,8 @@ public/js/kartoteka/
 src/routes/
 └── featureFlags.ts             # Backend: GET/PUT feature flags + audit
 
-prisma/migrations/
-└── 20260705000000_feature_import_export/migration.sql
+prisma/migrations-postgresql/
+└── 0001_initial/migration.sql  # Kanoniczny schemat PostgreSQL
 ```
 
 ## Zależności

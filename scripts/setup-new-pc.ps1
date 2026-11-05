@@ -465,22 +465,10 @@ function Repair-UnsafeAdminSecret {
 }
 
 function Invoke-DatabaseSetup {
-    param([string]$ArtifactPath)
-
-    $importPath = $null
-    if ($ArtifactPath) {
-        $artifactPath = (Resolve-Path -LiteralPath $ArtifactPath).Path
-        $repoPrefix = $script:Root.TrimEnd('\') + '\'
-        $cutoverPrefix = Join-Path $script:Root 'cutover\'
-        if ($artifactPath.StartsWith($repoPrefix, [StringComparison]::OrdinalIgnoreCase) -and
-            -not $artifactPath.StartsWith($cutoverPrefix, [StringComparison]::OrdinalIgnoreCase)) {
-            throw 'Do not place active-pricelists.json in the project build files. Copy it into the cutover folder or keep it outside the S.O.K. folder.'
-        }
-        $artifactPath = $artifactPath.Replace('\', '/')
-        if ($artifactPath.Contains(',')) {
-            throw 'The selected artifact path contains a comma. Copy active-pricelists.json to a folder with a simple path, then retry.'
-        }
-        $importPath = '/tmp/active-pricelists.json'
+    $importPath = 'data/pricelists/active-pricelists.json'
+    $artifactPath = Join-Path $script:Root 'data\pricelists\active-pricelists.json'
+    if (-not (Test-Path -LiteralPath $artifactPath -PathType Leaf)) {
+        throw 'The bundled active-pricelist package is missing from data\pricelists. Restore the complete S.O.K. installation folder.'
     }
 
     Write-Step 'Building the S.O.K. image and starting PostgreSQL 18.'
@@ -518,21 +506,13 @@ function Invoke-DatabaseSetup {
         throw 'PostgreSQL bootstrap did not verify the administrator credential state.'
     }
 
-    if ($ArtifactPath) {
-        $mount = "${artifactPath}:${importPath}:ro"
-        $dryRun = "npx ts-node scripts/import-active-pricelists.ts '$importPath'"
-        Write-Step 'Checking the active-pricelist artifact. This first pass does not import prices.'
-        Invoke-Compose -Arguments @('run', '--rm', '--no-deps', '--volume', $mount, '--entrypoint', 'sh', 'app', '-ec', $dryRun)
+    $validate = "npx ts-node scripts/import-active-pricelists.ts '$importPath' --validate-only"
+    Write-Step 'Validating the bundled active-pricelist package.'
+    Invoke-Compose -Arguments @('run', '--rm', '--no-deps', '--entrypoint', 'sh', 'app', '-ec', $validate)
 
-        $answer = Read-Host 'If the dry-run showed the expected three active lists and counts, type IMPORT to confirm their import'
-        if ($answer -cne 'IMPORT') {
-            throw 'Import cancelled. PostgreSQL was initialized, but the S.O.K. server was not started. Keep the export artifact and rerun after reviewing it.'
-        }
-
-        $apply = "npx ts-node scripts/import-active-pricelists.ts '$importPath' --apply"
-        Write-Step 'Importing only the active pricelists into the new database.'
-        Invoke-Compose -Arguments @('run', '--rm', '--no-deps', '--volume', $mount, '--entrypoint', 'sh', 'app', '-ec', $apply)
-    }
+    $apply = "npx ts-node scripts/import-active-pricelists.ts '$importPath' --apply"
+    Write-Step 'Importing the bundled active pricelists into PostgreSQL.'
+    Invoke-Compose -Arguments @('run', '--rm', '--no-deps', '--entrypoint', 'sh', 'app', '-ec', $apply)
 
     Write-Step 'Starting S.O.K. and waiting for its database readiness check.'
     Invoke-Compose -Arguments @('up', '--detach', '--wait', '--wait-timeout', '300', 'app')
@@ -612,27 +592,6 @@ try {
         }
     }
 
-    $defaultArtifact = Join-Path $script:Root 'cutover\active-pricelists.json'
-    $artifactPath = $null
-    if (Test-Path -LiteralPath $defaultArtifact -PathType Leaf) {
-        $artifactPath = $defaultArtifact
-        Write-Host '[INFO] Found cutover\active-pricelists.json.'
-    } else {
-        Write-Host ''
-        Write-Host 'Active pricelists are required to complete this installation.'
-        Write-Host 'On the old S.O.K. computer, export the active lists using docs/cutover/active-pricelists.md.'
-        Write-Host 'Copy active-pricelists.json to this computer, then enter its full path below.'
-        $answer = Read-Host 'Path to active-pricelists.json'
-        if (-not [string]::IsNullOrWhiteSpace($answer)) {
-            $artifactPath = (Resolve-Path -LiteralPath $answer).Path
-            if ([System.IO.Path]::GetFileName($artifactPath) -ne 'active-pricelists.json') {
-                throw 'The selected file must be named active-pricelists.json.'
-            }
-        } else {
-            throw 'Active pricelist export is required. No database setup was started. Export the lists from the old installation and run this installer again.'
-        }
-    }
-
     $markerPath = Join-Path $script:Root '.sok-postgres-installed'
     if (Test-Path -LiteralPath $markerPath) {
         $markerItem = Get-Item -LiteralPath $markerPath -Force
@@ -642,7 +601,7 @@ try {
         Remove-Item -LiteralPath $markerPath -Force
     }
 
-    Invoke-DatabaseSetup -ArtifactPath $artifactPath
+    Invoke-DatabaseSetup
     Write-PostgresInstallMarker
     Write-Host '[OK] PostgreSQL install, active-pricelist import, and app readiness verified.'
     $passwordPath = Join-Path $script:Root 'data\install-admin-password.txt'

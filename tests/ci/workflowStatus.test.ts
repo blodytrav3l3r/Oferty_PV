@@ -121,3 +121,19 @@ describe('P2.3 e2e classification', () => {
         expect(section).toMatch(/vars\.RENDER_DEPLOY_ENABLED == 'true'/);
     });
 });
+
+describe('PostgreSQL test toolchain', () => {
+    it('blocking Jest and flaky-detect use PostgreSQL 18 client tools', () => {
+        const jestJob = CI.slice(CI.indexOf('    test:'), CI.indexOf('    flaky-detect:'));
+        const flakyDetect = CI.slice(
+            CI.indexOf('    flaky-detect:'),
+            CI.indexOf('    docker-build:')
+        );
+        for (const section of [jestJob, flakyDetect]) {
+            expect(section).toMatch(/Install PostgreSQL 18 client tools/);
+            expect(section).toMatch(/apt-get install -y postgresql-client-18/);
+            expect(section).toMatch(/pg_dump --version \| grep -E ' 18/);
+            expect(section).toMatch(/pg_restore --version \| grep -E ' 18/);
+        }
+    });
+});

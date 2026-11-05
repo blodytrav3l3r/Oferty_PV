@@ -3,7 +3,7 @@
 // Nie dokładać PM2 do kontenera ani na Windows (dublowanie nadzoru).
 //
 // Wartości z pomiarów S.O.K. (nie kopiowane z internetu):
-// - fork ×1: ADR-012 single-process (SQLite jeden plik = jeden proces);
+// - fork ×1: cron, limity i blokady są lokalne dla procesu, nie współdzielone;
 // - min_uptime 10s + max_restarts 10: crash loop staje po 10 szybkich
 //   crashach; rzadkie crashe restartują w nieskończoność (jak watchdog);
 // - max_memory_restart 1G: RSS ~200 MB + 2× Chromium ~500 MB + zapas;

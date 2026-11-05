@@ -364,7 +364,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Kanoniczne migracje są w `prisma/migrations-postgresql/` i powstają od pustej bazy.
 - Aplikacja nie powinna wykonywać DDL przy starcie; schemat zmienia się przez `prisma migrate deploy`.
 - Backup/restore używa `pg_dump`/`pg_restore` w formacie custom archive; nie kopiuje pliku bazy.
-- SQLite występuje poza runtime wyłącznie w historycznych migracjach oraz jednorazowym, read-only eksporcie aktywnych cenników ze starej instalacji. Zasady produkcyjnego rollout’u opisuje `docs/DEPLOYMENT.md`.
+- PostgreSQL 18 jest jedynym silnikiem używanym przez runtime, narzędzia wdrożeniowe, CI i instalatory. Świeże instalacje pobierają aktywne cenniki z wersjonowanego pakietu `data/pricelists/active-pricelists.json`. Dawny eksporter i migracje pozostają wyłącznie w historii Git, poza bieżącym repozytorium. Zasady produkcyjnego rollout’u opisuje `docs/DEPLOYMENT.md`.
 
 ### Modele (56)
 
@@ -550,8 +550,7 @@ Oferty_PV/
 ├── prisma/                          # Prisma
 │   ├── schema.prisma                # Definicja schematu
 │   ├── seed.ts                      # Seed danych początkowych (admin, modele AI, ustawienia)
-│   ├── migrations-postgresql/       # Kanoniczna historia migracji PostgreSQL
-│   └── migrations/                  # Historyczne migracje SQLite; poza aktywną ścieżką
+│   └── migrations-postgresql/       # Kanoniczna historia migracji PostgreSQL
 │
 ├── data/                            # Pliki aplikacji; PostgreSQL działa jako osobny serwer
 │   ├── backups/                     # Archiwa PostgreSQL pg_dump custom

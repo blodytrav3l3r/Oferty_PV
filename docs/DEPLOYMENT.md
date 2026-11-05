@@ -131,7 +131,7 @@ ujawniają connection stringu, SQL, hosta ani sekretów.
 
 Poprzednie instrukcje wdrożenia bazowały na lokalnym pliku SQLite, katalogu
 `data`, `db push`, WAL, kopiowaniu plików i `VACUUM INTO`. Są zachowane wyłącznie
-jako historia obecnego runtime, nie jako docelowa lub wspierana procedura.
-Stare SQLite artefakty można wykorzystać wyłącznie w jednorazowym, read-only
-eksporcie aktywnych cenników; nie przenosi się z nich kont, sesji ani historii
-ofert.
+jako historia projektu, nie jako docelowa lub wspierana procedura. Dawnych
+plików SQLite nie ma już w bieżącym repozytorium i nie ma obsługiwanej ścieżki
+ich importu. Nowe instalacje używają wyłącznie pakietu aktywnych cenników
+`data/pricelists/active-pricelists.json`.

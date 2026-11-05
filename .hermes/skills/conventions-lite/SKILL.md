@@ -76,7 +76,7 @@ npm run version:patch    # bump PATCH (agent version-guardian ML/AI logika do CH
 
 ## 10. Brak rzeczy bardzo wa\u017cnych
 
-- NIE mutuj `data/app_database.sqlite` (lock); commit mtime-only diff jest OK ale nie wciągaj go.
+- Nie dodawaj lokalnych plików baz ani ich kopii do Git; runtime S.O.K. używa PostgreSQL.
 - NIE ignoruj `.gitignore` (plan-modernizacja, secrets).
 - NIE pisz w Python kod przeznaczony dla Node.js backend.
 

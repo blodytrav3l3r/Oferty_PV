@@ -12,7 +12,7 @@ znajduje realny najgorszy przypadek dla każdej renderowanej wartości, pokazuje
 zestawy i raportuje, co się zepsuło. Nie przeprojektowuje (to `ui-ux-pro-max`),
 nie ocenia smaku, nie recenzuje animacji.
 
-Kontekst S.O.K.: Vanilla JS SPA (`public/js/`), backend Express + Prisma + SQLite.
+Kontekst S.O.K.: Vanilla JS SPA (`public/js/`), backend Express + Prisma + PostgreSQL 18.
 Brak React, brak library do animacji. Dane wchodzą przez API albo wklejenie do Excela.
 
 ## Postawa

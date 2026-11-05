@@ -44,7 +44,7 @@ git grep -o -i -E '[[:space:]]on[a-z]+[[:space:]]*=' -- '*.html' | wc -l  # 0
 git ls-files '*.html' | wc -l                                             # 34
 git ls-files tests | grep -cE '\.(test|spec)\.ts$'                        # 588
 git ls-files scripts | wc -l                                              # 84
-ls -d prisma/migrations/*/ | wc -l                                        # 39
+ls -d prisma/migrations-postgresql/*/ | wc -l                             # 3
 grep -c '^model ' prisma/schema.prisma                                    # 47
 ```
 

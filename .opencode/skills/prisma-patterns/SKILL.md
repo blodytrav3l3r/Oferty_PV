@@ -2,14 +2,14 @@
 name: prisma-patterns
 description: Prisma ORM patterns for TypeScript backends - schema design, query optimization, transactions, pagination, and critical traps like updateMany returning count not records, $transaction timeouts, migrate dev resetting the DB, and @updatedAt skipped on bulk writes.
 metadata:
-    origin: ECC (zaadaptowano pod S.O.K. / SQLite)
+    origin: ECC (zaadaptowano pod S.O.K. / PostgreSQL 18)
 ---
 
 # Prisma Patterns
 
 Production patterns and non-obvious traps for Prisma ORM in TypeScript backends.
 
-> S.O.K.: uzywamy Prisma + **SQLite**. Sprawdz wersje przed zastosowaniem wzorcow:
+> S.O.K.: uzywamy Prisma + **PostgreSQL 18**. Sprawdz wersje przed zastosowaniem wzorcow:
 >
 > ```bash
 > npx prisma --version
@@ -29,12 +29,13 @@ Production patterns and non-obvious traps for Prisma ORM in TypeScript backends.
 - Planowanie lub wykonywanie migracji
 - Soft delete lub filtrowanie po kluczach obcych
 
-## SQLite-specific (S.O.K.)
+## PostgreSQL-specific (S.O.K.)
 
-- Ustaw `busy_timeout` w connection stringu (seed duzych pakietow): `file:./dev.db?connection_timeout=30000` - chroni przed `SQLITE_BUSY` przy rownoleglych zapisach (baza bledow #1, #2).
-- Nie uzywaj `?schema=public` ani parametrow serwerless - SQLite lokalne.
-- `$transaction` na SQLite jest sekwencyjne - nie rozwiazuje race condition, tylko atomicznosc.
-- Stosuj sekwencyjne `await` zamiast rownoleglych zapisow w jednym procesie.
+- Używaj jawnego `DATABASE_URL` z protokołem PostgreSQL i `?schema=public`.
+- Opieraj współbieżne zapisy na ograniczeniach, poziomie izolacji i atomowych
+  operacjach SQL; nie zakładaj, że sam `$transaction` rozwiązuje race condition.
+- W migracji sprawdzaj typy natywne, zachowanie `NULL`, collations i indeksy
+  na rzeczywistym PostgreSQL 18.
 
 ## Core Concepts
 

@@ -3,7 +3,7 @@ REM  Wersja: 1.56.4
 REM ===========================================================
 REM  start.bat - Jedno wejscie: caly system
 REM  Uruchamia:
-REM    - Backend Express (Prisma + SQLite) serwuje API i frontend z public/
+REM    - Backend Express + Prisma PostgreSQL serwuje API i frontend z public/
 REM  Uruchomienie: start.bat [--dev]
 REM    --dev: uruchom w trybie deweloperskim (domyslne)
 REM    prod:  odpowiednik prod.bat (produkcyjne)

@@ -96,30 +96,14 @@ Przy pierwszym uruchomieniu na nowym komputerze (bez istniejącej bazy danych):
 > `start.bat` automatycznie seeduje pustą bazę przez `ensure-db.bat`, ale `install.bat`
 > wykonuje pełną konfigurację (.env, zależności, migracje) — bez niego aplikacja nie zadziała.
 
-## Przenoszenie bazy między urządzeniami
+## Instalacja na nowym urządzeniu
 
-Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
-
-1. Na starym urządzeniu wykonaj `npm run backup`
-2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
-3. Na nowym urządzeniu wykonaj instalację z pominięciem seedowania:
-    ```bash
-    .\install.bat --skip-seed   # Windows
-    bash install.sh --skip-seed  # Linux
-    ```
-4. Przywróć bazę z backupu (restore automatycznie synchronizuje schemat):
-    ```bash
-    npm run restore data/backups/backup_*.sqlite
-    ```
-5. Uruchom serwer:
-    ```bash
-    .\start.bat
-    ```
-6. Upewnij się, że `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją.
-7. (opcjonalnie) Jeśli chcesz przenieść tylko ceny (bez ofert/zamówień):
-   na starym urządzeniu wyeksportuj cennik do XLSX w panelu „Wersje cennika”,
-   a na nowym zaimportuj ten plik jako nową wersję i zatwierdź ją (ACTIVE).
-   Nie jest potrzebny backup SQLite ani `--skip-seed`.
+Nowa instalacja wykonuje migracje PostgreSQL 18, seed oraz import trzech
+zatwierdzonych cenników z `data/pricelists/active-pricelists.json` automatycznie.
+Używaj `install-new-pc.bat` na Windows albo `sudo bash install-linux-server.sh`
+na Ubuntu/Debian. Instalator nie przenosi ofert, użytkowników, zamówień ani
+historii i nie usuwa istniejących wolumenów. Backup PostgreSQL służy do restore
+tej samej instalacji; szczegóły: `docs/instalacja-przenoszenie-systemu.md`.
 
 ## Aktualizacja istniejącej instalacji (schemat bazy)
 

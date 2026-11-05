@@ -105,7 +105,6 @@ describe('PostgreSQL backup restore roundtrip', () => {
                         '--format=custom',
                         '--no-owner',
                         '--no-acl',
-                        '--exit-on-error',
                         `--schema=${project.schemaName}`,
                         '--file',
                         archivePath

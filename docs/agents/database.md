@@ -4,7 +4,7 @@
 
 ## Kierunek i status
 
-PostgreSQL 18 jest jedynym wspieranym silnikiem danych runtime i aktywnych testów. Schemat i kanoniczna historia migracji są w `prisma/schema.prisma` i `prisma/migrations-postgresql/`; klient, runtime, narzędzia operacyjne, CI i Compose używają PostgreSQL. Wydanie 1.56.4 przeszło lokalne walidacje na PostgreSQL 18.6. To nie oznacza produkcyjnego cutoveru: przed live wymagane są osobny GO, zatwierdzenie planu backup/restore oraz weryfikacja docelowego środowiska. Nie dodawaj nowej obsługi SQLite. Jedyny wyjątek to jednorazowy, read-only eksport aktywnych cenników ze starego pliku, poza runtime i test harnessami aplikacji.
+PostgreSQL 18 jest jedynym wspieranym silnikiem danych runtime i aktywnych testów. Schemat i kanoniczna historia migracji są w `prisma/schema.prisma` i `prisma/migrations-postgresql/`; klient, runtime, narzędzia operacyjne, CI, instalatory Windows/Linux i Compose używają PostgreSQL. Nowe instalacje importują zatwierdzony pakiet `data/pricelists/active-pricelists.json`; żadne narzędzie runtime ani instalator nie otwiera SQLite. Wydanie 1.56.4 przeszło lokalne walidacje na PostgreSQL 18.6. To nie oznacza produkcyjnego cutoveru: przed live wymagane są osobny GO, zatwierdzenie planu backup/restore oraz weryfikacja docelowego środowiska.
 
 ## Standard schematu
 

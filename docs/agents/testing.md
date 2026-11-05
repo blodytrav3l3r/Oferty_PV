@@ -4,7 +4,7 @@
 
 ## Kierunek bazy i status migracji
 
-PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integracyjne oraz migracyjne korzystają z jawnego `POSTGRES_TEST_URL`, a harness izoluje workerów w osobnych schematach. Nie dodawaj SQLite jako providera testowego. Jednorazowy read-only eksporter aktywnych cenników ze starej bazy może używać SQLite tylko we własnych testach kontraktowych, poza harnessami aplikacji. Ostatnia potwierdzona pełna walidacja release 1.56.4: 5734 testy PASS oraz 23 testy Git safety PASS; przed każdym kolejnym wydaniem uruchamiaj aktualne bramki z `AGENTS.md`.
+PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integracyjne oraz migracyjne korzystają z jawnego `POSTGRES_TEST_URL`, a harness izoluje workerów w osobnych schematach. Nie dodawaj SQLite jako providera ani obsługi w instalatorach. Testy cenników weryfikują checksum pakietu `data/pricelists/active-pricelists.json` i import do izolowanego PostgreSQL. Ostatnia potwierdzona pełna walidacja release 1.56.4: 5734 testy PASS oraz 23 testy Git safety PASS; przed każdym kolejnym wydaniem uruchamiaj aktualne bramki z `AGENTS.md`.
 
 ## Poziomy i izolacja
 

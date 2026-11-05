@@ -27,6 +27,8 @@ generated/
 .sok-postgres-installed.*
 data/install-admin-password.txt
 cutover/
+/scripts/export-active-pricelists.py
+/prisma/migrations/
 
 # Database files (template is created in Dockerfile)
 *.sqlite

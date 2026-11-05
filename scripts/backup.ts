@@ -287,7 +287,7 @@ export async function runBackup(_prisma: PrismaClient): Promise<BackupResult> {
         createPrivateBackupArchive(backupPath);
         execFileSync(
             process.env.PG_DUMP_BIN || 'pg_dump',
-            ['--format=custom', '--no-owner', '--no-acl', '--exit-on-error', '--file', backupPath],
+            ['--format=custom', '--no-owner', '--no-acl', '--file', backupPath],
             { env: cliEnv, stdio: 'pipe' }
         );
     } catch {

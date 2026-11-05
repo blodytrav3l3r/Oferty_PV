@@ -6,7 +6,6 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_NAME="sok"
 COMPOSE_FILE="$ROOT/docker-compose.yml"
 RESUME_EXISTING_VOLUME=false
-ARTIFACT_PATH=""
 ENV_TEMP=""
 PASSWORD_TEMP=""
 PENDING_PASSWORD_TEMP=""
@@ -29,21 +28,15 @@ usage() {
 Instalacja S.O.K. na firmowym serwerze Linux (Ubuntu/Debian).
 
 Użycie:
-  sudo bash install-linux-server.sh [--artifact /ścieżka/active-pricelists.json]
-                                    [--resume-existing-volume]
+  sudo bash install-linux-server.sh [--resume-existing-volume]
 
-Instalator wymaga eksportu aktywnych cenników ze starej instalacji.
+Aktywne cenniki są dołączone do pakietu S.O.K. i importowane automatycznie.
 Nie usuwa wolumenów ani nie kopiuje ofert, użytkowników lub historii.
 EOF
 }
 
 while (($#)); do
     case "$1" in
-        --artifact)
-            (($# >= 2)) || fail 'Po --artifact podaj ścieżkę do pliku.'
-            ARTIFACT_PATH="$2"
-            shift 2
-            ;;
         --resume-existing-volume)
             RESUME_EXISTING_VOLUME=true
             shift
@@ -58,25 +51,9 @@ done
 
 [[ $EUID -eq 0 ]] || fail 'Uruchom instalator jako administrator: sudo bash install-linux-server.sh'
 cd -- "$ROOT"
-for required in docker-compose.yml Dockerfile .env.example docker/postgres/init-roles.sh scripts/docker-entrypoint.sh scripts/import-active-pricelists.ts scripts/grant-postgres-roles.mjs; do
+for required in docker-compose.yml Dockerfile .env.example docker/postgres/init-roles.sh scripts/docker-entrypoint.sh scripts/import-active-pricelists.ts scripts/grant-postgres-roles.mjs data/pricelists/active-pricelists.json; do
     [[ -f "$ROOT/$required" ]] || fail "Niekompletny folder S.O.K.; brakuje: $required"
 done
-
-if [[ -z "$ARTIFACT_PATH" ]]; then
-    default_artifact="$ROOT/cutover/active-pricelists.json"
-    if [[ -f "$default_artifact" ]]; then
-        ARTIFACT_PATH="$default_artifact"
-    elif [[ -t 0 ]]; then
-        read -r -p 'Podaj pełną ścieżkę do active-pricelists.json: ' ARTIFACT_PATH
-    fi
-fi
-[[ -n "$ARTIFACT_PATH" && -f "$ARTIFACT_PATH" ]] || fail 'Brak wymaganego active-pricelists.json. Najpierw wyeksportuj aktywne cenniki ze starego S.O.K.'
-ARTIFACT_PATH="$(realpath -- "$ARTIFACT_PATH")"
-[[ "$(basename -- "$ARTIFACT_PATH")" == 'active-pricelists.json' ]] || fail 'Artefakt musi mieć nazwę active-pricelists.json.'
-[[ "$ARTIFACT_PATH" != *','* && "$ARTIFACT_PATH" != *':'* ]] || fail 'Ścieżka artefaktu nie może zawierać przecinka ani dwukropka.'
-if [[ "$ARTIFACT_PATH" == "$ROOT"/* && "$ARTIFACT_PATH" != "$ROOT/cutover/"* ]]; then
-    fail 'Artefakt wewnątrz repozytorium umieść wyłącznie w cutover/ (wykluczonym z obrazu) albo przenieś poza folder S.O.K.'
-fi
 
 exec 9>/run/lock/sok-linux-installer.lock
 flock -n 9 || fail 'Inna instalacja S.O.K. jest już uruchomiona.'
@@ -304,15 +281,11 @@ else
     replace_env_value RESET_ADMIN_PASSWORD_ON_BOOTSTRAP false
 fi
 
-mount="$ARTIFACT_PATH:/tmp/active-pricelists.json:ro"
-dry_run="npx ts-node scripts/import-active-pricelists.ts /tmp/active-pricelists.json"
-log INFO 'Sprawdzam artefakt cenników bez zapisywania danych.'
-compose run --rm --no-deps --volume "$mount" --entrypoint sh app -ec "$dry_run"
-read -r -p 'Jeśli raport zawiera oczekiwane trzy aktywne cenniki i liczniki, wpisz IMPORT: ' answer
-[[ "$answer" == 'IMPORT' ]] || fail 'Import anulowany. Serwer S.O.K. nie został uruchomiony.'
-apply_import="npx ts-node scripts/import-active-pricelists.ts /tmp/active-pricelists.json --apply"
-log INFO 'Importuję wyłącznie aktywne cenniki.'
-compose run --rm --no-deps --volume "$mount" --entrypoint sh app -ec "$apply_import"
+pricelist_package='data/pricelists/active-pricelists.json'
+log INFO 'Waliduję dołączony pakiet aktywnych cenników.'
+compose run --rm --no-deps --entrypoint sh app -ec "npx ts-node scripts/import-active-pricelists.ts '$pricelist_package' --validate-only"
+log INFO 'Importuję do PostgreSQL aktywne cenniki dołączone do S.O.K.'
+compose run --rm --no-deps --entrypoint sh app -ec "npx ts-node scripts/import-active-pricelists.ts '$pricelist_package' --apply"
 
 log INFO 'Uruchamiam S.O.K. i czekam na gotowość PostgreSQL oraz aplikacji.'
 compose up --detach --wait --wait-timeout 300 app

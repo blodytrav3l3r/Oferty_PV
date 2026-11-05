@@ -19,11 +19,9 @@ PostgreSQL ani Node.js. Baza działa w wolumenie Docker, poza folderem aplikacji
 - Docker Desktop dla Windows. Instalator S.O.K. może go przygotować przez
   `winget`; pierwsze uruchomienie może wymagać zaakceptowania warunków Docker,
   włączenia WSL 2 oraz restartu komputera.
-- Repozytorium S.O.K. pobranego jako ZIP albo przez Git.
-- Plik `active-pricelists.json` z aktywnymi cennikami, przygotowany na starym
-  komputerze według [procedury eksportu](cutover/active-pricelists.md). Instalator
-  poprosi o jego ścieżkę, jeśli pliku nie ma w folderze `cutover`. Bez niego
-  instalacja zatrzyma się przed uruchomieniem aplikacji.
+- Repozytorium S.O.K. pobranego jako ZIP albo przez Git. Pobierz cały projekt;
+  aktywne cenniki są dołączone w `data/pricelists/` i instalator zaimportuje je
+  automatycznie.
 
 Docker Desktop jest bezpłatny dla części zastosowań; większe firmy mogą
 potrzebować płatnej subskrypcji według warunków Docker. Instalator nie usuwa
@@ -61,14 +59,13 @@ Do pierwszej instalacji albo wznowienia przerwanej konfiguracji użyj ponownie
 istniejący wolumen, nie zatwierdzaj wznowienia, jeśli nie wiesz, do jakiej
 instalacji należy. Nie usuwaj wolumenów w Docker Desktop.
 
-## Przenoszenie aktywnych cenników ze starej instalacji
+## Aktywne cenniki
 
-Obsługiwany zakres to aktywne cenniki rur, studni i PRECO. Oferty, użytkownicy,
-zamówienia, sesje, historia wersji i pozostałe dane nie są kopiowane. Szczegółowa
-procedura dla administratora znajduje się w
-[`docs/cutover/active-pricelists.md`](cutover/active-pricelists.md). Artefakt
-cenników zawiera dane handlowe: przechowuj go poza repozytorium i ogranicz do
-niego dostęp.
+Pakiet cenników rur, studni i PRECO jest częścią pełnego folderu S.O.K. i
+instalator importuje go automatycznie. Nie trzeba uruchamiać starego komputera,
+eksportować danych ani kopiować dodatkowych plików. Nowa instalacja nie przenosi
+ofert, użytkowników, zamówień, sesji ani historii wersji. Szczegóły pakietu
+opisuje [instrukcja PostgreSQL](cutover/active-pricelists.md).
 
 ## Rozwiązywanie problemów
 

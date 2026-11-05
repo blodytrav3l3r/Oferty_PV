@@ -107,7 +107,7 @@ Dziel duze funkcje na skupione czesci z jasna odpowiedzialnoscia.
 1. **Zakaz placeholderow**: NIGDY nie skracaj kodu komentarzami typu
    `// ... reszta kodu bez zmian` lub `/* TODO: reszta logiki */`. Kazda modyfikacja
    dostarcza kompletny, gotowy do uruchomienia kod.
-2. **Sekwencyjne dzialanie**: nie uruchamiaj rownoleglych zapisow do bazy (SQLITE_BUSY,
+2. **Sekwencyjne dzialanie**: uwzględniaj izolację transakcji i retry PostgreSQL,
    baza bledow #2).
 3. **Przyznanie sie do bledow**: rzeczowo przyznaj sie do bledu i napraw go bez
    przesadnych przeprosin.

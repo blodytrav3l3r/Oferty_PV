@@ -54,7 +54,6 @@ data/backup/
 data/backups/
 data/migration_backup/
 data/install-admin-password.txt
-cutover/active-pricelists.json
 data/*.sqlite*
 data/*.sqlite-shm
 data/*.sqlite-wal

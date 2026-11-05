@@ -43,14 +43,14 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 
 ### Wymagania wstępne
 
-| Składnik       | Wersja minimalna | Użycie                                                                                                |
-| -------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
-| Docker Desktop | aktualna         | Instalacja nowego komputera Windows; backend WSL 2 dla PostgreSQL 18 Compose                          |
-| Node.js        | >= 22.13         | Tylko rozwój lokalny bez Compose; [nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x)    |
-| npm            | 9+               | Tylko rozwój lokalny; instaluje się automatycznie z Node.js                                           |
-| Git            | dowolna          | Opcjonalnie do pobierania i aktualizacji źródeł; [git-scm.com](https://git-scm.com)                   |
-| PostgreSQL     | 18.x             | Dostarczany w Compose dla instalacji nowego komputera; lokalny serwer wymagany tylko poza Compose     |
-| Python         | 3.10+            | Opcjonalnie — jednorazowy eksport aktywnych cenników ze starej bazy oraz walidacja Excel w pre-commit |
+| Składnik       | Wersja minimalna | Użycie                                                                                             |
+| -------------- | ---------------- | -------------------------------------------------------------------------------------------------- |
+| Docker Desktop | aktualna         | Instalacja nowego komputera Windows; backend WSL 2 dla PostgreSQL 18 Compose                       |
+| Node.js        | >= 22.13         | Tylko rozwój lokalny bez Compose; [nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x) |
+| npm            | 9+               | Tylko rozwój lokalny; instaluje się automatycznie z Node.js                                        |
+| Git            | dowolna          | Opcjonalnie do pobierania i aktualizacji źródeł; [git-scm.com](https://git-scm.com)                |
+| PostgreSQL     | 18.x             | Dostarczany w Compose dla instalacji nowego komputera; lokalny serwer wymagany tylko poza Compose  |
+| Python         | 3.10+            | Opcjonalnie — walidacja plików Excel w pre-commit                                                  |
 
 **Sprawdź zainstalowane wersje:**
 
@@ -81,11 +81,11 @@ cd Oferty_PV
 
 Dwukrotnie kliknij `install-new-pc.bat`. Host nie musi mieć Node.js ani PostgreSQL: instalator przygotowuje Docker Desktop, uruchamia PostgreSQL 18 w Compose, stosuje migracje i seed, a potem otwiera S.O.K. pod `http://localhost:3000`. Pliki bazy są w zarządzanym wolumenie Dockera, poza folderem aplikacji. Ten wariant służy do testów na Windows 10/11, nie do serwerowego wdrożenia ani dystrybucji Docker Desktop z S.O.K.
 
-Po udanej instalacji używaj `start-postgres.bat`, aby uruchomić istniejące kontenery PostgreSQL i S.O.K. Launcher wymaga znacznika zakończonej instalacji, który instalator zapisuje dopiero po imporcie aktywnych cenników i przejściu health checku. Nie tworzy nowej bazy, nie importuje cenników ani nie resetuje wolumenów. Przy pierwszej instalacji lub jej wznowieniu użyj `install-new-pc.bat`.
+Po udanej instalacji używaj `start-postgres.bat`, aby uruchomić istniejące kontenery PostgreSQL i S.O.K. Launcher wymaga znacznika zakończonej instalacji, który instalator zapisuje dopiero po imporcie aktywnych cenników z pakietu w repozytorium i przejściu health checku. Nie tworzy nowej bazy, nie importuje cenników ani nie resetuje wolumenów. Przy pierwszej instalacji lub jej wznowieniu użyj `install-new-pc.bat`.
 
 Instalator tworzy lokalne sekrety i ogranicza ACL pliku `.env`. Pierwsze hasło administratora otworzy w Notatniku w pliku `data/install-admin-password.txt`; zmień je po pierwszym logowaniu. Instalator nie kasuje istniejących wolumenów. Jeśli Windows musi włączyć WSL 2, pojawi się prośba UAC i może być potrzebny restart. Docker Desktop wymaga akceptacji warunków przy pierwszym uruchomieniu; komercyjne użycie w większych organizacjach może wymagać płatnej subskrypcji.
 
-Instalacja wymaga `active-pricelists.json` wyeksportowanego ze starej bazy. Na starym komputerze wykonaj eksport zgodnie z [instrukcją cutoveru](docs/cutover/active-pricelists.md), skopiuj plik na nowy komputer i podaj jego ścieżkę instalatorowi. Instalator pokaże dry-run, zapisze wyłącznie aktywne cenniki po wpisaniu `IMPORT`, a potem uruchomi aplikację. Bez artefaktu instalacja zatrzymuje się przed utworzeniem bazy.
+Instalator automatycznie waliduje i importuje trzy zatwierdzone aktywne cenniki z `data/pricelists/active-pricelists.json` po migracjach PostgreSQL i przed uruchomieniem serwera. Nie wymaga starego komputera, eksportu ani ręcznego wskazywania pliku. Pakiet zawiera 1023 pozycje i sumę SHA-256 weryfikowaną przez importer.
 
 `install.bat` pozostaje instalatorem developerskim z zależnościami Node.js; nie służy do nowego komputera bez przygotowanej bazy. Jeśli poprzednia instalacja została przerwana po utworzeniu wolumenu, wznowienie wymaga `install-new-pc.bat -ResumeExistingVolume`, potwierdzenia `RESUME` oraz osobnej zgody `MIGRATE AND SEED` na migracje i seed w istniejącej bazie.
 
@@ -97,9 +97,9 @@ Docelowy wariant działa na Ubuntu lub Debianie z Docker Engine i wtyczką Docke
 
 Docker Engine i PostgreSQL są używane na licencjach open source bez opłaty za komercyjne użycie. Instalator nie dołącza Docker Desktop. To nie obejmuje kosztu systemu operacyjnego, sprzętu, domeny, certyfikatu od zewnętrznego dostawcy ani ewentualnego wsparcia. Przed sprzedażą S.O.K. trzeba osobno zamknąć przegląd licencji i praw do wszystkich składników aplikacji; lista zależności znajduje się w [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
-1. Przygotuj pełny folder S.O.K. na serwerze i skopiuj do niego `active-pricelists.json` albo zachowaj ten plik poza folderem aplikacji.
-2. Uruchom instalację jako administrator: `sudo bash install-linux-server.sh --artifact /bezpieczna/sciezka/active-pricelists.json`.
-3. Przeczytaj raport dry-run cenników i wpisz `IMPORT`, aby potwierdzić zapis. Instalator dopiero potem uruchomi aplikację.
+1. Przygotuj pełny folder S.O.K. na serwerze; pakiet aktywnych cenników jest dołączony do `data/pricelists/`.
+2. Uruchom instalację jako administrator: `sudo bash install-linux-server.sh`.
+3. Instalator automatycznie zweryfikuje checksum pakietu, zaimportuje trzy aktywne cenniki do PostgreSQL i uruchomi S.O.K. po kontroli gotowości.
 4. Przy nowej konfiguracji `.env` pierwsze hasło administratora znajdziesz w `~/.config/sok/install-admin-password.txt`; zmień je po pierwszym logowaniu. Przy zachowanym `.env` instalator nie zgaduje bieżącego hasła — użyj istniejących danych logowania.
 5. S.O.K. będzie nasłuchiwał lokalnie na serwerze pod `http://127.0.0.1:3000`. Aby użytkownicy firmowi mogli łączyć się z innych komputerów, skonfiguruj reverse proxy HTTPS i firmowy DNS zgodnie z [instrukcją HTTPS](docs/DEPLOY_HTTPS_IT.md). Nie otwieraj portu PostgreSQL ani socketu Dockera. Nie instaluj operatorów S.O.K. do grupy `docker` — dostęp do niej daje uprawnienia równoważne administratorowi.
 
@@ -133,7 +133,7 @@ npm run prisma:seed
 npm run build
 ```
 
-> **Przenoszenie ze starej instalacji:** nie odtwarzaj pełnej bazy. Zachowywane są wyłącznie aktywne cenniki, a pozostałe dane aplikacji zaczynają jako świeży stan. Użyj [procedury cutoveru aktywnych cenników](docs/cutover/active-pricelists.md); nie wdrażaj jej produkcyjnie bez osobnej zgody na cutover.
+> **Nowa instalacja:** zachowywane są zatwierdzone aktywne cenniki z dołączonego pakietu; pozostałe dane aplikacji zaczynają jako świeży stan. Szczegóły opisuje [pakiet aktywnych cenników](docs/cutover/active-pricelists.md).
 
 #### 4. Uruchom serwer
 
@@ -209,8 +209,8 @@ npx prisma migrate deploy
 # 4. Baza danych — opcje:
 #    a) Zasiej dane początkowe (nowa instalacja):
 npm run prisma:seed
-#    b) Dla istniejącej instalacji przenieś wyłącznie aktywne cenniki zgodnie
-#       z docs/cutover/active-pricelists.md; pełnego backupu starej bazy nie odtwarzaj.
+#    b) Dla świeżej bazy zaimportuj zatwierdzone aktywne cenniki przed startem:
+npx ts-node scripts/import-active-pricelists.ts data/pricelists/active-pricelists.json --apply
 
 # 5. Zbuduj projekt
 npm run build
@@ -244,7 +244,7 @@ Aplikacja: **http://localhost:3000** (port zgodny z konfiguracją w `.env`)
 
 Przy przejściu ze starszej instalacji zachowuj wyłącznie aktualnie aktywne cenniki rur, studni i PRECO. Oferty, klienci, użytkownicy, sesje, zamówienia, logi, drafty i historia wersji nie są przenoszone. Pełny backup starej bazy nie jest formatem migracji PostgreSQL.
 
-Eksport wykonuje jednorazowy skrypt read-only, a import zapisuje wyłącznie aktywne wersje z zatwierdzonego artefaktu. Pełna procedura, walidacja hash/count, wymagane kolejności i komendy Docker Compose są opisane w [docs/cutover/active-pricelists.md](docs/cutover/active-pricelists.md). Import musi nastąpić po migracjach i przed pierwszym startem serwera, który tworzy fabryczny baseline cenników.
+Instalatory Windows i Linux walidują checksum pakietu aktywnych cenników i importują go po migracjach oraz seedzie, a przed pierwszym startem serwera. Szczegóły formatu, liczników i kolejności opisuje [pakiet aktywnych cenników](docs/cutover/active-pricelists.md).
 
 Procedury produkcyjnej nie uruchamiaj bez odrębnego GO na cutover. Lokalna walidacja PG18 jest zielona; przed ruchem produkcyjnym zweryfikuj procedurę na docelowym serwerze, w tym restore drill oraz logowanie, zapisy ofert i eksporty.
 
@@ -572,8 +572,7 @@ Oferty_PV/
 │   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 ├── prisma/                    # Schema + migracje Prisma
 │   ├── schema.prisma          # Definicja schematu PostgreSQL
-│   ├── migrations-postgresql/ # Kanoniczna historia PostgreSQL od pustej bazy
-│   └── migrations/            # Historyczna ścieżka SQLite; nie jest używana przez runtime PG
+│   └── migrations-postgresql/ # Kanoniczna historia migracji PostgreSQL
 ├── data/                      # Pliki aplikacji, cenników bazowych i backupów PostgreSQL
 │   └── seed_*.json            # Fabryczne cenniki dla świeżej instalacji
 ├── tests/                     # Testy (Jest + Playwright)

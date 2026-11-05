@@ -4,7 +4,7 @@
 
 ## Kierunek bazy danych
 
-PostgreSQL 18 jest jedynym wspieranym providerem dla runtime i aktywnych testów S.O.K. Kanoniczny schema i migracje znajdują się w `prisma/schema.prisma` oraz `prisma/migrations-postgresql/`. Nie dodawaj zależności, ścieżek runtime, test harnessów ani instrukcji obsługujących SQLite. Dopuszczony wyjątek to izolowany read-only eksport aktywnych cenników ze starego pliku przez `scripts/export-active-pricelists.py`; nie jest to część runtime.
+PostgreSQL 18 jest jedynym wspieranym providerem dla runtime, narzędzi i aktywnych testów S.O.K. Kanoniczny schema i migracje znajdują się w `prisma/schema.prisma` oraz `prisma/migrations-postgresql/`. Nie dodawaj zależności, ścieżek runtime, test harnessów ani instrukcji obsługujących SQLite. Instalatory importują zatwierdzone cenniki z `data/pricelists/active-pricelists.json`.
 
 ## Architektura
 

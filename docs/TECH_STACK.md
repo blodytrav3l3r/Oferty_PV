@@ -67,10 +67,9 @@ pliku `LICENSE` w dystrybucji: [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES
 | esbuild            | ^0.28.2  | MIT                | Bundling JS                                | https://esbuild.github.io                                   |     ✅      |
 | Playwright         | ^1.62.1  | Apache-2.0         | E2E / a11y                                 | https://playwright.dev                                      |     ✅      |
 
-SQLite nie jest wspieranym silnikiem runtime ani providerem testów. Pozostaje
-wyłącznie źródłem dla jednorazowego, read-only eksportu aktywnych cenników ze
-starszej instalacji oraz w archiwalnych migracjach. Lokalna walidacja PostgreSQL
-18 jest zakończona; ograniczenia produkcyjnego rollout’u i Linux opisuje
+PostgreSQL 18 jest jedynym wspieranym silnikiem runtime, testów i instalatorów.
+Świeże instalacje importują aktywne cenniki z wersjonowanego pakietu S.O.K.
+Lokalna walidacja PostgreSQL 18 jest zakończona; ograniczenia produkcyjnego rollout’u i Linux opisuje
 [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Zasoby frontendowe (vendored)

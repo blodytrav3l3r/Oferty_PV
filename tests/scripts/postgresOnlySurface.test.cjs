@@ -31,8 +31,6 @@ const runtimeRoots = [
     'Dockerfile',
     'docker-compose.yml'
 ];
-const allowlistedLegacyExporter = 'scripts/export-active-pricelists.py';
-const historicalSqliteMigrations = 'prisma/migrations';
 const sqliteRuntimeApi =
     /node:sqlite|better-sqlite3|sqlite_master|\bPRAGMA\s+(?:table_info|query_only|foreign_keys|foreign_key_check|integrity_check|busy_timeout|wal_checkpoint|defer_foreign_keys)\b|\bINSERT\s+OR\s+(?:IGNORE|REPLACE)\b/i;
 
@@ -60,18 +58,17 @@ function listSourceFiles(relativePath) {
         .flatMap((entry) => listSourceFiles(path.join(relativePath, entry.name)));
 }
 
-const scannedFiles = [...new Set(runtimeRoots.flatMap(listSourceFiles))].filter(
-    (relativePath) =>
-        relativePath !== allowlistedLegacyExporter &&
-        !relativePath.startsWith(`${historicalSqliteMigrations}${path.sep}`)
-);
+const scannedFiles = [...new Set(runtimeRoots.flatMap(listSourceFiles))];
 const findings = scannedFiles.flatMap((relativePath) => {
     const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
     return sqliteRuntimeApi.test(source) ? [relativePath] : [];
 });
 
-assert.ok(fs.existsSync(path.join(root, allowlistedLegacyExporter)));
-assert.ok(fs.existsSync(path.join(root, historicalSqliteMigrations)));
+assert.equal(fs.existsSync(path.join(root, 'scripts/export-active-pricelists.py')), false);
+assert.equal(fs.existsSync(path.join(root, 'prisma/migrations')), false);
+const dockerIgnore = fs.readFileSync(path.join(root, '.dockerignore'), 'utf8');
+assert.match(dockerIgnore, /^\/scripts\/export-active-pricelists\.py$/m);
+assert.match(dockerIgnore, /^\/prisma\/migrations\/$/m);
 assert.match(
     fs.readFileSync(path.join(root, 'prisma.config.ts'), 'utf8'),
     /path:\s*'prisma\/migrations-postgresql'/
@@ -83,5 +80,5 @@ assert.deepEqual(
 );
 
 process.stdout.write(
-    `PostgreSQL-only surface check passed (${scannedFiles.length} active source files; legacy exporter and historical SQLite migrations excluded).\n`
+    `PostgreSQL-only surface check passed (${scannedFiles.length} runtime files).\n`
 );

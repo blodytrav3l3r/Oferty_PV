@@ -33,7 +33,7 @@ Przed napisaniem utility lub dodaniem funkcjonalnosci, przejdz mentalnie:
 ### Krok 1: Analiza potrzeb
 
 - Okresl dokladnie, jaka funkcjonalnosc jest potrzebna
-- Okresl ograniczenia stacka (TS + Express + Prisma + SQLite, vanilla JS frontend)
+- Okresl ograniczenia stacka (TS + Express + Prisma + PostgreSQL 18, vanilla JS frontend)
 
 ### Krok 2: Lokalne przeszukanie (zawsze pierwsze)
 

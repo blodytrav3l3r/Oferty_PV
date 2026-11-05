@@ -70,7 +70,7 @@ const artifactSchema = z
         format: z.literal('sok-active-pricelists'),
         formatVersion: z.literal(1),
         exportedAt: z.string().datetime({ offset: true }),
-        sourceSchema: z.literal('legacy-sqlite'),
+        sourceSchema: z.literal('sok-bundled-active-pricelists-v1'),
         versions: z
             .object({ rury: versionSchema, studnie: versionSchema, preco: versionSchema })
             .strict(),
@@ -479,17 +479,26 @@ async function verifyOrInsert(artifact: Artifact, apply: boolean): Promise<void>
 async function main(): Promise<void> {
     const args = process.argv.slice(2);
     const apply = args.includes('--apply');
+    const validateOnly = args.includes('--validate-only');
     const filePath = args.find((arg) => !arg.startsWith('--'));
     if (
         !filePath ||
         args.filter((arg) => !arg.startsWith('--')).length !== 1 ||
-        args.some((arg) => arg !== '--apply' && arg.startsWith('--'))
+        args.some((arg) => !['--apply', '--validate-only'].includes(arg) && arg.startsWith('--')) ||
+        (apply && validateOnly)
     ) {
         throw new Error(
             'Użycie: ts-node scripts/import-active-pricelists.ts <artefakt.json> [--apply]'
         );
     }
     const artifact = parseArtifact(filePath);
+    if (validateOnly) {
+        const totalItems = Object.values(artifact.counts).reduce((sum, count) => sum + count, 0);
+        console.info(
+            `Pakiet cenników poprawny: 3 aktywne wersje, ${totalItems} pozycji; SHA-256 ${artifact.sha256}.`
+        );
+        return;
+    }
     await verifyOrInsert(artifact, apply);
 }
 
