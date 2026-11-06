@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.5
+REM  Wersja: 1.56.6
 REM  Start S.O.K. with local PostgreSQL. Optional -Watch enables backend reload.
 setlocal
 cd /d "%~dp0"

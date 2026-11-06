@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.6 (2026-11-06)
+
+### Features
+
+- **windows:** osobne launchery instalacji, Dockera i trybów natywnych
+
 ### 1.56.5 (2026-11-05)
 
 ### Bug Fixes
