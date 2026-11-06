@@ -113,10 +113,10 @@ describe('cennik: publikacja z wyborem daty', () => {
         expect(css).toContain('.modal--publish .pv-publish-input');
     });
 
-    it('approve niesie effectiveFrom; data wsteczna wymaga noty min. 10 znaków', () => {
+    it('approve niesie effectiveFrom; notatka dla daty wstecznej jest opcjonalna', () => {
         expect(shared).toContain('body.effectiveFrom = opts.effectiveFrom');
-        expect(shared).toContain('PAST_NOTE_MIN');
-        expect(shared).toContain('Data w przeszłości');
+        expect(shared).toContain('Opis zmiany (opcjonalnie)');
+        expect(shared).not.toContain('Data w przeszłości — podaj uzasadnienie');
     });
 });
 

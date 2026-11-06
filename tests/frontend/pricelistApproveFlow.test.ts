@@ -6,7 +6,7 @@
 /**
  * Panel cenników — publikacja przez kanoniczny `POST /:id/approve` (M1):
  * kontrola `GET /:id/checks` przed publikacją, `checksCheckedAt` w body,
- * korekta wsteczna z notą (min. 10 znaków), brak aliasów deprecated w FE.
+ * korekta wsteczna z opcjonalną notą, brak aliasów deprecated w FE.
  */
 
 import fs from 'fs';
@@ -27,7 +27,12 @@ function mount(responses: Record<string, unknown>): { calls: Call[] } {
         escapeHtmlAttr: (v: unknown) => String(v ?? '')
     });
     window.showToast = jest.fn();
-    window.showModal = jest.fn();
+    window.showModal = jest.fn(({ id, html }: { id: string; html: string }) => {
+        const modal = document.createElement('div');
+        modal.id = id;
+        modal.innerHTML = html;
+        document.body.appendChild(modal);
+    });
     window.closeModal = jest.fn();
     window.appConfirm = jest.fn().mockResolvedValue(true);
     window.authHeaders = () => ({});
@@ -94,7 +99,39 @@ describe('frontend: publikacja cennika przez approve', () => {
         expect(json.checksStale).toBe(true);
     });
 
-    it('isPastDate: data przeszła = korekta wsteczna (wymaga noty)', () => {
+    it('publikuje datę wsteczną bez notatki', async () => {
+        const { calls } = mount({
+            'GET /api/pricelist-versions?type=studnie': {
+                versions: [
+                    {
+                        id: 'draft-1',
+                        version: 'Sv2-20261106',
+                        seq: 2,
+                        status: 'DRAFT',
+                        effectiveFrom: '2099-01-01T00:00:00.000Z'
+                    }
+                ]
+            },
+            'GET /api/pricelist-versions/draft-1/checks': { checkedAt: '2026-11-06T00:00:00.000Z' },
+            'POST /api/pricelist-versions/draft-1/approve': {
+                version: { id: 'draft-1', version: 'Sv2-20261106' }
+            }
+        });
+
+        await pv().openPublishDialog('studnie', 'draft-1');
+        (document.getElementById('pv-publish-date') as HTMLInputElement).value = '2020-01-01T00:00';
+        (document.getElementById('pv-publish-ok') as HTMLButtonElement).click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        const approveCall = calls.find((call) => call.url.endsWith('/approve'));
+        expect(calls.map((call) => `${call.method} ${call.url}`)).toContain(
+            'POST /api/pricelist-versions/draft-1/approve'
+        );
+        expect(approveCall?.body).toMatchObject({ effectiveFrom: expect.any(String) });
+        expect(approveCall?.body).not.toHaveProperty('note');
+    });
+
+    it('isPastDate: data przeszła = korekta wsteczna', () => {
         mount({});
         const isPast = pv().isPastDate;
         expect(isPast(new Date(Date.now() - 86400000).toISOString())).toBe(true);

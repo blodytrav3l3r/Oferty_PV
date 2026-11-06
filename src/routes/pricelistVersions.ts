@@ -457,8 +457,8 @@ const approveBodySchema = z.object({
 });
 
 /**
- * S2b: docelowa publikacja. effectiveFrom domyślnie z wersji; nota >=10
- * wymagana tylko dla daty z przeszłości (requirePastNote). Checks doradcze:
+ * S2b: docelowa publikacja. effectiveFrom domyślnie z wersji; nota jest
+ * opcjonalna również dla daty z przeszłości. Checks doradcze:
  * edycja po ich policzeniu daje checksStale=true, nie blokuje (200).
  */
 router.post(
@@ -485,8 +485,7 @@ router.post(
             const version = await approveVersion(id, {
                 userId: userIdOf(req),
                 effectiveFrom,
-                note,
-                requirePastNote: true
+                note
             });
             const checkedAtIso =
                 checksCheckedAt === undefined ? undefined : new Date(checksCheckedAt).toISOString();

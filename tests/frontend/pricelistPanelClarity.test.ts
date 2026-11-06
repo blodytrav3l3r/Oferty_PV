@@ -151,11 +151,11 @@ describe('frontend: brak eksportu wersji z raila', () => {
 });
 
 describe('frontend: backdate z potwierdzeniem i licznikiem', () => {
-    it('publikacja: data wsteczna wymaga uzasadnienia min. 10 znaków', () => {
+    it('publikacja: data wsteczna nie wymaga notatki', () => {
         expect(panel).toContain('pv-publish-note');
         expect(panel).toContain('Data w przeszłości — korekta wsteczna');
-        expect(panel).toContain('PAST_NOTE_MIN');
-        expect(panel).toContain('uzasadnienie min. ');
+        expect(panel).toContain('notatka jest opcjonalna');
+        expect(panel).not.toContain('PAST_NOTE_MIN');
     });
     it('karta: data lokalna, ISO/UTC tylko w tooltipie', () => {
         expect(panel).toContain('function fmtEff');

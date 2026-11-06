@@ -236,6 +236,7 @@ function exportOfferPDF(id) {
 
 /* ===== MODAL RABATU NA POZIOMIE POZYCJI ===== */
 let tempDiscounts = [];
+let initialTempDiscounts = [];
 
 function showItemDiscountModal() {
     const items = getActiveItemsArray();
@@ -246,6 +247,7 @@ function showItemDiscountModal() {
 
     // Utwórz płytką kopię bieżących rabatów
     tempDiscounts = items.map((item) => item.discount || 0);
+    initialTempDiscounts = [...tempDiscounts];
 
     showModal({
         id: 'item-discount-modal',
@@ -254,7 +256,7 @@ function showItemDiscountModal() {
     <div class="modal" style="max-width:1200px; width:95%; border-radius: var(--radius); box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
         <h3 id="item-discount-title" class="fs-4xl-bold-primary">% Edytuj rabaty pozycji</h3>
-        <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-discount-action="cancel"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
       <div style="overflow-y:auto; flex:1; padding-right:0.5rem;" id="discount-modal-list">
@@ -273,12 +275,18 @@ function showItemDiscountModal() {
           </div>
         </div>
         <div style="display:flex; gap: 1rem;">
-          <button class="btn btn-secondary p-075-15" data-csp="closeModal" data-csp-args="[]" >Anuluj</button>
-          <button class="btn btn-primary" data-csp="applyItemDiscounts" data-csp-args="[]" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold);">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+          <button class="btn btn-secondary p-075-15" data-discount-action="cancel">Anuluj</button>
+          <button class="btn btn-primary" data-csp="applyItemDiscounts" data-csp-args="[]" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold);">Zastosuj</button>
         </div>
       </div>
     </div>`
     });
+    const modal = document.getElementById('item-discount-modal');
+    if (modal) {
+        modal.querySelectorAll('[data-discount-action="cancel"]').forEach((button) => {
+            button.addEventListener('click', cancelItemDiscounts);
+        });
+    }
     if (window.lucide) lucide.createIcons();
 
     renderDiscountModalItems();
@@ -440,7 +448,22 @@ function checkGasketDiscount(index, inputEl) {
     }
 }
 
-function applyItemDiscounts() {
+async function applyItemDiscounts() {
+    const isOrder = !!window.orderEditMode;
+    const shouldSave = await window.appConfirm(
+        '<div class="fs-xl">Czy na pewno chcesz zapisać zmienione rabaty na stałe do bazy?</div>',
+        {
+            title: '<div class="fs-3xl-eb">Zapisz nową konfigurację cenową</div>',
+            type: 'info',
+            allowHtml: true,
+            okText: isOrder
+                ? '<i data-lucide="save"></i> Zapisz zamówienie'
+                : '<i data-lucide="save"></i> Zapisz ofertę',
+            cancelText: 'Anuluj'
+        }
+    );
+    if (!shouldSave) return;
+
     getActiveItemsArray().forEach((item, index) => {
         item.discount = tempDiscounts[index];
     });
@@ -452,7 +475,32 @@ function applyItemDiscounts() {
     updateOfferSummary();
     if (typeof renderOfferSummaryTab === 'function') renderOfferSummaryTab();
     showToast('Zaktualizowano rabaty dla wybranych pozycji', 'success');
+    if (typeof window.saveOfferOrOrder === 'function') {
+        await window.saveOfferOrOrder();
+    } else {
+        showToast('Zapis oferty jest niedostępny.', 'error');
+    }
 }
+
+const cancelItemDiscounts = async () => {
+    const hasChanges = tempDiscounts.some(
+        (discount, index) => discount !== initialTempDiscounts[index]
+    );
+    if (hasChanges) {
+        const shouldDiscard = await window.appConfirm(
+            '<div class="fs-xl">Zmieniono rabaty. Czy na pewno odrzucić niezapisane zmiany?</div>',
+            {
+                title: '<div class="fs-3xl-eb">Niezapisane zmiany rabatów</div>',
+                type: 'warning',
+                allowHtml: true,
+                okText: '<i data-lucide="x-circle"></i> Tak, odrzuć zmiany',
+                cancelText: 'Nie, wracam do edycji'
+            }
+        );
+        if (!shouldDiscard) return;
+    }
+    closeModal();
+};
 
 /* ===== EKSPORT XLSX ===== */
 

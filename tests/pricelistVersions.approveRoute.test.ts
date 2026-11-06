@@ -62,7 +62,7 @@ beforeEach(() => {
 });
 
 describe('POST /api/pricelist-versions/:id/approve', () => {
-    test('przekazuje effectiveFrom/note i wymusza note dla daty z przeszlosci', async () => {
+    test('przekazuje effectiveFrom/note bez wymagania noty dla daty z przeszlosci', async () => {
         const res = await request(app)
             .post('/api/pricelist-versions/v1/approve')
             .send({ effectiveFrom: '2026-11-01', note: 'korekta wsteczna' });
@@ -72,10 +72,22 @@ describe('POST /api/pricelist-versions/:id/approve', () => {
         expect(mockApproveVersion).toHaveBeenCalledWith('v1', {
             userId: 'admin-1',
             effectiveFrom: '2026-11-01',
-            note: 'korekta wsteczna',
-            requirePastNote: true
+            note: 'korekta wsteczna'
         });
         expect(mockAuditFindFirst).not.toHaveBeenCalled();
+    });
+
+    test('akceptuje datę z przeszłości bez noty', async () => {
+        const res = await request(app)
+            .post('/api/pricelist-versions/v1/approve')
+            .send({ effectiveFrom: '2026-11-01' });
+
+        expect(res.status).toBe(200);
+        expect(mockApproveVersion).toHaveBeenCalledWith('v1', {
+            userId: 'admin-1',
+            effectiveFrom: '2026-11-01',
+            note: undefined
+        });
     });
 
     test('checksCheckedAt starszy niz UPDATE w audycie -> checksStale=true, nadal 200', async () => {

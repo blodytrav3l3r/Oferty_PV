@@ -1236,15 +1236,16 @@ html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
     justify-content: flex-end;
 }
 
-.om-footer .btn {
-    font-size: var(--fs-sm);
-    padding: 0.4rem 1rem;
-    font-weight: var(--fw-bold);
+#offer-discounts-modal .om-footer .btn {
+    font-size: var(--fs-md);
+    padding: 0.75rem 1.5rem;
+    font-weight: var(--fw-medium);
 }
 
-.om-footer .btn-primary {
-    padding: 0.4rem 1.2rem;
-    font-weight: var(--fw-extrabold);
+#offer-discounts-modal .om-footer .btn-primary {
+    font-size: var(--fs-2xl);
+    padding: 0.75rem 2rem;
+    font-weight: var(--fw-semibold);
 }
 
 /* Stopka modali ofertowych — w light jasny pasek zamiast szarej mgielki. */

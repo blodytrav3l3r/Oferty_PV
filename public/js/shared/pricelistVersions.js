@@ -433,7 +433,7 @@
         return prefix + ': ' + (mapped || (err && err.message) || 'nieznany błąd');
     }
 
-    /** true gdy effectiveFrom jest w przeszłości (korekta wsteczna → nota ≥ 10 znaków). */
+    /** true gdy effectiveFrom jest w przeszłości (korekta wsteczna). */
     function isPastDate(iso) {
         if (!iso) return false;
         var t = Date.parse(iso);
@@ -1336,7 +1336,7 @@
             ' title="' +
             tip(
                 canDraft,
-                'Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna z uzasadnieniem)',
+                'Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna)',
                 'Dostępne dla wersji roboczej (szkicu)'
             ) +
             '">Opublikuj roboczą</button>' +
@@ -3141,8 +3141,6 @@
 
     /* ===== AKCJE: kopia → edycja → publikacja ===== */
 
-    var PAST_NOTE_MIN = 10;
-
     function toLocalInput(date) {
         var d = date || new Date();
         var pad = function (n) {
@@ -3243,7 +3241,7 @@
                 '<input class="pv-publish-input" id="pv-publish-date" type="datetime-local">' +
                 '<p class="pv-publish-hint" id="pv-publish-hint"></p></div>' +
                 '<div class="pv-publish-field"><label class="form-label" for="pv-publish-note">Nota (opcjonalna)</label>' +
-                '<input class="pv-publish-input" id="pv-publish-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
+                '<input class="pv-publish-input" id="pv-publish-note" maxlength="500" placeholder="Opis zmiany (opcjonalnie)"></div>' +
                 '<p class="pv-publish-error color-danger" id="pv-publish-error" role="alert"></p>' +
                 '</div>' +
                 '<div class="modal-footer"><button type="button" class="btn btn-secondary" id="pv-publish-cancel">Anuluj</button>' +
@@ -3275,11 +3273,7 @@
             }
             var label = versionLabel(t, draft.seq, iso);
             hint.textContent = isPastDate(iso)
-                ? 'Data w przeszłości — korekta wsteczna; uzasadnienie min. ' +
-                  PAST_NOTE_MIN +
-                  ' znaków. Etykieta po publikacji: ' +
-                  label +
-                  '.'
+                ? 'Data w przeszłości — korekta wsteczna. Etykieta po publikacji: ' + label + '.'
                 : 'Status: do wdrożenia od ' +
                   stripDateTime(iso) +
                   '. Etykieta po publikacji: ' +
@@ -3307,10 +3301,6 @@
                     return;
                 }
                 var note = noteInput ? String(noteInput.value || '').trim() : '';
-                if (isPastDate(iso) && note.length < PAST_NOTE_MIN) {
-                    showErr('Data w przeszłości — podaj uzasadnienie (min. 10 znaków).');
-                    return;
-                }
                 okBtn.disabled = true;
                 try {
                     var res = await approveVersion(draft.id, { effectiveFrom: iso, note: note });
@@ -3373,7 +3363,7 @@
                 '</ul></section>' +
                 '<section><h4>Daty publikacji</h4><ul>' +
                 '<li><strong>Data przyszła</strong> — wersja trafia do <em>Do wdrożenia</em> i obowiązuje od tej daty.</li>' +
-                '<li><strong>Data przeszła</strong> — korekta wsteczna: wymagane uzasadnienie (min. 10 znaków) i potwierdzenie.</li>' +
+                '<li><strong>Data przeszła</strong> — korekta wsteczna; notatka jest opcjonalna.</li>' +
                 '<li><strong>Teraz</strong> — wersja obowiązuje od razu dla nowych ofert.</li>' +
                 '<li>Ta sama data i godzina na jednej osi = kolizja („Kolizja daty obowiązywania”) — zmień termin.</li>' +
                 '</ul></section>' +

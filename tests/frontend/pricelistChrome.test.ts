@@ -379,10 +379,11 @@ describe('frontend: edycja notatek + notatki przy aktywacji (źródło)', () => 
         expect(panel).toContain('o.initial');
         expect(panel).toContain('o.okText');
     });
-    it('publikacja przez approve: korekta wsteczna wymaga noty (min. 10 znaków)', () => {
+    it('publikacja przez approve: notatka jest opcjonalna przy korekcie wstecznej', () => {
         expect(panel).toContain("'/approve'");
         expect(panel).toContain('function isPastDate(');
-        expect(panel).toContain('Data w przeszłości — podaj uzasadnienie (min. 10 znaków).');
+        expect(panel).toContain('placeholder="Opis zmiany (opcjonalnie)"');
+        expect(panel).not.toContain('Data w przeszłości — podaj uzasadnienie');
         expect(panel).not.toContain("'/activate'");
     });
     it('edycja notatek woła PUT samymi notatkami (bez rows)', () => {
