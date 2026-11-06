@@ -131,7 +131,7 @@
     "dependencies": {
         "@prisma/adapter-pg": "7.10.1",
         "@prisma/client": "7.10.1",
-        "@sentry/node": "^10.59.0",
+        "@sentry/node": "^11.10.0",
         "bcryptjs": "^3.0.3",
         "compression": "^1.8.2",
         "cookie-parser": "^1.4.7",
