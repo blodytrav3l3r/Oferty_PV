@@ -1,6 +1,26 @@
 import { createPrismaClient } from '../src/prismaClient';
 
 describe('Prisma 7 PostgreSQL driver adapter', () => {
+    it('shares at most two PostgreSQL sessions across concurrent queries in Jest', async () => {
+        const prisma = createPrismaClient();
+
+        try {
+            const queries = Array.from(
+                { length: 5 },
+                () =>
+                    prisma.$queryRaw<Array<{ pid: number }>>`
+                    SELECT pg_backend_pid() AS pid FROM pg_sleep(0.1)
+                `
+            );
+            const rows = (await Promise.all(queries)).flat();
+
+            expect(rows).toHaveLength(5);
+            expect(new Set(rows.map(({ pid }) => pid)).size).toBe(2);
+        } finally {
+            await prisma.$disconnect();
+        }
+    });
+
     it('executes Prisma queries in the worker schema and emits query events', async () => {
         const databaseUrl = process.env.DATABASE_URL;
         if (!databaseUrl?.startsWith('postgresql://') && !databaseUrl?.startsWith('postgres://')) {

@@ -1,11 +1,14 @@
 /**
- * Singleton klienta Prisma - zapewnia jedno połączenie z bazą danych w całej aplikacji
+ * Singleton klienta Prisma i jego pula połączeń.
  */
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Prisma } from '../generated/prisma-postgres/client';
 import { countDbQuery } from './utils/dbQueryCounter';
 import { requirePostgresDatabaseUrl } from './utils/databaseUrl';
 import { recordDbQuery } from './utils/metrics';
+
+const registerCleanup = Symbol.for('sok.jest.registerPrismaCleanup');
+type RegisterCleanup = (disconnect: () => Promise<void>) => void;
 
 export function createPrismaClient(rawUrl = process.env.DATABASE_URL): PrismaClient {
     const connectionString = requirePostgresDatabaseUrl(rawUrl);
@@ -15,10 +18,15 @@ export function createPrismaClient(rawUrl = process.env.DATABASE_URL): PrismaCli
         throw new Error('DATABASE_URL schema must be a valid PostgreSQL identifier');
     }
     parsedUrl.searchParams.delete('schema');
+    // Jest ładuje moduły od nowa dla każdego pliku testowego.
+    const onSuiteEnd =
+        process.env.NODE_ENV === 'test'
+            ? (globalThis as { [registerCleanup]?: RegisterCleanup })[registerCleanup]
+            : undefined;
     const adapter = new PrismaPg(
         {
             connectionString: parsedUrl.toString(),
-            max: 10,
+            max: onSuiteEnd ? 2 : 10,
             connectionTimeoutMillis: 10_000,
             idleTimeoutMillis: 30_000,
             ...(schema ? { options: `-c search_path=${schema}` } : {})
@@ -26,7 +34,7 @@ export function createPrismaClient(rawUrl = process.env.DATABASE_URL): PrismaCli
         schema ? { schema } : undefined
     );
 
-    return new PrismaClient({
+    const client = new PrismaClient({
         adapter,
         // M: query events do metryk (stdout dla warn/error bez zmian).
         log: [
@@ -35,6 +43,8 @@ export function createPrismaClient(rawUrl = process.env.DATABASE_URL): PrismaCli
             { emit: 'event', level: 'query' }
         ]
     });
+    onSuiteEnd?.(() => client.$disconnect());
+    return client;
 }
 
 export const prisma = createPrismaClient();

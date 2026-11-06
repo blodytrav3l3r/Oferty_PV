@@ -12,6 +12,7 @@ PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integra
 - Testy migracji tworzą pusty PostgreSQL, wykonują `migrate deploy`, sprawdzają drift i idempotentny ponowny deploy. Żadna migracja SQL nie jest zweryfikowana przez sam mock ani przez dawną bazę SQLite.
 - Playwright uruchamia własny serwer z `PLAYWRIGHT_DATABASE_URL` skierowanym na izolowany PostgreSQL. Nie używa defaultowego portu/dev-servera ani bazy produkcyjnej. Dane dostępu są przekazywane przez sekret/env; nie zapisuj ich w pliku testowym.
 - W CI uruchamiaj PostgreSQL jako odizolowaną usługę testową z readiness probe i losowym targetem dla joba. Brak połączenia oznacza jawny fail, nie fallback do innego providera.
+- Na hoście Windows lub Linux uruchom osobną bazę przez `docker compose -f docker-compose.postgres-test.yml up -d --wait`. Ustaw `POSTGRES_TEST_PORT` oraz port w `POSTGRES_TEST_URL` na 55440, aby baza testowa mogła działać obok natywnej bazy deweloperskiej na 55432. Proces w tej samej sieci Compose używa `postgres-test:5432`. URL przyjmuje parametry `schema` i `sslmode`. Pula Jest ma limit dwóch połączeń na klienta, zamyka się po każdym pliku i działa domyślnie z dwoma workerami.
 
 ## Kontrakty jakości
 
@@ -26,7 +27,7 @@ PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integra
 ## Bramy
 
 - `npm run validate`: version:check, typecheck BE+FE, lint BE+FE, appname, licenses, test:quick, collisions, ratchet, prices:verify.
-- Pre-push (`.husky/pre-push`, 4 grupy równoległe): `version:check` + `encoding:check` + `appname:check`; `lint` + `lint:frontend`; `typecheck` + `typecheck:frontend`; `jest` lite + `tests/pricelistChunk.test.ts --runInBand` + `test:git-safety`. W trakcie migracji bramy muszą zostać przepisane, nie pominięte.
+- Pre-push sprawdza `POSTGRES_TEST_URL` przed grupami kontroli, potem uruchamia m.in. `prices:verify`, lint, typecheck, `test:quick:lite` i osobno `test:git-safety`. `test:quick:lite` uruchamia ciężki test `pricelistChunk` szeregowo. `prices:verify` korzysta z `DATABASE_URL` i sprawdza aktywne cenniki.
 - DoD paczki: P0 open = 0; CSRF/matrix GREEN; typecheck/lint GREEN; `test:quick` GREEN; `version:check` GREEN; migration drift 0; testy DB na PostgreSQL; NEW globals/inline/security-exceptions = 0.
 
 ## Playwright — baza i konto testowe

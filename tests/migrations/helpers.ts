@@ -2,12 +2,12 @@ import { randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { parsePostgresTestUrl } from '../../scripts/postgres-test-url.cjs';
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const TMP_ROOT = path.join(ROOT, 'tests', 'tmp');
 const PRISMA_CLI = path.join(ROOT, 'node_modules', 'prisma', 'build', 'index.js');
 const MIGRATIONS_SRC = path.join(ROOT, 'prisma', 'migrations-postgresql');
-const ALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '::1', 'postgres']);
 
 export interface IsolatedProject {
     dir: string;
@@ -25,22 +25,7 @@ function getValidatedTestUrl(): URL {
     if (process.env.NODE_ENV !== 'test') {
         throw new Error('Isolated migration tests require NODE_ENV=test');
     }
-    const rawUrl = process.env.POSTGRES_TEST_URL;
-    if (!rawUrl) throw new Error('POSTGRES_TEST_URL is required for isolated migration tests');
-
-    const url = new URL(rawUrl);
-    const database = decodeURIComponent(url.pathname.slice(1)).toLowerCase();
-    if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
-        throw new Error('Isolated migration tests require PostgreSQL');
-    }
-    if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase())) {
-        throw new Error('Isolated migration tests require a local PostgreSQL host');
-    }
-    if (!database.endsWith('_test') && !database.endsWith('_test_db')) {
-        throw new Error('Isolated migration test database name must end in _test or _test_db');
-    }
-    url.searchParams.delete('schema');
-    return url;
+    return parsePostgresTestUrl(process.env.POSTGRES_TEST_URL);
 }
 
 function runPgScript(
@@ -51,21 +36,22 @@ function runPgScript(
 ): string {
     const script = [
         "const { Client } = require('pg');",
-        'const client = new Client({ connectionString: process.argv[1] });',
+        'const client = new Client({ connectionString: process.env.SOK_MIGRATION_TEST_CONNECTION_STRING });',
         '(async () => {',
         '  await client.connect();',
-        '  const schema = process.argv[2];',
+        '  const schema = process.argv[1];',
         '  await client.query(`SET search_path TO "${schema}"`);',
-        '  if (process.argv[3] === "create") { await client.query(`CREATE SCHEMA "${schema}"`); return; }',
-        '  if (process.argv[3] === "drop") { await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`); return; }',
+        '  if (process.argv[2] === "create") { await client.query(`CREATE SCHEMA "${schema}"`); return; }',
+        '  if (process.argv[2] === "drop") { await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`); return; }',
         '  const payload = JSON.parse(require("node:fs").readFileSync(0, "utf8"));',
         '  const result = await client.query(payload.sql, payload.values);',
         '  process.stdout.write(JSON.stringify(result.rows));',
         '})().catch(() => { console.error("Isolated PostgreSQL migration query failed"); process.exitCode = 1; }).finally(() => client.end());'
     ].join('\n');
 
-    return execFileSync(process.execPath, ['-e', script, connectionString, schemaName, mode], {
+    return execFileSync(process.execPath, ['-e', script, schemaName, mode], {
         cwd: ROOT,
+        env: { ...process.env, SOK_MIGRATION_TEST_CONNECTION_STRING: connectionString },
         encoding: 'utf8',
         input: payload,
         stdio: ['pipe', 'pipe', 'pipe'],

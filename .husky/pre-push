@@ -1,13 +1,12 @@
 #!/bin/sh
-# Pre-push S.O.K. — te same 9 bram co zawsze, ten sam fail-fast.
-# Kroki niezależne idą równolegle w grupach (A→B→C→D sekwencyjnie):
+# Pre-push S.O.K. sprawdza najpierw połączenie z izolowaną bazą testową.
+# Kroki niezależne w grupach A–C idą równolegle, a grupy idą sekwencyjnie:
 #   A: version + encoding + appname + licenses + collisions + ratchet + prices (~13 s)
 #   B: lint BE + lint FE (~25 s)
 #   C: typecheck BE + typecheck FE (~37 s)
 #   D: test:quick:lite + test:git-safety (~225 s, najdłuższy krok)
 # Logi kroków lądują w plikach tymczasowych — wypisywane tylko przy FAIL,
-# żeby równoległe outputy się nie przeplatały. (Optymalizacja czasu hooka,
-# zero zmian zakresów: te same komendy, te same werdykty.)
+# żeby komunikaty z różnych kroków się nie przeplatały.
 
 run_parallel() {
     tmpdir=$(mktemp -d 2>/dev/null || mktemp -d -t prepush) || exit 1
@@ -37,6 +36,8 @@ run_parallel() {
     return $fail
 }
 
+node scripts/postgres-test-url.cjs || { echo "❌ Konfiguracja PostgreSQL do testów — sprawdź POSTGRES_TEST_URL"; exit 1; }
+
 echo "── pre-push A: wersja/kodowanie/nazwa ──"
 run_parallel \
     "npm run version:check" \
@@ -62,11 +63,7 @@ echo "── pre-push D: testy (sekwencyjnie) ──"
 # tworzą/usuwają tmp_git_safety_*.txt w root repo, a równoległe suity
 # skanujące drzewo (np. appNameCheck) łapią ENOENT na znikających plikach
 # i testy git-safety łapią index.lock. Zweryfikowane dwoma pushami.
-# pricelistChunk osobno z --runInBand: wali 2000 wierszy do prawdziwej
-# dev-bazy (I/O-bound, timeout 60 s) i pada wyłącznie pod pełną suitą
-# na współdzielonych workerach (solo PASS) — ten sam zakres, mniej kontencji.
-npx jest --no-coverage --testPathIgnorePatterns=tests/migrations --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts 2>&1 || { echo "❌ Testy — uruchom npm run test:quick:lite"; exit 1; }
-npx jest tests/pricelistChunk.test.ts --no-coverage --runInBand 2>&1 || { echo "❌ Testy pricelistChunk — uruchom npx jest tests/pricelistChunk.test.ts --runInBand"; exit 1; }
+npm run test:quick:lite 2>&1 || { echo "❌ Testy — uruchom npm run test:quick:lite"; exit 1; }
 npm run test:git-safety 2>&1 || { echo "❌ Testy git-safety — uruchom npm run test:git-safety"; exit 1; }
 
 echo "✓ pre-push zielony"

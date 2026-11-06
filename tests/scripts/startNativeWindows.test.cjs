@@ -40,6 +40,22 @@ describe('native Windows launcher contract', () => {
         assert.match(readLauncher('start-native.bat'), /start-native\.ps1" %\*/i);
     });
 
+    it('gives the isolated Compose database its own port by default', () => {
+        const compose = fs.readFileSync(
+            path.join(projectRoot, 'docker-compose.postgres-test.yml'),
+            'utf8'
+        );
+        const example = fs.readFileSync(path.join(projectRoot, '.env.example'), 'utf8');
+        const startupScript = fs.readFileSync(startupScriptPath, 'utf8');
+        const testPort = compose.match(/POSTGRES_TEST_PORT:-(\d+)/)?.[1];
+        const devPort = startupScript.match(/127\.0\.0\.1:(\d+)\/sok_dev/)?.[1];
+
+        assert.ok(testPort && devPort);
+        assert.notEqual(testPort, devPort);
+        assert.match(example, new RegExp(`^POSTGRES_TEST_PORT=${testPort}\\r?$`, 'm'));
+        assert.ok(example.includes(`@127.0.0.1:${testPort}/sok_test`));
+    });
+
     it('does not migrate, seed, or terminate unrelated processes', () => {
         const startupScript = fs.readFileSync(startupScriptPath, 'utf8');
 

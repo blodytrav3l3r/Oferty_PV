@@ -10,7 +10,7 @@ const config: Config.InitialOptions = {
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
     coverageProvider: 'v8',
-    maxWorkers: process.env.CI === 'true' ? 2 : 4,
+    maxWorkers: 2,
     verbose: true,
     testTimeout: 10000,
     setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

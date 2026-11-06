@@ -1,43 +1,21 @@
 const { execFileSync } = require('node:child_process');
-const fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const path = require('node:path');
 const { TestEnvironment } = require('jest-environment-node');
 const { Client } = require('pg');
+const { parsePostgresTestUrl, readPostgresTestUrl } = require('../scripts/postgres-test-url.cjs');
 
 const projectRoot = path.resolve(__dirname, '..');
-const envPath = path.join(projectRoot, '.env');
+const registerCleanup = Symbol.for('sok.jest.registerPrismaCleanup');
 let workerDatabaseUrl;
-
-if (!process.env.POSTGRES_TEST_URL && fs.existsSync(envPath)) {
-    const localTestUrl = require('dotenv').parse(
-        fs.readFileSync(envPath, 'utf8')
-    ).POSTGRES_TEST_URL;
-    if (localTestUrl) process.env.POSTGRES_TEST_URL = localTestUrl;
-}
 
 function getPostgresUrl() {
     if (process.env.NODE_ENV !== 'test') {
         throw new Error('PostgreSQL schema isolation is permitted only with NODE_ENV=test');
     }
-    const rawUrl = process.env.POSTGRES_TEST_URL;
-    if (!rawUrl) throw new Error('POSTGRES_TEST_URL is required for backend tests');
-
-    const url = new URL(rawUrl);
-    if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
-        throw new Error('Backend tests require a PostgreSQL URL');
-    }
-    if (!['localhost', '127.0.0.1', '[::1]', 'postgres'].includes(url.hostname.toLowerCase())) {
-        throw new Error('PostgreSQL test URL host must be a local test service');
-    }
-    const database = decodeURIComponent(url.pathname.slice(1)).toLowerCase();
-    if (!database.endsWith('_test') && !database.endsWith('_test_db')) {
-        throw new Error('PostgreSQL test database name must end with _test or _test_db');
-    }
-    if ([...url.searchParams.keys()].some((key) => key !== 'schema' && key !== 'sslmode')) {
-        throw new Error('PostgreSQL test URL supports only schema and sslmode query parameters');
-    }
-    url.searchParams.delete('schema');
+    const rawUrl = readPostgresTestUrl();
+    const url = parsePostgresTestUrl(rawUrl);
+    process.env.POSTGRES_TEST_URL = rawUrl;
     return url;
 }
 
@@ -69,7 +47,10 @@ async function initializeWorkerSchema() {
     const baseUrl = getPostgresUrl();
     const suffix = randomUUID().replaceAll('-', '').slice(0, 12);
     const schema = `sok_jest_${process.pid}_${suffix}`;
-    const client = new Client({ connectionString: baseUrl.toString() });
+    const client = new Client({
+        connectionString: baseUrl.toString(),
+        connectionTimeoutMillis: 5_000
+    });
     try {
         await client.connect();
         await client.query(`CREATE SCHEMA "${schema}"`);
@@ -100,9 +81,30 @@ async function initializeWorkerSchema() {
 }
 
 module.exports = class PostgresTestEnvironment extends TestEnvironment {
+    prismaCleanup = [];
+
     async setup() {
         await super.setup();
         workerDatabaseUrl ??= initializeWorkerSchema();
         this.global.process.env.DATABASE_URL = await workerDatabaseUrl;
+        this.global.process.env.POSTGRES_TEST_URL = process.env.POSTGRES_TEST_URL;
+        this.global[registerCleanup] = (disconnect) => this.prismaCleanup.push(disconnect);
+    }
+
+    async teardown() {
+        try {
+            const results = await Promise.allSettled(
+                this.prismaCleanup.map(async (disconnect) => disconnect())
+            );
+            const failures = results.filter((result) => result.status === 'rejected');
+            if (failures.length > 0) {
+                throw new AggregateError(
+                    failures.map((failure) => failure.reason),
+                    'Failed to disconnect PostgreSQL test clients'
+                );
+            }
+        } finally {
+            await super.teardown();
+        }
     }
 };

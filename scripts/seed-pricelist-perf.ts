@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
+import { parsePostgresTestUrl } from './postgres-test-url.cjs';
 
 const ROOT = path.resolve(__dirname, '..');
 const VERSIONS_RURY = 200;
@@ -36,31 +37,8 @@ interface MeasureResult {
     verdict: 'PASS' | 'FAIL';
 }
 
-function requireTestDatabaseUrl(rawUrl: string | undefined): URL {
-    if (!rawUrl) throw new Error('POSTGRES_TEST_URL is required');
-    let url: URL;
-    try {
-        url = new URL(rawUrl);
-    } catch {
-        throw new Error('POSTGRES_TEST_URL must be a valid PostgreSQL URL');
-    }
-    const database = decodeURIComponent(url.pathname.slice(1)).toLowerCase();
-    const host = url.hostname.toLowerCase();
-    if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
-        throw new Error('POSTGRES_TEST_URL must use PostgreSQL');
-    }
-    if (!['localhost', '127.0.0.1', '::1', 'postgres'].includes(host)) {
-        throw new Error('Performance fixture requires a local test PostgreSQL host');
-    }
-    if (!database.endsWith('_test') && !database.endsWith('_test_db')) {
-        throw new Error('Performance fixture database name must end with _test or _test_db');
-    }
-    url.searchParams.delete('schema');
-    return url;
-}
-
 async function createIsolatedSchema(): Promise<IsolatedSchema> {
-    const baseUrl = requireTestDatabaseUrl(process.env.POSTGRES_TEST_URL);
+    const baseUrl = parsePostgresTestUrl(process.env.POSTGRES_TEST_URL);
     const schemaName = `sok_perf_${process.pid}_${randomUUID().replaceAll('-', '').slice(0, 10)}`;
     const admin = new Client({ connectionString: baseUrl.toString() });
     await admin.connect();
