@@ -1,11 +1,11 @@
 # API — dokumentacja endpointów
 
 **Wersja:** 1.56.5  
-**Ostatnia aktualizacja:** 2026-10-03  
-**Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne (surowy JSON: `GET /api/docs.json`)
+**Ostatnia aktualizacja:** 2026-11-06
 
-> **Uwaga:** Pełna, zawsze aktualna dokumentacja API dostępna jest przez Swagger pod `/api/docs`.
-> Poniższy opis może nie obejmować wszystkich endpointów — priorytetowo traktuj Swagger.
+**Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera), surowy JSON: `GET /api/docs.json`. Specyfikacja jest generowana z adnotacji `@openapi` w wybranych plikach; jej pokrycie jest częściowe i nie stanowi kompletnego źródła kontraktów.
+
+> **Uwaga:** Poniższy katalog opisuje główne i znane endpointy, ale nie jest kompletnym zestawieniem każdej metody, walidatora, autoryzacji i odpowiedzi. `/api/docs` zawiera tylko operacje udokumentowane adnotacjami OpenAPI. Dla wiążącego zachowania sprawdź montaż tras, middleware, walidator, implementację i testy; niespójności zgłaszaj do uzupełnienia.
 
 ---
 
@@ -435,26 +435,29 @@ i dawał cenę `0 zł` bez sygnału — dlatego zapis kończy się `400` (`preco
 
 Wymaga autoryzacji (administrator, oprócz etykiet).
 
-| Metoda | Ścieżka                                   | Auth  | Opis                                                                                                                                                    |
-| ------ | ----------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                                                                                                                                            |
-| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                                                                                                                         |
-| GET    | `/api/pricelist-versions/summary`         | admin | Stan osi per typ (`rury`, `studnie`, `preco`): `active`, `nextScheduled`, `draft`, `draftCount`, `approvedCount`, `archivedCount`, `collisionCount`     |
-| GET    | `/api/pricelist-versions/:id/preview`     | admin | Podgląd zawartości wersji (`max 5000` wierszy/arkusz, `truncated`; `413 VERSION_TOO_LARGE` >20 000)                                                     |
-| GET    | `/api/pricelist-versions/:id/rows`        | auth  | Wiersze wersji w kształcie LIVE do odtworzenia cennika oferty (tylko `APPROVED` i `effectiveFrom <= now`, inaczej `409 VERSION_NOT_EFFECTIVE`)          |
-| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                                                               |
-| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                                                                                                           |
-| PATCH  | `/api/pricelist-versions/:id/label`       | admin | Ręczna korekta etykiety (`label`: tekst ≤64 znaki albo `null` = etykieta pochodna)                                                                      |
-| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji (PRECO: `409 USED_BY_STUDNIE`, gdy wskazuje ją wersja studni; obowiązująca/historyczna → `409 NOT_DELETABLE`, używana → `409 USED_BY`) |
-| POST   | `/api/pricelist-versions/:id/approve`     | admin | **Kanoniczna publikacja**: DRAFT → APPROVED (stan wyliczany z `effectiveFrom`)                                                                          |
-| POST   | `/api/pricelist-versions/:id/publish`     | admin | ⚠️ Deprecated alias `approve` (`Deprecation: true`, `Sunset: Wed, 31 Mar 2027 23:59:59 GMT`)                                                            |
-| POST   | `/api/pricelist-versions/:id/activate`    | admin | ⚠️ Deprecated alias `approve` (te same nagłówki)                                                                                                        |
-| POST   | `/api/pricelist-versions/:id/backdate`    | admin | ⚠️ Deprecated alias `approve` z wymaganą notą (te same nagłówki)                                                                                        |
-| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                                                                                                                                       |
-| POST   | `/api/pricelist-versions/activate-due`    | admin | `410 Gone` (`code: GONE`) — automatyczna aktywacja usunięta                                                                                             |
-| GET    | `/api/pricelist-versions/:id/checks`      | admin | Kontrola przed publikacją (read-only, doradcza)                                                                                                         |
-| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                                                                                                                                          |
-| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                                                                                                                               |
+| Metoda | Ścieżka                                       | Auth  | Opis                                                                                                                                                    |
+| ------ | --------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/pricelist-versions`                     | admin | Lista wersji                                                                                                                                            |
+| GET    | `/api/pricelist-versions/labels`              | auth  | Etykiety wersji                                                                                                                                         |
+| GET    | `/api/pricelist-versions/summary`             | admin | Stan osi per typ (`rury`, `studnie`, `preco`): `active`, `nextScheduled`, `draft`, `draftCount`, `approvedCount`, `archivedCount`, `collisionCount`     |
+| GET    | `/api/pricelist-versions/:id/preview`         | admin | Podgląd zawartości wersji (`max 5000` wierszy/arkusz, `truncated`; `413 VERSION_TOO_LARGE` >20 000)                                                     |
+| GET    | `/api/pricelist-versions/:id/rows`            | auth  | Wiersze wersji w kształcie LIVE do odtworzenia cennika oferty (tylko `APPROVED` i `effectiveFrom <= now`, inaczej `409 VERSION_NOT_EFFECTIVE`)          |
+| POST   | `/api/pricelist-versions/:type/drafts`        | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                                                               |
+| PUT    | `/api/pricelist-versions/:id`                 | admin | Edycja wersji                                                                                                                                           |
+| PATCH  | `/api/pricelist-versions/:id/label`           | admin | Ręczna korekta etykiety (`label`: tekst ≤64 znaki albo `null` = etykieta pochodna)                                                                      |
+| DELETE | `/api/pricelist-versions/:id`                 | admin | Usunięcie wersji (PRECO: `409 USED_BY_STUDNIE`, gdy wskazuje ją wersja studni; obowiązująca/historyczna → `409 NOT_DELETABLE`, używana → `409 USED_BY`) |
+| POST   | `/api/pricelist-versions/:id/approve`         | admin | **Kanoniczna publikacja**: DRAFT → APPROVED (stan wyliczany z `effectiveFrom`)                                                                          |
+| POST   | `/api/pricelist-versions/:id/cancel-schedule` | admin | Anulowanie przyszłego wdrożenia zatwierdzonej wersji; powrót `APPROVED` → `DRAFT`                                                                       |
+| POST   | `/api/pricelist-versions/:id/active`          | admin | Ustawienie wersji jako obowiązującej dla nowych ofert                                                                                                   |
+| POST   | `/api/pricelist-versions/active/reset`        | admin | Usunięcie ręcznego override wyboru aktywnej wersji (`body.type`: `rury`, `studnie` lub `preco`; `422 INVALID_TYPE` dla błędnej wartości)                |
+| POST   | `/api/pricelist-versions/:id/publish`         | admin | ⚠️ Deprecated alias `approve` (`Deprecation: true`, `Sunset: Wed, 31 Mar 2027 23:59:59 GMT`)                                                            |
+| POST   | `/api/pricelist-versions/:id/activate`        | admin | ⚠️ Deprecated alias `approve` (te same nagłówki)                                                                                                        |
+| POST   | `/api/pricelist-versions/:id/backdate`        | admin | ⚠️ Deprecated alias `approve` z wymaganą notą (te same nagłówki)                                                                                        |
+| POST   | `/api/pricelist-versions/:id/clone-draft`     | admin | Klonowanie szkicu                                                                                                                                       |
+| POST   | `/api/pricelist-versions/activate-due`        | admin | `410 Gone` (`code: GONE`) — automatyczna aktywacja usunięta                                                                                             |
+| GET    | `/api/pricelist-versions/:id/checks`          | admin | Kontrola przed publikacją (read-only, doradcza)                                                                                                         |
+| GET    | `/api/pricelist-versions/:id/diff`            | admin | Różnice wersji                                                                                                                                          |
+| GET    | `/api/pricelist-versions/:id/export`          | admin | Eksport zamrożonej wersji                                                                                                                               |
 
 DELETE wersji PRECO (poza wersjami obowiązującą/historyczną, które blokuje wcześniej
 `409 NOT_DELETABLE`) jest blokowane, gdy dowolna wersja studni (dowolny status)
@@ -517,23 +520,23 @@ i snapshotem JSON. „Przywróć domyślne" w panelu cennika czyta
 
 ## Eksport XLSX cenników
 
-Wymaga autoryzacji. Jeden kształt pliku dla warstw LIVE / VERSION / DEFAULT
-(arkusze i kolumny 1:1; plik studni zawiera też arkusze PRECO, o ile eksport
-wersji studni znajdzie kwalifikującą się PRECO).
+Wymaga autoryzacji. Jeden kształt pliku dla warstw ACTIVE / DRAFT / DEFAULT
+(arkusze i kolumny 1:1; plik studni może zawierać też arkusze PRECO zgodnie
+z wersją kwalifikującą się do danego eksportu).
 
-| Metoda | Ścieżka                                                                 | Opis                                                                   |
-| ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| GET    | `/api/products/export.xlsx?source=live\|default\|active\|draft`         | Cennik rur (`Cennik_Rury_Export.xlsx`)                                 |
-| GET    | `/api/products-studnie/export.xlsx?source=live\|default\|active\|draft` | Cennik studni + PRECO (`Cennik_Studni_Export.xlsx`)                    |
-| GET    | `/api/preco-pricing/export.xlsx?source=live\|default\|active\|draft`    | Samo PRECO (`Cennik_Preco_Export.xlsx`)                                |
-| GET    | `/api/pricelist-versions/:id/export` (administrator)                    | Zamrożona wersja (`Cennik_{Rury,Studnie,Preco}_{version}_Export.xlsx`) |
+| Metoda | Ścieżka                                                           | Opis                                                                   |
+| ------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/api/products/export.xlsx?source=default\|active\|draft`         | Cennik rur (`Cennik_Rury_Export.xlsx`)                                 |
+| GET    | `/api/products-studnie/export.xlsx?source=default\|active\|draft` | Cennik studni + PRECO (`Cennik_Studni_Export.xlsx`)                    |
+| GET    | `/api/preco-pricing/export.xlsx?source=default\|active\|draft`    | Samo PRECO (`Cennik_Preco_Export.xlsx`)                                |
+| GET    | `/api/pricelist-versions/:id/export` (administrator)              | Zamrożona wersja (`Cennik_{Rury,Studnie,Preco}_{version}_Export.xlsx`) |
 
-`source=default` zwraca cennik domyślny (bazowy pod Reset), `source=active`
-zamrożoną wersję ACTIVE (nazwa pliku z labelką wersji; `409 NO_ACTIVE_VERSION`
-gdy brak), a `source=draft` — bieżący szkic (`409 NO_DRAFT_VERSION` gdy brak) —
-w UI dostępne wyłącznie przez dopisanie parametru do URL; przyciski eksportują `live`.
-W etapie 1 `source=live` aliasuje do `draft` (tabele LIVE nie są już eksportowane);
-parametr zniknie razem z LIVE. Diff wersji (`GET /:id/diff`) zwraca też
+`source=default` zwraca cennik fabryczny (bazowy pod Reset), `source=active`
+zamrożoną wersję ACTIVE (nazwa pliku z etykietą wersji; `409 NO_ACTIVE_VERSION`
+gdy brak), a `source=draft` — bieżący szkic (`409 NO_DRAFT_VERSION` gdy brak).
+`source=live` jest nieobsługiwany i zwraca `422 INVALID_SOURCE`; dawnych tabel LIVE
+nie ma. Sprawdzają to `tests/pricelistExportLive.test.ts` i
+`tests/pricelistWriteTargetRoutes.test.ts`. Diff wersji (`GET /:id/diff`) zwraca też
 `changes` (top zmian cen: sekcja, pozycja, przed/po, Δ%) i flagę `truncated`.
 
 Dla studni eksport wersji (`GET /:id/export`) i `source=active` dokleja PRECO
@@ -558,10 +561,11 @@ Wymaga autoryzacji. Łączy oferty rur i studni w jeden dokument.
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                   | Opis                         |
-| ------ | ------------------------- | ---------------------------- |
-| POST   | `/api/telemetry/override` | Nadpisanie ręczne telemetrii |
-| GET    | `/api/telemetry/logs`     | Logi telemetry               |
+| Metoda | Ścieżka                        | Auth  | Opis                                                                                              |
+| ------ | ------------------------------ | ----- | ------------------------------------------------------------------------------------------------- |
+| POST   | `/api/telemetry/override`      | auth  | Nadpisanie ręczne telemetrii                                                                      |
+| POST   | `/api/telemetry/draft-failure` | auth  | Zapis kodu przyczyny nieudanego zapisu draftu, bez treści dokumentu (`reason` z zamkniętej listy) |
+| GET    | `/api/telemetry/logs`          | admin | Ostatnie logi telemetrii                                                                          |
 
 ## Telemetria AI (`/api/telemetry/ai`)
 
@@ -676,7 +680,7 @@ Sonda CSP dashboardu Operacje czyta `Content-Security-Policy` z `/api/telemetry/
 
 ## Opieka (`/api/care`)
 
-Kontrakt w `docs/OPIEKA.md` + Swagger `/api/docs` (autorytatywny).
+Kontrakt opisuje `docs/OPIEKA.md` i poniższe wpisy API; `/api/docs` pokazuje wyłącznie operacje pokryte adnotacjami OpenAPI.
 `GET /queue`, `GET /panel`, `GET /notifications` zwracają dodatkowo
 `investName/investAddress/contactPerson/phone/email` wyprowadzone z payloadu
 `offers_*.data`; wartość wynosi `null`, jeśli jej nie ma. Szczegóły pól:
@@ -843,4 +847,4 @@ Wymaga autoryzacji (administrator). FTS to dane pochodne — status i rebuild wy
 - W produkcji ciasteczko `authToken` ma flagę `Secure` (wymaga HTTPS).
 - Zmiana roli/hasła użytkownika przez admina (`PUT /api/users/:id`) natychmiast unieważnia jego sesje (stara cookie → `401`).
 - Wymuszone wylogowanie (`DELETE /api/admin/sessions/:userId`) kasuje sesje wskazanego użytkownika; jego następne żądanie kończy się `401`. Operacja jest idempotentna (`revoked: 0` = brak sesji), a własna sesja admina jest chroniona (`400 SELF_REVOKE_BLOCKED`).
-- Pełną dokumentację OpenAPI ze schematami i przykładami znajdziesz pod `/api/docs`.
+- Operacje pokryte adnotacjami OpenAPI wraz ze schematami i przykładami są dostępne pod `/api/docs`; specyfikacja ma częściowe pokrycie i nie zastępuje kontroli tras, middleware, walidatorów i testów.

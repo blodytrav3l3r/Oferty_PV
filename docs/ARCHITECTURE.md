@@ -1,10 +1,10 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.56.5  
-**Ostatnia aktualizacja:** 2026-11-04<br>
+**Ostatnia aktualizacja:** 2026-11-06<br>
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline
 
-> **Status (1.56.4):** PostgreSQL 18 jest jedynym silnikiem runtime i aktywnych testów. Lokalna walidacja PG18.6, instalacji Windows, cenników, backup/restore smoke i readiness przeszła. Produkcyjny cutover oraz czysta instalacja Linux pozostają odrębnymi bramkami operacyjnymi.
+> **Status repozytorium (HEAD `5ab15ac0`, wydanie 1.56.5):** PostgreSQL 18 jest jedynym aktywnym providerem runtime. Udokumentowane lokalne wyniki pełnej walidacji PG18.6 i instalatora dotyczą wcześniejszego wydania 1.56.4. Nie są dowodem produkcyjnego cutoveru ani czystej instalacji Linux. Aktualny przegląd zależności SQLite i zakres weryfikacji opisuje [`documentation-audit.md`](documentation-audit.md).
 
 ---
 
@@ -366,7 +366,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup/restore używa `pg_dump`/`pg_restore` w formacie custom archive; nie kopiuje pliku bazy.
 - PostgreSQL 18 jest jedynym silnikiem używanym przez runtime, narzędzia wdrożeniowe, CI i instalatory. Świeże instalacje pobierają aktywne cenniki z wersjonowanego pakietu `data/pricelists/active-pricelists.json`. Dawny eksporter i migracje pozostają wyłącznie w historii Git, poza bieżącym repozytorium. Zasady produkcyjnego rollout’u opisuje `docs/DEPLOYMENT.md`.
 
-### Modele (56)
+### Modele (47 modeli Prisma)
 
 - **users** — użytkownicy systemu
 - **user_preferences** — preferencje użytkownika (m.in. motyw)
@@ -406,7 +406,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId)
   na `ai_telemetry_logs` — tworzone przez kanoniczne migracje PostgreSQL, nie przez startup.
 
-Szczegóły: [DATABASE.md](DATABASE.md)
+Szczegóły: [DATABASE.md](DATABASE.md). Mapa modułów SPA i zarejestrowanych grup API: [`architecture/runtime-and-module-map.md`](architecture/runtime-and-module-map.md). Potwierdzone przepływy danych: [`architecture/data-flows.md`](architecture/data-flows.md).
 
 ---
 

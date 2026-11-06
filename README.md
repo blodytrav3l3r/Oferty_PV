@@ -35,6 +35,7 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [Security](#security)
+- [Dokumentacja techniczna i operacyjna](docs/README.md)
 - [Licencja](#licencja)
 
 ---
