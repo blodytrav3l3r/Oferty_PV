@@ -159,6 +159,7 @@ describe('PostgreSQL test toolchain', () => {
         expect(start).toBeGreaterThan(-1);
         expect(section).toMatch(/--entrypoint node[^\n]*- <<'NODE'/);
         expect(section).toMatch(/format\('CREATE ROLE %I LOGIN PASSWORD %L'/);
+        expect(section).toMatch(/\$1::text,\s*\$2::text/);
         expect(section).not.toMatch(/--entrypoint node[^\n]*-e '/);
     });
 });

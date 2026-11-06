@@ -273,7 +273,7 @@ jobs:
                   client.connect().then(async () => {
                     for (const [role, envName] of roles) {
                       const { rows } = await client.query(
-                        "SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', $1, $2) AS statement",
+                        "SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', $1::text, $2::text) AS statement",
                         [role, process.env[envName]]
                       );
                       await client.query(rows[0].statement);
