@@ -82,7 +82,7 @@ cd Oferty_PV
 
 Dwukrotnie kliknij `install-new-pc.bat`. Host nie musi mieć Node.js ani PostgreSQL: instalator przygotowuje Docker Desktop, uruchamia PostgreSQL 18 w Compose, stosuje migracje i seed, a potem otwiera S.O.K. pod `http://localhost:3000`. Pliki bazy są w zarządzanym wolumenie Dockera, poza folderem aplikacji. Ten wariant służy do testów na Windows 10/11, nie do serwerowego wdrożenia ani dystrybucji Docker Desktop z S.O.K.
 
-Po udanej instalacji używaj `start-postgres.bat`, aby uruchomić istniejące kontenery PostgreSQL i S.O.K. Launcher wymaga znacznika zakończonej instalacji, który instalator zapisuje dopiero po imporcie aktywnych cenników z pakietu w repozytorium i przejściu health checku. Nie tworzy nowej bazy, nie importuje cenników ani nie resetuje wolumenów. Przy pierwszej instalacji lub jej wznowieniu użyj `install-new-pc.bat`.
+Po udanej instalacji używaj `start-docker.bat`, aby uruchomić istniejące kontenery PostgreSQL i S.O.K. Launcher wymaga znacznika zakończonej instalacji, który instalator zapisuje dopiero po imporcie aktywnych cenników z pakietu w repozytorium i przejściu health checku. Nie tworzy nowej bazy, nie importuje cenników ani nie resetuje wolumenów. Przy pierwszej instalacji lub jej wznowieniu użyj `install-new-pc.bat`.
 
 Instalator tworzy lokalne sekrety i ogranicza ACL pliku `.env`. Pierwsze hasło administratora otworzy w Notatniku w pliku `data/install-admin-password.txt`; zmień je po pierwszym logowaniu. Instalator nie kasuje istniejących wolumenów. Jeśli Windows musi włączyć WSL 2, pojawi się prośba UAC i może być potrzebny restart. Docker Desktop wymaga akceptacji warunków przy pierwszym uruchomieniu; komercyjne użycie w większych organizacjach może wymagać płatnej subskrypcji.
 
@@ -138,7 +138,7 @@ npm run build
 
 #### 4. Uruchom serwer
 
-Aplikację uruchamiasz przez `start.bat` (główne wejście):
+Na Windows wybierz [plik BAT odpowiedni do trybu pracy](#skrypty-startowe-bat). Jeśli samodzielnie konfigurujesz połączenie z PostgreSQL w `.env`, użyj:
 
 ```powershell
 .\start.bat              # Tryb developerski (domyślnie, z hot-reload)
@@ -331,20 +331,29 @@ npm run deploy:check                                               # smoke check
 
 ## Skrypty startowe (.bat)
 
-Projekt zawiera wygodne skrypty dla systemu Windows:
+| Kiedy użyć                  | Plik                 | Co robi                                                                    |
+| --------------------------- | -------------------- | -------------------------------------------------------------------------- |
+| Pierwsza instalacja na PC   | `install-new-pc.bat` | Przygotowuje Docker Desktop, PostgreSQL 18 i S.O.K. na Windows 10/11.      |
+| Kolejny start z Dockerem    | `start-docker.bat`   | Uruchamia istniejącą instalację Docker Compose.                            |
+| Praca nad kodem bez Dockera | `start-dev.bat`      | Uruchamia kod z repozytorium i automatycznie restartuje backend po edycji. |
+| Zwykły start bez Dockera    | `start-native.bat`   | Uruchamia kod z repozytorium. Po edycji backendu uruchom plik ponownie.    |
 
-| Skrypt                    | Opis                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `start.bat`               | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`                                       |
-| `start-postgres.bat`      | Uruchamia istniejący zestaw Docker Compose po ukończonej instalacji PG18 i imporcie aktywnych cenników    |
-| `dev.bat`                 | Alias do `start.bat` (zachowany dla kompatybilności)                                                      |
-| `build.bat`               | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005)             |
-| `install.bat`             | Instalator developerski; wymaga Node.js oraz dostępnej bazy PostgreSQL z hosta. `--skip-seed` pomija seed |
-| `install-new-pc.bat`      | Instalator testowy Windows 10/11: Docker Desktop, PostgreSQL 18 Compose i S.O.K.                          |
-| `install-linux-server.sh` | Docelowy instalator serwera Ubuntu/Debian: Docker Engine, PostgreSQL 18 Compose i S.O.K.                  |
-| `prod.bat`                | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                                           |
-| `deploy.bat`              | Deploy produkcji: `deploy.bat <windows\|linux\|docker> vX.Y.Z`                                            |
-| `rollback.bat`            | Powrót do poprzedniej wersji: `rollback.bat <windows\|linux\|docker> vX.Y.Z`                              |
+Oba tryby bez Dockera wymagają Node.js z npm, zależności zainstalowanych przez `npm ci` i wcześniej przygotowanego lokalnego zestawu PostgreSQL 18 w `data/perf/sok-native-pg18-*` z bazą `sok_dev`. Korzystają z tej samej lokalnej bazy, sprawdzają jej gotowość i pomijają migracje oraz seed. Każdy tryb udostępnia aplikację pod `http://localhost:3000`. Przy zmianie trybu zatrzymaj najpierw poprzednią instancję.
+
+Pozostałe skrypty obsługują konfigurację ręczną i utrzymanie:
+
+| Skrypt                           | Opis                                                                                           |
+| -------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `start.bat`                      | Używa bazy z `.env`. Tryb `--prod` korzysta z gotowego buildu lub tworzy go, jeśli go brakuje. |
+| `dev.bat` / `prod.bat`           | Skróty do odpowiednich trybów `start.bat`.                                                     |
+| `start-postgres.bat`             | Skrypt obsługujący start Dockera, wywoływany przez `start-docker.bat`.                         |
+| `install.bat`                    | Ręczna instalacja z Node.js i dostępnym PostgreSQL. Opcja `--skip-seed` pomija seed.           |
+| `build.bat`                      | Kompiluje TypeScript i kopiuje klienta Prisma do `dist`.                                       |
+| `deploy.bat`                     | Wdraża wskazaną wersję aplikacji.                                                              |
+| `rollback.bat`                   | Przywraca wskazaną wersję aplikacji.                                                           |
+| `setup-ai.bat`                   | Uruchamia diagnostykę i konfigurację modułu AI/ML.                                             |
+| `scripts/ensure-db.bat`          | Sprawdza i przygotowuje bazę dla `start.bat`.                                                  |
+| `scripts/harden-local-perms.bat` | Zmienia lokalne uprawnienia Windows do pliku `.env` i katalogu `data`.                         |
 
 ---
 

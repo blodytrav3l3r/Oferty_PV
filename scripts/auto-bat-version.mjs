@@ -28,6 +28,7 @@ if (!VERSION) {
 
 const BAT_FILES = [
     'start.bat',
+    'start-native.bat',
     'install.bat',
     'build.bat',
     'setup-ai.bat',

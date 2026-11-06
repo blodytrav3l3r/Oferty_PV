@@ -88,6 +88,7 @@ if (versionChangelog && versionFile && versionChangelog !== versionFile) {
 // ── Wersja w plikach .bat (ASCII, AGENTS.md — utrzymywana przez auto-bat-version.mjs) ──
 const BAT_FILES = [
     'start.bat',
+    'start-native.bat',
     'install.bat',
     'build.bat',
     'setup-ai.bat',
