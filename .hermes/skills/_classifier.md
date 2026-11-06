@@ -71,7 +71,7 @@ intents:
 - intent: "plan mode / walidacja istniejącego planu"
   required_capabilities: [planning, plan-compliance]
   preferred_skills: [plan, plan-guardian]
-  condition: ".hermes/plan-*.md exists"
+  condition: "active plan exists in docs/plans/ (excluding archive/)"
 
 # intent "python (well_configurator_backend/)" — usunięty (backend skasowany)
 

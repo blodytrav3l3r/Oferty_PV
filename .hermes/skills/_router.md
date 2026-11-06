@@ -41,7 +41,7 @@
 | ~~Praca w `well_configurator_backend/`~~ | backend usunięty |
 | AI/telemetry/ML/dashboard komponent | załaduj `oferty-pv-ai-telemetry` |
 | Modyfikacje SPA/app.html/router/iframe | załaduj `sp-a-conventions` (95 KB - planuj ostrożnie) |
-| Plan mode (.hermes/plan-*.md istnieje) | załaduj `plan-guardian` |
+| Plan mode (aktywny plan w `docs/plans/`, poza `archive/`) | załaduj `plan-guardian` |
 | Regresja, hard-to-repro bug | załaduj `systematic-debugging` |
 | Złożone (>3 pliki) / nowy feature | rozważ `multi-agent-coordination` + `plan` |
 | Refaktoring / cleanup po sesji | załaduj `simplify-code` |

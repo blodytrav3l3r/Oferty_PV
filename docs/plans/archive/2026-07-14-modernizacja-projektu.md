@@ -1,5 +1,7 @@
 # Plan modernizacji Oferty_PV
 
+> **Archiwum — plan zastąpiony.** Ten dokument opisuje stan projektu sprzed migracji do PostgreSQL 18. Wzmianki o SQLite i `PRAGMA` są wyłącznie historyczne i nie określają obecnej architektury. Aktualne zasady opisują `AGENTS.md` oraz `docs/DATABASE.md`.
+
 ## Założenia
 
 - 0 zmian w logice biznesowej

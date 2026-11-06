@@ -29,7 +29,7 @@ npm run version:patch    # bump PATCH (agent version-guardian ML/AI logika do CH
 ## 3. Bug-fix flow (`/caveman lite`)
 
 - **Prosty fix** (1-2 pliki): od razu patch → verify. Bez planu.
-- **Nowy feature / >3 pliki**: `.hermes/plan-modernizacja.md` lub nowy plan → execute.
+- **Nowy feature / >3 pliki**: plan w `docs/plans/` lub nowy plan → execute.
 - Po patchu TypeScript: `npm run typecheck`
 - Po patchu frontend JS: `npm run typecheck:frontend`
 - Browser: `Ctrl+Shift+R` po dużej zmianie CSS.

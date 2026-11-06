@@ -28,7 +28,7 @@ service_caps:
       actual SKILL.md content for pro-tier is not yet split.
 
   planning:
-    description: "Plan mode (`.hermes/plan-*.md`)"
+    description: "Plan mode (active plans in `docs/plans/`, excluding `archive/`)"
     source_skills: [plan]
     tier_offered: [lite, standard, pro]
     tier_default: standard

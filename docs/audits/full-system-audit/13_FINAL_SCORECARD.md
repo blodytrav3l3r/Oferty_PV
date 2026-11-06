@@ -1,0 +1,41 @@
+# Oceny S.O.K.
+
+## A13 · Wynik 6,76/10, warunkowy
+
+Kolejność kryteriów to poprawność 30%, bezpieczeństwo i odporność 20%, utrzymywalność 20%, wydajność 15% oraz testowalność 15%. W punktacji statycznej kryterium wydajności oznacza konstrukcję i obserwowalność. Pomiar faktycznej wydajności systemu jest osobnym obszarem N/A. Ocena 10 wymaga spełnienia warunków dla 9 i wiarygodnych dowodów braku istotnych problemów w całym zakresie, także po powtarzalnych przebiegach.
+
+| Obszar                           | Waga | Oceny 5 kryteriów       | Wynik | Dowody, plusy i problemy                                                                           | Zakres / pewność                                 | Warunki 9/10                                                                                |
+| -------------------------------- | ---: | ----------------------- | ----: | -------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Architektura                     |  10% | 7.5 / 7 / 7 / 7 / 7.5   |  7,23 | Monolit, moduły i wspólne middleware. Globalny stan iframe i nierówna granica serwisów.            | Statyczny, średnia–wysoka                        | Granice stanu, obsługa awarii i kontrakty między modułami, regresje zapisów i eksportów.    |
+| Frontend i UI/UX                 |  12% | 6.5 / 7 / 6.5 / 7.5 / 7 |  6,83 | Wirtualizacja i wspólne narzędzia. FE-01/04/07 oraz dostępność i loader.                           | Statyczny, średnia                               | Regresje paginacji, anulowania i dat, ręczne testy klawiatury, kontrastu i 4 GB.            |
+| Backend                          |  12% | 6.5 / 6 / 6.5 / 7 / 8   |  6,70 | Zod i transakcje. P0 klientów, async shares, niejednorodny audit.                                  | Statyczny, średnia–wysoka                        | Gwarancje współbieżności i idempotencji, spójny routing błędów, testy błędów pośrednich.    |
+| PostgreSQL i integralność danych |  12% | 7 / 6 / 7 / 6 / 8       |  6,80 | PG-only, migracje, GIN, role. Tekstowe daty, FK, wyścigi i nadmiarowe granty.                      | Schemat statyczny i pakiet, średnia              | Typy i FK po weryfikacji legacy, EXPLAIN, restore drill i instalacja docelowa.              |
+| API                              |   8% | 6 / 6 / 6.5 / 6.5 / 7.5 |  6,40 | Rozdział limitów i walidacja. Paginacja, uprawnienia obiektowe, OpenAPI.                           | AST i ręczny przegląd wybranych ścieżek, średnia | Kontrakty, kursory, ACL, dokumentacja i testy każdego krytycznego endpointu.                |
+| Bezpieczeństwo                   |  15% | 6.5 / 5.5 / 7 / 6 / 7   |  6,40 | Sesje, ownership, CSP. Blokady read-only, relacje zleceń, parser i obraz.                          | Statyczny + próby w pamięci, średnia             | Izolacja paczki, ACL, topologia TLS, redakcja logów, macierz ról i lokalny skan zależności. |
+| Moduły biznesowe                 |  10% | 6 / 6 / 7 / 7 / 8       |  6,65 | Cenniki wersjonowane i solver. Klienci, import częściowy i discard.                                | Statyczny, średnia                               | Udowodniona integralność pełnych przepływów, powtarzalne ceny i wydruki.                    |
+| Wydajność                        |   8% | —                       |   N/A | Wąskie gardła z kodu, historyczny Excel i mikrobenchmark JSON nie pokrywają systemu.               | N/A — NOT VERIFIED                               | Pomiary 4 GB, PostgreSQL i E2E przy reprezentatywnych danych i budżetach p95.               |
+| Testy i QA                       |   7% | 7 / 7 / 7.5 / 7 / 8     |  7,25 | 580 plików Jest, 7 Playwright, smoke/Excel. Bash SKIP, luka axe i brak świeżego pełnego przebiegu. | Statyczny + testy polityk, średnia               | Macierz krytycznych scenariuszy, pomiar flakiness, restore i poprawne cele axe.             |
+| CI/CD i DevOps                   |   3% | 7 / 7 / 7 / 7 / 7.5     |  7,08 | Bramki PG i Docker. Weryfikacja hostów, artefaktów i recovery otwarta.                             | Definicje lokalne, średnia                       | Reprodukowalne paczki, dwa fresh-install, weryfikacja gotowości po wdrożeniu.               |
+| Jakość kodu                      |   2% | 7 / 6.5 / 5.5 / 6.5 / 7 |  6,53 | Jawne typy i guardy. Legacy globals i duże funkcje w ścieżkach ryzyka.                             | AST i wybrane źródła, średnia                    | Uproszczenia z dowodem zachowania, brak cichych błędów i powielonych guardów.               |
+| Dokumentacja                     |   1% | 7 / 6 / 7 / 7 / 7       |  6,80 | Standard PostgreSQL i runbooki. Konflikt db push oraz niepełna specyfikacja.                       | Przegląd wybranych aktywnych docs, średnia       | Spójne linki, sprawdzone instrukcje i kompletne kontrakty publiczne.                        |
+
+Wynik jest sumą wyników obszarów pomnożonych przez wagi, podzieloną przez 92%. Pokrycie wag oceną wynosi 92%. Nie jest to procent pokrycia kodu ani scenariuszy. Wydajność systemowa ma N/A i nie jest wliczona. P0 integralności kartoteki klientów pozostaje blokadą gotowości niezależnie od średniej.
+
+## Oceny cząstkowe
+
+Takie same kryteria i wagi. Wyniki statyczne oceniają mechanizmy, a pełna jakość odczuwana przez użytkownika pozostaje częściowo niezweryfikowana.
+
+| Obszar                             | Wynik | Pięć kryteriów          | Dowód i ograniczenie                                                           | Do poziomu 9                                                    |
+| ---------------------------------- | ----: | ----------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Jakość frontendu                   |  6,70 | 7 / 6.5 / 6 / 7 / 7     | ESM obok klasycznych skryptów, ścieżki FE-02/10, AST                           | Zredukować zależności globalne i ujednolicić błędy.             |
+| Architektura frontendu             |  6,90 | 7 / 7 / 6.5 / 7 / 7     | Router, iframe i bramka zależności                                             | Udowodnić cykl życia iframe i ograniczyć stan wspólny.          |
+| UI/UX                              |  6,50 | 6 / 6 / 7 / 7 / 7       | Modal wydruku i FE-07, bez przeglądu wizualnego                                | Spójna semantyka dat, anulowania, loading i puste stany.        |
+| Dostępność                         |  5,85 | 5.5 / 6 / 6 / 6 / 6     | modalCore i FE-05/06, bez NVDA i pomiaru kontrastu                             | Axe na rzeczywistych widokach plus klawiatura, focus i czytnik. |
+| Wydajność frontendu                |   N/A | —                       | Benchmark historyczny i kod, brak bieżących pomiarów widoków                   | Pomiar cold/warm, przełączeń, heap i profilu 4 GB.              |
+| Architektura bazy                  |  7,15 | 7 / 7 / 7 / 7 / 8       | Model PG, osobne role i migracje                                               | Ograniczyć role, rozwiązać integralność i wykonać recovery.     |
+| Jakość schematu                    |  6,48 | 6.5 / 6 / 6.5 / 6.5 / 7 | Typy tekstowe, indeksy i brak FK stamp                                         | Typowane daty i wybrane FK z kontrolowanym backfill.            |
+| Wydajność zapytań                  |   N/A | —                       | Brak EXPLAIN i aktualnych pomiarów PostgreSQL                                  | Profile planów i czasów dla typowych filtrów oraz skrajności.   |
+| Integralność danych                |  6,50 | 6 / 6 / 7 / 6.5 / 7.5   | DB-02/04 i BUS-01/05, indeksy unikalne                                         | Wymusić inwarianty i współbieżne regresje w PG.                 |
+| Gotowość PostgreSQL – konfiguracja |  7,75 | 8 / 7.5 / 8 / 7 / 8     | Provider, adapter, migracje i walidacja pakietu; gotowość docelowego hosta N/A | Świeży Linux/Windows, backup/restore i pełne integracje.        |
+
+Oceny modułów biznesowych są w 08_BUSINESS_MODULES.md. Szczegółowa pewność dowodów i odtworzenia pozostają w rejestrze.
