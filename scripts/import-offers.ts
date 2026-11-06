@@ -30,6 +30,7 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import vm from 'vm';
+import { roundMoney } from '../src/utils/money';
 
 // quiserings intentionaly minimal — zero nowych zaleznosci (ladujemy
 // vendored SheetJS 0.20.3 przez vm, jak w F0; CSV przez readline stdlib).
@@ -527,8 +528,47 @@ export function buildStudniePayload(
         const wlCode = part === 'dennica' ? codes.dennicaWl : codes.nadbudowaWl;
         return n === wlCode ? 'Włocławek' : 'Kluczbork';
     };
+    const transportCosts = new Map<string, number>();
+    const transportRowNumbers = new Map<string, number>();
+    let transportSeparate = false;
+    let globalTransportCost = 0;
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (normalizeHeader(row['INDEKS_CZESCI']) !== 'TR-STUDNIE') continue;
+        const wellName = (row['NR_STUDNI'] || '').trim();
+        const quantity = parsePlNumber(row['ILOSC']);
+        const unitPrice = parsePlNumber(row['CENA_JEDNOSTKOWA']);
+        const rowNo = i + 2;
+        if (quantity === null || quantity <= 0 || (wellName && !Number.isInteger(quantity))) {
+            errors.push({
+                sheet: 'Import',
+                row: rowNo,
+                col: 'ILOSC',
+                value: short(row['ILOSC']),
+                reason: 'ilosc-calkowita-dodatnia'
+            });
+            return null;
+        }
+        if (unitPrice === null || unitPrice < 0) {
+            errors.push({
+                sheet: 'Import',
+                row: rowNo,
+                col: 'CENA_JEDNOSTKOWA',
+                value: short(row['CENA_JEDNOSTKOWA']),
+                reason: 'cena-nieujemna'
+            });
+            return null;
+        }
+        const amount = roundMoney(quantity * unitPrice);
+        if (!wellName) {
+            transportSeparate = true;
+            globalTransportCost = roundMoney(globalTransportCost + amount);
+            continue;
+        }
+        transportCosts.set(wellName, roundMoney((transportCosts.get(wellName) || 0) + amount));
+        if (!transportRowNumbers.has(wellName)) transportRowNumbers.set(wellName, rowNo);
+    }
     const dataRows = rows.filter((r) => normalizeHeader(r['INDEKS_CZESCI']) !== 'TR-STUDNIE');
-    const transportSeparate = dataRows.length !== rows.length;
     interface Well {
         dn?: string;
         depth: number;
@@ -538,6 +578,7 @@ export function buildStudniePayload(
         magazynNadbudowa: string | null;
         lp: number;
         components: Record<string, unknown>[];
+        transportCost?: number;
     }
     const wellMap: Record<string, Well> = {};
     for (let i = 0; i < dataRows.length; i++) {
@@ -623,7 +664,7 @@ export function buildStudniePayload(
             cenaJednostkowa: price
         });
     }
-    const wells = Object.values(wellMap)
+    const groupedWells = Object.values(wellMap)
         .map((w) => {
             if (w.magazynDennica == null) w.magazynDennica = w.magazyn;
             if (w.magazynNadbudowa == null) w.magazynNadbudowa = w.magazyn;
@@ -631,13 +672,29 @@ export function buildStudniePayload(
             return w;
         })
         .sort((a, b) => (a.lp || 0) - (b.lp || 0));
+    for (const [wellName] of transportCosts) {
+        if (!groupedWells.some((well) => well.name === wellName)) {
+            errors.push({
+                sheet: 'Import',
+                row: transportRowNumbers.get(wellName) || 0,
+                col: 'NR_STUDNI',
+                value: wellName,
+                reason: 'studnia-nie-znaleziona'
+            });
+            return null;
+        }
+    }
+    const wells = groupedWells.map((well) => {
+        const transportCost = transportCosts.get(well.name);
+        return transportCost === undefined ? well : { ...well, transportCost };
+    });
     return {
         module: 'studnie',
         number,
         payload: {
             number,
             status: 'draft',
-            transportCost: 0,
+            transportCost: globalTransportCost,
             transportSeparate,
             wells,
             clientName: '',

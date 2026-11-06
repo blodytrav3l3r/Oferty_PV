@@ -146,6 +146,7 @@ export const wellDataSchema = z
         type: z.string().optional(),
         totalPrice: z.number().finite().nonnegative().optional(),
         price: z.number().finite().nonnegative().optional(),
+        transportCost: z.number().finite().nonnegative().transform(roundMoney).optional(),
         discount: z.number().min(0).max(100).finite().optional(),
         zwienczenie: z.string().optional(),
         components: z.array(wellComponentSchema).max(MAX_COMPONENTS_PER_WELL).optional(),

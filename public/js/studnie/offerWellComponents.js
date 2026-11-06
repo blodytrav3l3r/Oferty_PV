@@ -205,6 +205,14 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
 function renderWellComponentsList(well, wellTransportCost, disc, _change) {
     let html = '';
     const assignedPrzejscia = calculateAssignedPrzejscia(well);
+    const hasTransportBase = well.config.some((item) => {
+        if (item.isPsiaBuda) return false;
+        const product =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
+        return product?.componentType === 'dennica' || product?.componentType === 'styczna';
+    });
     // P4-P0: kontekst Preco raz per studnia (nie per pozycja).
     const precoCtx =
         typeof computePrecoWellContext === 'function' ? computePrecoWellContext(well) : undefined;
@@ -227,6 +235,29 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
             index,
             precoCtx
         );
+        const isTransportHost =
+            (p.componentType === 'dennica' || p.componentType === 'styczna') && !item.isPsiaBuda;
+        const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
+        const standalonePrice = isTransportHost
+            ? calculateStandaloneComponentPrice(well, p, item, frozenCtx)
+            : totalLinePrice;
+        const kinetaItem = isTransportHost ? findWellKineta(well) : null;
+        const kinetaProduct = kinetaItem
+            ? typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(kinetaItem.productId)
+                : studnieProducts.find((product) => product.id === kinetaItem.productId)
+            : null;
+        const kinetaPrice = kinetaProduct
+            ? calculateKinetaLinePrice(well, kinetaItem, kinetaProduct, frozenCtx)
+            : 0;
+        const displayedLinePrice = isTransportHost
+            ? roundPreviewMoney(totalLinePrice + kinetaPrice)
+            : totalLinePrice;
+        const baseLineLabel = isTransportHost
+            ? `Cena ${p.componentType === 'dennica' ? 'dennicy' : 'stycznej'}: ${p.name}`
+            : item.isPsiaBuda
+              ? 'Psia buda'
+              : p.name;
 
         let badgesHtml = '';
         const precoAlloc =
@@ -270,11 +301,18 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
         }
 
         html += `<tr style="opacity:0.8;">
-            <td class="text-secondary">↳ ${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${badgesHtml}${discStr}</td>
+            <td class="text-secondary">↳ ${escapeHtml(baseLineLabel)}${badgesHtml}${discStr}</td>
             <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
             <td class="w-100px text-right" >${fmtInt(totalLineWeight)} kg</td>
-            <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(totalLinePrice) + ' PLN'}</td>
+            <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(displayedLinePrice) + ' PLN'}</td>
         </tr>`;
+
+        if (isTransportHost) {
+            html += `<tr class="included-row-accent">
+                <td colspan="3" class="pl-lg">↳ ${escapeHtml(p.name)}${badgesHtml}${discStr}</td>
+                <td class="text-right">${fmt(standalonePrice)} PLN</td>
+            </tr>`;
+        }
 
         html += renderComponentSubItems(
             well,
@@ -286,7 +324,67 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
             index
         );
     });
+
+    if (!hasTransportBase && wellTransportCost > 0) {
+        html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent2-hover);">
+            <td colspan="3" class="pl-lg">↳ <i data-lucide="truck" aria-hidden="true"></i> Udział w transporcie</td>
+            <td class="text-right">${fmt(wellTransportCost)} PLN</td>
+        </tr>`;
+    }
+
     return html;
+}
+
+function roundPreviewMoney(value) {
+    const amount = Number(value) || 0;
+    if (typeof roundMoney === 'function') return roundMoney(amount);
+    const sign = Math.sign(amount);
+    return (sign * Math.round((Math.abs(amount) + Number.EPSILON) * 100)) / 100;
+}
+
+function calculateStandaloneComponentPrice(well, product, item, frozenCtx) {
+    const quantity = Number(item.quantity) || 0;
+    if (item.frozenPrice != null && frozenCtx) {
+        return roundPreviewMoney(item.frozenPrice * quantity);
+    }
+
+    const breakdown =
+        typeof getItemPriceBreakdownSafe === 'function'
+            ? getItemPriceBreakdownSafe(well, product, true, item)
+            : typeof getItemPriceBreakdown === 'function'
+              ? getItemPriceBreakdown(well, product, true, item)
+              : null;
+    if (breakdown && Number.isFinite(Number(breakdown.base))) {
+        return roundPreviewMoney(breakdown.base * quantity);
+    }
+
+    const getAssessedPrice =
+        typeof getItemAssessedPriceSafe === 'function'
+            ? getItemAssessedPriceSafe
+            : getItemAssessedPrice;
+    return roundPreviewMoney(getAssessedPrice(well, product, true, item) * quantity);
+}
+
+function findWellKineta(well) {
+    return well.config.find((item) => {
+        const product =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((entry) => entry.id === item.productId);
+        return product?.componentType === 'kineta';
+    });
+}
+
+function calculateKinetaLinePrice(well, item, product, frozenCtx) {
+    const getAssessedPrice =
+        typeof getItemAssessedPriceSafe === 'function'
+            ? getItemAssessedPriceSafe
+            : getItemAssessedPrice;
+    const itemPrice =
+        item.frozenPrice != null && frozenCtx
+            ? item.frozenPrice
+            : getAssessedPrice(well, product, true, item);
+    return roundPreviewMoney(itemPrice * (item.quantity || 1));
 }
 
 // Badge rabatu dla podwierszy (przejścia/wiercenia/kineta) — wygląd jak getDiscountStr.
@@ -381,27 +479,14 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
     }
 
     if (isBase && !item.isPsiaBuda) {
-        const kineta = well.config.find(
-            (c) =>
-                (typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(c.productId)
-                    : studnieProducts.find((x) => x.id === c.productId)
-                )?.componentType === 'kineta'
-        );
+        const kineta = findWellKineta(well);
         if (kineta) {
             const kp =
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(kineta.productId)
                     : studnieProducts.find((x) => x.id === kineta.productId);
             const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
-            const _kAssessed =
-                typeof getItemAssessedPriceSafe === 'function'
-                    ? getItemAssessedPriceSafe
-                    : getItemAssessedPrice;
-            const kPrice =
-                (kineta.frozenPrice != null && frozenCtx
-                    ? kineta.frozenPrice
-                    : _kAssessed(well, kp, true, kineta)) * (kineta.quantity || 1);
+            const kPrice = calculateKinetaLinePrice(well, kineta, kp, frozenCtx);
             const kPct =
                 kineta.frozenPrice != null && frozenCtx && kineta.frozenPriceBase > 0
                     ? (1 - kineta.frozenPrice / kineta.frozenPriceBase) * 100
@@ -712,7 +797,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
         }
     }
 
-    if (isBase) {
+    if (isBase && !item.isPsiaBuda) {
         if (wellTransportCost > 0) {
             html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent2-hover);">
                 <td colspan="3" class="pl-lg">↳ <i data-lucide="truck" aria-hidden="true"></i> Udział w transporcie</td>

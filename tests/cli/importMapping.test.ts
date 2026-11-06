@@ -222,6 +222,63 @@ describe('import-offers: buildStudniePayload (1:1 FE)', () => {
         expect(built === null && errors[0].col).toBe('ILOSC');
     });
 
+    test('TR-STUDNIE z NR_STUDNI przypisany do studni bez zmiany trybu globalnego', () => {
+        const errors = [];
+        const built = buildStudniePayload(
+            'OS/1',
+            [
+                ruryRow({
+                    NR_STUDNI: 'S2',
+                    INDEKS_CZESCI: 'NAD-1',
+                    ILOSC: '2',
+                    CENA_JEDNOSTKOWA: '150',
+                    MAGAZYN: 'M0'
+                }),
+                ruryRow({
+                    NR_STUDNI: 'S2',
+                    INDEKS_CZESCI: 'TR-STUDNIE',
+                    ILOSC: '1',
+                    CENA_JEDNOSTKOWA: '500'
+                })
+            ],
+            new Map([['NAD-1', 'krag']]),
+            codes,
+            errors
+        );
+
+        expect(errors).toHaveLength(0);
+        expect(built.payload.transportSeparate).toBe(false);
+        expect(built.payload.wells[0].transportCost).toBe(500);
+        expect(built.payload.wells[0].components).toHaveLength(1);
+        expect(offersStudnieBatchSchema.safeParse({ data: [built.payload] }).success).toBe(true);
+    });
+
+    test('TR-STUDNIE bez NR_STUDNI zachowuje stary globalny tryb osobny', () => {
+        const built = buildStudniePayload(
+            'OS/1',
+            [
+                ruryRow({
+                    NR_STUDNI: 'S1',
+                    INDEKS_CZESCI: 'NAD-1',
+                    MAGAZYN: 'M0'
+                }),
+                ruryRow({
+                    INDEKS_CZESCI: 'TR-STUDNIE',
+                    NR_STUDNI: '',
+                    ILOSC: '1,25',
+                    CENA_JEDNOSTKOWA: '400'
+                })
+            ],
+            new Map([['NAD-1', 'krag']]),
+            codes,
+            []
+        );
+
+        expect(built.payload.transportSeparate).toBe(true);
+        expect(built.payload.transportCost).toBe(500);
+        expect(built.payload.wells[0].transportCost).toBeUndefined();
+    });
+
     test('payload przechodzi offersStudnieBatchSchema (Zod serwera)', () => {
         const errors = [];
         const built = buildStudniePayload(

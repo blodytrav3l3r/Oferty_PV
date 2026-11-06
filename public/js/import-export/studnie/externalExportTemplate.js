@@ -1,4 +1,12 @@
 window.StudnieExternalExportTemplate = {
+    _roundMoney(value) {
+        if (typeof roundMoney === 'function') return roundMoney(value);
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 0;
+        const sign = numeric < 0 ? -1 : 1;
+        return sign * (Math.round((Math.abs(numeric) + Number.EPSILON) * 100) / 100);
+    },
+
     _partForComp(comp) {
         const MC = window.MagazynCodes;
         let ct = comp.componentType;
@@ -65,42 +73,78 @@ window.StudnieExternalExportTemplate = {
     },
 
     /**
-     * Transport „w cenie elementów” (transportSeparate = false): doklejony do
-     * cen jednostkowych proporcjonalnie do wartości wierszy studni, żeby suma
-     * pliku równała się cenie studni z oferty (cena + transport).
+     * W kalkulacji transport trafia do wiersza dennicy/stycznej. Jeśli grosze nie
+     * dzielą się równo na ilość, host jest rozbijany na dwie ceny jednostkowe.
      */
-    _withTransport(rows, transport) {
+    _addTransportToDennica(rows, transport) {
         const extra = Number(transport) || 0;
-        const total = rows.reduce(
-            (s, r) => s + (Number(r.CENA_JEDNOSTKOWA) || 0) * (Number(r.ILOSC) || 0),
-            0
-        );
-        if (!(extra > 0) || !(total > 0) || rows.length === 0) return rows;
-        const factor = (total + extra) / total;
-        const scaled = rows.map((r) => ({
-            ...r,
-            CENA_JEDNOSTKOWA: Math.round((Number(r.CENA_JEDNOSTKOWA) || 0) * factor * 100) / 100
-        }));
-        // Korekta groszowa, żeby suma po zaokrągleniach trafiła w cenę studni.
-        const target = Math.round((total + extra) * 100) / 100;
-        const now = scaled.reduce(
-            (s, r) => s + (Number(r.CENA_JEDNOSTKOWA) || 0) * (Number(r.ILOSC) || 0),
-            0
-        );
-        const delta = Math.round((target - now) * 100) / 100;
-        if (delta !== 0) {
-            // Preferuj wiersz o ilości 1 — korekta trafia w cenę co do grosza.
-            const singles = scaled.filter((r) => Number(r.ILOSC) === 1);
-            const host = singles.length
-                ? singles.reduce((a, b) => (b.CENA_JEDNOSTKOWA > a.CENA_JEDNOSTKOWA ? b : a))
-                : [...scaled].reverse().find((r) => Number(r.ILOSC) > 0);
-            if (host) {
-                const qty = Number(host.ILOSC);
-                host.CENA_JEDNOSTKOWA =
-                    Math.round((Number(host.CENA_JEDNOSTKOWA) + delta / qty) * 100) / 100;
-            }
+        if (!(extra > 0)) return rows;
+        const hostIndex = rows.findIndex((row) => {
+            const product = this._productMap?.get(row.INDEKS_CZESCI);
+            return product && ['dennica', 'styczna'].includes(product.componentType);
+        });
+        if (hostIndex < 0) return rows;
+
+        const host = rows[hostIndex];
+        const quantity = Number(host.ILOSC) || 0;
+        if (!(quantity > 0)) return rows;
+        const basePrice = this._roundMoney(Number(host.CENA_JEDNOSTKOWA) || 0);
+        if (!Number.isInteger(quantity)) {
+            const transportPerUnit = this._roundMoney(extra / quantity);
+            return rows.map((row, index) =>
+                index === hostIndex
+                    ? {
+                          ...row,
+                          CENA_JEDNOSTKOWA: this._roundMoney(basePrice + transportPerUnit)
+                      }
+                    : row
+            );
         }
-        return scaled;
+
+        const transportCents = Math.round(this._roundMoney(extra) * 100);
+        if (!(transportCents > 0)) return rows;
+        const centsPerUnit = Math.floor(transportCents / quantity);
+        const extraCentUnits = transportCents % quantity;
+        const priceRows = [];
+        if (quantity > extraCentUnits) {
+            priceRows.push({
+                ...host,
+                ILOSC: quantity - extraCentUnits,
+                CENA_JEDNOSTKOWA: this._roundMoney(basePrice + centsPerUnit / 100)
+            });
+        }
+        if (extraCentUnits > 0) {
+            priceRows.push({
+                ...host,
+                ILOSC: extraCentUnits,
+                CENA_JEDNOSTKOWA: this._roundMoney(basePrice + (centsPerUnit + 1) / 100)
+            });
+        }
+        return [...rows.slice(0, hostIndex), ...priceRows, ...rows.slice(hostIndex + 1)];
+    },
+
+    _hasTransportHost(rows) {
+        return rows.some((row) => {
+            const product = this._productMap?.get(row.INDEKS_CZESCI);
+            return product && ['dennica', 'styczna'].includes(product.componentType);
+        });
+    },
+
+    _wellTransportRow(well, transport, offerNumber, depth, diameter, ending, lp) {
+        return {
+            NUMER_OFERTY: offerNumber,
+            NR_STUDNI: well.name || '',
+            GLEBOKOSC: depth,
+            INDEKS_CZESCI: 'TR-STUDNIE',
+            ILOSC: 1,
+            CENA_JEDNOSTKOWA: this._roundMoney(transport),
+            WERSJA: 1,
+            RABAT: '',
+            SREDNICA: diameter,
+            ZAKONCZENIE: ending,
+            MAGAZYN: '',
+            LP: lp
+        };
     },
 
     _wellRows(data, offerNumber, codes) {
@@ -187,12 +231,26 @@ window.StudnieExternalExportTemplate = {
                 });
             }
 
-            // „Transport w cenie elementów”: rozdziel na wiersze studni, żeby suma
-            // pliku = cena studni z oferty. Osobna pozycja → wiersz TR-STUDNIE.
+            // Transport wliczony trafia do dennicy jak w kalkulacji; osobny ma własny wiersz.
             const transport = data.transportSeparate
                 ? 0
                 : Number(well.transportCost) || transportByWell.get(String(well.name)) || 0;
-            rows.push(...this._withTransport(wellRows, transport));
+            if (transport > 0 && !this._hasTransportHost(wellRows)) {
+                rows.push(...wellRows);
+                rows.push(
+                    this._wellTransportRow(
+                        well,
+                        transport,
+                        offerNumber,
+                        glebokosc,
+                        srednica,
+                        zakonczenie,
+                        lp
+                    )
+                );
+            } else {
+                rows.push(...this._addTransportToDennica(wellRows, transport));
+            }
             lp++;
         }
 
@@ -206,19 +264,21 @@ window.StudnieExternalExportTemplate = {
      */
     _transportRow(data, offerNumber, lp) {
         const wells = data.wellsExport || data.wells || [];
-        const total = wells.reduce((s, w) => s + (Number(w.transportCost) || 0), 0);
+        const wellTotal = wells.reduce((s, w) => s + (Number(w.transportCost) || 0), 0);
+        const total = this._roundMoney(wellTotal > 0 ? wellTotal : Number(data.transportCost) || 0);
         if (!data.transportSeparate || !(total > 0)) return null;
         const km = Number(data.transportKm) || 0;
         const rate = Number(data.transportRate) || 0;
         const perTrip = km * rate;
-        const trips = perTrip > 0 ? Math.round((total / perTrip) * 100) / 100 : 0;
+        const trips = perTrip > 0 ? this._roundMoney(total / perTrip) : 0;
+        const tripsMatchTotal = perTrip > 0 && this._roundMoney(trips * perTrip) === total;
         return {
             NUMER_OFERTY: offerNumber,
             NR_STUDNI: '',
             GLEBOKOSC: '',
             INDEKS_CZESCI: 'TR-STUDNIE',
-            ILOSC: trips,
-            CENA_JEDNOSTKOWA: perTrip,
+            ILOSC: tripsMatchTotal ? trips : 1,
+            CENA_JEDNOSTKOWA: tripsMatchTotal ? perTrip : total,
             WERSJA: 1,
             RABAT: '',
             SREDNICA: '',

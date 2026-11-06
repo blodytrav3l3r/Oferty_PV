@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-02",
-    "totalEdges": 2833,
+    "generatedAt": "2026-11-06",
+    "totalEdges": 2834,
     "edges": [
         {
             "page": "public/app.html",
@@ -815,6 +815,22 @@
             "page": "public/kartoteka.html",
             "name": "renderTemplate",
             "userFile": "public/js/studnie/offerPrintManager.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/kartoteka.html",
+            "name": "roundMoney",
+            "userFile": "public/js/import-export/studnie/externalExportTemplate.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/kartoteka.html",
+            "name": "roundMoney",
+            "userFile": "public/js/import-export/studnie/externalImport.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -6032,14 +6048,6 @@
             "name": "_excelNormalizeHeaderFonts",
             "userFile": "public/js/studnie/excelColumnVisibility.js",
             "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelNotifyUndoRejected",
-            "userFile": "public/js/studnie/excelModal.js",
-            "defFile": "public/js/studnie/excelUndo.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
@@ -18662,6 +18670,14 @@
         {
             "page": "public/studnie.html",
             "name": "roundMoney",
+            "userFile": "public/js/studnie/offerWellComponents.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
             "userFile": "public/js/studnie/orderCrud.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
@@ -19455,14 +19471,6 @@
             "page": "public/studnie.html",
             "name": "showToast",
             "userFile": "public/js/studnie/excelHelpers.js",
-            "defFile": "public/js/shared/toast.js",
-            "defKind": "window-module",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "showToast",
-            "userFile": "public/js/studnie/excelModal.js",
             "defFile": "public/js/shared/toast.js",
             "defKind": "window-module",
             "confidence": "CONFIRMED"

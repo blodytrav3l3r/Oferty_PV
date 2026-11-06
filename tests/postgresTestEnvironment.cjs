@@ -1,11 +1,20 @@
 const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const path = require('node:path');
 const { TestEnvironment } = require('jest-environment-node');
 const { Client } = require('pg');
 
 const projectRoot = path.resolve(__dirname, '..');
+const envPath = path.join(projectRoot, '.env');
 let workerDatabaseUrl;
+
+if (!process.env.POSTGRES_TEST_URL && fs.existsSync(envPath)) {
+    const localTestUrl = require('dotenv').parse(
+        fs.readFileSync(envPath, 'utf8')
+    ).POSTGRES_TEST_URL;
+    if (localTestUrl) process.env.POSTGRES_TEST_URL = localTestUrl;
+}
 
 function getPostgresUrl() {
     if (process.env.NODE_ENV !== 'test') {

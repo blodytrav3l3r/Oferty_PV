@@ -172,6 +172,45 @@ describe('strict: studnie _groupRowsStrict', () => {
         expect(errors).toHaveLength(2);
     });
 
+    test('TR-STUDNIE z NR_STUDNI trafia do kosztu tej studni, nie do komponentów', () => {
+        const grouped = S._groupRowsStrict([row()], null, typeMap);
+        const applied = S._applyWellTransportRows(grouped.wells, [
+            {
+                row: row({
+                    NR_STUDNI: 'S1',
+                    INDEKS_CZESCI: 'TR-STUDNIE',
+                    ILOSC: '1',
+                    CENA_JEDNOSTKOWA: '500'
+                }),
+                rowNo: 3
+            }
+        ]);
+
+        expect(applied.errors).toHaveLength(0);
+        expect(applied.wells[0].transportCost).toBe(500);
+        expect(applied.wells[0].components).toHaveLength(1);
+        expect(applied.wells[0].components[0].indeks).toBe('DEN-1');
+    });
+
+    test('TR-STUDNIE bez NR_STUDNI zachowuje globalną kwotę transportu', () => {
+        const grouped = S._groupRowsStrict([row()], null, typeMap);
+        const applied = S._applyWellTransportRows(grouped.wells, [
+            {
+                row: row({
+                    NR_STUDNI: '',
+                    INDEKS_CZESCI: 'TR-STUDNIE',
+                    ILOSC: '1,25',
+                    CENA_JEDNOSTKOWA: '400'
+                }),
+                rowNo: 3
+            }
+        ]);
+
+        expect(applied.errors).toHaveLength(0);
+        expect(applied.globalTransportCost).toBe(500);
+        expect(applied.wells[0].transportCost).toBeUndefined();
+    });
+
     test('legacy _groupRows nietkniety (stare /100 + finalPrice)', () => {
         const wells = S._groupRows([row({ RABAT: '10' })], null, typeMap);
         expect(wells[0].components[0].rabat).toBeCloseTo(0.1);

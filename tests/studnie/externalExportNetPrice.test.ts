@@ -119,7 +119,7 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
         expect(rows[0].LP).toBe(1);
     });
 
-    test('transport „w cenie elementów” rozdzielony na wiersze studni', () => {
+    test('transport „w cenie elementów” trafia do dennicy jak w kalkulacji', () => {
         const withTransport = {
             ...data,
             wells: [{ ...data.wells[0], transportCost: 500 }]
@@ -128,9 +128,55 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
         const sum = out.reduce((s, r) => s + r.CENA_JEDNOSTKOWA * (Number(r.ILOSC) || 0), 0);
         const base = rows.reduce((s, r) => s + r.CENA_JEDNOSTKOWA * (Number(r.ILOSC) || 0), 0);
         expect(Math.round(sum * 100) / 100).toBe(Math.round((base + 500) * 100) / 100);
-        // Wszystkie wiersze proporcjonalnie droższe, RABAT nadal pusty.
-        expect(out[0].CENA_JEDNOSTKOWA).toBeGreaterThan(800);
+        expect(out[0].CENA_JEDNOSTKOWA).toBe(1300);
+        expect(out[1].CENA_JEDNOSTKOWA).toBe(150);
+        expect(out[2].CENA_JEDNOSTKOWA).toBe(870);
         for (const r of out) expect(r.RABAT).toBe('');
+    });
+
+    test('transport rozdziela grosze na jednostki dennicy bez zmiany sumy', () => {
+        const withTransport = {
+            wells: [
+                {
+                    ...data.wells[0],
+                    transportCost: 100,
+                    config: [{ productId: 'DEN-1', quantity: 3, _xp: 1000, _xd: 20 }]
+                }
+            ]
+        };
+        const out = T._wellRows(withTransport, 'OS/1', null);
+        expect(out.map((row) => row.ILOSC)).toEqual([2, 1]);
+        expect(out.map((row) => row.CENA_JEDNOSTKOWA)).toEqual([833.33, 833.34]);
+        expect(out.reduce((sum, row) => sum + row.ILOSC * row.CENA_JEDNOSTKOWA, 0)).toBe(2500);
+    });
+
+    test('brak dennicy: osobny transport przypisany do właściwej studni', () => {
+        const noDennica = {
+            transportSeparate: false,
+            wells: [
+                { ...data.wells[0], transportCost: 200 },
+                {
+                    ...data.wells[0],
+                    name: 'S2',
+                    transportCost: 500,
+                    config: [{ productId: 'KR-1', quantity: 2, _xp: 200, _xd: 25 }]
+                }
+            ]
+        };
+        const out = T._wellRows(noDennica, 'OS/1', null);
+        const transport = out.find((row) => row.INDEKS_CZESCI === 'TR-STUDNIE');
+
+        expect(out).toHaveLength(5);
+        expect(
+            out.find((row) => row.NR_STUDNI === 'S1' && row.INDEKS_CZESCI === 'DEN-1')
+                .CENA_JEDNOSTKOWA
+        ).toBe(1000);
+        expect(transport).toMatchObject({
+            NR_STUDNI: 'S2',
+            INDEKS_CZESCI: 'TR-STUDNIE',
+            ILOSC: 1,
+            CENA_JEDNOSTKOWA: 500
+        });
     });
 
     test('transport osobno: bez rozdziału (wiersz TR-STUDNIE poza _wellRows)', () => {
@@ -142,6 +188,20 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
         const out = T._wellRows(separate, 'OS/1', null);
         expect(out[0].CENA_JEDNOSTKOWA).toBe(800);
         expect(out[2].CENA_JEDNOSTKOWA).toBe(870);
+    });
+
+    test('globalny transport zaimportowany ponownie używa kosztu z oferty', () => {
+        const transportRow = T._transportRow(
+            { transportSeparate: true, transportCost: 500, wells: [] },
+            'OS/1',
+            1
+        );
+        expect(transportRow).toMatchObject({
+            INDEKS_CZESCI: 'TR-STUDNIE',
+            NR_STUDNI: '',
+            ILOSC: 1,
+            CENA_JEDNOSTKOWA: 500
+        });
     });
 
     test('legacy bez `_xp`: cennik x (1 - rabat z oferty)', () => {

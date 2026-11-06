@@ -138,25 +138,115 @@ window.StudnieExternalImport = {
         return { wells, errors };
     },
 
+    _applyWellTransportRows(wells, transportRows) {
+        const P = XlsxImportShared.parsePlNumber;
+        const errors = [];
+        const costsByWell = new Map();
+        let globalTransportCost = 0;
+        for (const entry of transportRows) {
+            const row = entry.row;
+            const wellName = String(row['NR_STUDNI'] || '').trim();
+            const quantity = P(row['ILOSC']);
+            const unitPrice = P(row['CENA_JEDNOSTKOWA']);
+            const rowNo = entry.rowNo;
+            const addError = (col, value, reason) =>
+                errors.push({
+                    sheet: 'Import',
+                    row: rowNo,
+                    col,
+                    value: String(value ?? ''),
+                    reason
+                });
+
+            if (quantity === null || quantity <= 0 || (wellName && !Number.isInteger(quantity))) {
+                addError('ILOSC', row['ILOSC'], 'ilosc-calkowita-dodatnia');
+                continue;
+            }
+            if (unitPrice === null || unitPrice < 0) {
+                addError('CENA_JEDNOSTKOWA', row['CENA_JEDNOSTKOWA'], 'cena-nieujemna');
+                continue;
+            }
+            const amount =
+                typeof roundMoney === 'function'
+                    ? roundMoney(quantity * unitPrice)
+                    : Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100;
+            if (!wellName) {
+                globalTransportCost += amount;
+                continue;
+            }
+
+            costsByWell.set(wellName, (costsByWell.get(wellName) || 0) + amount);
+        }
+
+        for (const wellName of costsByWell.keys()) {
+            if (!wells.some((well) => String(well.name || '').trim() === wellName)) {
+                errors.push({
+                    sheet: 'Import',
+                    row: transportRows.find(
+                        (entry) => String(entry.row['NR_STUDNI'] || '').trim() === wellName
+                    )?.rowNo,
+                    col: 'NR_STUDNI',
+                    value: wellName,
+                    reason: 'studnia-nie-znaleziona'
+                });
+            }
+        }
+
+        const nextWells = wells.map((well) => {
+            const wellName = String(well.name || '').trim();
+            const amount = costsByWell.get(wellName);
+            if (amount === undefined || errors.some((error) => error.value === wellName))
+                return well;
+            const existing = Number(well.transportCost) || 0;
+            const total = existing + amount;
+            return {
+                ...well,
+                transportCost:
+                    typeof roundMoney === 'function'
+                        ? roundMoney(total)
+                        : Math.round((total + Number.EPSILON) * 100) / 100
+            };
+        });
+        const roundedGlobalTransportCost =
+            typeof roundMoney === 'function'
+                ? roundMoney(globalTransportCost)
+                : Math.round((globalTransportCost + Number.EPSILON) * 100) / 100;
+        return { wells: nextWells, globalTransportCost: roundedGlobalTransportCost, errors };
+    },
+
     async import(offerGroup) {
         const number = offerGroup.number;
-        // Wiersz osobnej pozycji transportu (TR-STUDNIE) nie jest elementem studni.
-        const rows = (offerGroup.rows || []).filter(
-            (r) =>
+        const offerRows = offerGroup.rows || [];
+        const transportRows = offerRows
+            .map((row, index) => ({ row, rowNo: index + 2 }))
+            .filter(
+                (entry) =>
+                    (typeof XlsxImportShared !== 'undefined' && XlsxImportShared.normalizeHeader
+                        ? XlsxImportShared.normalizeHeader(entry.row['INDEKS_CZESCI'])
+                        : String(entry.row['INDEKS_CZESCI'] || '')
+                              .trim()
+                              .toUpperCase()) === 'TR-STUDNIE'
+            );
+        const rows = offerRows.filter(
+            (row) =>
                 (typeof XlsxImportShared !== 'undefined' && XlsxImportShared.normalizeHeader
-                    ? XlsxImportShared.normalizeHeader(r['INDEKS_CZESCI'])
-                    : String(r['INDEKS_CZESCI'] || '')
+                    ? XlsxImportShared.normalizeHeader(row['INDEKS_CZESCI'])
+                    : String(row['INDEKS_CZESCI'] || '')
                           .trim()
                           .toUpperCase()) !== 'TR-STUDNIE'
         );
-        const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
+        const hasTransportRow = transportRows.some(
+            (entry) => !String(entry.row['NR_STUDNI'] || '').trim()
+        );
 
         const MC = window.MagazynCodes;
         const codes = MC && typeof MC.get === 'function' ? await MC.get() : null;
         const typeMap = await this._ensureTypeMap();
 
         const grouped = this._groupRowsStrict(rows, codes, typeMap);
-        const wells = grouped.wells;
+        const wellTransportRows = this._applyWellTransportRows(grouped.wells, transportRows);
+        grouped.errors.push(...wellTransportRows.errors);
+        const wells = wellTransportRows.wells;
         // Zero poprawnych komponentow: brak POST (blokada), bledy do raportu.
         if (!wells.length || !wells.some((w) => (w.components || []).length)) {
             return { invalid: true, number, errors: grouped.errors };
@@ -179,7 +269,7 @@ window.StudnieExternalImport = {
             id: existing && action === 'overwrite' ? existing.id : undefined,
             number: number,
             status: 'draft',
-            transportCost: 0,
+            transportCost: wellTransportRows.globalTransportCost,
             transportSeparate: hasTransportRow,
             wells: wells,
             clientName: '',
