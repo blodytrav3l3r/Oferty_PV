@@ -10,6 +10,7 @@
 // Warianty: --quick do CI przy każdym pushu; --sustained tylko
 // workflow_dispatch/nightly (opis w docs/plans/archive/e3-perf.md).
 import { readFileSync } from 'node:fs';
+import { buildLoadReport } from './load-metrics.cjs';
 
 // Pobiera wartość flagi w formach --flaga=wartosc i --flaga wartosc.
 function argValue(name) {
@@ -25,8 +26,8 @@ if (process.argv.includes('--help') || process.argv.includes('-h')) {
     console.log(
         [
             'Użycie: node scripts/load-100.mjs [--quick] [--sustained] [--users N] [--base URL] [--shared-ip] [--bulk200[=N]]',
-            '  --quick      faza steady 60 s (domyślnie 300 s); wariant do CI przy pushu',
-            '  --sustained  faza steady ~15 min (900 s); TYLKO workflow_dispatch/nightly',
+            '  --quick      rozgrzewka 10 s + steady 60 s z rozłożonym startem; wariant CI',
+            '  --sustained  rozgrzewka 10 s + steady ~15 min (900 s); tylko nightly/manual',
             '  --users N    liczba wirtualnych userów (domyślnie 100); dla 100 podział',
             '               workerów identyczny jak historycznie (80/15/3 + claim + PDF)',
             '  --base URL   bazowy URL serwera (też BENCH_BASE_URL); formy --base=URL i --base URL',
@@ -55,6 +56,9 @@ if (USERS_RAW !== null) {
     }
 }
 // --sustained wygrywa z --quick (celowo dłuższy pomiar ma pierwszeństwo).
+// Workerzy mają co najmniej 10 s rozgrzewki; steady rusza po zakończeniu żądań warmup.
+const WARMUP_MS = 10_000;
+const STARTUP_STAGGER_MS = 5_000;
 const STEADY_MS = SUSTAINED ? 900_000 : QUICK ? 60_000 : 300_000;
 const ADMIN_PASSWORD = (process.env.DEFAULT_ADMIN_PASSWORD || '').trim();
 
@@ -80,6 +84,7 @@ function pct(sorted, p) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleepWithinPhase = (endAt, ms) => sleep(Math.min(ms, Math.max(0, endAt - Date.now())));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 // --shared-ip: symulacja NAT — wszyscy za jednym adresem, limity per-IP dzielone.
@@ -129,6 +134,7 @@ async function timeFetch(url, opts, timeoutMs = 30000) {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), timeoutMs);
     const start = process.hrtime.bigint();
+    const requestUrl = `${opts?.method || 'GET'} ${url}`;
     try {
         const res = await fetch(BASE + url, { ...opts, signal: ctrl.signal });
         const body = await res.text();
@@ -138,7 +144,7 @@ async function timeFetch(url, opts, timeoutMs = 30000) {
             bytes: body.length,
             body,
             setCookie: res.headers.get('set-cookie'),
-            url: `${opts?.method || 'GET'} ${url}`,
+            url: requestUrl,
             retryAfter: res.headers.get('retry-after')
         };
     } catch (e) {
@@ -146,6 +152,7 @@ async function timeFetch(url, opts, timeoutMs = 30000) {
             ms: Number(process.hrtime.bigint() - start) / 1e6,
             status: 0,
             bytes: 0,
+            url: requestUrl,
             error: e.message
         };
     } finally {
@@ -166,9 +173,11 @@ async function withBackoff(fn) {
 }
 
 const stats = [];
-function rec(op, r) {
+let activePhase = 'warmup';
+function rec(op, r, phase = activePhase) {
     stats.push({
         op,
+        phase,
         ms: r.ms,
         status: r.status,
         throttled: !!r.throttled,
@@ -230,6 +239,8 @@ async function main() {
 
     const q = ['studnia', 'oferta', 'ACME', 'DN1000', ''];
     const workers = [];
+    const measurementStartsAt = Date.now();
+    const warmupEndsAt = measurementStartsAt + WARMUP_MS;
     // Podział workerów wg --users (dla 100: 80/15/3 + claim + PDF jak dotąd).
     const grp = splitUsers(USERS);
     const W0 = grp.readers;
@@ -238,151 +249,145 @@ async function main() {
     const P0 = C0 + grp.claim;
     // Czytelnicy: ~4-12 req/min na IP (limit api 300/15min = śr. 20/min).
     for (let i = 0; i < grp.readers; i++) {
-        workers.push(
-            (async () => {
-                const end = Date.now() + STEADY_MS;
-                while (Date.now() < end) {
-                    const kind = Math.random();
-                    const r = await withBackoff(() =>
-                        kind < 0.5
-                            ? timeFetch(
-                                  `/api/offers/search?q=${encodeURIComponent(pick(q))}&limit=20`,
-                                  { headers: H(i) }
-                              )
-                            : kind < 0.75
-                              ? timeFetch('/api/offers-rury?limit=20', { headers: H(i) })
-                              : kind < 0.9
-                                ? timeFetch('/api/orders-studnie/production/index', {
-                                      headers: H(i)
-                                  })
-                                : timeFetch('/health/ready', { headers: H(i) })
-                    );
-                    rec('read', r);
-                    await sleep(rnd(5000, 15000));
-                }
-            })()
-        );
+        workers.push(async (endAt, staggerStart = false) => {
+            if (staggerStart) await sleep(rnd(0, STARTUP_STAGGER_MS));
+            while (Date.now() < endAt) {
+                const kind = Math.random();
+                const r = await withBackoff(() =>
+                    kind < 0.5
+                        ? timeFetch(
+                              `/api/offers/search?q=${encodeURIComponent(pick(q))}&limit=20`,
+                              { headers: H(i) }
+                          )
+                        : kind < 0.75
+                          ? timeFetch('/api/offers-rury?limit=20', { headers: H(i) })
+                          : kind < 0.9
+                            ? timeFetch('/api/orders-studnie/production/index', {
+                                  headers: H(i)
+                              })
+                            : timeFetch('/health/ready', { headers: H(i) })
+                );
+                rec('read', r);
+                await sleepWithinPhase(endAt, rnd(5000, 15000));
+            }
+        });
     }
     // Piszący: PUT+DELETE co 5-15 s (limit write 60/min na IP).
     for (let i = W0; i < W0 + grp.writers; i++) {
-        workers.push(
-            (async () => {
-                const end = Date.now() + STEADY_MS;
-                while (Date.now() < end) {
-                    const id = `load100_${Date.now()}_${i}`;
-                    const put = await withBackoff(() =>
-                        timeFetch('/api/offers-rury', {
-                            method: 'PUT',
-                            headers: H(i),
-                            body: JSON.stringify({
-                                data: [{ id, status: 'draft', items: [], clientName: 'LOAD100' }]
-                            })
+        workers.push(async (endAt, staggerStart = false) => {
+            if (staggerStart) await sleep(rnd(0, STARTUP_STAGGER_MS));
+            while (Date.now() < endAt) {
+                const id = `load100_${Date.now()}_${i}`;
+                const put = await withBackoff(() =>
+                    timeFetch('/api/offers-rury', {
+                        method: 'PUT',
+                        headers: H(i),
+                        body: JSON.stringify({
+                            data: [{ id, status: 'draft', items: [], clientName: 'LOAD100' }]
                         })
+                    })
+                );
+                rec('write', put);
+                if (put.status === 200) {
+                    const del = await withBackoff(() =>
+                        timeFetch(`/api/offers-rury/${id}`, { method: 'DELETE', headers: H(i) })
                     );
-                    rec('write', put);
-                    if (put.status === 200) {
-                        const del = await withBackoff(() =>
-                            timeFetch(`/api/offers-rury/${id}`, { method: 'DELETE', headers: H(i) })
-                        );
-                        rec('write', del);
-                    }
-                    await sleep(rnd(5000, 15000));
+                    rec('write', del);
                 }
-            })()
-        );
+                await sleepWithinPhase(endAt, rnd(5000, 15000));
+            }
+        });
     }
     // Batchujące: batch 10 co 30-60 s.
     for (let i = B0; i < B0 + grp.batchers; i++) {
-        workers.push(
-            (async () => {
-                const end = Date.now() + STEADY_MS;
-                while (Date.now() < end) {
-                    const docs = Array.from({ length: 10 }, (_, k) => ({
-                        id: `load100b_${Date.now()}_${i}_${k}`,
-                        status: 'draft',
-                        items: [],
-                        clientName: 'LOAD100'
-                    }));
-                    const put = await withBackoff(() =>
-                        timeFetch('/api/offers-rury', {
-                            method: 'PUT',
-                            headers: H(i),
-                            body: JSON.stringify({ data: docs })
-                        })
-                    );
-                    rec('batch', put);
-                    if (put.status === 200) {
-                        for (const d of docs) {
-                            const del = await withBackoff(() =>
-                                timeFetch(`/api/offers-rury/${d.id}`, {
-                                    method: 'DELETE',
-                                    headers: H(i)
-                                })
-                            );
-                            rec('batch', del);
-                        }
+        workers.push(async (endAt, staggerStart = false) => {
+            if (staggerStart) await sleep(rnd(0, STARTUP_STAGGER_MS));
+            while (Date.now() < endAt) {
+                const docs = Array.from({ length: 10 }, (_, k) => ({
+                    id: `load100b_${Date.now()}_${i}_${k}`,
+                    status: 'draft',
+                    items: [],
+                    clientName: 'LOAD100'
+                }));
+                const put = await withBackoff(() =>
+                    timeFetch('/api/offers-rury', {
+                        method: 'PUT',
+                        headers: H(i),
+                        body: JSON.stringify({ data: docs })
+                    })
+                );
+                rec('batch', put);
+                if (put.status === 200) {
+                    for (const d of docs) {
+                        const del = await withBackoff(() =>
+                            timeFetch(`/api/offers-rury/${d.id}`, {
+                                method: 'DELETE',
+                                headers: H(i)
+                            })
+                        );
+                        rec('batch', del);
                     }
-                    await sleep(rnd(30000, 60000));
                 }
-            })()
-        );
+                await sleepWithinPhase(endAt, rnd(30000, 60000));
+            }
+        });
     }
     // 1 numerujący: claim+recycle co 10 s. 1 PDF: sekwencyjnie.
     if (grp.claim) {
         const ci = C0;
-        workers.push(
-            (async () => {
-                const end = Date.now() + STEADY_MS;
-                while (Date.now() < end) {
-                    const c = await withBackoff(() =>
-                        timeFetch(`/api/orders-studnie/claim-production-number/${adminId}`, {
-                            method: 'POST',
-                            headers: H(ci)
-                        })
-                    );
-                    rec('claim', c);
-                    try {
-                        const seq = JSON.parse(c.body)?.nextSeq;
-                        if (c.status === 200 && seq) {
-                            const rc = await withBackoff(() =>
-                                timeFetch('/api/orders-studnie/production/recycle-numbers', {
-                                    method: 'POST',
-                                    headers: H(ci),
-                                    body: JSON.stringify({ userId: adminId, seqNumbers: [seq] })
-                                })
-                            );
-                            rec('claim', rc);
-                        }
-                    } catch {
-                        /* ignore */
+        workers.push(async (endAt, staggerStart = false) => {
+            if (staggerStart) await sleep(rnd(0, STARTUP_STAGGER_MS));
+            while (Date.now() < endAt) {
+                const c = await withBackoff(() =>
+                    timeFetch(`/api/orders-studnie/claim-production-number/${adminId}`, {
+                        method: 'POST',
+                        headers: H(ci)
+                    })
+                );
+                rec('claim', c);
+                try {
+                    const seq = JSON.parse(c.body)?.nextSeq;
+                    if (c.status === 200 && seq) {
+                        const rc = await withBackoff(() =>
+                            timeFetch('/api/orders-studnie/production/recycle-numbers', {
+                                method: 'POST',
+                                headers: H(ci),
+                                body: JSON.stringify({ userId: adminId, seqNumbers: [seq] })
+                            })
+                        );
+                        rec('claim', rc);
                     }
-                    await sleep(10000);
+                } catch {
+                    /* ignore */
                 }
-            })()
-        );
+                await sleepWithinPhase(endAt, 10000);
+            }
+        });
     }
     if (grp.pdf) {
         const pi = P0;
-        workers.push(
-            (async () => {
-                if (!pdfId) return;
-                const end = Date.now() + STEADY_MS;
-                while (Date.now() < end) {
-                    const r = await withBackoff(() =>
-                        timeFetch(
-                            `/api/offers-rury/studnie/${pdfId}/export-pdf`,
-                            { headers: H(pi) },
-                            90000
-                        )
-                    );
-                    rec('pdf', r);
-                    await sleep(15000);
-                }
-            })()
-        );
+        workers.push(async (endAt, staggerStart = false) => {
+            if (!pdfId) return;
+            if (staggerStart) await sleep(rnd(0, STARTUP_STAGGER_MS));
+            while (Date.now() < endAt) {
+                const r = await withBackoff(() =>
+                    timeFetch(
+                        `/api/offers-rury/studnie/${pdfId}/export-pdf`,
+                        { headers: H(pi) },
+                        90000
+                    )
+                );
+                rec('pdf', r);
+                await sleepWithinPhase(endAt, 15000);
+            }
+        });
     }
 
-    await Promise.all(workers);
+    await Promise.all(workers.map((worker) => worker(warmupEndsAt)));
+    const steadyStartsAt = Date.now();
+    const loadEndsAt = steadyStartsAt + STEADY_MS;
+    activePhase = 'steady';
+    await Promise.all(workers.map((worker) => worker(loadEndsAt, true)));
 
     // Faza bulk-200 (--bulk200[=N], domyślnie OFF): N równoległych cykli
     // claim-200 (z Idempotency-Key jak FE) + PUT-200 + cleanup (DELETE +
@@ -401,7 +406,7 @@ async function main() {
                             body: JSON.stringify({ count: 200 })
                         })
                     );
-                    rec('bulk200', c);
+                    rec('bulk200', c, 'bulk');
                     if (c.status !== 200) return;
                     let seqs = [];
                     try {
@@ -423,7 +428,7 @@ async function main() {
                             body: JSON.stringify({ data: docs })
                         })
                     );
-                    rec('bulk200', put);
+                    rec('bulk200', put, 'bulk');
                     let savedIds = [];
                     try {
                         savedIds = (JSON.parse(put.body)?.saved || []).map((s) => s.id);
@@ -440,7 +445,7 @@ async function main() {
                                 body: JSON.stringify({ ids: savedIds.slice(0, 200) })
                             })
                         );
-                        rec('bulk200', del);
+                        rec('bulk200', del, 'bulk');
                     }
                     const putSeqs = new Set(
                         docs
@@ -460,7 +465,7 @@ async function main() {
                                 })
                             })
                         );
-                        rec('bulk200', rc);
+                        rec('bulk200', rc, 'bulk');
                     }
                 })()
             );
@@ -539,7 +544,7 @@ async function main() {
     const bStart = process.hrtime.bigint();
     const bRes = await Promise.all(burstFns.map((fn) => fn()));
     const wallMs = Number(process.hrtime.bigint() - bStart) / 1e6;
-    for (const r of bRes) rec('burst', r);
+    for (const r of bRes) rec('burst', r, 'burst');
 
     const metrics1 = await (
         await fetch(BASE + '/metrics', { headers: H(0) })
@@ -547,8 +552,7 @@ async function main() {
         .json()
         .catch(() => null);
 
-    const byOp = {};
-    for (const s of stats) (byOp[s.op] = byOp[s.op] || []).push(s);
+    const measured = buildLoadReport(stats);
     const report = {
         quick: QUICK,
         sustained: SUSTAINED,
@@ -556,26 +560,16 @@ async function main() {
         sharedIp: SHARED_IP,
         bulk200: BULK200,
         steadyMs: STEADY_MS,
-        ops: {},
+        warmupTargetMs: WARMUP_MS,
+        warmupMs: steadyStartsAt - measurementStartsAt,
+        startupStaggerMs: STARTUP_STAGGER_MS,
+        warmup: measured.warmup,
+        ops: measured.ops,
+        routes: measured.routes,
         burst: null,
         metrics: null,
         dod: null
     };
-    for (const [op, arr] of Object.entries(byOp)) {
-        if (op === 'burst') continue;
-        const times = arr.map((s) => s.ms).sort((a, b) => a - b);
-        const bad = arr.filter((s) => s.status !== 200);
-        report.ops[op] = {
-            n: arr.length,
-            p50: +pct(times, 50).toFixed(1),
-            p95: +pct(times, 95).toFixed(1),
-            p99: +pct(times, 99).toFixed(1),
-            fail: bad.length,
-            throttled: arr.filter((s) => s.throttled).length,
-            statuses: arr.reduce((m, s) => ((m[s.status] = (m[s.status] || 0) + 1), m), {}),
-            errSample: [...new Set(bad.slice(0, 3).map((s) => s.body))].slice(0, 3)
-        };
-    }
     const bTimes = bRes.map((r) => r.ms).sort((a, b) => a - b);
     report.burst = {
         wallMs: +wallMs.toFixed(0),
@@ -633,7 +627,15 @@ async function main() {
 
     for (const [op, r] of Object.entries(report.ops))
         console.error(
-            `${op.padEnd(8)} n=${r.n} p50=${r.p50}ms p95=${r.p95}ms p99=${r.p99}ms fail=${r.fail} thr=${r.throttled} ${JSON.stringify(r.statuses)}`
+            `steady ${op.padEnd(8)} n=${r.n} p50=${r.p50}ms p95=${r.p95}ms p99=${r.p99}ms fail=${r.fail} thr=${r.throttled} ${JSON.stringify(r.statuses)}`
+        );
+    for (const [op, r] of Object.entries(report.warmup.ops))
+        console.error(
+            `warmup ${op.padEnd(8)} n=${r.n} p50=${r.p50}ms p95=${r.p95}ms p99=${r.p99}ms fail=${r.fail} thr=${r.throttled} ${JSON.stringify(r.statuses)}`
+        );
+    for (const [route, r] of Object.entries(report.routes))
+        console.error(
+            `route ${route} n=${r.n} p95=${r.p95}ms fail=${r.fail} ${JSON.stringify(r.statuses)}`
         );
     console.error(
         `BURST wall=${report.burst.wallMs}ms p50=${report.burst.p50}ms p95=${report.burst.p95}ms ${JSON.stringify(report.burst.statuses)}`
