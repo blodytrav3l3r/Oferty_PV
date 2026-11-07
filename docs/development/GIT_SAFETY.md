@@ -50,7 +50,7 @@ Pięć funkcji systemu rozróżnionych świadomie:
 
 ### 2.3 Harmless — zawsze dozwolone
 
-`status`, `diff`, `log`, `show`, `add`, `commit` (bez `--amend`), `fetch`, `pull --ff-only`, `push` (bez `--force`). Guard nie ingeruje.
+`status`, `diff`, `log`, `show`, `add`, `commit` (bez `--amend`), `fetch`, `pull --ff-only`, `push` (bez `--force`). Guard destrukcyjnych operacji Git nie ingeruje w te komendy. To klasyfikacja technicznego ryzyka, a nie zgoda na działanie: commit i push podlegają poziomom autoryzacji z `docs/AUTONOMY_CONTRACT.md`; w szczególności push wymaga osobnego GO z podanym celem `remote/branch`.
 
 ---
 

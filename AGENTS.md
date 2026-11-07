@@ -44,7 +44,8 @@ Twarde reguły dowodowe, Evidence Ledger i szablon checkpointu: `docs/agents/evi
 ## Filozofia pracy (skrót)
 
 - Read-first: grep/read przed pisaniem; nie reimplementuj helperów z sąsiedztwa (najpierw SSoT: `getSortedRuryItems`, `ownership.ts`, `versionWrite.ts`, `snapshots.ts`).
-- Niejasność → najbardziej logiczny default zgodny z architekturą + krótka notka; pytania tylko gdy ryzyko poważnego błędu **lub akcja z listy 🔴 w `docs/AUTONOMY_CONTRACT.md`** (push, migracje/seed, prod DB, progi ML, destrukcja w gicie).
+- **Zgoda na działania**: stosuj `docs/AUTONOMY_CONTRACT.md` (poziomy 🟢/🟡/🔴, zakres zgody, commit i push). Dla pushu zawsze podaj dokładny cel `remote/branch` i poczekaj na osobny GO.
+- Niejasność → najbardziej logiczny default zgodny z architekturą + krótka notka; pytania tylko gdy ryzyko poważnego błędu lub decyzja należy do użytkownika.
 - Tradeoffy jawnie: widzisz prostsze rozwiązanie — powiedz przed kodowaniem, nie po; nie wybieraj interpretacji po cichu.
 - Cudzy dead code i niepowiązane poprawki: zgłoś, nie usuwaj; każda zmieniona linia musi wynikać z zadania.
 - Zadanie wieloetapowe → krótki plan z `verify:` na krok.
@@ -57,7 +58,7 @@ Twarde reguły dowodowe, Evidence Ledger i szablon checkpointu: `docs/agents/evi
 Cel: najmniej kontekstu, kodu i tekstu, ile wystarczy do następnej poprawnej i weryfikowalnej decyzji. Oszczędność nigdy nie obniża poprawności, bezpieczeństwa, wymaganego zakresu testów ani zgodności z zasadami projektu.
 
 - **Styl odpowiedzi**: wynik/decyzja najpierw; potem tylko fakty potrzebne do potwierdzenia wyniku; „następny krok" wyłącznie gdy wymaga decyzji użytkownika. Nie powtarzaj pytania, znanych faktów o projekcie ani wcześniejszych ustaleń; nie opisuj doboru narzędzi ani rutynowego toku rozumowania. Rozwijaj odpowiedź tylko przy złożoności, ryzyku lub na wyraźną prośbę.
-- **Wyjątki od skrótu** (pełne zdania, nie skrót): ostrzeżenie bezpieczeństwa, akcja nieodwracalna (🔴 w `docs/AUTONOMY_CONTRACT.md`), pytanie do użytkownika, potwierdzenie kolejności kroków.
+- **Wyjątki od skrótu** (pełne zdania, nie skrót): ostrzeżenie bezpieczeństwa, akcja wymagająca osobnego GO według `docs/AUTONOMY_CONTRACT.md`, pytanie do użytkownika, potwierdzenie kolejności kroków.
 - **Kod w odpowiedzi**: nie wklejaj niezmienionego kodu; podaj `ścieżka:linia` i tylko zmienione fragmenty (z 1–2 liniami kontekstu); bez komentarzy opisujących oczywiste działanie.
 - **Weryfikacja**: najpierw najmniejszy właściwy test lub komenda; rozszerzaj zakres gdy wymagają tego bramy projektu, zmiana dotyka szerszego obszaru, podstawowa weryfikacja padła albo zadanie wymaga pełnej walidacji. Zakaz uruchamiania testów i skanów „na pokaz".
 - **Decyzje**: gdy dane wystarczają — jedno rozwiązanie, bez listy spekulacyjnych alternatyw. Prostsze rozwiązanie zgłoś raz, przed kodowaniem (nie po). Gdy brakuje informacji: wskaż czego brakuje, dlaczego blokuje decyzję, i wykonaj najmniejsze użyteczne sprawdzenie albo zadaj jedno pytanie.
@@ -117,10 +118,4 @@ Knowledge graph w `graphify-out/`. Na `/graphify`: `query` → `path` → `expla
 
 ## Kontrakt autonomii agenta (SSoT `docs/AUTONOMY_CONTRACT.md` z 2026-09-21)
 
-| Tier         | Zakres                                                                                                    | Tryb                                  |
-| ------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| 🟢 Autonomia | read-only audyty, testy, docs, małe fixy z zielonym `test:quick`, re-run pomiarów, commity docs/test-only | działanie + raport ex post, bez pusha |
-| 🟡 Batch GO  | implementacje P1/P2, nowe plany, commity kodu                                                             | jedno GO na paczkę                    |
-| 🔴 Osobne GO | push, restart/migracje/seed, progi ML, prod DB, operacje destrukcyjne w gicie                             | zawsze jawna zgoda                    |
-
-Twarde invarianty: GO na plan ≠ GO na kod; brak operacji na live DB poza drillem; progi ML tylko na danych; brak fallbacku do domyślnego `DATABASE_URL`; STOP przerywa paczkę natychmiast.
+Klasyfikacja zgód, zakres GO, reguły commit/push i twarde invarianty są zdefiniowane wyłącznie w `docs/AUTONOMY_CONTRACT.md`. Zmiany tej polityki wprowadzaj w tym źródle prawdy.
