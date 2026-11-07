@@ -2,9 +2,9 @@
 
 ## Metadane
 
-- **Status:** przewodnik oparty na obecnym kodzie UI, route’ach, dokumentacji i istniejących testach.
-- **HEAD zweryfikowany:** `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`.
-- **Data weryfikacji:** 2026-11-06.
+- **Status:** przewodnik oparty na kodzie UI, route’ach, dokumentacji i testach dostępnych na poprzednim HEAD; bieżąca zgodność modułów wymaga pełnej weryfikacji względem aktualnego UI/E2E.
+- **HEAD poprzedniej weryfikacji treści:** `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`.
+- **Data poprzedniej weryfikacji treści:** 2026-11-06. Przewodnik nie został ponownie zweryfikowany w całości na HEAD `fe8bbb3bcba36304e355d37051e4afb310c1f143`.
 - **Klasyfikacja:** `FACT` — potwierdzone w kodzie/teście/dokumentacji; `INFERENCE` — wniosek z faktów; `UNKNOWN` — brak wystarczającego dowodu.
 - **Zakres:** sześć modułów SPA. Dokument nie zastępuje walidatorów, uprawnień backendu, zasad cenników ani procedur operacyjnych.
 

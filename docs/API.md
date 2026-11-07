@@ -1,7 +1,7 @@
 # API — dokumentacja endpointów
 
 **Wersja:** 1.56.6  
-**Ostatnia aktualizacja:** 2026-11-06
+**Ostatnia aktualizacja:** 2026-11-07
 
 **Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera), surowy JSON: `GET /api/docs.json`. Specyfikacja jest generowana z adnotacji `@openapi` w wybranych plikach; jej pokrycie jest częściowe i nie stanowi kompletnego źródła kontraktów.
 
@@ -736,23 +736,26 @@ w kodzie, a wcześniej nie miały wpisu w tym dokumencie.
 
 ### Opieka i follow-upy ofert
 
-| Metoda | Ścieżka                                      | Auth | Opis                              |
-| ------ | -------------------------------------------- | ---- | --------------------------------- |
-| POST   | `/api/offers-rury/:kind/:id/followups`       | auth | Dodaj wpis kontaktu               |
-| GET    | `/api/offers-rury/:kind/:id/followups`       | auth | Historia kontaktów oferty         |
-| PUT    | `/api/offers-rury/:kind/:id/followups/:fuId` | auth | Edycja notatki wpisu              |
-| DELETE | `/api/offers-rury/:kind/:id/followups/:fuId` | auth | Usuń wpis kontaktu                |
-| GET    | `/api/offers-rury/followups/stats`           | auth | Statystyki follow-upów            |
-| PUT    | `/api/offers-rury/:kind/:id/client-contact`  | auth | Przypisz osobę kontaktową         |
-| GET    | `/api/care/summary`                          | auth | Podsumowanie kolejki opieki       |
-| GET    | `/api/care/sla`                              | auth | Odczyt progów SLA                 |
-| PUT    | `/api/care/sla`                              | auth | Zapis progów SLA                  |
-| POST   | `/api/care/:kind/:id/snooze`                 | auth | Odłóż pilnowanie oferty           |
-| POST   | `/api/care/:kind/:id/done`                   | auth | Zamknij pilnowanie                |
-| POST   | `/api/care/:kind/:id/reopen`                 | auth | Wznów pilnowanie                  |
-| POST   | `/api/care/notifications/read`               | auth | Oznacz wszystkie jako przeczytane |
-| POST   | `/api/care/notifications/:id/read`           | auth | Oznacz jedno jako przeczytane     |
-| POST   | `/api/care/notifications/:id/unread`         | auth | Oznacz jedno jako nieprzeczytane  |
+| Metoda | Ścieżka                                      | Auth | Opis                                                                                                                                                 |
+| ------ | -------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/offers-rury/:kind/:id/followups`       | auth | Dodaj wpis kontaktu                                                                                                                                  |
+| GET    | `/api/offers-rury/:kind/:id/followups`       | auth | Historia kontaktów oferty                                                                                                                            |
+| PUT    | `/api/offers-rury/:kind/:id/followups/:fuId` | auth | Edycja notatki wpisu                                                                                                                                 |
+| DELETE | `/api/offers-rury/:kind/:id/followups/:fuId` | auth | Usuń wpis kontaktu                                                                                                                                   |
+| GET    | `/api/offers-rury/followups/stats`           | auth | Statystyki follow-upów                                                                                                                               |
+| PUT    | `/api/offers-rury/:kind/:id/client-contact`  | auth | Przypisz osobę kontaktową                                                                                                                            |
+| GET    | `/api/care/summary`                          | auth | Podsumowanie kolejki opieki                                                                                                                          |
+| GET    | `/api/care/queue`                            | auth | Strona kolejki; `scope`, `cursor`, `limit` (1–100), `hidePaused`, `from`, `to`, `repId`; odpowiedź zawiera `items`, `nextCursor`, `totalCount`       |
+| GET    | `/api/care/panel`                            | auth | Zbiorczy panel: podsumowanie, kolejka, nieprzeczytane powiadomienia i SLA; obsługuje `ETag`/`304`                                                    |
+| GET    | `/api/care/notifications`                    | auth | Lista powiadomień; `scope`, `unreadOnly`, `limit` (1–100), `repId`; odpowiedź zawiera `items`, `unreadCount`, `hasOverflow`, `sync`, `mailboxUserId` |
+| GET    | `/api/care/sla`                              | auth | Odczyt progów SLA                                                                                                                                    |
+| PUT    | `/api/care/sla`                              | auth | Zapis progów SLA                                                                                                                                     |
+| POST   | `/api/care/:kind/:id/snooze`                 | auth | Odłóż pilnowanie oferty                                                                                                                              |
+| POST   | `/api/care/:kind/:id/done`                   | auth | Zamknij pilnowanie                                                                                                                                   |
+| POST   | `/api/care/:kind/:id/reopen`                 | auth | Wznów pilnowanie                                                                                                                                     |
+| POST   | `/api/care/notifications/read`               | auth | Oznacz wszystkie jako przeczytane                                                                                                                    |
+| POST   | `/api/care/notifications/:id/read`           | auth | Oznacz jedno jako przeczytane                                                                                                                        |
+| POST   | `/api/care/notifications/:id/unread`         | auth | Oznacz jedno jako nieprzeczytane                                                                                                                     |
 
 ### Klienci — osoby kontaktowe
 
@@ -842,7 +845,7 @@ Wymaga autoryzacji (administrator). FTS to dane pochodne — status i rebuild wy
 
 ## Uwagi
 
-- Wszystkie endpointy (oprócz publicznych: `/health*`, `/api/auth/login`, `/api/version`, `/api/docs*`, `/api/csp-report`) zwracają `401` przy braku autoryzacji.
+- Wszystkie endpointy (oprócz publicznych: `/health*`, `/api/auth/login`, `/api/auth/logout`, `/api/version`, `/api/docs*`, `/api/csp-report`) zwracają `401` przy braku autoryzacji. `POST /api/auth/logout` jest dostępny bez sesji i idempotentnie czyści cookie; jeśli cookie sesyjne istnieje, usuwa powiązaną sesję.
 - Token: wyłącznie ciasteczko `authToken` (HttpOnly); nagłówek `x-auth-token` jest ignorowany.
 - W produkcji ciasteczko `authToken` ma flagę `Secure` (wymaga HTTPS).
 - Zmiana roli/hasła użytkownika przez admina (`PUT /api/users/:id`) natychmiast unieważnia jego sesje (stara cookie → `401`).

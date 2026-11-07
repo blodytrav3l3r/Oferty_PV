@@ -1,6 +1,6 @@
 # Dokumentacja S.O.K.
 
-**Zweryfikowano:** 2026-11-06 · **HEAD:** `5ab15ac0` · **Status:** nawigacja do istniejących źródeł prawdy; zakres audytu: [`documentation-audit.md`](documentation-audit.md).
+**Nawigację zweryfikowano:** 2026-11-07 · **HEAD:** `fe8bbb3b` · **Wersja:** `1.56.6` · **Zakres:** sprawdzono lokalne cele linków i strukturę indeksu; aktualny status pokrycia opisuje [`documentation-audit.md`](documentation-audit.md).
 
 ## Rozpoczęcie
 

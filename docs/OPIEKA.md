@@ -1,7 +1,7 @@
 # Opieka nad ofertą — hub
 
 **Wersja:** 1.56.6
-**Ostatnia aktualizacja:** 2026-10-11
+**Ostatnia aktualizacja:** 2026-11-07
 
 > Warstwa opieki nad istniejącym modelem ofert, nie drugi CRM.
 > SSoT danych: `offer_follow_ups` (append-only) + `offers_*.userId` via `ownership.ts`.
@@ -48,23 +48,30 @@ Pulpit (widget: liczniki + top wiersze)
 
 ## Endpointy
 
-| Metoda | Trasa                                   | Rola                                                      |
-| ------ | --------------------------------------- | --------------------------------------------------------- |
-| GET    | `/api/care/summary?scope=`              | read, scope wg roli                                       |
-| GET    | `/api/care/queue?scope=&status=…`       | read, scope wg roli                                       |
-| POST   | `/api/offers/:kind/:id/followups`       | write (`canWriteDoc`)                                     |
-| GET    | `/api/offers/:kind/:id/followups`       | read (timeline)                                           |
-| GET    | `/api/care/panel?scope=&repId=`         | read, mailbox `repOwner ?? self`                          |
-| GET    | `/api/care/sla?scope=`                  | read, próg efektywny + `source`                           |
-| PUT    | `/api/care/sla`                         | zapis progu (global admin; `team` pro/admin; `user` self) |
-| POST   | `/api/care/:kind/:id/snooze`            | write (`canWriteDoc`), pauza                              |
-| POST   | `/api/care/:kind/:id/done`              | write (`canWriteDoc`), zakończenie                        |
-| POST   | `/api/care/:kind/:id/reopen`            | write (`canWriteDoc`), wznowienie                         |
-| GET    | `/api/care/notifications?scope=&repId=` | read, mailbox `repOwner ?? self`, sync w scope            |
-| POST   | `/api/care/notifications/read`          | write, self-only                                          |
-| POST   | `/api/care/notifications/:id/read`      | write, self-only (cudze id → 404)                         |
+| Metoda | Trasa                                                                | Rola                                                      |
+| ------ | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| GET    | `/api/care/summary?scope=`                                           | read, scope wg roli                                       |
+| GET    | `/api/care/queue?scope=&cursor=&limit=&hidePaused=&from=&to=&repId=` | read, stronicowana kolejka; scope wg roli                 |
+| POST   | `/api/offers/:kind/:id/followups`                                    | write (`canWriteDoc`)                                     |
+| GET    | `/api/offers/:kind/:id/followups`                                    | read (timeline)                                           |
+| GET    | `/api/care/panel?scope=&cursor=&limit=&hidePaused=&from=&to=&repId=` | read, panel zbiorczy; obsługuje `ETag`/`304`              |
+| GET    | `/api/care/sla?scope=`                                               | read, próg efektywny + `source`                           |
+| PUT    | `/api/care/sla`                                                      | zapis progu (global admin; `team` pro/admin; `user` self) |
+| POST   | `/api/care/:kind/:id/snooze`                                         | write (`canWriteDoc`), pauza                              |
+| POST   | `/api/care/:kind/:id/done`                                           | write (`canWriteDoc`), zakończenie                        |
+| POST   | `/api/care/:kind/:id/reopen`                                         | write (`canWriteDoc`), wznowienie                         |
+| GET    | `/api/care/notifications?scope=&unreadOnly=&limit=&repId=`           | read, mailbox `repOwner ?? self`, sync w scope            |
+| POST   | `/api/care/notifications/read`                                       | write, self-only                                          |
+| POST   | `/api/care/notifications/:id/read`                                   | write, self-only (cudze id → 404)                         |
 
 Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
+
+`queue` i `panel` przyjmują opcjonalnie `scope` (`mine|team|all`), `cursor`, `limit`
+(1–100), `hidePaused` (`true|false|1|0`), `from` i `to` (ISO-8601 ze strefą) oraz
+`repId`. `notifications` przyjmuje `scope`, `unreadOnly` (`true|false|1|0`),
+`limit` (1–100) i `repId`. Zakres dat kolejki/panelu musi być uporządkowany i nie
+może przekraczać 366 dni; nieuprawniony zakres odpowiada `403`. Szczegóły walidacji
+potwierdza `src/routes/care.ts`.
 
 ## Payload kolejki i powiadomień (Obiekt/kontakt)
 

@@ -1,12 +1,39 @@
 # Audyt dokumentacji i zależności SQLite
 
-- **Zweryfikowano:** 2026-11-06
+- **Zaktualizowano:** 2026-11-07
 - **Repozytorium:** `blodytrav3l3r/Oferty_PV`
-- **HEAD:** `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f` (`main`)
-- **Status:** audyt bieżącego kodu i dokumentacji; nie jest potwierdzeniem produkcyjnego cutoveru.
-- **Źródła:** repozytorium, konfiguracja, testy oraz równoległe odczytowe audyty. Każdy twierdzeniowy wniosek ogranicza się do podanych dowodów.
+- **Aktualny checkpoint:** `fe8bbb3bcba36304e355d37051e4afb310c1f143` (`main`), wersja `1.56.6`.
+- **Zakres bieżącego checkpointu:** aktualność metadanych dokumentacji, nawigacja, statusy i otwarte luki. Szczegółowy raport poniżej pozostaje snapshotem z HEAD `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`.
+- **Status wdrożenia:** dokumentacja i lokalny checkout nie potwierdzają produkcyjnego cutoveru ani czystej instalacji Linux.
+- **Źródła:** bieżący checkout, konfiguracja i dokumentacja; status GitHub Actions odczytano dla jawnie wskazanego SHA. Każdy wniosek ogranicza się do podanego zakresu i chwili weryfikacji.
 
-## Podsumowanie
+## Checkpoint aktualności — 2026-11-07
+
+**FACT:** lokalny branch to `main`, HEAD to `fe8bbb3bcba36304e355d37051e4afb310c1f143`, a `VERSION` i `package.json` wskazują `1.56.6`. `npm run version:check` zakończył się sukcesem. Lokalne cele linków w `docs/README.md` istnieją; sprawdzenie nie obejmowało zewnętrznych URL ani kotwic nagłówków.
+
+**FACT:** w bieżącym kodzie Prisma provider to PostgreSQL, klient używa `@prisma/adapter-pg`, a `prisma.config.ts` wskazuje `prisma/migrations-postgresql/`. Workflow PostgreSQL Docker deklaruje PostgreSQL 18. To potwierdza kierunek runtime w repozytorium, nie konfigurację zewnętrznego serwera.
+
+**FACT:** `docs/API.md` deklaruje wersję `1.56.6` i jawnie oznacza katalog endpointów jako niekompletny. Bieżący statyczny przegląd route’ów wykrył trzy pominięte odczyty Opieki (`GET /api/care/queue`, `/api/care/panel`, `/api/care/notifications`); dodano je do katalogu. Skorygowano też ogólną uwagę o publicznych trasach, która pomijała anonimowe `POST /api/auth/logout`. To uzupełnia wykryte przypadki, ale nie jest dowodem kompletnego opisu każdej trasy, walidatora i odpowiedzi API.
+
+**Zakres przeglądu API:** statyczny licznik znalazł 205 literalnych rejestracji w kodzie (196 wywołań `router.*` w `src/routes/**/*.ts` oraz 9 wywołań `app.*` w `src/app.ts`/`src/mountRoutes.ts`). Przed poprawkami `docs/API.md` zawierał 197 wierszy metod w tabelach i 17 nagłówków endpointów z opisem prozą; po dodaniu trzech tras Opieki zawiera 200 wierszy tabel. To nie są bezpośrednio porównywalne liczby unikalnych zewnętrznych tras: mounty/aliasy mogą powielać ścieżki, a dokumentacja może grupować aliasy. Nie wykonano pełnej kontroli semantycznej każdej trasy.
+
+**FACT:** `GET /api/care/queue` i `GET /api/care/panel` przyjmują `scope`, `cursor`, `limit`, `hidePaused`, `from`, `to`, `repId`; `GET /api/care/notifications` przyjmuje `scope`, `unreadOnly`, `limit`, `repId`. Potwierdza to `src/routes/care.ts`. W `docs/OPIEKA.md` usunięto nieobsługiwany parametr `status` z przykładu kolejki i dopisano bieżące parametry zapytań.
+
+**FACT:** przewodnik modułów nadal wskazuje poprzednią pełną weryfikację na SHA `5ab15ac0` z 2026-11-06. Metadane doprecyzowano, by nie sugerowały pełnej weryfikacji na aktualnym HEAD `fe8bbb3b`.
+
+**UNKNOWN:** czysta instalacja Linux i produkcyjny cutover nie zostały wykonane ani potwierdzone w tym przeglądzie. Runbook deploymentu opisuje wyniki lokalne wydania `1.56.4`; nie są one dowodem dla aktualnego release ani zewnętrznego środowiska.
+
+**TODO:** docelowe RPO/RTO wymagają decyzji właściciela operacji i restore drill na izolowanym celu. W tym przeglądzie nie wykonano połączenia do produkcyjnej bazy, migracji, backupu ani restore.
+
+**Kontrola przed commitem (2026-11-07):** `npm run validate` zakończył się kodem 0 na świeżej, izolowanej bazie PostgreSQL 18 `sok_test`: 586 suite’ów PASS, 2 SKIP; 5817 testów PASS, 4 SKIP. Migracje dotyczyły wyłącznie schematów testowych. `prices:verify` poprawnie zwrócił `SKIP` dla pustego schematu. Zwykła baza aplikacji i produkcyjne środowisko nie były używane.
+
+**GitHub Actions:** dla SHA `fe8bbb3bcba36304e355d37051e4afb310c1f143` o 2026-11-07, 12:12 UTC odczytano 4 check runs: `Typecheck (tsc)`, `Lint (ESLint + Prettier)` i `Analyze (javascript-typescript)` zakończone sukcesem; `Test (Jest)` pozostawał `in_progress`. To jest chwilowy status zdalnego CI, nie wynik pełnego CI ani dowód wdrożenia. [Workflow CI](https://github.com/blodytrav3l3r/Oferty_PV/actions/runs/42370292127) · [CodeQL](https://github.com/blodytrav3l3r/Oferty_PV/actions/runs/42370292162).
+
+## Raport bazowy — stan na HEAD 5ab15ac0
+
+Poniższe ustalenia, inwentarz, macierz pokrycia i wyniki weryfikacji opisują audyt wykonany 2026-11-06 na SHA `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`. Traktuj je jako historyczne, dopóki nie zostaną ponownie sprawdzone na aktualnym HEAD.
+
+## Podsumowanie raportu bazowego
 
 **FACT:** provider Prisma to PostgreSQL, klient używa `@prisma/adapter-pg`, a Prisma kieruje do kanonicznych migracji `prisma/migrations-postgresql/` (`prisma/schema.prisma:7-12`, `prisma.config.ts:4-12`, `src/prismaClient.ts:4-18`). Docker/Compose i workflows używają PostgreSQL 18; instalatory przygotowują tę bazę. Świeża instalacja importuje zatwierdzony pakiet `data/pricelists/active-pricelists.json`.
 
