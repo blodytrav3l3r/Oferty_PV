@@ -270,10 +270,19 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
         await page.goto(`${BASE}/`);
         const panel = page.locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
+        await expect(panel.getByText('Wybierz zakres dat, aby wczytać kolejkę.')).toBeVisible();
+        await expect(panel.locator('[data-care-loading]')).toHaveCount(0);
+
+        const panelRequest = page.waitForRequest(
+            (request) => request.url().includes('/api/care/panel') && request.method() === 'GET'
+        );
+        await panel.locator('[data-care-range="7d"]').click();
+        await panelRequest;
         await expect(
             panel.locator('[data-care-error]'),
             'błąd [data-care-error] nie pokazał się po awarii'
         ).toBeVisible({ timeout: 15000 });
+        await expect(panel.locator('[data-care-loading]')).toHaveCount(0);
 
         // Retry tą samą ścieżką co polling (sok:user-ready woła loadCarePanel,
         // sukces czyści alert przez clearError) — bez przeładowania strony.

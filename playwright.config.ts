@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 
 // D-017: E2E używa osobnego procesu, portu i schematu PostgreSQL.
