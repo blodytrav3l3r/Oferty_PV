@@ -121,7 +121,31 @@ test.describe('a11y axe', () => {
                 });
                 const lastField = visibleFields[visibleFields.length - 1];
                 if (!lastField || !footer) return null;
+
+                const scrollableAncestors = [];
+                for (
+                    let ancestor = lastField.parentElement;
+                    ancestor;
+                    ancestor = ancestor.parentElement
+                ) {
+                    const style = getComputedStyle(ancestor);
+                    if (
+                        ancestor.scrollHeight > ancestor.clientHeight &&
+                        /(auto|scroll)/.test(style.overflowY)
+                    ) {
+                        scrollableAncestors.push(ancestor);
+                    }
+                }
+
                 lastField.scrollIntoView({ block: 'end' });
+                for (const ancestor of scrollableAncestors) {
+                    ancestor.scrollTop = ancestor.scrollHeight;
+                }
+                const pageScroller = document.scrollingElement;
+                if (pageScroller && pageScroller.scrollHeight > pageScroller.clientHeight) {
+                    pageScroller.scrollTop = pageScroller.scrollHeight;
+                }
+
                 return (
                     footer.getBoundingClientRect().top - lastField.getBoundingClientRect().bottom
                 );

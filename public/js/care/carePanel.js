@@ -146,11 +146,11 @@ const RANGE_DAYS = { '7d': 7, '30d': 30, '90d': 90 };
 function resolveQueueRange() {
     const days = RANGE_DAYS[queueRange];
     if (!days) return {};
-    // Klucz ETag musi być stabilny między pollingami: minuta w dół.
-    const nowMin = Math.floor(Date.now() / 60000) * 60000;
+    // Granice ETag są stabilne przez minutę; inclusive `to` obejmuje jej koniec.
+    const minuteEnd = Math.floor(Date.now() / 60000) * 60000 + 60000 - 1;
     return {
-        from: new Date(nowMin - days * 86400000).toISOString(),
-        to: new Date(nowMin).toISOString()
+        from: new Date(minuteEnd - days * 86400000).toISOString(),
+        to: new Date(minuteEnd).toISOString()
     };
 }
 

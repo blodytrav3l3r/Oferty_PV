@@ -201,16 +201,24 @@ async function tabHash(frame, tab) {
                     .replace(/aria-valuenow="[\d.]+"/g, 'aria-valuenow="N"')
                     .replace(/>\s+</g, '><')
                     .trim();
+            const resolveAlphaTokens = (html) =>
+                String(html).replace(/var\((--excel-alpha-[a-z-]+)\)/g, (match, token) => {
+                    const value = getComputedStyle(document.documentElement)
+                        .getPropertyValue(token)
+                        .trim();
+                    return value || match;
+                });
             const rows = [...tbody.querySelectorAll('tr[data-widx]')];
             return {
-                html:
+                html: resolveAlphaTokens(
                     canonFn(thead.outerHTML) +
-                    canonFn(
-                        rows
-                            .slice(0, maxRows)
-                            .map((r) => r.outerHTML)
-                            .join('')
-                    ),
+                        canonFn(
+                            rows
+                                .slice(0, maxRows)
+                                .map((r) => r.outerHTML)
+                                .join('')
+                        )
+                ),
                 rows: rows.length,
                 logical: rows.map((r) => r.getAttribute('data-logical-row'))
             };
