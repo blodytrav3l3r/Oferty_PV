@@ -1,4 +1,7 @@
-param([switch]$Watch)
+param(
+    [switch]$Watch,
+    [switch]$StartTestDatabase
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -39,29 +42,26 @@ function Find-NativePostgresRoot {
     return $candidates[0].FullName
 }
 
-function Test-AppPortInUse {
-    $probe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 3000)
-    $probe.ExclusiveAddressUse = $true
-    try {
-        $probe.Start()
-        return $false
-    } catch [System.Net.Sockets.SocketException] {
-        if ($_.Exception.SocketErrorCode -eq [System.Net.Sockets.SocketError]::AddressAlreadyInUse) {
-            return $true
+function Find-AvailableAppPort {
+    for ($port = 3000; $port -le 3100; $port++) {
+        $probe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $port)
+        $probe.ExclusiveAddressUse = $true
+        try {
+            $probe.Start()
+            return $port
+        } catch [System.Net.Sockets.SocketException] {
+            if ($_.Exception.SocketErrorCode -notin @(
+                    [System.Net.Sockets.SocketError]::AddressAlreadyInUse,
+                    [System.Net.Sockets.SocketError]::AccessDenied
+                )) {
+                throw
+            }
+        } finally {
+            $probe.Stop()
         }
-        throw
-    } finally {
-        $probe.Stop()
     }
-}
 
-function Test-SokReady {
-    try {
-        $response = Invoke-WebRequest -Uri 'http://127.0.0.1:3000/health/ready' -TimeoutSec 3 -UseBasicParsing
-        return $response.StatusCode -eq 200
-    } catch {
-        return $false
-    }
+    throw 'No free application port is available between 3000 and 3100.'
 }
 
 function Wait-PostgresReady {
@@ -78,16 +78,40 @@ function Wait-PostgresReady {
     return $false
 }
 
+function Start-TestDatabase {
+    if (-not (Get-Command docker.exe -ErrorAction SilentlyContinue)) {
+        throw 'Docker Desktop is required by start-dev.bat to run the isolated PostgreSQL test database.'
+    }
+
+    & docker.exe info *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Docker is not running. Start Docker Desktop and retry start-dev.bat.'
+    }
+
+    & docker.exe compose -f docker-compose.postgres-test.yml config --quiet
+    if ($LASTEXITCODE -ne 0) {
+        throw 'PostgreSQL test database configuration is invalid. Check POSTGRES_TEST_* in .env.'
+    }
+
+    & docker.exe compose -f docker-compose.postgres-test.yml up -d --wait
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Could not start the PostgreSQL test database. Check Docker and port 55440.'
+    }
+
+    & node.exe scripts/postgres-test-url.cjs
+    if ($LASTEXITCODE -ne 0) {
+        throw 'PostgreSQL test database is not reachable. Check POSTGRES_TEST_URL in .env.'
+    }
+
+    Write-Host 'PostgreSQL test database is ready on the configured local test URL.'
+}
+
 try {
     Set-Location -LiteralPath $repoRoot
 
-    if (Test-AppPortInUse) {
-        if (Test-SokReady) {
-            Write-Host 'S.O.K. is already running at http://localhost:3000. Stop it before switching startup modes.'
-            $exitCode = 0
-            return
-        }
-        throw 'Port 3000 is already in use. The launcher will not stop another process.'
+    $appPort = Find-AvailableAppPort
+    if ($appPort -ne 3000) {
+        Write-Host "Port 3000 is occupied; using http://localhost:$appPort instead."
     }
 
     if (-not (Get-Command node.exe -ErrorAction SilentlyContinue)) {
@@ -98,6 +122,9 @@ try {
     }
     if (-not (Test-Path (Join-Path $repoRoot 'node_modules'))) {
         throw 'node_modules is missing. Run npm install first.'
+    }
+    if ($StartTestDatabase) {
+        Start-TestDatabase
     }
     $nativeRoot = Find-NativePostgresRoot -RepositoryRoot $repoRoot
     $cluster = Join-Path $nativeRoot 'cluster-native'
@@ -159,7 +186,7 @@ try {
     $escapedPassword = [uri]::EscapeDataString($password)
     $env:DATABASE_URL = "postgresql://sok_dev:$escapedPassword@127.0.0.1:55432/sok_dev?schema=public"
     $env:HOST = '127.0.0.1'
-    $env:PORT = '3000'
+    $env:PORT = [string]$appPort
     $env:NODE_ENV = 'development'
 
     if (-not (Test-Path (Join-Path $repoRoot 'generated\prisma-postgres\client.d.ts'))) {
@@ -175,7 +202,7 @@ try {
         throw 'The local database is not ready. No migrations or seed were run.'
     }
 
-    Write-Host 'Starting S.O.K. at http://localhost:3000. Press Ctrl+C to stop.'
+    Write-Host "Starting S.O.K. at http://localhost:$appPort. Press Ctrl+C to stop."
     if ($Watch) {
         & npm.cmd run dev
     } else {

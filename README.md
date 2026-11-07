@@ -4,7 +4,7 @@
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
 </div>
 
-**Wersja:** 1.56.6  
+**Wersja:** 1.56.7  
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline<br>
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** Łukasz Kobyłka
@@ -138,7 +138,7 @@ npm run build
 
 #### 4. Uruchom serwer
 
-Na Windows wybierz [plik BAT odpowiedni do trybu pracy](#skrypty-startowe-bat). Jeśli samodzielnie konfigurujesz połączenie z PostgreSQL w `.env`, użyj:
+Na Windows do pracy nad kodem i testów wybierz [plik BAT odpowiedni do trybu pracy](#skrypty-startowe-bat). Użyj `start-dev.bat`, aby przygotować również bazę testową do testów i pushu. Przy ręcznej konfiguracji połączenia aplikacji z PostgreSQL w `.env` użyj:
 
 ```powershell
 .\start.bat              # Tryb developerski (domyślnie, z hot-reload)
@@ -290,13 +290,33 @@ W środowisku produkcyjnym aplikacja jest serwowana przez **HTTPS** za pośredni
 
 ## Uruchomienie
 
-### Tryb developerski
+### Tryb developerski na Windowsie
 
 ```powershell
-npm run dev
+.\start-dev.bat
 ```
 
-- Backend: `http://localhost:3000/health` (hot-reload)
+Launcher uruchamia backend z hot-reload na natywnej bazie `sok_dev` oraz testowy PostgreSQL w Docker Compose. Docker jest wymagany tylko dla testowej bazy; usługa pozostaje uruchomiona po zamknięciu aplikacji. Domyślny port aplikacji to `3000`; jeśli jest zajęty, launcher wybierze pierwszy wolny port do `3100` i wypisze adres. Sprawdź `/health` pod wskazanym adresem.
+
+Przy ręcznie przygotowanym środowisku można uruchomić sam backend przez `npm run dev`; ta komenda nie uruchamia testowej bazy.
+
+### Krótka ścieżka: praca lokalna → commit → push
+
+1. Upewnij się, że `.env` zawiera lokalne ustawienia `POSTGRES_TEST_*` z `.env.example`. Uruchom `start-dev.bat` i sprawdź `/health` pod adresem wypisanym przez launcher.
+2. Przed commitem sprawdź `git branch --show-current`, `git status --short` oraz `git diff` i `git diff --staged`. Do commita dodaj tylko pliki związane ze zmianą.
+3. Uruchom wymagane bramy:
+
+    ```powershell
+    npm run version:check
+    npm run validate
+    npm run format
+    npm run encoding:check
+    ```
+
+4. Zacommituj przez helper, zachowując format `typ(scope): opis`, np. `node scripts/commit.mjs "docs(docs): lokalny workflow"`.
+5. Push wymaga osobnego, jawnego GO dla dokładnego celu `remote/branch` i wskazanych commitów. Po GO wykonaj push bez omijania hooków, sprawdź kod procesu przez `$LASTEXITCODE`, a następnie `git status -sb`.
+
+Szczegóły: [kontrakt autonomii](docs/AUTONOMY_CONTRACT.md) i [referencja komend](docs/agents/commands.md).
 
 ### Tryb produkcyjny
 
@@ -308,7 +328,7 @@ npm start
 > **Uwaga (Linux):** po surowym `npm run build` (bez `build.sh`) skopiuj klienta Prisma do `dist/`:
 > `mkdir -p dist/generated && cp -r generated/prisma-postgres dist/generated/` — albo użyj `build.bat`/`build.sh`, które robią to automatycznie.
 
-Aplikacja: `http://localhost:3000` (lokalnie; w produkcji przez HTTPS — patrz sekcja [HTTPS / Reverse proxy](#https--reverse-proxy-produkcja))
+Aplikacja: domyślnie `http://localhost:3000`; `start-dev.bat` wybierze port 3001–3100, gdy port 3000 jest zajęty (lokalnie; w produkcji przez HTTPS — patrz sekcja [HTTPS / Reverse proxy](#https--reverse-proxy-produkcja)).
 
 ---
 
@@ -331,14 +351,14 @@ npm run deploy:check                                               # smoke check
 
 ## Skrypty startowe (.bat)
 
-| Kiedy użyć                  | Plik                 | Co robi                                                                    |
-| --------------------------- | -------------------- | -------------------------------------------------------------------------- |
-| Pierwsza instalacja na PC   | `install-new-pc.bat` | Przygotowuje Docker Desktop, PostgreSQL 18 i S.O.K. na Windows 10/11.      |
-| Kolejny start z Dockerem    | `start-docker.bat`   | Uruchamia istniejącą instalację Docker Compose.                            |
-| Praca nad kodem bez Dockera | `start-dev.bat`      | Uruchamia kod z repozytorium i automatycznie restartuje backend po edycji. |
-| Zwykły start bez Dockera    | `start-native.bat`   | Uruchamia kod z repozytorium. Po edycji backendu uruchom plik ponownie.    |
+| Kiedy użyć                  | Plik                 | Co robi                                                                       |
+| --------------------------- | -------------------- | ----------------------------------------------------------------------------- |
+| Pierwsza instalacja na PC   | `install-new-pc.bat` | Przygotowuje Docker Desktop, PostgreSQL 18 i S.O.K. na Windows 10/11.         |
+| Kolejny start z Dockerem    | `start-docker.bat`   | Uruchamia istniejącą instalację Docker Compose.                               |
+| Praca nad kodem i testami   | `start-dev.bat`      | Uruchamia kod z repozytorium, auto-reload oraz testowy PostgreSQL w Dockerze. |
+| Start aplikacji bez Dockera | `start-native.bat`   | Uruchamia kod z repozytorium. Po edycji backendu uruchom plik ponownie.       |
 
-Oba tryby bez Dockera wymagają Node.js z npm, zależności zainstalowanych przez `npm ci` i wcześniej przygotowanego lokalnego zestawu PostgreSQL 18 w `data/perf/sok-native-pg18-*` z bazą `sok_dev`. Korzystają z tej samej lokalnej bazy, sprawdzają jej gotowość i pomijają migracje oraz seed. Każdy tryb udostępnia aplikację pod `http://localhost:3000`. Przy zmianie trybu zatrzymaj najpierw poprzednią instancję.
+Oba tryby wymagają Node.js z npm, zależności zainstalowanych przez `npm ci` i wcześniej przygotowanego lokalnego zestawu PostgreSQL 18 w `data/perf/sok-native-pg18-*` z bazą `sok_dev`. Korzystają z tej samej lokalnej bazy, sprawdzają jej gotowość i pomijają migracje oraz seed. `start-dev.bat` dodatkowo uruchamia izolowaną bazę testową Compose na porcie `55440`; Docker Desktop musi działać, a `.env` musi zawierać `POSTGRES_TEST_*`. Baza testowa pozostaje dostępna po zamknięciu S.O.K.; zatrzymasz ją poleceniem `docker compose -f docker-compose.postgres-test.yml stop postgres-test`. Port aplikacji domyślnie wynosi `3000`; gdy jest zajęty, launcher wybiera pierwszy wolny port do `3100` i wypisuje adres. Przy zmianie trybu zatrzymaj najpierw poprzednią instancję.
 
 Pozostałe skrypty obsługują konfigurację ręczną i utrzymanie:
 

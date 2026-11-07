@@ -1,6 +1,6 @@
 # Cenniki — instrukcja administratora (SSoT)
 
-**Wersja:** 1.56.6
+**Wersja:** 1.56.7
 
 Jedyny dokument o tym, jak tworzyć, publikować i korygować cenniki.
 Szczegóły techniczne (endpointy, limity, schematy): `docs/API.md`.
