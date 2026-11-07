@@ -2955,7 +2955,11 @@ select[id$='-czy'] option {
     border: 1px solid var(--excel-border);
     background: var(--excel-border-subtle);
     color: var(--text-secondary);
-    transition: all 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        box-shadow 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3485,7 +3489,9 @@ td.excel-tint--plyta_redukcyjna input {
     border-radius: var(--radius-sm);
     padding: 0.25rem 0.4rem;
     margin-bottom: 0.25rem;
-    transition: all 0.2s ease;
+    transition:
+        filter 0.2s ease,
+        box-shadow 0.2s ease;
     border: 1px solid transparent;
     background: var(--tile-accent, var(--slate-700));
     color: var(--tile-fg, var(--text-primary));
@@ -3556,7 +3562,10 @@ html[data-theme='light'] .config-tile {
     padding: 0.35rem 0.5rem;
     margin-bottom: 0.25rem;
     cursor: grab;
-    transition: all 0.15s;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        box-shadow 0.15s;
     border: 1px solid rgba(var(--white-rgb), 0.05);
     border-left: 4px solid var(--tile-accent, var(--slate-700));
     background: rgba(var(--slate-800-rgb), 0.8);
@@ -5735,6 +5744,11 @@ td.excel-tr-selected .excel-sel-wrap > div {
     width: 64px;
     min-width: 64px;
     text-align: center;
+}
+
+.preco-table--range .preco-col-actions {
+    width: 88px;
+    min-width: 88px;
 }
 
 .preco-cell-num {

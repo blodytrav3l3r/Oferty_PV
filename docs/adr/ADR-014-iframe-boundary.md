@@ -58,3 +58,12 @@ Cały ruch parent↔iframe wyłącznie przez kontrakt `__sok*` w `public/js/shar
 | Shadow DOM               | Izoluje CSS, nie JS — kolizje globali zostają                                                          |
 | Framework micro-frontend | Sprzeczny z ADR-002 (Vanilla SPA), nowa zależność                                                      |
 | Stopniowe wysysanie      | Dwa systemy naraz przez miesiące; spłata tylko przy okazji dotykania plików (dozwolona, nie planowana) |
+
+## Doprecyzowanie wdrożeniowe (2026-11-07)
+
+„Klasyczne skrypty” w tej decyzji opisują dominujący legacy i pozostają powodem,
+by nie łączyć modułów ani nie usuwać iframe. Nie wykluczają izolowanych entrypointów
+ESM i współdzielonych modułów ESM z mostkiem dla legacy callerów. Komunikacja
+parent↔iframe nadal odbywa się wyłącznie przez kontrakt `__sok*`; wprowadzanie ESM
+nie zmienia granicy ani zasad tego kontraktu. Zasady przyrostowego współistnienia
+opisuje ADR-008 oraz `docs/agents/frontend.md`.

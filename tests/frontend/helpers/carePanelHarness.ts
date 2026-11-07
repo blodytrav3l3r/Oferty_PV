@@ -6,6 +6,7 @@ import vm from 'vm';
 export const load = (opts: {
     fetchMock: (url: string, _init?: any) => any;
     role?: string;
+    initialRange?: '7d' | '30d' | '90d' | 'all';
     calls?: string[];
     timers?: number[];
     fuStub?: any;
@@ -165,6 +166,7 @@ export const load = (opts: {
             '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications };',
         context
     );
+    context.__careTest.setQueueRange(opts.initialRange ?? '30d');
     return { els, listeners, context };
 };
 export const okJson = (body: any) => ({ ok: true, json: async () => body });

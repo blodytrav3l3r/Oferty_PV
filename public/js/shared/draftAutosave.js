@@ -476,6 +476,13 @@ function _draftEmptySavedPayload(kind) {
             investName: '',
             investAddress: '',
             investContractor: '',
+            investStreet: '',
+            investPostalCode: '',
+            investCity: '',
+            investCountry: 'PL',
+            investLocationDescription: '',
+            investContact: '',
+            investContacts: [],
             notes: '',
             paymentTerms: 'Do uzgodnienia lub według indywidualnych warunków handlowych.',
             validity: '7 dni',
@@ -605,6 +612,7 @@ function _draftStripEphemeralWell(well) {
 var _DRAFT_FIELD_FALLBACKS = {
     transportKm: 100,
     transportRate: 10,
+    investCountry: 'PL',
     validity: '7 dni',
     paymentTerms: 'Do uzgodnienia lub według indywidualnych warunków handlowych.'
 };
@@ -737,6 +745,14 @@ function _draftComparablePayload(kind, payload) {
             fields.clientContacts = [];
         else if (Array.isArray(fields.clientContacts))
             fields.clientContacts = _draftNormContacts(fields.clientContacts);
+        if (
+            fields.investContacts === undefined ||
+            fields.investContacts === null ||
+            fields.investContacts === ''
+        )
+            fields.investContacts = [];
+        else if (Array.isArray(fields.investContacts))
+            fields.investContacts = _draftNormContacts(fields.investContacts);
         out.fields = fields;
     }
     if (Array.isArray(out.items)) {

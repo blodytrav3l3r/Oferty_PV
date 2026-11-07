@@ -233,6 +233,13 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>\u2014</div>'}
     ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
     ${data.investContractor ? `<div>Wykonawca: ${escapeHtml(data.investContractor)}</div>` : ''}
+    ${data.investLocationDescription ? `<div>Opis lokalizacji: ${escapeHtml(data.investLocationDescription)}</div>` : ''}
+    ${(data.investContacts || [])
+        .map((contact) => {
+            const details = [contact.name, contact.phone, contact.email].filter(Boolean).join(', ');
+            return details ? `<div>Kontakt na budowie: ${escapeHtml(details)}</div>` : '';
+        })
+        .join('')}
   `.trim();
 
     const { tables, summary } = buildRurySectionHTML(data);

@@ -24,12 +24,14 @@ function stripComments(code) {
 }
 
 describe('excelDynamicCss gate motywu', () => {
-    test('brak selektora html[data-theme] w excel*.js (poza komentarzami)', () => {
+    test('render Excel nie odczytuje motywu ani nie wybiera stylu w JS', () => {
         const violations = [];
+        const themeRead =
+            /(?:getAttribute\s*\(\s*['"]data-theme|dataset\s*(?:\.theme|\[\s*['"]theme)|data-theme\s*===|isLightTheme)/i;
         for (const f of EXCEL_FILES) {
             const lines = stripComments(f.code).split('\n');
             lines.forEach((line, i) => {
-                if (line.includes('html[data-theme')) violations.push(`${f.name}:${i + 1}`);
+                if (themeRead.test(line)) violations.push(`${f.name}:${i + 1}`);
             });
         }
         expect(violations).toEqual([]);

@@ -14,6 +14,7 @@ const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf-8');
 describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
     const panel = read('public/js/shared/pricelistVersions.js');
     const css = read('public/css/pricelist-panel.css');
+    const studnieCss = read('public/css/studnie.css');
     const ruryPartial = read('public/partials/rury/pricelist.html');
     const studniePartial = read('public/partials/studnie/pricelist.html');
     const ruryHtml = read('public/rury.html');
@@ -369,6 +370,15 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('@media print');
         expect(ruryHtml).toContain('css/pricelist-panel.css?v=');
         expect(studnieHtml).toContain('css/pricelist-panel.css?v=');
+    });
+
+    it('PRECO: nagłówek Akcje mieści przycisk dodania grupy i etykietę', () => {
+        const actionsColumn = studnieCss.match(
+            /\.preco-table--range\s+\.preco-col-actions\s*\{([^}]*)\}/
+        );
+
+        expect(actionsColumn?.[1]).toMatch(/width:\s*88px/);
+        expect(actionsColumn?.[1]).toMatch(/min-width:\s*88px/);
     });
 
     it('rail nie wprowadza inline handlerów (CSP-E)', () => {

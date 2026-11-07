@@ -30,7 +30,7 @@ var DRAFT_TTL_MS = 14 * 24 * 3600 * 1000;
 /** Dozwolone rodzaje dokumentów (osobne klucze dla rur i studni). */
 var DRAFT_KINDS = ['offer_studnie', 'order_studnie', 'offer_rury', 'order_rury'];
 
-/** 19 pól nagłówka oferty — dokładnie wyjście getOfferFormFields(), nic więcej. */
+/** Pola nagłówka oferty — dokładnie wyjście getOfferFormFields(), nic więcej. */
 var DRAFT_FIELD_KEYS = [
     'number',
     'date',
@@ -46,6 +46,13 @@ var DRAFT_FIELD_KEYS = [
     'investName',
     'investAddress',
     'investContractor',
+    'investStreet',
+    'investPostalCode',
+    'investCity',
+    'investCountry',
+    'investLocationDescription',
+    'investContact',
+    'investContacts',
     'notes',
     'paymentTerms',
     'validity',
@@ -84,6 +91,13 @@ var DRAFT_PII_FIELD_KEYS = [
     'investName',
     'investAddress',
     'investContractor',
+    'investStreet',
+    'investPostalCode',
+    'investCity',
+    'investCountry',
+    'investLocationDescription',
+    'investContact',
+    'investContacts',
     'notes'
 ];
 

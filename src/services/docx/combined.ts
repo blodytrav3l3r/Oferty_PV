@@ -63,6 +63,10 @@ export async function buildCombinedDocument(
     const investName = String(studnieData.investName ?? '');
     const investAddress = String(studnieData.investAddress ?? '');
     const investContractor = String(studnieData.investContractor ?? '');
+    const investLocationDescription = String(studnieData.investLocationDescription ?? '');
+    const investContacts = Array.isArray(studnieData.investContacts)
+        ? studnieData.investContacts
+        : [];
     const studnieNotes = String(studnieData.notes ?? '');
     const ruryNotes = String(rury.offerData.notes ?? '');
     const paymentTerms = String(
@@ -129,7 +133,9 @@ export async function buildCombinedDocument(
             clientContact,
             investName,
             investAddress,
-            investContractor
+            investContractor,
+            investLocationDescription,
+            investContacts
         )
     );
 

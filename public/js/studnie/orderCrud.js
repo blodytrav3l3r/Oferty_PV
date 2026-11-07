@@ -276,6 +276,13 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         investName: offer.investName,
         investAddress: offer.investAddress,
         investContractor: offer.investContractor,
+        investStreet: offer.investStreet,
+        investPostalCode: offer.investPostalCode,
+        investCity: offer.investCity,
+        investCountry: offer.investCountry,
+        investLocationDescription: offer.investLocationDescription,
+        investContact: offer.investContact,
+        investContacts: offer.investContacts,
         notes: offer.notes,
         paymentTerms: offer.paymentTerms,
         validity: offer.validity,
@@ -883,6 +890,33 @@ async function enterOrderEditMode(orderId) {
         setVal('invest-name', order.investName || '');
         setVal('invest-address', order.investAddress || '');
         setVal('invest-contractor', order.investContractor || '');
+        if (typeof ensureInvestCountryOptions === 'function') ensureInvestCountryOptions();
+        if (typeof bindInvestAddressMirror === 'function') bindInvestAddressMirror();
+        setVal('invest-street', order.investStreet || '');
+        setVal('invest-postal-code', order.investPostalCode || '');
+        setVal('invest-city', order.investCity || '');
+        setVal('invest-country', order.investCountry || 'PL');
+        setVal('invest-location-description', order.investLocationDescription || '');
+        const legacyInvestAddress = document.getElementById('invest-legacy-address');
+        const hasStructuredInvestAddress = !!(
+            order.investStreet ||
+            order.investPostalCode ||
+            order.investCity
+        );
+        if (legacyInvestAddress) {
+            legacyInvestAddress.textContent = hasStructuredInvestAddress
+                ? ''
+                : order.investAddress
+                  ? 'Adres zapisany wcześniej: ' + order.investAddress
+                  : '';
+            legacyInvestAddress.hidden = hasStructuredInvestAddress || !order.investAddress;
+        }
+        if (typeof renderInvestContactsList === 'function') {
+            renderInvestContactsList(order.investContacts || [], {
+                investContact: order.investContact || ''
+            });
+        }
+        if (typeof syncInvestAddressMirror === 'function') syncInvestAddressMirror();
 
         setVal('transport-km', order.transportKm ?? 100);
         setVal('transport-rate', order.transportRate ?? 10);
@@ -1044,6 +1078,33 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         setVal('invest-name', order.investName || '');
         setVal('invest-address', order.investAddress || '');
         setVal('invest-contractor', order.investContractor || '');
+        if (typeof ensureInvestCountryOptions === 'function') ensureInvestCountryOptions();
+        if (typeof bindInvestAddressMirror === 'function') bindInvestAddressMirror();
+        setVal('invest-street', order.investStreet || '');
+        setVal('invest-postal-code', order.investPostalCode || '');
+        setVal('invest-city', order.investCity || '');
+        setVal('invest-country', order.investCountry || 'PL');
+        setVal('invest-location-description', order.investLocationDescription || '');
+        const legacyInvestAddress = document.getElementById('invest-legacy-address');
+        const hasStructuredInvestAddress = !!(
+            order.investStreet ||
+            order.investPostalCode ||
+            order.investCity
+        );
+        if (legacyInvestAddress) {
+            legacyInvestAddress.textContent = hasStructuredInvestAddress
+                ? ''
+                : order.investAddress
+                  ? 'Adres zapisany wcześniej: ' + order.investAddress
+                  : '';
+            legacyInvestAddress.hidden = hasStructuredInvestAddress || !order.investAddress;
+        }
+        if (typeof renderInvestContactsList === 'function') {
+            renderInvestContactsList(order.investContacts || [], {
+                investContact: order.investContact || ''
+            });
+        }
+        if (typeof syncInvestAddressMirror === 'function') syncInvestAddressMirror();
 
         if (typeof skipWizardToStep3 === 'function') skipWizardToStep3();
         if (typeof showSection === 'function') showSection('builder');

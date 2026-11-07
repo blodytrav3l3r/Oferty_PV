@@ -810,7 +810,10 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     background: var(--accent-bg);
     color: var(--accent-text);
     border: 1px solid var(--accent-border-dim);
-    transition: all 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .ie-detected-badge--neutral {
@@ -2434,6 +2437,44 @@ svg.lucide {
     display: grid;
     gap: 0.7rem;
     margin-bottom: 0.5rem;
+}
+
+.wizard-form-grid.investment-form-grid {
+    grid-template-columns:
+        minmax(7rem, 0.62fr)
+        minmax(10rem, 1fr)
+        minmax(11rem, 1.1fr)
+        minmax(8rem, 0.68fr);
+}
+
+.investment-object,
+.investment-location-description {
+    grid-column: 1 / -1;
+}
+
+.investment-contact-group {
+    margin-top: 0.7rem;
+}
+
+.investment-legacy-address {
+    margin: 0 0 0.5rem;
+}
+
+@media (max-width: 760px) {
+    .wizard-form-grid.investment-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .wizard-form-grid.investment-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .investment-object,
+    .investment-location-description {
+        grid-column: auto;
+    }
 }
 
 .wizard-form-group {

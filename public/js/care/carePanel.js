@@ -1593,6 +1593,24 @@ function renderQueue(items, nextCursor, totalCount) {
     refreshCareIcons(list);
 }
 
+function renderRequiredRangePrompt() {
+    queueCache = [];
+    queueNextCursor = null;
+    queueTotal = 0;
+    updateQueueFilterCounts();
+    setText('care-queue-count', '');
+    syncMissBar(0);
+
+    const list = document.getElementById('care-queue-list');
+    if (!list) return;
+    list.textContent = '';
+    const prompt = document.createElement('span');
+    prompt.className = 'recycled-empty';
+    prompt.textContent = 'Wybierz zakres dat, aby wczytać kolejkę.';
+    prompt.setAttribute('role', 'status');
+    list.appendChild(prompt);
+}
+
 /** Pasek miss search (soft/hard): ręczne Dociągnij + Kartoteka, brak auto-pętli. */
 function syncMissBar(visibleCount) {
     let bar = null;
@@ -1902,8 +1920,7 @@ async function postCare(it, action) {
 const RANGE_LABELS = [
     ['7d', '7D'],
     ['30d', '30D'],
-    ['90d', '90D'],
-    ['all', 'Wszystko']
+    ['90d', '90D']
 ];
 
 function syncRangeButtons() {
@@ -2557,6 +2574,11 @@ export async function loadCarePanel() {
         syncQueueFilterButtons();
         syncRangeButtons();
         syncSortViewControls();
+        if (!resolveQueueRange().from) {
+            renderRequiredRangePrompt();
+            clearError();
+            return false;
+        }
         const packet = await loadPanelPacket();
         let changed = false;
         careLoadError = false;

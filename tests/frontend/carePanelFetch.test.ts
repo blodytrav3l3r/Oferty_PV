@@ -1,6 +1,22 @@
 import { load, okJson } from './helpers/carePanelHarness';
 
 describe('carePanel — panel fetch, ETag, błędy, polling, zakresy', () => {
+    test('brak zakresu początkowego blokuje pobranie kolejki i pokazuje prompt', async () => {
+        const calls: string[] = [];
+        const { els, context } = load({
+            calls,
+            initialRange: 'all',
+            fetchMock: () => okJson({})
+        });
+
+        await context.__careTest.loadCarePanel();
+
+        expect(calls).toHaveLength(0);
+        expect(els['care-queue-list'].children[0].textContent).toBe(
+            'Wybierz zakres dat, aby wczytać kolejkę.'
+        );
+    });
+
     test('panel: pakiet w 1 requescie, 304 bez renderu', async () => {
         const calls: string[] = [];
         const seenHeaders: Array<unknown> = [];
@@ -214,7 +230,7 @@ describe('carePanel — panel fetch, ETag, błędy, polling, zakresy', () => {
         expect(joined).toContain('PLN');
     });
 
-    test('preset zakresu: from/to w URL panelu, All bez parametr\u00f3w', async () => {
+    test('preset zakresu: from/to w URL; brak zakresu blokuje wczytanie', async () => {
         const calls: string[] = [];
         const packet = {
             ok: true,
@@ -232,7 +248,7 @@ describe('carePanel — panel fetch, ETag, błędy, polling, zakresy', () => {
             notifications: { items: [], unreadCount: 0, sync: { inserted: 0, resolved: 0 } },
             sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
         };
-        const { context } = load({
+        const { context, els } = load({
             calls,
             fetchMock: (url: string) => {
                 if (url.includes('/api/care/panel'))
@@ -251,8 +267,10 @@ describe('carePanel — panel fetch, ETag, błędy, polling, zakresy', () => {
         context.__careTest.setQueueRange('all');
         await context.__careTest.loadCarePanel();
         const panelCalls2 = calls.filter((c) => c.includes('/api/care/panel'));
-        expect(panelCalls2).toHaveLength(2);
-        expect(panelCalls2[1]).not.toContain('from=');
+        expect(panelCalls2).toHaveLength(1);
+        expect(els['care-queue-list'].children[0].textContent).toBe(
+            'Wybierz zakres dat, aby wczytać kolejkę.'
+        );
     });
 
     test('ETag osobny na zakres: zmiana presetu nie wysy\u0142a cudzego If-None-Match', async () => {

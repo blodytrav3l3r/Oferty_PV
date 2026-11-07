@@ -172,6 +172,13 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     const daneInwestycji = `
     ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>—</div>'}
     ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
+    ${data.investLocationDescription ? `<div>Opis lokalizacji: ${escapeHtml(data.investLocationDescription)}</div>` : ''}
+    ${(data.investContacts || [])
+        .map((contact) => {
+            const details = [contact.name, contact.phone, contact.email].filter(Boolean).join(', ');
+            return details ? `<div>Kontakt na inwestycji: ${escapeHtml(details)}</div>` : '';
+        })
+        .join('')}
   `.trim();
 
     const { tables, summary } = buildStudnieSectionHTML(data);

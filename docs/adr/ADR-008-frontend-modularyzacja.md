@@ -56,3 +56,13 @@ reorganizację strukturalną i testy logiki przez vm. **Opcja B odrzucona.**
 | ---------------------- | ----------------------------------------------------------------------------------- |
 | Opcja B (ESM)          | 657 globali, cykliczne importy, pełne przepisanie łańcucha, brak bundlera (ADR-005) |
 | Bundler (Vite/Webpack) | Sprzeczny z ADR-005 (Express serwuje statyczne pliki), wymaga build stepu w prod    |
+
+## Doprecyzowanie wdrożeniowe (2026-11-07)
+
+Decyzja nadal zakazuje hurtowej konwersji legacy na ESM. Repozytorium zawiera jednak
+izolowane moduły ESM używane jako przyrostowa granica dla nowych lub wydzielonych
+funkcji; mogą wystawiać jawny mostek `window.*`, dopóki korzystają z niego klasyczni
+callerzy (np. `public/js/shared/escapeHtml.js` i `modalCore.js`). Nowe funkcje w
+istniejących łańcuchach klasycznych skryptów pozostają zgodne z ich kolejnością
+ładowania i nie wprowadzają nowych globali. Nie zmienia to kontraktu iframe z ADR-014.
+Wytyczne dla nowych zmian opisuje `docs/agents/frontend.md`.

@@ -307,6 +307,16 @@
     --excel-row-even: #0a0e1a;
     --excel-row-odd: #111827;
     --excel-row-active: rgba(var(--blue-rgb), 0.18);
+    /* Alfa tintów Excela: dark w :root, light w bloku motywu poniżej. */
+    --excel-alpha-error-base: 0.12;
+    --excel-alpha-error-active: 0.22;
+    --excel-alpha-error-hover: 0.18;
+    --excel-alpha-warning-base: 0.1;
+    --excel-alpha-medium: 0.2;
+    --excel-alpha-warning-hover: 0.16;
+    --excel-alpha-duplicate-active: 0.3;
+    --excel-alpha-duplicate-hover: 0.25;
+    --excel-alpha-duplicate-hover-active: 0.35;
     --excel-tint-base: var(--slate-950);
     --excel-backdrop: var(--shadow-color);
     --excel-shadow: 0 20px 60px rgba(var(--black-rgb), 0.8);
@@ -844,7 +854,9 @@ body::before {
         var(--fw-medium) var(--fs-base) 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.2s;
+    transition:
+        color 0.2s,
+        border-color 0.2s;
 }
 
 .header-logout:hover {
@@ -1918,7 +1930,12 @@ button.btn-order-save:hover {
     font-weight: var(--fw-bold);
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(var(--black-rgb), 0.25);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tp-mode-btn:hover {
@@ -2794,6 +2811,15 @@ html[data-theme='light'] {
     --excel-row-even: #f6f8fa;
     --excel-row-odd: #ffffff;
     --excel-row-active: rgba(var(--blue-rgb), 0.24);
+    --excel-alpha-error-base: 0.2;
+    --excel-alpha-error-active: 0.3;
+    --excel-alpha-error-hover: 0.24;
+    --excel-alpha-warning-base: 0.18;
+    --excel-alpha-medium: 0.28;
+    --excel-alpha-warning-hover: 0.22;
+    --excel-alpha-duplicate-active: 0.36;
+    --excel-alpha-duplicate-hover: 0.32;
+    --excel-alpha-duplicate-hover-active: 0.4;
     --excel-tint-base: #ffffff;
     --excel-backdrop: var(--shadow-color);
     --excel-shadow: 0 8px 32px rgba(15, 23, 42, 0.16);

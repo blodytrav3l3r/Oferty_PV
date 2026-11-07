@@ -18,6 +18,8 @@ export interface RuryOfferData {
     investName: string;
     investAddress: string;
     investContractor: string;
+    investLocationDescription?: string;
+    investContacts?: Array<{ name?: string; phone?: string; email?: string }>;
     items: unknown[];
     transportSeparate?: boolean;
     transportMode?: string;
@@ -51,6 +53,8 @@ export interface StudnieOfferData {
     investName: string;
     investAddress: string;
     investContractor: string;
+    investLocationDescription?: string;
+    investContacts?: Array<{ name?: string; phone?: string; email?: string }>;
     items: Array<{
         productId?: string | null;
         productName?: string | null;

@@ -33,14 +33,113 @@ function renderClientContactsList(list, legacy) {
     window.ClientContacts.bindEditor(box);
 }
 
+function getInvestContactsList() {
+    const box = document.getElementById('invest-contacts');
+    if (box && typeof window.ClientContacts !== 'undefined') {
+        return window.ClientContacts.collectContacts(box);
+    }
+    return [];
+}
+
+function renderInvestContactsList(list, legacy) {
+    const box = document.getElementById('invest-contacts');
+    if (!box || typeof window.ClientContacts === 'undefined') return;
+    const legacyContact =
+        legacy && Object.prototype.hasOwnProperty.call(legacy, 'investContact')
+            ? legacy.investContact
+            : document.getElementById('invest-contact')?.value || '';
+    const rows =
+        Array.isArray(list) && list.length > 0
+            ? list
+            : window.ClientContacts.parseLegacyMirror(legacyContact || '');
+    window.ClientContacts.renderEditor(box, rows);
+    window.ClientContacts.bindEditor(box);
+}
+
+function ensureInvestCountryOptions() {
+    const select = /** @type {HTMLSelectElement | null} */ (
+        /** @type {unknown} */ (document.getElementById('invest-country'))
+    );
+    if (!select || select.dataset.countriesReady === 'true') return;
+    const codes =
+        'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(
+            ' '
+        );
+    const displayNames =
+        typeof Intl !== 'undefined' && typeof Intl.DisplayNames === 'function'
+            ? new Intl.DisplayNames(['pl'], { type: 'region' })
+            : null;
+    const countries = codes
+        .map((code) => ({ code, name: displayNames?.of(code) || code }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'pl'));
+    countries.sort((a, b) => (a.code === 'PL' ? -1 : b.code === 'PL' ? 1 : 0));
+    select.textContent = '';
+    countries.forEach(({ code, name }) => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = name;
+        select.appendChild(option);
+    });
+    select.dataset.countriesReady = 'true';
+}
+
+function getInvestCountryName() {
+    const select = /** @type {HTMLSelectElement | null} */ (
+        /** @type {unknown} */ (document.getElementById('invest-country'))
+    );
+    const selected = select?.options?.[select.selectedIndex];
+    return selected?.textContent?.trim() || 'Polska';
+}
+
+function syncInvestAddressMirror() {
+    const street = document.getElementById('invest-street')?.value?.trim() || '';
+    const postalCode = document.getElementById('invest-postal-code')?.value?.trim() || '';
+    const city = document.getElementById('invest-city')?.value?.trim() || '';
+    const legacy = document.getElementById('invest-address')?.value?.trim() || '';
+    let address = legacy;
+    if (street || postalCode || city) {
+        const postalCity = [postalCode, city].filter(Boolean).join(' ');
+        address = [street, postalCity, getInvestCountryName()].filter(Boolean).join(', ');
+        if (street === legacy && !postalCode && !city) address = legacy;
+    }
+    const mirror = document.getElementById('invest-address');
+    if (mirror) mirror.value = address;
+    return address;
+}
+
+function bindInvestAddressMirror() {
+    const container = document.getElementById('invest-location-fields');
+    if (!container || container.dataset.investAddressBound === 'true') return;
+    container.dataset.investAddressBound = 'true';
+    container.addEventListener('input', syncInvestAddressMirror);
+    container.addEventListener('change', syncInvestAddressMirror);
+}
+
+function getInvestLocationFields() {
+    const streetInput = document.getElementById('invest-street');
+    if (!streetInput) return null;
+    return {
+        investAddress: syncInvestAddressMirror(),
+        investStreet: streetInput.value.trim(),
+        investPostalCode: document.getElementById('invest-postal-code')?.value?.trim() || '',
+        investCity: document.getElementById('invest-city')?.value?.trim() || '',
+        investCountry: document.getElementById('invest-country')?.value || 'PL',
+        investLocationDescription:
+            document.getElementById('invest-location-description')?.value?.trim() || '',
+        investContact: document.getElementById('invest-contact')?.value?.trim() || '',
+        investContacts: getInvestContactsList()
+    };
+}
+
 /**
  * Zbiera standardowe pola formularza oferty.
- * @returns {{number:string,date:string,clientName:string,clientNumber:string,clientNip:string,clientAddress:string,clientContact:string,clientContacts:Array,contactPerson:string,clientPhone:string,clientEmail:string,investName:string,investAddress:string,investContractor:string,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
+ * @returns {{number:string,date:string,clientName:string,clientNumber:string,clientNip:string,clientAddress:string,clientContact:string,clientContacts:Array,contactPerson:string,clientPhone:string,clientEmail:string,investName:string,investAddress:string,investContractor:string,investStreet?:string,investPostalCode?:string,investCity?:string,investCountry?:string,investLocationDescription?:string,investContact?:string,investContacts?:Array,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
  */
 function getOfferFormFields() {
     const g = (id) => (document.getElementById(id)?.value ?? '').trim();
     const clientContacts = getClientContactsList();
     const first = Array.isArray(clientContacts) ? clientContacts[0] || {} : {};
+    const investmentFields = getInvestLocationFields();
     return {
         number: g('offer-number'),
         date: document.getElementById('offer-date')?.value || '',
@@ -54,8 +153,9 @@ function getOfferFormFields() {
         clientPhone: String(first.phone || ''),
         clientEmail: String(first.email || ''),
         investName: g('invest-name'),
-        investAddress: g('invest-address'),
+        investAddress: investmentFields ? investmentFields.investAddress : g('invest-address'),
         investContractor: g('invest-contractor'),
+        ...(investmentFields || {}),
         notes:
             document.getElementById('offer-tab-notes')?.value.trim() ||
             document.getElementById('offer-notes')?.value.trim() ||
@@ -75,7 +175,7 @@ function getOfferFormFields() {
 
 /**
  * Wypełnia standardowe pola formularza oferty danymi.
- * @param {{number?:string,date?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,clientContacts?:Array,contactPerson?:string,clientPhone?:string,clientEmail?:string,investName?:string,investAddress?:string,investContractor?:string,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
+ * @param {{number?:string,date?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,clientContacts?:Array,contactPerson?:string,clientPhone?:string,clientEmail?:string,investName?:string,investAddress?:string,investContractor?:string,investStreet?:string,investPostalCode?:string,investCity?:string,investCountry?:string,investLocationDescription?:string,investContact?:string,investContacts?:Array,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
  */
 function setOfferFormFields(data) {
     const s = (id, val) => {
@@ -103,6 +203,33 @@ function setOfferFormFields(data) {
     s('invest-name', data.investName);
     s('invest-address', data.investAddress);
     s('invest-contractor', data.investContractor);
+    if (document.getElementById('invest-street')) {
+        ensureInvestCountryOptions();
+        s('invest-street', data.investStreet ?? '');
+        s('invest-postal-code', data.investPostalCode);
+        s('invest-city', data.investCity);
+        s('invest-country', data.investCountry || 'PL');
+        s('invest-location-description', data.investLocationDescription);
+        const legacyAddressNote = document.getElementById('invest-legacy-address');
+        if (legacyAddressNote) {
+            const hasStructuredAddress = !!(
+                data.investStreet ||
+                data.investPostalCode ||
+                data.investCity
+            );
+            legacyAddressNote.textContent = hasStructuredAddress
+                ? ''
+                : data.investAddress
+                  ? 'Adres zapisany wcześniej: ' + data.investAddress
+                  : '';
+            legacyAddressNote.hidden = hasStructuredAddress || !data.investAddress;
+        }
+        bindInvestAddressMirror();
+        if (data.investContacts !== undefined || data.investContact !== undefined) {
+            renderInvestContactsList(data.investContacts, { investContact: data.investContact });
+        }
+        syncInvestAddressMirror();
+    }
     s('offer-notes', data.notes);
     s('offer-tab-notes', data.notes);
     s('offer-payment-terms', data.paymentTerms);
@@ -172,9 +299,17 @@ function clearOfferFormFields(numberGenerator) {
         clientNip: '',
         clientAddress: '',
         clientContact: '',
+        clientContacts: [],
         investName: '',
         investAddress: '',
         investContractor: '',
+        investStreet: '',
+        investPostalCode: '',
+        investCity: '',
+        investCountry: 'PL',
+        investLocationDescription: '',
+        investContact: '',
+        investContacts: [],
         notes: '',
         paymentTerms: 'Do uzgodnienia lub według indywidualnych warunków handlowych.',
         validity: '7 dni',
@@ -246,6 +381,7 @@ function buildBaseOfferDoc(spec) {
     // zapis jako "stary klient" (clientVersion=null) i cicho nadpisuje.
     const existingVersion = existingDoc?.version;
     const specVersion = spec.version;
+    /** @type {Record<string, any>} */
     const doc = {
         id: id,
         type: type,
@@ -273,6 +409,17 @@ function buildBaseOfferDoc(spec) {
         investName: fields.investName,
         investAddress: fields.investAddress,
         investContractor: fields.investContractor,
+        ...(fields.investStreet !== undefined
+            ? {
+                  investStreet: fields.investStreet,
+                  investPostalCode: fields.investPostalCode,
+                  investCity: fields.investCity,
+                  investCountry: fields.investCountry,
+                  investLocationDescription: fields.investLocationDescription,
+                  investContact: fields.investContact,
+                  investContacts: fields.investContacts || []
+              }
+            : {}),
         notes: fields.notes,
         paymentTerms: fields.paymentTerms,
         validity: fields.validity,

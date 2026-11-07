@@ -19,6 +19,23 @@ import {
 
 const MAX_TRANSPORT_WEIGHT = 24000;
 
+function normalizeInvestContacts(
+    value: unknown
+): Array<{ name?: string; phone?: string; email?: string }> {
+    if (!Array.isArray(value)) return [];
+    return value
+        .filter(
+            (contact): contact is Record<string, unknown> =>
+                !!contact && typeof contact === 'object'
+        )
+        .map((contact) => ({
+            name: typeof contact.name === 'string' ? contact.name : '',
+            phone: typeof contact.phone === 'string' ? contact.phone : '',
+            email: typeof contact.email === 'string' ? contact.email : ''
+        }))
+        .filter((contact) => contact.name || contact.phone || contact.email);
+}
+
 /**
  * D-010: odmowa dostępu przy re-checku własności w builderze kontekstu
  * (TOCTOU check→fetch w eksporcie łącznym). Route mapuje na 404
@@ -111,6 +128,8 @@ export async function buildRuryOfferContextFromOfferId(
         investName: String(offerData.investName ?? ''),
         investAddress: String(offerData.investAddress ?? ''),
         investContractor: String(offerData.investContractor ?? ''),
+        investLocationDescription: String(offerData.investLocationDescription ?? ''),
+        investContacts: normalizeInvestContacts(offerData.investContacts),
         items: withCategories,
         transportSeparate: !!offerData.transportSeparate,
         transportMode: String(offerData.transportMode ?? 'full'),
@@ -211,6 +230,8 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
         investName: String(orderData.investName ?? orderData.budowa ?? ''),
         investAddress: String(orderData.investAddress ?? ''),
         investContractor: String(orderData.investContractor ?? ''),
+        investLocationDescription: String(orderData.investLocationDescription ?? ''),
+        investContacts: normalizeInvestContacts(orderData.investContacts),
         items,
         transportSeparate: !!orderData.transportSeparate,
         transportMode: orderMode,
@@ -318,6 +339,8 @@ export async function buildStudnieOfferContextFromOfferId(
         investName: String(offerData.investName ?? offerData.budowa ?? ''),
         investAddress: String(offerData.investAddress ?? ''),
         investContractor: String(offerData.investContractor ?? ''),
+        investLocationDescription: String(offerData.investLocationDescription ?? ''),
+        investContacts: normalizeInvestContacts(offerData.investContacts),
         items: items as StudnieOfferData['items'],
         transportCost: totalTransportCost,
         transportSeparate: separateTransport,
@@ -418,6 +441,8 @@ export async function buildStudnieOrderContextFromOrderId(
         investName: String(orderData.investName ?? orderData.budowa ?? ''),
         investAddress: String(orderData.investAddress ?? ''),
         investContractor: String(orderData.investContractor ?? ''),
+        investLocationDescription: String(orderData.investLocationDescription ?? ''),
+        investContacts: normalizeInvestContacts(orderData.investContacts),
         items: items as StudnieOfferData['items'],
         transportCost: totalTransportCost,
         transportSeparate: separateTransport,

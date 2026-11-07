@@ -1,46 +1,38 @@
-# Component matrix — S.O.K. (P0 audit, 2026-09-23)
+# Component matrix — S.O.K.
 
-## Przyciski
+**Aktualizacja:** 2026-11-07
+**Źródło reguł:** [`docs/UI_GUIDELINES.md`](../UI_GUIDELINES.md)
+**Zakres:** mapa istniejących wzorców do ponownego użycia; nie jest listą wszystkich
+historycznych naruszeń ani zgodą na masowy refaktor.
 
-`.btn-primary/secondary/danger/success/warn(ing)/ghost` (base:1215-1313), `.btn-sm`, `.btn-icon(-danger/-sm/-xs)` (utilities:275-300). Wyjątki modułowe: `.pehd-btn` (rury.css:335) vs `.pehd-btn-cancel` (studnie.css:3113) — do ujednolicenia hoverów, bez zmiany geometrii.
+## Wspólne wzorce
 
-## Formularze
+| Obszar             | Wspólne rozwiązania                                                                                                                                           | Granice i uwagi                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Przyciski          | `.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-success`, `.btn-warn`, `.btn-ghost`, `.btn-sm`, `.btn-icon` w `style.base.css` i `style.utilities.css` | Warianty modułowe mogą zachować własną geometrię, gdy jest częścią istniejącego przepływu.                                    |
+| Formularze         | `.form-group`, `.form-label`, `.form-input`, `.form-select`, `.form-textarea`, `.form-row-*`, `.edit-input`                                                   | Zachowuj scoped warianty; pilnuj widocznego fokusu, etykiet i osiągalności pól na małym ekranie.                              |
+| Tabele             | `.table-wrap`, wspólne tokeny, sticky headers tam, gdzie moduł ich używa                                                                                      | Tabele Rur, Zleceń i Excela mają odrębne kontrakty i model renderowania; nie ujednolicać geometrii bez weryfikacji przepływu. |
+| Modale             | `shared/modalCore.js`, `.modal-overlay`, `.modal`, `.modal-header`, `.modal-footer`, `.modal--sm/md/lg`                                                       | Istniejące wyspecjalizowane modale migrować tylko przy zmianie ich zachowania lub wyglądu.                                    |
+| Tokeny             | `public/css/style.base.css` — kolory, rozmiary, typografia, radius, cienie i warstwy                                                                          | Gołe hexy poza tokenami wymagają uzasadnienia; wyjątki muszą być świadome i lokalne.                                          |
+| Ikony i dostępność | Lucide (`data-lucide`), `:focus-visible`, nazwy dostępne dla ikonowych przycisków                                                                             | Kolor nie może być jedynym sygnałem stanu; respektuj `prefers-reduced-motion`.                                                |
+| Karty i nawigacja  | `.card*`, `.nav-tile--*`, `.catalog-tabs`, `.status-*` i istniejące komponenty modułów                                                                        | Nowe wzorce wspólne dodawać do wspólnego CSS, nie kopiować selektorów do modułów.                                             |
 
-`.form-group/label/input/select/textarea`, `.form-input-sm/wide`, `.form-row-2/3/4`, `.edit-input`, `.search-box`. Scoped warianty modułowe zostają (guidelines §10): `.wt-add-cell .form-input`, `.zlecenia-virtual-toolbar .form-input`, `.login-box .form-input` — wyrównywać tylko wartości do tokenów.
+## Zasady architektoniczne frontendu
 
-## Tabele
+- Vanilla JS i istniejące iframe pozostają granicami modułów (ADR-002, ADR-014).
+- Nie konwertować masowo skryptów legacy. Nowe wydzielone entrypointy mogą być ESM;
+  współistnienie z klasycznymi callerami i istniejące mostki globali opisuje ADR-008.
+- Nie dodawać nowych globali `window.*`, handlerów `onclick` ani inline styles.
+- Excel Studni jest strefą chronioną: małe, celowane zmiany; brak niezwiązanego cleanupu.
+- Excel dobiera barwy przez CSS tokens. Testy pilnują braku odczytu motywu w rendererze
+  i par tokenów jasnego/ciemnego motywu.
+- Kreator Rur i Studni: ostatnie pole aktywnego kroku pozostaje osiągalne nad dolną
+  nawigacją przy szerokości 390 px; regresję sprawdza Playwright.
 
-Trzy systemy (brak unifikacji geometrii — kontrakt): `.rury-table` + `.rury-col-num` (rury.css:318), `.zlecenia-table(--flat)` (zlecenia.css:153), `.modal--clients table` (responsive:775). Wspólne: `.table-wrap`, sticky `th`, hover `--bg-hover`. Sortowanie: rury SSoT `getSortedRuryItems`, studnie sort DN, zlecenia cursor + sentinel.
+## Ograniczenia i nieweryfikowane obszary
 
-## Modale
-
-SSoT `shared/modalCore.js`: `showModal({id,titleId,html,onOpen,onClose})`, focus-trap, Esc/overlay-close, `LAYERS.*`. Klasy: `.modal-overlay/.modal/.modal-header/.modal-footer` (responsive:564-744), rozmiary `.modal--sm/md/lg` (utilities:1070-1078). Warianty szerokie: `--share/--tm/--ie/--clients/--prz-flow` (do migracji na `--sm/md/lg` tam, gdzie bezpieczne).
-
-## Badge / statusy
-
-`.badge-ok/info/muted`, `.role-admin/pro/user` (SSoT utilities), `.pill-tag-blue/danger/nierdz/warn`, `.ka-pill`, `.status-draft/.status-accepted`, `.cat-header/.cat-count`. Statusy błędów studni: `.well-row-error/warning` + ikona + tooltip (nie sam kolor).
-
-## Karty / nawigacja
-
-`.card/.card-sm/.card-compact`, `.modern-offer-card` (cards.css), `.nav-tile--<moduł>` + `.active::after`, `.catalog-tabs/tab`, `.zlecenia-filter-tab`, `.tile/.param-tile/.well-list-item/.offer-list-item`.
-
-## Znane niespójności (do naprawy w P2-P8)
-
-1. 4 twarde hexy w `studnie/offer.css:415,419,425,430` — zamiana na tokeny.
-2. Inline `style=` w JS: excelShortcuts, excelTableBody, excelModal, offerSummaryTable, offerDiscountsPopup, toolbar.js, offerAddItems.js, wellUI.js:68, zleceniaRender, rury/offerRendering — zamiana na utility.
-3. `el.style.cssText`: clientManager.js:206,223, orderEditMode.js:140, excelModal.js:117, excelHelpers.js:727.
-4. Duplikaty utility: `.flex-between` + `.flex-space-between` + `.flex-between-4` (używane 2 pierwsze — NIE ruszać nazw, kontrakt).
-5. `.text-xs` = `var(--fs-base)` — nazwa myląca, ale używana w ~15 miejscach — NIE ruszać.
-6. Luki escape: offerWellComponents.js:403, offerSummaryBanners.js:23, actionsWellCrud.js:193,236, excelWellActions.js:356, offerUserManager.js:126.
-
-## Desync motywu (2026-09-24, naprawione)
-
-Kafelki konfiguracji (`actionsConfigRender.js`) branchowały motyw w JS w czasie
-renderu (`isLightTheme` z `data-theme`). Przy cache `light` + synchronizacji
-`dark` z backendu (bez re-renderu) strona była ciemna, a kafle neutralne —
-„raz kolorowe, raz nie”. Reguła: motyw sterowany wyłącznie CSS
-(`.config-tile` + `html[data-theme='light']`), JS podaje `--tile-accent`
-i `--tile-fg` z pary AA typeBadge (pełne tło koloru typu, tekst dziedziczy fg).
-Ten sam wzorzec zastosowano w `orderZleceniaRender.js` (`.zl-config-tile`)
-i nagłówkach Excela (`excelTableRenderer.js`, `.excel-hdr-themed`).
-Zakaz `getAttribute('data-theme')` w kodzie renderującym (public/js).
+Historyczne liczniki inline-style/hex obejmują również style generowane dynamicznie,
+wyjątki i legacy. Same dopasowania tekstowe nie dowodzą naruszenia konkretnego
+ekranu, dlatego nie są tu przedstawiane jako potwierdzone błędy. Nie wykonywano
+masowej migracji selektorów, modalów, tabel ani kolorów. Zmiany w tych obszarach
+wymagają analizy wykorzystania, porównania przed/po i testu właściwego modułu.

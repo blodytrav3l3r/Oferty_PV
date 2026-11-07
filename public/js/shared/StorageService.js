@@ -310,6 +310,16 @@ class StorageService {
                 contactPerson: doc.data.contactPerson,
                 clientPhone: doc.data.clientPhone,
                 clientEmail: doc.data.clientEmail,
+                investName: doc.data.investName,
+                investAddress: doc.data.investAddress,
+                investContractor: doc.data.investContractor,
+                investStreet: doc.data.investStreet,
+                investPostalCode: doc.data.investPostalCode,
+                investCity: doc.data.investCity,
+                investCountry: doc.data.investCountry,
+                investLocationDescription: doc.data.investLocationDescription,
+                investContact: doc.data.investContact,
+                investContacts: doc.data.investContacts,
                 date: doc.data.date || doc.data.offerDate
             };
 

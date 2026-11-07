@@ -116,8 +116,8 @@
             <div class="wizard-section-title" style="margin-top: 1.2rem">
                 <i data-lucide="hard-hat"></i> Inwestycja
             </div>
-            <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr">
-                <div class="wizard-form-group">
+            <div class="wizard-form-grid investment-form-grid" id="invest-location-fields">
+                <div class="wizard-form-group investment-object">
                     <label class="wizard-form-label" for="invest-name">Obiekt</label>
                     <input
                         class="wizard-form-input"
@@ -126,21 +126,70 @@
                     />
                 </div>
                 <div class="wizard-form-group">
-                    <label class="wizard-form-label" for="invest-address">Adres</label>
+                    <label class="wizard-form-label" for="invest-postal-code">Kod pocztowy</label>
                     <input
                         class="wizard-form-input"
-                        id="invest-address"
-                        placeholder="ul. Nowa 5, Kraków"
+                        id="invest-postal-code"
+                        autocomplete="postal-code"
+                        maxlength="20"
+                        placeholder="00-000"
                     />
                 </div>
                 <div class="wizard-form-group">
-                    <label class="wizard-form-label" for="invest-contractor">Wykonawca</label>
+                    <label class="wizard-form-label" for="invest-city">Miejscowość</label>
                     <input
                         class="wizard-form-input"
-                        id="invest-contractor"
-                        placeholder="Imię i nazwisko"
+                        id="invest-city"
+                        autocomplete="address-level2"
+                        maxlength="120"
                     />
                 </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="invest-street">Ulica i numer</label>
+                    <input
+                        class="wizard-form-input"
+                        id="invest-street"
+                        autocomplete="street-address"
+                        maxlength="200"
+                    />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="invest-country">Kraj</label>
+                    <select class="wizard-form-input" id="invest-country" autocomplete="country">
+                        <option value="PL">Polska</option>
+                    </select>
+                </div>
+                <div class="wizard-form-group investment-location-description">
+                    <label class="wizard-form-label" for="invest-location-description"
+                        >Opis lokalizacji</label
+                    >
+                    <textarea
+                        class="wizard-form-input"
+                        id="invest-location-description"
+                        rows="2"
+                        maxlength="500"
+                        placeholder="Dodatkowe wskazówki dojazdu lub położenia obiektu"
+                    ></textarea>
+                </div>
+            </div>
+            <p
+                class="text-muted fs-md investment-legacy-address"
+                id="invest-legacy-address"
+                hidden
+            ></p>
+            <div class="wizard-form-group investment-contact-group">
+                <span class="wizard-form-label" id="invest-contacts-label">Osoby do kontaktu</span>
+                <div
+                    id="invest-contacts"
+                    data-cc-hidden="invest-contact"
+                    data-cc-autoinit
+                    data-cc-add-label="Dodaj kontakt na budowę"
+                    role="group"
+                    aria-labelledby="invest-contacts-label"
+                ></div>
+                <input type="hidden" id="invest-contact" />
+                <input type="hidden" id="invest-address" />
+                <input type="hidden" id="invest-contractor" />
             </div>
 
             <div

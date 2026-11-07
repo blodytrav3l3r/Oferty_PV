@@ -34,6 +34,7 @@ const AppZlecenia = (() => {
         const items = searchResults ? searchResults.items : [];
         return {
             items,
+            requiresDateFrom: !hasDateFrom(),
             totalCount: searchResults ? searchResults.totalCount : 0,
             hasMore: !!(searchResults && searchResults.hasMore && items.length < MAX_LOADED),
             stats: searchResults ? searchResults.stats : null,
@@ -51,12 +52,16 @@ const AppZlecenia = (() => {
         return y + '-' + m + '-' + day;
     }
 
-    function applyTodayFilter() {
-        const today = isoLocalDate(new Date());
+    function hasDateFrom() {
+        const dateFromInput = document.getElementById('zlecenia-date-from');
+        return !!(dateFromInput && dateFromInput.value.trim());
+    }
+
+    function clearDateRange() {
         const dateFromInput = document.getElementById('zlecenia-date-from');
         const dateToInput = document.getElementById('zlecenia-date-to');
-        if (dateFromInput) dateFromInput.value = today;
-        if (dateToInput) dateToInput.value = today;
+        if (dateFromInput) dateFromInput.value = '';
+        if (dateToInput) dateToInput.value = '';
         syncDatePresetState();
     }
 
@@ -111,7 +116,7 @@ const AppZlecenia = (() => {
         setupStaticActions();
         setupSentinel();
         await populateUserFilter();
-        applyTodayFilter();
+        clearDateRange();
         await searchOffers(buildSearchParams());
     }
 
@@ -201,9 +206,7 @@ const AppZlecenia = (() => {
         const dateClearBtn = document.getElementById('zlecenia-date-clear');
         if (dateClearBtn) {
             dateClearBtn.addEventListener('click', () => {
-                if (dateFromInput) dateFromInput.value = '';
-                if (dateToInput) dateToInput.value = '';
-                syncDatePresetState();
+                clearDateRange();
                 searchOffers(buildSearchParams());
             });
         }
@@ -242,6 +245,31 @@ const AppZlecenia = (() => {
     /* ===== DATA LOADING ===== */
 
     async function searchOffers(params) {
+        if (!params.dateFrom) {
+            if (abortController) abortController.abort();
+            abortController = null;
+            requestSeq += 1;
+            isLoading = false;
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+            selectedIds.clear();
+            selectState = 0;
+            searchResults = {
+                items: [],
+                totalCount: 0,
+                hasMore: false,
+                nextCursor: null,
+                nextCursorId: null,
+                stats: { total: 0, accepted: 0, draft: 0, today: 0 }
+            };
+            window.zleceniaRender.renderStats(buildRenderState());
+            window.zleceniaRender.updateChips(activeFilter);
+            selectState = window.zleceniaRender.renderTable(buildRenderState());
+            return;
+        }
+
         if (abortController) {
             abortController.abort();
         }
@@ -441,11 +469,11 @@ const AppZlecenia = (() => {
         }
     }
 
-    /* Wyzerowanie wszystkich filtrów naraz (daty wracają do dziś — spójnie z widokiem domyślnym) */
+    /* Wyzerowanie filtrów — data początkowa wymaga ponownego wyboru. */
     function clearAllFilters() {
         const qInput = document.getElementById('zlecenia-search-input');
         if (qInput) qInput.value = '';
-        applyTodayFilter();
+        clearDateRange();
         const select = document.getElementById('zlecenia-user-filter');
         if (select) select.value = '';
         const prodInput = document.getElementById('zlecenia-prod-number-input');

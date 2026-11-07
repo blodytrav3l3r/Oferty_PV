@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-06",
-    "totalEdges": 2834,
+    "generatedAt": "2026-11-07",
+    "totalEdges": 2846,
     "edges": [
         {
             "page": "public/app.html",
@@ -1221,6 +1221,14 @@
         },
         {
             "page": "public/rury.html",
+            "name": "bindInvestAddressMirror",
+            "userFile": "public/js/rury/orderEditMode.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
             "name": "buildBaseOfferDoc",
             "userFile": "public/js/rury/offerCrud.js",
             "defFile": "public/js/shared/offerCrudCommon.js",
@@ -1729,6 +1737,14 @@
             "userFile": "public/js/shared/draftAutosave.js",
             "defFile": "public/js/rury/orderCrud.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "ensureInvestCountryOptions",
+            "userFile": "public/js/rury/orderEditMode.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {
@@ -2365,6 +2381,14 @@
         },
         {
             "page": "public/rury.html",
+            "name": "getInvestLocationFields",
+            "userFile": "public/js/rury/orderCrud.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
             "name": "getItemOrderedQty",
             "userFile": "public/js/rury/offerSync.js",
             "defFile": "public/js/rury/orderItems.js",
@@ -2391,6 +2415,22 @@
             "page": "public/rury.html",
             "name": "getOfferFormFields",
             "userFile": "public/js/rury/offerCrud.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getOfferFormFields",
+            "userFile": "public/js/rury/offerPrintManager.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getOfferFormFields",
+            "userFile": "public/js/rury/orderCrud.js",
             "defFile": "public/js/shared/offerCrudCommon.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -3197,6 +3237,14 @@
         },
         {
             "page": "public/rury.html",
+            "name": "renderInvestContactsList",
+            "userFile": "public/js/rury/orderEditMode.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
             "name": "renderOfferItems",
             "userFile": "public/js/rury/offerAddItems.js",
             "defFile": "public/js/rury/offerRendering.js",
@@ -3849,6 +3897,14 @@
             "userFile": "public/js/rury/offerUpdateItems.js",
             "defFile": "public/js/rury/offerSync.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "syncInvestAddressMirror",
+            "userFile": "public/js/rury/orderEditMode.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {
@@ -8573,6 +8629,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "bindInvestAddressMirror",
+            "userFile": "public/js/studnie/orderCrud.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "buildBaseOfferDoc",
             "userFile": "public/js/studnie/offerSave.js",
             "defFile": "public/js/shared/offerCrudCommon.js",
@@ -10777,6 +10841,14 @@
             "userFile": "public/js/studnie/solverAutoSelect.js",
             "defFile": "public/js/studnie/wellElemId.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "ensureInvestCountryOptions",
+            "userFile": "public/js/studnie/orderCrud.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {
@@ -13271,6 +13343,14 @@
             "page": "public/studnie.html",
             "name": "getOfferFormFields",
             "userFile": "public/js/shared/draftAutosave.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getOfferFormFields",
+            "userFile": "public/js/studnie/offerPrintManager.js",
             "defFile": "public/js/shared/offerCrudCommon.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -17677,6 +17757,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "renderInvestContactsList",
+            "userFile": "public/js/studnie/orderCrud.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "renderOfferLockBanner",
             "userFile": "public/js/studnie/offerFormHelpers.js",
             "defFile": "public/js/studnie/uiLockBanners.js",
@@ -20689,6 +20777,14 @@
             "userFile": "public/js/studnie/wellManager.js",
             "defFile": "public/js/studnie/actionsElevation.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "syncInvestAddressMirror",
+            "userFile": "public/js/studnie/orderCrud.js",
+            "defFile": "public/js/shared/offerCrudCommon.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {

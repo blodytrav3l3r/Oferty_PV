@@ -168,6 +168,15 @@ function exportOfferPDF(id) {
       ${offer.clientContact ? `<div>Kontakt: ${escapeHtml(offer.clientContact)}</div>` : ''}
       ${offer.investName ? `<div style="margin-top:6px"><strong>Inwestycja:</strong> ${escapeHtml(offer.investName)}</div>` : ''}
       ${offer.investAddress ? `<div>Adres inwestycji: ${escapeHtml(offer.investAddress)}</div>` : ''}
+      ${offer.investLocationDescription ? `<div>Opis lokalizacji: ${escapeHtml(offer.investLocationDescription)}</div>` : ''}
+      ${(offer.investContacts || [])
+          .map((contact) => {
+              const details = [contact.name, contact.phone, contact.email]
+                  .filter(Boolean)
+                  .join(', ');
+              return details ? `<div>Kontakt na budowie: ${escapeHtml(details)}</div>` : '';
+          })
+          .join('')}
     </div>
     <div class="info-box"><h3>Podsumowanie</h3>
       <div>Pozycji: ${offer.items.length}</div>
@@ -615,6 +624,16 @@ function importOfferFromXlsx() {
                     metaData.forEach((row) => {
                         if (row[0] && row[0] !== 'KEY') meta[row[0]] = row[1];
                     });
+                    let investContacts = [];
+                    try {
+                        const parsedContacts = JSON.parse(meta.investContacts || '[]');
+                        if (Array.isArray(parsedContacts)) investContacts = parsedContacts;
+                    } catch (_e) {
+                        showToast(
+                            'Nie udało się odczytać kontaktów inwestycji z pliku.',
+                            'warning'
+                        );
+                    }
 
                     // Odczytaj pozycje z metadanych (pełny cykl JSON)
                     const items = [];
@@ -716,6 +735,12 @@ function importOfferFromXlsx() {
                         clientContact: meta.clientContact || '',
                         investName: meta.investName || '',
                         investAddress: meta.investAddress || '',
+                        investStreet: meta.investStreet || '',
+                        investPostalCode: meta.investPostalCode || '',
+                        investCity: meta.investCity || '',
+                        investCountry: meta.investCountry || 'PL',
+                        investLocationDescription: meta.investLocationDescription || '',
+                        investContacts,
                         notes: meta.notes || '',
                         paymentTerms:
                             meta.paymentTerms ||

@@ -15,7 +15,7 @@
 ## Legacy surface (nie powiększaj)
 
 - Bieżące liczby: `docs/agents/metrics.md`. Struktura: iframe + `defer-order` + partiale = wysokie coupling.
-- Zasada: **NEW `window.*` = 0, NEW `onclick` = 0, NEW inline styles = 0.** Stary kod zostaje; nowy kod to ESM + `addEventListener` + jawne importy/eksporty.
+- Zasada: **NEW `window.*` = 0, NEW `onclick` = 0, NEW inline styles = 0.** Stary kod zostaje. Nowe izolowane moduły mogą używać ESM + `addEventListener` + jawnych importów/eksportów; przy rozbudowie istniejącego łańcucha klasycznych skryptów zachowaj jego kontrakt i nie dodawaj globali ani handlerów inline. Mostki `window.*` w istniejących modułach ESM służą wyłącznie niezmigrowanym callerom legacy. To podejście przyrostowe nie oznacza hurtowej konwersji legacy ani zmiany granicy iframe; szczegóły: ADR-008 i ADR-014.
 - Excel (`excel*.js`) to protected zone: one problem → one diff → targeted tests → E2E → weryfikacja manualna. Bez "cleanup Excel".
 
 ## UI/UX (Design System SSoT) — obowiązkowe przy każdej zmianie UI
@@ -31,6 +31,8 @@ Jedyne źródło prawdy: `docs/UI_GUIDELINES.md`. Kluczowe reguły:
 - **Zakaz inline style**, gdy istnieje klasa/utility.
 - **A11y**: widoczne `:focus-visible`, `aria-label` na przyciskach ikonowych, kolor nie jedynym wskaźnikiem statusu, `prefers-reduced-motion`, kontrast ≥ 4.5:1.
 - **Responsywność**: breakpointy 1400/1200/1100/900/768/600/480 (lokalne odchylenia 860/720/700/640 — nie ujednolicaj bez screenshotów przed/po); brak poziomego scrolla w 375/768/1024/1440.
+- Formularze kreatora: na 390 px ostatnie pole aktywnego kroku musi dać się przewinąć w całości ponad `.wizard-nav-fixed`; chroni to test Playwright w `tests/playwright/a11yAxe.spec.ts`.
+- Motyw Excela: renderer nie odczytuje `data-theme` ani nie wybiera kolorów w JavaScript. Przezroczystości korzystają z par tokenów w `style.base.css`, a ich obecność i zgodność motywów chronią testy `tests/frontend/excelDynamicCss.test.ts` i `excelThemeTokens.test.ts`.
 
 ## Nagłówek, logo, SPA
 

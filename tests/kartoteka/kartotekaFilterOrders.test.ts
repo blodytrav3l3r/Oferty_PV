@@ -58,7 +58,10 @@ describe('kartoteka filtry — zmiana listy dociąga mapę zamówień', () => {
         context.window = {
             escapeHtml: esc,
             showToast: () => {},
-            resolveDatePreset: () => ({ from: '', to: '' }),
+            resolveDatePreset: () => ({
+                from: '2026-11-01T00:00:00.000Z',
+                to: '2026-12-01T00:00:00.000Z'
+            }),
             httpErrorMessage: (c: number) => 'HTTP ' + c
         };
         vm.createContext(context);
@@ -113,6 +116,7 @@ describe('kartoteka filtry — zmiana listy dociąga mapę zamówień', () => {
 
     test('setDatePreset: nowa lista + mapa zamówień wypełniona', async () => {
         queue.push(okBody(searchBody), okResp([order]), okResp([]));
+        mod.filters.date = { mode: 'none', preset: '', from: '', to: '' };
         mod.setDatePreset('month');
         await flush();
         expect(mod.searchResults.items).toHaveLength(1);

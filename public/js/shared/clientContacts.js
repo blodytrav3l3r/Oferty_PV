@@ -102,13 +102,13 @@ export function contactRowHtml(c, idx) {
     );
 }
 
-export function editorHtml(list) {
+export function editorHtml(list, addLabel = 'Dodaj osobę') {
     const rows = normalizeContacts(list);
     return (
         `<div class="cc-rows">` +
         rows.map((c, i) => contactRowHtml(c, i)).join('') +
         `</div>` +
-        `<button type="button" class="btn btn-sm btn-secondary" data-cc-add="1">Dodaj osobę</button>`
+        `<button type="button" class="btn btn-sm btn-secondary" data-cc-add="1">${escAttr(addLabel)}</button>`
     );
 }
 
@@ -116,7 +116,8 @@ export function editorHtml(list) {
 export function renderEditor(container, list) {
     if (!container) return;
     const rows = normalizeContacts(list);
-    container.innerHTML = editorHtml(rows.length > 0 ? rows : [{}]);
+    const addLabel = container.getAttribute?.('data-cc-add-label') || 'Dodaj osobę';
+    container.innerHTML = editorHtml(rows.length > 0 ? rows : [{}], addLabel);
     const hiddenId = container.getAttribute && container.getAttribute('data-cc-hidden');
     if (hiddenId && typeof document !== 'undefined') {
         const hidden = document.getElementById(hiddenId);
@@ -191,4 +192,21 @@ if (typeof window !== 'undefined') {
         collectContacts,
         bindEditor
     };
+}
+
+function initAutoEditors() {
+    if (typeof document === 'undefined') return;
+    document.querySelectorAll('[data-cc-autoinit]').forEach((container) => {
+        if (container.dataset.ccAutoInitialized === 'true') return;
+        const hiddenId = container.getAttribute('data-cc-hidden');
+        const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+        renderEditor(container, parseLegacyMirror(hidden?.value || ''));
+        bindEditor(container);
+        container.dataset.ccAutoInitialized = 'true';
+    });
+}
+
+if (typeof document !== 'undefined') {
+    initAutoEditors();
+    document.addEventListener('partials:loaded', initAutoEditors, { once: true });
 }

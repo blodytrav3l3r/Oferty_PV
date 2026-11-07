@@ -350,6 +350,22 @@ export const ruryOfferExportSchema = z.object({
     investName: z.string().optional().default(''),
     investAddress: z.string().optional().default(''),
     investContractor: z.string().optional().default(''),
+    investStreet: z.string().optional().default(''),
+    investPostalCode: z.string().optional().default(''),
+    investCity: z.string().optional().default(''),
+    investCountry: z.string().optional().default('PL'),
+    investLocationDescription: z.string().optional().default(''),
+    investContacts: z
+        .array(
+            z.object({
+                name: z.string().optional().default(''),
+                phone: z.string().optional().default(''),
+                email: z.string().optional().default('')
+            })
+        )
+        .max(10)
+        .optional()
+        .default([]),
     notes: z.string().optional().default(''),
     paymentTerms: z.string().optional().default(''),
     validity: z.string().optional().default(''),
@@ -398,6 +414,23 @@ export const studnieOfferExportSchema = z.object({
     clientContact: z.string().optional().default(''),
     investName: z.string().optional().default(''),
     investAddress: z.string().optional().default(''),
+    investContractor: z.string().optional().default(''),
+    investStreet: z.string().optional().default(''),
+    investPostalCode: z.string().optional().default(''),
+    investCity: z.string().optional().default(''),
+    investCountry: z.string().optional().default('PL'),
+    investLocationDescription: z.string().optional().default(''),
+    investContacts: z
+        .array(
+            z.object({
+                name: z.string().optional().default(''),
+                phone: z.string().optional().default(''),
+                email: z.string().optional().default('')
+            })
+        )
+        .max(10)
+        .optional()
+        .default([]),
     notes: z.string().optional().default(''),
     paymentTerms: z.string().optional().default(''),
     validity: z.string().optional().default(''),

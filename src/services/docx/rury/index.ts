@@ -168,6 +168,8 @@ export async function generateRuryOrderDOCX(orderId: string): Promise<Buffer> {
             investName: ctx.investName,
             investAddress: ctx.investAddress,
             investContractor: ctx.investContractor,
+            investLocationDescription: ctx.investLocationDescription,
+            investContacts: ctx.investContacts,
             notes: ctx.notes,
             paymentTerms: ctx.paymentTerms,
             orderNumber: ctx.orderNumber,

@@ -165,6 +165,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
     const investName = document.getElementById('invest-name')?.value?.trim() || '';
     const investAddress = document.getElementById('invest-address')?.value?.trim() || '';
     const investContractor = document.getElementById('invest-contractor')?.value?.trim() || '';
+    const investmentFields = getOfferFormFields();
     const notes = document.getElementById('offer-notes')?.value?.trim() || '';
     const transportKm = Number(document.getElementById('transport-km')?.value || 0);
     const transportRate = Number(document.getElementById('transport-rate')?.value || 0);
@@ -237,6 +238,13 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             investName,
             investAddress,
             investContractor,
+            investStreet: investmentFields.investStreet || '',
+            investPostalCode: investmentFields.investPostalCode || '',
+            investCity: investmentFields.investCity || '',
+            investCountry: investmentFields.investCountry || 'PL',
+            investLocationDescription: investmentFields.investLocationDescription || '',
+            investContact: investmentFields.investContact || '',
+            investContacts: investmentFields.investContacts || [],
             notes,
             transportKm,
             transportRate,
@@ -301,13 +309,33 @@ async function saveRuryOrder() {
     }
 
     const orderData = ordersRury[orderIndex];
-    orderData.items = structuredClone(orderCurrentItems || []);
-    orderData.transportKm = Number(document.getElementById('transport-km')?.value || 0);
-    orderData.transportRate = Number(document.getElementById('transport-rate')?.value || 0);
-    orderData.transportMode = currentRuryTransportMode || 'full';
-    orderData.transportSeparate = !!currentRuryTransportSeparate;
-    orderData.zabezpieczenieTransportuEnabled = !!window.zabezpieczenieTransportuEnabled;
-    orderData.updatedAt = new Date().toISOString();
+    const investmentFields =
+        typeof getInvestLocationFields === 'function' ? getInvestLocationFields() : null;
+    const updatedOrderData = {
+        ...orderData,
+        items: structuredClone(orderCurrentItems || []),
+        transportKm: Number(document.getElementById('transport-km')?.value || 0),
+        transportRate: Number(document.getElementById('transport-rate')?.value || 0),
+        transportMode: currentRuryTransportMode || 'full',
+        transportSeparate: !!currentRuryTransportSeparate,
+        zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
+        investName:
+            document.getElementById('invest-name')?.value?.trim() ?? orderData.investName ?? '',
+        investAddress:
+            investmentFields?.investAddress ??
+            document.getElementById('invest-address')?.value?.trim() ??
+            orderData.investAddress ??
+            '',
+        investContractor:
+            document.getElementById('invest-contractor')?.value?.trim() ??
+            orderData.investContractor ??
+            '',
+        ...(investmentFields || {}),
+        updatedAt: new Date().toISOString()
+    };
+    ordersRury = ordersRury.map((order, index) =>
+        index === orderIndex ? updatedOrderData : order
+    );
 
     try {
         await saveOrdersDataRury(ordersRury);

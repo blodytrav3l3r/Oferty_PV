@@ -99,6 +99,7 @@ function getCurrentOfferForExport() {
     const clientNip = document.getElementById('client-nip')?.value?.trim() || '';
     const clientAddress = document.getElementById('client-address')?.value?.trim() || '';
     const clientContact = document.getElementById('client-contact')?.value?.trim() || '';
+    const investmentFields = typeof getOfferFormFields === 'function' ? getOfferFormFields() : {};
     const investName = document.getElementById('invest-name')?.value?.trim() || '';
     const investAddress = document.getElementById('invest-address')?.value?.trim() || '';
     const investContractor = document.getElementById('invest-contractor')?.value?.trim() || '';
@@ -120,6 +121,13 @@ function getCurrentOfferForExport() {
         investName,
         investAddress,
         investContractor,
+        investStreet: investmentFields.investStreet || '',
+        investPostalCode: investmentFields.investPostalCode || '',
+        investCity: investmentFields.investCity || '',
+        investCountry: investmentFields.investCountry || 'PL',
+        investLocationDescription: investmentFields.investLocationDescription || '',
+        investContact: investmentFields.investContact || '',
+        investContacts: investmentFields.investContacts || [],
         notes,
         paymentTerms,
         validity,
@@ -287,6 +295,7 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
     const getVal = (id) => document.getElementById(id)?.value?.trim() || '';
     const transportKm = Number(document.getElementById('transport-km')?.value || 0);
     const transportRate = Number(document.getElementById('transport-rate')?.value || 0);
+    const investmentFields = getOfferFormFields();
 
     const currentOrder = typeof getCurrentRuryOrder === 'function' ? getCurrentRuryOrder() : null;
     const orderNumber = currentOrder?.orderNumber || orderId;
@@ -302,6 +311,13 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         investName: getVal('invest-name'),
         investAddress: getVal('invest-address'),
         investContractor: getVal('invest-contractor'),
+        investStreet: investmentFields.investStreet || '',
+        investPostalCode: investmentFields.investPostalCode || '',
+        investCity: investmentFields.investCity || '',
+        investCountry: investmentFields.investCountry || 'PL',
+        investLocationDescription: investmentFields.investLocationDescription || '',
+        investContact: investmentFields.investContact || '',
+        investContacts: investmentFields.investContacts || [],
         notes: getVal('offer-tab-notes') || getVal('offer-notes'),
         paymentTerms: getVal('offer-payment-terms'),
         validity: getVal('offer-validity'),

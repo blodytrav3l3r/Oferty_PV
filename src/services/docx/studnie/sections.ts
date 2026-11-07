@@ -204,7 +204,9 @@ export function buildClientInvestTable(
     contact: string,
     investName: string,
     investAddress: string,
-    investContractor: string
+    investContractor: string,
+    investLocationDescription: string,
+    investContacts: Array<{ name?: string; phone?: string; email?: string }>
 ): Table {
     const buildCell = (label: string, lines: TextRun[]): TableCell => {
         const runs: TextRun[] = [
@@ -225,7 +227,13 @@ export function buildClientInvestTable(
     };
 
     const clientRuns = buildClientRuns(name, address, nip, contact);
-    const investRuns = buildInvestRuns(investName, investAddress, investContractor);
+    const investRuns = buildInvestRuns(
+        investName,
+        investAddress,
+        investContractor,
+        investLocationDescription,
+        investContacts
+    );
 
     return new Table({
         rows: [
@@ -289,7 +297,9 @@ function buildClientRuns(name: string, address: string, nip: string, contact: st
 function buildInvestRuns(
     investName: string,
     investAddress: string,
-    investContractor: string
+    investContractor: string,
+    investLocationDescription: string,
+    investContacts: Array<{ name?: string; phone?: string; email?: string }>
 ): TextRun[] {
     const runs: TextRun[] = [];
     if (investName) {
@@ -360,6 +370,44 @@ function buildInvestRuns(
             })
         );
     }
+    if (investLocationDescription) {
+        runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
+        runs.push(
+            new TextRun({
+                text: 'Opis lokalizacji: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            }),
+            new TextRun({
+                text: investLocationDescription,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
+    }
+    investContacts.forEach((contact) => {
+        const details = [contact.name, contact.phone, contact.email].filter(Boolean).join(', ');
+        if (!details) return;
+        runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
+        runs.push(
+            new TextRun({
+                text: 'Kontakt na inwestycji: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            }),
+            new TextRun({
+                text: details,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
+    });
     return runs;
 }
 

@@ -91,6 +91,45 @@ test.describe('a11y axe', () => {
             });
             expect(withoutArtifact, JSON.stringify(withoutArtifact, null, 2)).toEqual([]);
         });
+
+        test(`${mod} na 390 px pozwala doscrollować ostatnie pole nad dolną nawigację`, async ({
+            page
+        }) => {
+            await page.setViewportSize({ width: 390, height: 844 });
+            const login = await page.request.post('/api/auth/login', {
+                data: {
+                    username: 'admin',
+                    password: process.env.TEST_ADMIN_PASSWORD || 'anim123456'
+                }
+            });
+            expect(login.ok(), `login failed: ${login.status()}`).toBe(true);
+            await page.goto(`/app.html#/${mod.replace('.html', '')}`);
+            const frame = await waitForModuleFrame(page, mod);
+            expect(frame, `brak iframe ${mod}`).not.toBeNull();
+            await frame!.locator('.wizard-nav-fixed').waitFor({ timeout: 15000 });
+            await frame!.locator('.wizard-step.active').waitFor({ timeout: 15000 });
+
+            const clearance = await frame!.evaluate(() => {
+                const step = document.querySelector('.wizard-step.active');
+                const footer = document.querySelector('.wizard-nav-fixed');
+                const fields = Array.from(step?.querySelectorAll('input, select, textarea') || []);
+                const visibleFields = fields.filter((field) => {
+                    const style = getComputedStyle(field);
+                    return (
+                        !field.disabled && style.display !== 'none' && style.visibility !== 'hidden'
+                    );
+                });
+                const lastField = visibleFields[visibleFields.length - 1];
+                if (!lastField || !footer) return null;
+                lastField.scrollIntoView({ block: 'end' });
+                return (
+                    footer.getBoundingClientRect().top - lastField.getBoundingClientRect().bottom
+                );
+            });
+
+            expect(clearance, 'brak ostatniego pola lub dolnej nawigacji').not.toBeNull();
+            expect(clearance).toBeGreaterThanOrEqual(8);
+        });
     }
 
     test('kartoteka filtry mają dostępne nazwy (aria-label)', async ({ page }) => {

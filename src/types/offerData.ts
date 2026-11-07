@@ -14,6 +14,13 @@ export interface RuryOfferDataBlob {
     investName?: string;
     investAddress?: string;
     investContractor?: string;
+    investStreet?: string;
+    investPostalCode?: string;
+    investCity?: string;
+    investCountry?: string;
+    investLocationDescription?: string;
+    investContact?: string;
+    investContacts?: Array<{ name?: string; phone?: string; email?: string }>;
     notes?: string;
     paymentTerms?: string;
     validity?: string;
@@ -47,6 +54,13 @@ export interface StudnieOfferDataBlob {
     investName?: string;
     investAddress?: string;
     investContractor?: string;
+    investStreet?: string;
+    investPostalCode?: string;
+    investCity?: string;
+    investCountry?: string;
+    investLocationDescription?: string;
+    investContact?: string;
+    investContacts?: Array<{ name?: string; phone?: string; email?: string }>;
     notes?: string;
     paymentTerms?: string;
     validity?: string;

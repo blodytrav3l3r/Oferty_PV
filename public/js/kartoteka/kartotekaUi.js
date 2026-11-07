@@ -19,10 +19,10 @@ class KartotekaUI {
         this.hidePaused = false;
         this.filters = {
             user: '',
-            // Domyślnie pokazuj oferty z bieżącego dnia (spójnie z #/zlecenia).
+            // Wyszukiwanie ofert wymaga jawnie wybranego zakresu początkowego.
             date: {
-                mode: 'preset',
-                preset: 'today',
+                mode: 'none',
+                preset: '',
                 from: '',
                 to: ''
             }

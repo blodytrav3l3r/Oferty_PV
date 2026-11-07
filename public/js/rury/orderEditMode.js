@@ -53,6 +53,33 @@ async function enterRuryOrderEditMode(orderId) {
         setVal('invest-name', orderData.investName);
         setVal('invest-address', orderData.investAddress);
         setVal('invest-contractor', orderData.investContractor);
+        if (typeof ensureInvestCountryOptions === 'function') ensureInvestCountryOptions();
+        if (typeof bindInvestAddressMirror === 'function') bindInvestAddressMirror();
+        setVal('invest-street', orderData.investStreet || '');
+        setVal('invest-postal-code', orderData.investPostalCode || '');
+        setVal('invest-city', orderData.investCity || '');
+        setVal('invest-country', orderData.investCountry || 'PL');
+        setVal('invest-location-description', orderData.investLocationDescription || '');
+        const legacyInvestAddress = document.getElementById('invest-legacy-address');
+        const hasStructuredInvestAddress = !!(
+            orderData.investStreet ||
+            orderData.investPostalCode ||
+            orderData.investCity
+        );
+        if (legacyInvestAddress) {
+            legacyInvestAddress.textContent = hasStructuredInvestAddress
+                ? ''
+                : orderData.investAddress
+                  ? 'Adres zapisany wcześniej: ' + orderData.investAddress
+                  : '';
+            legacyInvestAddress.hidden = hasStructuredInvestAddress || !orderData.investAddress;
+        }
+        if (typeof renderInvestContactsList === 'function') {
+            renderInvestContactsList(orderData.investContacts || [], {
+                investContact: orderData.investContact || ''
+            });
+        }
+        if (typeof syncInvestAddressMirror === 'function') syncInvestAddressMirror();
         setVal('offer-number', orderData.offerNumber);
         if (typeof setOrderNumberField === 'function')
             setOrderNumberField(orderData.orderNumber || '');

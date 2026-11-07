@@ -64,6 +64,13 @@ export async function generateCombinedHTML(
     const daneInwestycji = `
     ${studnieData.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(studnieData.investName)}</div>` : '<div>\u2014</div>'}
     ${studnieData.investAddress ? `<div>Adres: ${escapeHtml(studnieData.investAddress)}</div>` : ''}
+    ${studnieData.investLocationDescription ? `<div>Opis lokalizacji: ${escapeHtml(studnieData.investLocationDescription)}</div>` : ''}
+    ${(studnieData.investContacts || [])
+        .map((contact) => {
+            const details = [contact.name, contact.phone, contact.email].filter(Boolean).join(', ');
+            return details ? `<div>Kontakt na inwestycji: ${escapeHtml(details)}</div>` : '';
+        })
+        .join('')}
     ${studnieData.investContractor ? `<div>Wykonawca: ${escapeHtml(studnieData.investContractor)}</div>` : ''}
   `.trim();
 

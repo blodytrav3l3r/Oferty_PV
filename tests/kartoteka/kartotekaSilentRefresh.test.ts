@@ -48,11 +48,16 @@ describe('kartotekaSearch silent refresh (P0)', () => {
             ...context,
             escapeHtml: (s: string) => String(s),
             httpErrorMessage: (c: number) => 'HTTP ' + c,
-            resolveDatePreset: () => ({ from: '', to: '' })
+            resolveDatePreset: () => ({
+                from: '2026-11-01T00:00:00.000Z',
+                to: '2026-12-01T00:00:00.000Z'
+            })
         };
         vm.createContext(context);
         vm.runInContext(code, context);
         mod = context.__kartotekaSearch;
+        mod.filters = { date: { mode: 'preset', preset: 'month', from: '', to: '' } };
+        mod.currentFilter = 'all';
         mod.searchResults = null;
         mod._lastOfferSignature = undefined;
         mod.isLoading = false;

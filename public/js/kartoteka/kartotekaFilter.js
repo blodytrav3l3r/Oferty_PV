@@ -117,7 +117,7 @@ export default {
 
     /**
      * Zeruje wszystkie filtry kartoteki (typ, status, opiekun, szukaj).
-     * Data wraca do dziś — spójnie z widokiem domyślnym (jak w #/zlecenia).
+     * Data początkowa wymaga ponownego wyboru przed wczytaniem listy.
      */
     clearAllFilters() {
         this.currentFilter = 'all';
@@ -125,7 +125,7 @@ export default {
         this.currentFollowupFilter = 'all';
         this.hidePaused = false;
         this.filters.user = '';
-        this.filters.date = { mode: 'preset', preset: 'today', from: '', to: '' };
+        this.filters.date = { mode: 'none', preset: '', from: '', to: '' };
 
         const searchInput = document.getElementById('ka-local-search-input');
         if (searchInput) searchInput.value = '';

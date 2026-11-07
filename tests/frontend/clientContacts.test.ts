@@ -76,6 +76,43 @@ describe('clientContacts', () => {
         expect(html).toContain('data-cc-remove="0"');
     });
 
+    test('editorHtml pozwala zmienić etykietę przycisku dodawania', () => {
+        expect(cc.editorHtml([], 'Dodaj kontakt na budowę')).toContain('Dodaj kontakt na budowę');
+        expect(cc.editorHtml([])).toContain('Dodaj osobę');
+    });
+
+    test('inicjalizuje edytor auto po załadowaniu partiali', () => {
+        const file = path.join(__dirname, '../../public/js/shared/clientContacts.js');
+        const source = fs.readFileSync(file, 'utf8').replace(/^export /gm, '');
+        let containers: any[] = [];
+        let onPartialsLoaded: (() => void) | undefined;
+        const contactBox = {
+            dataset: {},
+            innerHTML: '',
+            getAttribute: (name: string) =>
+                name === 'data-cc-hidden' ? 'invest-contact' : 'Dodaj kontakt na budowę',
+            addEventListener() {}
+        };
+        const hiddenMirror = { value: '' };
+        const context: any = {
+            document: {
+                querySelectorAll: () => containers,
+                addEventListener: (name: string, callback: () => void) => {
+                    if (name === 'partials:loaded') onPartialsLoaded = callback;
+                },
+                getElementById: (id: string) => (id === 'invest-contact' ? hiddenMirror : null)
+            },
+            window: {}
+        };
+        vm.createContext(context);
+        vm.runInContext(source, context);
+
+        containers = [contactBox];
+        onPartialsLoaded?.();
+
+        expect(contactBox.innerHTML).toContain('Dodaj kontakt na budowę');
+    });
+
     test('collectContacts czyta wiersze z DOM-stuba', () => {
         const row = (vals: Record<string, string>) => ({
             querySelector: (sel: string) => {

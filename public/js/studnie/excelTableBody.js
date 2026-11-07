@@ -42,20 +42,23 @@ function _excelRowTitle(errTitle, isLocked) {
     return isLocked ? lockTitle : '';
 }
 
-function _excelIsLightTheme() {
-    try {
-        if (typeof document === 'undefined' || !document.documentElement) return false;
-        return document.documentElement.getAttribute('data-theme') === 'light';
-    } catch (_e) {
-        return false;
-    }
-}
+const _excelAlphaTokens = Object.freeze({
+    '0.12:0.2': '--excel-alpha-error-base',
+    '0.22:0.3': '--excel-alpha-error-active',
+    '0.18:0.24': '--excel-alpha-error-hover',
+    '0.1:0.18': '--excel-alpha-warning-base',
+    '0.2:0.28': '--excel-alpha-medium',
+    '0.16:0.22': '--excel-alpha-warning-hover',
+    '0.3:0.36': '--excel-alpha-duplicate-active',
+    '0.25:0.32': '--excel-alpha-duplicate-hover',
+    '0.35:0.4': '--excel-alpha-duplicate-hover-active'
+});
 
-/* Alfa tintu per motyw — na bialym tle light ta sama alfa jest percepcyjnie
-   slabsza, wiec light dostaje wzmocnienie (dark bez zmian). Wartosci liczone
-   w momencie renderu wiersza (patrz _excelRenderTbody). */
+/* Alfa jest wybierana przez token CSS motywu, nigdy przez odczyt stanu z DOM. */
 function _excelAlpha(dark, light) {
-    return _excelIsLightTheme() ? light : dark;
+    const token = _excelAlphaTokens[dark + ':' + light];
+    if (!token) throw new Error('Brak tokenu alfy Excela dla pary ' + dark + ':' + light);
+    return 'var(' + token + ')';
 }
 
 function _excelGetRowStatus(well) {

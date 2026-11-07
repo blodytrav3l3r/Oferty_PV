@@ -1465,7 +1465,7 @@ html[data-theme='light'] .om-footer {
     flex-direction: column;
     align-items: center;
     gap: 0.4rem;
-    transition: all 0.2s;
+    transition: background-color 0.2s;
 }
 
 .prz-flow-btn--wlot {

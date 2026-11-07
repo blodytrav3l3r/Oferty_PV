@@ -139,6 +139,12 @@ function buildOfferXlsxMetaRows(offer) {
     metaRows.push(['clientContact', offer.clientContact || '']);
     metaRows.push(['investName', offer.investName || '']);
     metaRows.push(['investAddress', offer.investAddress || '']);
+    metaRows.push(['investStreet', offer.investStreet || '']);
+    metaRows.push(['investPostalCode', offer.investPostalCode || '']);
+    metaRows.push(['investCity', offer.investCity || '']);
+    metaRows.push(['investCountry', offer.investCountry || 'PL']);
+    metaRows.push(['investLocationDescription', offer.investLocationDescription || '']);
+    metaRows.push(['investContacts', JSON.stringify(offer.investContacts || [])]);
     metaRows.push(['notes', offer.notes || '']);
     metaRows.push([
         'paymentTerms',

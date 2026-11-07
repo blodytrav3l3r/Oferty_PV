@@ -198,6 +198,8 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
             investName: String(body.investName ?? ''),
             investAddress: String(body.investAddress ?? ''),
             investContractor: String(body.investContractor ?? ''),
+            investLocationDescription: String(body.investLocationDescription ?? ''),
+            investContacts: Array.isArray(body.investContacts) ? body.investContacts : [],
             items,
             createdAt: String(body.date ?? new Date().toISOString()),
             validityDays: Number(body.validityDays ?? 30),
@@ -271,6 +273,12 @@ router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (r
             investName: body.investName ?? '',
             investAddress: body.investAddress ?? '',
             investContractor: body.investContractor ?? '',
+            investStreet: body.investStreet ?? '',
+            investPostalCode: body.investPostalCode ?? '',
+            investCity: body.investCity ?? '',
+            investCountry: body.investCountry ?? 'PL',
+            investLocationDescription: body.investLocationDescription ?? '',
+            investContacts: body.investContacts ?? [],
             notes: body.notes ?? '',
             paymentTerms: body.paymentTerms ?? ''
         };

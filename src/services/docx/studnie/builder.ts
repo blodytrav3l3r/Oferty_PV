@@ -133,6 +133,8 @@ export function buildStudnieSectionChildren(
     const investName = String(offerData.investName ?? '');
     const investAddress = String(offerData.investAddress ?? '');
     const investContractor = String(offerData.investContractor ?? '');
+    const investLocationDescription = String(offerData.investLocationDescription ?? '');
+    const investContacts = Array.isArray(offerData.investContacts) ? offerData.investContacts : [];
     const notes = String(offerData.notes ?? '');
     const paymentTerms = String(
         offerData.paymentTerms ?? 'Do uzgodnienia lub według indywidualnych warunków handlowych.'
@@ -158,7 +160,9 @@ export function buildStudnieSectionChildren(
             clientContact,
             investName,
             investAddress,
-            investContractor
+            investContractor,
+            investLocationDescription,
+            investContacts
         )
     );
 

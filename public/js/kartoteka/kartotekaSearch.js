@@ -38,7 +38,7 @@ export default {
             this.renderResults();
 
             // Załaduj mapę zamówień w tle — nie blokuje renderowania
-            this.notifyOrderMutation();
+            if (this.hasRequiredDateFrom()) this.notifyOrderMutation();
 
             this.initialized = true;
             if (typeof window.initAdvancedFilterEvents === 'function') {
@@ -56,7 +56,17 @@ export default {
         logger.info('kartotekaUi', 'loadLocalOffers: Delegowanie do searchOffers...');
         this._syncFilterUI();
         await this.searchOffers(this.buildSearchParams());
-        this.notifyOrderMutation();
+        if (this.hasRequiredDateFrom()) this.notifyOrderMutation();
+    },
+
+    hasRequiredDateFrom() {
+        const date = this.filters && this.filters.date;
+        if (!date) return false;
+        if (date.mode === 'preset') {
+            const resolved = window.resolveDatePreset(date.preset);
+            return !!(resolved && resolved.from);
+        }
+        return date.mode === 'range' && !!date.from;
     },
 
     /**
@@ -114,6 +124,24 @@ export default {
     },
 
     async searchOffers(params = {}, skipRender, opts = {}) {
+        if (!this.hasRequiredDateFrom()) {
+            if (this.abortController) this.abortController.abort();
+            this.abortController = null;
+            this.isLoading = false;
+            this.searchResults = {
+                items: [],
+                totalCount: 0,
+                hasMore: false,
+                nextCursor: null,
+                nextCursorId: null,
+                nextCursorType: null
+            };
+            this.ordersMap = new Map();
+            this.updateOfferCounter(0, 0);
+            this.renderResults();
+            return;
+        }
+
         if (this.abortController) {
             this.abortController.abort();
         }
@@ -221,6 +249,7 @@ export default {
      */
     async loadMore() {
         if (this.isLoading || !this.searchResults?.hasMore) return;
+        if (!this.hasRequiredDateFrom()) return;
         // Tryb follow-up nie ma kursora (sort po zaległości, v1) — brak
         // głębokiej paginacji; przycisk "Pokaż więcej" jest wtedy ukryty.
         if ((this.currentFollowupFilter || 'all') !== 'all') return;
@@ -269,6 +298,12 @@ export default {
     renderResults() {
         const listDiv = document.getElementById('ka-offers-list');
         if (!listDiv) return;
+
+        if (!this.hasRequiredDateFrom()) {
+            listDiv.innerHTML =
+                '<div class="empty-muted">Wybierz datę początkową, aby wczytać listę ofert.</div>';
+            return;
+        }
 
         const items = this.searchResults?.items || [];
 
