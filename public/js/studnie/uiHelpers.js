@@ -564,17 +564,14 @@ async function loadStudnieProducts(options) {
     }
 
     // Napraw uszczelki DN2500 dla kompatybilności z istniejącymi danymi
-    const hadDn2500Bug = saved.some(
-        (p) => p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000
+    saved = saved.map((product) =>
+        product.componentType === 'uszczelka' &&
+        product.id &&
+        product.id.includes('2500') &&
+        product.dn === 2000
+            ? { ...product, dn: 2500 }
+            : product
     );
-    saved.forEach((p) => {
-        if (p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000) {
-            p.dn = 2500;
-        }
-    });
-    if (hadDn2500Bug) {
-        saveStudnieProducts(saved).catch(() => {});
-    }
 
     window.__studniePricingSource = useActive ? 'active' : 'draft';
     return saved;
@@ -584,6 +581,8 @@ function renamePłyty(_p) {
     // Funkcja wyłączona - pozwala użytkownikowi na swobodne nazywanie Płyt
 }
 
+// Global used by pricelistSaveReset.js and pricelistImportExport.js.
+// eslint-disable-next-line no-unused-vars
 async function saveStudnieProducts(data) {
     try {
         const extra =

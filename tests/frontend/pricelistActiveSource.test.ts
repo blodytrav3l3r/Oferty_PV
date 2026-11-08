@@ -107,6 +107,48 @@ describe('P1 rury: loadProducts (dataService.js)', () => {
 });
 
 describe('P1 studnie: loadStudnieProducts / loadPrecoPricing (uiHelpers.js)', () => {
+    it('korekta DN2500 podczas odczytu nie zapisuje szkicu; jawny zapis nadal działa', async () => {
+        const makeLegacyGasket = () => ({
+            id: 'USZ-DN2500',
+            componentType: 'uszczelka',
+            dn: 2000
+        });
+        const activePayload = makeLegacyGasket();
+        const activeFetch = jest
+            .fn()
+            .mockResolvedValueOnce(okRes([activePayload]))
+            .mockImplementation(() => Promise.resolve(okRes([makeLegacyGasket()])));
+        const draftFetch = jest.fn(() =>
+            Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+        );
+        const sandbox = makeSandbox(activeFetch);
+        sandbox.fetch = draftFetch;
+        const products = await run(STUDNIE_CODE, sandbox, "loadStudnieProducts({source:'active'})");
+
+        expect(products[0].dn).toBe(2500);
+        expect(activePayload.dn).toBe(2000);
+        expect(activeFetch).toHaveBeenCalledTimes(1);
+        expect(draftFetch).not.toHaveBeenCalled();
+
+        await vm.runInContext("loadStudnieProducts({source:'active'})", sandbox, { timeout: 5000 });
+        expect(draftFetch).not.toHaveBeenCalled();
+
+        const editingFetch = jest.fn(() => Promise.resolve(okRes([makeLegacyGasket()])));
+        const editingSandbox = makeSandbox(editingFetch);
+        editingSandbox.fetch = draftFetch;
+        const editingProducts = await run(STUDNIE_CODE, editingSandbox, 'loadStudnieProducts()');
+        expect(editingProducts[0].dn).toBe(2500);
+        expect(editingFetch).toHaveBeenCalledTimes(1);
+        expect(draftFetch).not.toHaveBeenCalled();
+
+        editingSandbox.correctedProducts = editingProducts;
+        await vm.runInContext('saveStudnieProducts(correctedProducts)', editingSandbox);
+        expect(draftFetch).toHaveBeenCalledWith(
+            '/api/products-studnie',
+            expect.objectContaining({ method: 'PUT' })
+        );
+    });
+
     it('oferta: loader studni woła URL z ?source=active (z authHeaders)', async () => {
         let capturedUrl = null;
         let capturedHeaders = null;
