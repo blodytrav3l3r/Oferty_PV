@@ -4,6 +4,36 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.56.8](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.5...v1.56.8) (2026-11-08)
+
+### Features
+
+- **docs:** uporządkuj launchery windows ([e8f1307](https://github.com/blodytrav3l3r/Oferty_PV/commit/e8f13079e1bf416c3fa1e5bf3ee907d0587c29d4))
+- **ui:** dodaj jednostki i ujednolic etykiety ofert ([309cae3](https://github.com/blodytrav3l3r/Oferty_PV/commit/309cae33db47de9fbe4c52d09856c69b3cae52f5))
+- **ui:** ujednolicenie formularzy i filtrów dat ([50f4d89](https://github.com/blodytrav3l3r/Oferty_PV/commit/50f4d89fb6f9f613798c4d2cd7b15bf1b77e5944))
+- **ui:** ujednolicić formularz danych klienta ([23fd16c](https://github.com/blodytrav3l3r/Oferty_PV/commit/23fd16ce86504e6f59dbfd6582705551ba456a61))
+- **ui:** ujednolicić kartę budowy i workflow dev ([73e84b4](https://github.com/blodytrav3l3r/Oferty_PV/commit/73e84b4fbbff23364024d6b54e2f9b16b64ad024))
+
+### Bug Fixes
+
+- **auth:** popraw stabilność testów preferencji ([1035045](https://github.com/blodytrav3l3r/Oferty_PV/commit/103504513c1675b693a649c746d137816f1c0af4))
+- **ci:** napraw testy postgresql 18 ([84f9a80](https://github.com/blodytrav3l3r/Oferty_PV/commit/84f9a805015d3436bb976508c85785389d871652))
+- **ci:** stabilize load measurement phases ([1785a44](https://github.com/blodytrav3l3r/Oferty_PV/commit/1785a4471fc01aa99b62d3c2afc97baa57b0ff3a))
+- **ci:** typuj parametry postgres format ([5ab15ac](https://github.com/blodytrav3l3r/Oferty_PV/commit/5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f))
+- **offers:** stabilize care range polling and tests ([40a976f](https://github.com/blodytrav3l3r/Oferty_PV/commit/40a976f61d759836a6d75c4185e2d618e600c707))
+- **offers:** ustaw domyślny filtr na dziś ([a4987c3](https://github.com/blodytrav3l3r/Oferty_PV/commit/a4987c33304f3ace8f5294457bb9112513328775))
+- **studnie:** nie twórz szkicu przy odczycie ([2e24998](https://github.com/blodytrav3l3r/Oferty_PV/commit/2e24998995731ba057b2026d9679618d7247f43b))
+- **studnie:** ujednolić zaokrąglenie rabatu pehd ([65de7ae](https://github.com/blodytrav3l3r/Oferty_PV/commit/65de7ae8406dea4957b32e6c4e70b44d602a4dda))
+- **studnie:** usuń powracający konflikt szkicu ([8267e33](https://github.com/blodytrav3l3r/Oferty_PV/commit/8267e33365adfc8300dfe096ff0960a98f958f08))
+- **studnie:** utrwalaj ceny komponentów w zamówieniu ([eae0208](https://github.com/blodytrav3l3r/Oferty_PV/commit/eae0208e5e25c2e3f4c207b741f8dbb32ede70da))
+- **studnie:** uzgodnić ceny eksportu i podglądu ([4040258](https://github.com/blodytrav3l3r/Oferty_PV/commit/404025849ee1008afd72e998947938d0ba4bc7f6))
+- **studnie:** zgłaszaj braki metadanych ręcznie ([0c64351](https://github.com/blodytrav3l3r/Oferty_PV/commit/0c64351b6cb2817e01ad488e006668de97e3df67))
+- **test:** izolować skrzynkę powiadomień e2e ([8e760f9](https://github.com/blodytrav3l3r/Oferty_PV/commit/8e760f9b0d5b07283ec009494f768af6372ff3c7))
+- **test:** ustabilizuj postgresql pre-push ([2915922](https://github.com/blodytrav3l3r/Oferty_PV/commit/2915922d14eae0b7739b1017b745b00c69f68ef8))
+- **ui:** ogranicz autouzupełnianie przeglądarki ([e7448be](https://github.com/blodytrav3l3r/Oferty_PV/commit/e7448be147a09877d65d2e1959be776ca3092049))
+- **ui:** ogranicz podpowiedzi adresowe ([9b631eb](https://github.com/blodytrav3l3r/Oferty_PV/commit/9b631ebcb8f83083471c2c153c23190a802e1831))
+- **ui:** popraw rabaty ofert i publikację cennika ([18aef45](https://github.com/blodytrav3l3r/Oferty_PV/commit/18aef4514ac3b19891b889f6b9f1c48c25c1b9c4))
+
 ### 1.56.7 (2026-11-07)
 
 ### Features
