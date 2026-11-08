@@ -7,6 +7,10 @@ import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
 
+class FakeInputElement {
+    id = '';
+}
+
 function fakeEl() {
     return {
         value: '0',
@@ -30,16 +34,24 @@ function fakeEl() {
 
 function loadTransport() {
     const ctxDir = path.join(process.cwd(), 'public/js/rury');
+    const documentListeners = new Map<string, (event: { target: unknown }) => void>();
+    let summaryUpdates = 0;
     const sandbox = {
         window: {} as Record<string, unknown>,
         document: {
             getElementById: () => fakeEl(),
             createElement: () => fakeEl(),
             querySelector: () => null,
-            addEventListener() {}
+            addEventListener: (type: string, listener: (event: { target: unknown }) => void) => {
+                documentListeners.set(type, listener);
+            }
         },
+        HTMLInputElement: FakeInputElement,
         MAX_TRANSPORT_WEIGHT: 24000,
         getActiveItemsArray: () => [],
+        updateOfferSummary: () => {
+            summaryUpdates += 1;
+        },
         getRuryProductById: () => null,
         getProductDiameter: () => null,
         calculateTransportTrips: () => ({ saved: 0 }),
@@ -53,6 +65,9 @@ function loadTransport() {
     vm.runInContext(fs.readFileSync(path.join(ctxDir, 'transport.js'), 'utf-8'), sandbox, {
         filename: 'transport.js'
     });
+    sandbox.updateOfferSummary = () => {
+        summaryUpdates += 1;
+    };
     const w = sandbox.window as Record<string, (...args: unknown[]) => unknown>;
     return {
         toggle: w['toggleRuryTransportSeparate'] as () => void,
@@ -64,7 +79,13 @@ function loadTransport() {
         dist: w['calculateTransportDistributionStandalone'] as (
             items: Array<Record<string, unknown>>,
             costPerTrip: number
-        ) => Record<string, number>
+        ) => Record<string, number>,
+        dispatchInput: (id: string) => {
+            const target = new FakeInputElement();
+            target.id = id;
+            documentListeners.get('input')?.({ target });
+        },
+        summaryUpdates: () => summaryUpdates
     };
 }
 
@@ -95,5 +116,16 @@ describe('frontend vm: transport osobna pozycja (TR-RURY)', () => {
         expect(inside).toBe(false);
         expect(t.isSeparate()).toBe(true); // runtime nietknięty
         expect(t.dist(ITEMS, 100)).toEqual({});
+    });
+
+    it('odświeża podsumowanie po zmianie kilometrów lub stawki w kroku 1', () => {
+        const t = loadTransport();
+
+        t.dispatchInput('client-name');
+        expect(t.summaryUpdates()).toBe(0);
+
+        t.dispatchInput('transport-km');
+        t.dispatchInput('transport-rate');
+        expect(t.summaryUpdates()).toBe(2);
     });
 });

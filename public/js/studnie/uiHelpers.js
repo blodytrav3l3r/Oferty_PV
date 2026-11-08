@@ -429,6 +429,11 @@ function updateWizardIndicator() {
 // Partiale ładowane asynchronicznie — nadpisz label kroku 2 także po zakończeniu ładowania
 if (typeof document !== 'undefined') {
     document.addEventListener('partials:loaded', () => {
+        const step1NextButton = document.querySelector('[data-wizard-action="next"]');
+        if (step1NextButton && step1NextButton.dataset.wizardActionBound !== 'true') {
+            step1NextButton.dataset.wizardActionBound = 'true';
+            step1NextButton.addEventListener('click', wizardNext);
+        }
         const step2Dot = document.querySelector('.wizard-step-dot[data-step="2"]');
         const step2Label = step2Dot?.querySelector('.wizard-dot-label');
         if (step2Label && step2Label.textContent.trim() === 'Produkty') {

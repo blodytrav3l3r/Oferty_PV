@@ -26,7 +26,7 @@ const CSS_FILES = [
 const HTML_FILES = [
     'public/studnie.html',
     'public/partials/studnie/sidebar.html',
-    'public/partials/studnie/step1-client.html',
+    'public/partials/shared/step1-client.html',
     'public/partials/studnie/step2-parameters.html',
     'public/partials/studnie/step3-offer.html',
     'public/partials/shared/karta-build-card.html',

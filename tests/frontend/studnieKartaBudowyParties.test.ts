@@ -37,7 +37,7 @@ describe('studnie karta budowy: dane inwestycji i stron', () => {
 
     test('sekcje kontaktów klienta i inwestycji mają równoległe nazwy', () => {
         const step1 = fs.readFileSync(
-            path.join(__dirname, '../../public/partials/studnie/step1-client.html'),
+            path.join(__dirname, '../../public/partials/shared/step1-client.html'),
             'utf8'
         );
         const step4 = fs.readFileSync(

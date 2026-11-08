@@ -546,6 +546,15 @@ window.onRuryTransportFormChange = function () {
     }
 };
 
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        if (target.id !== 'transport-km' && target.id !== 'transport-rate') return;
+        window.onRuryTransportFormChange();
+    });
+}
+
 /**
  * Odtwarza overlay #rury-transport-modal, gdy go nie ma w DOM.
  * Brak modala = wyścig partiali (fetch jeszcze trwa) albo bare closeModal()

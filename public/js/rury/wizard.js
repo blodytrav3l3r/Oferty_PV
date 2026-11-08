@@ -160,6 +160,13 @@ function phaseNext() {
 
 window.phaseNext = phaseNext;
 
+document.addEventListener('partials:loaded', () => {
+    const step1NextButton = document.querySelector('[data-wizard-action="next"]');
+    if (!step1NextButton || step1NextButton.dataset.wizardActionBound === 'true') return;
+    step1NextButton.dataset.wizardActionBound = 'true';
+    step1NextButton.addEventListener('click', phaseNext);
+});
+
 function phasePrev() {
     const prev = currentWizardStep - 1;
     if (prev < 1) return;

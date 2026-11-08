@@ -795,6 +795,155 @@
     display: none !important;
 }
 
+/* Wspólny układ kroku Dane klienta i oferty dla Rur oraz Studni. */
+.wizard-step-client .wizard-client-header {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-sm-plus);
+    margin-bottom: var(--tile-gap-md);
+    padding-bottom: var(--tile-gap-sm-plus);
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.wizard-step-client .wizard-client-header-icon {
+    display: flex;
+    width: 2.4rem;
+    height: 2.4rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: var(--bg-deep);
+    font-size: var(--fs-5xl);
+}
+
+.wizard-step-client .wizard-client-title,
+.wizard-step-client .wizard-client-subtitle {
+    margin: 0;
+}
+
+.wizard-step-client .wizard-client-title {
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-bold);
+}
+
+.wizard-step-client .wizard-client-subtitle {
+    font-size: var(--fs-base);
+}
+
+.wizard-step-client .wizard-client-header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: var(--tile-gap-sm-plus);
+    margin-inline-start: auto;
+}
+
+.wizard-step-client .wizard-client-action {
+    padding: 0.4rem 0.8rem;
+    font-size: var(--fs-base);
+}
+
+.wizard-step-client .wizard-card-body {
+    display: grid;
+    gap: var(--tile-gap-md);
+}
+
+.wizard-step-client .wizard-card-body > .wizard-form-grid {
+    margin: 0;
+}
+
+.wizard-step-client .wizard-card-body > #invest-legacy-address,
+.wizard-step-client .wizard-card-body > .investment-contact-group {
+    margin: 0;
+}
+
+.wizard-step-client .wizard-client-grid {
+    display: grid;
+    gap: var(--tile-gap-sm-plus);
+    min-width: 0;
+}
+
+.wizard-step-client .wizard-client-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wizard-step-client .wizard-client-grid--four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.wizard-step-client .wizard-client-grid--one {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.wizard-step-client .wizard-client-grid--payment {
+    grid-template-columns: minmax(0, 3fr) minmax(10rem, 1fr);
+}
+
+.wizard-step-client .wizard-client-span-all {
+    grid-column: 1 / -1;
+}
+
+.wizard-step-client .wizard-client-help {
+    margin: var(--tile-gap-2xs) 0 0;
+}
+
+.wizard-step-client .wizard-client-section-title {
+    margin: 0;
+}
+
+.wizard-step-client .wizard-client-offer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tile-gap-sm-plus);
+}
+
+.wizard-step-client .wizard-client-supervisor {
+    display: none;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent-hover);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+}
+
+.wizard-step-client .wizard-client-notes {
+    min-height: 8.75rem;
+    height: 8.75rem;
+    resize: vertical;
+}
+
+.wizard-step-client #offer-payment-terms {
+    min-height: 2.125rem;
+    height: 2.125rem;
+    resize: vertical;
+    font-size: var(--fs-md);
+}
+
+@media (max-width: 900px) {
+    .wizard-step-client .wizard-client-grid--four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .wizard-step-client .wizard-client-header {
+        flex-wrap: wrap;
+    }
+
+    .wizard-step-client .wizard-client-header-actions {
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    .wizard-step-client .wizard-client-grid--two,
+    .wizard-step-client .wizard-client-grid--four,
+    .wizard-step-client .wizard-client-grid--payment {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 640px) {
     .cc-row {
         grid-template-columns: 1fr 1fr;

@@ -24,7 +24,7 @@ test.beforeAll(async ({ request }) => {
     expect(setCookie, 'Login failed - no authToken cookie').toMatch(/authToken=[^;]+;.*HttpOnly/i);
 });
 
-test.describe('smoke: oferta studni — start modułu', () => {
+test.describe('smoke: formularz oferty — start modułów', () => {
     let pageErrors = [];
 
     test.beforeEach(async ({ page }) => {
@@ -81,6 +81,41 @@ test.describe('smoke: oferta studni — start modułu', () => {
         await expect(frame.locator('#wizard-step-2.active')).toHaveCount(1);
         await expect(frame.locator('#studnie-nav-step-info')).toContainText('Krok 2 z 5');
     });
+
+    for (const moduleName of ['studnie', 'rury']) {
+        test(`${moduleName}: wspólny krok 1 mieści się na ekranie i działa z klawiatury`, async ({
+            page
+        }) => {
+            await page.goto(`${BASE}/app.html#/${moduleName}`);
+            const frame = await (async () => {
+                for (let i = 0; i < 30; i++) {
+                    const currentFrame = page
+                        .frames()
+                        .find((candidate) => candidate.url().includes(`${moduleName}.html`));
+                    if (currentFrame) return currentFrame;
+                    await page.waitForTimeout(300);
+                }
+                return null;
+            })();
+            expect(frame, `iframe ${moduleName}.html nie został utworzony`).not.toBeNull();
+            await frame.waitForSelector('#wizard-step-1.active', { timeout: 15000 });
+
+            for (const width of [375, 768, 1024, 1440]) {
+                await page.setViewportSize({ width, height: 1000 });
+                const overflows = await frame.locator('#wizard-step-1').evaluate((step) => {
+                    return step.scrollWidth > step.clientWidth;
+                });
+                expect(overflows, `${moduleName} krok 1 ma poziomy overflow przy ${width}px`).toBe(
+                    false
+                );
+            }
+
+            await frame.fill('#client-name', 'Test wspólnego formularza');
+            await frame.locator('#wizard-next-step1').focus();
+            await frame.locator('#wizard-next-step1').press('Enter');
+            await expect(frame.locator('#wizard-step-2.active')).toHaveCount(1);
+        });
+    }
 
     test('API produktów studni zwraca dane solvera', async ({ request }) => {
         // Wariant A: login w tym samym kontekście request — cookie niesie

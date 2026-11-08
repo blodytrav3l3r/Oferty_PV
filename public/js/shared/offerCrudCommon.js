@@ -469,7 +469,7 @@ function setOrderNumberField(num) {
     const input = document.getElementById('order-number');
     if (input) input.value = num || '';
     const group = document.getElementById('order-number-group');
-    if (group) group.style.display = num ? '' : 'none';
+    if (group) group.hidden = !num;
 }
 
 /**
@@ -480,7 +480,7 @@ function clearOrderNumberField() {
     const input = document.getElementById('order-number');
     if (input) input.value = '';
     const group = document.getElementById('order-number-group');
-    if (group) group.style.display = 'none';
+    if (group) group.hidden = true;
 }
 /**
  * Pull-sync: kopiuje Warunki płatności i Data ważności z kroku 1

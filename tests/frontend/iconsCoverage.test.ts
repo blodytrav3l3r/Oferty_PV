@@ -77,9 +77,8 @@ describe('iconsSlim pokrycie ikon shared', () => {
             'public/js/studnie/offerTransport.js',
             'public/js/studnie/offerWellComponents.js',
             'public/js/studnie/orderCrud.js',
-            'public/partials/studnie/step1-client.html',
+            'public/partials/shared/step1-client.html',
             'public/partials/studnie/step2-parameters.html',
-            'public/partials/rury/step1-client.html',
             'public/js/admin/aiTransfer.js',
             'public/js/admin/opsDashboard.js'
         ];

@@ -7,7 +7,7 @@ const read = (file: string) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
 describe('Rury: dane inwestycji', () => {
     test('formularz ma układ adresu, kraj i osobny kontakt na budowę', () => {
-        const html = read('public/partials/rury/step1-client.html');
+        const html = read('public/partials/shared/step1-client.html');
 
         for (const id of [
             'invest-name',

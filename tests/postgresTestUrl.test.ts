@@ -11,6 +11,14 @@ import {
     updatePostgresTestConfigPort
 } from '../scripts/postgres-test-url.cjs';
 
+function getListeningPort(server: net.Server): number {
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+        throw new Error('Test server is not listening on a TCP port');
+    }
+    return address.port;
+}
+
 describe('POSTGRES_TEST_URL contract', () => {
     test.each(['127.0.0.1:55432', '[::1]:55432', 'postgres-test:5432'])(
         'accepts the isolated service at %s and removes the input schema',
@@ -37,7 +45,7 @@ describe('POSTGRES_TEST_URL contract', () => {
         await new Promise<void>((resolve, reject) =>
             server.listen(0, '127.0.0.1', (error?: Error) => (error ? reject(error) : resolve()))
         );
-        const occupiedPort = server.address().port;
+        const occupiedPort = getListeningPort(server);
         const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-test-port-'));
         const envPath = path.join(directory, '.env');
         const original = [
@@ -76,8 +84,11 @@ describe('POSTGRES_TEST_URL contract', () => {
 
     test('does not rewrite the environment file when the configured port is available', async () => {
         const server = net.createServer();
-        await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-        const availablePort = server.address().port;
+        await new Promise<void>((resolve, reject) => {
+            server.once('error', reject);
+            server.listen(0, '127.0.0.1', () => resolve());
+        });
+        const availablePort = getListeningPort(server);
         await new Promise<void>((resolve, reject) =>
             server.close((error?: Error) => (error ? reject(error) : resolve()))
         );
