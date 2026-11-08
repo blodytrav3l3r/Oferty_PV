@@ -255,6 +255,42 @@ describe('L2 draftSync — ograniczony self-heal konfliktu', () => {
         expect(html).toContain('Draft ma nowszą wersję na serwerze');
     });
 
+    it.each(['server', 'both'])(
+        '%s zatrzymuje oczekujący autosave lokalnej treści',
+        async (act) => {
+            const { sandbox, net, storage, store } = loadCtx();
+            dirtyRury(sandbox);
+            const sync = sandbox.window.draftSync;
+            sync.saveMeta(storage, 'u1', 'offer_rury', 'o1', { version: 8 });
+            const remote = storedPayload(sandbox, { items: [{ uid: 'rur_1', quantity: 9 }] });
+            net.queue.push(conflict(1), serverDraft(remote, 1), serverDraft(remote, 1));
+            sandbox._draftWriteKind('offer_rury', true);
+            await flushTicks();
+
+            let pendingPush: () => void;
+            sandbox.setTimeout = (fn: () => void) => {
+                pendingPush = fn;
+                return 1;
+            };
+            sandbox.currentOfferItems = [{ uid: 'rur_1', quantity: 7 }];
+            sandbox._draftWriteKind('offer_rury', false);
+            const queuedBeforeChoice = pendingPush!;
+            const choice = { getAttribute: () => act };
+            modal(sandbox).handlers.click({ target: { closest: () => choice } });
+            await flushTicks();
+            queuedBeforeChoice();
+            await flushTicks();
+
+            expect(net.calls.map((call) => call.opts.method)).toEqual(['PUT', 'GET', 'GET']);
+            expect(sandbox.currentOfferItems[0].quantity).toBe(9);
+            expect(sync.loadMeta(storage, 'u1', 'offer_rury', 'o1')?.version).toBe(1);
+            if (act === 'both') {
+                const key = [...store.keys()].find((k) => k.includes('-konflikt-'))!;
+                expect(JSON.parse(store.get(key)!).payload.items[0].quantity).toBe(7);
+            }
+        }
+    );
+
     it('zmiana lokalnego draftu w trakcie pull() → brak dogonienia meta, modal', async () => {
         const { sandbox, net, storage } = loadCtx();
         dirtyRury(sandbox);

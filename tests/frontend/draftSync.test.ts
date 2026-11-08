@@ -431,6 +431,35 @@ describe('draftSync.push — limity i wyjście z karty', () => {
 });
 
 describe('draftSync.resolveConflict — trzy jawne wybory', () => {
+    test.each(['server', 'both'])(
+        '%s: po odtworzeniu szkicu kolejny zapis używa aktualnej wersji serwera',
+        async (choice) => {
+            const sync = loadSync();
+            const storage = memStorage();
+            const payload = { fields: { number: 'S' } };
+            sync.saveMeta(storage, USER, KIND, DOC, { version: 8 });
+            const { fn, calls } = fakeFetch([
+                { status: 200, body: { data: { kind: KIND, docId: DOC, payload, version: 1 } } },
+                { status: 200, body: { version: 2 } }
+            ]);
+            const args = { storage, userId: USER, kind: KIND, docId: DOC, fetchImpl: fn };
+
+            const resolved = await sync.resolveConflict({
+                ...args,
+                choice,
+                draftStore: loadStore(),
+                payload: { fields: { number: 'L' } },
+                serverVersion: 1
+            });
+            expect(resolved.status).toBe('ok');
+            expect(resolved.payload).toEqual(payload);
+            await sync.push({ ...args, payload });
+
+            expect(calls[1].opts.headers['If-Match']).toBe('"1"');
+            expect(sync.loadMeta(storage, USER, KIND, DOC)?.version).toBe(2);
+        }
+    );
+
     test('server: pobiera payload serwera i ustawia meta na jego wersję', async () => {
         const sync = loadSync();
         const storage = memStorage();

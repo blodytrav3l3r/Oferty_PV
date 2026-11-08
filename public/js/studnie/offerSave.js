@@ -446,7 +446,7 @@ async function saveOfferStudnie() {
                             anchorId: 'offer-form-title-studnie'
                         });
                     if (typeof loadSavedOfferStudnie === 'function')
-                        await loadSavedOfferStudnie(fresh, fresh.id);
+                        await loadSavedOfferStudnie(simpleId);
                 }
             } catch (_e) {
                 /* toast powyżej już poinformował */

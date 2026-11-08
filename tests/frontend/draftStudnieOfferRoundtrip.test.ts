@@ -141,6 +141,47 @@ function seedDraft(sandbox: any, st: any, payload: any) {
 }
 
 describe('draft studnie oferta — roundtrip load vs SAVED', () => {
+    it('otwarcie starszej oferty jest czyste, a edycja i przywrócenie historii zapisują draft', async () => {
+        const { sandbox, st } = studnieCtx();
+        const autosave = sandbox.window.draftAutosave;
+        Object.assign(sandbox, {
+            structuredClone: (data: any) => JSON.parse(JSON.stringify(data)),
+            normalizeOfferData: (offer: any) => offer,
+            migrateWellData: () => {},
+            freezeWellPrices: (wells: any[]) => {
+                wells[0].config[0].frozenStandalonePrice = 630;
+            },
+            refreshAll: () => {},
+            restoreWizardState: () => {},
+            showSection: () => {},
+            updateOfferFormHeader: () => {}
+        });
+        vm.runInContext(readJs('studnie/offerManager.js'), sandbox, {
+            filename: 'offerManager.js'
+        });
+        const loadOffer = sandbox.window.loadSavedOfferStudnie;
+        autosave.initKind('offer_studnie');
+        await loadOffer(sandbox.offersStudnie[0], 'o1', 'builder');
+
+        expect(autosave.hasUnsavedChanges()).toBe(false);
+        autosave.flushAll('hidden');
+        expect(st.getItem('sok_draft_v1_u1_offer_studnie_o1')).toBeNull();
+
+        sandbox.wells[0].config[0].quantity = 3;
+        expect(autosave.hasUnsavedChanges()).toBe(true);
+        autosave.flushAll('hidden');
+        const stored = JSON.parse(st.getItem('sok_draft_v1_u1_offer_studnie_o1')!);
+        expect(stored.payload.wells[0].config[0].quantity).toBe(3);
+
+        const historical = sandbox.structuredClone(sandbox.offersStudnie[0]);
+        historical.wells[0].config[0].quantity = 4;
+        await loadOffer(historical, 'o1', 'builder');
+        expect(autosave.hasUnsavedChanges()).toBe(true);
+        autosave.flushAll('hidden');
+        const restored = JSON.parse(st.getItem('sok_draft_v1_u1_offer_studnie_o1')!);
+        expect(restored.payload.wells[0].config[0].quantity).toBe(4);
+    });
+
     it('live po load (ephemeral _elemId/status/height) == SAVED', () => {
         const { sandbox } = studnieCtx();
         const live = sandbox._draftCollectLive('offer_studnie');

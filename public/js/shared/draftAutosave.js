@@ -17,6 +17,8 @@ var DRAFT_SYNC_MODAL_ID = 'sok-draft-sync-modal';
 var _draftInitedKinds = [];
 /** Ostatnio zapisany kanoniczny JSON per klucz (bramka diff, brak zapisu bez zmian). */
 var _draftLastWritten = {};
+/** Stan oferty Studnie po inicjalizacji edytora, przypisany do odczytanego SAVED. */
+let _draftLoadedOffer = null;
 /** Tombstone sesyjny Odrzuć: key → fingerprint comparable-live w chwili odrzucenia.
  * Pamięć sesyjna (reset z przeładowaniem), brak localStorage. Blokuje ponowny
  * zapis TEGO SAMEGO stanu live; realna zmiana formularza zmienia fingerprint
@@ -849,6 +851,22 @@ function _draftEquivalent(kind, draftPayload, savedPayload, isNewDoc, extra) {
 }
 
 /**
+ * @param {string} kind
+ * @param {object} live
+ * @param {object} cur
+ */
+const _draftMatchesSaved = function (kind, live, cur) {
+    if (_draftEquivalent(kind, live, cur.payload, cur.isNew)) return true;
+    const loaded = _draftLoadedOffer;
+    return (
+        kind === 'offer_studnie' &&
+        loaded !== null &&
+        loaded.savedDoc === cur.savedDoc &&
+        _draftEquivalent(kind, live, loaded.payload, false)
+    );
+};
+
+/**
  * Bieżący SAVED w przestrzeni porównywalnej dla rodzaju i docId.
  * Zwraca null (defensive, z logiem) gdy istniejący dokument jest slim
  * (lista bez wells/items — brak danych = brak decyzji recovery).
@@ -1057,7 +1075,7 @@ function _draftWriteKind(kind, isFlush, exitTrigger) {
     // Bez tego flush po czystym SAVED wskrzeszał draft-ducha (slim/DTO robiły resztę).
     // Slim (payload null): brak podstaw do bramki — zapis według _draftLastWritten.
     var cur = _draftCurrentSaved(kind, cfg, docId);
-    if (cur && !cur.slim && _draftEquivalent(kind, payload, cur.payload, cur.isNew)) {
+    if (cur && !cur.slim && _draftMatchesSaved(kind, payload, cur)) {
         // Self-heal: live czysty, a pod kluczem lezy martwy ghost → sprzatnij.
         _draftRemoveIfDead(key, kind, cur);
         return false;
@@ -1180,6 +1198,12 @@ function _draftClearContext(kind, oldDocId, newDocId) {
     if (!userId) return;
     [oldDocId, newDocId].forEach(function (d) {
         if (d === undefined || d === null) return;
+        if (
+            kind === 'offer_studnie' &&
+            _draftLoadedOffer &&
+            String(_draftLoadedOffer.savedDoc.id) === String(d)
+        )
+            _draftLoadedOffer = null;
         var key = window.draftStore.buildDraftKey(userId, kind, d);
         if (key) {
             window.draftStore.removeDraft(window.localStorage, key);
@@ -2340,15 +2364,16 @@ function _draftHideSyncConflictModal() {
 function _draftSyncApplyChoice(choice, userId, pending, res) {
     var sync = _draftG('draftSync');
     if (!sync || !choice) return;
-    _draftHideSyncConflictModal();
-    // Decyzja podjęta — kolejny konflikt tego klucza ma prawo znów otworzyć modal.
-    try {
-        var _choiceKey = window.draftStore.buildDraftKey(userId, pending.kind, pending.docId);
-        if (_choiceKey) {
-            delete _draftSyncConflictShown[_choiceKey];
-            delete _draftSyncNoted[_choiceKey + '|conflict'];
-        }
-    } catch (_eKey) {}
+    var key = window.draftStore.buildDraftKey(userId, pending.kind, pending.docId);
+    if (!key || _draftSyncInFlight[key]) return;
+    var local = _draftSyncPending[key] || pending;
+    _draftSyncInFlight[key] = true;
+    var finish = function () {
+        delete _draftSyncInFlight[key];
+        delete _draftSyncConflictShown[key];
+        delete _draftSyncNoted[key + '|conflict'];
+        _draftHideSyncConflictModal();
+    };
     sync.resolveConflict({
         choice: choice,
         storage: window.localStorage,
@@ -2356,11 +2381,12 @@ function _draftSyncApplyChoice(choice, userId, pending, res) {
         userId: userId,
         kind: pending.kind,
         docId: pending.docId,
-        payload: pending.payload,
-        baseVersion: pending.baseVersion,
+        payload: local.payload,
+        baseVersion: local.baseVersion,
         serverVersion: res && typeof res.serverVersion === 'number' ? res.serverVersion : null
     })
         .then(function (out) {
+            finish();
             var status = out && out.status ? out.status : 'error';
             if (out && out.conflictCopyKey)
                 _draftToast(
@@ -2372,9 +2398,12 @@ function _draftSyncApplyChoice(choice, userId, pending, res) {
             if (status === 'ok') {
                 if (choice === 'local') {
                     _draftToast('Wersja lokalna wysłana na serwer', 'success');
+                    if (_draftSyncPending[key] === local) delete _draftSyncPending[key];
+                    _draftSyncTail(key);
                     return;
                 }
                 if (out && out.payload) {
+                    _draftSyncForget(key);
                     _draftApply(pending.kind, { payload: out.payload });
                     // Formularz pokazuje teraz wersję serwera: lokalny draft musi
                     // dogonić ten stan, inaczej recovery zaproponuje starą kopię.
@@ -2385,6 +2414,7 @@ function _draftSyncApplyChoice(choice, userId, pending, res) {
             _draftToast('Nie udało się rozstrzygnąć konfliktu draftu — spróbuj ponownie', 'error');
         })
         .catch(function () {
+            finish();
             _draftToast('Nie udało się rozstrzygnąć konfliktu draftu — spróbuj ponownie', 'error');
         });
 }
@@ -2500,8 +2530,9 @@ function _draftRecoveryDecide(kind, cfg, docId, key, draft) {
  * siedzą w IndexedDB, więc brak kopii lokalnej sprawdzamy asynchronicznie
  * (potem L2: kopia serwerowa). Modal pokazuje się tylko przy realnej różnicy.
  * @param {string} kind
+ * @param {{loadedOffer?: object}} [options]
  */
-function _draftCheckRecovery(kind) {
+function _draftCheckRecovery(kind, options) {
     try {
         _draftHideDraftModal();
         var cfg = _draftKindConfig[kind];
@@ -2511,6 +2542,13 @@ function _draftCheckRecovery(kind) {
         var docId = cfg.getDocId() || 'new';
         var key = window.draftStore.buildDraftKey(userId, kind, docId);
         if (!key) return;
+        if (kind === 'offer_studnie' && options && options.loadedOffer) {
+            const cur = _draftCurrentSaved(kind, cfg, docId);
+            _draftLoadedOffer =
+                cur.savedDoc === options.loadedOffer && !cur.slim
+                    ? { savedDoc: cur.savedDoc, payload: _draftCollectLive(kind) }
+                    : null;
+        }
         var loaded = window.draftStore.loadDraft(window.localStorage, key);
         if (loaded.status === 'ok' && loaded.draft) {
             _draftRecoveryDecide(kind, cfg, docId, key, loaded.draft);
@@ -2622,7 +2660,7 @@ function _draftHasUnsavedChanges() {
             continue;
         }
         try {
-            if (!_draftEquivalent(kind, live, cur.payload, cur.isNew)) {
+            if (!_draftMatchesSaved(kind, live, cur)) {
                 // Diagnostyka wiecznego brudu: co się różni (same nazwy, bez wartości).
                 // Czyta to log save-unclean w sokDirty (__sokLastDirtyDetail).
                 try {
@@ -2675,7 +2713,7 @@ function _draftDescribeDirty() {
         }
         var dirty = false;
         try {
-            dirty = !_draftEquivalent(kind, live, cur.payload, cur.isNew);
+            dirty = !_draftMatchesSaved(kind, live, cur);
         } catch (_e4) {}
         if (!dirty) continue;
         var number = '';

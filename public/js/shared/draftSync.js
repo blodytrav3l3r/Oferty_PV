@@ -317,6 +317,7 @@ async function draftSyncPull(args) {
     try {
         res = await fetchFn(draftSyncUrl(a.kind, a.docId), {
             method: 'GET',
+            cache: 'no-store',
             credentials: 'same-origin'
         });
     } catch (_e) {
@@ -489,8 +490,26 @@ async function draftSyncResolveConflict(args) {
         userId: a.userId,
         kind: a.kind,
         docId: a.docId,
-        fetchImpl: a.fetchImpl
+        fetchImpl: a.fetchImpl,
+        persistMeta: false
     });
+    if (pulled.status === 'ok') {
+        // Jawny wybór serwera obejmuje szkic odtworzony od wersji 1.
+        var sameDraft = pulled.kind === a.kind && String(pulled.docId) === String(a.docId);
+        if (
+            !sameDraft ||
+            !draftSyncSaveMeta(
+                a.storage,
+                a.userId,
+                a.kind,
+                a.docId,
+                { version: pulled.version, updatedAt: pulled.updatedAt },
+                true
+            )
+        ) {
+            return { status: 'error', conflictCopyKey: copy ? copy.key : undefined };
+        }
+    }
     var res = {
         status: pulled.status,
         payload: pulled.payload,

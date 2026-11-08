@@ -35,7 +35,7 @@ describe('frontend: load czyści stale flagi brudu (false-positive guard)', () =
         const resetIdx = src.indexOf('setExcelDirty(false)');
         const resetLegacyIdx = src.indexOf('_excelDirty = false');
         const reset = resetIdx > -1 ? resetIdx : resetLegacyIdx;
-        const check = src.indexOf("checkRecovery('offer_studnie')");
+        const check = src.indexOf("checkRecovery('offer_studnie',");
         expect(reset).toBeGreaterThan(-1);
         expect(check).toBeGreaterThan(-1);
         expect(reset).toBeLessThan(check);

@@ -282,8 +282,9 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
         if (window.draftAutosave && typeof window.draftAutosave.resetWizardDirty === 'function')
             window.draftAutosave.resetWizardDirty();
     } catch (_e2) {}
-    // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
-    if (window.draftAutosave) window.draftAutosave.checkRecovery('offer_studnie');
+    // Zamrożone ceny i dane uzupełnione podczas odczytu są stanem początkowym edytora.
+    if (window.draftAutosave)
+        window.draftAutosave.checkRecovery('offer_studnie', { loadedOffer: offer });
 }
 
 /**
