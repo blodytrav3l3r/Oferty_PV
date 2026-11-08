@@ -57,6 +57,7 @@ function fullUiWell() {
                 quantity: 1,
                 frozenPrice: 740,
                 frozenPriceBase: 740,
+                frozenStandalonePrice: 640,
                 frozenName: 'Dennica',
                 _elemId: 'el-1'
             },
@@ -157,6 +158,7 @@ describe('orderDto — allowlist transportowa (P0.1)', () => {
         expect(out.config[0]._elemId).toBe('el-1');
         expect(out.config[0].frozenPrice).toBe(740);
         expect(out.config[0].frozenPriceBase).toBe(740);
+        expect(out.config[0].frozenStandalonePrice).toBe(640);
         expect(out.config[0].frozenName).toBe('Dennica');
         expect(out.przejscia[0].frozenPrice).toBe(100);
         expect(out.przejscia[0].angle).toBe(90);

@@ -73,6 +73,7 @@ describe('frontend vm: freezeWellPrices snapshotuje live (reuse w edycji)', () =
             wellDiscounts: {},
             getStudnieProductById: (id) => ({ id, price: 100, name: 'Krąg' }),
             getItemAssessedPrice: (well, p, apply) => (apply ? 90 : 100),
+            getItemPriceBreakdown: (well, p, apply) => ({ base: apply ? 80 : 100 }),
             getTransitionHostPct: () => 10
         };
         vm.createContext(sandbox);
@@ -96,10 +97,13 @@ describe('frontend vm: freezeWellPrices snapshotuje live (reuse w edycji)', () =
         const item = sb.wells[0].config[0];
         expect(item.frozenPrice).toBe(90);
         expect(item.frozenPriceBase).toBe(100);
+        expect(item.frozenStandalonePrice).toBe(80);
         expect(item.frozenName).toBe('Krąg');
         item.frozenPrice = 50;
+        delete item.frozenStandalonePrice;
         vm.runInContext('freezeWellPrices(wells, true)', sb);
         expect(item.frozenPrice).toBe(50);
+        expect(item.frozenStandalonePrice).toBe(80);
     });
 
     test('isFrozenPriceCtx: preview albo edycja oferty', () => {
@@ -364,6 +368,7 @@ describe('frontend static: mrożenie studni end-to-end w źródle', () => {
         for (const f of [
             'delete it.frozenPrice',
             'delete it.frozenPriceBase',
+            'delete it.frozenStandalonePrice',
             'delete it.frozenTransitionPrice',
             'delete it.frozenDrillingPrice',
             'delete w.frozenPrecoSuma'

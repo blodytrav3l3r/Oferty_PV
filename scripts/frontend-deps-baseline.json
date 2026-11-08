@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-08",
-    "totalEdges": 2847,
+    "totalEdges": 2849,
     "edges": [
         {
             "page": "public/app.html",
@@ -13278,6 +13278,14 @@
         {
             "page": "public/studnie.html",
             "name": "getItemPriceBreakdown",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/studnie/actionsWellPricing.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getItemPriceBreakdown",
             "userFile": "public/js/studnie/pricingCalculator.js",
             "defFile": "public/js/studnie/actionsWellPricing.js",
             "defKind": "window",
@@ -18751,6 +18759,14 @@
             "page": "public/studnie.html",
             "name": "roundMoney",
             "userFile": "public/js/studnie/actionsWellPricing.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
+            "userFile": "public/js/studnie/offerDiscountsPopup.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"

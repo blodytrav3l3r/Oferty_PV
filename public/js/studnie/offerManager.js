@@ -329,11 +329,13 @@ async function recalcStudnieToActive(activeId) {
         (w.config || []).forEach(function (it) {
             delete it.frozenPrice;
             delete it.frozenPriceBase;
+            delete it.frozenStandalonePrice;
             delete it.frozenName;
         });
         (w.przejscia || []).forEach(function (it) {
             delete it.frozenPrice;
             delete it.frozenPriceBase;
+            delete it.frozenStandalonePrice;
             delete it.frozenName;
             delete it.frozenTransitionPrice;
             delete it.frozenDrillingPrice;

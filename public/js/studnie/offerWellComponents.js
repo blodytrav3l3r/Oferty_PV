@@ -237,8 +237,10 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
         );
         const isTransportHost =
             (p.componentType === 'dennica' || p.componentType === 'styczna') && !item.isPsiaBuda;
+        const hasStandalonePrice =
+            !item.isPsiaBuda && ['dennica', 'styczna', 'krag', 'krag_ot'].includes(p.componentType);
         const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
-        const standalonePrice = isTransportHost
+        const standalonePrice = hasStandalonePrice
             ? calculateStandaloneComponentPrice(well, p, item, frozenCtx)
             : totalLinePrice;
         const kinetaItem = isTransportHost ? findWellKineta(well) : null;
@@ -253,8 +255,14 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
         const displayedLinePrice = isTransportHost
             ? roundPreviewMoney(totalLinePrice + kinetaPrice)
             : totalLinePrice;
-        const baseLineLabel = isTransportHost
-            ? `Cena ${p.componentType === 'dennica' ? 'dennicy' : 'stycznej'}: ${p.name}`
+        const standaloneComponentName =
+            p.componentType === 'dennica'
+                ? 'dennicy'
+                : p.componentType === 'styczna'
+                  ? 'stycznej'
+                  : 'kręgu';
+        const baseLineLabel = hasStandalonePrice
+            ? `Cena ${standaloneComponentName}: ${p.name}`
             : item.isPsiaBuda
               ? 'Psia buda'
               : p.name;
@@ -307,9 +315,9 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
             <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(displayedLinePrice) + ' PLN'}</td>
         </tr>`;
 
-        if (isTransportHost) {
+        if (hasStandalonePrice) {
             html += `<tr class="included-row-accent">
-                <td colspan="3" class="pl-lg">↳ ${escapeHtml(p.name)}${badgesHtml}${discStr}</td>
+                <td colspan="3" class="pl-lg">↳ ${escapeHtml(p.name)}${discStr}</td>
                 <td class="text-right">${fmt(standalonePrice)} PLN</td>
             </tr>`;
         }
@@ -344,10 +352,12 @@ function roundPreviewMoney(value) {
 
 function calculateStandaloneComponentPrice(well, product, item, frozenCtx) {
     const quantity = Number(item.quantity) || 0;
-    if (item.frozenPrice != null && frozenCtx) {
-        return roundPreviewMoney(item.frozenPrice * quantity);
+    if (item.frozenStandalonePrice != null && frozenCtx) {
+        return roundPreviewMoney(item.frozenStandalonePrice * quantity);
     }
 
+    // Legacy frozen records stored only the component total. Their best
+    // available base is the current breakdown; new snapshots persist the exact base above.
     const breakdown =
         typeof getItemPriceBreakdownSafe === 'function'
             ? getItemPriceBreakdownSafe(well, product, true, item)
@@ -356,6 +366,9 @@ function calculateStandaloneComponentPrice(well, product, item, frozenCtx) {
               : null;
     if (breakdown && Number.isFinite(Number(breakdown.base))) {
         return roundPreviewMoney(breakdown.base * quantity);
+    }
+    if (item.frozenPrice != null && frozenCtx) {
+        return roundPreviewMoney(item.frozenPrice * quantity);
     }
 
     const getAssessedPrice =

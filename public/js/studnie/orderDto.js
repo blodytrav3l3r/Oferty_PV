@@ -27,6 +27,7 @@ const ORDER_CONFIG_ITEM_FIELDS = [
     'quantity',
     'frozenPrice',
     'frozenPriceBase',
+    'frozenStandalonePrice',
     'frozenName',
     'disablePehd',
     'disablePreco',
@@ -240,7 +241,7 @@ const WELL_PRICING_FIELDS = [
 /**
  * Pola pozycji config wchodzace do hasha porownania.
  * Wylaczone celowo (wartosci pochodne, nie biznesowe): frozenPrice,
- * frozenPriceBase — sa dopisywane przez freezeWellPrices PO zbudowaniu
+ * frozenPriceBase, frozenStandalonePrice — sa dopisywane przez freezeWellPrices PO zbudowaniu
  * snapshotu (orderCrud: buildSlimWells przed freeze), wiec ich obecnosc
  * w hashu flagowala kazda studnie jako zmieniona (SA/ZS/000043/2026).
  * Zmiana cennika przy tym samym productId/qty jest wykrywana wymiarem

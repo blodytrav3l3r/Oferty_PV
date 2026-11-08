@@ -77,6 +77,7 @@ export const ORDER_CONFIG_ITEM_DTO_FIELDS = [
     'quantity',
     'frozenPrice',
     'frozenPriceBase',
+    'frozenStandalonePrice',
     'frozenName',
     'disablePehd',
     'disablePreco',

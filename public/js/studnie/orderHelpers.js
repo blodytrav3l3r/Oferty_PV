@@ -485,20 +485,30 @@ window.getOrderForWellId = getOrderForWellId;
 
 /**
  * Zamraża ceny (cennik) wszystkich pozycji w studniach, przechwytując
- * aktualną cenę z cennika do pól frozenPrice/frozenPriceBase/frozenName.
+ * aktualną cenę z cennika do pól frozenPrice/frozenPriceBase/frozenStandalonePrice/frozenName.
  * Przejściom przypisuje także koszt wiercenia.
  */
 function freezeWellPrices(wellsArr, preserveExisting = false) {
     (wellsArr || []).forEach((well) => {
         (well.config || []).forEach((item) => {
-            if (preserveExisting && item.frozenPrice != null) return;
             const p =
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(item.productId)
                     : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
+            const priceBreakdown =
+                typeof getItemPriceBreakdown === 'function'
+                    ? getItemPriceBreakdown(well, p, true, item)
+                    : null;
+            if (preserveExisting && item.frozenPrice != null) {
+                if (item.frozenStandalonePrice == null) {
+                    item.frozenStandalonePrice = priceBreakdown?.base ?? item.frozenPrice;
+                }
+                return;
+            }
             item.frozenPrice = getItemAssessedPrice(well, p, true, item);
             item.frozenPriceBase = getItemAssessedPrice(well, p, false, item);
+            item.frozenStandalonePrice = priceBreakdown?.base ?? item.frozenPrice;
             item.frozenName = p.name;
         });
 
@@ -624,14 +634,15 @@ function freezeWellPreco(well, preserveExisting = false) {
  * nośności, malowanie, kineta/spocznik, redukcja, stopnie, uszczelka,
  * geometria przejścia...).
  * Bez tego calcWellStats bierze item.frozenPrice (isFrozenPriceCtx) i cena
- * stoi mimo zmiany elementu. Obejmuje config i przejścia (7 kluczy frozen*
- * jak freeze: Price/Base/Name/Transition/DrillingPrice/DrillingName/DrillingDn).
+ * stoi mimo zmiany elementu. Obejmuje config i przejścia: Price/Base/
+ * StandalonePrice/Name oraz Transition/DrillingPrice/DrillingName/DrillingDn.
  */
 function invalidateFrozenPricesForWell(well) {
     if (!well) return;
     (well.config || []).forEach((item) => {
         delete item.frozenPrice;
         delete item.frozenPriceBase;
+        delete item.frozenStandalonePrice;
         delete item.frozenName;
     });
     (well.przejscia || []).forEach((item) => {

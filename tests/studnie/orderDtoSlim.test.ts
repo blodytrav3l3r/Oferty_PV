@@ -444,6 +444,14 @@ describe('orderDto slim snapshot — DoD P1', () => {
             expect(out.frozenPrecoSuma).toBe(123.45);
         });
 
+        test('DTO zachowuje zamrożoną cenę bazową komponentu', () => {
+            const out = dto.toWellOrderDTO({
+                ...dtoWell(),
+                config: [{ productId: 'krag-1', quantity: 1, frozenStandalonePrice: 270 }]
+            });
+            expect(out.config[0].frozenStandalonePrice).toBe(270);
+        });
+
         test('freezeWellPreco: mrozi sumę, preserveExisting chroni, beton czyści', () => {
             const h1 = loadFreezer(777);
             const well: any = { id: 'w', kineta: 'preco', config: [], przejscia: [] };

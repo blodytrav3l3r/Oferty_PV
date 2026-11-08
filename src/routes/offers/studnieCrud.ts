@@ -128,7 +128,15 @@ function stripAutoConfig(config: unknown): unknown {
         .map((item) => {
             const copy: Record<string, unknown> = {};
             for (const k of Object.keys(item)) {
-                if (['frozenPrice', 'frozenPriceBase', 'frozenName', '_osadnikCost'].includes(k))
+                if (
+                    [
+                        'frozenPrice',
+                        'frozenPriceBase',
+                        'frozenStandalonePrice',
+                        'frozenName',
+                        '_osadnikCost'
+                    ].includes(k)
+                )
                     continue;
                 copy[k] = normalizeValue(item[k]);
             }
