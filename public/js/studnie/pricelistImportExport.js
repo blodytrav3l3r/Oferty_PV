@@ -260,68 +260,6 @@ async function importStudnieFromExcel(event) {
     reader.readAsArrayBuffer(file);
 }
 
-/**
- * Automatycznie naprawia brakujące metadane w produktach (np. dodanych wcześniej ręcznie)
- */
-async function fixIncompleteProducts() {
-    let changed = false;
-    studnieProducts.forEach((p) => {
-        if (p.magazynKLB === undefined) {
-            p.magazynKLB = 1;
-            changed = true;
-        }
-        if (p.magazynWL === undefined) {
-            p.magazynWL = 1;
-            changed = true;
-        }
-        if (p.active === undefined) {
-            p.active = 1;
-            changed = true;
-        }
-
-        const n = (p.name || '').toUpperCase();
-        const cat = (p.category || '').toUpperCase();
-
-        if (!p.componentType || p.componentType === 'krag') {
-            let newType = p.componentType || 'krag';
-            if (n.includes('REDUKCYJNA')) newType = 'plyta_redukcyjna';
-            else if (n.includes('DENNICA')) newType = 'dennica';
-            else if (n.includes('KONUS') || n.includes('STOŻEK')) newType = 'konus';
-            else if (n.includes('PŁYTA DIN') || n.includes('NAKR')) newType = 'plyta_din';
-            else if (n.includes('NAJAZDOWA')) newType = 'plyta_najazdowa';
-            else if (n.includes('ZAMYKAJĄCA')) newType = 'plyta_zamykajaca';
-            else if (n.includes('ODCIĄŻAJĄCY')) newType = 'pierscien_odciazajacy';
-            else if (n.includes('USZCZELKA')) newType = 'uszczelka';
-            else if (n.includes('WŁAZ')) newType = 'wlaz';
-            else if (n.includes('AVR')) newType = 'avr';
-
-            if (newType !== p.componentType) {
-                p.componentType = newType;
-                changed = true;
-            }
-        }
-
-        if (!p.dn || p.dn === null) {
-            const dnMatch = (cat + ' ' + n).match(/DN(\d+)/i);
-            if (dnMatch) {
-                p.dn = parseInt(dnMatch[1]);
-                changed = true;
-            } else if (n.includes('STYCZNA')) {
-                p.dn = 'styczna';
-                changed = true;
-            }
-        }
-    });
-
-    if (changed) {
-        await saveStudnieProducts(studnieProducts);
-        logger.info(
-            'pricelistManager',
-            'Zastosowano automatyczne poprawki metadanych do produktów studni'
-        );
-    }
-}
-
 window.exportStudnieToExcel = exportStudnieToExcel;
 window.importStudnieFromExcel = importStudnieFromExcel;
 // Alias pod przycisk panelu: import studni zawsze pomija arkusze PRECO.
@@ -426,7 +364,3 @@ async function importPrecoFromExcel(event) {
 }
 
 window.importPrecoFromExcel = importPrecoFromExcel;
-
-if (typeof studnieProducts !== 'undefined' && !window.__STUDNIE_APP_ORCHESTRATOR__) {
-    setTimeout(fixIncompleteProducts, 1000);
-}

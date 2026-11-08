@@ -174,6 +174,51 @@ describe('P1 studnie: loadStudnieProducts / loadPrecoPricing (uiHelpers.js)', ()
         expect(capturedUrl).toBe('/api/products-studnie');
     });
 
+    it('cennik: zgłasza brakujące metadane bez automatycznej zmiany lub zapisu', async () => {
+        const incompleteProduct = {
+            id: 'KRG-DN1000',
+            name: 'Krąg DN1000',
+            componentType: 'krag',
+            dn: null,
+            magazynKLB: undefined,
+            magazynWL: 1,
+            active: 1
+        };
+        const fetch = jest.fn();
+        const sandbox = makeSandbox(() => Promise.resolve(okRes([incompleteProduct])));
+        sandbox.fetch = fetch;
+        sandbox.window.pricelistVersions = { isCennikHost: () => true };
+
+        const products = await run(STUDNIE_CODE, sandbox, 'loadStudnieProducts()');
+
+        expect(products[0].magazynKLB).toBeUndefined();
+        expect(sandbox.showToast).toHaveBeenCalledWith(
+            expect.stringContaining('Krąg DN1000'),
+            'warning'
+        );
+        expect(sandbox.showToast.mock.calls[0][0]).toContain('Magazyn KLB');
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('cennik: nie zgłasza prawidłowo pustego DN dla transportu', async () => {
+        const transport = {
+            id: 'TRANSPORT',
+            name: 'Transport studni (kurs)',
+            category: 'Transport',
+            componentType: 'transport',
+            dn: null,
+            magazynKLB: 1,
+            magazynWL: 1,
+            active: 1
+        };
+        const sandbox = makeSandbox(() => Promise.resolve(okRes([transport])));
+        sandbox.window.pricelistVersions = { isCennikHost: () => true };
+
+        await run(STUDNIE_CODE, sandbox, 'loadStudnieProducts()');
+
+        expect(sandbox.showToast).not.toHaveBeenCalled();
+    });
+
     it("oferta: loadPrecoPricing({source:'active'}) woła URL z ?source=active", async () => {
         let capturedUrl = null;
         const sandbox = makeSandbox((url) => {

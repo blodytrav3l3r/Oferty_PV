@@ -573,8 +573,51 @@ async function loadStudnieProducts(options) {
             : product
     );
 
+    if (!useActive) reportMissingStudnieMetadata(saved);
+
     window.__studniePricingSource = useActive ? 'active' : 'draft';
     return saved;
+}
+
+function reportMissingStudnieMetadata(products) {
+    const isCennikHost =
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.isCennikHost === 'function' &&
+        window.pricelistVersions.isCennikHost();
+    if (!isCennikHost || typeof showToast !== 'function') return;
+
+    const issues = products
+        .map((product) => {
+            const missing = [];
+            if (product.magazynKLB == null) missing.push('Magazyn KLB');
+            if (product.magazynWL == null) missing.push('Magazyn WL');
+            if (product.active == null) missing.push('Aktywność');
+            if (typeof product.componentType !== 'string' || !product.componentType.trim()) {
+                missing.push('Typ produktu');
+            }
+
+            const productDescription = `${product.category || ''} ${product.name || ''}`;
+            const requiresDn =
+                /\bDN\s*\d+/i.test(productDescription) || /\bstyczna\b/i.test(productDescription);
+            const missingDn =
+                product.dn == null || product.dn === '' || product.dn === 0 || product.dn === '0';
+            if (requiresDn && missingDn) missing.push('Średnica DN');
+            if (!missing.length) return null;
+
+            const name = String(product.name || product.id || 'Produkt bez nazwy').slice(0, 80);
+            return `${name} — ${missing.join(', ')}`;
+        })
+        .filter(Boolean);
+
+    if (!issues.length) return;
+
+    const visibleIssues = issues.slice(0, 4).join('; ');
+    const remaining = issues.length - 4;
+    const suffix = remaining > 0 ? `; i ${remaining} innych` : '';
+    showToast(
+        `Brakujące dane cennika (${issues.length}): ${visibleIssues}${suffix}. Uzupełnij je ręcznie przed zapisem.`,
+        'warning'
+    );
 }
 
 function renamePłyty(_p) {
