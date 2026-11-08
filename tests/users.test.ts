@@ -52,6 +52,9 @@ jest.mock('../src/prismaClient', () => ({
         user_preferences: {
             deleteMany: jest.fn()
         },
+        care_notifications: {
+            deleteMany: jest.fn()
+        },
         offers_rel: { count: jest.fn() },
         offers_studnie_rel: { count: jest.fn() },
         orders_studnie_rel: { count: jest.fn() },
@@ -227,6 +230,9 @@ describe('Users Routes', () => {
             expect(res.statusCode).toBe(200);
             expect(prisma.$transaction).toHaveBeenCalled();
             expect(prisma.sessions.deleteMany).toHaveBeenCalledWith({
+                where: { userId: 'user-id' }
+            });
+            expect(prisma.care_notifications.deleteMany).toHaveBeenCalledWith({
                 where: { userId: 'user-id' }
             });
             expect(prisma.users.delete).toHaveBeenCalledWith({ where: { id: 'user-id' } });

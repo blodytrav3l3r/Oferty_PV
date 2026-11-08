@@ -198,6 +198,8 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
             // Sesje w tej samej tx — brak okna martwy-user-z-żywą-sesją.
             await tx.sessions.deleteMany({ where: { userId: req.params.id } });
             await tx.user_preferences.deleteMany({ where: { userId: req.params.id } });
+            // Skrzynka nie ma FK do users — usuń jej wiersze razem z kontem.
+            await tx.care_notifications.deleteMany({ where: { userId: req.params.id } });
             // Semantyka shares przy kasowaniu usera: USUŃ (nie anonimizuj, nie blokuj).
             // Dokumenty chroni blokada 403 powyżej (owned > 0), więc ownerId-sieroty są
             // niedosiężne tą ścieżką; grantee-sieroty (sharedWithUserId) i createdBy

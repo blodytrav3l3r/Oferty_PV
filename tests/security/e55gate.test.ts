@@ -473,6 +473,7 @@ describe('E5.5 gate: role i ownership', () => {
         const txMock = {
             sessions: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
             user_preferences: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+            care_notifications: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
             document_shares: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
             users: { delete: jest.fn().mockResolvedValue({}) }
         };
@@ -480,6 +481,9 @@ describe('E5.5 gate: role i ownership', () => {
         const ok = await request(app).delete('/api/users/u-x').set(admin);
         expect(ok.status).toBe(200);
         expect(prisma.$transaction).toHaveBeenCalled();
+        expect(txMock.care_notifications.deleteMany).toHaveBeenCalledWith({
+            where: { userId: 'u-x' }
+        });
         expectNoLeak(ok.body);
     });
 

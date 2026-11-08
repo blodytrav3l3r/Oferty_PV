@@ -14,15 +14,20 @@
  *   (n) DOM: Kontakt z kafelka otwiera modal opieki w miejscu (bez kartoteki)
  *   (o) DOM: presety +9d i custom 28d odkładają (pill), 99 odrzucone
  */
+import { randomBytes, randomUUID } from 'node:crypto';
 import { test, expect } from '@playwright/test';
 
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
 const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
-const CLIENT_TAG = `E2E-CARE-META-${Date.now()}`;
+const RUN_ID = randomUUID();
+const CLIENT_TAG = `E2E-CARE-META-${RUN_ID}`;
+const CONTACT_USERNAME = `e2e-care-meta-${RUN_ID}`;
+const CONTACT_PASSWORD = randomBytes(32).toString('base64url');
 const ORIGIN = { Origin: BASE };
 
 let offerFull = '';
 let offerBare = '';
+let contactUserId = '';
 
 test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
     test.beforeAll(async ({ request }) => {
@@ -31,6 +36,28 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
         expect(login.status(), 'Admin login failed').toBe(200);
+
+        // Ten plik używa własnej skrzynki. Inne specy tworzą >20 powiadomień
+        // admina równolegle, a panel pokazuje tylko 20 najnowszych.
+        const registration = await request.post(`${BASE}/api/auth/register`, {
+            headers: ORIGIN,
+            data: {
+                username: CONTACT_USERNAME,
+                password: CONTACT_PASSWORD,
+                role: 'user',
+                firstName: 'E2E',
+                lastName: 'Care Contact'
+            }
+        });
+        expect(registration.status(), 'Seed dedykowanego użytkownika failed').toBe(200);
+        contactUserId = (await registration.json()).user?.id || '';
+        expect(contactUserId, 'Seed użytkownika nie zwrócił id').not.toBe('');
+
+        const contactLogin = await request.post(`${BASE}/api/auth/login`, {
+            headers: ORIGIN,
+            data: { username: CONTACT_USERNAME, password: CONTACT_PASSWORD }
+        });
+        expect(contactLogin.status(), 'Login dedykowanego użytkownika failed').toBe(200);
 
         // A: pełna — investName kolumną, adres blobem, kontakt PUT-em.
         const full = await request.post(`${BASE}/api/offers-rury`, {
@@ -78,9 +105,49 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
     test.beforeEach(async ({ request }) => {
         const login = await request.post(`${BASE}/api/auth/login`, {
             headers: ORIGIN,
+            data: { username: CONTACT_USERNAME, password: CONTACT_PASSWORD }
+        });
+        expect(login.status(), 'Login dedykowanego użytkownika (beforeEach) failed').toBe(200);
+    });
+
+    test.afterAll(async ({ request }) => {
+        if (!contactUserId) return;
+
+        const contactLogin = await request.post(`${BASE}/api/auth/login`, {
+            headers: ORIGIN,
+            data: { username: CONTACT_USERNAME, password: CONTACT_PASSWORD }
+        });
+        expect(contactLogin.status(), 'Cleanup login dedykowanego użytkownika failed').toBe(200);
+
+        const notifications = await request.get(
+            `${BASE}/api/care/notifications?scope=mine&unreadOnly=true&limit=100`
+        );
+        expect(notifications.ok(), 'Cleanup powiadomień failed').toBe(true);
+        const notificationIds = ((await notifications.json()).items || []).map((item) => item.id);
+        if (notificationIds.length > 0) {
+            const markRead = await request.post(`${BASE}/api/care/notifications/read`, {
+                headers: { ...ORIGIN, 'Content-Type': 'application/json' },
+                data: { ids: notificationIds }
+            });
+            expect(markRead.ok(), 'Cleanup odczytu powiadomień failed').toBe(true);
+        }
+
+        for (const offerId of [offerFull, offerBare].filter(Boolean)) {
+            const deletion = await request.delete(`${BASE}/api/offers-rury/${offerId}`, {
+                headers: ORIGIN
+            });
+            expect(deletion.status(), `Cleanup oferty ${offerId} failed`).toBe(200);
+        }
+
+        const adminLogin = await request.post(`${BASE}/api/auth/login`, {
+            headers: ORIGIN,
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
-        expect(login.status(), 'Admin login (beforeEach) failed').toBe(200);
+        expect(adminLogin.status(), 'Cleanup login admina failed').toBe(200);
+        const userDeletion = await request.delete(`${BASE}/api/users/${contactUserId}`, {
+            headers: ORIGIN
+        });
+        expect(userDeletion.status(), 'Cleanup użytkownika testowego failed').toBe(200);
     });
 
     test('(j) panel niesie obiekt+kontakt, braki = null', async ({ request }) => {
@@ -124,9 +191,9 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
     async function openPanel(page) {
         const login = await page.request.post(`${BASE}/api/auth/login`, {
             headers: ORIGIN,
-            data: { username: 'admin', password: ADMIN_PASSWORD }
+            data: { username: CONTACT_USERNAME, password: CONTACT_PASSWORD }
         });
-        expect(login.status(), 'Login failed').toBe(200);
+        expect(login.status(), 'Login dedykowanego użytkownika failed').toBe(200);
         await page.goto(`${BASE}/`);
         const panel = page.locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
