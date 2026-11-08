@@ -74,15 +74,36 @@ describe('polityka autouzupełniania przeglądarki', () => {
         );
     });
 
-    test('formularze wspólne nie deklarują adresowych tokenów autofill', () => {
+    test('szablony wspólne wyłączają autofill dla danych firmy i adresu', () => {
         const offer = read('public/partials/shared/step1-client.html');
         const buildCard = read('public/partials/shared/karta-build-card.html');
+        const offerDocument = new DOMParser().parseFromString(offer, 'text/html');
+        const buildCardDocument = new DOMParser().parseFromString(buildCard, 'text/html');
 
-        expect(offer).not.toMatch(
-            /autocomplete="(?:postal-code|address-level2|street-address|country)"/
-        );
-        expect(buildCard).not.toMatch(
-            /autocomplete="(?:postal-code|address-level2|street-address|country)"/
-        );
+        for (const id of [
+            'client-name',
+            'client-nip',
+            'client-address',
+            'invest-postal-code',
+            'invest-city',
+            'invest-street',
+            'invest-country',
+            'invest-location-description'
+        ]) {
+            expect(offerDocument.getElementById(id)?.getAttribute('autocomplete')).toBe('off');
+        }
+
+        for (const id of [
+            'step4-client-name',
+            'step4-client-nip',
+            'step4-client-address',
+            'step4-adres-wysylki',
+            'step4-invest-postal-code',
+            'step4-invest-city',
+            'step4-invest-street',
+            'step4-invest-location-description'
+        ]) {
+            expect(buildCardDocument.getElementById(id)?.getAttribute('autocomplete')).toBe('off');
+        }
     });
 });

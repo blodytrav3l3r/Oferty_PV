@@ -45,6 +45,7 @@
                     <input
                         class="wizard-form-input"
                         id="client-name"
+                        autocomplete="off"
                         placeholder="Budimex S.A."
                         data-csp="updateStep1NextState"
                         data-csp-on="input"
@@ -55,6 +56,7 @@
                     <input
                         class="wizard-form-input"
                         id="client-nip"
+                        autocomplete="off"
                         placeholder="1234567890"
                         data-csp="$digitsOnly"
                         data-csp-on="input"
@@ -65,6 +67,7 @@
                     <input
                         class="wizard-form-input"
                         id="client-address"
+                        autocomplete="off"
                         placeholder="ul. Przykładowa 1, Warszawa"
                     />
                 </div>
@@ -105,21 +108,32 @@
                     <input
                         class="wizard-form-input"
                         id="invest-postal-code"
+                        autocomplete="off"
                         maxlength="20"
                         placeholder="00-000"
                     />
                 </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="invest-city">Miejscowość</label>
-                    <input class="wizard-form-input" id="invest-city" maxlength="120" />
+                    <input
+                        class="wizard-form-input"
+                        id="invest-city"
+                        autocomplete="off"
+                        maxlength="120"
+                    />
                 </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="invest-street">Ulica i numer</label>
-                    <input class="wizard-form-input" id="invest-street" maxlength="200" />
+                    <input
+                        class="wizard-form-input"
+                        id="invest-street"
+                        autocomplete="off"
+                        maxlength="200"
+                    />
                 </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="invest-country">Kraj</label>
-                    <select class="wizard-form-input" id="invest-country">
+                    <select class="wizard-form-input" id="invest-country" autocomplete="off">
                         <option value="PL">Polska</option>
                     </select>
                 </div>
@@ -130,6 +144,7 @@
                     <textarea
                         class="wizard-form-input"
                         id="invest-location-description"
+                        autocomplete="off"
                         rows="2"
                         maxlength="500"
                         placeholder="Dodatkowe wskazówki dojazdu lub położenia obiektu"

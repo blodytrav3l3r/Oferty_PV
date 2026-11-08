@@ -14,6 +14,19 @@ Moduły są dostępne w powłoce SPA `app.html`; router tworzy dla nich iframe. 
 
 **Nie wszystkie moduły są dostępne dla każdej roli.** Poniżej role podaję tylko tam, gdzie potwierdza je middleware lub jawna kontrola UI. Samo ukrycie przycisku nie jest autoryzacją; uprawnienia endpointu rozstrzyga backend.
 
+## Sugestie adresów w przeglądarce
+
+S.O.K. ustawia `autocomplete="off"` dla pól firmy i adresów oraz dla kontrolek dodawanych dynamicznie. Przeglądarka może tę wskazówkę zignorować, a pytania o zapis adresu pochodzą z jej własnych ustawień. Aby wyłączyć zapisywanie i podpowiadanie adresów, zmień ustawienia profilu przeglądarki:
+
+- **Chrome:** Ustawienia → Autouzupełnianie i hasła → Adresy i inne; wyłącz zapisywanie i uzupełnianie adresów. [Pomoc Chrome](https://support.google.com/chrome/answer/142893)
+- **Microsoft Edge:** Ustawienia → Hasła i autouzupełnianie → Adresy i inne; wyłącz zapisywanie i uzupełnianie adresów. [Pomoc Edge](https://support.microsoft.com/en-us/edge/get-started-with-autofill-microsoft-edge)
+- **Brave:** Ustawienia → Autofill and passwords → Addresses and more; wyłącz zapisywanie i uzupełnianie adresów. [Pomoc Brave](https://support.brave.app/hc/en-us/articles/360017906292-How-do-I-manage-autofill-settings)
+- **Firefox:** Ustawienia → Prywatność i bezpieczeństwo → Adresy i inne; wyłącz zapisywanie i uzupełnianie adresów. [Pomoc Firefox](https://support.mozilla.org/en-US/kb/automatically-fill-your-address-web-forms)
+- **Safari na Macu:** Safari → Ustawienia → Autouzupełnianie; wyłącz używanie danych z Kontaktów i pozostałe niepotrzebne opcje. [Podręcznik Safari](https://support.apple.com/guide/safari/ibrwa005/mac)
+- **Safari na iPhonie/iPadzie:** Ustawienia → Aplikacje → Safari → Autouzupełnianie; wyłącz używanie danych kontaktowych i pozostałe niepotrzebne opcje. [Podręcznik iPhone’a](https://support.apple.com/guide/iphone/fill-in-forms-iphccfb450b7/ios)
+
+Nazwy i położenie ustawień mogą się różnić zależnie od wersji i języka przeglądarki. Zmiana dotyczy całego profilu, nie tylko S.O.K. Wcześniej zapisane adresy pozostają w przeglądarce i trzeba je usunąć osobno w jej ustawieniach.
+
 ## Rury — `#/rury`
 
 **Cel — FACT.** Moduł prowadzi kreator oferty rur, udostępnia sekcje oferty i cennika. HTML pokazuje kreator kroków 1–5 oraz sekcje builder, oferta i cennik: [rury.html](../../public/rury.html#L108-L145), [partials/rury/wizard-nav.html](../../public/partials/rury/wizard-nav.html#L1-L28).
