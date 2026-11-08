@@ -116,8 +116,7 @@ export default {
     },
 
     /**
-     * Zeruje wszystkie filtry kartoteki (typ, status, opiekun, szukaj).
-     * Data początkowa wymaga ponownego wyboru przed wczytaniem listy.
+     * Zeruje filtry kartoteki i przywraca domyślny zakres „Dzisiaj”.
      */
     clearAllFilters() {
         this.currentFilter = 'all';
@@ -125,7 +124,7 @@ export default {
         this.currentFollowupFilter = 'all';
         this.hidePaused = false;
         this.filters.user = '';
-        this.filters.date = { mode: 'none', preset: '', from: '', to: '' };
+        this.filters.date = { mode: 'preset', preset: 'today', from: '', to: '' };
 
         const searchInput = document.getElementById('ka-local-search-input');
         if (searchInput) searchInput.value = '';
@@ -145,13 +144,8 @@ export default {
     },
 
     setDatePreset(preset) {
-        if (this.filters.date.mode === 'preset' && this.filters.date.preset === preset) {
-            this.filters.date.mode = 'none';
-            this.filters.date.preset = '';
-        } else {
-            this.filters.date.mode = 'preset';
-            this.filters.date.preset = preset;
-        }
+        this.filters.date.mode = 'preset';
+        this.filters.date.preset = preset;
         this.filters.date.from = '';
         this.filters.date.to = '';
         this._syncFilterUI();

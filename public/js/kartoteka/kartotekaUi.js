@@ -19,10 +19,10 @@ class KartotekaUI {
         this.hidePaused = false;
         this.filters = {
             user: '',
-            // Wyszukiwanie ofert wymaga jawnie wybranego zakresu początkowego.
+            // Domyślny zakres umożliwia od razu przeglądać dzisiejsze oferty.
             date: {
-                mode: 'none',
-                preset: '',
+                mode: 'preset',
+                preset: 'today',
                 from: '',
                 to: ''
             }

@@ -78,6 +78,15 @@ const AppZlecenia = (() => {
         return { from: isoLocalDate(from), to: isoLocalDate(to) };
     }
 
+    function setDatePresetRange(daysBack) {
+        const range = buildDatePresetRange(daysBack);
+        const dateFromInput = document.getElementById('zlecenia-date-from');
+        const dateToInput = document.getElementById('zlecenia-date-to');
+        if (dateFromInput) dateFromInput.value = range.from;
+        if (dateToInput) dateToInput.value = range.to;
+        syncDatePresetState();
+    }
+
     /** Podświetla preset tylko gdy oba pola dat odpowiadają jego zakresowi. */
     function syncDatePresetState() {
         const fromInput = document.getElementById('zlecenia-date-from');
@@ -116,7 +125,7 @@ const AppZlecenia = (() => {
         setupStaticActions();
         setupSentinel();
         await populateUserFilter();
-        clearDateRange();
+        setDatePresetRange(0);
         await searchOffers(buildSearchParams());
     }
 
@@ -219,10 +228,7 @@ const AppZlecenia = (() => {
 
         // Presety dat: Dziś / 7 dni / 30 dni
         function applyDatePreset(daysBack) {
-            const range = buildDatePresetRange(daysBack);
-            if (dateFromInput) dateFromInput.value = range.from;
-            if (dateToInput) dateToInput.value = range.to;
-            syncDatePresetState();
+            setDatePresetRange(daysBack);
             searchOffers(buildSearchParams());
         }
         DATE_PRESETS.forEach(({ id, daysBack }) => {
@@ -469,11 +475,11 @@ const AppZlecenia = (() => {
         }
     }
 
-    /* Wyzerowanie filtrów — data początkowa wymaga ponownego wyboru. */
+    /* Wyzerowanie filtrów — domyślny zakres pozostaje ustawiony na dziś. */
     function clearAllFilters() {
         const qInput = document.getElementById('zlecenia-search-input');
         if (qInput) qInput.value = '';
-        clearDateRange();
+        setDatePresetRange(0);
         const select = document.getElementById('zlecenia-user-filter');
         if (select) select.value = '';
         const prodInput = document.getElementById('zlecenia-prod-number-input');

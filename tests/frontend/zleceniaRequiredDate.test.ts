@@ -4,14 +4,17 @@ import vm from 'vm';
 const SCRIPT = 'public/js/spa/zlecenia.js';
 
 function loadZlecenia(dateFrom = '') {
-    const elements: Record<string, { value?: string }> = {
-        'zlecenia-date-from': { value: dateFrom },
-        'zlecenia-date-to': { value: '' }
+    const elements: Record<string, { value?: string; addEventListener?: () => void }> = {
+        'zlecenia-date-from': { value: dateFrom, addEventListener() {} },
+        'zlecenia-date-to': { value: '', addEventListener() {} }
     };
     const renderStates: Array<{ requiresDateFrom?: boolean }> = [];
-    const fetch = jest.fn(async (_url: string) => ({
+    const fetch = jest.fn(async (url: string) => ({
         ok: true,
-        json: async () => ({ data: [], totalCount: 0, hasMore: false })
+        json: async () =>
+            url === '/api/auth/me'
+                ? { user: { id: 'admin', role: 'admin' } }
+                : { data: [], totalCount: 0, hasMore: false }
     }));
     const context: Record<string, any> = {
         AbortController,
@@ -64,5 +67,44 @@ describe('Zlecenia wymagają daty początkowej', () => {
 
         expect(fetch).toHaveBeenCalledTimes(1);
         expect(String(fetch.mock.calls[0][0])).toContain('dateFrom=2026-11-07');
+    });
+
+    test('otwarcie kartoteki domyślnie pobiera dzisiejsze zlecenia', async () => {
+        const { app, fetch, elements } = loadZlecenia();
+
+        await app.init();
+
+        const searchUrl = fetch.mock.calls.find(([url]) =>
+            String(url).startsWith('/api/orders-studnie/production/search?')
+        )?.[0];
+        const today = new Date();
+        const todayString = [
+            today.getFullYear(),
+            String(today.getMonth() + 1).padStart(2, '0'),
+            String(today.getDate()).padStart(2, '0')
+        ].join('-');
+
+        expect(searchUrl).toContain(`dateFrom=${todayString}`);
+        expect(elements['zlecenia-date-from'].value).toBe(todayString);
+        expect(elements['zlecenia-date-to'].value).toBe(todayString);
+    });
+
+    test('wyczyszczenie filtrów przywraca zakres dzisiaj', async () => {
+        const { app, fetch, elements } = loadZlecenia('2026-01-01');
+        const today = new Date();
+        const todayString = [
+            today.getFullYear(),
+            String(today.getMonth() + 1).padStart(2, '0'),
+            String(today.getDate()).padStart(2, '0')
+        ].join('-');
+
+        await app.clearAllFilters();
+
+        const searchUrl = fetch.mock.calls.find(([url]) =>
+            String(url).startsWith('/api/orders-studnie/production/search?')
+        )?.[0];
+        expect(elements['zlecenia-date-from'].value).toBe(todayString);
+        expect(elements['zlecenia-date-to'].value).toBe(todayString);
+        expect(searchUrl).toContain(`dateFrom=${todayString}`);
     });
 });
