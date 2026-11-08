@@ -50,7 +50,9 @@ jest.mock('../src/prismaClient', () => ({
             deleteMany: jest.fn()
         },
         user_preferences: {
-            deleteMany: jest.fn()
+            deleteMany: jest.fn(),
+            findMany: jest.fn().mockResolvedValue([]),
+            upsert: jest.fn()
         },
         care_notifications: {
             deleteMany: jest.fn()
@@ -178,6 +180,47 @@ describe('Users Routes', () => {
                     })
                 })
             );
+            expect(prisma.$transaction).not.toHaveBeenCalled();
+        });
+
+        it('zapisuje domyślną jednostkę organizacyjną atomowo z aktualizacją użytkownika', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValueOnce(mockUsers[1]);
+
+            const res = await request(app)
+                .put('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin')
+                .send({ defaultOrganizationUnit: 'ASM_KLUCZBORK' });
+
+            expect(res.statusCode).toBe(200);
+            expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+            expect(prisma.user_preferences.upsert).toHaveBeenCalledWith({
+                where: {
+                    userId_key: { userId: 'user-id', key: 'defaultOrganizationUnit' }
+                },
+                update: { value: 'ASM_KLUCZBORK' },
+                create: {
+                    userId: 'user-id',
+                    key: 'defaultOrganizationUnit',
+                    value: 'ASM_KLUCZBORK'
+                }
+            });
+        });
+
+        it('usuwa domyślną jednostkę organizacyjną w transakcji', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValueOnce(mockUsers[1]);
+
+            const res = await request(app)
+                .put('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin')
+                .send({ defaultOrganizationUnit: null });
+
+            expect(res.statusCode).toBe(200);
+            expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+            expect(prisma.user_preferences.deleteMany).toHaveBeenCalledWith({
+                where: { userId: 'user-id', key: 'defaultOrganizationUnit' }
+            });
         });
 
         it('powinien zwrócić 409 jeśli username istnieje', async () => {

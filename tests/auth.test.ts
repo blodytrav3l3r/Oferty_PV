@@ -21,6 +21,9 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: jest.fn(),
             deleteMany: jest.fn(),
             update: jest.fn()
+        },
+        user_preferences: {
+            findUnique: jest.fn().mockResolvedValue(null)
         }
     }
 }));

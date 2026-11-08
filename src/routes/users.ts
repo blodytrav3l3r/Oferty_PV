@@ -149,42 +149,44 @@ router.put(
                         : '[]'
                     : user.subUsers;
 
-            await prisma.$transaction(async (tx) => {
-                await tx.users.update({
-                    where: { id: userId },
-                    data: {
-                        username: username || user.username,
-                        password: newPassword,
-                        role: newRole,
-                        firstName: newFirstName,
-                        lastName: newLastName,
-                        phone: newPhone,
-                        email: newEmail,
-                        symbol: newSymbol,
-                        subUsers: newSubUsersString,
-                        orderStartNumber: newOrderStartNumber,
-                        productionOrderStartNumber: newProdOrderStartNumber
+            const userUpdateData = {
+                username: username || user.username,
+                password: newPassword,
+                role: newRole,
+                firstName: newFirstName,
+                lastName: newLastName,
+                phone: newPhone,
+                email: newEmail,
+                symbol: newSymbol,
+                subUsers: newSubUsersString,
+                orderStartNumber: newOrderStartNumber,
+                productionOrderStartNumber: newProdOrderStartNumber
+            };
+
+            if (defaultOrganizationUnit === undefined) {
+                await prisma.users.update({ where: { id: userId }, data: userUpdateData });
+            } else {
+                await prisma.$transaction(async (tx) => {
+                    await tx.users.update({ where: { id: userId }, data: userUpdateData });
+                    if (defaultOrganizationUnit === null) {
+                        await tx.user_preferences.deleteMany({
+                            where: { userId, key: DEFAULT_ORGANIZATION_UNIT_KEY }
+                        });
+                        return;
                     }
-                });
-                if (defaultOrganizationUnit === undefined) return;
-                if (defaultOrganizationUnit === null) {
-                    await tx.user_preferences.deleteMany({
-                        where: { userId, key: DEFAULT_ORGANIZATION_UNIT_KEY }
+                    await tx.user_preferences.upsert({
+                        where: {
+                            userId_key: { userId, key: DEFAULT_ORGANIZATION_UNIT_KEY }
+                        },
+                        update: { value: defaultOrganizationUnit },
+                        create: {
+                            userId,
+                            key: DEFAULT_ORGANIZATION_UNIT_KEY,
+                            value: defaultOrganizationUnit
+                        }
                     });
-                    return;
-                }
-                await tx.user_preferences.upsert({
-                    where: {
-                        userId_key: { userId, key: DEFAULT_ORGANIZATION_UNIT_KEY }
-                    },
-                    update: { value: defaultOrganizationUnit },
-                    create: {
-                        userId,
-                        key: DEFAULT_ORGANIZATION_UNIT_KEY,
-                        value: defaultOrganizationUnit
-                    }
                 });
-            });
+            }
 
             // D-FIX-1: rola/hasło to zmiana bezpieczeństwa — natychmiastowe
             // unieważnienie cache + purge sesji (stary stan nie może zostać

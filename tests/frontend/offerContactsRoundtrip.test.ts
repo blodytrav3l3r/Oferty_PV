@@ -88,15 +88,18 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(css).toContain('.td-contact');
     });
 
-    test('popup 3 kolumny: Imie/Telefon/E-mail, sub-wiersze, brak tr.onclick', () => {
+    test('popup rozdziela dane firmy i kontaktu w tabeli 8 kolumn', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('Imię i nazwisko');
-        expect(src).toContain('>Telefon<');
-        expect(src).toContain('>E-mail<');
+        expect(src).toContain('Telefon</th>');
+        expect(src).toContain('E-mail</th>');
         expect(src).not.toContain('<th scope="col">Kontakt<');
         expect(src).not.toContain('tr.onclick');
         expect(src).not.toContain("tr.title = 'Wczytaj do oferty'");
-        expect(src).toContain('colSpan = 3');
+        expect(src).toContain('companyCell.colSpan = 8');
+        expect(src).toContain('contactCell.colSpan = 8');
+        expect(src).toContain("companyTitle.textContent = 'Dane firmy'");
+        expect(src).toContain("contactTitle.textContent = 'Dane kontaktowe'");
         expect(src).toContain('ccc-sub');
         expect(src).toContain('ccc-mail');
         const css = read('public/css/style.base.css');
@@ -143,9 +146,9 @@ describe('frontend: offer contacts roundtrip', () => {
 
     test('katalog N-osob: edit-fallback rozcina legacy mirror jak display', () => {
         const src = read('public/js/shared/clientManager.js');
-        const editIdx = src.indexOf('Edytor N-osób katalogu');
+        const editIdx = src.indexOf("contactTitle.textContent = 'Dane kontaktowe'");
         expect(editIdx).toBeGreaterThan(-1);
-        expect(src.slice(editIdx, editIdx + 2000)).toContain('splitMerged');
+        expect(src.slice(editIdx, editIdx + 1800)).toContain('splitMerged');
     });
 
     test('katalog N-osob: jeden splitMerged we wszystkich sciezkach (phone tez)', () => {

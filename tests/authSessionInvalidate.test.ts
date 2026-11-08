@@ -75,6 +75,9 @@ jest.mock('../src/prismaClient', () => ({
                 return next;
             })
         },
+        user_preferences: {
+            findUnique: jest.fn(async () => null)
+        },
         sessions: {
             create: jest.fn(async ({ data }: any) => {
                 sessions.set(data.token, { ...data });
