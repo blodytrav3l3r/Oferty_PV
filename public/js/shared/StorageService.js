@@ -301,6 +301,7 @@ class StorageService {
                     doc.data.totalBrutto ||
                     (doc.data.summary ? doc.data.summary.totalBrutto : null),
                 number: doc.data.number || doc.data.offerNumber,
+                organizationUnit: doc.data.organizationUnit,
                 clientName: doc.data.clientName,
                 clientNumber: doc.data.clientNumber,
                 clientNip: doc.data.clientNip,

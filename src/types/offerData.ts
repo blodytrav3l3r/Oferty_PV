@@ -3,6 +3,7 @@ export interface RuryOfferDataBlob {
     type?: string;
     number?: string;
     date?: string;
+    organizationUnit?: 'ASM_KLUCZBORK' | 'WL_WLOCLAWEK';
     clientName?: string;
     clientNip?: string;
     clientAddress?: string;
@@ -44,6 +45,7 @@ export interface StudnieOfferDataBlob {
     type?: string;
     number?: string;
     date?: string;
+    organizationUnit?: 'ASM_KLUCZBORK' | 'WL_WLOCLAWEK';
     clientName?: string;
     clientNip?: string;
     clientAddress?: string;

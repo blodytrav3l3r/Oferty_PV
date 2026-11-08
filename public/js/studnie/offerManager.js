@@ -161,6 +161,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     setOfferFormFields({
         number: normalized.number,
         date: normalized.date,
+        organizationUnit: normalized.organizationUnit || '',
         clientName: normalized.clientName,
         clientNumber: normalized.clientNumber,
         clientNip: normalized.clientNip,

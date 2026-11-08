@@ -100,7 +100,7 @@ function renderSavedOffersStudnie() {
                         ? `
                 <div class="offer-client-badges">
                     ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2" aria-hidden="true"></i> <strong>Klient:</strong> <span class="fw-500">${escapeHtml(o.clientName)}</span></div>` : ''}
-                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat" aria-hidden="true"></i> <strong>Budowa:</strong> <span class="fw-500">${escapeHtml(o.investName)}</span></div>` : ''}
+                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat" aria-hidden="true"></i> <strong>Symbol oferty - Obiekt:</strong> <span class="fw-500">${escapeHtml(o.investName)}</span></div>` : ''}
                 </div>`
                         : ''
                 }

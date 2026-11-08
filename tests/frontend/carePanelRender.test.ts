@@ -460,7 +460,7 @@ describe('carePanel — render, a11y, kafelki, search', () => {
         const pills = byClass(l1[0], 'ops-pill').map((p: any) => p.textContent);
         expect(pills).toContain('Nowy kontakt');
         expect(pills).toContain('STUDNIE');
-        // L2: nr klienta + nazwa + obiekt, wartość z prawej.
+        // L2: kod kontrahenta + nazwa + obiekt, wartość z prawej.
         const l2 = byClass(card, 'care-queue-l2');
         expect(l2).toHaveLength(1);
         expect(byClass(l2[0], 'care-queue-client-no')[0].textContent).toContain('K-7');
@@ -627,7 +627,7 @@ describe('carePanel — render, a11y, kafelki, search', () => {
         expect(texts(l1[0])).toContain('PLN');
         expect(texts(l1[0])).toContain('STUDNIE');
         expect(texts(l1[0])).toContain('Termin kontaktu');
-        // L2: nr klienta + nazwa + obiekt, delay w h/m z prawej.
+        // L2: kod kontrahenta + nazwa + obiekt, delay w h/m z prawej.
         const l2 = byClass(card, 'care-notif-l2');
         expect(l2).toHaveLength(1);
         expect(texts(l2[0])).toContain('K-7');

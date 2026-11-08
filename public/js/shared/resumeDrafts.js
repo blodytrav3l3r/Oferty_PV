@@ -400,7 +400,7 @@
         var remote = detailsState.map[item.kind + '|' + item.docId] || null;
         var parts = [];
         if (remote && remote.clientName) parts.push('Firma: ' + remote.clientName);
-        if (remote && remote.investName) parts.push('Obiekt: ' + remote.investName);
+        if (remote && remote.investName) parts.push('Symbol oferty - Obiekt: ' + remote.investName);
         if (parts.length) return parts.join(' · ');
         if (!item.docId || item.docId === 'new') return 'Dokument jeszcze nie zapisany na serwerze';
         if (!detailsState.loaded) return 'Wczytywanie nazw…';

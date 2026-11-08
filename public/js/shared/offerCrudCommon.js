@@ -133,7 +133,7 @@ function getInvestLocationFields() {
 
 /**
  * Zbiera standardowe pola formularza oferty.
- * @returns {{number:string,date:string,clientName:string,clientNumber:string,clientNip:string,clientAddress:string,clientContact:string,clientContacts:Array,contactPerson:string,clientPhone:string,clientEmail:string,investName:string,investAddress:string,investContractor:string,investStreet?:string,investPostalCode?:string,investCity?:string,investCountry?:string,investLocationDescription?:string,investContact?:string,investContacts?:Array,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
+ * @returns {{number:string,date:string,organizationUnit:string,clientName:string,clientNumber:string,clientNip:string,clientAddress:string,clientContact:string,clientContacts:Array,contactPerson:string,clientPhone:string,clientEmail:string,investName:string,investAddress:string,investContractor:string,investStreet?:string,investPostalCode?:string,investCity?:string,investCountry?:string,investLocationDescription?:string,investContact?:string,investContacts?:Array,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
  */
 function getOfferFormFields() {
     const g = (id) => (document.getElementById(id)?.value ?? '').trim();
@@ -143,6 +143,7 @@ function getOfferFormFields() {
     return {
         number: g('offer-number'),
         date: document.getElementById('offer-date')?.value || '',
+        organizationUnit: g('offer-organization-unit'),
         clientName: g('client-name'),
         clientNumber: g('client-number'),
         clientNip: g('client-nip'),
@@ -175,7 +176,7 @@ function getOfferFormFields() {
 
 /**
  * Wypełnia standardowe pola formularza oferty danymi.
- * @param {{number?:string,date?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,clientContacts?:Array,contactPerson?:string,clientPhone?:string,clientEmail?:string,investName?:string,investAddress?:string,investContractor?:string,investStreet?:string,investPostalCode?:string,investCity?:string,investCountry?:string,investLocationDescription?:string,investContact?:string,investContacts?:Array,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
+ * @param {{number?:string,date?:string,organizationUnit?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,clientContacts?:Array,contactPerson?:string,clientPhone?:string,clientEmail?:string,investName?:string,investAddress?:string,investContractor?:string,investStreet?:string,investPostalCode?:string,investCity?:string,investCountry?:string,investLocationDescription?:string,investContact?:string,investContacts?:Array,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
  */
 function setOfferFormFields(data) {
     const s = (id, val) => {
@@ -184,6 +185,7 @@ function setOfferFormFields(data) {
     };
     s('offer-number', data.number);
     s('offer-date', data.date || new Date().toISOString().slice(0, 10));
+    s('offer-organization-unit', data.organizationUnit);
     s('client-name', data.clientName);
     s('client-number', data.clientNumber);
     s('client-nip', data.clientNip);
@@ -291,9 +293,11 @@ function pickOrderContactFields(f) {
  * @param {function} [numberGenerator] - opcjonalnie generuje numer oferty
  */
 function clearOfferFormFields(numberGenerator) {
+    const defaultOrganizationUnit = window.currentUser?.defaultOrganizationUnit || '';
     setOfferFormFields({
         number: typeof numberGenerator === 'function' ? numberGenerator() : '',
         date: new Date().toISOString().slice(0, 10),
+        organizationUnit: defaultOrganizationUnit,
         clientName: '',
         clientNumber: '',
         clientNip: '',
@@ -397,6 +401,7 @@ function buildBaseOfferDoc(spec) {
             buildUserDisplayName(currentUser),
         number: fields.number,
         date: fields.date,
+        organizationUnit: fields.organizationUnit || '',
         clientName: fields.clientName,
         clientNumber: fields.clientNumber,
         clientNip: fields.clientNip,

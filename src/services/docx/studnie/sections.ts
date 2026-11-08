@@ -305,7 +305,7 @@ function buildInvestRuns(
     if (investName) {
         runs.push(
             new TextRun({
-                text: 'Budowa: ',
+                text: 'Symbol oferty - Obiekt: ',
                 bold: true,
                 size: SZ_INFO_BOX,
                 font: FONT,

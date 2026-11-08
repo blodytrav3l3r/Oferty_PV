@@ -222,6 +222,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             offerId: offer.id || editingOfferId,
             offerNumber: offerNumber,
             orderNumber: orderNumber,
+            organizationUnit: investmentFields.organizationUnit || '',
             userId: assignedUserId,
             userName:
                 (typeof editingOfferAssignedUserName !== 'undefined' &&
@@ -329,6 +330,7 @@ async function saveRuryOrder() {
         transportMode: currentRuryTransportMode || 'full',
         transportSeparate: !!currentRuryTransportSeparate,
         zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
+        organizationUnit: document.getElementById('offer-organization-unit')?.value || '',
         investName:
             document.getElementById('invest-name')?.value?.trim() ?? orderData.investName ?? '',
         investAddress:

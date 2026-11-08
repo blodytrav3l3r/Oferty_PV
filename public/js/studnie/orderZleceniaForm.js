@@ -419,7 +419,7 @@ async function populateZleceniaForm(el) {
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
             <div class="form-group-sm m-0" >
-                <label class="form-label-sm ui-text-sec">Obiekt</label>
+                <label class="form-label-sm ui-text-sec">Symbol oferty - Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${escapeHtmlAttr(existing?.obiekt || investName)}" placeholder="Nazwa obiektu...">
             </div>
             <div class="form-group-sm m-0" >

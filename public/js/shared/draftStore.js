@@ -34,6 +34,7 @@ var DRAFT_KINDS = ['offer_studnie', 'order_studnie', 'offer_rury', 'order_rury']
 var DRAFT_FIELD_KEYS = [
     'number',
     'date',
+    'organizationUnit',
     'clientName',
     'clientNumber',
     'clientNip',

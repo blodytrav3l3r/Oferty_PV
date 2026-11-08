@@ -166,7 +166,7 @@ function exportOfferPDF(id) {
       ${offer.clientNip ? `<div>NIP: ${escapeHtml(offer.clientNip)}</div>` : ''}
       ${offer.clientAddress ? `<div>${escapeHtml(offer.clientAddress)}</div>` : ''}
       ${offer.clientContact ? `<div>Kontakt: ${escapeHtml(offer.clientContact)}</div>` : ''}
-      ${offer.investName ? `<div style="margin-top:6px"><strong>Inwestycja:</strong> ${escapeHtml(offer.investName)}</div>` : ''}
+      ${offer.investName ? `<div style="margin-top:6px"><strong>Symbol oferty - Obiekt:</strong> ${escapeHtml(offer.investName)}</div>` : ''}
       ${offer.investAddress ? `<div>Adres inwestycji: ${escapeHtml(offer.investAddress)}</div>` : ''}
       ${offer.investLocationDescription ? `<div>Opis lokalizacji: ${escapeHtml(offer.investLocationDescription)}</div>` : ''}
       ${(offer.investContacts || [])

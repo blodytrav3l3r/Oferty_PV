@@ -384,6 +384,7 @@ async function loadOffer(id) {
     setOfferFormFields({
         number: finalNumber,
         date: normalized.date,
+        organizationUnit: normalized.organizationUnit || '',
         clientName: normalized.clientName,
         clientNumber: normalized.clientNumber,
         clientNip: normalized.clientNip,
@@ -662,6 +663,7 @@ async function restoreOfferVersion(offerId, historyIndex) {
     setOfferFormFields({
         number: snapshot.number || offer.number,
         date: snapshot.date || offer.date,
+        organizationUnit: snapshot.organizationUnit || '',
         clientName: snapshot.clientName,
         clientNumber: snapshot.clientNumber,
         clientNip: snapshot.clientNip,

@@ -105,6 +105,7 @@ async function enterRuryOrderEditMode(orderId) {
         if (typeof updateZabezpieczenieTransportuUI === 'function')
             updateZabezpieczenieTransportuUI();
         setVal('offer-date', orderData.date ? orderData.date.slice(0, 10) : '');
+        setVal('offer-organization-unit', orderData.organizationUnit || '');
         setVal('offer-validity', orderData.validity || orderData.offerValidity);
         setVal('offer-payment-terms', orderData.paymentTerms);
 
@@ -162,6 +163,19 @@ function renderOrderModeBanner(orderData) {
     hideOrderModeBanner();
     const banner = document.createElement('div');
     banner.id = 'order-mode-banner';
+    const organizationUnitInput = document.getElementById('offer-organization-unit');
+    if (organizationUnitInput && organizationUnitInput.dataset.orderModeListener !== 'true') {
+        organizationUnitInput.dataset.orderModeListener = 'true';
+        organizationUnitInput.addEventListener('change', () => {
+            if (!window.orderEditMode) return;
+            const currentOrder = (ordersRury || []).find(
+                (order) => order.id === window.editingRuryOrderId
+            );
+            if (currentOrder) renderOrderModeBanner(currentOrder);
+        });
+    }
+    const organizationUnitChanged =
+        (organizationUnitInput?.value || '') !== (orderData.organizationUnit || '');
 
     const changes = getRuryOrderChanges({
         ...orderData,
@@ -174,7 +188,14 @@ function renderOrderModeBanner(orderData) {
     const changeCount = Object.keys(changes.items).filter(
         (k) => changes.items[k].type === 'modified'
     ).length;
-    const hasChanges = changeCount > 0 || changes.transportChanged;
+    const hasChanges = changeCount > 0 || changes.transportChanged || organizationUnitChanged;
+    const changeSummary = [
+        changeCount > 0 ? changeCount + ' poz. zmienionych' : '',
+        changes.transportChanged ? 'zmiana transportu' : '',
+        organizationUnitChanged ? 'zmiana jednostki organizacyjnej' : ''
+    ]
+        .filter(Boolean)
+        .join(' + ');
     banner.className = hasChanges
         ? 'order-banner order-banner--danger'
         : 'order-banner order-banner--success';
@@ -187,11 +208,7 @@ function renderOrderModeBanner(orderData) {
         '</span>' +
         '<div class="fs-xs-muted">' +
         (hasChanges
-            ? '<i data-lucide="alert-triangle"></i> ' +
-              changeCount +
-              ' poz. zmienionych' +
-              (changes.transportChanged ? ' + zmiana transportu' : '') +
-              ' od oryginału'
+            ? '<i data-lucide="alert-triangle"></i> ' + changeSummary + ' od oryginału'
             : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału') +
         ' &bull; Utworzono: ' +
         new Date(orderData.createdAt).toLocaleString('pl-PL') +

@@ -3,6 +3,13 @@
  */
 
 import { z } from 'zod';
+import { ORGANIZATION_UNIT_VALUES } from '../constants/organizationUnits';
+
+const organizationUnitInput = z
+    .enum(ORGANIZATION_UNIT_VALUES)
+    .or(z.literal(''))
+    .nullable()
+    .optional();
 
 // =============================================================================
 // ZAMÓWIENIA
@@ -37,6 +44,7 @@ export const studnieOrderItemSchema = z
     .object({
         id: z.string().optional(),
         offerStudnieId: z.string().optional(),
+        organizationUnit: organizationUnitInput,
         status: z.string().optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
@@ -52,6 +60,7 @@ export const studnieOrderUpdateSchema = z
     .object({
         status: z.string().optional(),
         userId: z.string().optional(),
+        organizationUnit: organizationUnitInput,
         data: z.record(z.string(), z.unknown()).optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
@@ -275,6 +284,7 @@ export const ruryOrderItemSchema = z
     .object({
         id: z.string().optional(),
         offerId: z.string().optional(),
+        organizationUnit: organizationUnitInput,
         status: z.string().optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
@@ -287,6 +297,7 @@ export const ruryOrderUpdateSchema = z
     .object({
         status: z.string().optional(),
         userId: z.string().optional(),
+        organizationUnit: organizationUnitInput,
         data: z.record(z.string(), z.unknown()).optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń

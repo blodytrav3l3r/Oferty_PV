@@ -13,6 +13,7 @@ import { validateData } from '../validators/authSchema';
 import { ADMIN_USERS_LIMITER } from '../middleware/rateLimiters';
 import { userUpdateSchema } from '../validators/offerSchemas';
 import { logger } from '../utils/logger';
+import { DEFAULT_ORGANIZATION_UNIT_KEY, isOrganizationUnit } from '../constants/organizationUnits';
 
 const router = express.Router();
 
@@ -28,6 +29,19 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
             where: { userId: { in: users.map((u) => u.id) }, year }
         });
         const counterByUser = new Map(counters.map((c) => [c.userId, c.lastNumber]));
+        const organizationUnitPreferences = await prisma.user_preferences.findMany({
+            where: {
+                userId: { in: users.map((user) => user.id) },
+                key: DEFAULT_ORGANIZATION_UNIT_KEY
+            },
+            select: { userId: true, value: true }
+        });
+        const defaultOrganizationUnitByUser = new Map(
+            organizationUnitPreferences.map((preference) => [
+                preference.userId,
+                isOrganizationUnit(preference.value) ? preference.value : null
+            ])
+        );
 
         const usersData = users.map((user) => {
             let subUsers: string[] = [];
@@ -55,6 +69,7 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
                 subUsers: subUsers,
                 orderStartNumber: user.orderStartNumber,
                 productionOrderStartNumber: user.productionOrderStartNumber || 1,
+                defaultOrganizationUnit: defaultOrganizationUnitByUser.get(user.id) || null,
                 createdAt: user.createdAt,
                 nextOrderNumber
             };
@@ -87,7 +102,8 @@ router.put(
             symbol,
             subUsers,
             orderStartNumber,
-            productionOrderStartNumber
+            productionOrderStartNumber,
+            defaultOrganizationUnit
         } = req.body;
         const userId = req.params.id;
 
@@ -133,21 +149,41 @@ router.put(
                         : '[]'
                     : user.subUsers;
 
-            await prisma.users.update({
-                where: { id: userId },
-                data: {
-                    username: username || user.username,
-                    password: newPassword,
-                    role: newRole,
-                    firstName: newFirstName,
-                    lastName: newLastName,
-                    phone: newPhone,
-                    email: newEmail,
-                    symbol: newSymbol,
-                    subUsers: newSubUsersString,
-                    orderStartNumber: newOrderStartNumber,
-                    productionOrderStartNumber: newProdOrderStartNumber
+            await prisma.$transaction(async (tx) => {
+                await tx.users.update({
+                    where: { id: userId },
+                    data: {
+                        username: username || user.username,
+                        password: newPassword,
+                        role: newRole,
+                        firstName: newFirstName,
+                        lastName: newLastName,
+                        phone: newPhone,
+                        email: newEmail,
+                        symbol: newSymbol,
+                        subUsers: newSubUsersString,
+                        orderStartNumber: newOrderStartNumber,
+                        productionOrderStartNumber: newProdOrderStartNumber
+                    }
+                });
+                if (defaultOrganizationUnit === undefined) return;
+                if (defaultOrganizationUnit === null) {
+                    await tx.user_preferences.deleteMany({
+                        where: { userId, key: DEFAULT_ORGANIZATION_UNIT_KEY }
+                    });
+                    return;
                 }
+                await tx.user_preferences.upsert({
+                    where: {
+                        userId_key: { userId, key: DEFAULT_ORGANIZATION_UNIT_KEY }
+                    },
+                    update: { value: defaultOrganizationUnit },
+                    create: {
+                        userId,
+                        key: DEFAULT_ORGANIZATION_UNIT_KEY,
+                        value: defaultOrganizationUnit
+                    }
+                });
             });
 
             // D-FIX-1: rola/hasło to zmiana bezpieczeństwa — natychmiastowe

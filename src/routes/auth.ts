@@ -19,6 +19,7 @@ import {
 } from '../validators/authSchema';
 import { logger } from '../utils/logger';
 import { isHttpsEnabled } from '../middleware/security';
+import { DEFAULT_ORGANIZATION_UNIT_KEY, isOrganizationUnit } from '../constants/organizationUnits';
 
 const router = express.Router();
 
@@ -106,7 +107,8 @@ router.post(
             symbol,
             subUsers,
             orderStartNumber,
-            productionOrderStartNumber
+            productionOrderStartNumber,
+            defaultOrganizationUnit
         } = req.body;
 
         try {
@@ -122,21 +124,32 @@ router.post(
             const userId = 'user_' + Date.now();
             const subUsersString = Array.isArray(subUsers) ? JSON.stringify(subUsers) : '[]';
 
-            await prisma.users.create({
-                data: {
-                    id: userId,
-                    username,
-                    password: hash,
-                    role: role || 'user',
-                    firstName: firstName || '',
-                    lastName: lastName || '',
-                    phone: phone || '',
-                    email: email || '',
-                    symbol: symbol || '',
-                    subUsers: subUsersString,
-                    orderStartNumber: parseInt(orderStartNumber, 10) || 1,
-                    productionOrderStartNumber: parseInt(productionOrderStartNumber, 10) || 1,
-                    createdAt: new Date().toISOString()
+            await prisma.$transaction(async (tx) => {
+                await tx.users.create({
+                    data: {
+                        id: userId,
+                        username,
+                        password: hash,
+                        role: role || 'user',
+                        firstName: firstName || '',
+                        lastName: lastName || '',
+                        phone: phone || '',
+                        email: email || '',
+                        symbol: symbol || '',
+                        subUsers: subUsersString,
+                        orderStartNumber: parseInt(orderStartNumber, 10) || 1,
+                        productionOrderStartNumber: parseInt(productionOrderStartNumber, 10) || 1,
+                        createdAt: new Date().toISOString()
+                    }
+                });
+                if (isOrganizationUnit(defaultOrganizationUnit)) {
+                    await tx.user_preferences.create({
+                        data: {
+                            userId,
+                            key: DEFAULT_ORGANIZATION_UNIT_KEY,
+                            value: defaultOrganizationUnit
+                        }
+                    });
                 }
             });
 
@@ -150,7 +163,10 @@ router.post(
                     phone: phone || '',
                     email: email || '',
                     symbol: symbol || '',
-                    subUsers: Array.isArray(subUsers) ? subUsers : []
+                    subUsers: Array.isArray(subUsers) ? subUsers : [],
+                    defaultOrganizationUnit: isOrganizationUnit(defaultOrganizationUnit)
+                        ? defaultOrganizationUnit
+                        : null
                 }
             });
         } catch (e: unknown) {
@@ -184,7 +200,7 @@ router.post('/logout', async (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', requireAuth, (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     // req.user jest już wypełniony przez middleware requireAuth
     // no-store: ETag/304 bez body wywalał `res.json()` w klientach i strona
@@ -195,7 +211,32 @@ router.get('/me', requireAuth, (req, res) => {
     // zawsze pełnym 200.
     delete req.headers['if-none-match'];
     delete req.headers['if-modified-since'];
-    res.json({ user: authReq.user });
+    try {
+        const preference = await prisma.user_preferences.findUnique({
+            where: {
+                userId_key: {
+                    userId: authReq.user!.id,
+                    key: DEFAULT_ORGANIZATION_UNIT_KEY
+                }
+            },
+            select: { value: true }
+        });
+        res.json({
+            user: {
+                ...authReq.user,
+                defaultOrganizationUnit: isOrganizationUnit(preference?.value)
+                    ? preference?.value
+                    : null
+            }
+        });
+    } catch (e: unknown) {
+        logger.error(
+            'Auth',
+            'Błąd odczytu preferencji użytkownika',
+            e instanceof Error ? e.message : 'Unknown error'
+        );
+        res.status(500).json({ error: 'Błąd serwera bazy danych' });
+    }
 });
 
 // POST /api/auth/change-password

@@ -71,17 +71,17 @@ describe('Kartoteka — wyszukiwanie po numerze zamówienia', () => {
         expect(offerMatchesSearch(offers[1], 'Beta', ordersMap)).toBe(true);
     });
 
-    it('zwraca ofertę gdy query pasuje do numeru klienta (clientNumber)', () => {
+    it('zwraca ofertę gdy query pasuje do kodu kontrahenta (clientNumber)', () => {
         const withNumber = { ...offers[0], clientNumber: 'K-001' };
         expect(offerMatchesSearch(withNumber, 'K-001', ordersMap)).toBe(true);
     });
 
-    it('zwraca ofertę gdy query pasuje do numeru klienta w data JSON', () => {
+    it('zwraca ofertę gdy query pasuje do kodu kontrahenta w data JSON', () => {
         const withDataNumber = { ...offers[0], data: { clientNumber: 'K-002' } };
         expect(offerMatchesSearch(withDataNumber, 'k-002', ordersMap)).toBe(true);
     });
 
-    it('zwraca false gdy numer klienta nie pasuje do query', () => {
+    it('zwraca false gdy kod kontrahenta nie pasuje do query', () => {
         const withNumber = { ...offers[0], clientNumber: 'K-001' };
         expect(offerMatchesSearch(withNumber, 'K-999', ordersMap)).toBe(false);
     });

@@ -165,12 +165,12 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     <div><strong>${escapeHtml(data.clientName)}</strong></div>
     ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
     ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
-    ${data.clientNumber ? `<div>Nr klienta: ${escapeHtml(data.clientNumber)}</div>` : ''}
+    ${data.clientNumber ? `<div>Kod kontrahenta: ${escapeHtml(data.clientNumber)}</div>` : ''}
     ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
   `.trim();
 
     const daneInwestycji = `
-    ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>—</div>'}
+    ${data.investName ? `<div><strong>Symbol oferty - Obiekt:</strong> ${escapeHtml(data.investName)}</div>` : '<div>—</div>'}
     ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
     ${data.investLocationDescription ? `<div>Opis lokalizacji: ${escapeHtml(data.investLocationDescription)}</div>` : ''}
     ${(data.investContacts || [])

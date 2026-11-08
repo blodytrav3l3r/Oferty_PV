@@ -69,7 +69,7 @@ function renderSavedOffers() {
                 ? `
         <div class="offer-client-badges">
           ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span class="fw-500">${escapeHtml(o.clientName)}</span></div>` : ''}
-          ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span class="fw-500">${escapeHtml(o.investName)}</span></div>` : ''}
+          ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Symbol oferty - Obiekt:</strong> <span class="fw-500">${escapeHtml(o.investName)}</span></div>` : ''}
           ${o.clientContact ? `<div class="badge-contact"><i data-lucide="phone"></i> <strong>Kontakt:</strong> <span class="fw-500">${escapeHtml(o.clientContact)}</span></div>` : ''}
         </div>`
                 : ''

@@ -266,6 +266,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         number: offer.number,
         orderNumber: orderNumber,
         date: offer.date,
+        organizationUnit: document.getElementById('offer-organization-unit')?.value || '',
         clientName: offer.clientName,
         clientNip: offer.clientNip,
         clientNumber:
@@ -875,6 +876,7 @@ async function enterOrderEditMode(orderId) {
         setVal('offer-number', order.number || '');
         if (typeof setOrderNumberField === 'function') setOrderNumberField(order.orderNumber || '');
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
+        setVal('offer-organization-unit', order.organizationUnit || '');
         setVal('client-name', order.clientName || '');
         setVal('client-nip', order.clientNip || '');
         setVal('client-number', order.clientNumber || '');
@@ -1075,6 +1077,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         setVal('offer-number', order.number || '');
         if (typeof setOrderNumberField === 'function') setOrderNumberField(order.orderNumber || '');
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
+        setVal('offer-organization-unit', order.organizationUnit || '');
         setVal('client-name', order.clientName || '');
         setVal('client-nip', order.clientNip || '');
         setVal('client-number', order.clientNumber || '');
@@ -1238,6 +1241,8 @@ async function saveCurrentOrderUnsafe(options = {}) {
 
     order.transportKm = transportKmVal;
     order.transportRate = transportRateVal;
+    const organizationUnitInput = document.getElementById('offer-organization-unit');
+    if (organizationUnitInput) order.organizationUnit = organizationUnitInput.value;
     order.transportMode = currentTransportMode;
     order.transportSeparate = !!currentTransportSeparate;
     order.paymentTerms =
@@ -1318,6 +1323,7 @@ async function saveCurrentOrderUnsafe(options = {}) {
             totalBrutto: order.totalBrutto,
             transportKm: order.transportKm,
             transportRate: order.transportRate,
+            organizationUnit: order.organizationUnit,
             transportMode: order.transportMode,
             transportSeparate: !!order.transportSeparate,
             paymentTerms: order.paymentTerms,
@@ -1349,6 +1355,7 @@ async function saveCurrentOrderUnsafe(options = {}) {
                 totalBrutto: order.totalBrutto,
                 transportKm: order.transportKm,
                 transportRate: order.transportRate,
+                organizationUnit: order.organizationUnit,
                 transportMode: order.transportMode,
                 transportSeparate: !!order.transportSeparate,
                 paymentTerms: order.paymentTerms,

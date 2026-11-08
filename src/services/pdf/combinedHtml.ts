@@ -57,12 +57,12 @@ export async function generateCombinedHTML(
     <div><strong>${escapeHtml(studnieData.clientName)}</strong></div>
     ${studnieData.clientAddress ? `<div>${escapeHtml(studnieData.clientAddress)}</div>` : ''}
     ${studnieData.clientNip ? `<div>NIP: ${escapeHtml(studnieData.clientNip)}</div>` : ''}
-    ${studnieData.clientNumber ? `<div>Nr klienta: ${escapeHtml(studnieData.clientNumber)}</div>` : ''}
+    ${studnieData.clientNumber ? `<div>Kod kontrahenta: ${escapeHtml(studnieData.clientNumber)}</div>` : ''}
     ${studnieData.clientPhone ? `<div>Kontakt: ${escapeHtml(studnieData.clientPhone)}</div>` : ''}
   `.trim();
 
     const daneInwestycji = `
-    ${studnieData.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(studnieData.investName)}</div>` : '<div>\u2014</div>'}
+    ${studnieData.investName ? `<div><strong>Symbol oferty - Obiekt:</strong> ${escapeHtml(studnieData.investName)}</div>` : '<div>\u2014</div>'}
     ${studnieData.investAddress ? `<div>Adres: ${escapeHtml(studnieData.investAddress)}</div>` : ''}
     ${studnieData.investLocationDescription ? `<div>Opis lokalizacji: ${escapeHtml(studnieData.investLocationDescription)}</div>` : ''}
     ${(studnieData.investContacts || [])

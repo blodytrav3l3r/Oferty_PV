@@ -37,7 +37,7 @@
             </div>
             <div class="wizard-form-grid wizard-client-grid wizard-client-grid--two">
                 <div class="wizard-form-group">
-                    <label class="wizard-form-label" for="client-number">Nr klienta</label>
+                    <label class="wizard-form-label" for="client-number">Kod kontrahenta</label>
                     <input class="wizard-form-input" id="client-number" placeholder="K-001" />
                 </div>
                 <div class="wizard-form-group">
@@ -91,7 +91,9 @@
             </div>
             <div class="wizard-form-grid investment-form-grid" id="invest-location-fields">
                 <div class="wizard-form-group investment-object">
-                    <label class="wizard-form-label" for="invest-name">Obiekt</label>
+                    <label class="wizard-form-label" for="invest-name"
+                        >Symbol oferty - Obiekt</label
+                    >
                     <input
                         class="wizard-form-input"
                         id="invest-name"
@@ -180,18 +182,24 @@
                     <i data-lucide="user"></i> Zmień opiekuna
                 </button>
             </div>
-            <div class="wizard-form-grid wizard-client-grid wizard-client-grid--four">
+            <div class="wizard-form-grid wizard-client-grid wizard-client-grid--five">
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="offer-number">Nr oferty</label>
                     <input class="wizard-form-input" id="offer-number" />
                 </div>
-                <div class="wizard-form-group" id="order-number-group" hidden>
-                    <label class="wizard-form-label" for="order-number">Nr zamówienia</label>
-                    <input class="wizard-form-input" id="order-number" readonly />
-                </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="offer-date">Data</label>
                     <input class="wizard-form-input" type="date" id="offer-date" />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="offer-organization-unit"
+                        >Jednostka organizacyjna</label
+                    >
+                    <select class="wizard-form-input" id="offer-organization-unit">
+                        <option value="">Wybierz jednostkę</option>
+                        <option value="ASM_KLUCZBORK">ASM Kluczbork</option>
+                        <option value="WL_WLOCLAWEK">WL Włocławek</option>
+                    </select>
                 </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="transport-km">Kilometry</label>

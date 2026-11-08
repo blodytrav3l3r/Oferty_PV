@@ -252,7 +252,7 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
                 <div class="order-modal-row">
                     <div class="min-w-0">
                         <div class="btn-open-order order-link" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(resolvedType)}" title="Kliknij, aby otworzyć zamówienie w trybie edycji">${orderLabel}</div>
-                        <div class="text-muted fs-base mt-3">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
+                        <div class="text-muted fs-base mt-3">Utworzono: ${createdAt}${ord.clientNumber ? ` • Kod kontrahenta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
                     </div>
                     <div class="order-modal-row-actions">
                         <button class="btn btn-sm btn-primary btn-open-order fs-base-035" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(resolvedType)}" >Otwórz</button>
@@ -348,7 +348,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
                                         <span class="offer-order-text">
                                             <strong>${label} <span class="color-success">• ${orderValue.toFixed(2)} PLN</span></strong>
-                                            <small>${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
+                                            <small>${createdAt}${ord.clientNumber ? ` • Kod kontrahenta: ${window.escapeHtml(ord.clientNumber)}` : ''}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
                                         </span>
                                     </button>
                                     <div class="offer-order-actions">
@@ -409,7 +409,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             <div class="offer-title-section">
                                 <h3 class="offer-title">${escapeHtml(offer.number || offer.title || offer.offerName || 'Oferta bez numeru')}</h3>
                                 <div class="offer-subtitle">
-                                    <span class="offer-client">${dd.clientNumber ? `<span class="client-nip" title="Nr klienta">${escapeHtml(dd.clientNumber)}</span> ` : ''}${escapeHtml(dd.clientInfo)}</span>
+                                    <span class="offer-client">${dd.clientNumber ? `<span class="client-nip" title="Kod kontrahenta">${escapeHtml(dd.clientNumber)}</span> ` : ''}${escapeHtml(dd.clientInfo)}</span>
                                     ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${escapeHtml(dd.investInfo)}</span>` : ''}
                                 </div>
                             </div>

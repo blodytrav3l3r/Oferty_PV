@@ -90,6 +90,7 @@ interface AuthUser {
     username: string;
     role: 'admin' | 'pro' | 'user';
     displayName?: string;
+    defaultOrganizationUnit?: 'ASM_KLUCZBORK' | 'WL_WLOCLAWEK' | null;
 }
 
 interface AuthState {
@@ -115,6 +116,7 @@ interface IconsModule {
 
 /** Augmentacja Window — globalne API dostępne przez window.* */
 interface Window {
+    currentUser?: AuthUser | null;
     api: ApiClient;
     logger: Logger;
     ui: UI;

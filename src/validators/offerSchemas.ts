@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { roundMoney } from '../utils/money';
+import { ORGANIZATION_UNIT_VALUES } from '../constants/organizationUnits';
 
 // Limity wejścia (security: DoS przez wielkie tablice). Sufit udokumentowany
 // to ~3000 studni (src/mountRoutes.ts); cap 5000 = zapas + zgodny z UI
@@ -85,6 +86,7 @@ export const offerCreateSchema = z
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
+        organizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).or(z.literal('')).nullable().optional(),
         transportCost: z.number().finite().min(0).transform(roundMoney).default(0),
         items: z.array(offerItemSchema),
         data: z.record(z.string(), z.unknown()).optional()
@@ -162,6 +164,7 @@ export const offerStudnieCreateSchema = z
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
+        organizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).or(z.literal('')).nullable().optional(),
         transportCost: z.number().finite().min(0).transform(roundMoney).default(0),
         wells: z.array(wellDataSchema).max(MAX_WELLS_PER_OFFER),
         totalPrice: z.number().finite().nonnegative().transform(roundMoney).optional(),
@@ -224,7 +227,7 @@ export const clientSchema = z.object({
         }),
     address: z.string().max(500, 'Adres nie może przekraczać 500 znaków').optional(),
     contact: z.string().max(200, 'Kontakt nie może przekraczać 200 znaków').optional(),
-    clientNumber: z.string().max(50, 'Numer klienta nie może przekraczać 50 znaków').optional(),
+    clientNumber: z.string().max(50, 'Kod kontrahenta nie może przekraczać 50 znaków').optional(),
     phone: z
         .string()
         .optional()
@@ -334,7 +337,8 @@ export const userUpdateSchema = z.object({
     symbol: z.string().optional(),
     subUsers: z.array(z.string()).optional(),
     orderStartNumber: z.number().int().min(1).optional(),
-    productionOrderStartNumber: z.number().int().min(1).optional()
+    productionOrderStartNumber: z.number().int().min(1).optional(),
+    defaultOrganizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).nullable().optional()
 });
 
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;

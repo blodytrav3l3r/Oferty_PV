@@ -1732,6 +1732,50 @@ button.btn-order-save:hover {
     background: rgba(var(--accent-rgb), 0.05);
     cursor: default;
 }
+.clients-table .clients-edit-contact-row {
+    background: rgba(var(--accent-rgb), 0.05);
+}
+.clients-table .clients-edit-contact-row > td,
+.clients-table .clients-row--editing > td {
+    padding: var(--tile-gap-sm-plus);
+}
+.clients-edit-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-sm);
+}
+.clients-edit-section-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold);
+}
+.clients-edit-company-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--tile-gap-sm-plus);
+}
+.clients-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-2xs);
+    min-width: 0;
+}
+.clients-edit-contacts .ccc-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.clients-edit-contacts .ccc-grid .ccc-wide {
+    grid-column: auto;
+}
+.clients-edit-contacts .ccc-row {
+    margin-bottom: 0;
+}
+.clients-edit-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--tile-gap-xs-plus);
+}
 .clients-table td {
     padding: 0.6rem 0.8rem;
 }

@@ -106,7 +106,10 @@ export function getKartaBudowySharedSections(
         {
             title: 'Miejsce budowy / dostawy',
             rows: [
-                { label: 'Obiekt', value: getFieldValue(kb.investName ?? orderData.investName) },
+                {
+                    label: 'Symbol oferty - Obiekt',
+                    value: getFieldValue(kb.investName ?? orderData.investName)
+                },
                 {
                     label: 'Kod pocztowy',
                     value: getFieldValue(kb.investPostalCode ?? orderData.investPostalCode)
@@ -139,7 +142,7 @@ export function getKartaBudowySharedSections(
             title: 'Dane nabywcy',
             rows: [
                 {
-                    label: 'Nr klienta',
+                    label: 'Kod kontrahenta',
                     value: getFieldValue(kb.clientNumber ?? orderData.clientNumber)
                 },
                 { label: 'Firma', value: getFieldValue(kb.clientName ?? orderData.clientName) },

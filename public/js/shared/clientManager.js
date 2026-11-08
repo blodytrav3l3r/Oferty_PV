@@ -721,10 +721,10 @@ function renderClientsDbList(query) {
 
     const thead = document.createElement('thead');
     thead.innerHTML = `<tr>
-        <th scope="col" style="width:84px;">Nr klienta</th>
+        <th scope="col" style="width:110px;">Kod kontrahenta</th>
         <th scope="col">Firma</th>
         <th scope="col" style="width:110px;">NIP</th>
-        <th scope="col">Adres</th>
+        <th scope="col">Adres firmy</th>
         <th scope="col" style="min-width:150px;">Imię i nazwisko</th>
         <th scope="col" style="width:110px;">Telefon</th>
         <th scope="col" style="min-width:150px;">E-mail</th>
@@ -741,27 +741,58 @@ function renderClientsDbList(query) {
         // Sub-wiersze osób 2..N (tworzone w gałęzi listy, schowane).
         const subRows = [];
         let shownList = [];
+        let editContactRow = null;
 
         if (editingClientId === c.id) {
-            // Edycja firmy + edytor N-osób na szerokość 3 kolumn kontaktowych.
+            // Dane firmy i kontakty są osobnymi, pełnej szerokości wierszami.
             const fields = ['clientNumber', 'name', 'nip', 'address'];
+            const fieldLabels = {
+                clientNumber: 'Kod kontrahenta',
+                name: 'Firma',
+                nip: 'NIP',
+                address: 'Adres firmy'
+            };
+            const companyCell = document.createElement('td');
+            companyCell.className = 'td-edit clients-edit-section-cell';
+            companyCell.colSpan = 8;
+            const companySection = document.createElement('section');
+            companySection.className = 'clients-edit-section';
+            const companyTitle = document.createElement('h4');
+            companyTitle.className = 'clients-edit-section-title';
+            companyTitle.textContent = 'Dane firmy';
+            companySection.appendChild(companyTitle);
+            const companyGrid = document.createElement('div');
+            companyGrid.className = 'clients-edit-company-grid';
             fields.forEach((field) => {
-                const td = document.createElement('td');
-                td.className = 'td-edit';
+                const label = document.createElement('label');
+                label.className = 'clients-edit-field';
+                const caption = document.createElement('span');
+                caption.className = 'ccc-label';
+                caption.textContent = fieldLabels[field];
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.id = 'edit-client-' + field;
                 input.className = 'form-input form-input-sm';
                 input.value = c[field] || '';
                 input.onclick = (e) => e.stopPropagation();
-                td.appendChild(input);
-                tr.appendChild(td);
+                label.append(caption, input);
+                companyGrid.appendChild(label);
             });
-            // Edytor N-osób katalogu (imię/telefon/e-mail + ★)
-            // na szerokość 3 kolumn kontaktowych.
-            const contactTd = document.createElement('td');
-            contactTd.className = 'td-edit';
-            contactTd.colSpan = 3;
+            companySection.appendChild(companyGrid);
+            companyCell.appendChild(companySection);
+            tr.appendChild(companyCell);
+
+            editContactRow = document.createElement('tr');
+            editContactRow.className = 'clients-edit-contact-row';
+            const contactCell = document.createElement('td');
+            contactCell.className = 'td-edit clients-edit-section-cell';
+            contactCell.colSpan = 8;
+            const contactSection = document.createElement('section');
+            contactSection.className = 'clients-edit-section';
+            const contactTitle = document.createElement('h4');
+            contactTitle.className = 'clients-edit-section-title';
+            contactTitle.textContent = 'Dane kontaktowe';
+            contactSection.appendChild(contactTitle);
             const cached = clientContactsCache[c.id];
             // Fallback mirror: łączony "Jan, 600" rozcinany jak w displayu.
             const legacySplit = splitMerged(c.contact || '', c.phone || '');
@@ -776,14 +807,16 @@ function renderClientsDbList(query) {
             const editList = cachedForEdit ? cached.list.map(splitCachedRow) : [legacySingle];
             const edBox = document.createElement('div');
             edBox.id = 'edit-client-contacts';
+            edBox.className = 'clients-edit-contacts';
             renderCatalogEditor(edBox, c.id, editList, cachedForEdit ? editingClientCatalog : null);
-            contactTd.appendChild(edBox);
-            tr.appendChild(contactTd);
-            const actionTd = document.createElement('td');
-            actionTd.className = 'td-edit td-actions';
-            actionTd.innerHTML = `<button class="btn-icon btn-icon--accent" data-csp="saveEditedClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Zapisz" aria-label="Zapisz"><i data-lucide="save" aria-hidden="true"></i></button>
+            contactSection.appendChild(edBox);
+            const contactFooter = document.createElement('div');
+            contactFooter.className = 'clients-edit-footer';
+            contactFooter.innerHTML = `<button class="btn btn-sm btn-primary" data-csp="saveEditedClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Zapisz"><i data-lucide="save" aria-hidden="true"></i> Zapisz</button>
                 <button class="btn-icon btn-icon--muted" data-csp="cancelEditClient" data-csp-args="[]" data-csp-stop="1" title="Anuluj" aria-label="Anuluj"><i data-lucide="x" aria-hidden="true"></i></button>`;
-            tr.appendChild(actionTd);
+            contactSection.appendChild(contactFooter);
+            contactCell.appendChild(contactSection);
+            editContactRow.appendChild(contactCell);
         } else {
             const clientNumberTd = document.createElement('td');
             clientNumberTd.className = 'td-muted';
@@ -879,6 +912,7 @@ function renderClientsDbList(query) {
         }
 
         tbody.appendChild(tr);
+        if (editContactRow) tbody.appendChild(editContactRow);
         // Sub-wiersze osób 2..N (puste komórki firmowe, bez własnych akcji).
         if (shownList.length > 1) {
             const shown = shownList.slice(1);

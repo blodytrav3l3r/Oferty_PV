@@ -73,28 +73,28 @@ Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 może przekraczać 366 dni; nieuprawniony zakres odpowiada `403`. Szczegóły walidacji
 potwierdza `src/routes/care.ts`.
 
-## Payload kolejki i powiadomień (Obiekt/kontakt)
+## Payload kolejki i powiadomień (Symbol oferty - Obiekt/kontakt)
 
 `GET /queue`, `GET /panel.queue`, `GET /notifications` zwracają pola
 pochodne ze snapshotu `offers_*.data` (bez migracji, `json_extract`):
 
-| Pole            | Źródło                                                       | Uwagi                                                 |
-| --------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
-| `investName`    | kolumna, fallback `$.investName`, `$.budowa`                 | label UI `Obiekt`, `null` → wiersz ukryty             |
-| `investAddress` | `$.investAddress`                                            | label `Adres`, `null` → wiersz ukryty                 |
-| `contactPerson` | `$.contactPerson`, fallback `$.clientContacts[0].name`       | label `Kontakt`, escapowany                           |
-| `phone`         | `$.clientPhone`, fallback `$.clientContacts[0].phone`        | link `tel:` po sanitacji cyfr/`+`, brak → brak linku  |
-| `email`         | `$.clientEmail`, fallback `$.clientContacts[0].email`        | link `mailto:` po walidacji, brak → brak linku        |
-| `clientNumber`  | kolumna `offers_*/clientNumber`                              | L2 kafelka, `null` → bez prefixu                      |
-| `ownerName`     | `users` po `offers_*.userId` (imię+nazwisko, fallback login) | L4 centrum / linia staff kolejki, brak → ukryte       |
-| `authorName`    | `$.createdByUserName` z bloba (oryginalny autor)             | tylko kolejka: `• Przygotował`, gdy ≠ opiekun         |
-| `value`         | rury `$.totalBrutto`, studnie guard 0-kolumny jak kolejka    | L1 kafelka, format kolejki (`PLN`), brak → `0,00 PLN` |
+| Pole            | Źródło                                                       | Uwagi                                                     |
+| --------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
+| `investName`    | kolumna, fallback `$.investName`, `$.budowa`                 | label UI `Symbol oferty - Obiekt`, `null` → wiersz ukryty |
+| `investAddress` | `$.investAddress`                                            | label `Adres`, `null` → wiersz ukryty                     |
+| `contactPerson` | `$.contactPerson`, fallback `$.clientContacts[0].name`       | label `Kontakt`, escapowany                               |
+| `phone`         | `$.clientPhone`, fallback `$.clientContacts[0].phone`        | link `tel:` po sanitacji cyfr/`+`, brak → brak linku      |
+| `email`         | `$.clientEmail`, fallback `$.clientContacts[0].email`        | link `mailto:` po walidacji, brak → brak linku            |
+| `clientNumber`  | kolumna `offers_*/clientNumber`                              | L2 kafelka, `null` → bez prefixu                          |
+| `ownerName`     | `users` po `offers_*.userId` (imię+nazwisko, fallback login) | L4 centrum / linia staff kolejki, brak → ukryte           |
+| `authorName`    | `$.createdByUserName` z bloba (oryginalny autor)             | tylko kolejka: `• Przygotował`, gdy ≠ opiekun             |
+| `value`         | rury `$.totalBrutto`, studnie guard 0-kolumny jak kolejka    | L1 kafelka, format kolejki (`PLN`), brak → `0,00 PLN`     |
 
 Odłożenie (snooze): presety `+3d/+6d/+9d` + własna liczba dni (OK lub Enter),
 limit 28 dni (`MAX_SNOOZE_DAYS`, BE zwraca 400 powyżej). Pauza blokuje cały
 wiersz odłożeń. Undo podmienia akcje na `Odłożono o Xd` + `Cofnij` (reopen).
 
-Karta kolejki i karta powiadomienia pokazują `Obiekt/Adres/Kontakt + tel:/mailto:`.
+Karta kolejki i karta powiadomienia pokazują `Symbol oferty - Obiekt/Adres/Kontakt + tel:/mailto:`.
 Dane w scope requesta (jak `clientName`); brak wiersza w blobie = `null`, nie 404.
 
 ## Centrum powiadomień (skrzynka za repem, decyzja 2026-10-11, zmiana kontraktu A+C)

@@ -620,7 +620,7 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
         }
         l1.appendChild(badges);
         card.appendChild(l1);
-        // L2: nr klienta + nazwa (bold) + obiekt (lewo), opóźnienie (prawo).
+        // L2: kod kontrahenta + nazwa (bold) + obiekt (lewo), opóźnienie (prawo).
         const l2 = document.createElement('div');
         l2.className = 'care-notif-l2';
         const clientWrap = document.createElement('div');
@@ -644,7 +644,10 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
             const obj = document.createElement('span');
             obj.className = 'care-notif-obj';
             obj.setAttribute('data-care-object', '1');
-            const full = 'Obiekt: ' + (invest || '—') + (address ? ' • Adres: ' + address : '');
+            const full =
+                'Symbol oferty - Obiekt: ' +
+                (invest || '—') +
+                (address ? ' • Adres: ' + address : '');
             obj.textContent = careCap(full);
             obj.title = full;
             clientWrap.appendChild(obj);
@@ -1430,7 +1433,7 @@ function renderQueue(items, nextCursor, totalCount) {
         badges.appendChild(kind);
         l1.appendChild(badges);
         row.appendChild(l1);
-        // L2: nr klienta + nazwa (bold, lewo) + obiekt, wartość (prawo).
+        // L2: kod kontrahenta + nazwa (bold, lewo) + obiekt, wartość (prawo).
         const l2 = document.createElement('div');
         l2.className = 'care-queue-l2';
         const clientWrap = document.createElement('div');
@@ -1455,7 +1458,10 @@ function renderQueue(items, nextCursor, totalCount) {
             const obj = document.createElement('span');
             obj.className = 'care-queue-obj';
             obj.setAttribute('data-care-object', '1');
-            const full = 'Obiekt: ' + (invest || '—') + (address ? ' • Adres: ' + address : '');
+            const full =
+                'Symbol oferty - Obiekt: ' +
+                (invest || '—') +
+                (address ? ' • Adres: ' + address : '');
             obj.textContent = careCap(full);
             obj.title = full;
             clientWrap.appendChild(obj);

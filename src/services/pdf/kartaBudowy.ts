@@ -34,7 +34,7 @@ function buildKartaBudowyBaseHtml(
             .filter((value) => value !== '—')
             .join(', ') || '—';
     const buildFields: Record<string, string | undefined> = {
-        INVEST_NAME: sharedValue('Miejsce budowy / dostawy', 'Obiekt'),
+        INVEST_NAME: sharedValue('Miejsce budowy / dostawy', 'Symbol oferty - Obiekt'),
         INVEST_POSTAL_CODE: sharedValue('Miejsce budowy / dostawy', 'Kod pocztowy'),
         INVEST_CITY: sharedValue('Miejsce budowy / dostawy', 'Miejscowość'),
         INVEST_STREET: sharedValue('Miejsce budowy / dostawy', 'Ulica i numer'),
@@ -42,7 +42,7 @@ function buildKartaBudowyBaseHtml(
         BUILD_CONTACT_NAME: sharedValue('Osoby do kontaktu — budowa', 'Imię i nazwisko'),
         BUILD_CONTACT_PHONE: sharedValue('Osoby do kontaktu — budowa', 'Telefon'),
         BUILD_CONTACT_EMAIL: sharedValue('Osoby do kontaktu — budowa', 'E-mail'),
-        CLIENT_NUMBER: sharedValue('Dane nabywcy', 'Nr klienta'),
+        CLIENT_NUMBER: sharedValue('Dane nabywcy', 'Kod kontrahenta'),
         CLIENT_NAME: sharedValue('Dane nabywcy', 'Firma'),
         CLIENT_NIP: sharedValue('Dane nabywcy', 'NIP'),
         CLIENT_ADDRESS: sharedValue('Dane nabywcy', 'Adres firmy')

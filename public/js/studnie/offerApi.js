@@ -10,6 +10,7 @@ function normalizeOfferData(doc) {
             'totalNetto',
             'totalBrutto',
             'number',
+            'organizationUnit',
             'clientName',
             'clientNip',
             'clientNumber',

@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
+import { ORGANIZATION_UNIT_VALUES } from '../constants/organizationUnits';
 
 export const loginSchema = z.object({
     username: z.string().min(3, 'Login musi mieć conajmniej 3 znaki'),
@@ -28,7 +29,8 @@ export const registerSchema = z.object({
     symbol: z.string().optional(),
     subUsers: z.array(z.string()).optional(),
     orderStartNumber: z.union([z.string(), z.number()]).optional(),
-    productionOrderStartNumber: z.union([z.string(), z.number()]).optional()
+    productionOrderStartNumber: z.union([z.string(), z.number()]).optional(),
+    defaultOrganizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).nullable().optional()
 });
 
 /**

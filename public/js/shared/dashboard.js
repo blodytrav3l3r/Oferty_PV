@@ -992,6 +992,20 @@ function buildUserModalHtml(user) {
             </div>
 
             <div class="uf-section">
+                <div class="uf-section-title"><i data-lucide="building-2"></i> Jednostka organizacyjna</div>
+                <div class="uf-grid">
+                    <div class="uf-field">
+                        <label for="new-user-default-organization-unit">Domyślna jednostka do ofert</label>
+                        <select id="new-user-default-organization-unit" class="form-select">
+                            <option value=""${val(u.defaultOrganizationUnit) === '' ? ' selected' : ''}>Nie ustawiono</option>
+                            <option value="ASM_KLUCZBORK"${val(u.defaultOrganizationUnit) === 'ASM_KLUCZBORK' ? ' selected' : ''}>ASM Kluczbork</option>
+                            <option value="WL_WLOCLAWEK"${val(u.defaultOrganizationUnit) === 'WL_WLOCLAWEK' ? ' selected' : ''}>WL Włocławek</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uf-section">
                 <div class="uf-section-title"><i data-lucide="hash"></i> Numeracja</div>
                 <div class="uf-grid cols-2">
                     <div class="uf-field">
@@ -1099,6 +1113,36 @@ function validateUserForm(values) {
 
 let isSavingUser = false;
 
+function syncActiveUserOrganizationUnit(userId, defaultOrganizationUnit) {
+    /** @type {Window} */
+    let rootWindow = window;
+    try {
+        rootWindow = window.top || window;
+    } catch (_error) {
+        rootWindow = window;
+    }
+
+    /** @type {Set<Window>} */
+    const windows = new Set([window, rootWindow]);
+    try {
+        for (let index = 0; index < rootWindow.frames.length; index += 1) {
+            windows.add(rootWindow.frames[index]);
+        }
+    } catch (_error) {
+        // Okno nadrzędne może mieć inną domenę; bieżące okno nadal jest synchronizowane.
+    }
+
+    windows.forEach((targetWindow) => {
+        try {
+            const activeUser = targetWindow.currentUser;
+            if (activeUser?.id !== userId) return;
+            targetWindow.currentUser = { ...activeUser, defaultOrganizationUnit };
+        } catch (_error) {
+            // Pomijamy ramki spoza originu aplikacji.
+        }
+    });
+}
+
 async function createUser() {
     if (isSavingUser) return;
     const g = (id) => {
@@ -1145,7 +1189,8 @@ async function createUser() {
             email: values.email,
             subUsers: selectedSubUsers,
             orderStartNumber: values.orderStart,
-            productionOrderStartNumber: values.prodOrderStart
+            productionOrderStartNumber: values.prodOrderStart,
+            defaultOrganizationUnit: g('new-user-default-organization-unit') || null
         };
         if (values.password) payload.password = values.password;
 
@@ -1168,6 +1213,9 @@ async function createUser() {
                       : 'Błąd tworzenia konta';
             if (errorEl) errorEl.textContent = message;
             return;
+        }
+        if (values.isEditing && editingUserId === window.currentUser?.id) {
+            syncActiveUserOrganizationUnit(editingUserId, payload.defaultOrganizationUnit);
         }
         closeUserModal();
         await refreshAdminSessions();
