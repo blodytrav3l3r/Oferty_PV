@@ -7,6 +7,73 @@ import vm from 'vm';
 const ROOT = path.join(__dirname, '..', '..');
 const readPub = (rel: string) => fs.readFileSync(path.join(ROOT, 'public', rel), 'utf8');
 
+describe('podgląd rabatu PEHD za m²', () => {
+    test('rabat 50% od bazowych 270 PLN/m² pokazuje 135,00 PLN/m²', () => {
+        const priceAfterDiscount = { innerText: '' };
+        const modal = { classList: { contains: () => true } };
+        const sandbox: any = {
+            console,
+            wells: [{ id: 'w1', pehdDiscount: 0 }],
+            studnieProducts: [{ id: 'krag-1', componentType: 'krag', area: 2, doplataPEHD: 540.4 }],
+            getPehdEffectiveArea: () => 2,
+            document: {
+                getElementById: (id: string) =>
+                    id === 'offer-discounts-modal'
+                        ? modal
+                        : id === 'offer-pehd-price-after-discount'
+                          ? priceAfterDiscount
+                          : null
+            },
+            updateOfferDiscountsPopupPrices: () => {},
+            renderDiscountPanel: () => {},
+            updateSummary: () => {},
+            renderOfferSummary: () => {},
+            renderWellConfig: () => {},
+            window: {}
+        };
+        sandbox.window = sandbox;
+        vm.createContext(sandbox);
+        vm.runInContext(readPub('js/studnie/actionsWellDiscounts.js'), sandbox);
+        vm.runInContext('updateGlobalPehdDiscount(50)', sandbox);
+
+        expect(priceAfterDiscount.innerText).toBe('135.00');
+    });
+});
+
+describe('zaokrąglenie w renderze rabatu PEHD', () => {
+    test('stosuje zaokrąglenie half-up dla wartości 1,005 PLN/m²', () => {
+        const body = { innerHTML: '' };
+        const sandbox: any = {
+            console,
+            window: {},
+            document: {
+                getElementById: (id: string) => (id === 'offer-discounts-modal-body' ? body : null)
+            },
+            wells: [
+                {
+                    id: 'w1',
+                    dn: '1000',
+                    wkladkaNadbudowa: '3mm',
+                    pehdDiscount: 49.75
+                }
+            ],
+            studnieProducts: [{ id: 'krag-1', componentType: 'krag', area: 1, doplataPEHD: 2 }],
+            wellDiscounts: {},
+            getPehdEffectiveArea: () => 1,
+            safeCalcWellStats: () => ({ weight: 0, price: 1 }),
+            escapeHtml: (value: unknown) => String(value),
+            escapeHtmlAttr: (value: unknown) => String(value)
+        };
+        sandbox.window = sandbox;
+        vm.createContext(sandbox);
+        vm.runInContext(readPub('js/shared/formatters.js'), sandbox);
+        vm.runInContext(readPub('js/studnie/offerDiscountsPopup.js'), sandbox);
+        vm.runInContext('renderOfferDiscountsPopupContent()', sandbox);
+
+        expect(body.innerHTML).toContain('<span id="offer-pehd-price-after-discount">1.01</span>');
+    });
+});
+
 describe('parseLiveDiscount: macierz', () => {
     function loadParse() {
         const sandbox: any = { window: {}, console };

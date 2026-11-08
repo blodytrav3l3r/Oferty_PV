@@ -534,21 +534,21 @@ function renderOfferDiscountsPopupContent() {
     );
     if (anyPehd) {
         let currentPehdPrice = 0;
-        for (const p of studnieProducts) {
+        for (const product of studnieProducts) {
             if (
-                p.area > 0 &&
-                p.doplataPEHD > 0 &&
-                p.componentType !== 'przejscie' &&
-                p.componentType !== 'kineta' &&
-                p.componentType !== 'konus'
+                product.area > 0 &&
+                product.doplataPEHD > 0 &&
+                product.componentType !== 'przejscie' &&
+                product.componentType !== 'kineta' &&
+                product.componentType !== 'konus'
             ) {
-                currentPehdPrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
+                currentPehdPrice = Math.round(product.doplataPEHD / getPehdEffectiveArea(product));
                 break;
             }
         }
 
         const pehdDiscountValue = wells[0] && wells[0].pehdDiscount ? wells[0].pehdDiscount : 0;
-        const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
+        const currentPehdPriceAfter = roundMoney(currentPehdPrice * (1 - pehdDiscountValue / 100));
 
         html += `
         <div style="margin-top: 0.5rem; background: rgba(var(--blue-alt-rgb), 0.05); border: 1px solid rgba(var(--blue-alt-rgb), 0.15); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem;">

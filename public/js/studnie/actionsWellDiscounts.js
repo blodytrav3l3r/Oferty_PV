@@ -220,21 +220,21 @@ function updateGlobalPehdDiscount(value) {
         const priceAfterDiscountSpan = document.getElementById('offer-pehd-price-after-discount');
         if (priceAfterDiscountSpan) {
             let currentPehdPrice = 0;
-            for (const p of studnieProducts) {
+            for (const product of studnieProducts) {
                 if (
-                    p.area > 0 &&
-                    p.doplataPEHD > 0 &&
-                    p.componentType !== 'przejscie' &&
-                    p.componentType !== 'kineta' &&
-                    p.componentType !== 'konus'
+                    product.area > 0 &&
+                    product.doplataPEHD > 0 &&
+                    product.componentType !== 'przejscie' &&
+                    product.componentType !== 'kineta' &&
+                    product.componentType !== 'konus'
                 ) {
-                    currentPehdPrice = _moneyRoundDiscounts(
-                        p.doplataPEHD / getPehdEffectiveArea(p)
+                    currentPehdPrice = Math.round(
+                        product.doplataPEHD / getPehdEffectiveArea(product)
                     );
                     break;
                 }
             }
-            const priceAfterDiscount = currentPehdPrice * (1 - numVal / 100);
+            const priceAfterDiscount = _moneyRoundDiscounts(currentPehdPrice * (1 - numVal / 100));
             priceAfterDiscountSpan.innerText = priceAfterDiscount.toFixed(2);
         }
     }
