@@ -506,6 +506,7 @@ html[data-theme='light'] .unit-popup-preview {
 #wizard-step-4 {
     padding-bottom: calc(var(--bottom-bar-h) + 32px + env(safe-area-inset-bottom, 0px));
 }
+
 @media (max-width: 768px) {
     #wizard-step-1,
     #wizard-step-2 {
@@ -515,7 +516,6 @@ html[data-theme='light'] .unit-popup-preview {
         padding-bottom: calc(var(--bottom-bar-h-mobile) + 32px + env(safe-area-inset-bottom, 0px));
     }
 }
-
 .well-center-column::-webkit-scrollbar,
 #wells-list::-webkit-scrollbar {
     width: 6px;

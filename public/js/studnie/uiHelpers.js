@@ -58,15 +58,7 @@ function goToWizardStep(step) {
         const target = document.getElementById('wizard-step-4');
         if (target) target.classList.add('active');
 
-        // Załaduj dane tylko jeśli jesteśmy w trybie edycji zamówienia
-        // (przy nowym zamówieniu funkcja jest już wywoływana z parametrem w orderManager.js)
-        if (
-            typeof orderEditMode !== 'undefined' &&
-            orderEditMode &&
-            typeof initKartaBudowyStep4 === 'function'
-        ) {
-            initKartaBudowyStep4();
-        }
+        if (typeof _enterKartaBudowyStep4 === 'function') _enterKartaBudowyStep4();
 
         reattachStudniePricelistBadge();
         return;

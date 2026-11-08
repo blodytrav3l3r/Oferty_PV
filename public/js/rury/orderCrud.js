@@ -162,6 +162,14 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         '';
     const clientAddress = document.getElementById('client-address')?.value?.trim() || '';
     const clientContact = document.getElementById('client-contact')?.value?.trim() || '';
+    const contactApi = window.ClientContacts;
+    const contactEditor = document.getElementById('client-contacts');
+    const clientContacts = contactApi
+        ? contactEditor
+            ? contactApi.normalizeContacts(contactApi.collectContacts(contactEditor))
+            : contactApi.legacyToContacts(offer)
+        : [];
+    const contactMirrors = contactApi ? contactApi.contactsToLegacy(clientContacts) : {};
     const investName = document.getElementById('invest-name')?.value?.trim() || '';
     const investAddress = document.getElementById('invest-address')?.value?.trim() || '';
     const investContractor = document.getElementById('invest-contractor')?.value?.trim() || '';
@@ -235,6 +243,8 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             clientNumber,
             clientAddress,
             clientContact,
+            clientContacts,
+            ...contactMirrors,
             investName,
             investAddress,
             investContractor,

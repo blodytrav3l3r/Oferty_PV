@@ -50,9 +50,10 @@ Nie wysyłaj tego pliku ani `.env` innym osobom.
 
 ## Codzienne uruchamianie
 
-Po poprawnej instalacji uruchamiaj `start-postgres.bat`. Ten launcher uruchamia
-istniejące kontenery i sprawdza stan aplikacji. Nie tworzy nowej bazy, nie
-importuje cenników i nie resetuje wolumenów.
+Po poprawnej instalacji uruchamiaj `start-docker.bat`. Ten zalecany launcher
+uruchamia istniejące kontenery i sprawdza stan aplikacji. Nie tworzy nowej bazy,
+nie importuje cenników i nie resetuje wolumenów. `start-postgres.bat` jest
+pomocniczym skryptem startowym wywoływanym przez `start-docker.bat`.
 
 Do pierwszej instalacji albo wznowienia przerwanej konfiguracji użyj ponownie
 `install-new-pc.bat` i postępuj zgodnie z komunikatami. Jeżeli instalator wykryje
@@ -77,7 +78,7 @@ opisuje [instrukcja PostgreSQL](cutover/active-pricelists.md).
 - **Błąd migracji lub importu:** zachowaj całe okno/log, nie usuwaj wolumenu i
   przekaż komunikat administratorowi.
 - **Strona się nie otwiera:** sprawdź, czy Docker Desktop działa, uruchom
-  `start-postgres.bat` i otwórz ponownie `http://localhost:3000`.
+  `start-docker.bat` i otwórz ponownie `http://localhost:3000`.
 
 ## Dokumentacja administratora
 

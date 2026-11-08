@@ -1,4 +1,9 @@
 @echo off
+REM  Wersja: 1.56.7
+REM Rola: Pierwsza instalacja S.O.K. na Windows przez Docker Desktop.
+REM Uzycie: install-new-pc.bat [argumenty przekazywane do instalatora PowerShell]
+REM Uruchamia: scripts/setup-new-pc.ps1.
+REM Wplyw: Konfiguruje Docker/PostgreSQL i importuje aktywne cenniki; nie usuwa wolumenow.
 setlocal
 cd /d "%~dp0"
 

@@ -16,6 +16,7 @@
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { resolve, join } from 'path';
+import { VERSIONED_BAT_FILES } from './bat-files.mjs';
 
 const ROOT = resolve(process.cwd());
 const SEMVER = /^\d+\.\d+\.\d+$/;
@@ -86,17 +87,9 @@ if (versionChangelog && versionFile && versionChangelog !== versionFile) {
 }
 
 // ── Wersja w plikach .bat (ASCII, AGENTS.md — utrzymywana przez auto-bat-version.mjs) ──
-const BAT_FILES = [
-    'start.bat',
-    'start-native.bat',
-    'install.bat',
-    'build.bat',
-    'setup-ai.bat',
-    'scripts/ensure-db.bat'
-];
-const BAT_VERSION_RE = /(?:set "APP_VERSION=|REM {2}Wersja: )(\d+\.\d+\.\d+)/g;
+const BAT_VERSION_RE = /(?:set "APP_VERSION=|REM[ \t]+Wersja:[ \t]*)(\d+\.\d+\.\d+)/g;
 
-for (const file of BAT_FILES) {
+for (const file of VERSIONED_BAT_FILES) {
     const content = read(resolve(ROOT, file));
     if (content == null) continue;
     const found = [...content.matchAll(BAT_VERSION_RE)].map((m) => m[1]);

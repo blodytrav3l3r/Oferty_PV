@@ -6,6 +6,7 @@
 
 function clearOfferForm() {
     if (typeof window !== 'undefined' && window.lockService) window.lockService.release();
+    if (typeof _resetKartaBudowyStep4Context === 'function') _resetKartaBudowyStep4Context();
     // P1.1b: nowa oferta = nowy kontekst — sprzątnij draft poprzedniego.
     if (window.draftAutosave)
         window.draftAutosave.clearContext('offer_studnie', editingOfferIdStudnie || 'new');
@@ -99,6 +100,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
         )
             return;
     }
+    if (typeof _resetKartaBudowyStep4Context === 'function') _resetKartaBudowyStep4Context();
     const sectionToShow = targetSection || 'offer';
     // Deterministyczne wejście: VPT/notatki liczone są z cennika.
     if (typeof ensureStudnieCatalogReady === 'function') {

@@ -29,7 +29,7 @@ const HTML_FILES = [
     'public/partials/studnie/step1-client.html',
     'public/partials/studnie/step2-parameters.html',
     'public/partials/studnie/step3-offer.html',
-    'public/partials/studnie/step4-build-card.html',
+    'public/partials/shared/karta-build-card.html',
     'public/partials/studnie/offer.html',
     'public/partials/studnie/pricelist.html',
     'public/partials/studnie/modals.html'
@@ -86,7 +86,6 @@ function classTokens(selector) {
 /* Vivid baza jako tekst na powierzchniach nie przechodzi AA na dark
    (accent 3.97, accent2 ~3.0, purple 4.48, slate-500 3.73) — dozwolone
    wylacznie warianty -text/-hover (tokeny adaptacyjne w light). */
-const VIVID_TEXT = /(?<![-\w])color\s*:\s*var\(--(accent|accent2|purple|slate-500)\)/;
 /* Display 8xl black = large text (3.97 >= 3:1 PASS), swiadoma decyzja P3. */
 const VIVID_CSS_ALLOW = [/\.index-logo/, /\.summary-card \.label/, /\.print-footer/];
 /* Budowniczowie dokumentow drukuja na papierze (slate-500 na bieli 4.76 PASS). */

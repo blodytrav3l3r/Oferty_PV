@@ -1,13 +1,16 @@
 @echo off
+REM Rola: Ograniczenie uprawnien lokalnych plikow konfiguracyjnych i danych.
+REM Uzycie: scripts\harden-local-perms.bat [--restore-dir KATALOG]
+REM Uruchamia: icacls; przywracanie odtwarza ACL ze snapshotu.
+REM Wplyw: Zmienia ACL .env i data; zapisuje snapshot w TEMP.
 REM harden-local-perms.bat - ogranicza ACL .env i data\ do wlasciciela + SYSTEM + Administratorzy.
 REM SIDy zamiast nazw (niezalezne od jezyka Windows): *S-1-5-18 SYSTEM,
 REM *S-1-5-32-544 Administratorzy. Usuwa dziedziczone wpisy grupowe
 REM (Authenticated Users, Users), przez ktore kazdy lokalny user czyta sekrety.
-REM Uzycie: scripts\harden-local-perms.bat [--restore-dir KATALOG]
 REM   Bez --restore-dir: zapisuje snapshot ACL, nadaje jawne wpisy, wycina dziedziczenie.
 REM   Z --restore-dir: przywraca snapshot i konczy.
 REM Zasieg: lokalny Windows dev. Na serwerze prod/legacy najpierw audyt czytelnikow.
-REM Wersja: 1.44.1
+REM  Wersja: 1.56.7
 setlocal ENABLEDELAYEDEXPANSION
 
 if /i "%1"=="--restore-dir" (
@@ -43,7 +46,7 @@ icacls data /save "!SNAPDIR!\acl-data.bak" >nul
 echo [INFO] Snapshot ACL: !SNAPDIR!
 
 set "ME=%USERDOMAIN%\%USERNAME%"
-REM Pliki: jawny (F) BEZ (OI)(CI) — flagi dziedziczenia na pliku powoduja
+REM Pliki: jawny (F) BEZ (OI)(CI) - flagi dziedziczenia na pliku powoduja
 REM ciche odrzucenie wpisu i pusty DACL (lockout). Katalogi: z (OI)(CI).
 icacls ".env" /grant:r "!ME!:(F)" "*S-1-5-18:(F)" "*S-1-5-32-544:(F)" >nul
 if errorlevel 1 (

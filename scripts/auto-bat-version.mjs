@@ -2,7 +2,7 @@
 /**
  * auto-bat-version.mjs — automatyczna aktualizacja wersji w plikach .bat.
  *
- * Czyta wersję z VERSION i podmienia w plikach .bat:
+ * Czyta wersję z VERSION i aktualizuje lub dodaje znaczniki w plikach .bat:
  *   - set "APP_VERSION=X.Y.Z"  →  set "APP_VERSION=<VERSION>"
  *   - REM  Wersja: X.Y.Z       →  REM  Wersja: <VERSION>
  *
@@ -17,6 +17,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
+import { VERSIONED_BAT_FILES } from './bat-files.mjs';
 
 const ROOT = resolve(process.cwd());
 
@@ -25,15 +26,6 @@ if (!VERSION) {
     console.error('BLAD: Brak wersji w VERSION');
     process.exit(1);
 }
-
-const BAT_FILES = [
-    'start.bat',
-    'start-native.bat',
-    'install.bat',
-    'build.bat',
-    'setup-ai.bat',
-    'scripts/ensure-db.bat'
-];
 
 function processFile(filePath) {
     const absPath = resolve(ROOT, filePath);
@@ -46,7 +38,19 @@ function processFile(filePath) {
     const original = content;
 
     content = content.replace(/(set "APP_VERSION=)\d+\.\d+\.\d+(")/g, `$1${VERSION}$2`);
-    content = content.replace(/(^REM {2}Wersja: )\d+\.\d+\.\d+$/gm, `$1${VERSION}`);
+    const versionMarker = `REM  Wersja: ${VERSION}`;
+    const markerPattern = /^REM[ \t]+Wersja:[ \t]*\d+\.\d+\.\d+[ \t]*$/gm;
+    if (content.match(markerPattern)) {
+        content = content.replace(markerPattern, versionMarker);
+    } else {
+        const lineEnding = content.includes('\r\n') ? '\r\n' : '\n';
+        const echoOff = /^@echo off(\r?\n)/im;
+        if (echoOff.test(content)) {
+            content = content.replace(echoOff, `$&${versionMarker}${lineEnding}`);
+        } else {
+            content = `${versionMarker}${lineEnding}${content}`;
+        }
+    }
 
     if (content === original) {
         console.log(`  - ${filePath} (bez zmian)`);
@@ -62,11 +66,11 @@ function main() {
     console.log(`\n  auto-bat-version  |  VERSION=${VERSION}\n`);
 
     let changed = 0;
-    for (const file of BAT_FILES) {
+    for (const file of VERSIONED_BAT_FILES) {
         if (processFile(file)) changed++;
     }
 
-    console.log(`\n  Zmieniono ${changed} z ${BAT_FILES.length} plikow BAT\n`);
+    console.log(`\n  Zmieniono ${changed} z ${VERSIONED_BAT_FILES.length} plikow BAT\n`);
 }
 
 main();

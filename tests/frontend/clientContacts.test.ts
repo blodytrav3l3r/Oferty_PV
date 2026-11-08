@@ -9,15 +9,23 @@ describe('clientContacts', () => {
     beforeEach(() => {
         const file = path.join(__dirname, '../../public/js/shared/clientContacts.js');
         let code = fs.readFileSync(file, 'utf8');
+        code = code.replace(/^import .*?;\r?\n/m, '');
         code = code.replace(/^export /gm, '');
         const esc = (s: unknown) => String(s ?? '');
         const context: any = {
             console,
             module: { exports: {} },
+            createKartaBudowyCommon: () => ({}),
             document: undefined,
             window: {
                 escapeHtml: esc,
-                escapeHtmlAttr: (s: unknown) => String(s ?? '').replace(/"/g, '&quot;')
+                escapeHtmlAttr: (s: unknown) =>
+                    String(s ?? '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;')
             }
         };
         vm.createContext(context);
@@ -81,9 +89,18 @@ describe('clientContacts', () => {
         expect(cc.editorHtml([])).toContain('Dodaj osobę');
     });
 
+    test('editorHtml nie renderuje usuniętego pola roli, także dla danych historycznych', () => {
+        const html = cc.editorHtml([{ name: 'Jan', role: 'Kierownik' }], 'Dodaj kontakt', true);
+        expect(html).not.toContain('data-cc="role"');
+        expect(html).not.toContain('Kierownik');
+    });
+
     test('inicjalizuje edytor auto po załadowaniu partiali', () => {
         const file = path.join(__dirname, '../../public/js/shared/clientContacts.js');
-        const source = fs.readFileSync(file, 'utf8').replace(/^export /gm, '');
+        const source = fs
+            .readFileSync(file, 'utf8')
+            .replace(/^import .*?;\r?\n/m, '')
+            .replace(/^export /gm, '');
         let containers: any[] = [];
         let onPartialsLoaded: (() => void) | undefined;
         const contactBox = {
@@ -95,6 +112,7 @@ describe('clientContacts', () => {
         };
         const hiddenMirror = { value: '' };
         const context: any = {
+            createKartaBudowyCommon: () => ({}),
             document: {
                 querySelectorAll: () => containers,
                 addEventListener: (name: string, callback: () => void) => {
@@ -117,7 +135,7 @@ describe('clientContacts', () => {
         const row = (vals: Record<string, string>) => ({
             querySelector: (sel: string) => {
                 const m = sel.match(/data-cc="(\w+)"/);
-                return m ? { value: vals[m[1]] ?? '' } : null;
+                return m && m[1] in vals ? { value: vals[m[1]] ?? '' } : null;
             }
         });
         const box = {
@@ -127,5 +145,28 @@ describe('clientContacts', () => {
             ]
         };
         expect(cc.collectContacts(box)).toEqual([{ name: 'Jan', phone: '600', email: '' }]);
+    });
+
+    test('collectContacts ignoruje pole roli z danych historycznych', () => {
+        const row = (vals: Record<string, string>) => ({
+            querySelector: (sel: string) => {
+                const m = sel.match(/data-cc="(\w+)"/);
+                return m && m[1] in vals ? { value: vals[m[1]] } : null;
+            }
+        });
+        const box = {
+            querySelectorAll: () => [
+                row({
+                    name: 'Jan Kowalski',
+                    phone: '500',
+                    email: 'jan@example.test',
+                    role: 'Kierownik'
+                })
+            ]
+        };
+
+        expect(cc.collectContacts(box)).toEqual([
+            { name: 'Jan Kowalski', phone: '500', email: 'jan@example.test' }
+        ]);
     });
 });

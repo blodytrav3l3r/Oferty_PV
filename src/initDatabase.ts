@@ -40,7 +40,6 @@ export async function ensureClientContactsTable(): Promise<void> {
                     name,
                     phone: phone || null,
                     email: email || null,
-                    position: '',
                     isPrimary: 1,
                     createdByUserId: client.userId,
                     createdAt: now,

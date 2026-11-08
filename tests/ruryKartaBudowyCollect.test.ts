@@ -32,7 +32,14 @@ describe('rury karta budowy: offerNumbers jako tablica (F2)', () => {
 
     function runCtx(values: Record<string, string>) {
         const context: any = {
-            window: {},
+            window: {
+                ClientContacts: {
+                    kartaBudowy: {
+                        collect: () => ({}),
+                        restore: () => {}
+                    }
+                }
+            },
             document: makeDocumentWithQuery(values),
             getActiveItemsArray: () => [],
             collectPrzejsciaDetailsFromTable: () => [],
@@ -72,15 +79,34 @@ describe('rury karta budowy: offerNumbers jako tablica (F2)', () => {
         expect(kb.offerNumbers).toEqual([]);
     });
 
-    test('kontakt prefill: Zamawiajacy + Budowa z przedrostkami', () => {
+    test('collect dokleja wspólne pola i listy kontaktów adaptera', () => {
         const ctx = runCtx({});
-        expect(ctx._buildKontaktPrefill('Jan 123', 'Firma X')).toBe(
-            'Zamawiający: Jan 123, Budowa: Firma X'
+        ctx.window.ClientContacts.kartaBudowy = {
+            collect: () => ({
+                clientName: 'Budimex S.A.',
+                kontaktZamawiajacy: [{ name: 'Anna', phone: '600', email: 'anna@example.test' }],
+                kontaktyBudowa: [{ name: 'Piotr', phone: '500', email: 'piotr@example.test' }]
+            })
+        };
+
+        const data = ctx.collectKartaBudowyDataStep4();
+
+        expect(data.clientName).toBe('Budimex S.A.');
+        expect(data.kontaktZamawiajacy[0].email).toBe('anna@example.test');
+        expect(data.kontaktyBudowa[0].name).toBe('Piotr');
+    });
+
+    test('kopiowanie starej karty zleca wspólnemu adapterowi rozdzielenie kontaktu', () => {
+        const ctx = runCtx({});
+        const restore = jest.fn();
+        ctx.window.ClientContacts.kartaBudowy = { collect: () => ({}), restore };
+
+        ctx.applyCopiedKartaBudowyData({ osobaKontakt: 'Zamawiający: Jan, Budowa: Kierownik' });
+
+        expect(restore).toHaveBeenCalledWith(
+            { osobaKontakt: 'Zamawiający: Jan, Budowa: Kierownik' },
+            { splitLegacyOsobaKontakt: true }
         );
-        expect(ctx._buildKontaktPrefill('Jan 123', '')).toBe('Zamawiający: Jan 123');
-        expect(ctx._buildKontaktPrefill('', 'Firma X')).toBe('Budowa: Firma X');
-        expect(ctx._buildKontaktPrefill('', '')).toBe('');
-        expect(ctx._buildKontaktPrefill(null, undefined)).toBe('');
     });
 
     test('copy odtwarza tablice jako tekst rozdzielony przecinkiem', () => {

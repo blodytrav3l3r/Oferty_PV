@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-07",
-    "totalEdges": 2846,
+    "generatedAt": "2026-11-08",
+    "totalEdges": 2847,
     "edges": [
         {
             "page": "public/app.html",
@@ -4205,6 +4205,22 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "_enterKartaBudowyStep4",
+            "userFile": "public/js/studnie/orderCrud.js",
+            "defFile": "public/js/studnie/orderKartaBudowy.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_enterKartaBudowyStep4",
+            "userFile": "public/js/studnie/uiHelpers.js",
+            "defFile": "public/js/studnie/orderKartaBudowy.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "_EXCEL_COL_FIT_MAX",
             "userFile": "public/js/studnie/excelTableRenderer.js",
             "defFile": "public/js/studnie/excelState.js",
@@ -7937,6 +7953,14 @@
             "userFile": "public/js/studnie/offerSave.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_resetKartaBudowyStep4Context",
+            "userFile": "public/js/studnie/offerManager.js",
+            "defFile": "public/js/studnie/orderKartaBudowy.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {
@@ -14680,22 +14704,6 @@
             "name": "inferUszczelkaType",
             "userFile": "public/js/studnie/orderKartaBudowy.js",
             "defFile": "public/js/studnie/actionsWellSync.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "initKartaBudowyStep4",
-            "userFile": "public/js/studnie/orderCrud.js",
-            "defFile": "public/js/studnie/orderKartaBudowy.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "initKartaBudowyStep4",
-            "userFile": "public/js/studnie/uiHelpers.js",
-            "defFile": "public/js/studnie/orderKartaBudowy.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },

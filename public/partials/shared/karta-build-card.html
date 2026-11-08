@@ -1,0 +1,612 @@
+<!-- STEP 4: Build Card (Karta Budowy) -->
+<!-- ====== WIZARD STEP 4: KARTA BUDOWY ====== -->
+<div class="wizard-step" id="wizard-step-4">
+    <div class="wizard-card">
+        <div class="karta-build-form">
+            <!-- Wiersz 0: Kopiuj Kartę Budowy z istniejącego zamówienia -->
+            <div class="karta-build-row karta-build-copy-row">
+                <div class="karta-build-copy-field">
+                    <select id="step4-copy-order-select" class="form-input form-input-wide">
+                        <option value="">Wybierz kartę budowy do skopiowania</option>
+                    </select>
+                    <div id="step4-copy-order-help" class="karta-build-help">
+                        Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    id="step4-copy-toggle-btn"
+                    class="wizard-btn wizard-btn-prev"
+                    data-csp="copyKartaBudowyFromOrder"
+                >
+                    Kopiuj Kartę Budowy z zamówienia
+                </button>
+            </div>
+
+            <!-- Wiersz 1: Emaile i numer oferty -->
+            <div class="karta-build-row karta-build-offer-row">
+                <!-- Email do faktury (Zablokowane) -->
+                <div class="flex-1-240">
+                    <label class="karta-build-label karta-build-label--warning">
+                        Aktualnie przypisane emaile do faktury
+                    </label>
+                    <input
+                        type="email"
+                        id="step4-email-faktura"
+                        class="form-input form-input-wide karta-build-input--readonly"
+                        placeholder="np. faktura@firma.pl"
+                        readonly
+                    />
+                </div>
+
+                <!-- Email e-faktura (TU DOPISYWAC) -->
+                <div class="flex-1-240">
+                    <label class="karta-build-label karta-build-label--success">
+                        Email e-faktura
+                        <span class="karta-build-note karta-build-note--success"
+                            >(TU DOPISYWAĆ)</span
+                        >
+                    </label>
+                    <input
+                        type="email"
+                        id="step4-email-efaktura"
+                        class="form-input form-input-wide"
+                        placeholder="np. efaktura@firma.pl"
+                    />
+                </div>
+
+                <!-- Zamówienie według oferty nr. -->
+                <div class="flex-1-240">
+                    <label class="karta-build-label karta-build-label--accent">
+                        Zamówienie według oferty nr.
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-offer-nr-input"
+                        class="form-input form-input-wide"
+                        placeholder="np. OF/2026/001, OF/2026/002"
+                    />
+                    <div class="karta-build-help">Numery ofert oddzielaj przecinkiem</div>
+                </div>
+            </div>
+
+            <!-- Dane nabywcy -->
+            <div class="p-6-12">
+                <section aria-labelledby="step4-buyer-title">
+                    <h3 id="step4-buyer-title" class="wizard-section-title">Dane nabywcy</h3>
+                    <div class="wizard-form-grid investment-form-grid">
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-client-number"
+                                >Nr klienta</label
+                            >
+                            <input class="form-input form-input-wide" id="step4-client-number" />
+                        </div>
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-client-name">Firma</label>
+                            <input class="form-input form-input-wide" id="step4-client-name" />
+                        </div>
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-client-nip">NIP</label>
+                            <input class="form-input form-input-wide" id="step4-client-nip" />
+                        </div>
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-client-address"
+                                >Adres firmy</label
+                            >
+                            <input class="form-input form-input-wide" id="step4-client-address" />
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Wiersz 2: Adres i Płatności -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Adres wysyłki faktury -->
+                <div class="flex-2-240">
+                    <label class="karta-build-label karta-build-label--blue">
+                        Adres wysyłki faktury
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-adres-wysylki"
+                        class="form-input form-input-wide"
+                        placeholder="Wpisz adres wysyłki faktury..."
+                    />
+                </div>
+
+                <!-- Warunki płatności -->
+                <div class="karta-build-column karta-build-column--150">
+                    <label class="karta-build-label karta-build-label--secondary">
+                        Warunki płatności
+                    </label>
+                    <select id="step4-warunki-platnosci" class="form-input form-input-wide">
+                        <option value="przelew">Przelew</option>
+                        <option value="gotówka">Gotówka</option>
+                        <option value="przedpłata">Przedpłata</option>
+                    </select>
+                </div>
+
+                <!-- Ilość dni -->
+                <div class="karta-build-column karta-build-column--100">
+                    <label class="karta-build-label karta-build-label--secondary">
+                        Ilość dni
+                    </label>
+                    <input
+                        type="number"
+                        id="step4-ilosc-dni"
+                        class="form-input form-input-wide"
+                        placeholder="np. 14"
+                        min="0"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 3: Ubezpieczenie -->
+            <div class="flex-wrap-start p-6-12">
+                <div class="flex-1-240">
+                    <label class="karta-build-label karta-build-label--success">
+                        Ubezpieczenie
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-ubezpieczenie"
+                        class="form-input form-input-wide"
+                        placeholder="Wpisz dane ubezpieczenia..."
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 4: Osoby do kontaktu — klient -->
+            <div class="p-6-12">
+                <div class="wizard-form-group">
+                    <span class="wizard-form-label" id="step4-client-contacts-label"
+                        >Osoby do kontaktu — klient</span
+                    >
+                    <div
+                        id="step4-client-contacts"
+                        data-cc-hidden="step4-osoba-kontakt"
+                        role="group"
+                        aria-labelledby="step4-client-contacts-label"
+                    ></div>
+                    <input type="hidden" id="step4-osoba-kontakt" />
+                </div>
+            </div>
+
+            <!-- Miejsce budowy i osobny kontakt -->
+            <div class="p-6-12">
+                <section aria-labelledby="step4-build-location-title">
+                    <h3 id="step4-build-location-title" class="wizard-section-title">
+                        Miejsce budowy / dostawy
+                    </h3>
+                    <div class="wizard-form-grid investment-form-grid">
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-invest-name">Obiekt</label>
+                            <input class="form-input form-input-wide" id="step4-invest-name" />
+                        </div>
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-invest-postal-code"
+                                >Kod pocztowy</label
+                            >
+                            <input
+                                class="form-input form-input-wide"
+                                id="step4-invest-postal-code"
+                            />
+                        </div>
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-invest-city"
+                                >Miejscowość</label
+                            >
+                            <input class="form-input form-input-wide" id="step4-invest-city" />
+                        </div>
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label" for="step4-invest-street"
+                                >Ulica i numer</label
+                            >
+                            <input class="form-input form-input-wide" id="step4-invest-street" />
+                        </div>
+                        <div class="wizard-form-group investment-location-description">
+                            <label class="wizard-form-label" for="step4-invest-location-description"
+                                >Opis dojazdu</label
+                            >
+                            <textarea
+                                class="form-input form-input-wide"
+                                id="step4-invest-location-description"
+                                rows="2"
+                            ></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section aria-labelledby="step4-build-contact-title">
+                    <h3 id="step4-build-contact-title" class="wizard-section-title">
+                        Osoby do kontaktu — budowa
+                    </h3>
+                    <div
+                        id="step4-build-contacts"
+                        data-cc-add-label="Dodaj kontakt na budowie"
+                        role="group"
+                        aria-labelledby="step4-build-contact-title"
+                    ></div>
+                    <input type="hidden" id="step4-build-contact-name" />
+                    <input type="hidden" id="step4-build-contact-phone" />
+                    <input type="hidden" id="step4-build-contact-email" />
+                </section>
+            </div>
+
+            <!-- Wiersz 5: Transport -->
+            <div class="flex-wrap-start p-6-12">
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--danger">
+                        Zabezpieczenie transportu
+                    </label>
+                    <select id="step4-zabezpieczenie-transportu" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Podkłady jednorazowe">Podkłady jednorazowe</option>
+                        <option value="Podkłady zwrotne">Podkłady zwrotne</option>
+                    </select>
+                </div>
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--warning">
+                        Rodzaj transportu
+                    </label>
+                    <select id="step4-rodzaj-transportu" class="form-input form-input-wide">
+                        <option value="W kółko">W kółko</option>
+                        <option value="Spedycja">Spedycja</option>
+                        <option value="Transport P.V." selected>Transport P.V.</option>
+                        <option value="Odbiór własny">Odbiór własny</option>
+                    </select>
+                </div>
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--secondary">
+                        Wyliczony transport z zam.
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-wyliczony-transport"
+                        class="form-input form-input-wide"
+                        placeholder="Brak danych"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 6: Rodzaj studni, Uszczelka do studni, Rodzaj stopni -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Rodzaj studni -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--blue-alt">
+                        Rodzaj studni
+                    </label>
+                    <select id="step4-rodzaj-studni" class="form-input form-input-wide">
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Beton" selected>Beton</option>
+                        <option value="Żelbet">Żelbet</option>
+                    </select>
+                </div>
+
+                <!-- Uszczelka do studni: jedno pole, przełącznik Auto/Ręcznie -->
+                <div class="flex-1-180 karta-build-studnie-only" id="step4-uszczelka-wrap">
+                    <div class="karta-build-field-heading">
+                        <label class="karta-build-label karta-build-label--cyan">
+                            Uszczelka do studni
+                        </label>
+                        <button
+                            type="button"
+                            id="step4-uszczelka-mode-btn"
+                            class="karta-build-studnie-only karta-build-mode-button"
+                            data-mode="auto"
+                            data-csp="handleUszczelkaModeToggle"
+                            title="Przełącz tryb: Auto (z konfiguracji) / Ręcznie"
+                        >
+                            Auto
+                        </button>
+                    </div>
+                    <input
+                        type="text"
+                        id="step4-uszczelka-studni-auto"
+                        class="form-input karta-build-studnie-only form-input-wide"
+                        placeholder="Brak"
+                        readonly
+                        title="Wykryte typy uszczelek per DN na podstawie konfiguracji studni."
+                    />
+                    <select
+                        id="step4-uszczelka-studni"
+                        class="form-input form-input-wide"
+                        data-csp="$toggleInne"
+                        data-csp-args='["step4-uszczelka-studni-inne-wrap"]'
+                        data-csp-on="change"
+                    >
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Brak" selected>Brak</option>
+                        <option value="GSG">GSG</option>
+                        <option value="SDV">SDV</option>
+                        <option value="SDV PO">SDV PO</option>
+                        <option value="NBR">NBR</option>
+                        <option value="Inne">Inne</option>
+                    </select>
+                    <div id="step4-uszczelka-studni-inne-wrap" class="karta-build-other-field">
+                        <input
+                            type="text"
+                            id="step4-uszczelka-studni-inne"
+                            class="form-input form-input-wide"
+                            placeholder="Wpisz uszczelkę..."
+                        />
+                    </div>
+                </div>
+
+                <!-- Rodzaj stopni -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--warning">
+                        Rodzaj stopni
+                    </label>
+                    <select
+                        id="step4-rodzaj-stopni"
+                        class="form-input form-input-wide"
+                        data-csp="$toggleInne"
+                        data-csp-args='["step4-rodzaj-stopni-inne-wrap"]'
+                        data-csp-on="change"
+                    >
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Brak">Brak</option>
+                        <option value="Drabinka">Drabinka</option>
+                        <option value="Drabinka nierdzewna">Drabinka nierdzewna</option>
+                        <option value="Inne">Inne</option>
+                    </select>
+                </div>
+                <div class="flex-1-180-hidden" id="step4-rodzaj-stopni-inne-wrap">
+                    <label class="karta-build-label karta-build-label--warning">
+                        Jakie (Inne)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-rodzaj-stopni-inne"
+                        class="form-input form-input-wide"
+                        placeholder="Wpisz rodzaj stopni..."
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 7: Kineta i Wysokość spocznika -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Kineta -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--secondary"> Kineta </label>
+                    <select
+                        id="step4-kineta"
+                        class="form-input form-input-wide"
+                        data-csp="$toggleInne"
+                        data-csp-args='["step4-kineta-inne-wrap"]'
+                        data-csp-on="change"
+                    >
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Brak" selected>Brak</option>
+                        <option value="Beton">Beton</option>
+                        <option value="Beton z GFK">Beton z GFK</option>
+                        <option value="Klinkier">Klinkier</option>
+                        <option value="Preco">Preco</option>
+                        <option value="PrecoTop">PrecoTop</option>
+                        <option value="UnoLith">UnoLith</option>
+                        <option value="Predl">Predl</option>
+                        <option value="Kamionka">Kamionka</option>
+                        <option value="Inne">Inne</option>
+                    </select>
+                </div>
+                <div class="flex-1-180-hidden" id="step4-kineta-inne-wrap">
+                    <label class="karta-build-label karta-build-label--secondary">
+                        Jakie (Inne)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-kineta-inne"
+                        class="form-input form-input-wide"
+                        placeholder="Wpisz rodzaj kinety..."
+                    />
+                </div>
+
+                <!-- Wysokość spocznika -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--success">
+                        Wysokość spocznika
+                    </label>
+                    <select id="step4-wysokosc-spocznika" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="1/2">1/2</option>
+                        <option value="2/3">2/3</option>
+                        <option value="3/4">3/4</option>
+                        <option value="1/1">1/1</option>
+                    </select>
+                </div>
+
+                <!-- Usytuowanie -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--danger"> Usytuowanie </label>
+                    <select id="step4-usytuowanie" class="form-input form-input-wide">
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Linia dolna" selected>Linia dolna</option>
+                        <option value="Linia górna">Linia górna</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Wiersz 8: Kaskada i Ślepa kineta -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Kaskada -->
+                <div class="karta-build-column karta-build-column--140">
+                    <label class="karta-build-label karta-build-label--blue"> Kaskada </label>
+                    <select id="step4-kaskada" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+                <div class="karta-build-column karta-build-column--wide">
+                    <label class="karta-build-label karta-build-label--blue">
+                        Uwagi (Kaskada)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-kaskada-uwagi"
+                        class="form-input form-input-wide"
+                        placeholder="Wpisz uwagi..."
+                    />
+                </div>
+
+                <!-- Ślepa kineta -->
+                <div class="karta-build-column karta-build-column--140">
+                    <label class="karta-build-label karta-build-label--secondary">
+                        Ślepa kineta
+                    </label>
+                    <select id="step4-slepa-kineta" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+                <div class="karta-build-column karta-build-column--wide">
+                    <label class="karta-build-label karta-build-label--secondary">
+                        Uwagi (Ślepa kineta)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-slepa-kineta-uwagi"
+                        class="form-input form-input-wide"
+                        placeholder="Wpisz uwagi..."
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 9: Redukcja kinety, Przejścia tulejowe, Przejścia szczelne -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Redukcja kinety -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--success">
+                        Redukcja kinety
+                    </label>
+                    <select id="step4-redukcja-kinety" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Nie">Nie</option>
+                        <option value="Tak">Tak</option>
+                    </select>
+                </div>
+
+                <!-- Przejścia tulejowe -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--blue-alt">
+                        Przejścia tulejowe
+                    </label>
+                    <select id="step4-przejscia-tulejowe" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+
+                <!-- Przejścia szczelne -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--secondary">
+                        Przejścia szczelne
+                    </label>
+                    <select id="step4-przejscia-szczelne" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="W zakresie P.V.">W zakresie P.V.</option>
+                        <option value="Dostarcza klient">Dostarcza klient</option>
+                    </select>
+                </div>
+
+                <!-- Przejścia zamówione -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--muted">
+                        Przejścia zamówione
+                    </label>
+                    <select
+                        id="step4-przejscia-zamowione"
+                        class="form-input form-input-wide"
+                        data-csp="handlePrzejsciaZamowioneChange"
+                        data-csp-args='["$el"]'
+                        data-csp-on="change"
+                    >
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+
+                <!-- Data zamówienia -->
+                <div class="flex-2-240">
+                    <label class="karta-build-label karta-build-label--muted">
+                        Data zamówienia
+                    </label>
+                    <input
+                        type="date"
+                        id="step4-data-zamowienia"
+                        class="form-input form-input-wide"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 10: Właściwości betonu, Pozostałe właściwości -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Właściwości betonu -->
+                <div class="flex-1-180">
+                    <label class="karta-build-label karta-build-label--muted">
+                        Właściwości betonu
+                    </label>
+                    <select id="step4-wlasciwosci-betonu" class="form-input form-input-wide">
+                        <option value="C40/50" selected>C40/50</option>
+                        <option value="C40/50 HSR">C40/50 HSR</option>
+                        <option value="C45/55">C45/55</option>
+                        <option value="C45/55 HSR">C45/55 HSR</option>
+                        <option value="C70/85">C70/85</option>
+                        <option value="C70/80 HSR">C70/80 HSR</option>
+                    </select>
+                </div>
+
+                <!-- Pozostałe właściwości -->
+                <div class="flex-2-240">
+                    <label class="karta-build-label karta-build-label--muted">
+                        Pozostałe właściwości
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-pozostale-wlasciwosci"
+                        class="form-input form-input-wide"
+                        placeholder="Wpisz właściwości (np. Agresja mrozowa)..."
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 9.1: Przejścia szczelne — szczegóły z oferty -->
+            <div class="p-6-12">
+                <div class="karta-build-details-panel">
+                    <div class="karta-build-details-header">
+                        <label class="gap-2 karta-build-details-title">
+                            <i data-lucide="link"></i> Przejścia szczelne — szczegóły z oferty
+                        </label>
+                        <button
+                            type="button"
+                            id="step4-add-custom-przejscie-btn"
+                            data-csp="addCustomPrzejscieRow"
+                            class="gap-1 karta-build-add-button"
+                        >
+                            <i data-lucide="plus" class="icon-sm"></i>
+                            Dodaj niestandardowe
+                        </button>
+                    </div>
+                    <div id="step4-przejscia-details-table"></div>
+                </div>
+            </div>
+
+            <!-- Wiersz 11: Uwagi ogólne -->
+            <div class="p-6-12">
+                <label class="karta-build-label karta-build-label--muted"> Uwagi </label>
+                <textarea
+                    id="step4-uwagi-ogolne"
+                    class="form-input form-input-wide"
+                    rows="9"
+                    placeholder="Wpisz uwagi..."
+                ></textarea>
+            </div>
+
+            <!-- Step 4 nav handled by bottom fixed nav -->
+        </div>
+    </div>
+</div>

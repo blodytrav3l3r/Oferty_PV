@@ -2,6 +2,10 @@
 REM  Wersja: 1.56.7
 REM ===========================================================
 REM  build.bat - Budowanie production bundle (final)
+REM Rola: Budowanie produkcyjnych plikow aplikacji.
+REM Uzycie: build.bat
+REM Uruchamia: Prisma generate, TypeScript compile i kopiuje klienta Prisma.
+REM Wplyw: Usuwa i odtwarza dist; nie zmienia bazy danych.
 REM ===========================================================
 
 setlocal

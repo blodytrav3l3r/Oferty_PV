@@ -6,10 +6,12 @@ import { escapeHtml } from './helpers';
 import { loadPdfTemplate } from './templateCache';
 import { getCatalogStudnieRows } from '../pricelist/catalog';
 import { generatePDF } from './pdfEngine';
+import { getKartaBudowySharedSections } from '../kartaBudowy/sharedSections';
 import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../types/kartaBudowy';
 
 function buildKartaBudowyBaseHtml(
     kb: KartaBudowyMeta,
+    orderData: KartaBudowyOrderData,
     nrZamowienia: string,
     nrOferty: string
 ): string {
@@ -18,8 +20,38 @@ function buildKartaBudowyBaseHtml(
 
     html = html.replace(/\{\{NR_ZAMOWIENIA\}\}/g, nrZamowienia);
     html = html.replace(/\{\{OFFER_NUMBERS\}\}/g, nrOferty);
+    const sharedSections = getKartaBudowySharedSections(kb, orderData);
+    const sharedValue = (sectionTitle: string, label: string) =>
+        sharedSections
+            .find((section) => section.title === sectionTitle)
+            ?.rows.find((row) => row.label === label)?.value || '—';
+    const buyerContactText =
+        [
+            sharedValue('Dane nabywcy', 'Kontakt zamawiającego — imię i nazwisko'),
+            sharedValue('Dane nabywcy', 'Telefon zamawiającego'),
+            sharedValue('Dane nabywcy', 'E-mail zamawiającego')
+        ]
+            .filter((value) => value !== '—')
+            .join(', ') || '—';
+    const buildFields: Record<string, string | undefined> = {
+        INVEST_NAME: sharedValue('Miejsce budowy / dostawy', 'Obiekt'),
+        INVEST_POSTAL_CODE: sharedValue('Miejsce budowy / dostawy', 'Kod pocztowy'),
+        INVEST_CITY: sharedValue('Miejsce budowy / dostawy', 'Miejscowość'),
+        INVEST_STREET: sharedValue('Miejsce budowy / dostawy', 'Ulica i numer'),
+        INVEST_LOCATION_DESCRIPTION: sharedValue('Miejsce budowy / dostawy', 'Opis dojazdu'),
+        BUILD_CONTACT_NAME: sharedValue('Osoby do kontaktu — budowa', 'Imię i nazwisko'),
+        BUILD_CONTACT_PHONE: sharedValue('Osoby do kontaktu — budowa', 'Telefon'),
+        BUILD_CONTACT_EMAIL: sharedValue('Osoby do kontaktu — budowa', 'E-mail'),
+        CLIENT_NUMBER: sharedValue('Dane nabywcy', 'Nr klienta'),
+        CLIENT_NAME: sharedValue('Dane nabywcy', 'Firma'),
+        CLIENT_NIP: sharedValue('Dane nabywcy', 'NIP'),
+        CLIENT_ADDRESS: sharedValue('Dane nabywcy', 'Adres firmy')
+    };
+    Object.entries(buildFields).forEach(([key, value]) => {
+        html = html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), () => escapeHtml(value ?? '—'));
+    });
     html = html.replace(/\{\{DATA_ZAMOWIENIA\}\}/g, escapeHtml(kb.dataZamowienia ?? '—'));
-    html = html.replace(/\{\{OSOBA_KONTAKT\}\}/g, escapeHtml(kb.osobaKontakt ?? '—'));
+    html = html.replace(/\{\{OSOBA_KONTAKT\}\}/g, escapeHtml(buyerContactText));
     html = html.replace(/\{\{ADRES_WYSYLKI\}\}/g, escapeHtml(kb.adresWysylki ?? '—'));
     html = html.replace(/\{\{EMAIL_FAKTURA\}\}/g, escapeHtml(kb.emailFaktura ?? '—'));
     html = html.replace(/\{\{EMAIL_EFAKTURA\}\}/g, escapeHtml(kb.emailEfaktura ?? '—'));
@@ -144,7 +176,7 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
             (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—')
     );
 
-    let html = buildKartaBudowyBaseHtml(kb, nrZamowienia, nrOferty);
+    let html = buildKartaBudowyBaseHtml(kb, orderData, nrZamowienia, nrOferty);
 
     const allProducts = new Map<
         string,
@@ -441,7 +473,7 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
             (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—')
     );
 
-    let html = buildKartaBudowyBaseHtml(kb, nrZamowienia, nrOferty);
+    let html = buildKartaBudowyBaseHtml(kb, orderData, nrZamowienia, nrOferty);
 
     html = html.replace(/\{\{RZECZYWISTA_ILOSC_PRZEJSC\}\}/g, '');
 

@@ -1,8 +1,11 @@
 @echo off
 REM  Wersja: 1.56.7
 REM ensure-db.bat - Sprawdza i przygotowuje baze danych
-REM Zwraca: errorlevel 0 = OK, 1 = blad krytyczny
+REM Rola: Wewnetrzny helper bazy wywolywany przez start.bat.
 REM Uzycie: call scripts\ensure-db.bat
+REM Uruchamia: check-db.js, Prisma migrate deploy lub prisma/seed.ts.
+REM Wplyw: Moze migrowac schemat lub seedowac baze wskazana przez DATABASE_URL.
+REM Zwraca: errorlevel 0 = OK, 1 = blad krytyczny
 
 setlocal ENABLEDELAYEDEXPANSION
 set "RETRY=0"

@@ -5,6 +5,10 @@ import {
 import prisma from '../src/prismaClient';
 import { getCatalogStudnieRows } from '../src/services/pricelist/catalog';
 import * as pdfEngine from '../src/services/pdf/pdfEngine';
+import { generateKartaBudowyDOCX } from '../src/services/docx/studnie/kartaBudowy';
+import { generateKartaBudowyRuryDOCX } from '../src/services/docx/rury/kartaBudowy';
+import { getKartaBudowySharedSections } from '../src/services/kartaBudowy/sharedSections';
+import JSZip from 'jszip';
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
@@ -39,6 +43,146 @@ describe('kartaBudowy - Z-71', () => {
         expect(Buffer.isBuffer(buf)).toBe(true);
         expect(buf.length).toBeGreaterThan(100);
         expect(pdfEngine.generatePDF).toHaveBeenCalled();
+    });
+
+    it('renderuje lokalizację, kontakt budowy i nabywcę w ustalonej kolejności', async () => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-parties',
+            data: JSON.stringify({
+                orderNumber: 'ZAM/003',
+                investName: 'Hala <A>',
+                investPostalCode: '00-001',
+                investCity: 'Warszawa',
+                investStreet: 'Leśna 2',
+                investLocationDescription: 'Wjazd od północy',
+                investContacts: [
+                    { name: 'Jan Kowalski', phone: '500 600 700', email: 'jan@example.test' }
+                ],
+                clientNumber: 'K-001',
+                clientName: 'Budimex S.A.',
+                clientNip: '1234567890',
+                clientAddress: 'ul. Testowa 1, Warszawa',
+                kartaBudowy: {
+                    kontaktyBudowa: [
+                        {
+                            name: 'Jan Kowalski',
+                            phone: '500 600 700',
+                            email: 'jan@example.test',
+                            role: 'Kierownik budowy'
+                        },
+                        {
+                            name: 'Alicja Malinowska',
+                            phone: '700 800 900',
+                            email: 'alicja@example.test',
+                            role: 'Odbiór dostawy'
+                        }
+                    ]
+                },
+                wells: []
+            })
+        });
+
+        await generateKartaBudowyPDF('order-parties');
+
+        const html = (pdfEngine.generatePDF as jest.Mock).mock.calls[0][0] as string;
+        expect(html).toContain('Hala &lt;A&gt;');
+        expect(html).toContain('Jan Kowalski');
+        expect(html).toContain('Alicja Malinowska');
+        expect(html).not.toContain('Odbiór dostawy');
+        expect(html).not.toContain('Kierownik budowy');
+        expect(html).toContain('K-001');
+        expect(html.indexOf('Miejsce budowy / dostawy')).toBeLessThan(
+            html.indexOf('Osoby do kontaktu — budowa')
+        );
+        expect(html.indexOf('Osoby do kontaktu — budowa')).toBeLessThan(
+            html.indexOf('Dane nabywcy')
+        );
+        expect(html.indexOf('Dane nabywcy')).toBeLessThan(html.indexOf('Podstawowe Informacje'));
+    });
+
+    it('renderuje te same dane i kolejność w DOCX', async () => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-parties-docx',
+            data: JSON.stringify({
+                orderNumber: 'ZAM/004',
+                investName: 'Hala A',
+                investPostalCode: '00-001',
+                investCity: 'Warszawa',
+                investStreet: 'Leśna 2',
+                investLocationDescription: 'Wjazd od północy',
+                investContacts: [
+                    { name: 'Jan Kowalski', phone: '500 600 700', email: 'jan@example.test' }
+                ],
+                clientNumber: 'K-001',
+                clientName: 'Budimex S.A.',
+                clientNip: '1234567890',
+                clientAddress: 'ul. Testowa 1, Warszawa',
+                kartaBudowy: {
+                    kontaktyBudowa: [
+                        {
+                            name: 'Jan Kowalski',
+                            phone: '500 600 700',
+                            email: 'jan@example.test',
+                            role: 'Kierownik budowy'
+                        },
+                        {
+                            name: 'Alicja Malinowska',
+                            phone: '700 800 900',
+                            email: 'alicja@example.test',
+                            role: 'Odbiór dostawy'
+                        }
+                    ]
+                },
+                wells: []
+            })
+        });
+
+        const buffer = await generateKartaBudowyDOCX('order-parties-docx');
+        const archive = await JSZip.loadAsync(buffer);
+        const xml = await archive.file('word/document.xml')!.async('string');
+
+        expect(xml).toContain('Hala A');
+        expect(xml).toContain('Jan Kowalski');
+        expect(xml).toContain('Alicja Malinowska');
+        expect(xml).not.toContain('Kierownik budowy');
+        expect(xml).not.toContain('Odbiór dostawy');
+        expect(xml).toContain('K-001');
+        expect(xml.indexOf('MIEJSCE BUDOWY / DOSTAWY')).toBeLessThan(
+            xml.indexOf('OSOBY DO KONTAKTU — BUDOWA')
+        );
+        expect(xml.indexOf('OSOBY DO KONTAKTU — BUDOWA')).toBeLessThan(xml.indexOf('DANE NABYWCY'));
+        expect(xml.indexOf('DANE NABYWCY')).toBeLessThan(xml.indexOf('PODSTAWOWE INFORMACJE'));
+    });
+
+    it('rozdziela historyczny kontakt zamawiającego i budowy w PDF oraz DOCX', async () => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-legacy-contacts',
+            data: JSON.stringify({
+                orderNumber: 'ZAM/005',
+                investContacts: [{ name: 'Kontakt z oferty', phone: '111 222 333' }],
+                kartaBudowy: {
+                    osobaKontakt:
+                        'Zamawiający: Anna Nowak, 600 700 800, Budowa: Jan Kowalski, 500 111 222'
+                },
+                wells: []
+            })
+        });
+
+        await generateKartaBudowyPDF('order-legacy-contacts');
+        const html = (pdfEngine.generatePDF as jest.Mock).mock.calls[0][0] as string;
+        expect(html).toContain('Anna Nowak, 600 700 800');
+        expect(html).toContain('Jan Kowalski');
+        expect(html).not.toContain('Kontakt z oferty');
+
+        const archive = await JSZip.loadAsync(
+            await generateKartaBudowyDOCX('order-legacy-contacts')
+        );
+        const xml = await archive.file('word/document.xml')!.async('string');
+        expect(xml).toContain('Anna Nowak');
+        expect(xml).toContain('600 700 800');
+        expect(xml).toContain('Jan Kowalski');
+        expect(xml).toContain('500 111 222');
+        expect(xml).not.toContain('Kontakt z oferty');
     });
 
     it('obsługuje duży payload', async () => {
@@ -146,7 +290,23 @@ describe('kartaBudowy - Z-71', () => {
         (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
             id: 'rury1',
             data: JSON.stringify({
-                kartaBudowy: { uwagiOgolne: 'rury' },
+                investName: 'Hala Rur',
+                clientName: 'Budimex Rury',
+                clientContacts: [
+                    { name: 'Anna Nowak', phone: '600 700 800', email: 'anna@example.test' },
+                    { name: 'Jan Nowak', phone: '500 400 300', email: 'jan@example.test' }
+                ],
+                kartaBudowy: {
+                    uwagiOgolne: 'rury',
+                    kontaktyBudowa: [
+                        {
+                            name: 'Piotr Nowak',
+                            phone: '500 111 222',
+                            email: 'piotr@example.test',
+                            role: 'Kierownik budowy'
+                        }
+                    ]
+                },
                 orderNumber: 'ZR/010',
                 items: [
                     {
@@ -172,5 +332,100 @@ describe('kartaBudowy - Z-71', () => {
         expect(htmlArg).toContain('Rura DN300 2500');
         expect(htmlArg).toContain('auto');
         expect(htmlArg).toContain('>3<'); // orderedQuantity
+        expect(htmlArg).toContain('Hala Rur');
+        expect(htmlArg).toContain('Budimex Rury');
+        expect(htmlArg).toContain('anna@example.test');
+        expect(htmlArg).toContain('jan@example.test');
+        expect(htmlArg).not.toContain('Kierownik budowy');
+    });
+
+    it('eksport Rur zawiera wspólne sekcje oraz kontakty i zachowuje kolejność Studni', async () => {
+        (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'rury-docx-parties',
+            data: JSON.stringify({
+                orderNumber: 'ZR/011',
+                investName: 'Hala A',
+                investPostalCode: '00-001',
+                investCity: 'Warszawa',
+                investStreet: 'Leśna 2',
+                investLocationDescription: 'Wjazd od północy',
+                clientNumber: 'K-002',
+                clientName: 'Budimex S.A.',
+                clientNip: '1234567890',
+                clientAddress: 'Testowa 1',
+                clientContacts: [
+                    { name: 'Anna Nowak', phone: '600 700 800', email: 'anna@example.test' },
+                    { name: 'Jan Nowak', phone: '500 400 300', email: 'jan@example.test' }
+                ],
+                kartaBudowy: {
+                    kontaktyBudowa: [
+                        {
+                            name: 'Piotr Nowak',
+                            phone: '500 111 222',
+                            email: 'piotr@example.test',
+                            role: 'Kierownik budowy'
+                        }
+                    ]
+                },
+                items: [{ name: 'Rura DN300', quantity: 1 }]
+            })
+        });
+
+        const archive = await JSZip.loadAsync(
+            await generateKartaBudowyRuryDOCX('rury-docx-parties')
+        );
+        const xml = await archive.file('word/document.xml')!.async('string');
+
+        expect(xml).toContain('Hala A');
+        expect(xml).toContain('anna@example.test');
+        expect(xml).toContain('jan@example.test');
+        expect(xml).not.toContain('Kierownik budowy');
+        expect(xml).toContain('Rura DN300');
+        expect(xml.indexOf('MIEJSCE BUDOWY / DOSTAWY')).toBeLessThan(
+            xml.indexOf('OSOBY DO KONTAKTU — BUDOWA')
+        );
+        expect(xml.indexOf('OSOBY DO KONTAKTU — BUDOWA')).toBeLessThan(xml.indexOf('DANE NABYWCY'));
+        expect(xml.indexOf('DANE NABYWCY')).toBeLessThan(xml.indexOf('PODSTAWOWE INFORMACJE'));
+    });
+
+    it('builds the shared party sections and restores legacy contacts', () => {
+        const sections = getKartaBudowySharedSections(
+            { investName: 'Hala A' },
+            {
+                investContacts: [{ name: 'Jan Kowalski', phone: '500', email: 'jan@example.test' }],
+                contactPerson: 'Anna Nowak',
+                clientPhone: '600',
+                clientEmail: 'anna@example.test'
+            }
+        );
+
+        expect(sections.map(({ title }) => title)).toEqual([
+            'Miejsce budowy / dostawy',
+            'Osoby do kontaktu — budowa',
+            'Dane nabywcy'
+        ]);
+        expect(sections[1].rows).toContainEqual({
+            label: 'Imię i nazwisko',
+            value: 'Jan Kowalski'
+        });
+        expect(sections[2].rows).toContainEqual({
+            label: 'Kontakt zamawiającego — imię i nazwisko',
+            value: 'Anna Nowak'
+        });
+        expect(JSON.stringify(sections)).not.toContain('Rola');
+
+        const explicitlyEmpty = getKartaBudowySharedSections(
+            { kontaktyBudowa: [] },
+            { investContacts: [{ name: 'Legacy builder' }] }
+        );
+        expect(explicitlyEmpty[1].rows[0].value).toBe('—');
+
+        const legacyRury = getKartaBudowySharedSections(
+            { osobaKontakt: 'Zamawiający: Anna Nowak, 600 700 800, Budowa: Jan Kowalski' },
+            {}
+        );
+        expect(legacyRury[1].rows[0].value).toBe('Jan Kowalski');
+        expect(legacyRury[2].rows[4].value).toBe('Anna Nowak');
+        expect(legacyRury[2].rows[5].value).toBe('600 700 800');
     });
 });

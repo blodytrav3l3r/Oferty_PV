@@ -3,6 +3,10 @@ REM  Wersja: 1.56.7
 REM ===========================================================
 REM  install.bat - Setup srodowiska developer-skiego (final)
 REM  Strategia: proste kroki, zero kolorow i delikatnych ANSI.
+REM Rola: Instalacja lokalnego srodowiska developerskiego.
+REM Uzycie: install.bat [--skip-seed]
+REM Uruchamia: init-env, npm, Prisma migrations i opcjonalnie prisma/seed.ts.
+REM Wplyw: Zapisuje .env i zaleznosci; moze migrowac lub seedowac DATABASE_URL.
 REM ===========================================================
 
 setlocal ENABLEDELAYEDEXPANSION

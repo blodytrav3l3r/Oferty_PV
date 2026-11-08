@@ -50,6 +50,16 @@ async function enterRuryOrderEditMode(orderId) {
         setVal('client-number', orderData.clientNumber);
         setVal('client-address', orderData.clientAddress);
         setVal('client-contact', orderData.clientContact);
+        if (window.ClientContacts) {
+            const editor = document.getElementById('client-contacts');
+            if (editor) {
+                const contacts = Array.isArray(orderData.clientContacts)
+                    ? orderData.clientContacts
+                    : window.ClientContacts.legacyToContacts(orderData);
+                window.ClientContacts.renderEditor(editor, contacts);
+                window.ClientContacts.bindEditor(editor);
+            }
+        }
         setVal('invest-name', orderData.investName);
         setVal('invest-address', orderData.investAddress);
         setVal('invest-contractor', orderData.investContractor);

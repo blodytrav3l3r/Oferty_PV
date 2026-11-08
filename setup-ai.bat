@@ -2,6 +2,10 @@
 REM  Wersja: 1.56.7
 REM ===========================================================
 REM  setup-ai.bat - Diagnostyka i setup modulu AI / ML
+REM Rola: Diagnostyka i konfiguracja modulu AI/ML.
+REM Uzycie: setup-ai.bat
+REM Uruchamia: scripts/setupAi.ts przez ts-node.
+REM Wplyw: Moze zapisac konfiguracje i wyniki AI/ML w bazie aplikacji.
 REM ===========================================================
 
 setlocal ENABLEDELAYEDEXPANSION

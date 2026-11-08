@@ -134,3 +134,29 @@ describe('syncOrderContactsFromForm: guardy i happy path', () => {
         expect(sync(sb, order).clientContact).toBe('Jan, 600');
     });
 });
+
+describe('Studnie: kontakty klienta w zamówieniu z oferty', () => {
+    test('utworzone zamówienie zachowuje listę kontaktów i mirrory zgodne z danymi oferty', () => {
+        const source = readPub('js/studnie/orderCrud.js');
+        const orderDefinition = source.match(/const order = \{([\s\S]*?)\n {4}\};/)?.[1] || '';
+
+        for (const field of ['clientContacts', 'contactPerson', 'clientPhone', 'clientEmail']) {
+            expect(orderDefinition).toContain(field);
+            expect(orderDefinition).toContain(`offer.${field}`);
+        }
+        expect(source).toContain('renderClientContactsList(order.clientContacts, order)');
+    });
+});
+
+describe('Rury: kontakty klienta w zamówieniu i jego edycji', () => {
+    test('zapisuje listę oraz mirrory i odtwarza legacy, gdy lista nie istnieje', () => {
+        const createSource = readPub('js/rury/orderCrud.js');
+        const editSource = readPub('js/rury/orderEditMode.js');
+
+        expect(createSource).toContain('clientContacts,');
+        expect(createSource).toContain('...contactMirrors,');
+        expect(editSource).toContain('Array.isArray(orderData.clientContacts)');
+        expect(editSource).toContain('window.ClientContacts.legacyToContacts(orderData)');
+        expect(editSource).toContain('applyCopiedKartaBudowyData(orderData.kartaBudowy)');
+    });
+});

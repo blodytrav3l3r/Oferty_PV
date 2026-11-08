@@ -7,6 +7,18 @@ function _resetKartaBudowyForm() {
         'step4-ilosc-dni',
         'step4-ubezpieczenie',
         'step4-osoba-kontakt',
+        'step4-invest-name',
+        'step4-invest-postal-code',
+        'step4-invest-city',
+        'step4-invest-street',
+        'step4-invest-location-description',
+        'step4-build-contact-name',
+        'step4-build-contact-phone',
+        'step4-build-contact-email',
+        'step4-client-number',
+        'step4-client-name',
+        'step4-client-nip',
+        'step4-client-address',
         'step4-kaskada-uwagi',
         'step4-slepa-kineta-uwagi',
         'step4-data-zamowienia'
@@ -51,6 +63,45 @@ function _resetKartaBudowyForm() {
     );
 
     setUszczelkaMode('auto');
+}
+
+let _kartaBudowyStep4ContextKey = null;
+
+function _getKartaBudowyStep4ContextKey() {
+    const pending =
+        typeof pendingOrderCreationData !== 'undefined' ? pendingOrderCreationData : null;
+    if (pending) {
+        const offerId = pending.offer?.id || pending.offer?.number || 'offer';
+        const selectedWellIds = (pending.selectedWells || [])
+            .map((well) => well.id)
+            .filter(Boolean)
+            .sort()
+            .join(',');
+        return `pending:${offerId}:${selectedWellIds}`;
+    }
+
+    const editOrder =
+        typeof orderEditMode !== 'undefined' && orderEditMode ? orderEditMode.order : null;
+    if (editOrder) return `order:${editOrder.id || editOrder.orderNumber || 'editing'}`;
+
+    return 'configuration';
+}
+
+function _enterKartaBudowyStep4() {
+    const contextKey = _getKartaBudowyStep4ContextKey();
+    if (_kartaBudowyStep4ContextKey === contextKey) return;
+
+    const pending =
+        typeof pendingOrderCreationData !== 'undefined' ? pendingOrderCreationData : null;
+    const editOrder =
+        typeof orderEditMode !== 'undefined' && orderEditMode ? orderEditMode.order : null;
+    const primaryOfferNumber = pending?.offer?.number || editOrder?.offerNumber;
+    initKartaBudowyStep4(primaryOfferNumber);
+    _kartaBudowyStep4ContextKey = contextKey;
+}
+
+function _resetKartaBudowyStep4Context() {
+    _kartaBudowyStep4ContextKey = null;
 }
 
 function _calcTransportCosts() {
@@ -378,7 +429,6 @@ function _applyExistingKartaBudowyData(existingData, primaryOfferNumber) {
         'adresWysylki',
         'iloscDni',
         'ubezpieczenie',
-        'osobaKontakt',
         'wysokoscSpocznika',
         'usytuowanie',
         'kaskada',
@@ -399,6 +449,8 @@ function _applyExistingKartaBudowyData(existingData, primaryOfferNumber) {
         const el = document.getElementById(inputId);
         if (el && existingData[field]) el.value = existingData[field];
     });
+
+    window.ClientContacts.kartaBudowy.restore(existingData);
 
     const selectMappings = [
         { field: 'warunkiPlatnosci', id: 'step4-warunki-platnosci' },
@@ -515,42 +567,15 @@ function _generateDefaultUwagi() {
     }
 }
 
-/**
- * Buduje prefill pola "Osoba do kontaktu" z kroku 1 (dane klienta):
- * "Zamawiający: <kontakt>, Budowa: <wykonawca>" (puste części pomijane).
- */
-function _buildKontaktPrefill(kontakt, wykonawca) {
-    const parts = [];
-    const k = (kontakt || '').trim();
-    const w = (wykonawca || '').trim();
-    if (k) parts.push('Zamawiający: ' + k);
-    if (w) parts.push('Budowa: ' + w);
-    return parts.join(', ');
-}
-
 function initKartaBudowyStep4(primaryOfferNumber) {
     _przejsciaInitialized = false;
     _resetKartaBudowyForm();
 
-    // Prefill kontaktu z kroku 1 (jak rury) — tylko gdy pole puste,
-    // żeby nie nadpisać zapisanej karty ani kopii.
-    const kontaktInput = document.getElementById('step4-osoba-kontakt');
-    if (kontaktInput && !kontaktInput.value) {
-        const pending =
-            typeof pendingOrderCreationData !== 'undefined' ? pendingOrderCreationData : null;
-        const editOrder =
-            typeof orderEditMode !== 'undefined' && orderEditMode ? orderEditMode.order : null;
-        kontaktInput.value = _buildKontaktPrefill(
-            document.getElementById('client-contact')?.value?.trim() ||
-                pending?.offer?.clientContact ||
-                editOrder?.clientContact ||
-                '',
-            document.getElementById('invest-contractor')?.value?.trim() ||
-                pending?.offer?.investContractor ||
-                editOrder?.investContractor ||
-                ''
-        );
-    }
+    const pending =
+        typeof pendingOrderCreationData !== 'undefined' ? pendingOrderCreationData : null;
+    const editOrder =
+        typeof orderEditMode !== 'undefined' && orderEditMode ? orderEditMode.order : null;
+    window.ClientContacts.kartaBudowy.prefill(pending?.offer || editOrder || {});
 
     const transport = _calcTransportCosts();
     _displayTransportCost(transport.tCost, transport.costPerTrip);
@@ -702,7 +727,7 @@ function copyKartaBudowyFromOrder() {
         return;
     }
 
-    applyCopiedKartaBudowyData(sourceOrder.kartaBudowy);
+    applyCopiedKartaBudowyData({ ...sourceOrder, ...sourceOrder.kartaBudowy });
 
     if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
         pendingOrderCreationData.kartaBudowyTemplate = collectKartaBudowyDataStep4();
@@ -739,7 +764,7 @@ function applyCopiedKartaBudowyData(sourceData) {
     setSelect('step4-warunki-platnosci', sourceData.warunkiPlatnosci);
     setValue('step4-ilosc-dni', sourceData.iloscDni || '');
     setValue('step4-ubezpieczenie', sourceData.ubezpieczenie || '');
-    setValue('step4-osoba-kontakt', sourceData.osobaKontakt || '');
+    window.ClientContacts.kartaBudowy.restore(sourceData);
     setSelect('step4-zabezpieczenie-transportu', sourceData.zabezpieczenieTransportu);
     setSelect('step4-rodzaj-transportu', sourceData.rodzajTransportu);
     setSelect('step4-rodzaj-stopni', sourceData.rodzajStopni);
@@ -817,7 +842,10 @@ function collectKartaBudowyDataStep4() {
     ).trim();
     const iloscDni = (document.getElementById('step4-ilosc-dni')?.value || '').trim();
     const ubezpieczenie = (document.getElementById('step4-ubezpieczenie')?.value || '').trim();
-    const osobaKontakt = (document.getElementById('step4-osoba-kontakt')?.value || '').trim();
+    const common = window.ClientContacts.kartaBudowy.collect();
+    const kontaktZamawiajacy = common.kontaktZamawiajacy;
+    const kontaktyBudowa = common.kontaktyBudowa;
+    const osobaKontakt = common.osobaKontakt;
     const zabezpieczenieTransportu = (
         document.getElementById('step4-zabezpieczenie-transportu')?.value || 'Nie dotyczy'
     ).trim();
@@ -898,6 +926,9 @@ function collectKartaBudowyDataStep4() {
         iloscDni,
         ubezpieczenie,
         osobaKontakt,
+        kontaktZamawiajacy,
+        kontaktyBudowa,
+        ...common,
         zabezpieczenieTransportu,
         rodzajTransportu,
         wyliczonyTransport,

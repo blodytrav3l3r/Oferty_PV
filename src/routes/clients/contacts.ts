@@ -42,7 +42,6 @@ const contactEntrySchema = z.object({
     name: z.string().max(200).nullish(),
     phone: z.string().max(50).nullish(),
     email: emailField,
-    position: z.string().max(200).nullish(),
     isPrimary: z.boolean().nullish()
 });
 
@@ -62,7 +61,6 @@ interface NormalizedContact {
     name: string;
     phone: string | null;
     email: string | null;
-    position: string;
     isPrimary: boolean;
 }
 
@@ -82,10 +80,7 @@ function normalizeEntries(raw: unknown): NormalizedContact[] {
             String(r.email ?? '')
                 .trim()
                 .slice(0, 200) || null;
-        const position = String(r.position ?? '')
-            .trim()
-            .slice(0, 200);
-        if (!name && !phone && !email && !position) continue;
+        if (!name && !phone && !email) continue;
         // Łączony "Jan, 600" z wypełnionym phone → czyste name (jak display).
         const split = splitMergedContact(name, phone);
         const rawId = typeof r.id === 'string' && r.id.trim() !== '' ? r.id.trim() : null;
@@ -94,7 +89,6 @@ function normalizeEntries(raw: unknown): NormalizedContact[] {
             name: split.name,
             phone: split.phone,
             email,
-            position,
             isPrimary: r.isPrimary === true
         });
     }
@@ -110,10 +104,21 @@ router.get('/:clientId/contacts', requireAuth, READ_LIMITER, async (req, res) =>
         if (!client) {
             return res.status(404).json({ error: 'Klient nie istnieje', code: 'NOT_FOUND' });
         }
-        const items = await prisma.client_contacts_rel.findMany({
+        const rows = await prisma.client_contacts_rel.findMany({
             where: { clientId },
             orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }]
         });
+        const items = rows.map((contact) => ({
+            id: contact.id,
+            clientId: contact.clientId,
+            name: contact.name,
+            phone: contact.phone,
+            email: contact.email,
+            isPrimary: contact.isPrimary,
+            createdByUserId: contact.createdByUserId,
+            createdAt: contact.createdAt,
+            updatedAt: contact.updatedAt
+        }));
         return res.json({ ok: true, items });
     } catch (e) {
         if (mapPrismaError(res, e)) return;
@@ -224,7 +229,6 @@ router.put(
                             name: c.name,
                             phone: c.phone,
                             email: c.email,
-                            position: c.position,
                             isPrimary: primaryId !== null && idOf(i) === primaryId ? 1 : 0,
                             createdByUserId: authReq.user?.id ?? null,
                             createdAt: now,
@@ -238,7 +242,6 @@ router.put(
                                 name: c.name,
                                 phone: c.phone,
                                 email: c.email,
-                                position: c.position,
                                 isPrimary: primaryId !== null && c.id === primaryId ? 1 : 0,
                                 updatedAt: now
                             }

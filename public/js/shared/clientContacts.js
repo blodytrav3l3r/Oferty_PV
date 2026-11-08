@@ -1,4 +1,5 @@
 // @ts-check
+import { createKartaBudowyCommon } from './kartaBudowyCommon.js';
 /**
  * clientContacts.js — ESM: wiele osób do kontaktu w ofercie.
  * SSoT listy: blob `data.clientContacts: [{name, phone, email}]` (max 10).
@@ -179,7 +180,7 @@ export function bindEditor(container) {
 
 // Bridge dla klasycznych (non-ESM) formularzy ofert — precedens: escapeHtml.js.
 if (typeof window !== 'undefined') {
-    window.ClientContacts = {
+    const clientContactsApi = {
         MAX_CONTACTS,
         normalizeContacts,
         legacyToContacts,
@@ -191,6 +192,13 @@ if (typeof window !== 'undefined') {
         renderEditor,
         collectContacts,
         bindEditor
+    };
+    window.ClientContacts = {
+        ...clientContactsApi,
+        kartaBudowy: createKartaBudowyCommon({
+            document,
+            clientContacts: clientContactsApi
+        })
     };
 }
 

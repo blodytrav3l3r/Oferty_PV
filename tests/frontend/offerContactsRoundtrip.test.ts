@@ -126,13 +126,16 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(css).toContain('.ccc-head');
     });
 
-    test('katalog N-osob: edytor .ccc-* z ★ i stanowiskiem, bez innerHTML na danych', () => {
+    test('katalog N-osob: edytor .ccc-* z ★ bez pola stanowiska i bez innerHTML na danych', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('ccc-row');
         expect(src).toContain('data-ccc');
         expect(src).toContain('collectCatalogEditor');
         expect(src).toContain('renderCatalogEditor');
         expect(src).toContain('textContent');
+        expect(src).not.toContain("mkField('position'");
+        expect(src).not.toContain("get('position')");
+        expect(src).not.toContain('r.position ? esc');
         const css = read('public/css/style.base.css');
         expect(css).toContain('.ccc-row');
         expect(css).toContain('.ccc-picks');

@@ -15,6 +15,8 @@ $previousValues = @{
     HOST = [Environment]::GetEnvironmentVariable('HOST', 'Process')
     PORT = [Environment]::GetEnvironmentVariable('PORT', 'Process')
     NODE_ENV = [Environment]::GetEnvironmentVariable('NODE_ENV', 'Process')
+    POSTGRES_TEST_PORT = [Environment]::GetEnvironmentVariable('POSTGRES_TEST_PORT', 'Process')
+    POSTGRES_TEST_URL = [Environment]::GetEnvironmentVariable('POSTGRES_TEST_URL', 'Process')
 }
 
 function Find-NativePostgresRoot {
@@ -93,9 +95,53 @@ function Start-TestDatabase {
         throw 'PostgreSQL test database configuration is invalid. Check POSTGRES_TEST_* in .env.'
     }
 
-    & docker.exe compose -f docker-compose.postgres-test.yml up -d --wait
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not start the PostgreSQL test database. Check Docker and port 55440.'
+    $runningContainer = & docker.exe compose -f docker-compose.postgres-test.yml ps --status running --quiet postgres-test
+    if ($LASTEXITCODE -eq 0 -and $runningContainer) {
+        & docker.exe compose -f docker-compose.postgres-test.yml up -d --wait
+        if ($LASTEXITCODE -eq 0) {
+            & node.exe scripts/postgres-test-url.cjs
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host 'Reusing the running PostgreSQL test database.'
+                return
+            }
+        }
+    }
+
+    $started = $false
+    for ($attempt = 0; $attempt -lt 5; $attempt++) {
+        $portConfigJson = & node.exe scripts/postgres-test-url.cjs --prepare-port
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Could not select a local port for the PostgreSQL test database. Check POSTGRES_TEST_* in .env.'
+        }
+        $portConfig = ($portConfigJson -join '') | ConvertFrom-Json
+        $env:POSTGRES_TEST_PORT = [string]$portConfig.port
+        $env:POSTGRES_TEST_URL = [string]$portConfig.url
+        if ($portConfig.changed) {
+            Write-Host "Test database port is occupied; using port $($portConfig.port). Local .env test settings were updated."
+        }
+
+        & docker.exe compose -f docker-compose.postgres-test.yml config --quiet
+        if ($LASTEXITCODE -ne 0) {
+            throw 'PostgreSQL test database configuration is invalid. Check POSTGRES_TEST_* in .env.'
+        }
+
+        & docker.exe compose -f docker-compose.postgres-test.yml up -d --wait
+        if ($LASTEXITCODE -eq 0) {
+            $started = $true
+            break
+        }
+
+        $nextPortConfigJson = & node.exe scripts/postgres-test-url.cjs --prepare-port
+        if ($LASTEXITCODE -ne 0) { break }
+        $nextPortConfig = ($nextPortConfigJson -join '') | ConvertFrom-Json
+        if (-not $nextPortConfig.changed) { break }
+        $env:POSTGRES_TEST_PORT = [string]$nextPortConfig.port
+        $env:POSTGRES_TEST_URL = [string]$nextPortConfig.url
+        Write-Host "Port $($portConfig.port) became occupied; retrying with port $($nextPortConfig.port)."
+    }
+
+    if (-not $started) {
+        throw 'Could not start the PostgreSQL test database on a free local port.'
     }
 
     & node.exe scripts/postgres-test-url.cjs
@@ -103,7 +149,7 @@ function Start-TestDatabase {
         throw 'PostgreSQL test database is not reachable. Check POSTGRES_TEST_URL in .env.'
     }
 
-    Write-Host 'PostgreSQL test database is ready on the configured local test URL.'
+    Write-Host "PostgreSQL test database is ready on port $env:POSTGRES_TEST_PORT."
 }
 
 try {

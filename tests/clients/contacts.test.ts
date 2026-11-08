@@ -156,6 +156,7 @@ describe('Katalog kontaktów — GET /:clientId/contacts', () => {
         expect(res.status).toBe(200);
         expect(res.body.ok).toBe(true);
         expect(Array.isArray(res.body.items)).toBe(true);
+        expect(res.body.items[1]).not.toHaveProperty('position');
         const m = mockPrisma();
         expect(m.client_contacts_rel.findMany).toHaveBeenCalledWith({
             where: { clientId: 'c-1' },
@@ -199,6 +200,7 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
         expect(created.clientId).toBe('c-1');
         expect(created.name).toBe('Ewa Nowa');
         expect(created.isPrimary).toBe(1);
+        expect(created).not.toHaveProperty('position');
         expect(typeof created.id).toBe('string');
         // Mirror: primary (nowy) → clients_rel.
         expect(m.clients_rel.update).toHaveBeenCalledWith({

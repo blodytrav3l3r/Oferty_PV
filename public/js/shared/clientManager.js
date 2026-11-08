@@ -17,7 +17,7 @@ let editingClientId = null;
 let editingClientCatalog = null;
 
 /* ===== KATALOG KONTAKTÓW (N osób per klient) ===== */
-// Cache list per klient: {list:[{id,name,phone,email,position,isPrimary}], ok}
+// Cache list per klient: {list:[{id,name,phone,email,isPrimary}], ok}
 // Snapshot oferty (blob clientContacts[]) zostaje SSoT oferty; katalog to podpowiedź.
 const clientContactsCache = {};
 /** @type {WeakMap<HTMLElement, ClientData[]>} */
@@ -53,8 +53,13 @@ function splitMerged(name, phone) {
 function splitCachedRow(r) {
     if (!r) return r;
     const split = splitMerged(r.name || '', r.phone || '');
-    if (split.name === (r.name || '') && (split.phone || '') === (r.phone || '')) return r;
-    return { ...r, name: split.name, phone: split.phone };
+    return {
+        id: r.id || null,
+        name: split.name,
+        phone: split.phone,
+        email: r.email || '',
+        isPrimary: !!r.isPrimary
+    };
 }
 
 function catalogDisplayList(c) {
@@ -64,7 +69,7 @@ function catalogDisplayList(c) {
     const name = split.name;
     const phone = split.phone;
     if (!name && !phone && !(c.email || '')) return [];
-    return [{ id: null, name, phone, email: c.email || '', position: '', isPrimary: true }];
+    return [{ id: null, name, phone, email: c.email || '', isPrimary: true }];
 }
 
 function newContactId() {
@@ -115,7 +120,16 @@ async function fetchClientContactsOnce(clientId) {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        const entry = { list: Array.isArray(json.items) ? json.items : [], ok: true, baseCatalog };
+        const list = Array.isArray(json.items)
+            ? json.items.map((item) => ({
+                  id: item.id || null,
+                  name: item.name || '',
+                  phone: item.phone || '',
+                  email: item.email || '',
+                  isPrimary: !!item.isPrimary
+              }))
+            : [];
+        const entry = { list, ok: true, baseCatalog };
         clientContactsCache[clientId] = entry;
         return entry;
     } catch (e) {
@@ -300,7 +314,6 @@ async function syncOfferEditorToCatalog(clientId, baseUpdatedAt, baseCatalog) {
                 name: r.name || '',
                 phone: r.phone || '',
                 email: r.email || '',
-                position: '',
                 isPrimary: false
             }))
         );
@@ -528,7 +541,7 @@ function filterClientsDb(query) {
 }
 
 /* ===== EDYTOR KONTAKTÓW KATALOGU (N osób, .ccc-*) ===== */
-// Osobny namespace niż edytor oferty (.cc-*): wiersz niesie id + stanowisko + ★.
+// Osobny namespace niż edytor oferty (.cc-*): wiersz niesie id + ★.
 function catalogEditorRow(container, clientId, r) {
     const row = document.createElement('div');
     row.className = 'ccc-row';
@@ -568,7 +581,6 @@ function catalogEditorRow(container, clientId, r) {
         if (field === 'name') input.maxLength = 200;
         if (field === 'phone') input.maxLength = 50;
         if (field === 'email') input.maxLength = 200;
-        if (field === 'position') input.maxLength = 200;
         input.onclick = (e) => e.stopPropagation();
         wrap.appendChild(input);
         return wrap;
@@ -597,7 +609,6 @@ function catalogEditorRow(container, clientId, r) {
     grid.appendChild(mkField('name', 'text', 'Imię i nazwisko *', true));
     grid.appendChild(mkField('phone', 'tel', 'Telefon', false));
     grid.appendChild(mkField('email', 'email', 'E-mail', false));
-    grid.appendChild(mkField('position', 'text', 'Stanowisko', true));
     row.appendChild(grid);
     container.appendChild(row);
     renumberCatalogRows(container);
@@ -657,12 +668,11 @@ function collectCatalogEditor(container, clientId) {
             name: get('name'),
             phone: get('phone'),
             email: get('email'),
-            position: get('position'),
             isPrimary: !!(radio && radio.checked)
         });
     });
     // Puste wiersze wypadają (jak BE); ★ awaryjnie na pierwszą.
-    const rows = out.filter((r) => r.name || r.phone || r.email || r.position);
+    const rows = out.filter((r) => r.name || r.phone || r.email);
     if (rows.length > 0 && !rows.some((r) => r.isPrimary)) rows[0].isPrimary = true;
     return rows;
 }
@@ -677,10 +687,7 @@ function renderClientsDbList(query) {
         const hit = (v) => v && v.toLowerCase().includes(q);
         if (hit(c.contact) || hit(c.phone) || hit(c.email)) return true;
         const cached = clientContactsCache[c.id];
-        return (
-            !!cached &&
-            cached.list.some((r) => hit(r.name) || hit(r.phone) || hit(r.email) || hit(r.position))
-        );
+        return !!cached && cached.list.some((r) => hit(r.name) || hit(r.phone) || hit(r.email));
     };
     const filtered = q
         ? clientsDb.filter(
@@ -750,7 +757,7 @@ function renderClientsDbList(query) {
                 td.appendChild(input);
                 tr.appendChild(td);
             });
-            // Edytor N-osób katalogu (imię/telefon/e-mail/stanowisko + ★)
+            // Edytor N-osób katalogu (imię/telefon/e-mail + ★)
             // na szerokość 3 kolumn kontaktowych.
             const contactTd = document.createElement('td');
             contactTd.className = 'td-edit';
@@ -763,7 +770,6 @@ function renderClientsDbList(query) {
                 name: legacySplit.name,
                 phone: legacySplit.phone,
                 email: c.email || '',
-                position: '',
                 isPrimary: true
             };
             const cachedForEdit = cached?.ok && cached.baseCatalog === editingClientCatalog;
@@ -1068,7 +1074,7 @@ function openContactPicker(id, rows) {
         .map(
             (r) =>
                 `<label class="ccc-pick"><input type="checkbox" data-ccc-pick="${window.escapeHtmlAttr(r.id || '')}" checked />` +
-                `<span>${esc(r.isPrimary ? '★ ' : '')}${esc(r.name)}${r.phone ? esc(' — ' + r.phone) : ''}${r.email ? esc(', ' + r.email) : ''}${r.position ? esc(' (' + r.position + ')') : ''}</span></label>`
+                `<span>${esc(r.isPrimary ? '★ ' : '')}${esc(r.name)}${r.phone ? esc(' — ' + r.phone) : ''}${r.email ? esc(', ' + r.email) : ''}</span></label>`
         )
         .join('');
     const overlay = showModal({

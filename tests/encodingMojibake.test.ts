@@ -1,9 +1,9 @@
-const {
+import {
     detectMojibake,
     fixMojibake,
     classifyMojibake,
     isPolishConventionFile
-} = require('../scripts/encoding-integrity.js');
+} from '../scripts/encoding-integrity.js';
 
 describe('encoding-integrity mojibake detection', () => {
     it('wykrywa podwojnie zakodowane polskie znaki (mojibake)', () => {
@@ -28,7 +28,7 @@ describe('encoding-integrity mojibake detection', () => {
     });
 
     it('klasyfikuje mojibake w pliku konwencji jako ERROR', () => {
-        const rel = 'public/partials/studnie/step4-build-card.html';
+        const rel = 'public/partials/shared/karta-build-card.html';
         expect(classifyMojibake(1, false, isPolishConventionFile(rel))).toBe('ERROR');
         expect(classifyMojibake(1, false, false)).toBe('WARN');
         expect(classifyMojibake(2, false, false)).toBe('ERROR');

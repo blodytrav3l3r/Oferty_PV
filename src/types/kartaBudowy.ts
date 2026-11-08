@@ -1,4 +1,19 @@
 export interface KartaBudowyMeta {
+    investName?: string;
+    investPostalCode?: string;
+    investCity?: string;
+    investStreet?: string;
+    investLocationDescription?: string;
+    kontaktBudowaImie?: string;
+    kontaktBudowaTelefon?: string;
+    kontaktBudowaEmail?: string;
+    kontaktyBudowa?: Array<{ name?: string; phone?: string; email?: string }>;
+    kontaktZamawiajacy?: Array<{ name?: string; phone?: string; email?: string }>;
+    clientContacts?: Array<{ name?: string; phone?: string; email?: string }>;
+    clientNumber?: string;
+    clientName?: string;
+    clientNip?: string;
+    clientAddress?: string;
     dataZamowienia?: string;
     osobaKontakt?: string;
     adresWysylki?: string;
@@ -72,6 +87,23 @@ export interface OrderItem {
 
 export interface KartaBudowyOrderData {
     kartaBudowy?: KartaBudowyMeta;
+    investName?: string;
+    investPostalCode?: string;
+    investCity?: string;
+    investStreet?: string;
+    investLocationDescription?: string;
+    investContact?: string;
+    investContractor?: string;
+    investContacts?: Array<{ name?: string; phone?: string; email?: string }>;
+    clientNumber?: string;
+    clientName?: string;
+    clientNip?: string;
+    clientAddress?: string;
+    clientContact?: string;
+    clientContacts?: Array<{ name?: string; phone?: string; email?: string }>;
+    contactPerson?: string;
+    clientPhone?: string;
+    clientEmail?: string;
     wells?: WellItem[];
     items?: OrderItem[];
     orderNumber?: string;

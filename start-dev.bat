@@ -1,4 +1,8 @@
 @echo off
-REM Start S.O.K. with native PostgreSQL and Docker test PostgreSQL.
+REM  Wersja: 1.56.7
+REM Rola: Start aplikacji developerskiej z osobna testowa baza PostgreSQL w Dockerze.
+REM Uzycie: start-dev.bat
+REM Uruchamia: start-native.bat -Watch -StartTestDatabase.
+REM Wplyw: Startuje baze testowa Docker; nie migruje ani nie seeduje lokalnej bazy aplikacji.
 call "%~dp0start-native.bat" -Watch -StartTestDatabase
 exit /b %errorlevel%

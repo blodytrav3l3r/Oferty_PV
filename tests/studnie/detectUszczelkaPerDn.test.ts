@@ -184,14 +184,4 @@ describe('przelacznik Auto/Recznie uszczelki (karta budowy)', () => {
         ctx._applyUszczelkaValueWithMode('');
         expect(ctx.getUszczelkaMode()).toBe('auto');
     });
-
-    test('kontakt prefill: Zamawiajacy + Budowa z przedrostkami', () => {
-        const ctx = runModeCtx('Brak');
-        expect(ctx._buildKontaktPrefill('Jan 123', 'Firma X')).toBe(
-            'Zamawiający: Jan 123, Budowa: Firma X'
-        );
-        expect(ctx._buildKontaktPrefill('Jan 123', '')).toBe('Zamawiający: Jan 123');
-        expect(ctx._buildKontaktPrefill('', 'Firma X')).toBe('Budowa: Firma X');
-        expect(ctx._buildKontaktPrefill('', '')).toBe('');
-    });
 });

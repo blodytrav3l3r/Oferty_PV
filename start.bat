@@ -1,12 +1,16 @@
 @echo off
 REM  Wersja: 1.56.7
 REM ===========================================================
-REM  start.bat - Jedno wejscie: caly system
+REM  start.bat - Reczny lokalny start z konfiguracja bazy w .env
 REM  Uruchamia:
 REM    - Backend Express + Prisma PostgreSQL serwuje API i frontend z public/
-REM  Uruchomienie: start.bat [--dev]
+REM  Uruchomienie: start.bat [--dev|--prod]
 REM    --dev: uruchom w trybie deweloperskim (domyslne)
-REM    prod:  odpowiednik prod.bat (produkcyjne)
+REM    --prod: tryb produkcyjny (takze przez prod.bat)
+REM Rola: Reczny start lokalnej aplikacji z DATABASE_URL z .env.
+REM Uzycie: start.bat [--dev|--prod]
+REM Uruchamia: scripts/ensure-db.bat, a nastepnie backend dev albo prod.
+REM Wplyw: ensure-db moze wykonac migracje lub seed bazy z DATABASE_URL.
 REM ===========================================================
 
 setlocal ENABLEDELAYEDEXPANSION

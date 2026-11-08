@@ -146,11 +146,10 @@ async function createOrderFromOffer() {
             selectedWells,
             kartaBudowyTemplateOrders: existingOrdersForOffer
         };
-        initKartaBudowyStep4(offer.number);
-
         if (typeof goToWizardStep === 'function') {
             goToWizardStep(4);
         } else {
+            _enterKartaBudowyStep4();
             currentWizardStep = 4;
             if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
         }
@@ -273,6 +272,12 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
             document.getElementById('client-number')?.value?.trim() || offer.clientNumber || '',
         clientAddress: offer.clientAddress,
         clientContact: offer.clientContact,
+        clientContacts: Array.isArray(offer.clientContacts)
+            ? structuredClone(offer.clientContacts)
+            : [],
+        contactPerson: offer.contactPerson || '',
+        clientPhone: offer.clientPhone || '',
+        clientEmail: offer.clientEmail || '',
         investName: offer.investName,
         investAddress: offer.investAddress,
         investContractor: offer.investContractor,

@@ -534,6 +534,248 @@
     justify-content: flex-end;
 }
 
+/* Karta Budowy: akcja kopiowania i pola ofertowe mają stały rytm wierszy. */
+#wizard-step-4 .karta-build-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-md);
+}
+
+#wizard-step-4 .karta-build-form > .p-6-12 {
+    margin: 0;
+    padding: 0;
+}
+
+#wizard-step-4 .karta-build-form > .p-6-12 section + section {
+    margin-top: var(--section-gap);
+}
+
+#wizard-step-4 .karta-build-row {
+    min-width: 0;
+}
+
+#wizard-step-4 .karta-build-copy-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--tile-gap-sm);
+}
+
+#wizard-step-4 .karta-build-copy-field,
+#wizard-step-4 .karta-build-offer-row > div {
+    min-width: 0;
+}
+
+#wizard-step-4 .karta-build-copy-row #step4-copy-order-select,
+#wizard-step-4 .karta-build-offer-row input {
+    width: 100%;
+}
+
+#wizard-step-4 .karta-build-offer-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: var(--tile-gap-sm);
+}
+
+#wizard-step-4 .karta-build-offer-row > div {
+    display: flex;
+    flex-direction: column;
+}
+
+#wizard-step-4 .karta-build-offer-row label {
+    min-height: 2.4em;
+}
+
+#wizard-step-4 .karta-build-label {
+    display: block;
+    margin-bottom: var(--tile-gap-xs);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+#wizard-step-4 .karta-build-label--warning {
+    color: var(--warn);
+}
+
+#wizard-step-4 .karta-build-label--success {
+    color: var(--success);
+}
+
+#wizard-step-4 .karta-build-label--accent {
+    color: var(--accent-hover);
+}
+
+#wizard-step-4 .karta-build-label--secondary {
+    color: var(--accent2-hover);
+}
+
+#wizard-step-4 .karta-build-label--blue {
+    color: var(--blue);
+}
+
+#wizard-step-4 .karta-build-label--blue-alt {
+    color: var(--blue-alt);
+}
+
+#wizard-step-4 .karta-build-label--danger {
+    color: var(--danger);
+}
+
+#wizard-step-4 .karta-build-label--cyan {
+    color: var(--cyan);
+}
+
+#wizard-step-4 .karta-build-label--muted {
+    color: var(--text-secondary);
+}
+
+#wizard-step-4 .karta-build-details-title {
+    display: flex;
+    align-items: center;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    color: var(--accent2-hover);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+#wizard-step-4 .karta-build-note {
+    margin-left: var(--tile-gap-xs);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-extrabold);
+}
+
+#wizard-step-4 .karta-build-note--success {
+    color: var(--success);
+}
+
+#wizard-step-4 .karta-build-help {
+    margin-top: var(--tile-gap-xs);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+}
+
+#wizard-step-4 #step4-email-faktura.karta-build-input--readonly {
+    background: rgba(var(--black-rgb), 0.2);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+#wizard-step-4 .karta-build-column {
+    flex: 1;
+    min-width: 0;
+}
+
+#wizard-step-4 .karta-build-column--150 {
+    min-width: 150px;
+}
+
+#wizard-step-4 .karta-build-column--100 {
+    min-width: 100px;
+    max-width: 150px;
+}
+
+#wizard-step-4 .karta-build-column--140 {
+    min-width: 140px;
+}
+
+#wizard-step-4 .karta-build-column--wide {
+    flex: 2;
+    min-width: 180px;
+}
+
+#wizard-step-4 .karta-build-field-heading,
+#wizard-step-4 .karta-build-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#wizard-step-4 .karta-build-field-heading {
+    gap: var(--tile-gap-sm);
+    margin-bottom: var(--tile-gap-xs);
+}
+
+#wizard-step-4 .karta-build-details-header {
+    margin-bottom: var(--tile-gap-sm);
+}
+
+#wizard-step-4 .karta-build-mode-button,
+#wizard-step-4 .karta-build-add-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tile-gap-xs);
+    border: 1px solid rgba(var(--accent2-rgb), 0.3);
+    border-radius: var(--radius-sm);
+    background: rgba(var(--accent2-rgb), 0.1);
+    color: var(--accent2-hover);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+#wizard-step-4 .karta-build-mode-button {
+    min-width: 5.5rem;
+    padding: 0.25rem 0.7rem;
+    font-size: var(--fs-sm);
+}
+
+#wizard-step-4 .karta-build-add-button {
+    padding: 0.55rem 0.8rem;
+    font-size: var(--fs-lg);
+}
+
+#wizard-step-4 .karta-build-add-button:hover {
+    background: rgba(var(--accent2-rgb), 0.3);
+    border-color: rgba(var(--accent2-rgb), 0.5);
+}
+
+#wizard-step-4 .karta-build-add-button i {
+    width: 16px;
+    height: 16px;
+}
+
+#wizard-step-4 .karta-build-other-field {
+    display: none;
+    margin-top: var(--tile-gap-xs);
+}
+
+#wizard-step-4 .karta-build-details-panel {
+    position: relative;
+    padding: var(--tile-gap-sm-plus);
+    border: 1px solid rgba(var(--accent2-rgb), 0.2);
+    border-radius: var(--radius-sm);
+    background: rgba(var(--accent2-rgb), 0.05);
+}
+
+@media (max-width: 640px) {
+    #wizard-step-4 .karta-build-copy-row,
+    #wizard-step-4 .karta-build-offer-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #wizard-step-4 .karta-build-copy-row > button {
+        width: 100%;
+        white-space: normal;
+    }
+
+    #wizard-step-4 .karta-build-offer-row label {
+        min-height: 0;
+    }
+
+    #wizard-step-4 .karta-build-column,
+    #wizard-step-4 .karta-build-column--wide {
+        min-width: min(100%, 180px);
+    }
+}
+
 /* Osoby do kontaktu — edytor wielu wierszy (krok 1 + modal Opieki). */
 .cc-rows {
     display: flex;
@@ -547,6 +789,10 @@
     grid-template-columns: 1.4fr 1fr 1.2fr auto;
     gap: 0.4rem;
     align-items: center;
+}
+
+#partial-step4[data-karta-domain='rury'] .karta-build-studnie-only {
+    display: none !important;
 }
 
 @media (max-width: 640px) {

@@ -20,6 +20,7 @@ import type {
     PrzejscieDetail
 } from '../../../types/kartaBudowy';
 import { textCell } from '../helpers';
+import { getKartaBudowySharedSections } from '../../kartaBudowy/sharedSections';
 import { DOCX_COLORS } from '../colors';
 import {
     FONT,
@@ -222,12 +223,20 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
         })
     );
 
-    // 1. Podstawowe Informacje
+    children.push(
+        ...getKartaBudowySharedSections(kb, orderData).flatMap(({ title, rows }) =>
+            infoSection(
+                title,
+                rows.map(({ label, value }) => infoRow(label, value))
+            )
+        )
+    );
+
+    // 4. Podstawowe Informacje
     children.push(
         ...infoSection('Podstawowe Informacje', [
             infoRow('Nr powiązanej oferty', nrOferty),
             infoRow('Data zamówienia', String(kb.dataZamowienia || '—')),
-            infoRow('Osoba kontaktowa', String(kb.osobaKontakt || '—')),
             infoRow('Adres wysyłki', String(kb.adresWysylki || '—')),
             infoRow('E-mail (Faktura)', String(kb.emailFaktura || '—')),
             infoRow('E-mail (e-Faktura)', String(kb.emailEfaktura || '—'))
