@@ -200,6 +200,7 @@ function renderStudniePriceList() {
         <td data-action="editStudnieCell" data-field="name" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-medium);">${escapeHtml(p.name)}</td>`;
 
             if (isPrzejscia) {
+                const isAvailable = p.active === 1 || p.active === true;
                 html += `
         <td class="text-center fw600-accent-cursor"  data-action="editStudnieCell" data-field="dn" data-id="${escapeHtmlAttr(p.id)}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
         <td class="text-right ui-pointer-bold" data-action="editStudnieCell" data-field="weight" data-id="${escapeHtmlAttr(p.id)}" >${p.weight != null ? fmtInt(p.weight) : '—'}</td>
@@ -207,7 +208,7 @@ function renderStudniePriceList() {
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="zapasGora" data-id="${escapeHtmlAttr(p.id)}" >${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
         <td class="text-right cursor-warn" data-action="editStudnieCell" data-field="zapasDolMin" data-id="${escapeHtmlAttr(p.id)}" >${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
         <td class="text-right cursor-warn" data-action="editStudnieCell" data-field="zapasGoraMin" data-id="${escapeHtmlAttr(p.id)}" >${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
-        <td class="text-center" data-action="toggleMagazynField" data-field="active" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.active !== 0 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.active !== 0 ? '1' : '0'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="active" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${isAvailable ? 'var(--success-hover)' : 'var(--danger-hover)'};">${isAvailable ? '1' : '0'}</td>
                `;
             } else if (isKinety) {
                 html += `

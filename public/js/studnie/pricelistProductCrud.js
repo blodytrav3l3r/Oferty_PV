@@ -26,13 +26,13 @@ async function copyStudnieProduct(id) {
         finalId = `${original.id}-KOP${counter}`;
         counter++;
     }
-    const copied = structuredClone(original);
-    copied.id = finalId;
-    copied.name = copied.name + ' (Kopia)';
+    const copied = { ...structuredClone(original), id: finalId, name: original.name + ' (Kopia)' };
     const index = studnieProducts.findIndex((p) => p.id === id);
-    studnieProducts.splice(index + 1, 0, copied);
-    // P0.4: mutacja in-place — unieważnij cache Map.
-    if (typeof invalidateStudnieProductsMap === 'function') invalidateStudnieProductsMap();
+    window.studnieProducts = [
+        ...studnieProducts.slice(0, index + 1),
+        copied,
+        ...studnieProducts.slice(index + 1)
+    ];
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     renderStudniePriceList();

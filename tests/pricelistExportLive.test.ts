@@ -51,6 +51,7 @@ const STUDNIE_LEGACY_ROWS = [
         name: 'Przejście',
         category: 'Przejścia szczelne',
         componentType: 'przejscie',
+        active: 0,
         dn: 200,
         price: 50
     }
@@ -105,10 +106,11 @@ describe('Etap C: studnie live == version (arkusze/kolumny/kolejność)', () => 
     it('grupowanie/sanitize jak FE, legacy 1/0 i dn liczbowe nietknięte', () => {
         const live = projectVersionToLiveShape('studnie', { studnie: STUDNIE_LEGACY_ROWS });
         expect(Object.keys(live)).toEqual(['DN1000', 'Przejścia']);
-        expect(Object.keys(live['DN1000'][0])).toHaveLength(34);
+        expect(Object.keys(live['DN1000'][0])).toHaveLength(35);
         expect(live['DN1000'][0]['Mag WL']).toBe(1);
         expect(live['DN1000'][0]['Mag KLB']).toBe(0);
         expect(live['DN1000'][0]['DN']).toBe(1000);
+        expect(live['Przejścia'][0]['Dost.']).toBe(0);
     });
 
     it('ten sam zestaw produktów w shape legacy i canonical → te same arkusze/kolumny', () => {

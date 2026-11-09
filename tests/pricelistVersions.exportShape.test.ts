@@ -177,7 +177,8 @@ const EXPECTED_STUDNIE_HEADERS = [
     'Cena 2 PLN',
     'Hmin 3 mm',
     'Hmax 3 mm',
-    'Cena 3 PLN'
+    'Cena 3 PLN',
+    'Dost.'
 ];
 
 describe('Etap A: projectVersionToLiveShape — RURY', () => {
@@ -228,9 +229,8 @@ describe('Etap A: projectVersionToLiveShape — RURY', () => {
 });
 
 describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
-    it('stałe kolumn == nagłówki LIVE 1:1 (34 kolumny, nazwy + kolejność)', () => {
+    it('stałe kolumn == nagłówki LIVE 1:1 (nazwy + kolejność)', () => {
         expect(STUDNIE_LIVE_COLUMNS.map((c) => c.header)).toEqual(EXPECTED_STUDNIE_HEADERS);
-        expect(STUDNIE_LIVE_COLUMNS).toHaveLength(34);
     });
 
     it('getSheetName 1:1 z LIVE (Akcesoria/Przejścia/Styczna/Kinety/Dennice/DN/Inne)', () => {
@@ -334,6 +334,17 @@ describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
         expect(row['Mag KLB']).toBe(0);
         expect(row['Forma std. WL']).toBe(1);
         expect(row['Forma std. KLB']).toBe(0);
+    });
+
+    it('przenosi do arkusza zarówno wyłączone, jak i dostępne przejścia', () => {
+        const out = projectVersionToLiveShape('studnie', {
+            studnie: [
+                { id: 'GRP-150', componentType: 'przejscie', dn: '150', active: false },
+                { id: 'GRP-200', componentType: 'przejscie', dn: '200', active: true }
+            ]
+        });
+
+        expect(out['Przejścia'].map((row) => row['Dost.'])).toEqual([0, 1]);
     });
 });
 

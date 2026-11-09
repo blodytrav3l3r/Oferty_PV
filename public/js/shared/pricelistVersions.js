@@ -917,9 +917,31 @@
     }
 
     /** Po zapisie wersji serwer zwraca nowy sha — bez tego drugi zapis = 409. */
-    function noteVersionSaved(type, json) {
+    async function noteVersionSaved(type, json, rows) {
         var mode = versionEditMode(type);
-        if (mode && json && json.sha256) mode.sha256 = json.sha256;
+        if (
+            type === 'studnie' &&
+            rows &&
+            !mode &&
+            json?.target === 'draft' &&
+            isEditing(type) &&
+            gridSnapshot[type]
+        ) {
+            // Import do szkicu także otwiera pasek z powrotem do widoku bazowego.
+            gridSnapshot[type] = rows;
+        }
+        if (!mode || !json || json.versionId !== mode.id || !json.sha256) return;
+        var savedMode = { ...mode, sha256: json.sha256 };
+        versionEdit = savedMode;
+        if (type !== 'studnie' || !rows) return;
+
+        // Widok bazowy pokazuje szkic, jeśli istnieje. Bez szkicu przy wyjściu
+        // z edycji obowiązującej wersji przywracamy jej właśnie zapisane wiersze.
+        var summary = await fetchSummary();
+        var base = summary?.types?.[type];
+        if (versionEdit === savedMode && base?.active?.id === mode.id && !base.draft) {
+            gridSnapshot[type] = rows;
+        }
     }
 
     function clearVersionEdit() {
@@ -1018,8 +1040,8 @@
         toast('Edytujesz wersję ' + labelOf(v) + ' — zapis zmienia jej ceny', 'warning');
     }
 
-    /** Wersja → dane siatki: ten sam plik i parser co import XLSX. */
-    async function fetchVersionRows(type, id) {
+    /** Odczyt konkretnej wersji: ten sam plik i parser co import XLSX. */
+    async function readVersionRows(type, id) {
         var res = await fetch(API + '/' + encodeURIComponent(id) + '/export', {
             headers: typeof authHeaders === 'function' ? authHeaders() : {}
         });
@@ -1032,21 +1054,11 @@
             includePreco: type !== 'rury'
         });
         if (type === 'rury') {
-            var ruryRows = window.pricelistXlsx.normalizeRows(
-                parsed.rows,
-                window.ruryImportOptions([])
-            );
-            GRID_STATE.rury.write(ruryRows);
-            return;
+            return window.pricelistXlsx.normalizeRows(parsed.rows, window.ruryImportOptions([]));
         }
         var split = window.pricelistXlsx.splitStudnieImport(parsed);
-        if (type === 'preco') {
-            GRID_STATE.preco.write(split.precoDataMap || {});
-            return;
-        }
-        GRID_STATE.studnie.write(
-            window.pricelistXlsx.normalizeRows(split.products, window.studnieImportOptions([]))
-        );
+        if (type === 'preco') return split.precoDataMap || {};
+        return window.pricelistXlsx.normalizeRows(split.products, window.studnieImportOptions([]));
     }
 
     /**
@@ -1151,7 +1163,7 @@
         }
         setEditing(type, false);
         try {
-            await fetchVersionRows(type, v.id);
+            cfg.write(await readVersionRows(type, v.id));
         } catch (err) {
             toast('Błąd wczytania wersji: ' + err.message, 'error');
             restoreGrid(type);
@@ -3510,6 +3522,7 @@
         transferVersion: transferVersion,
         transferConfirm: transferConfirm,
         exportVersionXlsx: exportVersionXlsx,
+        readVersionRows: readVersionRows,
         enterVersionEditForImport: enterVersionEditForImport,
         _apiJson: apiJson,
         _authed: authed

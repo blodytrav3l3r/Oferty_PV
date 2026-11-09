@@ -19,6 +19,7 @@ async function addPrzejsciaCategory() {
         category: catName,
         dn: dn,
         componentType: 'przejscie',
+        active: 1,
         zapasDol: 300,
         zapasGora: 300,
         zapasDolMin: 150,
@@ -142,6 +143,7 @@ async function addStudnieElement(groupKey) {
     const name = await appPrompt('Podaj nazwę nowego elementu:', '');
     if (!name) return;
 
+    const isPrzejscie = defaults.isPrzejscia || template?.componentType === 'przejscie';
     const newProduct = {
         id: id.trim(),
         name: name.trim(),
@@ -158,10 +160,11 @@ async function addStudnieElement(groupKey) {
         magazynKLB: 0,
         doplataDrabNierdzewna: null,
         formaStandardowa: 1,
-        formaStandardowaKLB: 1
+        formaStandardowaKLB: 1,
+        ...(isPrzejscie ? { active: 1 } : {})
     };
 
-    if (defaults.isPrzejscia || template?.componentType === 'przejscie') {
+    if (isPrzejscie) {
         newProduct.componentType = 'przejscie';
         newProduct.zapasDol = template?.zapasDol || 300;
         newProduct.zapasGora = template?.zapasGora || 300;

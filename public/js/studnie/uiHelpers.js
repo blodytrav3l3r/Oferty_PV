@@ -628,24 +628,32 @@ function renamePłyty(_p) {
 // eslint-disable-next-line no-unused-vars
 async function saveStudnieProducts(data) {
     try {
-        const extra =
-            window.pricelistVersions && typeof window.pricelistVersions.draftHeaders === 'function'
-                ? await window.pricelistVersions.draftHeaders('studnie')
-                : {};
+        const submittedRows = data.map((row) => ({ ...row }));
+        const pv = window.pricelistVersions;
+        const extra = (await pv?.draftHeaders?.('studnie')) ?? {};
         const res = await fetch('/api/products-studnie', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', ...authHeaders(), ...extra },
-            body: JSON.stringify({ data })
+            body: JSON.stringify({ data: submittedRows })
         });
-        if (res.ok && window.pricelistVersions) {
-            const json = await res.json().catch(() => null);
-            if (typeof window.pricelistVersions.noteVersionSaved === 'function') {
-                window.pricelistVersions.noteVersionSaved('studnie', json);
-            }
-        }
-        return res.ok;
+        if (!res.ok) return null;
+
+        const json = await res.json().catch(() => null);
+        const savedRows =
+            json?.target === 'version' && json.versionId
+                ? await pv?.readVersionRows?.('studnie', json.versionId).catch((err) => {
+                      logger.warn(
+                          'uiHelpers',
+                          'Nie udało się odczytać zapisanej wersji studni',
+                          err
+                      );
+                      return null;
+                  })
+                : null;
+        await pv?.noteVersionSaved?.('studnie', json, savedRows ?? submittedRows);
+        return { rows: savedRows };
     } catch {
-        return false;
+        return null;
     }
 }
 

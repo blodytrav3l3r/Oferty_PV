@@ -285,6 +285,10 @@ brak kolumny = wszystkie pozycje dostają `0` (niedostępne) i import pokazuje o
 z nazwami brakujących kolumn. Pusta komórka w istniejącej kolumnie = `1`. Import nie
 zgaduje dostępności po cichu.
 
+Kolumna `Dost.` zapisuje widoczność przejścia w konfiguratorze (`0` lub `1`). Przy
+imporcie starszego pliku bez tej wartości istniejące przejścia zachowują dostępność
+z wybranej wersji według indeksu, a nowe przejścia dostają `0`.
+
 **Edycja PRECO:** puste lub niepoprawne pole blokuje zapis (toast z listą pól).
 Wcześniej taka komórka zapisywała się jako `0 zł`. Zakresy muszą mieć `max > 0`
 i `max >= min` — przedział `max < min` nigdy się nie dopasowuje i dawał cenę `0 zł`.

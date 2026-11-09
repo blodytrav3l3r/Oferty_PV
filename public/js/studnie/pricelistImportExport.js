@@ -29,7 +29,6 @@ async function exportStudnieToExcel() {
  * @param {Array<any>} importIssues kolekcja błędów (pusta dla widoku wersji)
  */
 function studnieImportOptions(importIssues) {
-    const dnColKey = HEADER_TO_KEY['dn'] || 'dn';
     return {
         headerToKey: HEADER_TO_KEY,
         numericFields: [
@@ -48,6 +47,7 @@ function studnieImportOptions(importIssues) {
             'magazynKLB',
             'formaStandardowa',
             'formaStandardowaKLB',
+            'active',
             'zapasDol',
             'zapasGora',
             'zapasDolMin',
@@ -68,6 +68,27 @@ function studnieImportOptions(importIssues) {
             magazynKLB: 1,
             formaStandardowa: 1,
             formaStandardowaKLB: 1
+        },
+        preValidate: (product, _raw, index) => {
+            const flagPattern = /^(?:[01](?:[.,]0+)?|true|false|-|—)?$/i;
+            const flags = [
+                'magazynWL',
+                'magazynKLB',
+                'formaStandardowa',
+                'formaStandardowaKLB',
+                'active'
+            ];
+            for (const field of flags) {
+                if (flagPattern.test(String(product[field] ?? '').trim())) continue;
+                importIssues.push(
+                    window.pricelistXlsx.importIssue(
+                        index,
+                        field,
+                        'Flaga dostępności musi mieć wartość 0 lub 1',
+                        HEADER_TO_KEY
+                    )
+                );
+            }
         },
         onIssue: (index, field, reason) => {
             importIssues.push(
@@ -94,7 +115,7 @@ function studnieImportOptions(importIssues) {
                 product.componentType = 'kineta';
             }
 
-            const rawDn = raw[dnColKey];
+            const rawDn = raw.DN ?? raw.dn;
             if (product.dn !== null && typeof rawDn === 'string' && rawDn.includes('/')) {
                 product.dn = rawDn;
             }
@@ -117,17 +138,19 @@ function studnieImportOptions(importIssues) {
 /**
  * Kolumny flag, ktorych brak w pliku (wtedy postCoerce ustawia 0).
  * Zwraca czytelne nazwy naglowkow — import ostrzega, zamiast robic to cicho.
- * @param {Array<any>} rows wiersze po mapowaniu naglowkow
+ * @param {Array<any>} rows surowe wiersze ze wszystkich arkuszy produktów
  */
 function findMissingFlagColumns(rows) {
-    const present = rows.length > 0 ? Object.keys(rows[0]) : [];
+    const presentByRow = rows.map(
+        (row) => new Set(Object.keys(row).map((header) => HEADER_TO_KEY[header] || header))
+    );
     return [
         ['magazynWL', 'Mag WL'],
         ['magazynKLB', 'Mag KLB'],
         ['formaStandardowa', 'Forma std. WL'],
         ['formaStandardowaKLB', 'Forma std. KLB']
     ]
-        .filter((pair) => !present.includes(pair[0]))
+        .filter(([key]) => rows.length === 0 || presentByRow.some((present) => !present.has(key)))
         .map((pair) => pair[1]);
 }
 
@@ -173,12 +196,6 @@ async function importStudnieFromExcel(event) {
         resetImportInput();
         return;
     }
-    if (!pv.enterVersionEditForImport('studnie', targetVersion)) {
-        showToast('Otwórz edytor cennika studni, aby zaimportować plik', 'error');
-        resetImportInput();
-        return;
-    }
-
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
@@ -197,7 +214,7 @@ async function importStudnieFromExcel(event) {
             }
 
             const importIssues = [];
-            const normalized = window.pricelistXlsx.normalizeRows(
+            let normalized = window.pricelistXlsx.normalizeRows(
                 allJson,
                 studnieImportOptions(importIssues)
             );
@@ -207,19 +224,39 @@ async function importStudnieFromExcel(event) {
                 return;
             }
 
-            const missingFlagColumns = findMissingFlagColumns(allJson);
-            if (missingFlagColumns.length > 0) {
-                showToast(
-                    'Brak kolumn w pliku: ' +
-                        missingFlagColumns.join(', ') +
-                        ' — te pozycje dostaną 0 (niedostępne w magazynie/formie)',
-                    'warning'
-                );
-            }
-
             if (normalized.length === 0) {
                 showToast('Brak prawidłowych wierszy do importu (sprawdź Indeks i Nazwę)', 'error');
                 return;
+            }
+
+            const needsActive = (row) => row.componentType === 'przejscie' && row.active == null;
+            if (normalized.some(needsActive)) {
+                // Starszy eksport nie miał DOST. Zachowaj wartości wybranej wersji po indeksie.
+                const targetRows = await pv.readVersionRows('studnie', targetVersion.id);
+                const targetById = new Map(targetRows.map((row) => [row.id, row]));
+                normalized = normalized.map((row) => {
+                    if (!needsActive(row)) return row;
+                    const previous = targetById.get(row.id);
+                    if (previous && previous.active !== 0 && previous.active !== 1) {
+                        throw new Error('Brak poprawnej flagi DOST. dla przejścia ' + row.id);
+                    }
+                    return { ...row, active: previous?.active ?? 0 };
+                });
+            }
+
+            if (!pv.enterVersionEditForImport('studnie', targetVersion)) {
+                showToast('Otwórz edytor cennika studni, aby zaimportować plik', 'error');
+                return;
+            }
+
+            const missingFlagColumns = findMissingFlagColumns(allJson);
+            if (missingFlagColumns.length > 0) {
+                showToast(
+                    'Brak kolumn w arkuszach: ' +
+                        missingFlagColumns.join(', ') +
+                        ' — pozycje bez tych kolumn dostaną 0 (niedostępne w magazynie/formie)',
+                    'warning'
+                );
             }
 
             const precoSheets = (workbook.SheetNames || []).filter(

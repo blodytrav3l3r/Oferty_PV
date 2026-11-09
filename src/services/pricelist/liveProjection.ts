@@ -65,7 +65,8 @@ export const STUDNIE_LIVE_COLUMNS = [
     { key: 'cena2', header: 'Cena 2 PLN' },
     { key: 'hMin3', header: 'Hmin 3 mm' },
     { key: 'hMax3', header: 'Hmax 3 mm' },
-    { key: 'cena3', header: 'Cena 3 PLN' }
+    { key: 'cena3', header: 'Cena 3 PLN' },
+    { key: 'active', header: 'Dost.' }
 ] as const;
 
 /** SSoT FE: public/js/studnie/pricelistImportExport.js:89-94 (PRECO_Kinety). */

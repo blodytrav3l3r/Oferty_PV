@@ -6,10 +6,12 @@ function toggleMagazynField(el, field, id) {
             : studnieProducts.find((p) => p.id === id)
     );
     if (!product) return;
-    product[field] = product[field] === 1 ? 0 : 1;
+    const newVal = product[field] === 1 || product[field] === true ? 0 : 1;
+    window.studnieProducts = studnieProducts.map((p) =>
+        p === product ? { ...p, [field]: newVal } : p
+    );
 
     // Natychmiastowa aktualizacja UI bez pełnego re-renderu
-    const newVal = product[field];
     el.textContent = String(newVal);
     el.style.color = newVal === 1 ? 'var(--success-hover)' : 'var(--danger-hover)';
 
@@ -24,6 +26,7 @@ function editStudnieCell(el, field, id) {
         typeof getStudnieProductById === 'function'
             ? getStudnieProductById(id)
             : studnieProducts.find((p) => p.id === id);
+    if (!product) return;
     const oldVal = product[field] ?? '';
     const input = document.createElement('input');
     const isTextField = ['name', 'id', 'dn', 'spocznikH', 'category'].includes(field);
@@ -59,7 +62,9 @@ function editStudnieCell(el, field, id) {
             }
         }
 
-        product[field] = val;
+        window.studnieProducts = studnieProducts.map((p) =>
+            p === product ? { ...p, [field]: val } : p
+        );
         _studniePricelistDirty = true;
         updateStudnieSaveBtn();
         renderStudniePriceList();

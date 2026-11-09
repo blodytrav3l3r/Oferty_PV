@@ -54,29 +54,32 @@ async function saveStudniePriceList() {
         return;
     }
     const btns = document.querySelectorAll('[data-csp*="saveStudniePriceList"]');
+    const pv = window.pricelistVersions;
+    const versionLabel = pv?.versionEditLabel?.('studnie');
+    const rows = studnieProducts;
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
-        const ok = await saveStudnieProducts(studnieProducts);
-        if (!ok) {
+        const saved = await saveStudnieProducts(rows);
+        if (!saved) {
             showToast('Błąd zapisu cennika studni', 'error');
             return;
         }
-        _studniePricelistDirty = false;
-        updateStudnieSaveBtn();
-        await refreshStudnieData();
-        if (
-            window.pricelistVersions &&
-            typeof window.pricelistVersions.refreshStatusStrip === 'function'
-        ) {
-            window.pricelistVersions.refreshStatusStrip('studnie');
+        if (studnieProducts === rows) {
+            _studniePricelistDirty = false;
+            if (Array.isArray(saved.rows)) window.studnieProducts = saved.rows;
+            // Ogólny odczyt edytora może zwrócić szkic zamiast zapisanej wersji.
+            await refreshStudnieData({ reload: versionLabel == null });
+        }
+        if (typeof pv?.refreshStatusStrip === 'function') {
+            try {
+                await pv.refreshStatusStrip('studnie');
+            } catch (err) {
+                logger.warn('pricelistSaveReset', 'Nie udało się odświeżyć paska cennika', err);
+            }
         }
         showToast(
-            window.pricelistVersions &&
-                typeof window.pricelistVersions.versionEditLabel === 'function' &&
-                window.pricelistVersions.versionEditLabel('studnie')
-                ? 'Zapisano wersję ' +
-                      window.pricelistVersions.versionEditLabel('studnie') +
-                      ' — jej ceny zostały podmienione'
+            versionLabel
+                ? 'Zapisano wersję ' + versionLabel + ' — jej ceny zostały podmienione'
                 : 'Zapisano szkic studni — opublikuj wersję, aby trafił do ofert',
             'success'
         );
@@ -85,6 +88,7 @@ async function saveStudniePriceList() {
         showToast('Błąd zapisu: ' + err.message, 'error');
     } finally {
         btns.forEach((b) => b.removeAttribute('disabled'));
+        updateStudnieSaveBtn();
     }
 }
 
@@ -93,19 +97,24 @@ async function saveStudniePriceList() {
  * Pobiera świeże dane z serwera i przebudowuje: tabelę cennika, kafelki, tabelę Excel.
  * Źródło zależy od kontekstu: edycja (hub) = dane edytora (szkic), podgląd =
  * cennik oferty (wersja pieczątki), a bez pieczątki — obowiązujący (ACTIVE).
+ * @param {{reload?: boolean}} [options]
  */
-async function refreshStudnieData() {
+async function refreshStudnieData({ reload = true } = {}) {
     try {
-        const pv = window.pricelistVersions;
-        const editing =
-            pv && typeof pv.isPricelistEditing === 'function' && pv.isPricelistEditing('studnie');
-        const stamp = pv && typeof pv.offerStamp === 'function' ? pv.offerStamp('studnie') : null;
-        if (!editing && stamp && typeof pv.applyOfferPricelist === 'function') {
-            // Kafelki i Excel muszą liczyć z tego samego cennika co siatka.
-            await pv.applyOfferPricelist('studnie', stamp);
-        } else {
-            const rows = await loadStudnieProducts(editing ? undefined : { source: 'active' });
-            if (Array.isArray(rows)) window.studnieProducts = rows;
+        if (reload) {
+            const pv = window.pricelistVersions;
+            const editing = pv?.isPricelistEditing?.('studnie');
+            const stamp = pv?.offerStamp?.('studnie');
+            if (!editing && stamp && typeof pv.applyOfferPricelist === 'function') {
+                // Kafelki i Excel muszą liczyć z tego samego cennika co siatka.
+                await pv.applyOfferPricelist('studnie', stamp);
+            } else {
+                const previousRows = studnieProducts;
+                const rows = await loadStudnieProducts(editing ? undefined : { source: 'active' });
+                if (studnieProducts === previousRows && Array.isArray(rows)) {
+                    window.studnieProducts = rows;
+                }
+            }
         }
         renderStudniePriceList();
         renderTiles();

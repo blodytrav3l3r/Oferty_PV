@@ -27,7 +27,8 @@
 
     /**
      * Solidne parsowanie pól liczbowych: spacje precz, przecinek na kropkę,
-     * puste/myślniki/em-dash na default (emptyDefaults) lub null.
+     * puste komórki i myślniki na default (emptyDefaults) lub null.
+     * Brak kolumny daje null.
      * Mutuje i zwraca przekazany produkt (jak dotychczas w callerach).
      */
     function coerceNumerics(product, numericFields, emptyDefaults, onInvalid) {
@@ -35,7 +36,9 @@
             var val = product[f];
             if (val === '' || val === undefined || val === null || val === '-' || val === '—') {
                 product[f] =
-                    emptyDefaults && Object.prototype.hasOwnProperty.call(emptyDefaults, f)
+                    emptyDefaults &&
+                    Object.prototype.hasOwnProperty.call(product, f) &&
+                    Object.prototype.hasOwnProperty.call(emptyDefaults, f)
                         ? emptyDefaults[f]
                         : null;
             } else if (typeof val === 'boolean') {
@@ -75,7 +78,7 @@
     /**
      * Zbiorcza normalizacja surowych wierszy: mapowanie nagłówków, preValidate,
      * walidacja id/name, dedup po id, coerce liczb, postCoerce.
-     * opts: { headerToKey, numericFields, emptyDefaults, preValidate(product, raw),
+     * opts: { headerToKey, numericFields, emptyDefaults, preValidate(product, raw, index),
      *         postCoerce(product, raw), onSkip(index, reason, product),
      *         onIssue(index, field, reason, value) }
      * reason: 'missing-id-or-name' | 'duplicate-id' | 'missing-id' |
@@ -91,7 +94,7 @@
         };
         (rawRows || []).forEach(function (raw, index) {
             var product = mapHeaders(raw, headerToKey);
-            if (typeof o.preValidate === 'function') o.preValidate(product, raw);
+            if (typeof o.preValidate === 'function') o.preValidate(product, raw, index);
             if (!validateProductIdName(product)) {
                 if (!product.id) reportIssue(index, 'id', 'missing-id');
                 if (!product.name) reportIssue(index, 'name', 'missing-name');

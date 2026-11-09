@@ -16,12 +16,17 @@ function makeCtx(): any {
         console,
         document: { addEventListener: () => {} },
         localStorage: { getItem: () => null, setItem: () => {} },
-        location: { search: '' }
+        location: { search: '' },
+        _studniePricelistDirty: false,
+        updateStudnieSaveBtn: jest.fn(),
+        renderStudniePriceList: jest.fn(),
+        showToast: jest.fn()
     };
     context.window = context;
     vm.createContext(context);
-    const code = fs.readFileSync(path.join(base, 'globals.js'), 'utf8');
-    vm.runInContext(code, context);
+    for (const file of ['globals.js', 'pricelistCellEdit.js', 'pricelistCategory.js']) {
+        vm.runInContext(fs.readFileSync(path.join(base, file), 'utf8'), context);
+    }
     return context;
 }
 
@@ -65,5 +70,55 @@ describe('przejsciaCategories — nieświeża mapa nie daje 0/0', () => {
         expect(ctx.getPrzejsciaCategories()).toEqual(['PE']);
         ctx.window.studnieProducts = [{ ...PRZ('P1', 'PE'), active: 0 }];
         expect(ctx.getPrzejsciaCategories()).toEqual([]);
+    });
+
+    test('kliknięcie DOST. od razu zmienia listę dostępnych przejść', () => {
+        const ctx = makeCtx();
+        ctx.window.studnieProducts = [PRZ('P1', 'PE'), PRZ('P2', 'PE')];
+
+        ctx.toggleMagazynField({ style: {} }, 'active', 'P1');
+
+        expect(ctx.getPrzejsciaForCategory('PE').map((p: { id: string }) => p.id)).toEqual(['P2']);
+    });
+
+    test('edycja ceny wymienia wiersz, żeby zapis mógł wykryć nowsze zmiany', () => {
+        const ctx = makeCtx();
+        const original = PRZ('P1', 'PE');
+        ctx.window.studnieProducts = [original];
+        const input = {
+            style: {},
+            value: '',
+            focus: jest.fn(),
+            select: jest.fn(),
+            addEventListener: jest.fn()
+        };
+        ctx.document.createElement = () => input;
+        const cell = { querySelector: () => null, appendChild: jest.fn() };
+
+        ctx.editStudnieCell(cell, 'price', 'P1');
+        input.value = '11';
+        const blur = input.addEventListener.mock.calls.find(([event]) => event === 'blur');
+        blur?.[1]();
+
+        expect(original.price).toBe(10);
+        expect(ctx.window.studnieProducts[0].price).toBe(11);
+    });
+
+    test('nowa kategoria i element mają zapisywalną dostępność', async () => {
+        const ctx = makeCtx();
+        ctx.appPrompt = jest
+            .fn()
+            .mockResolvedValueOnce('PE')
+            .mockResolvedValueOnce('PE-500')
+            .mockResolvedValueOnce('PE 500')
+            .mockResolvedValueOnce('500');
+        vm.runInContext("currentCennikTab = 'przejscia'", ctx);
+
+        await ctx.addPrzejsciaCategory();
+        await ctx.addStudnieElement('PE');
+
+        expect(ctx.window.studnieProducts.map((p: { active: number }) => p.active)).toEqual([
+            1, 1, 1, 1, 1, 1, 1
+        ]);
     });
 });

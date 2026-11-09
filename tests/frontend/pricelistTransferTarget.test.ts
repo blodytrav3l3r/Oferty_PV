@@ -6,6 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
+import * as XLSX from '../../public/vendor/xlsx.full.min.js';
 
 const ROOT = path.join(__dirname, '..', '..');
 const readPub = (rel) => fs.readFileSync(path.join(ROOT, 'public', 'js', rel), 'utf8');
@@ -169,16 +170,25 @@ describe('import cennika = wersja zaznaczona na osi', () => {
     function loadStudnie(rowsBySheet) {
         const sb = baseSandbox();
         loadShared(sb);
-        const pv = stubCommon(sb, {
-            rowsBySheet: rowsBySheet || { DN1000: STUDNIE_ROWS }
-        });
-        sb.HEADER_TO_KEY = { Indeks: 'id', Nazwa: 'name', 'Cena PLN': 'price' };
+        const sheets = rowsBySheet || { DN1000: STUDNIE_ROWS };
+        const pv = stubCommon(sb, { rowsBySheet: sheets });
+        const workbook = XLSX.utils.book_new();
+        for (const [name, rows] of Object.entries(sheets)) {
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), name);
+        }
+        sb.XLSX = XLSX;
+        sb.FileReader = class {
+            readAsArrayBuffer() {
+                this.onload({ target: { result: XLSX.write(workbook, { type: 'array' }) } });
+            }
+        };
         sb.studnieProducts = [];
         sb.window.studnieProducts = [];
-        sb._studniePricelistDirty = false;
         sb.renderStudniePriceList = () => {};
         sb.renderTiles = () => {};
-        sb.updateStudnieSaveBtn = () => {};
+        vm.runInContext(readPub('studnie/pricelistState.js'), sb, {
+            filename: 'pricelistState.js'
+        });
         vm.runInContext(readPub('studnie/pricelistImportExport.js'), sb, {
             filename: 'pricelistImportExport.js'
         });
@@ -251,6 +261,131 @@ describe('import cennika = wersja zaznaczona na osi', () => {
         );
         expect(sb.fetch).not.toHaveBeenCalled();
         expect(ev.target.value).toBe('');
+    });
+
+    test.each([false, true])(
+        'studnie: zachowuje jawne flagi i odróżnia pustą komórkę od brakującej kolumny (%s)',
+        async (missingColumn) => {
+            const flagHeaders = {
+                'Mag WL': '',
+                'Mag KLB': false,
+                'Forma std.': true,
+                'Forma std. KLB': 0
+            };
+            const { sb } = loadStudnie({
+                DN1000: [{ ...STUDNIE_ROWS[0], ...flagHeaders }],
+                DN1200: [
+                    {
+                        ...STUDNIE_ROWS[0],
+                        Indeks: 'S2',
+                        ...(missingColumn ? {} : flagHeaders)
+                    }
+                ]
+            });
+
+            await sb.importStudnieFromExcel(xlsxEvent());
+            await flush();
+
+            const flags = sb.window.studnieProducts.map((p) => [
+                p.magazynWL,
+                p.magazynKLB,
+                p.formaStandardowa,
+                p.formaStandardowaKLB
+            ]);
+            expect(flags).toEqual([[1, 0, 1, 0], missingColumn ? [0, 0, 0, 0] : [1, 0, 1, 0]]);
+            const warnings = sb.showToast.mock.calls.filter(([, type]) => type === 'warning');
+            if (missingColumn) {
+                expect(warnings).toEqual([
+                    [
+                        expect.stringContaining('Mag WL, Mag KLB, Forma std. WL, Forma std. KLB'),
+                        'warning'
+                    ]
+                ]);
+            } else {
+                expect(warnings).toEqual([]);
+            }
+        }
+    );
+
+    test('studnie: stary plik zachowuje DOST. istniejących przejść wybranej wersji', async () => {
+        const { sb, pv } = loadStudnie({
+            Przejścia: [
+                {
+                    Indeks: 'P1',
+                    Nazwa: 'Zachowane',
+                    'Typ komponentu': 'przejscie',
+                    DN: '1000/1500'
+                },
+                { Indeks: 'P2', Nazwa: 'Nowe', 'Typ komponentu': 'przejscie' }
+            ],
+            'Nowe przejścia': [
+                {
+                    Indeks: 'P3',
+                    Nazwa: 'Jawnie wyłączone',
+                    'Typ komponentu': 'przejscie',
+                    'Dost.': 0
+                },
+                {
+                    Indeks: 'P4',
+                    Nazwa: 'Jawnie włączone',
+                    'Typ komponentu': 'przejscie',
+                    'Dost.': 1
+                }
+            ]
+        });
+        pv.readVersionRows = jest.fn(async () => [
+            { id: 'P1', active: 1 },
+            { id: 'P3', active: 1 },
+            { id: 'P4', active: 0 }
+        ]);
+
+        await sb.importStudnieFromExcel(xlsxEvent());
+        await flush();
+
+        expect(pv.readVersionRows).toHaveBeenCalledWith('studnie', VERSION.id);
+        expect(sb.window.studnieProducts.map(({ active }) => active)).toEqual([1, 0, 0, 1]);
+        expect(sb.window.studnieProducts[0].dn).toBe('1000/1500');
+    });
+
+    test('studnie: błąd odczytu DOST. blokuje import przed zmianą edytowanej wersji', async () => {
+        const { sb, pv } = loadStudnie({
+            Przejścia: [{ Indeks: 'P1', Nazwa: 'Przejście', 'Typ komponentu': 'przejscie' }]
+        });
+        const original = [{ id: 'poprzedni' }];
+        sb.window.studnieProducts = original;
+        pv.readVersionRows = jest.fn(async () => {
+            throw new Error('HTTP 500');
+        });
+
+        await sb.importStudnieFromExcel(xlsxEvent());
+        await flush();
+
+        expect(pv.enterVersionEditForImport).not.toHaveBeenCalled();
+        expect(sb.window.studnieProducts).toBe(original);
+        expect(sb.showToast).toHaveBeenCalledWith(expect.any(String), 'error');
+    });
+
+    test.each([
+        ['Dost.', 2],
+        ['Mag WL', '1abc']
+    ])('studnie: odrzuca nieprawidłową flagę %s = %s', async (header, value) => {
+        const { sb, pv } = loadStudnie({
+            Przejścia: [
+                {
+                    Indeks: 'P1',
+                    Nazwa: 'Przejście',
+                    'Typ komponentu': 'przejscie',
+                    'Dost.': 1,
+                    [header]: value
+                }
+            ]
+        });
+
+        await sb.importStudnieFromExcel(xlsxEvent());
+        await flush();
+
+        expect(pv.enterVersionEditForImport).not.toHaveBeenCalled();
+        expect(sb.window.studnieProducts).toEqual([]);
     });
 
     test('preco: wersja z osi, dane w siatce PRECO', async () => {
