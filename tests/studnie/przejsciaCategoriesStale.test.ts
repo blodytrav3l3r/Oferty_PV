@@ -18,6 +18,7 @@ function makeCtx(): any {
         localStorage: { getItem: () => null, setItem: () => {} },
         location: { search: '' },
         _studniePricelistDirty: false,
+        pricelistVersions: { isEditing: () => true },
         updateStudnieSaveBtn: jest.fn(),
         renderStudniePriceList: jest.fn(),
         showToast: jest.fn()
@@ -76,7 +77,7 @@ describe('przejsciaCategories — nieświeża mapa nie daje 0/0', () => {
         const ctx = makeCtx();
         ctx.window.studnieProducts = [PRZ('P1', 'PE'), PRZ('P2', 'PE')];
 
-        ctx.toggleMagazynField({ style: {} }, 'active', 'P1');
+        ctx.setStudnieAvailability({ checked: false }, 'active', 'P1');
 
         expect(ctx.getPrzejsciaForCategory('PE').map((p: { id: string }) => p.id)).toEqual(['P2']);
     });

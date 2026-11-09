@@ -19,6 +19,16 @@ function renderStudniePriceList() {
     );
 
     const groups = {};
+    const flagCell = (product, field, label) => {
+        const checked = product[field] === 1 || product[field] === true;
+        const editing = window.pricelistVersions?.isEditing?.('studnie') === true;
+        return `<td class="pricelist-flag-cell"><label class="pricelist-flag-target"><input type="checkbox" class="pricelist-flag-input" data-action="setStudnieAvailability" data-field="${field}" data-id="${escapeHtmlAttr(product.id)}" aria-label="${escapeHtmlAttr(label + ': ' + product.id)}" ${checked ? 'checked' : ''} ${editing ? '' : 'disabled'}></label></td>`;
+    };
+    const categoryFlag = (items, field, label, group) => {
+        const selected = items.filter((item) => item[field] === 1 || item[field] === true).length;
+        const editing = window.pricelistVersions?.isEditing?.('studnie') === true;
+        return `<label class="pricelist-category-option" title="Zaznacz widoczne elementy w kategorii"><span>${label}</span><span class="pricelist-flag-target pricelist-category-target"><input type="checkbox" class="pricelist-flag-input" data-action="setStudnieCategoryAvailability" data-field="${field}" data-mixed="${selected > 0 && selected < items.length}" aria-label="${escapeHtmlAttr(label + ' w kategorii ' + group)}" ${selected === items.length ? 'checked' : ''} ${editing ? '' : 'disabled'}></span></label>`;
+    };
     const dynamicGroups = new Set();
     filteredProducts.forEach((p) => {
         let groupKey;
@@ -107,7 +117,7 @@ function renderStudniePriceList() {
         <button class="btn btn-secondary pill-sm" data-action="addStudnieElement" ><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
         ${isKinety ? `<button class="btn btn-secondary pill-sm" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne."><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
     </div>
-    <table class="table-fixed">
+    <table class="table-fixed ${isPrzejscia ? 'pricelist-passages-table' : 'pricelist-components-table'}">
       <thead>
         <tr>
           <th scope="col" class="w-10pct">Indeks</th>
@@ -167,12 +177,29 @@ function renderStudniePriceList() {
         if (!items || items.length === 0) return;
         hasAnyItems = true;
         const label = groupLabels[groupKey] || groupKey;
+        const categoryName = groupLabels[groupKey]
+            ? label.replace(/<[^>]+>/g, '').trim()
+            : groupKey;
+        const categoryFields = isPrzejscia
+            ? [['active', 'DOST.']]
+            : isKinety
+              ? []
+              : [
+                    ['magazynWL', 'M.WL'],
+                    ['magazynKLB', 'M.KLB'],
+                    ['formaStandardowa', 'FS.WL'],
+                    ['formaStandardowaKLB', 'FS.KLB']
+                ];
+        const categoryControls = categoryFields.length
+            ? `<span class="pricelist-category-controls">${categoryFields.map(([field, name]) => categoryFlag(items, field, name, categoryName)).join('')}</span>`
+            : '';
 
         html += `<tbody>
       <tr>
         <td colspan="${colCount - 1}" style="padding:0; border-bottom:1px solid var(--border);">
           <div class="cat-header">
             <span>${label} <span class="cat-count">(${items.length})</span></span>
+            ${categoryControls}
           </div>
         </td>
         <td class="cat-header-actions-cell">
@@ -200,7 +227,6 @@ function renderStudniePriceList() {
         <td data-action="editStudnieCell" data-field="name" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-medium);">${escapeHtml(p.name)}</td>`;
 
             if (isPrzejscia) {
-                const isAvailable = p.active === 1 || p.active === true;
                 html += `
         <td class="text-center fw600-accent-cursor"  data-action="editStudnieCell" data-field="dn" data-id="${escapeHtmlAttr(p.id)}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
         <td class="text-right ui-pointer-bold" data-action="editStudnieCell" data-field="weight" data-id="${escapeHtmlAttr(p.id)}" >${p.weight != null ? fmtInt(p.weight) : '—'}</td>
@@ -208,7 +234,7 @@ function renderStudniePriceList() {
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="zapasGora" data-id="${escapeHtmlAttr(p.id)}" >${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
         <td class="text-right cursor-warn" data-action="editStudnieCell" data-field="zapasDolMin" data-id="${escapeHtmlAttr(p.id)}" >${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
         <td class="text-right cursor-warn" data-action="editStudnieCell" data-field="zapasGoraMin" data-id="${escapeHtmlAttr(p.id)}" >${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
-        <td class="text-center" data-action="toggleMagazynField" data-field="active" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${isAvailable ? 'var(--success-hover)' : 'var(--danger-hover)'};">${isAvailable ? '1' : '0'}</td>
+        ${flagCell(p, 'active', 'Dostępność')}
                `;
             } else if (isKinety) {
                 html += `
@@ -237,10 +263,10 @@ function renderStudniePriceList() {
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="malowanieZewnetrzne" data-id="${escapeHtmlAttr(p.id)}" >${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
         <td class="text-right${p.componentType === 'dennica' ? ' cursor-pointer' : ' ui-text-mute'}" ${p.componentType === 'dennica' ? `data-action="editStudnieCell" data-field="doplataZelbet" data-id="${escapeHtmlAttr(p.id)}"` : ''}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="doplataDrabNierdzewna" data-id="${escapeHtmlAttr(p.id)}" >${p.doplataDrabNierdzewna != null ? '+' + fmtInt(p.doplataDrabNierdzewna) : '—'}</td>
-        <td class="text-center" data-action="toggleMagazynField" data-field="magazynWL" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.magazynWL === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynWL === 1 ? '1' : '0'}</td>
-        <td class="text-center" data-action="toggleMagazynField" data-field="magazynKLB" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.magazynKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynKLB === 1 ? '1' : '0'}</td>
-        <td class="text-center" data-action="toggleMagazynField" data-field="formaStandardowa" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.formaStandardowa === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowa === 1 ? '1' : '0'}</td>
-        <td class="text-center" data-action="toggleMagazynField" data-field="formaStandardowaKLB" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.formaStandardowaKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowaKLB === 1 ? '1' : '0'}</td>
+        ${flagCell(p, 'magazynWL', 'Magazyn Włocławek')}
+        ${flagCell(p, 'magazynKLB', 'Magazyn Kluczbork')}
+        ${flagCell(p, 'formaStandardowa', 'Forma standardowa Włocławek')}
+        ${flagCell(p, 'formaStandardowaKLB', 'Forma standardowa Kluczbork')}
                `;
             }
 
@@ -265,6 +291,9 @@ function renderStudniePriceList() {
     }
 
     container.innerHTML = html;
+    container.querySelectorAll('input[data-mixed="true"]').forEach((input) => {
+        input.indeterminate = true;
+    });
     if (window.lucide) lucide.createIcons();
     // Render odtwarza DOM, więc blokada podglądu (inert) musi wrócić.
     if (window.pricelistVersions && window.pricelistVersions.applyEditorLock) {
@@ -284,8 +313,6 @@ if (typeof document !== 'undefined' && !window.__pricelistDelegated) {
         const group = el.getAttribute('data-group');
         if (action === 'editStudnieCell') {
             window.editStudnieCell(el, field, id);
-        } else if (action === 'toggleMagazynField') {
-            window.toggleMagazynField(el, field, id);
         } else if (action === 'addStudnieElement') {
             window.addStudnieElement(group);
         } else if (action === 'addStudnieCategory') {
@@ -301,6 +328,29 @@ if (typeof document !== 'undefined' && !window.__pricelistDelegated) {
         } else if (action === 'recalculatePEHD') {
             window.recalculatePEHD();
         }
+    });
+    document.addEventListener('change', (e) => {
+        const input = e.target.closest('input[data-action="setStudnieAvailability"]');
+        if (input) {
+            window.setStudnieAvailability(input, input.dataset.field, input.dataset.id);
+            const group = input.closest('tbody');
+            if (group) {
+                const category = group.querySelector(
+                    `input[data-action="setStudnieCategoryAvailability"][data-field="${input.dataset.field}"]`
+                );
+                if (category) {
+                    const rows = [
+                        ...group.querySelectorAll(
+                            `input[data-action="setStudnieAvailability"][data-field="${input.dataset.field}"]`
+                        )
+                    ];
+                    category.checked = rows.every((row) => row.checked);
+                    category.indeterminate = rows.some((row) => row.checked) && !category.checked;
+                }
+            }
+        }
+        const category = e.target.closest('input[data-action="setStudnieCategoryAvailability"]');
+        if (category) window.setStudnieCategoryAvailability(category);
     });
 }
 

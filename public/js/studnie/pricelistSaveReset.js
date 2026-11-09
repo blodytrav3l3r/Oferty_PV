@@ -60,15 +60,20 @@ async function saveStudniePriceList() {
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
         const saved = await saveStudnieProducts(rows);
-        if (!saved) {
-            showToast('Błąd zapisu cennika studni', 'error');
+        if (!saved || saved.error) {
+            showToast(
+                'Nie potwierdzono zapisu cennika studni: ' + (saved?.error || 'brak odpowiedzi'),
+                'error'
+            );
             return;
         }
-        if (studnieProducts === rows) {
+        if (studnieProducts === rows || saved.savedWhilePreviewing) {
             _studniePricelistDirty = false;
-            if (Array.isArray(saved.rows)) window.studnieProducts = saved.rows;
-            // Ogólny odczyt edytora może zwrócić szkic zamiast zapisanej wersji.
-            await refreshStudnieData({ reload: versionLabel == null });
+            if (studnieProducts === rows && Array.isArray(saved.rows)) {
+                window.studnieProducts = saved.rows;
+            }
+            // Odczyt kontrolny w saveStudnieProducts już zwrócił zapisany cel.
+            await refreshStudnieData({ reload: false });
         }
         if (typeof pv?.refreshStatusStrip === 'function') {
             try {
@@ -101,17 +106,28 @@ async function saveStudniePriceList() {
  */
 async function refreshStudnieData({ reload = true } = {}) {
     try {
-        if (reload) {
+        const versionBar = document.getElementById('pv-version-bar');
+        const isPreviewing = () =>
+            versionBar &&
+            !versionBar.hidden &&
+            versionBar.dataset.axis === 'studnie' &&
+            window.pricelistVersions?.isEditing?.('studnie') !== true;
+        if (reload && !isPreviewing()) {
             const pv = window.pricelistVersions;
-            const editing = pv?.isPricelistEditing?.('studnie');
+            const editing = pv?.isEditing?.('studnie') === true;
             const stamp = pv?.offerStamp?.('studnie');
             if (!editing && stamp && typeof pv.applyOfferPricelist === 'function') {
                 // Kafelki i Excel muszą liczyć z tego samego cennika co siatka.
                 await pv.applyOfferPricelist('studnie', stamp);
-            } else {
+            } else if (!pv?.versionEditLabel?.('studnie')) {
                 const previousRows = studnieProducts;
                 const rows = await loadStudnieProducts(editing ? undefined : { source: 'active' });
-                if (studnieProducts === previousRows && Array.isArray(rows)) {
+                if (
+                    studnieProducts === previousRows &&
+                    (pv?.isEditing?.('studnie') === true) === editing &&
+                    !isPreviewing() &&
+                    Array.isArray(rows)
+                ) {
                     window.studnieProducts = rows;
                 }
             }

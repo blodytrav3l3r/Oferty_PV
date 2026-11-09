@@ -538,7 +538,11 @@ async function loadStudnieProducts(options) {
     let saved = null;
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
-            const res = await fetchWithTimeout(url, { headers: authHeaders() }, 1000);
+            const res = await fetchWithTimeout(
+                url,
+                { headers: authHeaders(), cache: 'no-store' },
+                1000
+            );
             if (useActive && res.status === 409) {
                 const err = await res.json().catch(() => ({}));
                 if (err && err.code === 'NO_ACTIVE_VERSION') {
@@ -636,25 +640,92 @@ async function saveStudnieProducts(data) {
             headers: { 'Content-Type': 'application/json', ...authHeaders(), ...extra },
             body: JSON.stringify({ data: submittedRows })
         });
-        if (!res.ok) return null;
+        if (!res.ok) throw new Error('HTTP ' + res.status);
 
-        const json = await res.json().catch(() => null);
+        const json = await res.json();
+        if (!json?.ok || !json.versionId || !['draft', 'version'].includes(json.target)) {
+            throw new Error('Brak potwierdzenia celu zapisu');
+        }
+        // Nowy SHA obowiązuje również wtedy, gdy kontrolny odczyt się nie powiedzie.
+        if (json.target === 'version') await pv?.noteVersionSaved?.('studnie', json, null);
         const savedRows =
-            json?.target === 'version' && json.versionId
-                ? await pv?.readVersionRows?.('studnie', json.versionId).catch((err) => {
-                      logger.warn(
-                          'uiHelpers',
-                          'Nie udało się odczytać zapisanej wersji studni',
-                          err
-                      );
-                      return null;
-                  })
-                : null;
-        await pv?.noteVersionSaved?.('studnie', json, savedRows ?? submittedRows);
-        return { rows: savedRows };
-    } catch {
-        return null;
+            json.target === 'version'
+                ? await pv.readVersionRows('studnie', json.versionId)
+                : await readSavedStudnieDraft();
+        const diff = diffSavedStudnieFlags(submittedRows, savedRows);
+        if (!diff.ok) {
+            logger.warn('uiHelpers', 'Odczyt po zapisie różni się od siatki', diff);
+            throw new Error('Odczyt po zapisie różni się od zaznaczeń w siatce');
+        }
+        const savedWhilePreviewing = await pv?.noteVersionSaved?.('studnie', json, savedRows);
+        return { rows: savedRows, savedWhilePreviewing };
+    } catch (err) {
+        logger.warn('uiHelpers', 'Nie potwierdzono zapisu cennika studni', err);
+        return { error: err instanceof Error ? err.message : 'Nieznany błąd' };
     }
+}
+
+async function readSavedStudnieDraft() {
+    const res = await fetch('/api/products-studnie', {
+        headers: authHeaders(),
+        cache: 'no-store'
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (!Array.isArray(json?.data)) throw new Error('Brak wierszy zapisanego szkicu');
+    return json.data;
+}
+
+/**
+ * Kontrola odczytu po zapisie: flagi z siatki vs wiersze z serwera.
+ * Zwraca szczegóły różnicy (bez nich warn nie mówi, co się rozjechało).
+ */
+function diffSavedStudnieFlags(submittedRows, savedRows) {
+    const base = { ok: false, countDiff: null, missingIds: [], extraIds: [], flagDiffs: [] };
+    if (!Array.isArray(savedRows)) return base;
+
+    const fields = ['active', 'magazynWL', 'magazynKLB', 'formaStandardowa', 'formaStandardowaKLB'];
+    const savedById = new Map(savedRows.map((row) => [row.id, row]));
+    const submittedIds = new Set(submittedRows.map((row) => row.id));
+
+    const missingIds = submittedRows
+        .map((row) => row.id)
+        .filter((id) => !savedById.has(id))
+        .slice(0, 5);
+    const extraIds = savedRows
+        .map((row) => row.id)
+        .filter((id) => !submittedIds.has(id))
+        .slice(0, 5);
+
+    const flagDiffs = [];
+    for (const row of submittedRows) {
+        const saved = savedById.get(row.id);
+        if (!saved) continue;
+        for (const field of fields) {
+            if (Number(Boolean(saved[field])) === Number(Boolean(row[field]))) continue;
+            if (flagDiffs.length < 5) {
+                flagDiffs.push({
+                    id: row.id,
+                    field,
+                    submitted: row[field] ?? null,
+                    saved: saved[field] ?? null
+                });
+            }
+        }
+    }
+
+    const countDiff = savedRows.length - submittedRows.length;
+    return {
+        ok:
+            countDiff === 0 &&
+            missingIds.length === 0 &&
+            extraIds.length === 0 &&
+            flagDiffs.length === 0,
+        countDiff,
+        missingIds,
+        extraIds,
+        flagDiffs
+    };
 }
 
 /* ===== CENNIK PRECO — load / save / defaults ===== */

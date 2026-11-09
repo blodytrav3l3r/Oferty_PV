@@ -436,14 +436,35 @@ async function showSectionStudnie(id) {
             ? pvStudnie.offerStamp('studnie')
             : null;
     if (id === 'pricelist') {
+        const isStudniePreviewing = () => {
+            const bar = document.getElementById('pv-version-bar');
+            return bar && !bar.hidden && bar.dataset.axis === 'studnie';
+        };
+        const loadGridRows = async (options, expectedEditing) => {
+            const previousRows = studnieProducts;
+            const rows = await loadStudnieProducts(options);
+            if (
+                studnieProducts === previousRows &&
+                (pvStudnie?.isEditing?.('studnie') === true) === expectedEditing &&
+                !isStudniePreviewing()
+            ) {
+                window.studnieProducts = rows;
+            }
+        };
         const axisEditing = (axis) =>
             !!(
                 pvStudnie &&
                 typeof pvStudnie.isPricelistEditing === 'function' &&
                 pvStudnie.isPricelistEditing(axis)
             );
-        if (axisEditing('studnie')) {
-            window.studnieProducts = await loadStudnieProducts();
+        const editingStudnie = pvStudnie?.isEditing?.('studnie') === true;
+        if (isStudniePreviewing()) {
+            // Wybrana karta ma własne wiersze; odczyt osi nie może ich zastąpić.
+        } else if (editingStudnie) {
+            // Edytor konkretnej wersji już ma jej wiersze w pamięci.
+            if (!pvStudnie?.versionEditLabel?.('studnie') && !_studniePricelistDirty) {
+                await loadGridRows(undefined, true);
+            }
         } else if (
             studnieOfferStamp &&
             pvStudnie &&
@@ -453,10 +474,10 @@ async function showSectionStudnie(id) {
             try {
                 await pvStudnie.applyOfferPricelist('studnie', studnieOfferStamp);
             } catch (_e) {
-                window.studnieProducts = await loadStudnieProducts({ source: 'active' });
+                await loadGridRows({ source: 'active' }, false);
             }
         } else {
-            window.studnieProducts = await loadStudnieProducts({ source: 'active' });
+            await loadGridRows({ source: 'active' }, false);
         }
         if (axisEditing('preco')) await loadPrecoPricing();
         else if (!studnieOfferStamp) await loadPrecoPricing({ source: 'active' });

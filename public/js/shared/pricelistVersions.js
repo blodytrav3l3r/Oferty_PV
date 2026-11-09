@@ -847,7 +847,20 @@
     function openSelectedPreview(type) {
         var v = selectedVersion(type);
         if (!v) return;
-        // Wybór innej wersji kończy ewentualną edycję wersji (dane live ze snapshotu).
+        if (type === 'studnie' && isEditing(type) && !previewReturn[type]) {
+            var mode = versionEditMode(type);
+            previewReturn[type] = {
+                rows: GRID_STATE[type].read(),
+                mode: mode,
+                version: mode
+                    ? (versionsByType[type] || []).find(function (item) {
+                          return item.id === mode.id;
+                      }) || v
+                    : null,
+                header: document.getElementById('pv-title-version')?.textContent || ''
+            };
+        }
+        // Podgląd zapisanej wersji chwilowo zawiesza edycję roboczej siatki.
         if (versionEditMode(type)) {
             clearVersionEdit();
             setEditing(type, false);
@@ -905,6 +918,9 @@
 
     /** Snapshot danych siatki — powrót nie gubi niezapisanych zmian. */
     var gridSnapshot = {};
+    /** Robocza siatka zachowana na czas podglądu zapisanej wersji. */
+    var previewReturn = {};
+    var gridLoadGeneration = 0;
 
     /**
      * Tryb edycji OPUBLIKOWANEJ wersji („Edytuj” na kafelku active/historycznej):
@@ -919,6 +935,19 @@
     /** Po zapisie wersji serwer zwraca nowy sha — bez tego drugi zapis = 409. */
     async function noteVersionSaved(type, json, rows) {
         var mode = versionEditMode(type);
+        var returning = previewReturn[type];
+        if (returning?.mode?.id === json?.versionId && json?.sha256) {
+            previewReturn[type] = {
+                ...returning,
+                mode: { ...returning.mode, sha256: json.sha256 },
+                rows: rows || returning.rows
+            };
+            return Boolean(rows);
+        }
+        if (returning && !returning.mode && json?.target === 'draft') {
+            previewReturn[type] = { ...returning, rows: rows || returning.rows };
+            return Boolean(rows);
+        }
         if (
             type === 'studnie' &&
             rows &&
@@ -1029,7 +1058,7 @@
                 window.selectCennikTab('preco');
             }
         }
-        await showVersionInGrid(type, v);
+        if (!(await showVersionInGrid(type, v))) return;
         if (!Object.prototype.hasOwnProperty.call(gridSnapshot, type)) return;
         versionEdit = { type: type, id: v.id, sha256: v.sha256 || '', label: labelOf(v) };
         setEditing(type, true);
@@ -1043,7 +1072,8 @@
     /** Odczyt konkretnej wersji: ten sam plik i parser co import XLSX. */
     async function readVersionRows(type, id) {
         var res = await fetch(API + '/' + encodeURIComponent(id) + '/export', {
-            headers: typeof authHeaders === 'function' ? authHeaders() : {}
+            headers: typeof authHeaders === 'function' ? authHeaders() : {},
+            cache: 'no-store'
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var buffer = await res.arrayBuffer();
@@ -1130,7 +1160,11 @@
             setOfferStamp(type, null);
             return false;
         }
+        var generation = gridLoadGeneration;
         var data = await fetchOfferVersionData(type, versionId);
+        if (type === 'studnie' && (generation !== gridLoadGeneration || versionAxis() === type)) {
+            return false;
+        }
         if (type === 'rury') {
             GRID_STATE.rury.write(data.rows || []);
         } else if (type === 'preco') {
@@ -1149,6 +1183,7 @@
     async function showVersionInGrid(type, v) {
         var cfg = GRID_STATE[type];
         if (!cfg || !document.getElementById(EDITOR_GRID[type] || '')) return;
+        var generation = ++gridLoadGeneration;
         // PRECO dzieli kontener ze studniami — najpierw przełącz widoczną zakładkę.
         if (type === 'preco' && typeof window.selectCennikTab === 'function') {
             var activeTab = document.querySelector('.cennik-tab.active');
@@ -1163,11 +1198,14 @@
         }
         setEditing(type, false);
         try {
-            cfg.write(await readVersionRows(type, v.id));
+            var rows = await readVersionRows(type, v.id);
+            if (generation !== gridLoadGeneration) return false;
+            cfg.write(rows);
         } catch (err) {
+            if (generation !== gridLoadGeneration) return false;
             toast('Błąd wczytania wersji: ' + err.message, 'error');
             restoreGrid(type);
-            return;
+            return false;
         }
         var render = /** @type {any} */ (window)[cfg.render];
         if (typeof render === 'function') render();
@@ -1175,6 +1213,7 @@
         showVersionBar(type, v);
         syncHeaderVersion(labelOf(v));
         watchVersionLock(type);
+        return true;
     }
 
     /* ===== Blokada siatki w trybie wersji ===== */
@@ -1213,6 +1252,11 @@
     /** Zwalnia wersję osi bez renderu — gdy siatkę zaraz przejmie druga oś. */
     function releaseEditorVersion(type) {
         if (!type) return;
+        if (previewReturn[type]) {
+            restoreGrid(type);
+            return;
+        }
+        gridLoadGeneration++;
         stopVersionLock();
         restoreGridDataOnly(type);
         var bar = document.getElementById('pv-version-bar');
@@ -1226,10 +1270,19 @@
     /** Powrót do danych edytora (snapshot) + odblokowanie wg trybu osi. */
     function restoreGrid(type) {
         var hadSnapshot = Object.prototype.hasOwnProperty.call(gridSnapshot, type);
-        clearVersionEdit();
+        var returning = previewReturn[type];
+        gridLoadGeneration++;
         stopVersionLock();
-        restoreGridDataOnly(type);
-        if (hadSnapshot) {
+        if (returning) {
+            GRID_STATE[type].write(returning.rows);
+            versionEdit = returning.mode;
+            setEditing(type, true);
+            delete previewReturn[type];
+        } else {
+            clearVersionEdit();
+            restoreGridDataOnly(type);
+        }
+        if (returning || hadSnapshot) {
             var cfg = GRID_STATE[type];
             var render = cfg ? /** @type {any} */ (window)[cfg.render] : null;
             if (typeof render === 'function') render();
@@ -1241,7 +1294,8 @@
             bar.removeAttribute('data-axis');
         }
         applyEditorLock(type);
-        syncHeaderVersion(activeVersionLabel(type));
+        if (returning?.version) showVersionBar(type, returning.version, true);
+        syncHeaderVersion(returning ? returning.header : activeVersionLabel(type));
     }
 
     /** Karta = wybór wersji; akcje żyją w jednym pasku nad listą. */
@@ -1905,7 +1959,7 @@
         }
         var json = await fetchSummary();
         var draft = json && json.types && json.types[type] && json.types[type].draft;
-        if (!draft && isEditing(type)) setEditing(type, false);
+        if (!draft && isEditing(type) && !versionEditMode(type)) setEditing(type, false);
         if (o.reloadGrid) reloadEditorGrid(type);
         await refreshStatusStrip(type);
     }
@@ -2888,6 +2942,9 @@
             Array.prototype.forEach.call(sections, function (el) {
                 el.inert = !editing;
             });
+            grid.querySelectorAll('.pricelist-flag-input').forEach(function (input) {
+                input.disabled = !editing;
+            });
             grid.inert = !editing && sections.length === 0;
             // Obrys siatki = ten sam sygnał co pasek „TRYB EDYCJI".
             grid.setAttribute('data-pv-editing', editing ? '1' : '0');
@@ -3063,7 +3120,8 @@
                 }
                 // Podgląd (moduł oferty) = cennik obowiązujący; szkic widać tylko
                 // w edycji (hub #/cennik) — inaczej pasek kłamałby o źródle siatki.
-                var editingGrid = isPricelistEditing(stripType);
+                var editingGrid =
+                    stripType === 'studnie' ? isEditing(stripType) : isPricelistEditing(stripType);
                 // A5: siatka pokazuje szkic, nie cennik obowiązujący — musi to być widoczne.
                 if (data.draft && editingGrid) {
                     parts.push(
@@ -3107,7 +3165,9 @@
                         );
                     } else {
                         parts.push(
-                            '<span class="badge badge-ok" title="Podgląd w module oferty: siatka pokazuje cennik obowiązujący, z którego liczy nowa oferta.">◉ Podgląd cennika oferty</span>'
+                            isCennikHost() && stripType === 'studnie'
+                                ? '<span class="badge badge-ok">◉ Podgląd zapisanej wersji Studni</span>'
+                                : '<span class="badge badge-ok" title="Podgląd w module oferty: siatka pokazuje cennik obowiązujący, z którego liczy nowa oferta.">◉ Podgląd cennika oferty</span>'
                         );
                     }
                 }

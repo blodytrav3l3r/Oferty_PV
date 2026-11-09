@@ -1,20 +1,60 @@
-/* ===== PRZEŁĄCZANIE POLA MAGAZYNU ===== */
-function toggleMagazynField(el, field, id) {
+/* ===== POLA DOSTĘPNOŚCI ===== */
+function setStudnieAvailability(input, field, id) {
+    const allowed = [
+        'active',
+        'magazynWL',
+        'magazynKLB',
+        'formaStandardowa',
+        'formaStandardowaKLB'
+    ];
+    if (!allowed.includes(field)) return;
     const product = /** @type {any} */ (
         typeof getStudnieProductById === 'function'
             ? getStudnieProductById(id)
             : studnieProducts.find((p) => p.id === id)
     );
     if (!product) return;
-    const newVal = product[field] === 1 || product[field] === true ? 0 : 1;
+    if (window.pricelistVersions?.isEditing?.('studnie') !== true) {
+        input.checked = product[field] === 1 || product[field] === true;
+        return;
+    }
+    const newVal = input.checked ? 1 : 0;
     window.studnieProducts = studnieProducts.map((p) =>
         p === product ? { ...p, [field]: newVal } : p
     );
 
-    // Natychmiastowa aktualizacja UI bez pełnego re-renderu
-    el.textContent = String(newVal);
-    el.style.color = newVal === 1 ? 'var(--success-hover)' : 'var(--danger-hover)';
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
+}
 
+function setStudnieCategoryAvailability(input) {
+    if (window.pricelistVersions?.isEditing?.('studnie') !== true) return;
+    const field = input.dataset.field;
+    const allowed = [
+        'active',
+        'magazynWL',
+        'magazynKLB',
+        'formaStandardowa',
+        'formaStandardowaKLB'
+    ];
+    if (!allowed.includes(field)) return;
+    const group = input.closest('tbody');
+    if (!group) return;
+    const checkboxes = [
+        ...group.querySelectorAll(
+            `input[data-action="setStudnieAvailability"][data-field="${field}"]`
+        )
+    ];
+    const ids = new Set(checkboxes.map((checkbox) => checkbox.dataset.id));
+    if (ids.size === 0) return;
+    const value = input.checked ? 1 : 0;
+    window.studnieProducts = studnieProducts.map((product) =>
+        ids.has(product.id) ? { ...product, [field]: value } : product
+    );
+    checkboxes.forEach((checkbox) => {
+        checkbox.checked = input.checked;
+    });
+    input.indeterminate = false;
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
 }
@@ -77,5 +117,6 @@ function editStudnieCell(el, field, id) {
 }
 
 /* ===== Rejestracja globali ===== */
-window.toggleMagazynField = toggleMagazynField;
+window.setStudnieAvailability = setStudnieAvailability;
+window.setStudnieCategoryAvailability = setStudnieCategoryAvailability;
 window.editStudnieCell = editStudnieCell;

@@ -22,6 +22,10 @@ function updateStudnieSaveBtn() {
         window.pricelistVersions && typeof window.pricelistVersions.saveButtonMeta === 'function'
             ? window.pricelistVersions.saveButtonMeta('studnie')
             : { editing: true, label: 'Zapisz', title: 'Zapisz zmiany w cenniku' };
+    const readonlyState = document.getElementById('studnie-pricelist-readonly-state');
+    const dirtyState = document.getElementById('studnie-pricelist-dirty-state');
+    if (readonlyState) readonlyState.hidden = meta.editing;
+    if (dirtyState) dirtyState.hidden = !_studniePricelistDirty;
     btn.disabled = !meta.editing;
     btn.title = meta.title;
     btn.innerHTML = _studniePricelistDirty

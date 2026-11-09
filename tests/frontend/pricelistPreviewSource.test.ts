@@ -25,9 +25,11 @@ describe('cennik w ofercie: podgląd z cennika oferty', () => {
         expect(globals).toMatch(/pvStudnie\.applyOfferPricelist\('studnie', studnieOfferStamp\)/);
         // Brak pieczątki / błąd pobrania wersji → obowiązujący.
         expect(globals).toContain("loadStudnieProducts({ source: 'active' })");
-        expect(globals).toMatch(
-            /if \(axisEditing\('studnie'\)\) \{\s*window\.studnieProducts = await loadStudnieProducts\(\);/
+        expect(globals).toContain(
+            "const editingStudnie = pvStudnie?.isEditing?.('studnie') === true;"
         );
+        expect(globals).toContain('&& !_studniePricelistDirty)');
+        expect(globals).toContain('await loadGridRows(undefined, true);');
         // Powrót z cennika nie nadpisuje katalogu oferty wersją ACTIVE.
         expect(globals).toMatch(/!studnieOfferStamp &&/);
     });
@@ -51,7 +53,9 @@ describe('cennik w ofercie: podgląd z cennika oferty', () => {
         expect(panel).toContain('function isPricelistEditing(type)');
         expect(panel).toContain('return isEditing(type) || isCennikHost();');
         expect(panel).toContain('isPricelistEditing: isPricelistEditing');
-        expect(panel).toContain('var editingGrid = isPricelistEditing(stripType);');
+        expect(panel).toContain(
+            "stripType === 'studnie' ? isEditing(stripType) : isPricelistEditing(stripType);"
+        );
         expect(panel).toMatch(/if \(data\.draft && editingGrid\) \{/);
         expect(panel).toContain('Podgląd cennika oferty');
         // Pasek mówi, że siatka pokazuje cennik oferty (wersja pieczątki).

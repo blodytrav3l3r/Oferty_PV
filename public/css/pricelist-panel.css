@@ -248,6 +248,92 @@ body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) tbody td {
     padding: 0.4rem 0.5rem;
 }
 
+#studnie-pricelist-body td.pricelist-flag-cell {
+    padding: 0 !important;
+}
+
+.pricelist-flag-target {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    margin-inline: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    cursor: pointer;
+}
+
+.pricelist-flag-target:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-border-medium);
+}
+
+.pricelist-flag-target:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.pricelist-category-target {
+    flex: none;
+    margin-inline: 0;
+}
+
+.pricelist-category-controls {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-left: auto;
+}
+
+.pricelist-category-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pricelist-flag-input {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    accent-color: var(--success-hover);
+    cursor: pointer;
+}
+
+.pricelist-flag-target:has(.pricelist-flag-input:disabled),
+.pricelist-flag-input:disabled {
+    cursor: default;
+}
+
+.pricelist-flag-target:has(.pricelist-flag-input:disabled):hover {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+.pricelist-state-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+}
+
+.pricelist-state-badge--dirty {
+    border-color: var(--warn);
+    color: var(--warn);
+}
+
+.pricelist-state-badge[hidden] {
+    display: none;
+}
+
 /* PRECO: nagłówek DN jak nagłówek kategorii w rurach/studniach. */
 body.pv-cennik-host .preco-accordion-head {
     padding: 0.55rem 0.8rem;
@@ -272,6 +358,10 @@ body.pv-cennik-host #studnie-pricelist-body .preco-table {
 body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) {
     width: 100%;
     min-width: 1080px;
+}
+
+body.pv-cennik-host #studnie-pricelist-body .pricelist-components-table {
+    min-width: 1600px;
 }
 
 body.pv-cennik-host .preco-table {
