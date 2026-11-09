@@ -4,6 +4,20 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.9 (2026-11-09)
+
+### Features
+
+- **studnie:** pola dostępności (DOST., M.WL, M.KLB, FS.WL, FS.KLB) w siatce cennika
+- **studnie:** kontrolka kategorii zaznacza widoczne elementy grupy
+
+### Bug Fixes
+
+- **studnie:** podgląd zapisanej wersji nie gubi roboczej siatki i trybu edycji
+- **studnie:** odczyt osi nie nadpisuje wierszy podczas podglądu wersji
+- **studnie:** pomiń nieaktualne wczytania wersji i blokuj edycję pól poza trybem edycji
+- **studnie:** zgłoś brak potwierdzenia zapisu cennika zamiast cichego sukcesu
+
 ### [1.56.8](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.5...v1.56.8) (2026-11-08)
 
 ### Features

@@ -10,7 +10,7 @@ REM (Authenticated Users, Users), przez ktore kazdy lokalny user czyta sekrety.
 REM   Bez --restore-dir: zapisuje snapshot ACL, nadaje jawne wpisy, wycina dziedziczenie.
 REM   Z --restore-dir: przywraca snapshot i konczy.
 REM Zasieg: lokalny Windows dev. Na serwerze prod/legacy najpierw audyt czytelnikow.
-REM  Wersja: 1.56.8
+REM  Wersja: 1.56.9
 setlocal ENABLEDELAYEDEXPANSION
 
 if /i "%1"=="--restore-dir" (

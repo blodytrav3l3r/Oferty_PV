@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.8
+REM  Wersja: 1.56.9
 REM Rola: Pomocnicza implementacja startu Docker Compose dla start-docker.bat.
 REM Uzycie: start-postgres.bat
 REM Uruchamia: docker compose up --detach --build dla postgres i app.
