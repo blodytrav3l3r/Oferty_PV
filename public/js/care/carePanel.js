@@ -192,7 +192,9 @@ function notifyRangeChange() {
 
 setQueueSort(careStoreGet('sok-care-sort') || 'sla');
 setQueueView(careStoreGet('sok-care-view') || 'list');
-setQueueRange(careStoreGet('sok-care-range') || 'all');
+/* UI nie ma przycisku „Wszystko" — 'all' to legacy stan; domyslnie 7 dni. */
+const storedRange = careStoreGet('sok-care-range');
+setQueueRange(storedRange === 'all' ? '7d' : storedRange || '7d');
 
 function setText(id, v) {
     const el = document.getElementById(id);

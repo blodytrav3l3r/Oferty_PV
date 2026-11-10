@@ -304,8 +304,8 @@ function followUpRangeQuery() {
     try {
         const raw =
             typeof localStorage !== 'undefined' ? localStorage.getItem('sok-care-range') : null;
-        const days = raw === '7d' ? 7 : raw === '30d' ? 30 : raw === '90d' ? 90 : 0;
-        if (!days) return '';
+        /* Brak zapisu lub legacy 'all' → domyslnie 7 dni (zgodnie z panelem opieki). */
+        const days = raw === '30d' ? 30 : raw === '90d' ? 90 : 7;
         const nowMin = Math.floor(Date.now() / 60000) * 60000;
         const to = new Date(nowMin).toISOString();
         const from = new Date(nowMin - days * 86400000).toISOString();
