@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.12 (2026-11-10)
+
+### Features
+
+- **ui:** panel opieki i KPI pulpitu startują z zakresem 7 dni; zapis legacy `all` migruje do `7d` przy odczycie stanu
+
+### Bug Fixes
+
+- **ui:** przyciski edytora kontaktów klienta w jednej prawej szynie — `Dodaj osobę` wyrównany do krawędzi sekcji, usunięty podwójny odstęp między kartami osób
+
 ### 1.56.11 (2026-11-10)
 
 ### Bug Fixes

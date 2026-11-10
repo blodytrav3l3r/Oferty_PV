@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.11
+REM  Wersja: 1.56.12
 REM ===========================================================
 REM  dev.bat - Alias do start.bat w trybie developerskim
 REM  Zachowany dla kompatybilnosci z przyzwyczajeniami.
