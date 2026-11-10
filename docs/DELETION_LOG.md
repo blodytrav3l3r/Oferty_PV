@@ -363,3 +363,53 @@ Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `Authentic
 | Plik                     | Operacja                                                                                                                                                                                                                                                                                                            | Uzasadnienie                                                                         |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `docs/baseline-https.md` | `git rm` (jednorazowa checklista migracji HTTPS, zakończona). Checklisty `DEPLOYMENT.md` §7.1–§7.6 przepięte na własne sekcje (§7.4/§7.5) zamiast martwych odwołań do §§3–4 usuwanego pliku; wpis usunięty z `scripts/auto-cache-bust.mjs` (MD_FILES). Cross-linki instalacji już istniały obustronnie — bez zmian. | Migracja HTTPS dawno wdrożona (`DEPLOYMENT.md` §5/§7.1 normatywnie); historia w Git. |
+
+## [2026-11-10] Porządki w skryptach BAT (refactor(bat))
+
+Zakres: usunięcie duplikacji logiki builda i pełnej redundantności `setup-ai.bat`, ujednolicenie nagłówków i zależności od katalogu roboczego. Zachowane wszystkie 4 aliasy startowe (`dev.bat`, `prod.bat`, `start-dev.bat`, `start-docker.bat`) — udokumentowane skróty produktu (`README.md`, ADR-006).
+
+### Pliki usunięte
+
+| Plik           | Powód                                                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setup-ai.bat` | 38 linii duplikatu `package.json:52` (`"ai:setup": "ts-node scripts/setupAi.ts"`). Wpis usunięty z `scripts/bat-files.mjs`, liczba plików BAT 15 → 14 w teście kontraktu. |
+
+### Files Consolidated
+
+| Pliki                            | Operacja                                                                                                                                                             | Uzasadnienie                                                                                                                         |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `build.bat`                      | ciało (`prisma generate`, czyszczenie `dist`, `tsc`, `xcopy`) zastąpione `call npm run build` + kontrola `dist\server.js`                                            | Jedno źródło prawdy builda (`package.json:12`), używane też przez `Dockerfile:44`. `xcopy` nie obsługiwał symlinka `dist/generated`. |
+| `start.bat`                      | usunięty martwy `if not exist "data" mkdir data` (linia 121); ostrzeżenie portu pokazuje nazwę procesu (`Get-Process`), a domyślna odpowiedź to `T` tylko dla `node` | Duplikat linii 69; użytkownik wie, który proces zatrzymuje, i nie zabija obcej usługi (np. `com.docker.backend`) przez Enter.        |
+| `start-postgres.bat`             | dwa `where docker.exe` scalone w jedną bramę z jednym komunikatem                                                                                                    | Jedna przyczyna błędu = jeden komunikat.                                                                                             |
+| `prod.bat`                       | `call start.bat --prod %*` → `call "%~dp0start.bat" --prod %*`                                                                                                       | Brak zależności od CWD/PATH, brak ryzyka uruchomienia obcego `start.bat`.                                                            |
+| `install.bat`                    | dodany `pause` na końcu                                                                                                                                              | Dwuklik nie zamyka okna przed komunikatem „Uruchom start.bat".                                                                       |
+| `install-new-pc.bat`             | dodany `pause` + wskazanie `start-docker.bat` po sukcesie                                                                                                            | `scripts/setup-new-pc.ps1` nie pauzuje na końcu.                                                                                     |
+| `scripts/harden-local-perms.bat` | `REM  Wersja:` przeniesione na linię 2 (spójność z pozostałymi plikami)                                                                                              | Jeden standard nagłówka.                                                                                                             |
+
+### Documentation Updates
+
+| Plik                                        | Zmiana                                                                                                                                        |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`                                 | Dwie częściowe tabele skryptów scalone w jedną (14 wierszy: kiedy użyć, warstwa, co robi, zmienia stan); `setup-ai.bat` → `npm run ai:setup`. |
+| `tests/scripts/startNativeWindows.test.cjs` | Liczba plików BAT 15 → 14; nowe asercje: `build.bat` deleguje do `npm run build`, każdy `.bat` wymieniony w README.                           |
+| `scripts/bat-files.mjs`                     | Usunięty wpis `setup-ai.bat`.                                                                                                                 |
+
+### Impact
+
+| Wskaźnik            | Wartość                                              |
+| ------------------- | ---------------------------------------------------- |
+| Pliki usunięte      | 1 (`setup-ai.bat`)                                   |
+| Pliki zmodyfikowane | 10                                                   |
+| Pliki BAT           | 15 → 14                                              |
+| Linie usunięte      | ok. 78 (35 build.bat + 38 setup-ai.bat + 5 porządki) |
+| Nowe pliki `.bat`   | 0                                                    |
+
+### Testing
+
+- [x] `node tests/scripts/startNativeWindows.test.cjs` — 12/12 (kontrakt 14 plików, nagłówki, ASCII, delegacje, README)
+- [x] `node tests/scripts/installLinuxServer.test.cjs` — `start-postgres.bat` bez regresji
+- [x] `node tests/scripts/postgresOnlySurface.test.cjs` — 317 plików runtime, bez SQLite
+- [x] `npm run version:check` + `npm run encoding:check`
+- [x] `build.bat` ręcznie — exit 0, `dist\server.js` i `dist\generated\prisma-postgres` obecne
+- [x] `npm run validate` + `npm run format`
+- [ ] Smoke `start-postgres.bat` / `start.bat` — wymaga Dockera i bazy z danymi (poza maszyną agenta)

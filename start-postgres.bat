@@ -31,19 +31,11 @@ if not exist ".sok-postgres-installed" (
 )
 
 where docker.exe >nul 2>nul
-if errorlevel 1 (
-    if exist "%ProgramFiles%\Docker\Docker\resources\bin\docker.exe" (
-        set "PATH=%ProgramFiles%\Docker\Docker\resources\bin;%PATH%"
-    ) else (
-        echo [BLAD] Brak Docker CLI. Uruchom Docker Desktop lub ponownie zainstaluj Docker Desktop.
-        pause
-        exit /b 1
-    )
-)
+if errorlevel 1 if exist "%ProgramFiles%\Docker\Docker\resources\bin\docker.exe" set "PATH=%ProgramFiles%\Docker\Docker\resources\bin;%PATH%"
 
 where docker.exe >nul 2>nul
 if errorlevel 1 (
-    echo [BLAD] Nie mozna odnalezc Docker CLI w PATH ani standardowej lokalizacji.
+    echo [BLAD] Brak Docker CLI w PATH ani w standardowej lokalizacji Docker Desktop.
     pause
     exit /b 1
 )

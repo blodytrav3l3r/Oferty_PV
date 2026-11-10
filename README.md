@@ -351,33 +351,28 @@ npm run deploy:check                                               # smoke check
 
 ## Skrypty startowe (.bat)
 
-| Kiedy użyć                | Plik                 | Co robi                                                                                        |
-| ------------------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
-| Pierwsza instalacja na PC | `install-new-pc.bat` | Przygotowuje Docker Desktop, PostgreSQL 18 i S.O.K. na Windows 10/11.                          |
-| Kolejny start z Dockerem  | `start-docker.bat`   | Zalecany start istniejącej instalacji Docker Compose; zachowuje dane wolumenu.                 |
-| Praca nad kodem i testami | `start-dev.bat`      | Uruchamia kod z repozytorium, auto-reload i osobny testowy PostgreSQL w Dockerze.              |
-| Praca bez bazy testowej   | `start-native.bat`   | Uruchamia kod z repozytorium na przygotowanej lokalnej bazie PostgreSQL; pomija migracje/seed. |
+| Kiedy użyć                           | Plik                             | Warstwa | Co robi                                                                                                                | Zmienia stan                                                                             |
+| ------------------------------------ | -------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Pierwsza instalacja na PC            | `install-new-pc.bat`             | L1      | Przygotowuje Docker Desktop, PostgreSQL 18 i S.O.K. na Windows 10/11.                                                  | Konfiguruje Docker; nie usuwa wolumenów.                                                 |
+| Instalacja dev bez Dockera           | `install.bat`                    | L1      | Tworzy `.env`, instaluje zależności, generuje klienta Prisma, migruje i seeduje bazę. Opcja `--skip-seed` pomija seed. | Zapisuje `.env`; migruje i seeduje bazę z `DATABASE_URL`.                                |
+| Kolejny start z Dockerem             | `start-docker.bat`               | L2      | Zalecany start istniejącej instalacji Docker Compose; zachowuje dane wolumenu.                                         | Przebudowuje obraz aplikacji.                                                            |
+| Wewnętrznie przez `start-docker.bat` | `start-postgres.bat`             | L1      | Sprawdza Docker CLI, daemon, konfigurację Compose i wolumen, potem `compose up --detach --build --wait`.               | Przebudowuje kontenery; danych nie resetuje.                                             |
+| Praca nad kodem i testami            | `start-dev.bat`                  | L2      | Uruchamia kod z repozytorium, auto-reload i osobny testowy PostgreSQL w Dockerze.                                      | Startuje testowy PostgreSQL Compose na porcie `55440`.                                   |
+| Praca bez bazy testowej              | `start-native.bat`               | L1      | Uruchamia kod z repozytorium na przygotowanej lokalnej bazie PostgreSQL; pomija migracje/seed.                         | Uruchamia serwer na przygotowanej bazie.                                                 |
+| Ręczny start na bazie z `.env`       | `start.bat`                      | L1      | Preflight Node.js, zależności i klienta Prisma, `ensure-db.bat`, kontrola portu 3000, watchdog do 5 restartów.         | Może zmigrować lub seedować bazę; może zatrzymać proces na porcie 3000 po potwierdzeniu. |
+| Skrót trybu developerskiego          | `dev.bat`                        | L2      | Wywołuje `start.bat --dev`.                                                                                            | Jak `start.bat`.                                                                         |
+| Skrót trybu produkcyjnego            | `prod.bat`                       | L2      | Wywołuje `start.bat --prod`.                                                                                           | Jak `start.bat`.                                                                         |
+| Wewnętrznie przez `start.bat`        | `scripts/ensure-db.bat`          | L3      | Sprawdza starą instancję serwera, `check-db.js`, `prisma migrate deploy` lub seed (do 3 prób).                         | Migruje lub seeduje bazę.                                                                |
+| Build produkcyjny                    | `build.bat`                      | L1      | Wywołuje `npm run build` i weryfikuje `dist\server.js`.                                                                | Usuwa i odtwarza `dist`.                                                                 |
+| Wdrożenie wersji                     | `deploy.bat`                     | L1      | Wywołuje `scripts/deploy.mjs`; `--dry-run` pokazuje plan.                                                              | Zmienia wskazane wdrożenie.                                                              |
+| Powrót do poprzedniej wersji         | `rollback.bat`                   | L1      | Wywołuje `scripts/rollback.mjs`.                                                                                       | Przywraca wersję; może odtworzyć bazę z kopii.                                           |
+| Utwardzenie lokalnych uprawnień      | `scripts/harden-local-perms.bat` | L3      | Ogranicza ACL `.env` i `data\` do właściciela, SYSTEM i Administratorów; `--restore-dir` przywraca snapshot.           | Zmienia ACL plików.                                                                      |
 
 Oba tryby wymagają Node.js z npm, zależności zainstalowanych przez `npm ci` i wcześniej przygotowanego lokalnego zestawu PostgreSQL 18 w `data/perf/sok-native-pg18-*` z bazą `sok_dev`. Korzystają z tej samej lokalnej bazy, sprawdzają jej gotowość i pomijają migracje oraz seed. `start-dev.bat` dodatkowo uruchamia izolowaną bazę testową Compose na porcie `55440`; Docker Desktop musi działać, a `.env` musi zawierać `POSTGRES_TEST_*`. Baza testowa pozostaje dostępna po zamknięciu S.O.K.; zatrzymasz ją poleceniem `docker compose -f docker-compose.postgres-test.yml stop postgres-test`. Port aplikacji domyślnie wynosi `3000`; gdy jest zajęty, launcher wybiera pierwszy wolny port do `3100` i wypisuje adres. Przy zmianie trybu zatrzymaj najpierw poprzednią instancję.
 
 `start.bat` jest osobnym, ręcznym trybem: używa `DATABASE_URL` z `.env`, a `ensure-db.bat` może wykonać migracje lub seed. `start-native.bat` sam konfiguruje połączenie z przygotowaną lokalną bazą i pomija migracje oraz seed. `dev.bat` i `prod.bat` pozostają skrótami do trybów `start.bat`.
 
-Pozostałe skrypty obsługują konfigurację ręczną i utrzymanie:
-
-| Skrypt                           | Opis                                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `start.bat`                      | Ręczny start z `DATABASE_URL` z `.env`; sprawdza i przygotowuje bazę przez `ensure-db.bat`. |
-| `dev.bat` / `prod.bat`           | Skróty do odpowiednich trybów `start.bat`.                                                  |
-| `start-postgres.bat`             | Pomocnicza implementacja startu Dockera, wywoływana przez `start-docker.bat`.               |
-| `install.bat`                    | Ręczna instalacja z Node.js i dostępnym PostgreSQL. Opcja `--skip-seed` pomija seed.        |
-| `build.bat`                      | Kompiluje TypeScript i kopiuje klienta Prisma do `dist`.                                    |
-| `deploy.bat`                     | Wdraża wskazaną wersję aplikacji.                                                           |
-| `rollback.bat`                   | Przywraca wskazaną wersję aplikacji.                                                        |
-| `setup-ai.bat`                   | Uruchamia diagnostykę i konfigurację modułu AI/ML.                                          |
-| `scripts/ensure-db.bat`          | Sprawdza i przygotowuje bazę dla `start.bat`.                                               |
-| `scripts/harden-local-perms.bat` | Zmienia lokalne uprawnienia Windows do pliku `.env` i katalogu `data`.                      |
-
-Pliki pomocnicze `start-postgres.bat` i `scripts/ensure-db.bat` zwykle uruchamiają inne launchery. Do codziennej pracy wybieraj wiersz z tabeli „Kiedy użyć”.
+Kolumna „Warstwa": L1 to plik uruchamiany przez użytkownika (banner, pytania, `pause`), L2 to skrót bez logiki, L3 to wewnętrzny helper bez `pause` i bez bannera. Konfiguracja AI/ML: `npm run ai:setup`.
 
 ---
 

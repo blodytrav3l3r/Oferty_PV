@@ -36,5 +36,8 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo.
+echo [OK] Instalacja zakonczona. Kolejny start: start-docker.bat
+pause
 endlocal
 exit /b 0

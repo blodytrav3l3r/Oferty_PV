@@ -8,7 +8,6 @@ export const VERSIONED_BAT_FILES = [
     'rollback.bat',
     'scripts/ensure-db.bat',
     'scripts/harden-local-perms.bat',
-    'setup-ai.bat',
     'start-dev.bat',
     'start-docker.bat',
     'start-native.bat',

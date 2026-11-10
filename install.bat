@@ -172,4 +172,5 @@ echo.
 echo UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:
 echo   npm run restore data/backups/nazwa_pliku.dump
 echo.
+pause
 endlocal

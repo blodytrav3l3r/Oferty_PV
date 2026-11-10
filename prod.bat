@@ -10,5 +10,5 @@ REM Uruchamia: start.bat --prod.
 REM Wplyw: Jak start.bat; moze wykonac migracje lub seed bazy z DATABASE_URL.
 REM ===========================================================
 
-call start.bat --prod %*
+call "%~dp0start.bat" --prod %*
 exit /b %errorlevel%

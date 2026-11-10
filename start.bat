@@ -99,8 +99,14 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000 " ^| findstr "LISTENIN
 )
 
 if defined PORT_PID (
-    echo [UWAGA] Port 3000 zajety przez PID !PORT_PID!
-    set /p "KILL=Czy zatrzymac ten proces i kontynuowac? (T/N) [T]: "
+    set "PROC_NAME=?"
+    for /f "tokens=1" %%n in ('powershell -NoProfile -Command "(Get-Process -Id !PORT_PID! -ErrorAction SilentlyContinue).ProcessName" 2^>nul') do set "PROC_NAME=%%n"
+    echo [UWAGA] Port 3000 zajety przez PID !PORT_PID! ^(!PROC_NAME!^)
+    REM Domyslne T tylko dla node - cudzy proces (np. com.docker.backend) wymaga jawnego T.
+    set "KILL_DEFAULT=N"
+    echo !PROC_NAME! | findstr /i "node" >nul && set "KILL_DEFAULT=T"
+    set /p "KILL=Czy zatrzymac ten proces i kontynuowac? (T/N) [!KILL_DEFAULT!]: "
+    if not defined KILL set "KILL=!KILL_DEFAULT!"
     if /i "!KILL!"=="N" (
         echo [INFO] Kontynuuje pomimo zajetego portu...
     ) else (
@@ -116,9 +122,6 @@ echo ===========================================================
 echo   Uruchamiam aplikacje (Ctrl+C aby zatrzymac)
 echo ===========================================================
 echo.
-
-REM P0 watchdog: data\ musi istniec przed logowaniem
-if not exist "data" mkdir data
 
 set "MAX_RESTARTS=5"
 set "RESTART_DELAY=5"

@@ -20,7 +20,7 @@ describe('native Windows launcher contract', () => {
                 .map((entry) => path.join(projectRoot, 'scripts', entry.name))
         ];
 
-        assert.equal(batFiles.length, 15);
+        assert.equal(batFiles.length, 14);
         const appVersion = fs.readFileSync(path.join(projectRoot, 'VERSION'), 'utf8').trim();
         for (const batFile of batFiles) {
             const launcher = fs.readFileSync(batFile, 'utf8');
@@ -62,8 +62,34 @@ describe('native Windows launcher contract', () => {
         const readLauncher = (name) => fs.readFileSync(path.join(projectRoot, name), 'utf8');
 
         assert.match(readLauncher('dev.bat'), /start\.bat" --dev %\*/i);
-        assert.match(readLauncher('prod.bat'), /start\.bat --prod %\*/i);
+        assert.match(readLauncher('prod.bat'), /start\.bat" --prod %\*/i);
         assert.match(readLauncher('start-docker.bat'), /start-postgres\.bat"/i);
+    });
+
+    it('builds through the canonical npm build script', () => {
+        const launcher = fs.readFileSync(path.join(projectRoot, 'build.bat'), 'utf8');
+
+        assert.match(launcher, /call npm run build/i);
+        assert.doesNotMatch(launcher, /xcopy\s+\/e\s+\/i\s+\/y\s+"generated/i);
+        assert.doesNotMatch(launcher, /npx tsc/i);
+    });
+
+    it('describes every BAT entry point in README', () => {
+        const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+        const batFiles = [
+            ...fs
+                .readdirSync(projectRoot, { withFileTypes: true })
+                .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.bat'))
+                .map((entry) => entry.name),
+            ...fs
+                .readdirSync(path.join(projectRoot, 'scripts'), { withFileTypes: true })
+                .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.bat'))
+                .map((entry) => `scripts/${entry.name}`)
+        ];
+
+        for (const batFile of batFiles) {
+            assert.ok(readme.includes(path.basename(batFile)), `${batFile} missing in README`);
+        }
     });
 
     it('documents the separate local database startup flows', () => {

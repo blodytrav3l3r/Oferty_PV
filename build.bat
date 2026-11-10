@@ -1,10 +1,10 @@
 @echo off
 REM  Wersja: 1.56.10
 REM ===========================================================
-REM  build.bat - Budowanie production bundle (final)
-REM Rola: Budowanie produkcyjnych plikow aplikacji.
+REM  build.bat - Budowanie production bundle (delegacja do npm)
+REM Rola: Budowanie produkcyjnych plikow aplikacji w dist\.
 REM Uzycie: build.bat
-REM Uruchamia: Prisma generate, TypeScript compile i kopiuje klienta Prisma.
+REM Uruchamia: npm run build (prisma generate, czyszczenie dist, tsc, kopiowanie klienta Prisma).
 REM Wplyw: Usuwa i odtwarza dist; nie zmienia bazy danych.
 REM ===========================================================
 
@@ -18,60 +18,42 @@ echo   S.O.K. - Budowanie produkcyjne v%APP_VERSION%
 echo ===========================================================
 echo.
 
-REM Walidacja
-where node >nul 2>nul || (
-    echo [BLAD] Brak Node.js.
+REM ---------- 1. Node.js ----------
+where node >nul 2>nul
+if errorlevel 1 (
+    echo [BLAD] Brak Node.js. Uruchom install.bat.
     pause
     exit /b 1
 )
 
-REM npm ci jesli brak node_modules
+REM ---------- 2. Zaleznosci (instaluje je install.bat) ----------
 if not exist "node_modules" (
-    echo [INFO] npm ci...
-    call npm ci --no-audit --no-fund
-    if errorlevel 1 (
-        echo [BLAD] npm ci nie powiodl sie.
-        pause
-        exit /b 1
-    )
-)
-echo [OK] Dependencies OK
-
-REM Prisma client
-echo [INFO] Prisma generate...
-call npx prisma generate
-if errorlevel 1 (
-    echo [BLAD] prisma generate
+    echo [BLAD] Brak node_modules. Uruchom install.bat.
     pause
     exit /b 1
 )
-echo [OK] Prisma client
 
-REM TypeScript compile
-echo [INFO] TypeScript compile...
-REM Clean dist: tsc nigdy nie usuwa, stare .js po rename/delete wisialyby w prod.
-if exist "dist" rmdir /s /q "dist"
-call npx tsc
+REM ---------- 3. Build (jedno zrodlo prawdy: package.json) ----------
+echo [INFO] npm run build...
+call npm run build
 if errorlevel 1 (
-    echo [BLAD] TypeScript compile.
+    echo [BLAD] Build nie powiodl sie. Sprawdz komunikaty powyzej.
     pause
     exit /b 1
 )
-echo [OK] dist\
 
-REM Kopiuj Prisma Client do dist - tsc nie kopiuje generated/ (src/prismaClient.ts importuje ../generated/prisma-postgres)
-echo [INFO] Kopiowanie Prisma Client...
-if not exist "dist\generated" mkdir "dist\generated"
-xcopy /e /i /y "generated\prisma-postgres" "dist\generated\prisma-postgres" >nul
-if errorlevel 1 (
-    echo [BLAD] Kopiowanie Prisma Client nie powiodlo sie.
+if not exist "dist\server.js" (
+    echo [BLAD] Brak dist\server.js po buildzie.
     pause
     exit /b 1
 )
-echo [OK] dist\generated\prisma-postgres
 
+echo [OK] dist\server.js
+echo.
 echo ===========================================================
 echo   Build zakonczony
 echo ===========================================================
+echo.
+echo [INFO] Produkcja: prod.bat
 pause
-endlocal
+exit /b 0
