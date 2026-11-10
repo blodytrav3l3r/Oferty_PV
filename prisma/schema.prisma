@@ -274,6 +274,7 @@ model client_contacts_rel {
   email           String?
   position        String? @default("")
   isPrimary       Int     @default(0)
+  excluded        Boolean @default(false)
   createdByUserId String?
   createdAt       String?
   updatedAt       String?

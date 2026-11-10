@@ -129,6 +129,14 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(css).toContain('.ccc-head');
     });
 
+    test('katalog: osoba pomijana startuje odznaczona w pickerze oferty', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('ccc-include');
+        expect(src).toContain("r.excluded ? '' : ' checked'");
+        expect(src).toContain('excluded: !!(includeBox && !includeBox.checked)');
+        expect(src).toContain('rows.some((r) => r.excluded)');
+    });
+
     test('katalog N-osob: edytor .ccc-* z ★ bez pola stanowiska i bez innerHTML na danych', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('ccc-row');

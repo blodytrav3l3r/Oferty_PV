@@ -1856,6 +1856,35 @@ button.btn-order-save:hover {
 .ccc-head .btn {
     margin-left: auto;
 }
+/* „Do oferty”: prawa szyna head, przed „Usuń osobę”. */
+.ccc-include {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.ccc-include-box {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+.ccc-head .ccc-include + .btn {
+    margin-left: 0.5rem;
+}
+/* Kompaktowe przyciski edytora: karta osoby ma być lżejsza od stopki. */
+.clients-edit-contacts .btn {
+    padding: 0.2rem 0.6rem;
+    font-size: var(--fs-base);
+    line-height: 1.5;
+}
+.ccc-row--excluded .ccc-grid {
+    opacity: 0.55;
+}
 .ccc-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

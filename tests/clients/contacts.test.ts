@@ -102,6 +102,7 @@ const EXISTING = [
         email: 'jan@firma.pl',
         position: '',
         isPrimary: 1,
+        excluded: true,
         createdByUserId: 'user-id',
         createdAt: '2026-09-01T00:00:00.000Z',
         updatedAt: '2026-09-01T00:00:00.000Z'
@@ -114,6 +115,7 @@ const EXISTING = [
         email: null,
         position: 'Księgowość',
         isPrimary: 0,
+        excluded: false,
         createdByUserId: 'user-id',
         createdAt: '2026-09-02T00:00:00.000Z',
         updatedAt: '2026-09-02T00:00:00.000Z'
@@ -217,6 +219,27 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
             action: 'sync'
         });
         expect(searchCache.invalidateAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('excluded: zapis w update/create i odczyt w GET', async () => {
+        const app = createContactsApp();
+        const res = await request(app)
+            .put('/api/clients/c-1/contacts/sync')
+            .send({
+                contacts: [
+                    { id: 'k-1', name: 'Jan Kowalski', excluded: true },
+                    { name: 'Ewa Nowa', isPrimary: true }
+                ]
+            });
+        expect(res.status).toBe(200);
+        const m = mockPrisma();
+        expect(m.client_contacts_rel.update).toHaveBeenCalledWith({
+            where: { id: 'k-1' },
+            data: expect.objectContaining({ excluded: true })
+        });
+        expect(m.client_contacts_rel.create.mock.calls[0][0].data.excluded).toBe(false);
+        const get = await request(app).get('/api/clients/c-1/contacts');
+        expect(get.body.items[0].excluded).toBe(true);
     });
 
     it('puste wiersze wypadają; wiersz z telefonem bez nazwy → 400', async () => {
@@ -578,7 +601,8 @@ describe('Katalog kontaktów — migracja (realna persystencja)', () => {
                 'isPrimary',
                 'createdByUserId',
                 'createdAt',
-                'updatedAt'
+                'updatedAt',
+                'excluded'
             ]);
             const indexes = project.query<{ indexname: string }>(
                 `SELECT indexname FROM pg_indexes

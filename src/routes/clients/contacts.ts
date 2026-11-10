@@ -42,7 +42,8 @@ const contactEntrySchema = z.object({
     name: z.string().max(200).nullish(),
     phone: z.string().max(50).nullish(),
     email: emailField,
-    isPrimary: z.boolean().nullish()
+    isPrimary: z.boolean().nullish(),
+    excluded: z.boolean().nullish()
 });
 
 const contactsSyncSchema = z.object({
@@ -62,6 +63,7 @@ interface NormalizedContact {
     phone: string | null;
     email: string | null;
     isPrimary: boolean;
+    excluded: boolean;
 }
 
 function normalizeEntries(raw: unknown): NormalizedContact[] {
@@ -89,7 +91,8 @@ function normalizeEntries(raw: unknown): NormalizedContact[] {
             name: split.name,
             phone: split.phone,
             email,
-            isPrimary: r.isPrimary === true
+            isPrimary: r.isPrimary === true,
+            excluded: r.excluded === true
         });
     }
     return out;
@@ -115,6 +118,7 @@ router.get('/:clientId/contacts', requireAuth, READ_LIMITER, async (req, res) =>
             phone: contact.phone,
             email: contact.email,
             isPrimary: contact.isPrimary,
+            excluded: contact.excluded,
             createdByUserId: contact.createdByUserId,
             createdAt: contact.createdAt,
             updatedAt: contact.updatedAt
@@ -230,6 +234,7 @@ router.put(
                             phone: c.phone,
                             email: c.email,
                             isPrimary: primaryId !== null && idOf(i) === primaryId ? 1 : 0,
+                            excluded: c.excluded,
                             createdByUserId: authReq.user?.id ?? null,
                             createdAt: now,
                             updatedAt: now
@@ -243,6 +248,7 @@ router.put(
                                 phone: c.phone,
                                 email: c.email,
                                 isPrimary: primaryId !== null && c.id === primaryId ? 1 : 0,
+                                excluded: c.excluded,
                                 updatedAt: now
                             }
                         }));

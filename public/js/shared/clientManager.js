@@ -58,7 +58,8 @@ function splitCachedRow(r) {
         name: split.name,
         phone: split.phone,
         email: r.email || '',
-        isPrimary: !!r.isPrimary
+        isPrimary: !!r.isPrimary,
+        excluded: !!r.excluded
     };
 }
 
@@ -69,7 +70,7 @@ function catalogDisplayList(c) {
     const name = split.name;
     const phone = split.phone;
     if (!name && !phone && !(c.email || '')) return [];
-    return [{ id: null, name, phone, email: c.email || '', isPrimary: true }];
+    return [{ id: null, name, phone, email: c.email || '', isPrimary: true, excluded: false }];
 }
 
 function newContactId() {
@@ -126,7 +127,8 @@ async function fetchClientContactsOnce(clientId) {
                   name: item.name || '',
                   phone: item.phone || '',
                   email: item.email || '',
-                  isPrimary: !!item.isPrimary
+                  isPrimary: !!item.isPrimary,
+                  excluded: !!item.excluded
               }))
             : [];
         const entry = { list, ok: true, baseCatalog };
@@ -591,6 +593,25 @@ function catalogEditorRow(container, clientId, r) {
     const title = document.createElement('span');
     title.className = 'ccc-title';
     head.appendChild(title);
+    // „Do oferty”: trwała decyzja per osoba — odznaczona nie wczytuje się
+    // domyślnie do oferty (picker startuje bez niej).
+    const include = document.createElement('label');
+    include.className = 'ccc-include';
+    include.title = 'Odznacz, aby ta osoba nie wczytywała się domyślnie do oferty';
+    const includeBox = document.createElement('input');
+    includeBox.type = 'checkbox';
+    includeBox.className = 'ccc-include-box';
+    includeBox.checked = !(r && r.excluded);
+    includeBox.setAttribute('data-ccc', 'include');
+    includeBox.onclick = (e) => e.stopPropagation();
+    const includeCap = document.createElement('span');
+    includeCap.textContent = 'Do oferty';
+    include.appendChild(includeBox);
+    include.appendChild(includeCap);
+    const syncExcludedLook = () => row.classList.toggle('ccc-row--excluded', !includeBox.checked);
+    includeBox.onchange = syncExcludedLook;
+    syncExcludedLook();
+    head.appendChild(include);
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'btn btn-sm btn-secondary';
@@ -663,12 +684,14 @@ function collectCatalogEditor(container, clientId) {
         };
         // clientId to UUID/cc_* (bezpieczne znaki), bez CSS.escape.
         const radio = row.querySelector(`input[name="ccc-primary-${clientId}"]`);
+        const includeBox = row.querySelector('[data-ccc="include"]');
         out.push({
             id: row.getAttribute('data-ccc-id') || null,
             name: get('name'),
             phone: get('phone'),
             email: get('email'),
-            isPrimary: !!(radio && radio.checked)
+            isPrimary: !!(radio && radio.checked),
+            excluded: !!(includeBox && !includeBox.checked)
         });
     });
     // Puste wiersze wypadają (jak BE); ★ awaryjnie na pierwszą.
@@ -1093,8 +1116,9 @@ async function proceedSelectClient(id) {
     const res = await fetchClientContacts(id);
     if (!res.ok) showToast('Brak połączenia z katalogiem — wczytano podpowiedź z firmy', 'warning');
     const rows = res.ok ? res.list : [];
-    // N osób → picker (wszystkie domyślnie zaznaczone); 1/0 → dotychczasowa ścieżka.
-    if (rows.length > 1) {
+    // N osób albo ktokolwiek pomijany → picker (pomijane startują odznaczone);
+    // 1 osoba bez pomijania → dotychczasowa ścieżka.
+    if (rows.length > 1 || rows.some((r) => r.excluded)) {
         openContactPicker(id, rows);
         return;
     }
@@ -1107,8 +1131,8 @@ function openContactPicker(id, rows) {
     const items = rows
         .map(
             (r) =>
-                `<label class="ccc-pick"><input type="checkbox" data-ccc-pick="${window.escapeHtmlAttr(r.id || '')}" checked />` +
-                `<span>${esc(r.isPrimary ? '★ ' : '')}${esc(r.name)}${r.phone ? esc(' — ' + r.phone) : ''}${r.email ? esc(', ' + r.email) : ''}</span></label>`
+                `<label class="ccc-pick"><input type="checkbox" data-ccc-pick="${window.escapeHtmlAttr(r.id || '')}"${r.excluded ? '' : ' checked'} />` +
+                `<span>${esc(r.isPrimary ? '★ ' : '')}${esc(r.name)}${r.phone ? esc(' — ' + r.phone) : ''}${r.email ? esc(', ' + r.email) : ''}${r.excluded ? ' <em>(pomijana)</em>' : ''}</span></label>`
         )
         .join('');
     const overlay = showModal({
