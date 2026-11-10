@@ -388,11 +388,13 @@ Zakres: usunięcie duplikacji logiki builda i pełnej redundantności `setup-ai.
 
 ### Documentation Updates
 
-| Plik                                        | Zmiana                                                                                                                                        |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `README.md`                                 | Dwie częściowe tabele skryptów scalone w jedną (14 wierszy: kiedy użyć, warstwa, co robi, zmienia stan); `setup-ai.bat` → `npm run ai:setup`. |
-| `tests/scripts/startNativeWindows.test.cjs` | Liczba plików BAT 15 → 14; nowe asercje: `build.bat` deleguje do `npm run build`, każdy `.bat` wymieniony w README.                           |
-| `scripts/bat-files.mjs`                     | Usunięty wpis `setup-ai.bat`.                                                                                                                 |
+| Plik                                                               | Zmiana                                                                                                                                        |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`                                                        | Dwie częściowe tabele skryptów scalone w jedną (14 wierszy: kiedy użyć, warstwa, co robi, zmienia stan); `setup-ai.bat` → `npm run ai:setup`. |
+| `tests/scripts/startNativeWindows.test.cjs`                        | Liczba plików BAT 15 → 14; nowe asercje: `build.bat` deleguje do `npm run build`, każdy `.bat` wymieniony w README.                           |
+| `scripts/bat-files.mjs`                                            | Usunięty wpis `setup-ai.bat`.                                                                                                                 |
+| `docs/agents/commands.md`                                          | Nowa sekcja „Skrypty BAT (kontrakt)”: warstwy L1/L2/L3, wymagany nagłówek, zasady wywołań, kodów wyjścia i dodawania nowego pliku.            |
+| `docs/RELEASE_PROCESS.md`, `docs/VERSIONING.md`, `CONTRIBUTING.md` | Ręczna lista plików `.bat` zastąpiona odwołaniem do SSoT `scripts/bat-files.mjs`.                                                             |
 
 ### Impact
 

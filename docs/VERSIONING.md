@@ -27,7 +27,7 @@ Wersja jest przechowywana w pliku `VERSION` w katalogu głównym projektu. Stamt
 - `public/js/versionDisplay.js` — wyświetlana w UI (toolbar aplikacji)
 - `scripts/auto-cache-bust.mjs` — synchronizuje `?v=` w plikach HTML (`public/*.html`, `public/templates/*.html`) podczas release
 - `scripts/auto-docs-version.mjs` — synchronizuje markery wersji w `README.md` i `docs/*.md` oraz JSON `"version"`/`"dbVersion"` w `docs/API.md`
-- `scripts/auto-bat-version.mjs` — synchronizuje `APP_VERSION` w `.bat` (start, install, build, setup-ai, ensure-db)
+- `scripts/auto-bat-version.mjs` — synchronizuje `APP_VERSION` w `.bat` (lista w `scripts/bat-files.mjs`, 14 plików)
 
 Spójność wszystkich źródeł weryfikuje `npm run version:check` (detale i pełna lista miejsc: [RELEASE_PROCESS.md](RELEASE_PROCESS.md)).
 

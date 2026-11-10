@@ -40,7 +40,7 @@ To wykonuje:
       `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON
       `"version"`/`"dbVersion"` w `docs/API.md`
     - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat`
-      (start, install, build, setup-ai, ensure-db)
+      (lista w `scripts/bat-files.mjs`, 14 plików)
 
     Hook kończy się `git add -u`. Bez tego etapu commit `--commit-all` obejmował
     tylko `bumpFiles` + `CHANGELOG.md`, a pliki propagacji zostawały w worktree już
@@ -55,7 +55,7 @@ To wykonuje:
 2. `package.json` / `package-lock.json` → `version`
 3. `CHANGELOG.md` (nagłówki)
 4. `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`
-5. `*.bat` (start, install, build, setup-ai, ensure-db) → `APP_VERSION`
+5. `*.bat` (lista w `scripts/bat-files.mjs`, 14 plików) → `APP_VERSION`
 6. `README.md` + `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja aplikacji:**` / `> Wersja:`
 7. `docs/API.md` przykłady JSON → `"version"` / `"dbVersion"`
 

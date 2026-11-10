@@ -61,3 +61,24 @@ zwrócił `0`. Git pisze komunikaty informacyjne na stderr (`To https://...`,
 | `.yaml`, `.yml`, `.sql`, `.prisma` | **UTF-8 (bez BOM)** | Pliki konfiguracyjne i migracje                    |
 
 Zasady: w `.bat` brak znaków spoza ASCII (zamienniki: `-` za `—`, `l` za `ł` itd.); bez BOM; zakaz mojibake (sygnatury: `C4 85` ą, `C5 82` ł, `C5 84` ń, `C3 B3` ó, `C5 9B` ś, `C5 BC` ż, `E2 80 94` —). Guardy: `.editorconfig` (utf-8), lint-staged (`encoding-integrity.js`), Husky pre-commit/pre-push, CI job `lint`. Naprawa: `npm run encoding:fix`; sprawdzenie: `encoding:check` / `encoding:staged`. `encoding:check` ignoruje `ECC/`.
+
+## Skrypty BAT (kontrakt)
+
+Lista plików podlegających wersjonowaniu: `scripts/bat-files.mjs` (14 plików). Kontrakt wymusza `tests/scripts/startNativeWindows.test.cjs`.
+
+| Warstwa | Znaczenie                                | Zasady                                                             |
+| ------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| L1      | plik uruchamiany przez użytkownika       | banner, preflight, `pause` na błędzie i na końcu, `exit /b 1`      |
+| L2      | skrót do L1                              | maks. 8 linii, tylko `call "%~dp0<plik>.bat"`, zero logiki         |
+| L3      | helper wołany przez L1 (`scripts/*.bat`) | brak bannera i `pause`, kod wyjścia jest kontraktem dla wołającego |
+
+Wymagany nagłówek każdego pliku: `REM  Wersja: X.Y.Z` (dokładnie jeden), `REM Rola:`, `REM Uzycie:`, `REM Uruchamia:`, `REM Wplyw:`.
+
+Zasady wykonania:
+
+- wywołanie innego `.bat` zawsze przez `call "%~dp0..."` — nigdy zależnie od CWD/PATH;
+- każda komenda zewnętrzna sprawdzana `if errorlevel 1`, komunikat `[BLAD]` mówi, co uruchomić dalej;
+- kody wyjścia: `0` = OK, `1` = błąd (kody `check-db.js` są wewnętrzne dla `scripts/ensure-db.bat`);
+- prefiksy komunikatów: `[INFO]`, `[OK]`, `[UWAGA]`, `[BLAD]`;
+- build wyłącznie przez `npm run build` (`build.bat` tylko deleguje, nie powiela `tsc`/kopiowania klienta Prisma);
+- nowy `.bat` wymaga wpisu w `scripts/bat-files.mjs`, wiersza w tabeli „Skrypty startowe (.bat)" w `README.md` i aktualizacji licznika w teście kontraktu.

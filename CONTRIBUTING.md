@@ -45,7 +45,7 @@ Proces release:
 3. Hook `postbump` (`standard-version.scripts.postbump` w `package.json`) uruchamia `npm run version:propagate`, czyli **trzy skrypty**:
     - `scripts/auto-cache-bust.mjs` — aktualizuje `?v=` we wszystkich HTML (w tym `public/templates/*.html`) do nowej wersji
     - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji `README.md` + `docs/*.md` (`**Wersja:**`, `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON `"version"`/`"dbVersion"` w `docs/API.md`
-    - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat` (start, install, build, setup-ai, ensure-db)
+    - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat` (lista w `scripts/bat-files.mjs`, 14 plików)
 
     Hook kończy się `git add -u` — bez tego `--commit-all` commitował tylko `bumpFiles` + `CHANGELOG.md`, a propagacja zostawała w worktree po commicie.
 
