@@ -835,8 +835,8 @@ function renderClientsDbList(query) {
             contactSection.appendChild(edBox);
             const contactFooter = document.createElement('div');
             contactFooter.className = 'clients-edit-footer';
-            contactFooter.innerHTML = `<button class="btn btn-sm btn-primary" data-csp="saveEditedClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Zapisz"><i data-lucide="save" aria-hidden="true"></i> Zapisz</button>
-                <button class="btn-icon btn-icon--muted" data-csp="cancelEditClient" data-csp-args="[]" data-csp-stop="1" title="Anuluj" aria-label="Anuluj"><i data-lucide="x" aria-hidden="true"></i></button>`;
+            contactFooter.innerHTML = `<button class="btn btn-sm btn-secondary" data-csp="cancelEditClient" data-csp-args="[]" data-csp-stop="1">Anuluj</button>
+                <button class="btn btn-sm btn-primary" data-csp="saveEditedClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Zapisz"><i data-lucide="save" aria-hidden="true"></i> Zapisz</button>`;
             contactSection.appendChild(contactFooter);
             contactCell.appendChild(contactSection);
             editContactRow.appendChild(contactCell);
