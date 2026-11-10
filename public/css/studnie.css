@@ -17,6 +17,12 @@ body {
     overflow-x: hidden;
 }
 
+/* Studnie: jedynym kontenerem przewijania jest .section.active.
+   Pasek strony + pasek sekcji naraz zwężały siatkę i ucinały dół diagramu. */
+body.studnie-page {
+    overflow-y: hidden;
+}
+
 body > .header {
     flex: 0 0 auto;
 }
@@ -30,6 +36,9 @@ body.studnie-page > .main {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
+    /* Jeden scroll (sekcja). Strona nie przewija się o kilka pikseli,
+       przez co pasek viewportu zwężał siatkę i ucinał dół diagramu. */
+    overflow: hidden;
     /* padding boczny 0 dla full-width grid; bottom padding zachowany dla fixed bars */
     padding: 0 0 0 0 !important;
 }
@@ -50,6 +59,9 @@ body > .main > .section.active {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    /* Pasek sekcji nie może zwężać siatki przy zmianie treści — inaczej
+       diagram przeskakuje między szerokościami i ucina dół. */
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
@@ -69,6 +81,7 @@ body.studnie-page > .main > #partial-offer > .section.active {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
@@ -170,7 +183,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    /* Wysoki/niski viewport + szeroki panel: rysunek bywa wyższy niż panel,
+       a overflow:hidden ucinał dół studni (dennica, etykieta DN) bez scrolla. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .well-diagram-panel h3 {
