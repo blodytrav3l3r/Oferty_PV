@@ -4,6 +4,25 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.11 (2026-11-10)
+
+### Bug Fixes
+
+- **ci:** golden DOM Excela odporny na politykę autouzupełniania — hash zmieniał się tylko dla pierwszej zakładki (1000), bo `autocomplete` nadaje `MutationObserver` po odczycie DOM
+
+### Refactors
+
+- **config:** `build.bat` deleguje do `npm run build` (jedno źródło prawdy); `start.bat` pokazuje nazwę procesu na porcie 3000 i nie zabija obcych procesów domyślnym Enterem; `prod.bat` niezależny od katalogu roboczego
+- **config:** `setup-ai.bat` usunięty (duplikat `npm run ai:setup`); liczba plików BAT 15 → 14
+
+### Tests
+
+- **config:** guard `docs/DELETION_LOG.md` jako `npm run test:docs` w `test:quick` i `test:quick:lite`
+
+### Documentation
+
+- **config:** kontrakt skryptów BAT (warstwy L1/L2/L3, nagłówek, kody wyjścia) w `docs/agents/commands.md`; listy `.bat` w `RELEASE_PROCESS.md`, `VERSIONING.md` i `CONTRIBUTING.md` wskazują `scripts/bat-files.mjs`
+
 ### 1.56.10 (2026-11-10)
 
 ### Bug Fixes
