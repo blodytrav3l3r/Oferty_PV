@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.14 (2026-11-10)
+
+### Bug Fixes
+
+- **clients:** stopka edycji klienta ma jawny przycisk „Anuluj” (secondary) obok „Zapisz” (primary) zamiast samej ikony `×`
+
 ### 1.56.13 (2026-11-10)
 
 ### Features
