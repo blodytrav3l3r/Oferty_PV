@@ -81,4 +81,5 @@ Zasady wykonania:
 - kody wyjścia: `0` = OK, `1` = błąd (kody `check-db.js` są wewnętrzne dla `scripts/ensure-db.bat`);
 - prefiksy komunikatów: `[INFO]`, `[OK]`, `[UWAGA]`, `[BLAD]`;
 - build wyłącznie przez `npm run build` (`build.bat` tylko deleguje, nie powiela `tsc`/kopiowania klienta Prisma);
-- nowy `.bat` wymaga wpisu w `scripts/bat-files.mjs`, wiersza w tabeli „Skrypty startowe (.bat)" w `README.md` i aktualizacji licznika w teście kontraktu.
+- nowy `.bat` wymaga wpisu w `scripts/bat-files.mjs`, wiersza w tabeli „Skrypty startowe (.bat)" w `README.md` i aktualizacji licznika w teście kontraktu;
+- `docs/DELETION_LOG.md` pilnuje `npm run test:docs`: każde wpis ma poprawną datę i treść, a tabele usunięć nie mogą wskazywać plików, które nadal istnieją.
