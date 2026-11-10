@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.9
+REM  Wersja: 1.56.10
 REM Rola: Zalecany start istniejacej instalacji S.O.K. w Dockerze.
 REM Uzycie: start-docker.bat
 REM Uruchamia: start-postgres.bat.

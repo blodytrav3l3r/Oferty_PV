@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.10 (2026-11-10)
+
+### Bug Fixes
+
+- **studnie:** diagram studni nie jest już ucinany na dole (dennica, etykieta DN)
+- **studnie:** jeden kontener przewijania; pasek strony nie zwęża siatki
+- **studnie:** `scrollbar-gutter: stable` eliminuje przeskok szerokości po pojawieniu się paska
+
 ### 1.56.9 (2026-11-09)
 
 ### Features
