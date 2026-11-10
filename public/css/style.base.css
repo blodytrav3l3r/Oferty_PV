@@ -1770,6 +1770,13 @@ button.btn-order-save:hover {
 .clients-edit-contacts .ccc-row {
     margin-bottom: 0;
 }
+/* „Dodaj osobę" w prawej szynie: ta sama krawędź co „Usuń osobę" w karcie
+   i przyciski stopki (Zapisz/Anuluj) — koniec z osieroconym przyciskiem
+   w lewym dolnym rogu. */
+.clients-edit-contacts > .btn {
+    display: block;
+    margin: 0.5rem 0 0 auto;
+}
 .clients-edit-footer {
     display: flex;
     align-items: center;
@@ -1835,7 +1842,6 @@ button.btn-order-save:hover {
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-sm);
     padding: 0.45rem 0.55rem;
-    margin-bottom: 0.45rem;
 }
 .ccc-head {
     display: flex;
