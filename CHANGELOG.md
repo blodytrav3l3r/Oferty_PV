@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.15 (2026-11-10)
+
+### Tests
+
+- **ui:** E2E panelu opieki pod domyślny zakres 7d — `aria-pressed` na pillu zamiast promptu o wybór zakresu, skeleton przy auto-loadzie, błąd panelu bez klikania zakresu
+
 ### 1.56.14 (2026-11-10)
 
 ### Bug Fixes
