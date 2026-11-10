@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.13 (2026-11-10)
+
+### Features
+
+- **clients:** checkbox „Do oferty” przy każdej osobie katalogu — odznaczona nie wczytuje się domyślnie do oferty; picker startuje bez niej i oznacza ją jako pomijaną (kolumna `client_contacts_rel.excluded`, migracja `0004`)
+
+### Bug Fixes
+
+- **ui:** kompaktowe przyciski edytora kontaktów klienta i checkbox „Do oferty” 15 px w kolorze akcentu
+
 ### 1.56.12 (2026-11-10)
 
 ### Features
