@@ -171,20 +171,12 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         expect(notif.phone).toBe('601000111');
     });
 
-    async function selectSevenDayRange(page, panel) {
+    async function selectSevenDayRange(panel) {
+        // Domyślny zakres to 7d — panel wczytuje kolejkę sam, bez kliknięcia.
         await expect(
-            panel.getByText('Wybierz zakres dat, aby wczytać kolejkę.'),
-            'panel nie poprosił o wybór zakresu dat'
-        ).toBeVisible();
-        await expect(panel.locator('[data-care-loading]')).toHaveCount(0);
-
-        const responsePromise = page.waitForResponse(
-            (response) =>
-                response.url().includes('/api/care/panel') && response.request().method() === 'GET'
-        );
-        await panel.locator('[data-care-range="7d"]').click();
-        const response = await responsePromise;
-        expect(response.ok(), 'GET /api/care/panel failed after selecting 7d').toBe(true);
+            panel.locator('[data-care-range="7d"]'),
+            'domyślny zakres 7d nie jest aktywny'
+        ).toHaveAttribute('aria-pressed', 'true');
         await expect(panel.locator('[data-care-loading]')).toHaveCount(0);
     }
 
@@ -197,7 +189,7 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         await page.goto(`${BASE}/`);
         const panel = page.locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
-        await selectSevenDayRange(page, panel);
+        await selectSevenDayRange(panel);
     }
 
     test('(k) karta pełna: obiekt + tel: + mailto:', async ({ page }) => {

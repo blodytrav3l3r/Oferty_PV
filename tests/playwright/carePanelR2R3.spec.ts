@@ -230,26 +230,21 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
 
         // Opóźnij pakiet panelu — skeleton musi być widoczny w międzyczasie.
         await page.route('**/api/care/panel*', async (route) => {
-            await new Promise((r) => setTimeout(r, 900));
+            await new Promise((r) => setTimeout(r, 1500));
             await route.continue();
         });
         await page.goto(`${BASE}/`);
         const panel = page.locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
-        await expect(panel.getByText('Wybierz zakres dat, aby wczytać kolejkę.')).toBeVisible();
-        await expect(panel.locator('[data-care-loading]')).toHaveCount(0);
-
-        const responsePromise = page.waitForResponse(
-            (response) =>
-                response.url().includes('/api/care/panel') && response.request().method() === 'GET'
+        // Domyślny zakres 7d startuje sam — skeleton leci razem z auto-loadem.
+        await expect(panel.locator('[data-care-range="7d"]')).toHaveAttribute(
+            'aria-pressed',
+            'true'
         );
-        await panel.locator('[data-care-range="7d"]').click();
         await expect(
             panel.locator('[data-care-loading]'),
             'skeleton [data-care-loading] niewidoczny przy opóźnieniu'
         ).toBeVisible({ timeout: 10000 });
-        const response = await responsePromise;
-        expect(response.ok(), 'GET /api/care/panel failed after selecting 7d').toBe(true);
         // Po dociągnięciu pakietu skeleton znika (jak w (e) carePanel.spec.ts).
         await expect(panel.locator('[data-care-loading]'), 'loading nie zniknął').toHaveCount(0, {
             timeout: 15000
@@ -270,14 +265,7 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
         await page.goto(`${BASE}/`);
         const panel = page.locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
-        await expect(panel.getByText('Wybierz zakres dat, aby wczytać kolejkę.')).toBeVisible();
-        await expect(panel.locator('[data-care-loading]')).toHaveCount(0);
-
-        const panelRequest = page.waitForRequest(
-            (request) => request.url().includes('/api/care/panel') && request.method() === 'GET'
-        );
-        await panel.locator('[data-care-range="7d"]').click();
-        await panelRequest;
+        // Auto-load domyślnego zakresu 7d uderza w zablokowane endpointy bez kliknięcia.
         await expect(
             panel.locator('[data-care-error]'),
             'błąd [data-care-error] nie pokazał się po awarii'
