@@ -13,8 +13,8 @@ import {
 } from 'docx';
 import prisma from '../../../prismaClient';
 import { logger } from '../../../utils/logger';
-import { textCell, contactRows } from '../helpers';
-import { getKartaBudowySharedSections } from '../../kartaBudowy/sharedSections';
+import { textCell, contactTable } from '../helpers';
+import { getKartaBudowySharedSections, CONTACT_ROW_LABELS } from '../../kartaBudowy/sharedSections';
 import { DOCX_COLORS } from '../colors';
 import {
     FONT,
@@ -97,21 +97,6 @@ function infoSection(heading: string, rows: TableRow[]): (Table | Paragraph)[] {
             width: { size: 100, type: WidthType.PERCENTAGE },
             columnWidths: [4500, 5500],
             rows: [sectionRow(heading), ...rows]
-        }),
-        SPACER
-    ];
-}
-
-/** Sekcja kontaktów — 3 kolumny, jedna osoba na wiersz. */
-function contactsSection(
-    heading: string,
-    contacts: Array<{ name?: string; phone?: string; email?: string }>
-): (Table | Paragraph)[] {
-    return [
-        new Table({
-            width: { size: 100, type: WidthType.PERCENTAGE },
-            columnWidths: [4200, 2500, 3300],
-            rows: [sectionRow(heading, 3), ...contactRows(contacts)]
         }),
         SPACER
     ];
@@ -217,14 +202,18 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
     );
 
     children.push(
-        ...getKartaBudowySharedSections(kb, orderData).flatMap(({ title, rows, contacts }) =>
-            contacts && contacts.length > 0
-                ? contactsSection(title, contacts)
-                : infoSection(
-                      title,
-                      rows.map(({ label, value }) => infoRow(label, value))
-                  )
-        )
+        ...getKartaBudowySharedSections(kb, orderData).flatMap(({ title, rows, contacts }) => {
+            // Sekcja z kontaktami: wiersze danych (firma, NIP, adres) + tabela osób.
+            const hasContacts = Boolean(contacts && contacts.length > 0);
+            const dataRows = hasContacts
+                ? rows.filter(({ label }) => !CONTACT_ROW_LABELS.includes(label))
+                : rows;
+            const section = infoSection(
+                title,
+                dataRows.map(({ label, value }) => infoRow(label, value))
+            );
+            return hasContacts ? [...section, contactTable(contacts ?? []), SPACER] : section;
+        })
     );
 
     // 4. Podstawowe Informacje

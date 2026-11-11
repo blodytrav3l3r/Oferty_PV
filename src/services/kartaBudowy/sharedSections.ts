@@ -15,6 +15,20 @@ interface KartaBudowySharedSection {
 type ContactField = 'name' | 'phone' | 'email';
 type Contact = { name?: string; phone?: string; email?: string };
 
+/**
+ * Etykiety wierszy, które są tylko zbiorczym podsumowaniem listy kontaktów.
+ * Wydruki DOCX pokazują osoby w tabeli (jedna linia na osobę), więc tych
+ * wierszy nie powtarzają — inaczej dane firmy i NIP giną pod tabelą.
+ */
+export const CONTACT_ROW_LABELS: readonly string[] = [
+    'Imię i nazwisko',
+    'Telefon',
+    'E-mail',
+    'Kontakt zamawiającego — imię i nazwisko',
+    'Telefon zamawiającego',
+    'E-mail zamawiającego'
+];
+
 function parseLegacyContact(value: string): Contact {
     const contactText = value.trim();
     const phoneMatch = contactText.match(/^(.*?)[,;]\s*([\d+\-() ]{7,20})$/);

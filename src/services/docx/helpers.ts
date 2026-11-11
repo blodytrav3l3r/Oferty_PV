@@ -1,6 +1,7 @@
 import {
     Paragraph,
     TextRun,
+    Table,
     TableCell,
     TableRow,
     WidthType,
@@ -129,6 +130,15 @@ export function contactRows(contacts: ContactRowData[]): TableRow[] {
             })
     );
     return [head, ...body];
+}
+
+/** Tabela kontaktów bez nagłówka sekcji — dokładana pod wierszami sekcji. */
+export function contactTable(contacts: ContactRowData[]): Table {
+    return new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        columnWidths: [4200, 2500, 3300],
+        rows: contactRows(contacts)
+    });
 }
 
 // ─── Ładowanie obrazów ──────────────────────────────────────────────
