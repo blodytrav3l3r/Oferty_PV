@@ -7,6 +7,7 @@ Szczegóły domenowe w `docs/agents/` (routing poniżej) — ten plik to mapa i 
 
 - `npm run version:check` (spójność wersji we WSZYSTKICH źródłach; rozjazd = blokada, bez wyjątków — także przy samych docsach).
 - `npm run validate` (typecheck BE+FE + lint BE+FE + appname + licenses + collisions + test:quick + prices:verify).
+- Zmiana logiki → test w tym samym commicie (kontrakt: `docs/agents/testing.md`).
 - `npm run format` (Prettier; respektuj `.prettierrc`, nie nadpisuj ustawień).
 - Commity wyłącznie przez `node scripts/commit.mjs "typ(scope): opis"` (polskie znaki, reguły commitlint).
 - Kodowanie UTF-8 bez BOM (`.bat` ASCII-only); przy ERROR: `npm run encoding:fix`.

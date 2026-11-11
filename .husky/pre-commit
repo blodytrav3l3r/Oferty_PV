@@ -11,4 +11,6 @@ if [ $EXIT_CODE -ne 0 ]; then
     exit 1
 fi
 
+node scripts/check-migration-tests.mjs || exit 1
+
 npx lint-staged --max-arg-length 4000

@@ -18,7 +18,7 @@
         "test:native-windows": "node tests/scripts/startNativeWindows.test.cjs",
         "test:installer-linux": "node tests/scripts/installLinuxServer.test.cjs && node tests/scripts/recoverFailedInitialMigration.test.cjs && node tests/scripts/postgresOnlySurface.test.cjs",
         "test:load-metrics": "node --test tests/scripts/loadMetrics.test.cjs",
-        "test:docs": "node tests/scripts/deletionLog.test.cjs",
+        "test:docs": "node tests/scripts/deletionLog.test.cjs && node tests/scripts/migrationTestPolicy.test.cjs",
         "test:git-safety": "jest --selectProjects git-safety --runInBand --no-coverage",
         "test:alignment": "node tests/playwright/excelEmptyRowAlignment.cjs",
         "test:parity": "node tests/playwright/excelVirtualParity.cjs",

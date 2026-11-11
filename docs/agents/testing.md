@@ -25,6 +25,14 @@ PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integra
 - Zakaz obchodzenia: `.only`/`.skip`, `continue-on-error` dla krytycznych, osłabiania asercji lub wyłączania lint/typecheck. Jeśli dotychczasowy test koliduje z adapterem, przenieś właściwość do PostgreSQL integracji i zachowaj jej asercje.
 - `jest` przypięty na `30.4.2` (exact): `jest@30.5.2` koliduje z `@types/jest@30.0.0` i sypie `TS2345 ... not assignable to type 'never'` w mockach. Bump dopiero razem z `@types/jest`.
 
+## Kontrakt testowy commita
+
+- Zmiana logiki (route/service backendu, kalkulacja lub stan frontendu, migracja SQL) → test w tym samym commicie.
+- Zmiana czysto wizualna (CSS, markup bez zmiany zachowania) → test niewymagany; dowodem są `lint`, `typecheck` i pomiar w DOM.
+- Bug fix istotny → test regresyjny odtwarzający błąd (czerwony przed poprawką, zielony po).
+- Brak testu przy zmianie logiki = commit do poprawy w review, nie „test później”.
+- Twardy guard: `scripts/check-migration-tests.mjs` blokuje commit z `migration.sql` bez pliku `tests/**` (pre-commit); pozostałe przypadki ocenia review.
+
 ## Bramy
 
 - `npm run validate`: version:check, typecheck BE+FE, lint BE+FE, appname, licenses, test:quick, collisions, ratchet, prices:verify.
