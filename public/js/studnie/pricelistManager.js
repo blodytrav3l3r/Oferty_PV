@@ -27,7 +27,7 @@ function renderStudniePriceList() {
     const categoryFlag = (items, field, label, group) => {
         const selected = items.filter((item) => item[field] === 1 || item[field] === true).length;
         const editing = window.pricelistVersions?.isEditing?.('studnie') === true;
-        return `<label class="pricelist-category-option" title="Zaznacz widoczne elementy w kategorii"><span>${label}</span><span class="pricelist-flag-target pricelist-category-target"><input type="checkbox" class="pricelist-flag-input" data-action="setStudnieCategoryAvailability" data-field="${field}" data-mixed="${selected > 0 && selected < items.length}" aria-label="${escapeHtmlAttr(label + ' w kategorii ' + group)}" ${selected === items.length ? 'checked' : ''} ${editing ? '' : 'disabled'}></span></label>`;
+        return `<label class="pricelist-flag-target" title="Zaznacz widoczne elementy w kategorii: ${escapeHtmlAttr(label)}"><input type="checkbox" class="pricelist-flag-input" data-action="setStudnieCategoryAvailability" data-field="${field}" data-mixed="${selected > 0 && selected < items.length}" aria-label="${escapeHtmlAttr(label + ' w kategorii ' + group)}" ${selected === items.length ? 'checked' : ''} ${editing ? '' : 'disabled'}></label>`;
     };
     const dynamicGroups = new Set();
     filteredProducts.forEach((p) => {
@@ -190,18 +190,22 @@ function renderStudniePriceList() {
                     ['formaStandardowa', 'FS.WL'],
                     ['formaStandardowaKLB', 'FS.KLB']
                 ];
-        const categoryControls = categoryFields.length
-            ? `<span class="pricelist-category-controls">${categoryFields.map(([field, name]) => categoryFlag(items, field, name, categoryName)).join('')}</span>`
-            : '';
+        const categoryFlagCells = categoryFields
+            .map(
+                ([field, name]) =>
+                    `<td class="pricelist-flag-cell">${categoryFlag(items, field, name, categoryName)}</td>`
+            )
+            .join('');
 
         html += `<tbody>
       <tr>
-        <td colspan="${colCount - 1}" style="padding:0; border-bottom:1px solid var(--border);">
+        <td colspan="${colCount - 2 - categoryFields.length}" style="padding:0; border-bottom:1px solid var(--border);">
           <div class="cat-header">
             <span>${label} <span class="cat-count">(${items.length})</span></span>
-            ${categoryControls}
           </div>
         </td>
+        ${categoryFlagCells}
+        <td class="text-right"></td>
         <td class="cat-header-actions-cell">
           <span class="pricelist-actions">
             <button class="btn-icon fs-base-025" title="Dodaj element do tej kategorii" aria-label="Dodaj element" data-action="addStudnieElement" data-group="${escapeHtmlAttr(groupKey)}"

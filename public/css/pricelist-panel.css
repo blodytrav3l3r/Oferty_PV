@@ -316,27 +316,6 @@ body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) tbody td {
     outline-offset: 2px;
 }
 
-.pricelist-category-target {
-    flex: none;
-    margin-inline: 0;
-}
-
-.pricelist-category-controls {
-    display: inline-flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-left: auto;
-}
-
-.pricelist-category-option {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
 .pricelist-flag-input {
     width: 24px;
     height: 24px;
