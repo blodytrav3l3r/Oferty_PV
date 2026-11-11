@@ -3,8 +3,9 @@ import path from 'path';
 import vm from 'vm';
 
 // Regresja: oferta z _orderCount > 0 i pustą ordersMap (tło jeszcze nie dograło
-// szczegółów) pokazywała goły badge „Zamówienia" bez licznika i pusty panel.
-describe('kartotekaHelpers buildOfferCardHtml — badge przy pustej mapie', () => {
+// szczegółów) nie renderowała panelu; badge „Zamówienia (N)" usunięty z karty
+// (klik w wiersz zamówienia otwiera edycję).
+describe('kartotekaHelpers buildOfferCardHtml — panel zamówień przy pustej mapie', () => {
     let buildOfferCardHtml: any;
 
     beforeEach(() => {
@@ -48,14 +49,14 @@ describe('kartotekaHelpers buildOfferCardHtml — badge przy pustej mapie', () =
         ...over
     });
 
-    test('hasOrder + pusta lista: badge z licznikiem z _orderCount, bez pustego panelu', () => {
+    test('hasOrder + pusta lista: bez badge’a „Zamówienia", bez pustego panelu', () => {
         const html = buildOfferCardHtml(offer(), true, [], null, 'admin', true);
-        expect(html).toContain('Zamówienia (1)');
+        expect(html).not.toContain('Zamówienia');
         expect(html).not.toContain('offer-orders-panel');
         expect(html).toContain('has-order');
     });
 
-    test('hasOrder + lista: panel z wierszem i licznik z listy', () => {
+    test('hasOrder + lista: panel z wierszem', () => {
         const ord = {
             id: 'ord-1',
             orderNumber: 'LKZ/1',
@@ -63,15 +64,15 @@ describe('kartotekaHelpers buildOfferCardHtml — badge przy pustej mapie', () =
             totalNetto: 100
         };
         const html = buildOfferCardHtml(offer(), true, [ord], ord, 'admin', true);
-        expect(html).toContain('Zamówienia (1)');
         expect(html).toContain('offer-orders-panel');
         expect(html).toContain('LKZ/1');
     });
 
-    test('bez zamówienia: badge „Brak zamówienia"', () => {
+    test('bez zamówienia: brak badge’a i brak panelu', () => {
         const html = buildOfferCardHtml(offer({ _orderCount: 0 }), false, [], null, 'admin', true);
-        expect(html).toContain('Brak zam');
-        expect(html).not.toContain('Zamówienia (');
+        expect(html).not.toContain('Brak zam');
+        expect(html).not.toContain('btn-order-badge');
+        expect(html).not.toContain('offer-orders-panel');
     });
 
     test('licznik pozycji ujednolicony: zawsze „poz." (studnie i rury)', () => {
@@ -89,7 +90,7 @@ describe('kartotekaHelpers buildOfferCardHtml — badge przy pustej mapie', () =
         expect(rury).toContain('5 poz.');
     });
 
-    test('wiele zamówień: pierwszy wiersz + <details> z resztą', () => {
+    test('wiele zamówień: wszystkie wiersze naraz, bez zwijania', () => {
         const mk = (n: string) => ({
             id: `ord-${n}`,
             orderNumber: `LKZ/${n}`,
@@ -105,13 +106,13 @@ describe('kartotekaHelpers buildOfferCardHtml — badge przy pustej mapie', () =
             true
         );
         expect(html).toContain('LKZ/1');
-        expect(html).toContain('orders-more');
-        expect(html).toContain('+2 więcej');
         expect(html).toContain('LKZ/2');
         expect(html).toContain('LKZ/3');
+        expect(html).not.toContain('orders-more');
+        expect(html).not.toContain('więcej');
     });
 
-    test('jedno zamówienie: brak <details>', () => {
+    test('jedno zamówienie: brak zwijania', () => {
         const ord = {
             id: 'ord-1',
             orderNumber: 'LKZ/1',

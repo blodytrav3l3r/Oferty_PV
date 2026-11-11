@@ -13,6 +13,7 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 - **ui:** `#/cennik` ma jedną strefę przewijania — poziomy pasek jest zawsze na dole okna, pionowy przy prawej krawędzi (bez przerwy od paddingu), a nie na końcu długiej tabeli; dotyczy Rury, Studnie i PRECO
 - **ui:** studnie - checkboxy kategorii (M.WL/M.KLB/FS.WL/FS.KLB) są w prawdziwych kolumnach tabeli i stoją w jednej linii z checkboxami elementów
 - **ui:** `#/cennik` - rail wersji dochodzi do dolnej krawędzi okna (ukryty pasek kreatora nie ucina go już o 60px)
+- **ui:** kartoteka - karty ofert w jednym rzędzie (ikona, numer z cennikiem, klient, status, cena, akcje), srebrna powierzchnia, zamówienie jako zielony pasek z kwotą i „Edytuj zamówienie"; wszystkie zamówienia widoczne od razu (bez „+N więcej"), cennik jako sam tekst bez ramki i typu, autor oraz opiekun przy statusie opieki
 
 ### 1.56.16 (2026-11-11)
 

@@ -203,8 +203,9 @@
 
     /** Placeholder badge; hydrateBadges() uzupełnia labelkę + tooltip.
      *  Dopisek typu (· Studnie/Rury/Preco) TYLKO na poziomie wyświetlania —
-     *  labelki wersji w DB (PricelistVersion.version) niemutowalne. */
-    function badgeHtml(versionId, type) {
+     *  labelki wersji w DB (PricelistVersion.version) niemutowalne.
+     *  compact: sam tekst wersji, bez dopisku typu (tooltip zachowuje typ). */
+    function badgeHtml(versionId, type, compact) {
         if (!versionId) return '';
         var typeAttr = type ? ' data-pv-type="' + escAttr(type) + '"' : '';
         return (
@@ -212,18 +213,21 @@
             escAttr(versionId) +
             '"' +
             typeAttr +
-            ' title="Wersja cennika…">cennik…</span>'
+            (compact ? ' data-pv-compact="1"' : '') +
+            ' title="Wersja cennika…">Cennik…</span>'
         );
     }
 
     /** Placeholder badge aktywnej wersji per typ (gdy wiersz nie niesie
      *  versionId, np. lista kartoteki); hydrateActiveBadges() uzupełnia.
      *  Bez fetchy per karta — 1× fetchLabels per typ (cache). */
-    function activeBadgeHtml(type) {
+    function activeBadgeHtml(type, compact) {
         return (
             '<span class="pv-offer-badge badge-info" data-pv-active="' +
             escAttr(type) +
-            '" title="Aktywny cennik…">cennik…</span>'
+            '"' +
+            (compact ? ' data-pv-compact="1"' : '') +
+            ' title="Aktywny cennik…">Cennik…</span>'
         );
     }
 
@@ -242,18 +246,20 @@
         return best;
     }
 
-    /** Maluje pojedynczy badge: „cennik {version} · {Typ}" + tooltip z typem. */
+    /** Maluje pojedynczy badge: „cennik {version} · {Typ}" + tooltip z typem.
+     *  data-pv-compact="1" → sam tekst wersji (bez dopisku typu). */
     function paintVersionBadge(el, v, type) {
         var label = typeLabel(type || (v && v.type) || '');
+        var isCompact = el.getAttribute('data-pv-compact') === '1';
         if (!v) {
-            el.textContent = 'cennik legacy';
+            el.textContent = 'Cennik legacy';
             el.setAttribute(
                 'title',
                 'Oferta sprzed wersjonowania (legacy)' + (label ? ' • Typ: ' + label : '')
             );
             return;
         }
-        el.textContent = 'cennik ' + labelOf(v) + (label ? ' · ' + label : '');
+        el.textContent = 'Cennik ' + labelOf(v) + (!isCompact && label ? ' · ' + label : '');
         var local = '';
         try {
             local = new Date(v.effectiveFrom).toLocaleString();

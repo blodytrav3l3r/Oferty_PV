@@ -24,7 +24,7 @@ describe('frontend: etykieta efektywna (override nad pochodną)', () => {
         expect(panel).toContain('kanoniczna: ');
     });
     it('badge cennika w ofertach używa etykiety efektywnej', () => {
-        expect(panel).toContain("el.textContent = 'cennik ' + labelOf(v)");
+        expect(panel).toContain("el.textContent = 'Cennik ' + labelOf(v)");
     });
 });
 

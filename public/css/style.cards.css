@@ -1,7 +1,13 @@
 /* ===== NOWOCZESNE KARTY OFERT ===== */
+/* Karta jednorzędowa: ikona → numer/cennik → klient → status → cena → akcje.
+ * Powierzchnia „srebrna": neutralna, z delikatnym gradientem i jasną krawędzią. */
 .modern-offer-card {
     position: relative;
-    background: var(--bg-card);
+    background: linear-gradient(
+        180deg,
+        rgba(var(--slate-400-rgb), 0.06) 0%,
+        rgba(var(--slate-500-rgb), 0.02) 100%
+    );
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 0;
@@ -11,12 +17,14 @@
         border-color 0.15s ease-in-out,
         background-color 0.15s ease-in-out,
         box-shadow 0.15s ease-in-out;
-    box-shadow: var(--shadow-sm);
+    box-shadow:
+        var(--shadow-sm),
+        inset 0 1px 0 rgba(var(--slate-400-rgb), 0.16);
 }
 
 .modern-offer-card:hover {
     border-color: var(--accent-border-medium);
-    background: var(--bg-hover);
+    background: rgba(var(--slate-400-rgb), 0.1);
     box-shadow: var(--shadow-md);
 }
 
@@ -81,27 +89,32 @@
 }
 
 .offer-card-content {
-    padding: 0.85rem 1rem 0.7rem 1.25rem;
+    padding: 0.7rem 0.8rem 0.7rem 1.15rem;
 }
 
 .offer-top-row {
     display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 0.55rem;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    margin-bottom: 0;
 }
 
 .offer-icon-wrapper {
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    background: var(--accent-bg);
-    border: 1px solid var(--accent-border-dim);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(
+        180deg,
+        rgba(var(--slate-400-rgb), 0.18),
+        rgba(var(--slate-500-rgb), 0.1)
+    );
+    border: 1px solid rgba(var(--slate-400-rgb), 0.28);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--accent-hover);
+    color: var(--text-secondary);
     font-size: var(--fs-2xl);
     transition: box-shadow 0.2s ease;
 }
@@ -114,12 +127,12 @@
 }
 
 .offer-title-section {
-    flex: 1;
-    min-width: 0;
+    flex: 0 1 15rem;
+    min-width: 9rem;
 }
 
 .offer-title {
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 0.15rem 0;
     font-size: var(--fs-3xl);
     font-weight: var(--fw-bold);
     color: var(--text-primary);
@@ -133,13 +146,42 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: var(--fs-3xl);
-    color: var(--text-primary);
+    color: var(--text-muted);
     flex-wrap: wrap;
 }
 
+/* Kolumna klienta: nazwa, budowa, opiekun — jak w kartotece papierowej. */
+.offer-client-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1 1 13rem;
+    min-width: 9rem;
+}
+
 .offer-client {
-    font-weight: var(--fw-medium);
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.offer-invest {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.offer-status-section {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
 }
 
 .client-nip {
@@ -154,8 +196,10 @@
 }
 
 .offer-price-section {
-    flex-shrink: 0;
+    flex: 0 0 auto;
     text-align: right;
+    margin-left: auto;
+    padding-left: 0.35rem;
 }
 
 .offer-price {
@@ -164,23 +208,14 @@
     color: var(--accent-hover);
     line-height: 1.2;
     letter-spacing: -0.3px;
+    white-space: nowrap;
 }
 
 .offer-meta {
     font-size: var(--fs-sm);
     color: var(--text-muted);
     margin-top: 0.15rem;
-}
-
-/* Odznaki autora – renderowane w .offer-actions-row */
-.offer-author-badges {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-wrap: wrap;
-    flex: 1 1 auto;
-    justify-content: flex-end;
-    min-width: 0;
+    white-space: nowrap;
 }
 
 .author-badge {
@@ -219,11 +254,11 @@
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    margin: 0 0 0.5rem;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid rgba(var(--success-rgb), 0.2);
+    margin: 0.55rem 0 0;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid rgba(var(--success-rgb), 0.32);
     border-radius: var(--radius-sm);
-    background: rgba(var(--slate-950-rgb), 0.5);
+    background: rgba(var(--success-rgb), 0.06);
 }
 
 .offer-order-row {
@@ -232,10 +267,10 @@
     justify-content: space-between;
     gap: 0.5rem;
     min-height: 40px;
-    padding: 0.45rem 0.6rem;
-    border: 1px solid rgba(var(--slate-400-rgb), 0.1);
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(var(--success-rgb), 0.22);
     border-radius: var(--radius-sm);
-    background: rgba(var(--slate-800-rgb), 0.8);
+    background: rgba(var(--success-rgb), 0.05);
     transition:
         border-color 0.15s ease-in-out,
         background-color 0.15s ease-in-out;
@@ -243,7 +278,7 @@
 
 .offer-order-row:hover {
     border-color: rgba(var(--success-rgb), 0.55);
-    background: rgba(var(--success-rgb), 0.08);
+    background: rgba(var(--success-rgb), 0.1);
 }
 
 .offer-order-main {
@@ -308,44 +343,21 @@
     color: var(--text-secondary);
 }
 
+.offer-order-amount {
+    flex: 0 0 auto;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
 .offer-order-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 0.3rem;
     flex: 0 0 auto;
-}
-
-/* Zwarty panel zamówień: reszta wierszy w natywnym <details>. */
-.orders-more {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.orders-toggle {
-    cursor: pointer;
-    align-self: flex-start;
-    display: inline-flex;
-    align-items: center;
-    box-sizing: border-box;
-    min-height: 34px;
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-semibold);
-    color: var(--accent-text);
-    padding: 0 0.85rem;
-    border-radius: var(--radius-sm);
-    background: rgba(var(--accent-rgb), 0.1);
-    border: 1px solid rgba(var(--accent-rgb), 0.2);
-    list-style: none;
-}
-
-.orders-toggle::-webkit-details-marker {
-    display: none;
-}
-
-.orders-toggle:hover {
-    background: rgba(var(--accent-rgb), 0.18);
 }
 
 /* Badże nagłówka karty: cennik + opieka nad ofertą w jednej linii. */
@@ -374,41 +386,72 @@
     border-radius: var(--radius-sm);
 }
 
-/* Badże karty jak przyciski akcji (kształt .action-btn.text-btn, nie pill):
- * prostokąt radius-sm, ten sam font i padding. Scope karty — modale
- * i edytor zachowują swoje kształty. */
+/* Odznaki na karcie: kształt przycisku „Edytuj" (30px, radius-sm,
+ * obramowanie) — jeden rząd kontrolek. Kolor wariantu statusu zostaje
+ * z .status-badge.{success,danger,warn,info,neutral}; autor/opiekun neutralny. */
 .modern-offer-card .status-badge,
-.modern-offer-card .author-badge,
-.modern-offer-card .pv-offer-badge {
+.modern-offer-card .author-badge {
     border-radius: var(--radius-sm);
     font-size: var(--fs-base);
     font-weight: var(--fw-semibold);
     padding: 0 0.85rem;
+    gap: 0.4rem;
+    height: 30px;
     margin-left: 0;
-    min-height: 34px;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
+    line-height: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+}
+
+/* Cennik na karcie: sam tekst, wyrównany do lewej — bez ramki i typu. */
+.modern-offer-card .pv-offer-badge {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin-left: 0;
+    min-height: 0;
+    font-weight: var(--fw-medium);
+    color: var(--text-muted);
+}
+
+.modern-offer-card .status-badge::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
 }
 
 .modern-offer-card .status-badge svg,
 .modern-offer-card .status-badge i,
 .modern-offer-card .author-badge svg,
 .modern-offer-card .author-badge i {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
 }
 
-.offer-actions-row {
+/* Przyciski akcji w jednym rzędzie — bez zawijania, CTA zawsze na końcu. */
+.modern-offer-card .action-buttons {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    gap: 0.28rem;
+    flex-wrap: nowrap;
+    flex: 0 0 auto;
 }
 
-.order-status-badge {
-    flex-shrink: 0;
+.modern-offer-card .action-btn:not(.text-btn) {
+    width: 30px;
+    height: 30px;
+}
+
+.modern-offer-card .action-btn.text-btn {
+    white-space: nowrap;
+    height: 30px;
+    padding: 0 0.7rem;
 }
 
 .status-badge {
@@ -1171,10 +1214,6 @@
     gap: 0.3rem;
 }
 
-.compact-mode .offer-author-badges {
-    gap: 0.25rem;
-}
-
 .compact-mode .offer-price {
     font-size: var(--fs-xl);
 }
@@ -1222,32 +1261,18 @@
     height: 13px;
 }
 
-.compact-mode .status-badge {
-    padding: 0 0.5rem;
-    font-size: var(--fs-xs);
-    min-height: 26px;
-}
-
-.compact-mode .offer-author-badges .author-badge,
-.compact-mode .offer-badges .pv-offer-badge {
-    min-height: 26px;
+.compact-mode .status-badge,
+.compact-mode .modern-offer-card .author-badge {
+    height: 26px;
+    min-height: 0;
     padding: 0 0.55rem;
     font-size: var(--fs-sm);
-}
-
-.compact-mode .orders-toggle {
-    min-height: 26px;
-    padding: 0 0.55rem;
 }
 
 .compact-mode .status-badge svg,
 .compact-mode .status-badge i {
     width: 10px;
     height: 10px;
-}
-
-.compact-mode .offer-actions-row {
-    gap: 0.5rem;
 }
 
 .compact-mode .action-buttons {
@@ -1304,13 +1329,34 @@
 /* ===== Tryb jasny — wiersze zamówień (audyt light L3) ===== */
 /* L3: granatowe belki na białym tle były nieczytelne — jasne powierzchnie. */
 html[data-theme='light'] .offer-orders-panel {
-    background: var(--bg-secondary);
+    background: rgba(var(--success-rgb), 0.05);
     border-color: var(--success-border);
 }
 
+/* Karta oferty w trybie jasnym: srebrny gradient + jasna krawędź
+ * (odpowiednik metalicznej powierzchni z projektu). */
+html[data-theme='light'] .modern-offer-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f3f6f9 100%);
+    border-color: #dbe2e8;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 #ffffff;
+}
+
+html[data-theme='light'] .modern-offer-card:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #edf2f6 100%);
+    border-color: var(--accent-border-medium);
+}
+
+html[data-theme='light'] .offer-icon-wrapper {
+    background: linear-gradient(180deg, #f8fafc 0%, #e6ecf2 100%);
+    border-color: #d3dce4;
+    color: #475569;
+}
+
 html[data-theme='light'] .offer-order-row {
-    background: var(--bg-secondary);
-    border-color: var(--border);
+    background: rgba(var(--success-rgb), 0.05);
+    border-color: rgba(var(--success-rgb), 0.24);
 }
 
 html[data-theme='light'] .order-modal-row {

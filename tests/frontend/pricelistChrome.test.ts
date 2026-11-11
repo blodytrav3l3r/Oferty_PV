@@ -265,7 +265,7 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
     );
 
     it('badge ZAWSZE z typem (labelka + tooltip), labelki DB nietknięte', () => {
-        expect(panel).toContain('function badgeHtml(versionId, type)');
+        expect(panel).toContain('function badgeHtml(versionId, type, compact)');
         expect(panel).toContain('data-pv-type="');
         expect(panel).toContain("' · ' + label");
         expect(panel).toContain("• Typ: ' + label");
@@ -314,8 +314,8 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
     });
     it('kartoteka: badge per karta (pieczątka albo aktywna per typ) + hydratacja', () => {
         expect(kartHtml).toContain('js/shared/pricelistVersions.js');
-        expect(kartHelpers).toContain('badgeHtml(offer.pricelistVersionId, pvType)');
-        expect(kartHelpers).toContain('activeBadgeHtml(pvType)');
+        expect(kartHelpers).toContain('badgeHtml(offer.pricelistVersionId, pvType, true)');
+        expect(kartHelpers).toContain('activeBadgeHtml(pvType, true)');
         expect(kartHelpers).toContain("offer.type === 'studnia_oferta' ? 'studnie' : 'rury'");
         expect(kartHelpers).toContain('offer-meta');
         expect(kartSearch).toContain('hydrateBadges(listDiv)');
@@ -347,16 +347,23 @@ describe('frontend: badge archiwalnej pieczątki (nie fałszywe legacy)', () => 
         expect(panel).toContain('missing');
         expect(panel).toContain('fetchLabelsByIds(t, missing)');
     });
-    it('legacy tylko dla null/nieznanego stamp (paintVersionBadge !v → cennik legacy)', () => {
+    it('legacy tylko dla null/nieznanego stamp (paintVersionBadge !v → Cennik legacy)', () => {
         expect(panel).toContain('function paintVersionBadge(el, v, type)');
         expect(panel).toContain('if (!v)');
-        expect(panel).toContain('cennik legacy');
+        expect(panel).toContain('Cennik legacy');
         expect(panel).toContain('Oferta sprzed wersjonowania (legacy)');
     });
     it('cache dopisywany per id (archiwalna labelka trafia do labelCache)', () => {
         expect(panel).toContain('labelCache[type]');
         expect(panel).toContain('map[v.id] = v');
         expect(panel).toContain('fetchLabelsByIds');
+    });
+    it('compact (kartoteka): badgeHtml/activeBadgeHtml emitują data-pv-compact, paintVersionBadge pomija typ', () => {
+        expect(panel).toContain('function badgeHtml(versionId, type, compact)');
+        expect(panel).toContain('function activeBadgeHtml(type, compact)');
+        expect(panel).toContain('data-pv-compact="1"');
+        expect(panel).toContain("el.getAttribute('data-pv-compact') === '1'");
+        expect(panel).toContain("!isCompact && label ? ' · ' + label : ''");
     });
 });
 

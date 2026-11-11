@@ -312,24 +312,10 @@ function followUpBadgeHtml(offer, nowIso) {
 
 function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
     const orderList = orders && orders.length > 0 ? orders : [];
-    // Licznik z search API (_orderCount), gdy ordersMap jeszcze pusta (tło dogrywa
-    // szczegóły) — badge nigdy nie pokazuje gołego „Zamówienia" przy hasOrder.
-    const orderCount =
-        orderList.length > 0 ? orderList.length : Number(offer && offer._orderCount) || 0;
 
-    let orderBadge = '';
     let orderItemsHtml = '';
 
     if (hasOrder) {
-        const hasModifiedOrder = orderList.some((ord) => window.getOrderChangeInfo(ord).changed);
-
-        const badgeStateClass = hasModifiedOrder ? 'btn-order-badge modified' : 'btn-order-badge';
-        const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
-
-        orderBadge = `<a href="#" class="btn btn-sm ${badgeStateClass}" data-order-id="${escapeHtmlAttr(order?.id || '')}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
-                    <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
-                   </a>`;
-
         const orderRowHtml = (ord) => {
             const rawLabel =
                 ord?.orderNumber ||
@@ -347,34 +333,21 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                     <button class="offer-order-main btn-edit-order" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Edytuj zamówienie ${labelAttr}">
                                         <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
                                         <span class="offer-order-text">
-                                            <strong>${label} <span class="color-success">• ${orderValue.toFixed(2)} PLN</span></strong>
+                                            <strong>${label}</strong>
                                             <small>${createdAt}${ord.clientNumber ? ` • Kod kontrahenta: ${window.escapeHtml(ord.clientNumber)}` : ''}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
                                         </span>
                                     </button>
+                                    <div class="offer-order-amount">${typeof window.fmt === 'function' ? window.fmt(orderValue) : orderValue.toFixed(2)} PLN</div>
                                     <div class="offer-order-actions">
                                         <button class="action-btn success btn-karta-budowy" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Karta budowy ${labelAttr}" aria-label="Karta budowy ${labelAttr}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
                                         <button class="action-btn secondary btn-history-order" data-order-id="${escapeHtmlAttr(ord.id)}" title="Historia zmian zamówienia ${labelAttr}" aria-label="Historia zmian zamówienia ${labelAttr}"><i data-lucide="clock" aria-hidden="true"></i></button>
                                         <button class="action-btn danger btn-delete-order" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Usuń zamówienie ${labelAttr}" aria-label="Usuń zamówienie ${labelAttr}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+                                        <button class="action-btn success text-btn btn-edit-order" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Edytuj zamówienie ${labelAttr}"><i data-lucide="pencil" aria-hidden="true"></i> Edytuj zamówienie</button>
                                     </div>
                                 </div>`;
         };
-        // Kafelek zwarty: pierwszy wiersz zawsze widoczny, reszta w natywnym
-        // <details> (zero JS, dostępność z klawiatury za darmo). Pusta lista
-        // (licznik tylko z _orderCount, tło dogrywa szczegóły) → brak wierszy.
-        const restCount = orderList.length - 1;
-        orderItemsHtml =
-            orderList.length === 0
-                ? ''
-                : orderRowHtml(orderList[0]) +
-                  (restCount > 0
-                      ? `<details class="orders-more"><summary class="orders-toggle">+${restCount} więcej</summary>${orderList
-                            .slice(1)
-                            .map(orderRowHtml)
-                            .join('')}</details>`
-                      : '');
-    } else {
-        orderBadge = `<span style="background:rgba(var(--slate-500-rgb), 0.1); color:var(--text-secondary); padding:4px 10px; border-radius: var(--radius-sm);
-                    border:1px solid rgba(var(--slate-500-rgb), 0.2); font-size: var(--fs-base); font-weight: var(--fw-semibold); white-space:nowrap;">Brak zamówienia</span>`;
+        // Wszystkie zamówienia od razu — bez zwijania w <details>.
+        orderItemsHtml = orderList.map(orderRowHtml).join('');
     }
 
     const dateStr = offer.createdAt ? new Date(offer.createdAt).toLocaleDateString('pl-PL') : '—';
@@ -391,12 +364,59 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
     const pvType = offer.type === 'studnia_oferta' ? 'studnie' : 'rury';
     const pvBadge = window.pricelistVersions
         ? offer.pricelistVersionId
-            ? window.pricelistVersions.badgeHtml(offer.pricelistVersionId, pvType)
-            : window.pricelistVersions.activeBadgeHtml(pvType)
+            ? window.pricelistVersions.badgeHtml(offer.pricelistVersionId, pvType, true)
+            : window.pricelistVersions.activeBadgeHtml(pvType, true)
         : '';
 
     const dd = window.getOfferDisplayData(offer);
     const isClickable = !!role;
+
+    // Opiekun + autor w jednej, cichej linii pod klientem. Ten sam człowiek
+    // w obu rolach nie dubluje odznaki.
+    const ownerBadges = [
+        dd.creatorName && dd.creatorName !== dd.userName
+            ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>`
+            : '',
+        dd.userName
+            ? `<span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `data-csp-stop="1" data-csp="changeOfferUserFromList" data-csp-scope="kartotekaUI" data-csp-args="${escapeHtmlAttr(JSON.stringify([offer.id]))}"` : ''} title="Zmień opiekuna"><i data-lucide="briefcase" aria-hidden="true"></i> ${escapeHtml(dd.userName)}</span>`
+            : ''
+    ]
+        .filter(Boolean)
+        .join('');
+
+    const iconsHtml = `
+        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" title="Skopiuj ofertę" aria-label="Skopiuj ofertę">
+            <i data-lucide="copy" aria-hidden="true"></i>
+        </button>
+        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Historia zmian" aria-label="Historia zmian">
+            <i data-lucide="clock" aria-hidden="true"></i>
+        </button>
+        <button class="action-btn secondary btn-followup" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Zapisz kontakt" aria-label="Zapisz kontakt">
+            <i data-lucide="phone" aria-hidden="true"></i>
+        </button>
+        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" data-order-id="${escapeHtmlAttr(hasOrder ? order?.id || '' : '')}" title="Wydruk" aria-label="Wydruk">
+            <i data-lucide="printer" aria-hidden="true"></i>
+        </button>
+        <button class="action-btn secondary btn-share" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i></button>
+        ${
+            offer.clientPhone
+                ? `<a href="tel:${escapeHtmlAttr(offer.clientPhone)}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
+                : ''
+        }
+        <button class="action-btn danger" data-id="${escapeHtmlAttr(offer.id)}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
+            <i data-lucide="trash-2" aria-hidden="true"></i>
+        </button>`;
+
+    const actionsHtml = isLocalList
+        ? `${iconsHtml}
+        <button class="action-btn primary text-btn" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Edytuj ofertę">
+            <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
+        </button>`
+        : `
+        <button class="action-btn primary" data-id="${escapeHtmlAttr(offer.id)}" title="Szczegóły" aria-label="Szczegóły">
+            <i data-lucide="eye" aria-hidden="true"></i>
+        </button>
+        <button class="action-btn secondary btn-share" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i></button>`;
 
     return `
                 <div class="modern-offer-card" data-offer-id="${escapeHtmlAttr(offer.id)}">
@@ -408,64 +428,24 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             </div>
                             <div class="offer-title-section">
                                 <h3 class="offer-title">${escapeHtml(offer.number || offer.title || offer.offerName || 'Oferta bez numeru')}</h3>
-                                <div class="offer-subtitle">
-                                    <span class="offer-client">${dd.clientNumber ? `<span class="client-nip" title="Kod kontrahenta">${escapeHtml(dd.clientNumber)}</span> ` : ''}${escapeHtml(dd.clientInfo)}</span>
-                                    ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${escapeHtml(dd.investInfo)}</span>` : ''}
-                                </div>
+                                <div class="offer-subtitle">${pvBadge ? `${pvBadge}` : ''}</div>
+                            </div>
+                            <div class="offer-client-section">
+                                <span class="offer-client">${dd.clientNumber ? `<span class="client-nip" title="Kod kontrahenta">${escapeHtml(dd.clientNumber)}</span> ` : ''}${escapeHtml(dd.clientInfo)}</span>
+                                ${dd.investInfo ? `<span class="offer-invest">${escapeHtml(dd.investInfo)}</span>` : ''}
+                            </div>
+                            <div class="offer-status-section">
+                                <span class="fu-badge-top">${followUpBadgeHtml(offer)}</span>
+                                ${ownerBadges}
                             </div>
                             <div class="offer-price-section">
                                 <div class="offer-price">${typeof window.fmt === 'function' ? window.fmt(priceVal) + ' PLN' : priceVal.toFixed(2) + ' PLN'}</div>
                                 <div class="offer-meta">${dateStr} • ${itemCount} poz.</div>
-                                <div class="offer-meta offer-badges">${pvBadge ? `${pvBadge}` : ''}<span class="fu-badge-top">${followUpBadgeHtml(offer)}</span></div>
+                            </div>
+                            <div class="action-buttons">${actionsHtml}
                             </div>
                         </div>
                         ${orderList.length > 0 ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
-                        <div class="offer-actions-row">
-                            <div class="order-status-badge">
-                                ${orderBadge}
-                            </div>
-                            <div class="offer-author-badges">
-                                ${dd.creatorName ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>` : ''}
-                                ${dd.userName ? `<span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `data-csp-stop="1" data-csp="changeOfferUserFromList" data-csp-scope="kartotekaUI" data-csp-args="${escapeHtmlAttr(JSON.stringify([offer.id]))}"` : ''} title="Zmień opiekuna"><i data-lucide="briefcase" aria-hidden="true"></i> ${escapeHtml(dd.userName)}</span>` : ''}
-                            </div>
-                            <div class="action-buttons">
-                                ${
-                                    isLocalList
-                                        ? `
-                                        <button class="action-btn primary text-btn" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Edytuj ofertę">
-                                            <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
-                                        </button>
-                                        <button class="action-btn secondary text-btn" data-id="${escapeHtmlAttr(offer.id)}" title="Skopiuj ofertę">
-                                            <i data-lucide="copy" aria-hidden="true"></i> Skopiuj ofertę
-                                        </button>
-                                        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Historia zmian" aria-label="Historia zmian">
-                                            <i data-lucide="clock" aria-hidden="true"></i>
-                                        </button>
-                                        <button class="action-btn secondary btn-followup" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Zapisz kontakt" aria-label="Zapisz kontakt">
-                                            <i data-lucide="phone" aria-hidden="true"></i>
-                                        </button>
-                                        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" data-order-id="${escapeHtmlAttr(hasOrder ? order?.id || '' : '')}" title="Wydruk" aria-label="Wydruk">
-                                            <i data-lucide="printer" aria-hidden="true"></i>
-                                        </button>
-                                        <button class="action-btn secondary btn-share" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i></button>
-                                        ${
-                                            offer.clientPhone
-                                                ? `<a href="tel:${escapeHtmlAttr(offer.clientPhone)}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
-                                                : ''
-                                        }
-                                        <button class="action-btn danger" data-id="${escapeHtmlAttr(offer.id)}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
-                                            <i data-lucide="trash-2" aria-hidden="true"></i>
-                                        </button>
-                                        `
-                                        : `
-                                        <button class="action-btn primary" data-id="${escapeHtmlAttr(offer.id)}" title="Szczegóły" aria-label="Szczegóły">
-                                            <i data-lucide="eye" aria-hidden="true"></i>
-                                        </button>
-                                        <button class="action-btn secondary btn-share" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i></button>
-                                        `
-                                }
-                            </div>
-                        </div>
                     </div>
                 </div>
             `;
