@@ -23,13 +23,17 @@ const responsive = read('public/css/style.responsive.css');
 const utilities = read('public/css/style.utilities.css');
 const base = read('public/css/style.base.css');
 
-const FIELD = '<input type="date" id="ka-date-from" aria-label="Data od" />';
+const FIELD =
+    '<input type="date" id="ka-date-from" aria-label="Data od" />' +
+    '<input type="datetime-local" id="fu-contacted-at" aria-label="Data kontaktu" />';
 
 let input: HTMLInputElement;
+let dtInput: HTMLInputElement;
 
 beforeAll(() => {
     document.body.innerHTML = FIELD;
     input = document.getElementById('ka-date-from') as HTMLInputElement;
+    dtInput = document.getElementById('fu-contacted-at') as HTMLInputElement;
     new Function(src)();
     if (!input.readOnly) document.dispatchEvent(new Event('DOMContentLoaded'));
 });
@@ -69,6 +73,23 @@ describe('kalendarz S.O.K. dla pól daty', () => {
         expect(changes).toBe(1);
         expect((document.querySelector('.sok-datepicker') as HTMLElement).hidden).toBe(true);
         expect(input.hasAttribute('aria-expanded')).toBe(false);
+    });
+
+    it('datetime-local: to samo okno + pole godziny, wartość data+czas', () => {
+        dtInput.value = '2026-11-10T09:45';
+        const panel = openPanel(dtInput);
+        const timeWrap = panel.querySelector('.sok-datepicker-time') as HTMLElement;
+        const timeField = timeWrap.querySelector('input') as HTMLInputElement;
+        expect(timeWrap.hidden).toBe(false);
+        expect(timeField.value).toBe('09:45');
+        clickDay('2026-11-15');
+        expect(dtInput.value).toBe('2026-11-15T09:45');
+    });
+
+    it('pole date chowa wiersz godziny', () => {
+        openPanel(dtInput);
+        const panel = openPanel(input);
+        expect((panel.querySelector('.sok-datepicker-time') as HTMLElement).hidden).toBe(true);
     });
 
     it('Escape zamyka panel i wraca focus na pole', () => {
@@ -128,10 +149,10 @@ describe('kalendarz: styl i zasięg (wszystkie moduły)', () => {
         expect(base).toMatch(/--sok-calendar-icon:\s*url\("data:image\/svg\+xml/);
         expect(base.match(/--sok-calendar-icon:/g)?.length).toBe(2); // dark + light
         expect(utilities).toMatch(
-            /input\[type='date'\]\s*\{[^}]*background-image:\s*var\(--sok-calendar-icon\) !important/
+            /input\[type='date'\],\s*input\[type='datetime-local'\]\s*\{[^}]*background-image:\s*var\(--sok-calendar-icon\) !important/
         );
         expect(utilities).toMatch(
-            /input\[type='date'\]::-webkit-calendar-picker-indicator\s*\{[^}]*display:\s*none/
+            /input\[type='datetime-local'\]::-webkit-calendar-picker-indicator\s*\{[^}]*display:\s*none/
         );
     });
 
@@ -155,8 +176,10 @@ describe('kalendarz: styl i zasięg (wszystkie moduły)', () => {
     });
 
     it('skrypt dołączony do wszystkich stron z polem daty', () => {
-        ['kartoteka.html', 'studnie.html', 'rury.html', 'zlecenia.html'].forEach((page) => {
-            expect(read(`public/${page}`)).toContain('js/shared/datePicker.js?v=');
-        });
+        ['kartoteka.html', 'studnie.html', 'rury.html', 'zlecenia.html', 'index.html'].forEach(
+            (page) => {
+                expect(read(`public/${page}`)).toContain('js/shared/datePicker.js?v=');
+            }
+        );
     });
 });

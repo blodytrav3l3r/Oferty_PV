@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.17
+REM  Wersja: 1.56.18
 REM ===========================================================
 REM  deploy.bat - Uruchamia deploy aplikacji (rdzen w deploy.mjs)
 REM  Przyklad: deploy.bat windows v1.16.0

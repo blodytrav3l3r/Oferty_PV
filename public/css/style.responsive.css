@@ -498,6 +498,27 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     border-color: var(--accent);
     color: var(--white);
 }
+.sok-datepicker-time {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+}
+.sok-datepicker-time label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+.sok-datepicker-time input {
+    padding: 0.3rem 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font: inherit;
+}
 .sok-datepicker-foot {
     display: flex;
     gap: 0.4rem;

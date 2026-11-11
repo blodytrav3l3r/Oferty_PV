@@ -19,7 +19,7 @@ import type {
     KartaBudowyOrderData,
     PrzejscieDetail
 } from '../../../types/kartaBudowy';
-import { textCell } from '../helpers';
+import { textCell, contactRows } from '../helpers';
 import { getKartaBudowySharedSections } from '../../kartaBudowy/sharedSections';
 import { DOCX_COLORS } from '../colors';
 import {
@@ -112,6 +112,21 @@ function infoSection(heading: string, rows: TableRow[]): (Table | Paragraph)[] {
     ];
 }
 
+/** Sekcja kontaktów — 3 kolumny, jedna osoba na wiersz. */
+function contactsSection(
+    heading: string,
+    contacts: Array<{ name?: string; phone?: string; email?: string }>
+): (Table | Paragraph)[] {
+    return [
+        new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            columnWidths: [4200, 2500, 3300],
+            rows: [sectionRow(heading, 3), ...contactRows(contacts)]
+        }),
+        SPACER
+    ];
+}
+
 // ─── Transition table helpers ────────────────────────────────
 
 const TBL_COLS = [
@@ -194,7 +209,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
     children.push(
         new Paragraph({
             alignment: AlignmentType.CENTER,
-            spacing: { after: 0 },
+            spacing: { after: 200 },
             border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: COLOR_GRAY_HEADER } },
             children: [
                 new TextRun({
@@ -203,17 +218,9 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
                     size: 28,
                     font: FONT,
                     color: COLOR_BODY
-                })
-            ]
-        })
-    );
-    children.push(
-        new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 60, after: 200 },
-            children: [
+                }),
                 new TextRun({
-                    text: `Nr zamówienia: ${nrZamowienia}`,
+                    text: `   Nr zamówienia: ${nrZamowienia}`,
                     bold: true,
                     size: 20,
                     font: FONT,
@@ -224,11 +231,13 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
     );
 
     children.push(
-        ...getKartaBudowySharedSections(kb, orderData).flatMap(({ title, rows }) =>
-            infoSection(
-                title,
-                rows.map(({ label, value }) => infoRow(label, value))
-            )
+        ...getKartaBudowySharedSections(kb, orderData).flatMap(({ title, rows, contacts }) =>
+            contacts && contacts.length > 0
+                ? contactsSection(title, contacts)
+                : infoSection(
+                      title,
+                      rows.map(({ label, value }) => infoRow(label, value))
+                  )
         )
     );
 

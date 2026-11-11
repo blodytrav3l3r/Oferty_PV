@@ -269,4 +269,19 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         });
         await expect(card, 'kolejka zniknęła po modalu').toHaveCount(1);
     });
+
+    test('(o) modal opieki zamyka się przyciskiem ×', async ({ page }) => {
+        await openPanel(page);
+        const card = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
+        await expect(card, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
+        await card.locator('[data-care-contact-open]').click();
+        await expect(page.locator('#fu-close-btn'), 'brak przycisku ×').toBeVisible({
+            timeout: 15000
+        });
+        await page.locator('#fu-close-btn').click();
+        await expect(page.locator('#offer-followup-title'), 'modal nie zamknięty').toHaveCount(0, {
+            timeout: 15000
+        });
+        await expect(card, 'kolejka zniknęła po modalu').toHaveCount(1);
+    });
 });

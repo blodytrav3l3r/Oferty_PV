@@ -100,6 +100,38 @@ describe('kartaBudowy - Z-71', () => {
         expect(html.indexOf('Dane nabywcy')).toBeLessThan(html.indexOf('Podstawowe Informacje'));
     });
 
+    it('kontakty w PDF: jedna linia na osobę (nazwisko obok telefonu i e-maila)', async () => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-contact-rows',
+            data: JSON.stringify({
+                orderNumber: 'SA/ZS/000008/2026',
+                kartaBudowy: {
+                    kontaktyBudowa: [
+                        { name: 'Kamil Kopiec', phone: '659625652', email: 'kamil@o2.pl' },
+                        { name: 'Ala Nowak', phone: '700 800 900', email: 'ala@example.test' }
+                    ],
+                    kontaktZamawiajacy: [
+                        { name: 'Marek Bęc', phone: '123654789', email: 'bec@o2.pl' }
+                    ]
+                },
+                wells: []
+            })
+        });
+
+        await generateKartaBudowyPDF('order-contact-rows');
+        const html = (pdfEngine.generatePDF as jest.Mock).mock.calls[0][0] as string;
+
+        const rows = html.match(/<div class="contacts-row(?: [^"]*)?">[\s\S]*?<\/div>/g) || [];
+        const peopleRows = rows.filter((row) => !row.includes('contacts-head'));
+        expect(peopleRows).toHaveLength(3); // 2 budowa + 1 zamawiający
+        expect(peopleRows[0]).toMatch(/Kamil Kopiec[\s\S]*659625652[\s\S]*kamil@o2\.pl/);
+        expect(peopleRows[1]).toMatch(/Ala Nowak[\s\S]*700 800 900[\s\S]*ala@example\.test/);
+        expect(peopleRows[2]).toMatch(/Marek Bęc[\s\S]*123654789[\s\S]*bec@o2\.pl/);
+        expect(html).toMatch(
+            /class="karta-title"[\s\S]*KARTA BUDOWY[\s\S]*Nr zamówienia: SA\/ZS\/000008\/2026/
+        );
+    });
+
     it('renderuje te same dane i kolejność w DOCX', async () => {
         (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
             id: 'order-parties-docx',
@@ -152,6 +184,18 @@ describe('kartaBudowy - Z-71', () => {
         );
         expect(xml.indexOf('OSOBY DO KONTAKTU — BUDOWA')).toBeLessThan(xml.indexOf('DANE NABYWCY'));
         expect(xml.indexOf('DANE NABYWCY')).toBeLessThan(xml.indexOf('PODSTAWOWE INFORMACJE'));
+
+        // Jedna osoba = jeden wiersz: nazwisko, telefon i e-mail w tej samej <w:tr>.
+        const rows = xml.match(/<w:tr[ >][\s\S]*?<\/w:tr>/g) || [];
+        const personRow = rows.find((r) => r.includes('Jan Kowalski') && r.includes('500 600 700'));
+        expect(personRow).toBeTruthy();
+        expect(personRow).toContain('jan@example.test');
+        expect(personRow!.match(/<w:tc>/g) || []).toHaveLength(3);
+        // Tytuł i numer zamówienia w jednym akapicie.
+        const titleParagraph = (xml.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []).find((p) =>
+            p.includes('KARTA BUDOWY')
+        );
+        expect(titleParagraph).toContain('Nr zamówienia: ZAM/004');
     });
 
     it('rozdziela historyczny kontakt zamawiającego i budowy w PDF oraz DOCX', async () => {
@@ -170,7 +214,8 @@ describe('kartaBudowy - Z-71', () => {
 
         await generateKartaBudowyPDF('order-legacy-contacts');
         const html = (pdfEngine.generatePDF as jest.Mock).mock.calls[0][0] as string;
-        expect(html).toContain('Anna Nowak, 600 700 800');
+        expect(html).toContain('Anna Nowak');
+        expect(html).toContain('600 700 800');
         expect(html).toContain('Jan Kowalski');
         expect(html).not.toContain('Kontakt z oferty');
 

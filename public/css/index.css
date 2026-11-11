@@ -3764,6 +3764,16 @@ html[data-theme='light'] body.index-page.logged-in::before {
     color: var(--white);
     border-color: var(--accent);
 }
+/* Pigułki zakresu (7D/30D/90D): wybrana podświetlona akcentem, jak filtry kolejki. */
+.care-range-group .care-range-btn.active {
+    background: var(--accent);
+    color: var(--white);
+    border-color: var(--accent);
+}
+.care-range-group .care-range-btn.active:hover {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+}
 /* Badge licznika: rezerwa na 5 cyfr (99999), cyfry tabularne. */
 .care-queue-filters .care-count {
     display: inline-block;

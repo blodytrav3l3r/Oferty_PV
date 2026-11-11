@@ -33,10 +33,11 @@
     padding: 0.6rem 0.8rem;
 }
 
-/* input[type=date] — ikona kalendarza z tokenu motywu (glif natywny ukryty:
-   pole jest readonly i otwiera popover S.O.K. z shared/datePicker.js).
-   !important, bo moduły nadpisują background/padding shorthandem. */
-input[type='date'] {
+/* input[type=date]/datetime-local — ikona kalendarza z tokenu motywu (glif
+ * natywny ukryty: pole jest readonly i otwiera popover S.O.K. z shared/datePicker.js).
+ * !important, bo moduły nadpisują background/padding shorthandem. */
+input[type='date'],
+input[type='datetime-local'] {
     background-image: var(--sok-calendar-icon) !important;
     background-repeat: no-repeat !important;
     background-position: right 0.55rem center !important;
@@ -44,7 +45,8 @@ input[type='date'] {
     padding-right: 2rem !important;
     cursor: pointer;
 }
-input[type='date']::-webkit-calendar-picker-indicator {
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator {
     display: none;
 }
 

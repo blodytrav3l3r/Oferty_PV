@@ -371,10 +371,10 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
     const dd = window.getOfferDisplayData(offer);
     const isClickable = !!role;
 
-    // Opiekun + autor w jednej, cichej linii pod klientem. Ten sam człowiek
-    // w obu rolach nie dubluje odznaki.
+    // Autor i opiekun zawsze osobno — także gdy to ta sama osoba
+    // (inna ikona: przygotował vs opiekun).
     const ownerBadges = [
-        dd.creatorName && dd.creatorName !== dd.userName
+        dd.creatorName
             ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>`
             : '',
         dd.userName

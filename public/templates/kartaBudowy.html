@@ -34,7 +34,10 @@
 
             /* ===== KARTA BUDOWY (bez naglowka/stopki firmowej) ===== */
             .karta-title {
-                text-align: center;
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 12px;
                 margin-bottom: 12px;
                 padding-bottom: 6px;
                 border-bottom: 2px solid var(--slate-400);
@@ -49,7 +52,38 @@
                 font-size: 9pt;
                 font-weight: 600;
                 color: var(--slate-600);
+                text-align: right;
+                white-space: nowrap;
+            }
+
+            /* ===== OSOBY DO KONTAKTU (jedna linia na osobę) ===== */
+            .contacts-title {
+                font-weight: 700;
+                color: var(--slate-400);
+                font-size: 9pt;
                 margin-top: 4px;
+            }
+            .contacts-row {
+                display: flex;
+                gap: 12px;
+                font-size: 9pt;
+                padding: 1px 0;
+                border-bottom: 1px dotted var(--slate-300);
+            }
+            .contacts-head {
+                font-weight: 700;
+                color: var(--slate-400);
+                border-bottom: 1px solid var(--slate-300);
+            }
+            .contacts-name {
+                width: 42%;
+            }
+            .contacts-phone {
+                width: 25%;
+            }
+            .contacts-email {
+                width: 33%;
+                word-break: break-word;
             }
 
             /* ===== SEKCJE DANYCH ===== */
@@ -87,6 +121,32 @@
             .info-value {
                 width: 55%;
                 color: var(--slate-950);
+            }
+
+            /* Pary w jednej linii (np. Kod pocztowy | Miejscowość | Ulica i numer). */
+            .info-row--multi {
+                display: flex;
+                gap: 12px;
+                justify-content: space-between;
+            }
+
+            .info-row--multi .info-pair {
+                display: flex;
+                gap: 5px;
+                flex: 0 1 auto;
+                min-width: 0;
+            }
+
+            .info-row--multi .info-label {
+                width: auto;
+                flex: 0 0 auto;
+            }
+
+            .info-row--multi .info-value {
+                width: auto;
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow-wrap: anywhere;
             }
 
             .full-width {
@@ -171,17 +231,21 @@
                                     <div class="info-label">Symbol oferty - Obiekt:</div>
                                     <div class="info-value">{{INVEST_NAME}}</div>
                                 </div>
-                                <div class="info-row">
-                                    <div class="info-label">Kod pocztowy:</div>
-                                    <div class="info-value">{{INVEST_POSTAL_CODE}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">Miejscowość:</div>
-                                    <div class="info-value">{{INVEST_CITY}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">Ulica i numer:</div>
-                                    <div class="info-value">{{INVEST_STREET}}</div>
+                                <div class="info-row info-row--multi">
+                                    <span class="info-pair"
+                                        ><span class="info-label">Kod pocztowy:</span
+                                        ><span class="info-value"
+                                            >{{INVEST_POSTAL_CODE}}</span
+                                        ></span
+                                    >
+                                    <span class="info-pair"
+                                        ><span class="info-label">Miejscowość:</span
+                                        ><span class="info-value">{{INVEST_CITY}}</span></span
+                                    >
+                                    <span class="info-pair"
+                                        ><span class="info-label">Ulica i numer:</span
+                                        ><span class="info-value">{{INVEST_STREET}}</span></span
+                                    >
                                 </div>
                                 <div class="info-row">
                                     <div class="info-label">Opis dojazdu:</div>
@@ -191,31 +255,20 @@
 
                             <!-- OSOBY DO KONTAKTU — BUDOWA -->
                             <div class="section-header">Osoby do kontaktu — budowa</div>
-                            <div class="info-grid">
-                                <div class="info-row">
-                                    <div class="info-label">Imię i nazwisko:</div>
-                                    <div class="info-value">{{BUILD_CONTACT_NAME}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">Telefon:</div>
-                                    <div class="info-value">{{BUILD_CONTACT_PHONE}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">E-mail:</div>
-                                    <div class="info-value">{{BUILD_CONTACT_EMAIL}}</div>
-                                </div>
-                            </div>
+                            {{BUILD_CONTACTS}}
 
                             <!-- DANE NABYWCY -->
                             <div class="section-header">Dane nabywcy</div>
                             <div class="info-grid">
-                                <div class="info-row">
-                                    <div class="info-label">Kod kontrahenta:</div>
-                                    <div class="info-value">{{CLIENT_NUMBER}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">Firma:</div>
-                                    <div class="info-value">{{CLIENT_NAME}}</div>
+                                <div class="info-row info-row--multi">
+                                    <span class="info-pair"
+                                        ><span class="info-label">Kod kontrahenta:</span
+                                        ><span class="info-value">{{CLIENT_NUMBER}}</span></span
+                                    >
+                                    <span class="info-pair"
+                                        ><span class="info-label">Firma:</span
+                                        ><span class="info-value">{{CLIENT_NAME}}</span></span
+                                    >
                                 </div>
                                 <div class="info-row">
                                     <div class="info-label">NIP:</div>
@@ -225,21 +278,21 @@
                                     <div class="info-label">Adres firmy:</div>
                                     <div class="info-value">{{CLIENT_ADDRESS}}</div>
                                 </div>
-                                <div class="info-row">
-                                    <div class="info-label">Kontakt zamawiającego:</div>
-                                    <div class="info-value">{{OSOBA_KONTAKT}}</div>
-                                </div>
+                                <div class="contacts-title">Kontakt zamawiającego:</div>
+                                {{BUYER_CONTACTS}}
                             </div>
                             <!-- INFO: PODSTAWOWE -->
                             <div class="section-header">Podstawowe Informacje</div>
                             <div class="info-grid">
-                                <div class="info-row">
-                                    <div class="info-label">Nr powiązanej oferty:</div>
-                                    <div class="info-value">{{OFFER_NUMBERS}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">Data zamówienia:</div>
-                                    <div class="info-value">{{DATA_ZAMOWIENIA}}</div>
+                                <div class="info-row info-row--multi">
+                                    <span class="info-pair"
+                                        ><span class="info-label">Nr powiązanej oferty:</span
+                                        ><span class="info-value">{{OFFER_NUMBERS}}</span></span
+                                    >
+                                    <span class="info-pair"
+                                        ><span class="info-label">Data zamówienia:</span
+                                        ><span class="info-value">{{DATA_ZAMOWIENIA}}</span></span
+                                    >
                                 </div>
                                 <div class="info-row">
                                     <div class="info-label">Adres wysyłki:</div>
@@ -258,21 +311,27 @@
                             <!-- LOGISTYKA -->
                             <div class="section-header">Logistyka i Płatności</div>
                             <div class="info-grid">
-                                <div class="info-row">
-                                    <div class="info-label">Warunki płatności:</div>
-                                    <div class="info-value">{{WARUNKI_PLATNOSCI}}</div>
+                                <div class="info-row info-row--multi">
+                                    <span class="info-pair"
+                                        ><span class="info-label">Warunki płatności:</span
+                                        ><span class="info-value">{{WARUNKI_PLATNOSCI}}</span></span
+                                    >
+                                    <span class="info-pair"
+                                        ><span class="info-label">Ilość dni:</span
+                                        ><span class="info-value">{{ILOSC_DNI}}</span></span
+                                    >
                                 </div>
-                                <div class="info-row">
-                                    <div class="info-label">Ilość dni:</div>
-                                    <div class="info-value">{{ILOSC_DNI}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">Rodzaj transportu:</div>
-                                    <div class="info-value">{{RODZAJ_TRANSPORTU}}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="info-label">Koszt transportu:</div>
-                                    <div class="info-value">{{WYLICZONY_TRANSPORT}}</div>
+                                <div class="info-row info-row--multi">
+                                    <span class="info-pair"
+                                        ><span class="info-label">Rodzaj transportu:</span
+                                        ><span class="info-value">{{RODZAJ_TRANSPORTU}}</span></span
+                                    >
+                                    <span class="info-pair"
+                                        ><span class="info-label">Koszt transportu:</span
+                                        ><span class="info-value"
+                                            >{{WYLICZONY_TRANSPORT}}</span
+                                        ></span
+                                    >
                                 </div>
                                 <div class="info-row">
                                     <div class="info-label">Zabezpieczenie transportu:</div>

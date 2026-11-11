@@ -7,6 +7,7 @@ import vm from 'vm';
 // (klik w wiersz zamówienia otwiera edycję).
 describe('kartotekaHelpers buildOfferCardHtml — panel zamówień przy pustej mapie', () => {
     let buildOfferCardHtml: any;
+    let ctx: any;
 
     beforeEach(() => {
         const file = path.join(__dirname, '../../public/js/kartoteka/kartotekaHelpers.js');
@@ -38,6 +39,7 @@ describe('kartotekaHelpers buildOfferCardHtml — panel zamówień przy pustej m
         vm.createContext(context);
         vm.runInContext(code, context);
         buildOfferCardHtml = context.window.buildOfferCardHtml;
+        ctx = context;
     });
 
     const offer = (over: Record<string, unknown> = {}) => ({
@@ -121,6 +123,20 @@ describe('kartotekaHelpers buildOfferCardHtml — panel zamówień przy pustej m
         };
         const html = buildOfferCardHtml(offer(), true, [ord], ord, 'admin', true);
         expect(html).not.toContain('orders-more');
+    });
+
+    test('autor i opiekun: dwie odznaki, także gdy to ta sama osoba', () => {
+        ctx.window.getOfferDisplayData = () => ({
+            clientNumber: '',
+            clientInfo: 'Klient',
+            investInfo: '',
+            userName: 'Anna Nowak',
+            creatorName: 'Anna Nowak'
+        });
+        const html = buildOfferCardHtml(offer(), false, [], null, 'admin', true);
+        expect((html.match(/class="author-badge/g) || []).length).toBe(2);
+        expect(html).toContain('pen-tool');
+        expect(html).toContain('briefcase');
     });
 
     test('badge follow-up w nagłówku karty (fu-badge-top)', () => {

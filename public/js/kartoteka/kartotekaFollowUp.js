@@ -198,7 +198,8 @@ export default {
             titleId: 'offer-followup-title',
             html:
                 `<div class="modal modal--lg">` +
-                `<h3 id="offer-followup-title">Opieka nad ofertą — ${window.escapeHtml(title)}</h3>` +
+                `<div class="fu-modal-head"><h3 id="offer-followup-title">Opieka nad ofertą — ${window.escapeHtml(title)}</h3>` +
+                `<button type="button" class="fu-modal-close" id="fu-close-btn" title="Zamknij" aria-label="Zamknij okno"><i data-lucide="x" aria-hidden="true"></i></button></div>` +
                 `<div class="fu-client-box"><h4>Kontakt do klienta</h4>` +
                 `<div id="fu-cc-list" data-cc-hidden=""></div>` +
                 `<div class="fu-client-actions"><button type="button" class="btn btn-sm btn-secondary" id="fu-client-save">Zapisz kontakt do klienta</button></div>` +
@@ -226,6 +227,14 @@ export default {
 
         this._fuItems = items;
         this._fuEditingId = null;
+
+        const closeBtn = overlay.querySelector('#fu-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                if (typeof window.closeModal === 'function') window.closeModal();
+                else overlay.remove();
+            });
+        }
 
         const ccBox = overlay.querySelector('#fu-cc-list');
         if (ccBox) {

@@ -8,6 +8,8 @@ interface KartaBudowySharedRow {
 interface KartaBudowySharedSection {
     title: string;
     rows: KartaBudowySharedRow[];
+    /** Lista osób do kontaktu (jedna linia na osobę w wydrukach). */
+    contacts?: Array<{ name?: string; phone?: string; email?: string }>;
 }
 
 type ContactField = 'name' | 'phone' | 'email';
@@ -56,6 +58,19 @@ function formatBuyerContacts(kb: KartaBudowyMeta, orderData: KartaBudowyOrderDat
         ];
     }
     return [];
+}
+
+function formatBuyerContactList(kb: KartaBudowyMeta, orderData: KartaBudowyOrderData) {
+    const hasExplicitList =
+        Array.isArray(kb.kontaktZamawiajacy) ||
+        Array.isArray(kb.clientContacts) ||
+        Array.isArray(orderData.clientContacts);
+    const contacts = formatBuyerContacts(kb, orderData);
+    if (hasExplicitList || contacts.length > 0) return contacts;
+    const legacyBuyer = splitLegacyParties(
+        String(kb.osobaKontakt ?? orderData.clientContact ?? '')
+    ).buyer;
+    return Object.values(legacyBuyer).some(Boolean) ? [legacyBuyer] : [];
 }
 
 function formatBuildContacts(kb: KartaBudowyMeta, orderData: KartaBudowyOrderData) {
@@ -136,7 +151,8 @@ export function getKartaBudowySharedSections(
                 { label: 'Imię i nazwisko', value: formatBuild('name') },
                 { label: 'Telefon', value: formatBuild('phone') },
                 { label: 'E-mail', value: formatBuild('email') }
-            ]
+            ],
+            contacts: buildContacts
         },
         {
             title: 'Dane nabywcy',
@@ -157,7 +173,8 @@ export function getKartaBudowySharedSections(
                 },
                 { label: 'Telefon zamawiającego', value: formatBuyer('phone') },
                 { label: 'E-mail zamawiającego', value: formatBuyer('email') }
-            ]
+            ],
+            contacts: formatBuyerContactList(kb, orderData)
         }
     ];
 }

@@ -63,4 +63,50 @@ describe('public/templates/kartaBudowy.html — brak naglowka i stopki', () => {
         expect(row).not.toMatch(/style="width:/);
         expect(row).not.toMatch(/full-width/);
     });
+
+    describe('pary pol w jednej linii (.info-row--multi)', () => {
+        /** Wycina HTML wiersza zawierajacego podany label. */
+        const rowWith = (label: string): string => {
+            const labelIndex = html.indexOf(`>${label}<`);
+            expect(labelIndex).toBeGreaterThanOrEqual(0);
+            const rowStart = html.lastIndexOf('<div class="info-row info-row--multi">', labelIndex);
+            expect(rowStart).toBeGreaterThanOrEqual(0);
+            const rowEnd = html.indexOf('</div>', labelIndex);
+            return html.slice(rowStart, rowEnd);
+        };
+
+        it('Kod pocztowy + Miejscowość + Ulica i numer w jednym wierszu', () => {
+            const row = rowWith('Kod pocztowy:');
+            expect(row).toContain('Kod pocztowy:');
+            expect(row).toContain('Miejscowość:');
+            expect(row).toContain('Ulica i numer:');
+            expect(row.match(/class="info-pair"/g)).toHaveLength(3);
+        });
+
+        it('Kod kontrahenta obok Firma, a NIP i Adres firmy w kolejnych wierszach', () => {
+            const row = rowWith('Kod kontrahenta:');
+            expect(row).toContain('Firma:');
+            for (const label of ['NIP:', 'Adres firmy:']) {
+                const labelIndex = html.indexOf(`>${label}<`);
+                expect(labelIndex).toBeGreaterThanOrEqual(0);
+                const rowStart = html.lastIndexOf('<div class="info-row', labelIndex);
+                expect(html.slice(rowStart, rowStart + 30)).toContain('<div class="info-row">');
+            }
+        });
+
+        it('Nr powiązanej oferty obok Data zamówienia', () => {
+            const row = rowWith('Nr powiązanej oferty:');
+            expect(row).toContain('Data zamówienia:');
+        });
+
+        it('Warunki płatności obok Ilość dni, a Rodzaj transportu obok Koszt transportu', () => {
+            expect(rowWith('Warunki płatności:')).toContain('Ilość dni:');
+            expect(rowWith('Rodzaj transportu:')).toContain('Koszt transportu:');
+        });
+
+        it('CSS definiuje .info-row--multi i .info-pair', () => {
+            expect(html).toMatch(/\.info-row--multi\s*\{/);
+            expect(html).toMatch(/\.info-row--multi \.info-pair\s*\{/);
+        });
+    });
 });

@@ -4,7 +4,7 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
-### 1.56.17 (2026-11-11)
+### 1.56.18 (2026-11-11)
 
 ### Features
 
@@ -14,6 +14,10 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 - **ui:** studnie - checkboxy kategorii (M.WL/M.KLB/FS.WL/FS.KLB) są w prawdziwych kolumnach tabeli i stoją w jednej linii z checkboxami elementów
 - **ui:** `#/cennik` - rail wersji dochodzi do dolnej krawędzi okna (ukryty pasek kreatora nie ucina go już o 60px)
 - **ui:** kartoteka - karty ofert w jednym rzędzie (ikona, numer z cennikiem, klient, status, cena, akcje), srebrna powierzchnia, zamówienie jako zielony pasek z kwotą i „Edytuj zamówienie"; wszystkie zamówienia widoczne od razu (bez „+N więcej"), cennik jako sam tekst bez ramki i typu, autor oraz opiekun przy statusie opieki
+- **pdf:** karta budowy - „KARTA BUDOWY" i „Nr zamówienia" w jednej linii (tytuł z lewej, numer z prawej); osoby do kontaktu (budowa i zamawiający) w jednej linii na osobę: imię i nazwisko, telefon, e-mail (PDF i DOCX)
+- **pdf:** karta budowy - pola łączone w pary w jednej linii: kod pocztowy | miejscowość | ulica i numer, kod kontrahenta | firma, nr powiązanej oferty | data zamówienia, warunki płatności | ilość dni, rodzaj transportu | koszt transportu
+- **ui:** pulpit i kartoteka - wybrany zakres panelu opieki ma akcent, terminy w formacie `DD.MM.RRRR`, a „Data kontaktu" korzysta z kalendarza SOK z wierszem „Godzina"
+- **ui:** kartoteka - modal kontaktu zwrotnego ma przycisk zamknięcia `×`
 
 ### 1.56.16 (2026-11-11)
 

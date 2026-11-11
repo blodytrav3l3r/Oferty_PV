@@ -9,7 +9,7 @@
  * więc logika filtrów i formularzy działa bez zmian.
  *
  * Pola dodane później (modale, partiale) łapie MutationObserver.
- * `datetime-local` nie jest obsługiwany — popover nie ma wyboru godziny.
+ * `datetime-local` też jest obsługiwany — popover ma dodatkowe pole godziny.
  */
 (function () {
     var MONTHS = [
@@ -56,7 +56,7 @@
 
     /** @param {string} value */
     function parseValue(value) {
-        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value || '');
         if (!m) return null;
         return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
     }
@@ -84,6 +84,9 @@
             }).join('') +
             '</div>' +
             '<div class="sok-datepicker-grid" role="grid"></div>' +
+            '<div class="sok-datepicker-time" hidden>' +
+            '<label>Godzina <input type="time" step="60" /></label>' +
+            '</div>' +
             '<div class="sok-datepicker-foot">' +
             '<button type="button" class="btn btn-sm btn-secondary" data-act="today">Dzisiaj</button>' +
             '<button type="button" class="btn btn-sm btn-secondary" data-act="clear">Wyczyść</button>' +
@@ -165,6 +168,16 @@
         viewYear = current.getFullYear();
         viewMonth = current.getMonth();
         if (!panel) panel = buildPanel();
+        var timeWrap = panel.querySelector('.sok-datepicker-time');
+        var timeField = panel.querySelector('.sok-datepicker-time input');
+        var wantsTime = input.type === 'datetime-local';
+        if (timeWrap instanceof HTMLElement) timeWrap.hidden = !wantsTime;
+        if (timeField instanceof HTMLInputElement) {
+            var m = /T(\d{2}):(\d{2})/.exec(input.value || '');
+            timeField.value = m
+                ? m[1] + ':' + m[2]
+                : pad2(new Date().getHours()) + ':' + pad2(new Date().getMinutes());
+        }
         panel.hidden = false;
         render();
         position();
@@ -185,6 +198,14 @@
 
     /** @param {HTMLInputElement} input @param {string} value */
     function commit(input, value) {
+        if (value && input.type === 'datetime-local') {
+            var timeField = panel && panel.querySelector('.sok-datepicker-time input');
+            var time =
+                timeField instanceof HTMLInputElement && timeField.value
+                    ? timeField.value
+                    : '00:00';
+            value += 'T' + time;
+        }
         input.value = value;
         input.dispatchEvent(new Event('change', { bubbles: true }));
     }
@@ -274,10 +295,14 @@
     /** @param {Document | Element} root */
     function bindAll(root) {
         // Węzeł dodany bezpośrednio (nie kontener) nie łapie się w querySelectorAll.
-        if (root instanceof HTMLInputElement && root.type === 'date') bindInput(root);
-        root.querySelectorAll('input[type="date"]').forEach(function (node) {
-            if (node instanceof HTMLInputElement) bindInput(node);
-        });
+        if (root instanceof HTMLInputElement && /^(date|datetime-local)$/.test(root.type)) {
+            bindInput(root);
+        }
+        root.querySelectorAll('input[type="date"], input[type="datetime-local"]').forEach(
+            function (node) {
+                if (node instanceof HTMLInputElement) bindInput(node);
+            }
+        );
     }
 
     function init() {

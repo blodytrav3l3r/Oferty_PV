@@ -490,6 +490,45 @@
     color: var(--blue-hover);
 }
 
+/* Opieka nad ofertą (P1): nagłówek z przyciskiem zamknięcia ×. */
+.fu-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.fu-modal-head h3 {
+    margin: 0;
+}
+
+.fu-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.fu-modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.fu-modal-close svg,
+.fu-modal-close i {
+    width: 16px;
+    height: 16px;
+}
+
 /* Opieka nad ofertą (P1): formularz + timeline w modalu — klasy bazowe z utilities. */
 .fu-form-grid {
     display: grid;

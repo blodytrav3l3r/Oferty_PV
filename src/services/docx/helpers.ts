@@ -1,7 +1,23 @@
-import { Paragraph, TextRun, TableCell, WidthType, AlignmentType, ShadingType } from 'docx';
+import {
+    Paragraph,
+    TextRun,
+    TableCell,
+    TableRow,
+    WidthType,
+    AlignmentType,
+    ShadingType
+} from 'docx';
 import fs from 'fs';
 import path from 'path';
-import { FONT, COLOR_BODY, SZ_TABLE_BODY, CELL_BORDERS, type CellBorders } from './constants';
+import {
+    FONT,
+    COLOR_BODY,
+    SZ_TABLE_BODY,
+    CELL_BORDERS,
+    BORDER_DOTTED,
+    BORDER_NONE,
+    type CellBorders
+} from './constants';
 import { logger } from '../../utils/logger';
 import { resolvePublicDir } from '../../utils/paths';
 
@@ -77,6 +93,42 @@ export function textCell(
             : undefined,
         borders: opts.borders ?? CELL_BORDERS
     });
+}
+
+// ─── Wiersze kontaktów (jedna osoba = jedna linia) ──────────────
+
+export interface ContactRowData {
+    name?: string;
+    phone?: string;
+    email?: string;
+}
+
+/**
+ * Nagłówek + po jednym wierszu na osobę: imię i nazwisko | telefon | e-mail.
+ * Szerokości procentowe sumują się do 100.
+ */
+export function contactRows(contacts: ContactRowData[]): TableRow[] {
+    const dotted: CellBorders = {
+        top: BORDER_NONE,
+        bottom: BORDER_DOTTED,
+        left: BORDER_NONE,
+        right: BORDER_NONE
+    };
+    const cells = (name: string, phone: string, email: string, bold = false) => [
+        textCell(name, { bold, width: 42, size: SZ_TABLE_BODY, borders: dotted }),
+        textCell(phone, { bold, width: 25, size: SZ_TABLE_BODY, borders: dotted }),
+        textCell(email, { bold, width: 33, size: SZ_TABLE_BODY, borders: dotted })
+    ];
+    const head = new TableRow({
+        children: cells('Imię i nazwisko', 'Telefon', 'E-mail', true)
+    });
+    const body = (contacts.length ? contacts : [{}]).map(
+        (c) =>
+            new TableRow({
+                children: cells(c.name || '—', c.phone || '—', c.email || '—')
+            })
+    );
+    return [head, ...body];
 }
 
 // ─── Ładowanie obrazów ──────────────────────────────────────────────
