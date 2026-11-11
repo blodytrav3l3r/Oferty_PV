@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.16 (2026-11-11)
+
+### Tests
+
+- **config:** kontrakt testowy commita (`docs/agents/testing.md`) — zmiana logiki wymaga testu w tym samym commicie, zmiana czysto wizualna nie; wskaźnik w `AGENTS.md`
+- **config:** pre-commit blokuje `migration.sql` bez pliku `tests/**` (`scripts/check-migration-tests.mjs`, test w `test:docs`)
+
 ### 1.56.15 (2026-11-10)
 
 ### Tests
