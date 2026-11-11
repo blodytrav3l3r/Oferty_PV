@@ -42,6 +42,13 @@ body:has(.wizard-nav-fixed) .pv-dock {
     }
 }
 
+/* #/cennik nie ma dolnego paska kreatora (nav jest w DOM, ale `hidden`), więc
+ * `body:has(.wizard-nav-fixed)` ucinał rail o 60px i zostawiał martwy pas u dołu.
+ * Tutaj rail dochodzi do samej krawędzi okna. */
+body.pv-cennik-host .pv-dock {
+    bottom: 0;
+}
+
 /* #/cennik: rail jest jedynym lewym panelem — bez zamykania na desktopie.
  * Na wąskim ekranie zostaje drawer z X, a „Panel" w toolbarze go przywraca. */
 body.pv-cennik-host .pv-dock__close,

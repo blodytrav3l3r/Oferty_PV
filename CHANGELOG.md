@@ -11,7 +11,8 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 - **ui:** pasek zakładek cennika pokazuje tylko aktywną oś — PRECO nie jest już 12. zakładką w pasku studni (dostępne z listwy Rury/Studnie/PRECO)
 - **ui:** pasek wersji nad siatką ma równe odstępy między tytułem, statusem i podpowiedzią (`.pv-version-bar__title`)
 - **ui:** `#/cennik` ma jedną strefę przewijania — poziomy pasek jest zawsze na dole okna, pionowy przy prawej krawędzi (bez przerwy od paddingu), a nie na końcu długiej tabeli; dotyczy Rury, Studnie i PRECO
-- **ui:** studnie — checkboxy kategorii (M.WL/M.KLB/FS.WL/FS.KLB) są w prawdziwych kolumnach tabeli i stoją w jednej linii z checkboxami elementów
+- **ui:** studnie - checkboxy kategorii (M.WL/M.KLB/FS.WL/FS.KLB) są w prawdziwych kolumnach tabeli i stoją w jednej linii z checkboxami elementów
+- **ui:** `#/cennik` - rail wersji dochodzi do dolnej krawędzi okna (ukryty pasek kreatora nie ucina go już o 60px)
 
 ### 1.56.16 (2026-11-11)
 
