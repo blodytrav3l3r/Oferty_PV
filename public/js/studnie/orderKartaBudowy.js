@@ -114,10 +114,29 @@ function _calcTransportCosts() {
         tWeight = o.totalWeight || 0;
         if (o.wells) {
             o.wells.forEach((w) => {
-                tCost += typeof w.transportCost === 'number' ? w.transportCost : 0;
+                const wc =
+                    typeof w.transportCost === 'number'
+                        ? w.transportCost
+                        : typeof w.frozenTransportCost === 'number'
+                          ? w.frozenTransportCost
+                          : 0;
+                tCost += wc;
+            });
+        }
+        if (tCost === 0 && Array.isArray(o.wellsExport)) {
+            o.wellsExport.forEach((exp) => {
+                tCost += typeof exp.transportCost === 'number' ? exp.transportCost : 0;
             });
         }
         costPerTrip = (parseFloat(o.transportKm) || 0) * (parseFloat(o.transportRate) || 0);
+        if (tCost === 0 && costPerTrip > 0 && tWeight > 0) {
+            const offerMode = o.transportMode || 'full';
+            const count =
+                typeof calcTransportCount === 'function'
+                    ? calcTransportCount(tWeight, offerMode)
+                    : Math.ceil(tWeight / MAX_TRANSPORT_WEIGHT);
+            tCost = count * costPerTrip;
+        }
     } else if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
         const off = pendingOrderCreationData.offer;
         const sel = pendingOrderCreationData.selectedWells;
@@ -429,6 +448,7 @@ function _applyExistingKartaBudowyData(existingData, primaryOfferNumber) {
         'adresWysylki',
         'iloscDni',
         'ubezpieczenie',
+        'wyliczonyTransport',
         'wysokoscSpocznika',
         'usytuowanie',
         'kaskada',
@@ -764,6 +784,7 @@ function applyCopiedKartaBudowyData(sourceData) {
     setSelect('step4-warunki-platnosci', sourceData.warunkiPlatnosci);
     setValue('step4-ilosc-dni', sourceData.iloscDni || '');
     setValue('step4-ubezpieczenie', sourceData.ubezpieczenie || '');
+    setValue('step4-wyliczony-transport', sourceData.wyliczonyTransport || '');
     window.ClientContacts.kartaBudowy.restore(sourceData);
     setSelect('step4-zabezpieczenie-transportu', sourceData.zabezpieczenieTransportu);
     setSelect('step4-rodzaj-transportu', sourceData.rodzajTransportu);
