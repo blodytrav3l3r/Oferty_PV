@@ -26,6 +26,16 @@
  */
 
 import 'dotenv/config';
+
+// Gdy DATABASE_URL wskazuje na host sieci dockerowej (np. '@postgres:'),
+// a lokalnie na hoście dostępna jest baza testowa POSTGRES_TEST_URL, użyj jej.
+if (
+    process.env.POSTGRES_TEST_URL &&
+    (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('@postgres:'))
+) {
+    process.env.DATABASE_URL = process.env.POSTGRES_TEST_URL;
+}
+
 import prisma from '../src/prismaClient';
 import { getSeedPrecoItems, getSeedRury, getSeedStudnie } from '../src/services/pricelist/seedData';
 import { getVersionExport } from '../src/services/pricelist/export';
