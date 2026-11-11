@@ -230,7 +230,7 @@ body.pv-cennik-host #section-pricelist {
 }
 
 /* Tabele cennika skalują się do okna i są zakotwiczone w treści (bez pływania).
- * Studnie: pełna szerokość, min. 1080 px → wąskie okno przewija `.table-wrap`.
+ * Studnie: pełna szerokość, min. 1080 px → wąskie okno przewija sekcja cennika.
  * PRECO: pełna szerokość treści (bez zawężania do 1040 px). */
 body.pv-cennik-host #studnie-pricelist-body:has(.preco-accordion) {
     width: 100%;
@@ -241,6 +241,48 @@ body.pv-cennik-host #studnie-pricelist-body:has(.preco-accordion) {
 body.pv-cennik-host #pricelist-body,
 body.pv-cennik-host #studnie-pricelist-body {
     width: 100%;
+}
+
+/* #/cennik: jedna strefa przewijania dla treści cennika.
+ * Sekcja ma ograniczoną wysokość (okno), więc pasek poziomy jest zawsze
+ * na dole okna, a nie na końcu długiej tabeli. Tabele nie dostają własnych
+ * pasków — inaczej trzeba by zjeżdżać do końca tabeli, żeby przewinąć w bok. */
+body.pv-cennik-host {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+body.pv-cennik-host > .main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    /* Pasek przewijania siedzi na krawędzi sekcji, więc padding boczny
+     * należy do sekcji (nie do .main) — inaczej zostaje pusta przerwa
+     * między paskiem a krawędzią okna. */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+body.pv-cennik-host #partial-pricelist {
+    display: contents;
+}
+
+body.pv-cennik-host #section-pricelist {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+body.pv-cennik-host #section-pricelist .table-wrap,
+body.pv-cennik-host #section-pricelist .preco-wrap {
+    overflow-x: visible;
 }
 
 /* Studnie: komfortowe odstępy komórek jak w cenniku rur. */
@@ -692,10 +734,16 @@ body.pv-dock-open #pricelist-status-strip {
 .pv-version-bar__label {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.8rem;
     flex-wrap: wrap;
     font-size: var(--fs-md);
     color: var(--text-secondary);
+}
+
+.pv-version-bar__title {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
 }
 
 /* ===== Lista wersji (karty w podkategoriach rok) ===== */

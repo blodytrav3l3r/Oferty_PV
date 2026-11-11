@@ -34,6 +34,20 @@ function updateStudnieSaveBtn() {
     if (window.lucide) lucide.createIcons({ root: btn });
 }
 
+// PRECO to osobna oś cennika (własna strona cennika), więc pasek zakładek
+// pokazuje tylko zakładki aktywnej osi: studnie bez „Wkładki PRECO”,
+// PRECO bez DN/akcesoriów/kinet.
+function syncCennikTabAxis(axis) {
+    const isPreco = axis === 'preco';
+    document.querySelectorAll('.cennik-tab').forEach((/** @type {HTMLElement} */ b) => {
+        b.hidden = (b.dataset.tab === 'preco') !== isPreco;
+    });
+}
+
+document.addEventListener('partials:loaded', () => syncCennikTabAxis(currentCennikTab), {
+    once: true
+});
+
 function selectCennikTab(tab) {
     // Oś zakładki: PRECO to osobna oś, wszystkie DN to oś studni. Zmiana DN
     // wewnątrz osi ma zostawić pokazywaną wersję, zmiana osi ją zwalnia.
@@ -43,6 +57,7 @@ function selectCennikTab(tab) {
     document.querySelectorAll('.cennik-tab').forEach((/** @type {HTMLElement} */ b) => {
         b.classList.toggle('active', b.dataset.tab === tab);
     });
+    syncCennikTabAxis(nextAxis);
     if (tab === 'preco') {
         renderPrecoPriceList();
     } else {

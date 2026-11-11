@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.56.16
+REM  Wersja: 1.56.17
 REM ===========================================================
 REM  prod.bat - alias do start.bat --prod
 REM  Uruchamia tryb produkcyjny przez start.bat (pojedyncze

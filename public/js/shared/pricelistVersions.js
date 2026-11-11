@@ -1012,11 +1012,14 @@
         bar.setAttribute('data-axis', type);
         var label =
             '<span class="pv-version-bar__label">' +
+            '<span class="pv-version-bar__title">' +
             (editing ? 'Edycja wersji <strong>' : 'Wersja <strong>') +
             esc(labelOf(v)) +
-            '</strong> ' +
+            '</strong></span>' +
             statusBadge(stateOf(v)) +
-            (editing ? ' — zapis podmienia ceny tej wersji' : ' — tylko odczyt') +
+            '<span class="pv-version-bar__hint">' +
+            (editing ? '— zapis podmienia ceny tej wersji' : '— tylko odczyt') +
+            '</span>' +
             '</span>';
         bar.innerHTML =
             label +

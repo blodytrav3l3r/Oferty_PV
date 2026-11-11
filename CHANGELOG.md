@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### 1.56.17 (2026-11-11)
+
+### Features
+
+- **ui:** pasek zakładek cennika pokazuje tylko aktywną oś — PRECO nie jest już 12. zakładką w pasku studni (dostępne z listwy Rury/Studnie/PRECO)
+- **ui:** pasek wersji nad siatką ma równe odstępy między tytułem, statusem i podpowiedzią (`.pv-version-bar__title`)
+- **ui:** `#/cennik` ma jedną strefę przewijania — poziomy pasek jest zawsze na dole okna, pionowy przy prawej krawędzi (bez przerwy od paddingu), a nie na końcu długiej tabeli; dotyczy Rury, Studnie i PRECO
+
 ### 1.56.16 (2026-11-11)
 
 ### Tests

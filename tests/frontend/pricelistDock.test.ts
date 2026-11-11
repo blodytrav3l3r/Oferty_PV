@@ -107,6 +107,14 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain('function restoreGridDataOnly');
     });
 
+    it('pasek zakładek pokazuje tylko aktywną oś: studnie bez PRECO, PRECO bez DN', () => {
+        const state = read('public/js/studnie/pricelistState.js');
+        expect(state).toContain('function syncCennikTabAxis(axis)');
+        expect(state).toContain("b.hidden = (b.dataset.tab === 'preco') !== isPreco;");
+        expect(state).toContain("document.addEventListener('partials:loaded'");
+        expect(studnieCss).toContain('.cennik-tab[hidden]');
+    });
+
     it('zmiana DN zostaje w wersji; tylko zmiana osi ją zwalnia', () => {
         const state = read('public/js/studnie/pricelistState.js');
         // Oś: wszystkie DN = studnie, Wkładki = [preco].

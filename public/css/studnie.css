@@ -1606,6 +1606,10 @@ html[data-theme='light'] .unit-popup-preview {
     gap: 0.4rem;
 }
 
+.cennik-tab[hidden] {
+    display: none;
+}
+
 .cennik-tab:hover {
     border-color: var(--bg-tertiary-alt);
     color: var(--text-secondary);
