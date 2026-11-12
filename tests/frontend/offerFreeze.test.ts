@@ -446,15 +446,15 @@ describe('frontend static: pieczątka doklejana tylko przy pending', () => {
         expect(crud).toContain(
             'if (pendingRuryStampId) offerDoc.pricelistVersionId = pendingRuryStampId'
         );
-        const saves = crud.indexOf('storageService.saveOffer(offerDoc)');
-        expect(crud.slice(saves, saves + 200)).toContain('pendingRuryStampId = null');
+        const saves = crud.indexOf('storageService.saveOffer(offerDoc, {');
+        expect(crud.indexOf('pendingRuryStampId = null', saves)).toBeGreaterThan(saves);
     });
     test('studnie: saveOfferStudnie dokleja/czyści pending, clearOfferForm resetuje', () => {
         const save = readPub('js/studnie/offerSave.js');
         expect(save).toContain('if (window.pendingStudnieStampId)');
         expect(save).toContain('offerDoc.pricelistVersionId = window.pendingStudnieStampId');
-        const at = save.indexOf('storageService.saveOffer(offerDoc)');
-        expect(save.slice(at, at + 200)).toContain('window.pendingStudnieStampId = null');
+        const at = save.indexOf('storageService.saveOffer(offerDoc, {');
+        expect(save.indexOf('window.pendingStudnieStampId = null', at)).toBeGreaterThan(at);
         const mgr = readPub('js/studnie/offerManager.js');
         expect(mgr).toContain('function recalcStudnieToActive(activeId)');
         expect(mgr).toContain('window.pendingStudnieStampId = null');

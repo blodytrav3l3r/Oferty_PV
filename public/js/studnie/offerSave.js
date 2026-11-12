@@ -1,5 +1,6 @@
 // @ts-check
 /* ===== ZAPIS OFERTY (STUDNIE) ===== */
+let pendingStudnieOfferId = null;
 
 // SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
 // Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
@@ -189,7 +190,8 @@ async function saveOfferStudnie() {
             }
         }
 
-        simpleId = editingOfferIdStudnie || 'offer_studnie_' + Date.now();
+        simpleId =
+            editingOfferIdStudnie || (pendingStudnieOfferId ||= 'offer_studnie_' + Date.now());
         const pricing = calculateOfferPricing(
             wells,
             fields.transportKm,
@@ -274,18 +276,32 @@ async function saveOfferStudnie() {
             );
             return false;
         }
-        const result = await storageService.saveOffer(offerDoc);
+        const result = await storageService.saveOffer(offerDoc, {
+            generateOfferNumber:
+                !editingOfferIdStudnie &&
+                document.getElementById('offer-number')?.dataset.numberGenerated === 'true'
+        });
         window.pendingStudnieStampId = null;
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         const savedId = result.id || offerDoc.id;
         editingOfferIdStudnie = savedId;
+        pendingStudnieOfferId = null;
+        const numberInput = document.getElementById('offer-number');
+        if (result.number && numberInput) {
+            numberInput.value = result.number;
+            numberInput.dataset.numberGenerated = 'false';
+        }
         // P1.1b: sukces SAVED kasuje draft (zapis draftu ≠ zapis SAVED).
         if (window.draftAutosave)
             window.draftAutosave.clearContext('offer_studnie', 'new', savedId);
 
         // Aktualizuj lokalną tablicę dla natychmiastowego renderowania przy użyciu potwierdzonego ID
         const idx = offersStudnie.findIndex((o) => o.id === editingOfferIdStudnie);
-        const updatedOffer = { ...offerDoc, id: editingOfferIdStudnie };
+        const updatedOffer = {
+            ...offerDoc,
+            number: result.number || offerDoc.number,
+            id: editingOfferIdStudnie
+        };
 
         if (idx >= 0) offersStudnie[idx] = updatedOffer;
         else offersStudnie.push(updatedOffer);

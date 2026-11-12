@@ -83,6 +83,7 @@ export const offerItemSchema = z
 export const offerCreateSchema = z
     .object({
         id: z.string().optional(),
+        generateOfferNumber: z.boolean().optional(),
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
@@ -161,6 +162,7 @@ export const wellDataSchema = z
 export const offerStudnieCreateSchema = z
     .object({
         id: z.string().optional(),
+        generateOfferNumber: z.boolean().optional(),
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),

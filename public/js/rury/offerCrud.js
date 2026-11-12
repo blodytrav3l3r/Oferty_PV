@@ -21,6 +21,7 @@ window.isSavingOffer = false;
 /* Pieczątka po „Przelicz do aktywnego" — active.id z bannera; saveOffer
  * dokleja do offerDoc tylko gdy ustawione, czyści po udanym zapisie. */
 let pendingRuryStampId = null;
+let pendingRuryOfferId = null;
 /* calculateTransports, calculateTransportDistributionStandalone z transport.js */
 /* renderOfferItems, generateOfferNumber z offerItems.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js; fmt z shared/formatters.js */
@@ -117,7 +118,7 @@ async function saveOffer() {
     }
 
     const base = buildBaseOfferDoc({
-        id: editingOfferId || 'offer_' + Date.now(),
+        id: editingOfferId || (pendingRuryOfferId ||= 'offer_' + Date.now()),
         type: 'offer',
         fields: fields,
         existingDoc: existingDoc,
@@ -148,15 +149,31 @@ async function saveOffer() {
             showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
             return;
         }
-        const result = await storageService.saveOffer(offerDoc);
+        const result = await storageService.saveOffer(offerDoc, {
+            generateOfferNumber:
+                !editingOfferId &&
+                document.getElementById('offer-number')?.dataset.numberGenerated === 'true'
+        });
         pendingRuryStampId = null;
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         editingOfferId = result.id || offerDoc.id;
+        pendingRuryOfferId = null;
+        const numberInput = document.getElementById('offer-number');
+        if (result.number && numberInput) {
+            numberInput.value = result.number;
+            numberInput.dataset.numberGenerated = 'false';
+        }
 
         // Aktualizuj lokalna tablice do natychmiastowego renderowania
         const idx = offers.findIndex((o) => o.id === offerDoc.id);
-        if (idx >= 0) offers[idx] = { ...offerDoc, id: offerDoc.id };
-        else offers.push({ ...offerDoc, id: offerDoc.id });
+        if (idx >= 0)
+            offers[idx] = {
+                ...offerDoc,
+                number: result.number || offerDoc.number,
+                id: offerDoc.id
+            };
+        else
+            offers.push({ ...offerDoc, number: result.number || offerDoc.number, id: offerDoc.id });
         if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
 
         renderSavedOffers();
@@ -260,6 +277,7 @@ function clearOfferForm() {
     if (window.draftAutosave)
         window.draftAutosave.clearContext('offer_rury', editingOfferId || 'new');
     editingOfferId = null;
+    pendingRuryOfferId = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
     pendingRuryStampId = null;

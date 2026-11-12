@@ -67,6 +67,8 @@ function setupOfferForm() {
     };
     setVal('offer-date', new Date().toISOString().slice(0, 10));
     setVal('offer-number', generateOfferNumber());
+    const numberInput = document.getElementById('offer-number');
+    if (numberInput) numberInput.dataset.numberGenerated = 'true';
 
     const hiddenCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu', 'Transport'];
     if (!window.activeCatalogCategory || hiddenCategories.includes(window.activeCatalogCategory)) {

@@ -28,6 +28,12 @@ import {
     decimalMoneyValueToNumber,
     decimalMoneyRowsToNumbers
 } from '../../services/pricelist/moneySerialization';
+import {
+    allocateNextOfferNumber,
+    getCurrentOfferNumberYear,
+    isSameGeneratedOfferRetry,
+    withOfferNumber
+} from '../../services/offers/offerNumbering';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -422,6 +428,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 id: offer.id,
                 type: 'studnia_oferta',
                 userId: offer.userId,
+                number: offer.offer_number,
                 title: `Oferta Studnia ${offer.offer_number || offer.id}`,
                 price: decimalMoneyValueToNumber(offer.totalPrice) ?? 0,
                 status: offer.state === 'final' ? 'active' : 'draft',
@@ -568,6 +575,7 @@ router.post(
                 version: number | null;
                 totalPrice: number | null;
                 pricelistVersionId: string | null;
+                offer_number: string | null;
             }> =
                 incomingIds.length > 0
                     ? decimalMoneyRowsToNumbers(
@@ -581,7 +589,8 @@ router.post(
                                   userId: true,
                                   version: true,
                                   totalPrice: true,
-                                  pricelistVersionId: true
+                                  pricelistVersionId: true,
+                                  offer_number: true
                               }
                           }),
                           ['totalPrice']
@@ -612,13 +621,17 @@ router.post(
                 exists: boolean;
                 serverVersion: number | null;
                 clientVersion: number | null;
+                generateOfferNumber: boolean;
+                organizationUnit: string | null;
                 auditAction: 'create' | 'update';
                 auditOld: Record<string, unknown> | null;
                 auditNew: Record<string, unknown>;
             }> = [];
             // M3: jawny numer oferty musi być unikalny (I-004) — jak w ruryCrud.
             const wantedNumbers = new Map<string, string>();
+            const retryGeneratedResults: Record<string, unknown>[] = [];
             for (const o of incoming) {
+                if (o.generateOfferNumber) continue;
                 const num =
                     typeof o.number === 'string' && o.number
                         ? o.number
@@ -713,6 +726,16 @@ router.post(
                         return res.status(403).json(forbiddenCreate);
                     }
                     effectiveUserId = resolved.effectiveUserId;
+                }
+                if (old && o.generateOfferNumber === true && old.offer_number) {
+                    if (!isSameGeneratedOfferRetry(old.data, o, old.offer_number)) {
+                        return res.status(409).json({
+                            error: 'Oferta została już zapisana; odśwież ją przed kolejną zmianą',
+                            code: 'OFFER_CREATE_RETRY_CONFLICT'
+                        });
+                    }
+                    retryGeneratedResults.push({ id: docId, ok: true, number: old.offer_number });
+                    continue;
                 }
                 if (!old && !frozenStudnieVersionId) {
                     // Etap 1: nowa oferta bez aktywnego cennika nie ma z czego
@@ -840,6 +863,7 @@ router.post(
                 const {
                     version: _postVersion,
                     pricelistVersionId: stampReq,
+                    generateOfferNumber: _generateNumber,
                     ...blobSrc
                 } = o as Record<string, unknown>;
                 const postClientVersion = typeof o.version === 'number' ? o.version : null;
@@ -874,6 +898,8 @@ router.post(
                 pending.push({
                     docId,
                     exists: !!old,
+                    generateOfferNumber: !old && o.generateOfferNumber === true,
+                    organizationUnit: o.organizationUnit || null,
                     serverVersion: old?.version ?? null,
                     clientVersion: postClientVersion,
                     create: {
@@ -919,8 +945,18 @@ router.post(
             // Atomowy zapis wszystkich ofert — all-or-nothing (P1.1 correctness).
             // Timeout 30 s: upsert oferty z ~3k studni (~10 MB JSON) może
             // przekroczyć domyślny limit transakcji przy wolniejszej bazie.
+            const assignedNumbers = new Map<string, string>();
             await prisma.$transaction(async (tx) => {
                 for (const w of pending) {
+                    const generatedNumber = w.generateOfferNumber
+                        ? await allocateNextOfferNumber(
+                              tx,
+                              'studnie',
+                              w.organizationUnit,
+                              getCurrentOfferNumberYear()
+                          )
+                        : null;
+                    if (generatedNumber) assignedNumbers.set(w.docId, generatedNumber);
                     // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
                     await assertDocLockForWrite(tx, {
                         docType: 'offer_studnie',
@@ -933,8 +969,20 @@ router.post(
                         exists: w.exists,
                         serverVersion: w.serverVersion,
                         clientVersion: w.clientVersion,
-                        createData: w.create,
-                        updateData: w.update,
+                        createData: generatedNumber
+                            ? {
+                                  ...w.create,
+                                  offer_number: generatedNumber,
+                                  data: withOfferNumber(String(w.create.data), generatedNumber)
+                              }
+                            : w.create,
+                        updateData: generatedNumber
+                            ? {
+                                  ...w.update,
+                                  offer_number: generatedNumber,
+                                  data: withOfferNumber(String(w.update.data), generatedNumber)
+                              }
+                            : w.update,
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
                     // Audit w tej samej tx — rollback biznesu cofa wpis.
@@ -949,9 +997,10 @@ router.post(
                     );
                 }
             }, HOT_TX_OPTS);
-            const results: Record<string, unknown>[] = [];
+            const results: Record<string, unknown>[] = [...retryGeneratedResults];
             for (const w of pending) {
-                results.push({ id: w.docId, ok: true });
+                const number = assignedNumbers.get(w.docId);
+                results.push({ id: w.docId, ok: true, ...(number ? { number } : {}) });
             }
 
             logger.info(

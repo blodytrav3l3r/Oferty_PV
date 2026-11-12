@@ -37,6 +37,12 @@ import {
     decimalMoneyRowsToNumbers
 } from '../../services/pricelist/moneySerialization';
 import { roundMoney } from '../../utils/money';
+import {
+    allocateNextOfferNumber,
+    getCurrentOfferNumberYear,
+    isSameGeneratedOfferRetry,
+    withOfferNumber
+} from '../../services/offers/offerNumbering';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -106,6 +112,7 @@ router.get('/', requireAuth, async (req, res) => {
                 id: offer.id,
                 type: 'offer',
                 userId: offer.userId,
+                number: offer.offer_number,
                 title: `Oferta ${offer.offer_number || offer.id}`,
                 price: items.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 0), 0),
                 status: offer.state === 'final' ? 'active' : 'draft',
@@ -227,6 +234,8 @@ router.post(
                 // undefined = zapis slim (np. sama zmiana opiekuna) — relacji
                 // offer_items_rel nie ruszac; [] = jawne wyczyszczenie pozycji.
                 items?: unknown[];
+                generateOfferNumber: boolean;
+                organizationUnit: string | null;
                 // P0-D2: optimistic locking.
                 exists: boolean;
                 serverVersion: number | null;
@@ -247,6 +256,7 @@ router.post(
             // wymagałby UNIQUE w DB (follow-up migracyjny).
             const wantedNumbers = new Map<string, string>();
             for (const o of incoming) {
+                if (o.generateOfferNumber) continue;
                 const num =
                     typeof o.offer_number === 'string' && o.offer_number
                         ? o.offer_number
@@ -344,6 +354,17 @@ router.post(
                     effectiveUserId = resolved.effectiveUserId;
                 }
 
+                if (old && o.generateOfferNumber === true && old.offer_number) {
+                    if (!isSameGeneratedOfferRetry(old.data, o, old.offer_number)) {
+                        return res.status(409).json({
+                            error: 'Oferta została już zapisana; odśwież ją przed kolejną zmianą',
+                            code: 'OFFER_CREATE_RETRY_CONFLICT'
+                        });
+                    }
+                    results.push({ id: docId, ok: true, number: old.offer_number });
+                    continue;
+                }
+
                 if (!old && !frozenRuryVersionId) {
                     // Etap 1: nowa oferta bez aktywnego cennika nie ma z czego
                     // wycenić — zamiast cichej pieczątki `null` blokujemy zapis.
@@ -402,7 +423,12 @@ router.post(
                 const offerNumber = o.offer_number || o.number || null;
                 // P0-D2: version to kolumna, nie blob. Pieczątka też poza blobem
                 // (kolumna pricelistVersionId jest źródłem prawdy).
-                const { version: clientVersionRaw, pricelistVersionId: stampReq, ...blobSrc } = o;
+                const {
+                    version: clientVersionRaw,
+                    pricelistVersionId: stampReq,
+                    generateOfferNumber: _generateNumber,
+                    ...blobSrc
+                } = o;
                 const clientVersion =
                     typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
                 // Pieczątka: awans tylko dla update i tylko do bieżącej ACTIVE;
@@ -424,6 +450,8 @@ router.post(
                     docId,
                     effectiveUserId,
                     offerNumber,
+                    generateOfferNumber: !old && o.generateOfferNumber === true,
+                    organizationUnit: o.organizationUnit || null,
                     state,
                     clientName,
                     investName,
@@ -453,11 +481,21 @@ router.post(
                         items: o.items
                     }
                 });
-                results.push({ id: docId, ok: true });
             }
 
+            const assignedNumbers = new Map<string, string>();
             await prisma.$transaction(async (tx) => {
                 for (const w of pendingWrites) {
+                    const generatedNumber = w.generateOfferNumber
+                        ? await allocateNextOfferNumber(
+                              tx,
+                              'rury',
+                              w.organizationUnit,
+                              getCurrentOfferNumberYear()
+                          )
+                        : null;
+                    const offerNumber = generatedNumber || w.offerNumber;
+                    if (generatedNumber) assignedNumbers.set(w.docId, generatedNumber);
                     // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
                     await assertDocLockForWrite(tx, {
                         docType: 'offer',
@@ -472,7 +510,7 @@ router.post(
                         clientVersion: w.clientVersion,
                         createData: {
                             userId: w.effectiveUserId,
-                            offer_number: w.offerNumber,
+                            offer_number: offerNumber,
                             state: w.state,
                             clientName: w.clientName,
                             investName: w.investName,
@@ -482,13 +520,15 @@ router.post(
                             updatedAt: w.updated,
                             transportCost: w.transportCost,
                             history: w.historyStr,
-                            data: w.dataStr,
+                            data: generatedNumber
+                                ? withOfferNumber(w.dataStr, generatedNumber)
+                                : w.dataStr,
                             // F3 freeze (tylko create — updateData bez zmian).
                             pricelistVersionId: w.pricelistVersionId
                         },
                         updateData: {
                             userId: w.effectiveUserId,
-                            offer_number: w.offerNumber,
+                            offer_number: offerNumber,
                             state: w.state,
                             clientName: w.clientName,
                             investName: w.investName,
@@ -551,6 +591,11 @@ router.post(
                     );
                 }
             }, HOT_TX_OPTS);
+
+            for (const w of pendingWrites) {
+                const number = assignedNumbers.get(w.docId);
+                results.push({ id: w.docId, ok: true, ...(number ? { number } : {}) });
+            }
 
             logger.info(
                 'Offers',

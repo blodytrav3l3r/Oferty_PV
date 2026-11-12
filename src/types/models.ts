@@ -28,6 +28,7 @@ export interface OfferMapped {
     id: string;
     type: 'offer';
     userId?: string | null;
+    number?: string | null;
     title: string;
     price: number;
     status: 'active' | 'draft';

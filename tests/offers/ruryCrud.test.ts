@@ -169,6 +169,33 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             expect(createManyCalls).toBeGreaterThan(0);
         });
 
+        it('przydziela nowy numer według jednostki po stronie serwera', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ maxNumber: 7n }]);
+
+            const res = await request(app)
+                .post('/api/offers')
+                .send({
+                    data: [
+                        {
+                            id: 'o-numbered',
+                            clientId: 'client-1',
+                            organizationUnit: 'ASM_KLUCZBORK',
+                            generateOfferNumber: true,
+                            number: 'OF/000001/ASM/2026',
+                            items: []
+                        }
+                    ]
+                });
+
+            const created = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0].data;
+            expect(res.statusCode).toBe(200);
+            expect(res.body.results[0].number).toBe(`OF/000008/ASM/${new Date().getFullYear()}`);
+            expect(created.offer_number).toBe(`OF/000008/ASM/${new Date().getFullYear()}`);
+            expect(JSON.parse(created.data).number).toBe(created.offer_number);
+        });
+
         it('brak numeru → NULL w DB (nie pusty string)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);

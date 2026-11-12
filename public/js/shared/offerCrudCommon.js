@@ -179,6 +179,8 @@ function getOfferFormFields() {
  * @param {{number?:string,date?:string,organizationUnit?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,clientContacts?:Array,contactPerson?:string,clientPhone?:string,clientEmail?:string,investName?:string,investAddress?:string,investContractor?:string,investStreet?:string,investPostalCode?:string,investCity?:string,investCountry?:string,investLocationDescription?:string,investContact?:string,investContacts?:Array,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
  */
 function setOfferFormFields(data) {
+    const numberInput = document.getElementById('offer-number');
+    if (numberInput) numberInput.dataset.numberGenerated = 'false';
     const s = (id, val) => {
         const el = document.getElementById(id);
         if (el && val !== undefined) el.value = val ?? '';
@@ -293,9 +295,9 @@ function pickOrderContactFields(f) {
  * @param {function} [numberGenerator] - opcjonalnie generuje numer oferty
  */
 function clearOfferFormFields(numberGenerator) {
-    const defaultOrganizationUnit = window.currentUser?.defaultOrganizationUnit || '';
+    const defaultOrganizationUnit = window.currentUser?.defaultOrganizationUnit || 'ASM_KLUCZBORK';
     setOfferFormFields({
-        number: typeof numberGenerator === 'function' ? numberGenerator() : '',
+        number: '',
         date: new Date().toISOString().slice(0, 10),
         organizationUnit: defaultOrganizationUnit,
         clientName: '',
@@ -320,6 +322,13 @@ function clearOfferFormFields(numberGenerator) {
         transportKm: 100,
         transportRate: 10
     });
+    if (typeof numberGenerator === 'function') {
+        const numberInput = document.getElementById('offer-number');
+        if (numberInput) {
+            numberInput.value = numberGenerator();
+            numberInput.dataset.numberGenerated = 'true';
+        }
+    }
 }
 
 /**

@@ -93,6 +93,17 @@ interface AuthUser {
     defaultOrganizationUnit?: 'ASM_KLUCZBORK' | 'WL_WLOCLAWEK' | null;
 }
 
+interface OfferNumberOptions {
+    prefix: 'OF' | 'OS';
+    offers: Array<{ number?: string; offer_number?: string }>;
+    organizationUnit?: string | null;
+    year: number;
+}
+
+interface Window {
+    getNextOfferNumber: (options: OfferNumberOptions) => string;
+}
+
 interface AuthState {
     user: AuthUser | null;
     token: string | null;

@@ -115,6 +115,31 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
     });
 
     describe('POST /api/offers/studnie (upsert studni)', () => {
+        it('przydziela nowy numer WL dla studni po stronie serwera', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ maxNumber: 3n }]);
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({
+                    data: [
+                        {
+                            id: 's-numbered',
+                            organizationUnit: 'WL_WLOCLAWEK',
+                            generateOfferNumber: true,
+                            number: 'OS/000001/WL/2026',
+                            status: 'draft'
+                        }
+                    ]
+                });
+
+            const created = (prisma.offers_studnie_rel.create as jest.Mock).mock.calls[0][0].data;
+            expect(res.statusCode).toBe(200);
+            expect(res.body.results[0].number).toBe(`OS/000004/WL/${new Date().getFullYear()}`);
+            expect(created.offer_number).toBe(`OS/000004/WL/${new Date().getFullYear()}`);
+            expect(JSON.parse(created.data).number).toBe(created.offer_number);
+        });
+
         it('tworzy nową ofertę studni i wywołuje create', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});

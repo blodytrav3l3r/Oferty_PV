@@ -30,7 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('offer-number').value = generateOfferNumberStudnie();
+    const assignGeneratedOfferNumber = () => {
+        const numberInput = document.getElementById('offer-number');
+        if (!numberInput) return;
+        numberInput.value = generateOfferNumberStudnie();
+        numberInput.dataset.numberGenerated = 'true';
+    };
+    assignGeneratedOfferNumber();
 
     wizardConfirmedParams = new Set();
     goToWizardStep(1);
@@ -72,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (!orderEditMode) {
-            document.getElementById('offer-number').value = generateOfferNumberStudnie();
+            assignGeneratedOfferNumber();
         }
     } catch (err) {
         logger.error('pricelistManager', 'Błąd podczas inicjalizacji danych:', err);
@@ -81,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (_) {}
         showToast('Wystąpił błąd podczas ładowania danych. Nawigacja jest dostępna.', 'error');
         if (!orderEditMode) {
-            document.getElementById('offer-number').value = generateOfferNumberStudnie();
+            assignGeneratedOfferNumber();
         }
     }
 });

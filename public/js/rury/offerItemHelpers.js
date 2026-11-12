@@ -2,21 +2,25 @@
 /* === Helpery oferty rur === */
 
 function generateOfferNumber() {
-    const d = new Date();
-    const year = d.getFullYear();
-    let symbol = 'XX';
-    if (typeof currentUser !== 'undefined' && currentUser) {
-        if (currentUser.symbol) {
-            symbol = currentUser.symbol;
-        } else if (currentUser.firstName && currentUser.lastName) {
-            symbol = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
-        } else if (currentUser.username) {
-            symbol = currentUser.username.substring(0, 2).toUpperCase();
-        }
+    const year = Number(
+        new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Europe/Warsaw' }).format(
+            new Date()
+        )
+    );
+    const organizationUnitInput = document.getElementById('offer-organization-unit');
+    if (organizationUnitInput && !organizationUnitInput.value) {
+        organizationUnitInput.value =
+            window.currentUser?.defaultOrganizationUnit || 'ASM_KLUCZBORK';
     }
-
-    const count = typeof offers !== 'undefined' ? offers.length + 1 : 1;
-    return `OF/${String(count).padStart(6, '0')}/${symbol}/${year}`;
+    const organizationUnit =
+        organizationUnitInput?.value || window.currentUser?.defaultOrganizationUnit;
+    const currentOffers = typeof offers !== 'undefined' && Array.isArray(offers) ? offers : [];
+    return window.getNextOfferNumber({
+        prefix: 'OF',
+        offers: currentOffers,
+        organizationUnit,
+        year
+    });
 }
 window.generateOfferNumber = generateOfferNumber;
 

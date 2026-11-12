@@ -11,6 +11,7 @@ function clearOfferForm() {
     if (window.draftAutosave)
         window.draftAutosave.clearContext('offer_studnie', editingOfferIdStudnie || 'new');
     editingOfferIdStudnie = null;
+    pendingStudnieOfferId = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
     editingOfferCreatedByUserId = null;

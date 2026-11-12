@@ -32,9 +32,10 @@ class StorageService {
     /**
      * Zapisuje ofertę (Rury lub Studnie).
      * @param {Object} offerData - Dokument oferty do zapisania.
+     * @param {{generateOfferNumber?: boolean}} [options] - Czy numer ma zostać przydzielony przez serwer.
      * @returns {Promise<Object>} Wynik zapisanego dokumentu.
      */
-    async saveOffer(offerData) {
+    async saveOffer(offerData, options = {}) {
         if (!this.initialized) throw new Error('StorageService not initialized.');
 
         const now = new Date().toISOString();
@@ -48,6 +49,9 @@ class StorageService {
 
         try {
             const headers = this.getHeaders();
+            const requestOffer = options.generateOfferNumber
+                ? { ...offerData, generateOfferNumber: true }
+                : offerData;
             // A2: timeout jak fetchWithTimeout (10 s) — half-open connection nie
             // wiesza zapisu w nieskończoność; AbortError → saveErrorKind 'network'.
             const controller = new AbortController();
@@ -58,7 +62,7 @@ class StorageService {
                     method: 'POST',
                     headers: headers,
                     credentials: 'same-origin',
-                    body: JSON.stringify({ data: [offerData] }),
+                    body: JSON.stringify({ data: [requestOffer] }),
                     signal: controller.signal
                 });
             } finally {
@@ -87,7 +91,12 @@ class StorageService {
 
             // Pobierz ponownie, aby uzyskać pola wygenerowane po stronie serwera, jeśli to konieczne,
             // lub po prostu zwróć zaktualizowane dane.
-            return offerData;
+            const savedNumber = Array.isArray(data.results)
+                ? data.results.find((result) => result.id === offerData.id)?.number
+                : null;
+            return typeof savedNumber === 'string' && savedNumber
+                ? { ...offerData, number: savedNumber }
+                : offerData;
         } catch (error) {
             logger.error(
                 'StorageService',
