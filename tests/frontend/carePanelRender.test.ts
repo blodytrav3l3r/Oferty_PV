@@ -990,6 +990,97 @@ describe('carePanel — render, a11y, kafelki, search', () => {
         expect(findBtn(card, 'Kontakt').disabled).toBe(false);
     });
 
+    test('karta pokazuje datę odłożenia i termin następnego kontaktu', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return okJson({
+                        ok: true,
+                        etag: '"ecare-dates"',
+                        summary: {
+                            noContact: 1,
+                            due: 2,
+                            openOk: 0,
+                            won: 0,
+                            lost: 0,
+                            abandoned: 0,
+                            totalCount: 3
+                        },
+                        queue: {
+                            items: [
+                                {
+                                    offerKind: 'studnie',
+                                    offerId: 's1',
+                                    status: 'NO_CONTACT',
+                                    overdueDays: 3,
+                                    escalated: false,
+                                    paused: true,
+                                    snoozedUntil: '2026-11-20T12:00:00.000Z',
+                                    clientName: 'Budimex',
+                                    number: 'OS/1',
+                                    value: null,
+                                    nextContactAt: null,
+                                    lastContactAt: null,
+                                    lastNote: null
+                                },
+                                {
+                                    offerKind: 'rury',
+                                    offerId: 'o1',
+                                    status: 'DUE',
+                                    overdueDays: 0,
+                                    escalated: false,
+                                    paused: false,
+                                    snoozedUntil: null,
+                                    clientName: 'Inny klient',
+                                    number: 'OF/1',
+                                    value: null,
+                                    nextContactAt: '2026-11-18T10:00:00.000Z',
+                                    lastContactAt: null,
+                                    lastNote: null
+                                },
+                                {
+                                    offerKind: 'rury',
+                                    offerId: 'o2',
+                                    status: 'DUE',
+                                    overdueDays: 0,
+                                    escalated: false,
+                                    paused: true,
+                                    snoozedUntil: null,
+                                    clientName: 'Zakończona oferta',
+                                    number: 'OF/2',
+                                    value: null,
+                                    nextContactAt: null,
+                                    lastContactAt: '2026-11-17T12:00:00.000Z',
+                                    lastNote: null
+                                }
+                            ],
+                            nextCursor: null,
+                            totalCount: 3
+                        },
+                        notifications: { items: [], unreadCount: 0, hasOverflow: false },
+                        sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const findSubs = (root: any, result: string[] = []): string[] => {
+            for (const child of root.children || []) {
+                if (child.className === 'care-queue-sub') result.push(child.textContent);
+                findSubs(child, result);
+            }
+            return result;
+        };
+        const subs = findSubs(els['care-queue-list']);
+        expect(subs).toEqual(
+            expect.arrayContaining([
+                expect.stringContaining('Odłożone do: 20.11.2026'),
+                expect.stringContaining('Termin: 18.11.2026'),
+                expect.stringContaining('Ost. kontakt: 17.11.2026 • wymaga ponowienia')
+            ])
+        );
+    });
+
     test('search kolejki: normalize + match po kliencie/obiekcie/telefonie', async () => {
         const { context } = load({ fetchMock: () => okJson({}) });
         const t = context.__careTest;

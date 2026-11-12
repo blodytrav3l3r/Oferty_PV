@@ -1501,19 +1501,28 @@ function statusPill(it) {
 /** Ikona + tytuł + sub do szarego boxu karty (jak na projekcie: ⚠/📄/◷/✓). */
 function queueInfoContent(it) {
     const last = fmtDate(it.lastContactAt);
+    const snoozedUntil = fmtDate(it.snoozedUntil);
     if (it.status === 'NO_CONTACT') {
         const age = it.overdueDays > 0 ? String(it.overdueDays) + 'd bez kontaktu' : 'bez historii';
         return {
             icon: 'triangle-alert',
             title: it.paused ? 'Odłożone — brak pierwszego kontaktu' : 'Brak pierwszego kontaktu',
-            sub: age + ' • bez jakiejkolwiek interakcji'
+            sub:
+                age +
+                (it.paused && snoozedUntil ? ' • Odłożone do: ' + snoozedUntil : '') +
+                ' • bez jakiejkolwiek interakcji'
         };
     }
     if (it.paused) {
         return {
             icon: 'pause',
             title: 'Odłożone',
-            sub: (last ? 'Ost. kontakt: ' + last : 'Bez terminu') + ' • wymaga ponowienia'
+            sub:
+                (snoozedUntil
+                    ? 'Odłożone do: ' + snoozedUntil + (last ? ' • Ost. kontakt: ' + last : '')
+                    : last
+                      ? 'Ost. kontakt: ' + last
+                      : 'Bez terminu') + ' • wymaga ponowienia'
         };
     }
     if (it.nextContactAt) {
