@@ -6,7 +6,7 @@ import vm from 'vm';
 export const load = (opts: {
     fetchMock: (url: string, _init?: any) => any;
     role?: string;
-    initialRange?: '7d' | '30d' | '90d' | 'all';
+    initialRange?: '7d' | '30d' | '90d' | 'custom' | 'all';
     calls?: string[];
     timers?: number[];
     fuStub?: any;
@@ -163,7 +163,7 @@ export const load = (opts: {
     vm.createContext(context);
     vm.runInContext(
         code +
-            '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications };',
+            '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueCustomRange: typeof setQueueCustomRange === "function" ? setQueueCustomRange : undefined, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications };',
         context
     );
     context.__careTest.setQueueRange(opts.initialRange ?? '30d');

@@ -3687,7 +3687,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
     flex: 2 1 12rem;
     min-width: 10rem;
 }
-/* Wiersz zakresów 7D/30D/90D/Wszystko + szukaj w jednej linii. */
+/* Wiersz zakresów 7D/30D, dat od–do i wyszukiwania. */
 .care-range-group {
     display: flex;
     flex-wrap: wrap;
@@ -3698,6 +3698,30 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-range-group .care-search-wrap {
     flex: 2 1 12rem;
     min-width: 10rem;
+}
+.care-custom-range {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+.care-range-date-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--fs-xs);
+}
+.care-range-date {
+    width: 8.5rem;
+    min-width: 0;
+}
+.care-custom-range.active .care-range-date {
+    border-color: var(--accent);
+}
+.care-range-error {
+    flex-basis: 100%;
+    color: var(--danger);
+    font-size: var(--fs-xs);
 }
 .care-search-wrap input[type='search'] {
     flex: 1 1 auto;
@@ -3764,7 +3788,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
     color: var(--white);
     border-color: var(--accent);
 }
-/* Pigułki zakresu (7D/30D/90D): wybrana podświetlona akcentem, jak filtry kolejki. */
+/* Pigułki zakresu: wybrana podświetlona akcentem, jak filtry kolejki. */
 .care-range-group .care-range-btn.active {
     background: var(--accent);
     color: var(--white);

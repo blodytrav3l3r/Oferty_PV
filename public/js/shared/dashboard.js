@@ -299,13 +299,42 @@ async function loadRecycledNumbers(user) {
  * Opieka nad ofertami: TYLKO KPI z analityki. Liczniki fu-stat-* pisze
  * wyłącznie carePanel.js (jeden pisarz — SSoT /api/care/summary).
  */
+function localFollowUpDate(value, endOfDay) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return null;
+    const [year, month, day] = value.split('-').map(Number);
+    const date = endOfDay
+        ? new Date(year, month - 1, day, 23, 59, 59, 999)
+        : new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
+        return null;
+    return date;
+}
+
 /* Zakres KPI z presetu opieki (sok-care-range pisze carePanel.js). */
 function followUpRangeQuery() {
     try {
         const raw =
             typeof localStorage !== 'undefined' ? localStorage.getItem('sok-care-range') : null;
+        if (raw === 'custom') {
+            const fromDate = localStorage.getItem('sok-care-from');
+            const toDate = localStorage.getItem('sok-care-to');
+            const customFrom = localFollowUpDate(fromDate, false);
+            const customTo = localFollowUpDate(toDate, true);
+            if (
+                customFrom &&
+                customTo &&
+                customFrom <= customTo &&
+                customTo.getTime() - customFrom.getTime() <= 366 * 86400000
+            )
+                return (
+                    '&from=' +
+                    encodeURIComponent(customFrom.toISOString()) +
+                    '&to=' +
+                    encodeURIComponent(customTo.toISOString())
+                );
+        }
         /* Brak zapisu lub legacy 'all' → domyslnie 7 dni (zgodnie z panelem opieki). */
-        const days = raw === '30d' ? 30 : raw === '90d' ? 90 : 7;
+        const days = raw === '30d' ? 30 : 7;
         const nowMin = Math.floor(Date.now() / 60000) * 60000;
         const to = new Date(nowMin).toISOString();
         const from = new Date(nowMin - days * 86400000).toISOString();
@@ -340,9 +369,12 @@ function followUpRepQuery() {
     return '';
 }
 
+let followUpRequestId = 0;
+
 async function loadFollowUpWidget() {
     const panel = document.getElementById('followup-panel');
     if (!panel) return;
+    const requestId = ++followUpRequestId;
     const set = (id, v) => {
         const el = document.getElementById(id);
         if (el) el.textContent = String(v);
@@ -360,8 +392,10 @@ async function loadFollowUpWidget() {
                     credentials: 'same-origin'
                 }
             );
+            if (requestId !== followUpRequestId) return;
             if (statsRes.ok) {
                 const s = (await statsRes.json()).stats || {};
+                if (requestId !== followUpRequestId) return;
                 const conv =
                     typeof s.conversion === 'number' ? (s.conversion * 100).toFixed(1) + ' %' : '–';
                 set('fu-kpi-conversion', conv);

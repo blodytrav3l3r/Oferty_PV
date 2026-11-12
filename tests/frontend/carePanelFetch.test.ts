@@ -311,10 +311,115 @@ describe('carePanel — panel fetch, ETag, błędy, polling, zakresy', () => {
         await context.__careTest.loadCarePanel();
         await context.__careTest.loadCarePanel();
         expect(seenHeaders[1]).toEqual({ 'If-None-Match': '"e7"' });
-        context.__careTest.setQueueRange('90d');
+        context.__careTest.setQueueRange('30d');
         await context.__careTest.loadCarePanel();
         expect(seenHeaders[2]).toEqual({});
         expect(calls.filter((c) => c.includes('/api/care/panel'))).toHaveLength(3);
+    });
+
+    test('własny zakres dat daje lokalne pełne dni i osobny ETag dla każdej pary', async () => {
+        const calls: string[] = [];
+        const headers: Array<Record<string, string>> = [];
+        const { context } = load({
+            calls,
+            fetchMock: (url: string, init?: { headers?: Record<string, string> }) => {
+                if (!url.includes('/api/care/panel')) return okJson({});
+                headers.push(init?.headers || {});
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        ok: true,
+                        etag: '"custom-1"',
+                        summary: { noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 },
+                        queue: { items: [], nextCursor: null, totalCount: 0 }
+                    })
+                };
+            }
+        });
+
+        expect(context.__careTest.setQueueCustomRange('2026-10-01', '2026-10-31')).toBe(true);
+        await context.__careTest.loadCarePanel();
+        await context.__careTest.loadCarePanel();
+        expect(headers[1]).toEqual({ 'If-None-Match': '"custom-1"' });
+        const firstUrl = new URL(
+            calls.find((call) => call.includes('/api/care/panel'))!.slice(4),
+            'http://test'
+        );
+        const from = new Date(firstUrl.searchParams.get('from')!);
+        const to = new Date(firstUrl.searchParams.get('to')!);
+        expect([from.getFullYear(), from.getMonth(), from.getDate(), from.getHours()]).toEqual([
+            2026, 9, 1, 0
+        ]);
+        expect([
+            to.getFullYear(),
+            to.getMonth(),
+            to.getDate(),
+            to.getHours(),
+            to.getMinutes()
+        ]).toEqual([2026, 9, 31, 23, 59]);
+
+        expect(context.__careTest.setQueueCustomRange('2026-11-01', '2026-11-12')).toBe(true);
+        await context.__careTest.loadCarePanel();
+        expect(headers[2]).toEqual({});
+        expect(calls.filter((call) => call.includes('/api/care/panel'))).toHaveLength(3);
+    });
+
+    test('własny zakres odrzuca brak dat, odwrócony przedział i ponad 366 dni', () => {
+        const { context } = load({ fetchMock: () => okJson({}) });
+        expect(context.__careTest.setQueueCustomRange('', '2026-10-31')).toBe(false);
+        expect(context.__careTest.setQueueCustomRange('2026-11-01', '2026-10-31')).toBe(false);
+        expect(context.__careTest.setQueueCustomRange('2025-01-01', '2026-11-01')).toBe(false);
+        expect(context.__careTest.setQueueCustomRange('2026-10-01', '2026-10-31')).toBe(true);
+    });
+
+    test('zmiana dat podczas pobierania odrzuca stary pakiet i pobiera nowy', async () => {
+        const calls: string[] = [];
+        const headers: Array<Record<string, string>> = [];
+        const pending: Array<(response: unknown) => void> = [];
+        const packet = (count: number, etag: string) => ({
+            ok: true,
+            status: 200,
+            json: async () => ({
+                ok: true,
+                etag,
+                summary: {
+                    noContact: count,
+                    due: 0,
+                    openOk: 0,
+                    won: 0,
+                    lost: 0,
+                    abandoned: 0,
+                    totalCount: count
+                },
+                queue: { items: [], nextCursor: null, totalCount: count }
+            })
+        });
+        const { context, els } = load({
+            calls,
+            fetchMock: (url: string, init?: { headers?: Record<string, string> }) => {
+                if (!url.includes('/api/care/panel')) return okJson({});
+                headers.push(init?.headers || {});
+                return new Promise((resolve) => pending.push(resolve));
+            }
+        });
+
+        const firstLoad = context.__careTest.loadCarePanel();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(pending).toHaveLength(1);
+        expect(context.__careTest.setQueueCustomRange('2026-11-11', '2026-11-12')).toBe(true);
+        pending[0](packet(7, '"old"'));
+        await firstLoad;
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(els['fu-stat-needs'].textContent).not.toBe('7');
+        expect(pending).toHaveLength(2);
+        expect(headers[1]).toEqual({});
+        expect(calls.filter((call) => call.includes('/api/care/panel'))[1]).toContain('from=');
+
+        pending[1](packet(2, '"new"'));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(els['fu-stat-needs'].textContent).toBe('2');
     });
 
     test('legacy fallback niesie from/to w summary i queue (nie w notif)', async () => {

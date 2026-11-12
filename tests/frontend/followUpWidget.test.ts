@@ -7,7 +7,12 @@ import vm from 'vm';
 describe('dashboard loadFollowUpWidget', () => {
     let context: any;
 
-    const load = (fetchMock: any, noPanel = false, range: string | null = null) => {
+    const load = (
+        fetchMock: any,
+        noPanel = false,
+        range: string | null = null,
+        custom: { from: string; to: string } | null = null
+    ) => {
         const file = path.join(__dirname, '../../public/js/shared/dashboard.js');
         const code = fs.readFileSync(file, 'utf8');
         // Kontrakt window.escapeHtml (shared/ui.js) — encje jak w produkcji.
@@ -41,7 +46,14 @@ describe('dashboard loadFollowUpWidget', () => {
             logger: { info() {}, warn() {}, error() {} },
             sessionStorage: { getItem: () => null, setItem() {} },
             localStorage: {
-                getItem: (k: string) => (k === 'sok-care-range' ? range : null),
+                getItem: (k: string) =>
+                    k === 'sok-care-range'
+                        ? range
+                        : k === 'sok-care-from'
+                          ? custom?.from
+                          : k === 'sok-care-to'
+                            ? custom?.to
+                            : null,
                 setItem() {}
             },
             window: null as any,
@@ -137,5 +149,53 @@ describe('dashboard loadFollowUpWidget', () => {
         }, true);
         await context.loadFollowUpWidget();
         expect(fetched).toBe(0);
+    });
+
+    test('KPI używa tych samych pełnych lokalnych dni dla zakresu od–do', async () => {
+        const calls: string[] = [];
+        load(
+            async (url: string) => {
+                calls.push(url);
+                return { ok: true, json: async () => ({ stats: {} }) };
+            },
+            false,
+            'custom',
+            { from: '2026-10-01', to: '2026-10-31' }
+        );
+
+        await context.loadFollowUpWidget();
+
+        const statsUrl = new URL(
+            calls.find((call) => call.includes('followups/stats'))!,
+            'http://test'
+        );
+        const from = new Date(statsUrl.searchParams.get('from')!);
+        const to = new Date(statsUrl.searchParams.get('to')!);
+        expect([from.getFullYear(), from.getMonth(), from.getDate(), from.getHours()]).toEqual([
+            2026, 9, 1, 0
+        ]);
+        expect([
+            to.getFullYear(),
+            to.getMonth(),
+            to.getDate(),
+            to.getHours(),
+            to.getMinutes()
+        ]).toEqual([2026, 9, 31, 23, 59]);
+    });
+
+    test('starsza odpowiedź KPI nie nadpisuje nowszego zakresu', async () => {
+        const pending: Array<(response: unknown) => void> = [];
+        const els = load(() => new Promise((resolve) => pending.push(resolve)));
+
+        const firstLoad = context.loadFollowUpWidget();
+        const secondLoad = context.loadFollowUpWidget();
+        expect(pending).toHaveLength(2);
+        pending[1]({ ok: true, json: async () => ({ stats: { wonValue: 20 } }) });
+        await secondLoad;
+        expect(els['fu-kpi-won-value'].textContent).toBe('20.00 PLN');
+
+        pending[0]({ ok: true, json: async () => ({ stats: { wonValue: 10 } }) });
+        await firstLoad;
+        expect(els['fu-kpi-won-value'].textContent).toBe('20.00 PLN');
     });
 });

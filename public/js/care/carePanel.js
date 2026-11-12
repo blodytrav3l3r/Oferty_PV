@@ -12,6 +12,10 @@ let queueSearch = '';
 let queueSort = 'sla';
 let queueView = 'list';
 let queueRange = 'all';
+let customFromDate = '';
+let customToDate = '';
+let panelLoading = false;
+let pendingRangeReload = false;
 let queueCache = [];
 let queueNextCursor = null;
 let queueTotal = 0;
@@ -67,9 +71,45 @@ export function setQueueView(value) {
 
 /* Zakres dat panelu/kolejki (test-hook jak setQueueSort). Wszystko = brak filtra. */
 export function setQueueRange(value) {
-    queueRange = value === '7d' || value === '30d' || value === '90d' ? value : 'all';
+    const nextRange = value === '7d' || value === '30d' || value === 'custom' ? value : 'all';
+    if (panelLoading && queueRange !== nextRange) pendingRangeReload = true;
+    queueRange = nextRange;
     careStoreSet('sok-care-range', queueRange);
     return queueRange;
+}
+
+function parseLocalCareDate(value, endOfDay) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const [year, month, day] = value.split('-').map(Number);
+    const date = endOfDay
+        ? new Date(year, month - 1, day, 23, 59, 59, 999)
+        : new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
+        return null;
+    return date;
+}
+
+function resolveCustomCareRange(fromDate, toDate) {
+    if (!fromDate || !toDate) return { error: 'Wybierz datę od i do.' };
+    const from = parseLocalCareDate(fromDate, false);
+    const to = parseLocalCareDate(toDate, true);
+    if (!from || !to) return { error: 'Wybierz poprawne daty.' };
+    if (from > to) return { error: 'Data „od” musi być wcześniejsza niż „do”.' };
+    if (to.getTime() - from.getTime() > 366 * 86400000)
+        return { error: 'Zakres może obejmować maksymalnie 366 dni.' };
+    return { from: from.toISOString(), to: to.toISOString() };
+}
+
+export function setQueueCustomRange(fromDate, toDate) {
+    if (resolveCustomCareRange(fromDate, toDate).error) return false;
+    if (panelLoading && (customFromDate !== fromDate || customToDate !== toDate))
+        pendingRangeReload = true;
+    customFromDate = fromDate;
+    customToDate = toDate;
+    careStoreSet('sok-care-from', fromDate);
+    careStoreSet('sok-care-to', toDate);
+    setQueueRange('custom');
+    return true;
 }
 
 /** Fraza wyszukiwania kolejki (test-hook). Cap 100 znaków, in-memory (bez persist). */
@@ -140,10 +180,14 @@ function trackCareSearch(visibleCount) {
     }
 }
 
-const RANGE_DAYS = { '7d': 7, '30d': 30, '90d': 90 };
+const RANGE_DAYS = { '7d': 7, '30d': 30 };
 
 /* ISO from/to z presetu (All = brak filtra, zachowanie jak dotąd). */
 function resolveQueueRange() {
+    if (queueRange === 'custom') {
+        const range = resolveCustomCareRange(customFromDate, customToDate);
+        return range.error ? {} : range;
+    }
     const days = RANGE_DAYS[queueRange];
     if (!days) return {};
     // Granice ETag są stabilne przez minutę; inclusive `to` obejmuje jej koniec.
@@ -160,10 +204,16 @@ function rangeQuery() {
     return '&from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
 }
 
-/* ETag per scope+preset+rep (klucz stabilny — minutowe from/to w URL i tak
- * wchodzą do hasła BE; klucz po timestampach rotował co minutę i 304 nie trafiał). */
+/* ETag per scope+zakres+rep; dla custom daty są częścią klucza. */
 function panelKey() {
-    return careScope + '|' + queueRange + '|' + (careRep || '');
+    return (
+        careScope +
+        '|' +
+        queueRange +
+        '|' +
+        (queueRange === 'custom' ? customFromDate + '|' + customToDate + '|' : '') +
+        (careRep || '')
+    );
 }
 
 /* Zawężenie do 1 handlowca (repId waliduje BE via resolveRepOwner, fail-closed 403). */
@@ -192,9 +242,13 @@ function notifyRangeChange() {
 
 setQueueSort(careStoreGet('sok-care-sort') || 'sla');
 setQueueView(careStoreGet('sok-care-view') || 'list');
-/* UI nie ma przycisku „Wszystko" — 'all' to legacy stan; domyslnie 7 dni. */
+/* UI nie ma przycisku „Wszystko" ani 90D — legacy stan wraca do 7 dni. */
 const storedRange = careStoreGet('sok-care-range');
-setQueueRange(storedRange === 'all' ? '7d' : storedRange || '7d');
+if (
+    storedRange !== 'custom' ||
+    !setQueueCustomRange(careStoreGet('sok-care-from'), careStoreGet('sok-care-to'))
+)
+    setQueueRange(storedRange === '30d' ? '30d' : '7d');
 
 function setText(id, v) {
     const el = document.getElementById(id);
@@ -1927,8 +1981,7 @@ async function postCare(it, action) {
 
 const RANGE_LABELS = [
     ['7d', '7D'],
-    ['30d', '30D'],
-    ['90d', '90D']
+    ['30d', '30D']
 ];
 
 function syncRangeButtons() {
@@ -1938,6 +1991,97 @@ function syncRangeButtons() {
         btn.classList.toggle('btn-secondary', !active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+    document.querySelectorAll('.care-custom-range').forEach((group) => {
+        group.classList.toggle('active', queueRange === 'custom');
+    });
+}
+
+function refreshQueueRange() {
+    queueCache = [];
+    queueNextCursor = null;
+    careBumpPolling();
+    syncRangeButtons();
+    notifyRangeChange();
+    loadCarePanel();
+}
+
+function showCustomRangeError(group, message) {
+    const error = group.querySelector('#care-range-error');
+    if (!error) return;
+    error.textContent = message;
+    error.hidden = !message;
+    group.querySelectorAll('input').forEach((input) => {
+        input.setAttribute('aria-invalid', message ? 'true' : 'false');
+    });
+}
+
+function handleCustomRangeChange(group) {
+    const fromDate = group.querySelector('#care-range-from')?.value || '';
+    const toDate = group.querySelector('#care-range-to')?.value || '';
+    const error = resolveCustomCareRange(fromDate, toDate).error || '';
+    showCustomRangeError(group, error);
+    if (error) {
+        if (queueRange === 'custom') {
+            setQueueRange('7d');
+            refreshQueueRange();
+        }
+        return;
+    }
+    setQueueCustomRange(fromDate, toDate);
+    refreshQueueRange();
+}
+
+function createCustomRangeGroup() {
+    const group = document.createElement('div');
+    group.className = 'care-custom-range';
+    for (const [id, label, value] of [
+        ['care-range-from', 'Od', customFromDate],
+        ['care-range-to', 'Do', customToDate]
+    ]) {
+        const field = document.createElement('label');
+        field.className = 'care-range-date-label';
+        const caption = document.createElement('span');
+        caption.textContent = label;
+        const input = document.createElement('input');
+        input.type = 'date';
+        input.id = id;
+        input.className = 'form-input form-input-sm care-range-date';
+        input.value = value;
+        input.setAttribute('aria-label', 'Data ' + label.toLowerCase());
+        input.setAttribute('aria-describedby', 'care-range-error');
+        input.addEventListener('change', () => handleCustomRangeChange(group));
+        field.appendChild(caption);
+        field.appendChild(input);
+        group.appendChild(field);
+    }
+    const error = document.createElement('span');
+    error.id = 'care-range-error';
+    error.className = 'care-range-error';
+    error.setAttribute('role', 'alert');
+    error.hidden = true;
+    group.appendChild(error);
+    return group;
+}
+
+function createRangeButton(value, label, customGroup) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-sm ka-pill care-range-btn';
+    btn.setAttribute('data-care-range', value);
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+        customFromDate = '';
+        customToDate = '';
+        careStoreSet('sok-care-from', '');
+        careStoreSet('sok-care-to', '');
+        customGroup.querySelectorAll('.care-range-date').forEach((input) => {
+            input.value = '';
+        });
+        showCustomRangeError(customGroup, '');
+        setQueueRange(value);
+        refreshQueueRange();
+    });
+    return btn;
 }
 
 /* Pigułki zakresu obok filtrów kolejki (osobna grupa, tworzona raz). */
@@ -1955,24 +2099,12 @@ function ensureRangeUI() {
         group.className = 'care-range-group';
         group.setAttribute('role', 'group');
         group.setAttribute('aria-label', 'Zakres dat');
+        const customGroup = createCustomRangeGroup();
         for (const [value, label] of RANGE_LABELS) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn btn-sm ka-pill care-range-btn';
-            btn.setAttribute('data-care-range', value);
-            btn.textContent = label;
-            btn.addEventListener('click', () => {
-                setQueueRange(value);
-                queueCache = [];
-                queueNextCursor = null;
-                careBumpPolling();
-                syncRangeButtons();
-                notifyRangeChange();
-                loadCarePanel();
-            });
-            group.appendChild(btn);
+            group.appendChild(createRangeButton(value, label, customGroup));
         }
-        // Szukaj w linii z 7D/30D/90D/Wszystko: przenieś istniejący label
+        group.appendChild(customGroup);
+        // Szukaj w linii z filtrami zakresu: przenieś istniejący label
         // z wiersza filtrów (listener/value/dataset.bound wędrują z nodem).
         try {
             const searchLabel =
@@ -2438,12 +2570,12 @@ function logPanelError(msg) {
 }
 
 /** Pakiet /panel w 1 requeście. Zwraca 'fresh' | 'stale' | null (błąd). */
-async function loadPanelPacket() {
+async function loadPanelPacket(requestKey) {
     // 5xx przed chwilą: legacy bez strzału w zepsuty endpoint (oszczędza
     // 1 request na tick pollingu, nie odbiera danych z fallbacku).
     if (Date.now() < panelDownUntil) return null;
     const headers = {};
-    const known = panelEtags[panelKey()];
+    const known = panelEtags[requestKey];
     if (known) headers['If-None-Match'] = known;
     let resp = null;
     try {
@@ -2460,8 +2592,16 @@ async function loadPanelPacket() {
             { credentials: 'same-origin', headers }
         );
     } catch (e) {
+        if (requestKey !== panelKey()) {
+            pendingRangeReload = true;
+            return 'range-changed';
+        }
         logPanelError('panel: ' + ((e && e.message) || 'siec'));
         return null;
+    }
+    if (requestKey !== panelKey()) {
+        pendingRangeReload = true;
+        return 'range-changed';
     }
     if (!resp) return null;
     if (resp.status === 304) {
@@ -2489,8 +2629,12 @@ async function loadPanelPacket() {
     lastPanelError = '';
     try {
         const json = await resp.json();
+        if (requestKey !== panelKey()) {
+            pendingRangeReload = true;
+            return 'range-changed';
+        }
         if (!json || !json.ok || !json.summary || !json.queue) return null;
-        if (json.etag) rememberPanelEtag(panelKey(), json.etag);
+        if (json.etag) rememberPanelEtag(requestKey, json.etag);
         renderSummary(json.summary);
         renderQueue(json.queue.items, json.queue.nextCursor, json.queue.totalCount);
         if (json.notifications)
@@ -2513,7 +2657,7 @@ async function loadPanelPacket() {
 }
 
 /** Ścieżka legacy (3 requesty) — fallback gdy /panel niedostępny. */
-async function loadCarePanelLegacy() {
+async function loadCarePanelLegacy(requestKey) {
     let summary = null;
     try {
         summary = await getJson(
@@ -2521,6 +2665,10 @@ async function loadCarePanelLegacy() {
         );
     } catch {
         showError();
+        return false;
+    }
+    if (requestKey !== panelKey()) {
+        pendingRangeReload = true;
         return false;
     }
     if (!summary) return false;
@@ -2546,6 +2694,10 @@ async function loadCarePanelLegacy() {
                     Date.now()
             )
         ]);
+        if (requestKey !== panelKey()) {
+            pendingRangeReload = true;
+            return false;
+        }
         if (queue) renderQueue(queue.items, queue.nextCursor, queue.totalCount);
         if (notif)
             renderNotifications(
@@ -2564,7 +2716,6 @@ async function loadCarePanelLegacy() {
     return true;
 }
 
-let panelLoading = false;
 let careLoadError = false;
 
 export async function loadCarePanel() {
@@ -2587,7 +2738,9 @@ export async function loadCarePanel() {
             clearError();
             return false;
         }
-        const packet = await loadPanelPacket();
+        const requestKey = panelKey();
+        const packet = await loadPanelPacket(requestKey);
+        if (packet === 'range-changed') return false;
         let changed = false;
         careLoadError = false;
         if (packet === 'stale') {
@@ -2595,7 +2748,7 @@ export async function loadCarePanel() {
         } else if (packet === 'fresh') {
             changed = true;
         } else {
-            changed = await loadCarePanelLegacy();
+            changed = await loadCarePanelLegacy(requestKey);
             if (!changed) careLoadError = true;
         }
         try {
@@ -2607,6 +2760,12 @@ export async function loadCarePanel() {
     } finally {
         clearLoading();
         panelLoading = false;
+        if (pendingRangeReload) {
+            pendingRangeReload = false;
+            Promise.resolve()
+                .then(() => loadCarePanel())
+                .catch((error) => careWarn('Ponowne pobranie panelu: ' + error));
+        }
     }
 }
 
