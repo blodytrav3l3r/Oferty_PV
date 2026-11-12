@@ -4,6 +4,33 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.57.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.8...v1.57.0) (2026-11-12)
+
+### Features
+
+- **clients:** osoba pomijana w ofercie ([f73f0db](https://github.com/blodytrav3l3r/Oferty_PV/commit/f73f0db93116c2a686778a75bcf8c92e34ea543f))
+- **ui:** domyślny zakres panelu opieki 7 dni ([ea0ed2e](https://github.com/blodytrav3l3r/Oferty_PV/commit/ea0ed2ebae3cdf678eb8c46b74a980d8adcc8181))
+- **ui:** filtruj kolejkę opieki według statusu ([5cbef61](https://github.com/blodytrav3l3r/Oferty_PV/commit/5cbef61ad599ac12ffb959490ca0415c750db5da))
+- **ui:** karta oferty w kartotece jak wpis papierowy ([9c2bd5d](https://github.com/blodytrav3l3r/Oferty_PV/commit/9c2bd5d1d1e3ca38b567b7ec952c8657d6f6280f))
+- **ui:** usprawnij filtry i terminy kolejki opieki ([24112f3](https://github.com/blodytrav3l3r/Oferty_PV/commit/24112f3969f900519555359cc5eeecceb43f40c8))
+
+### Bug Fixes
+
+- **ci:** golden dom bez atrybutow autofill ([8569c49](https://github.com/blodytrav3l3r/Oferty_PV/commit/8569c49b75761ee1b2ff2a4bf1fe50af0c9ef872))
+- **clients:** przycisk anuluj zamiast ikony x ([4df6651](https://github.com/blodytrav3l3r/Oferty_PV/commit/4df66517bf68b0ce6cb1eb8832f417ab8f4d76f3))
+- **config:** uzyj postgres_test_url w prices verify poza dockerem ([647c58d](https://github.com/blodytrav3l3r/Oferty_PV/commit/647c58d23b798365d43d60cca3ac1908b676121c))
+- **offers:** numeracja według jednostki i roku ([329ff39](https://github.com/blodytrav3l3r/Oferty_PV/commit/329ff39d39b9702d9c3fba8c52d93735adabedcd))
+- **studnie:** dostępność w siatce i podgląd bez utraty edycji ([1a95dbd](https://github.com/blodytrav3l3r/Oferty_PV/commit/1a95dbde9b64103d2d9fd3a0c701ef8eb91f144f))
+- **studnie:** napraw odczyt wyliczonego transportu i pol karty budowy ([156ad9c](https://github.com/blodytrav3l3r/Oferty_PV/commit/156ad9c0885cb08a1ffa9f84ff0fa8af1908bd90))
+- **studnie:** nie ucinaj dołu diagramu i zablokuj scroll strony ([ade93d0](https://github.com/blodytrav3l3r/Oferty_PV/commit/ade93d0d96a09c2f903768e5b66fe35bd977b003))
+- **studnie:** zachowaj dostępność w wersjach cennika ([c731ac3](https://github.com/blodytrav3l3r/Oferty_PV/commit/c731ac3939b6e41dddb51d583806b98b44bac7d6))
+- **ui:** checkboxy kategorii w kolumnach tabeli cennika studni ([f35d703](https://github.com/blodytrav3l3r/Oferty_PV/commit/f35d7031f87b76036cb75ae182302ef96702d2ee))
+- **ui:** jedna strefa przewijania w cenniku ([ca6c854](https://github.com/blodytrav3l3r/Oferty_PV/commit/ca6c8542404f7adcb98a523cc3a5ffa27e35ec60))
+- **ui:** pokaż termin odłożenia w kolejce ([5d51f4a](https://github.com/blodytrav3l3r/Oferty_PV/commit/5d51f4a780b9c4d993e0f0c91b68235ac9731365))
+- **ui:** przyciski edytora kontaktów w prawej szynie ([a494899](https://github.com/blodytrav3l3r/Oferty_PV/commit/a49489960dae168d71063d053687fee876e34e34))
+- **ui:** rail wersji dochodzi do dolu okna w cenniku ([9e4c16c](https://github.com/blodytrav3l3r/Oferty_PV/commit/9e4c16ce19523024c02b3853cdafb3aba73edb00))
+- **ui:** ustal rozmiar pola kątów i dodaj zakres dat od-do ([6ad1d18](https://github.com/blodytrav3l3r/Oferty_PV/commit/6ad1d18b1e7b7ae391497eed37e1a95184dec99f))
+
 ### 1.56.18 (2026-11-11)
 
 ### Features
