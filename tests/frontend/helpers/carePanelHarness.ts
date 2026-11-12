@@ -65,6 +65,11 @@ export const load = (opts: {
                 for (const c of self.children || []) {
                     if (sel === '[data-care-actions]' && c.dataset && 'careActions' in c.dataset)
                         return c;
+                    if (
+                        sel.startsWith('[data-offer="') &&
+                        c.getAttribute?.('data-offer') === sel.slice(13, -2)
+                    )
+                        return c;
                     const hit = c.querySelector ? c.querySelector(sel) : null;
                     if (hit) return hit;
                 }
@@ -163,7 +168,7 @@ export const load = (opts: {
     vm.createContext(context);
     vm.runInContext(
         code +
-            '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueCustomRange: typeof setQueueCustomRange === "function" ? setQueueCustomRange : undefined, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications };',
+            '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueStatus, setQueueCustomRange: typeof setQueueCustomRange === "function" ? setQueueCustomRange : undefined, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications, renderQueue };',
         context
     );
     context.__careTest.setQueueRange(opts.initialRange ?? '30d');

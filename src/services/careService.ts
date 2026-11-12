@@ -64,12 +64,15 @@ export interface CareQueueResult {
     totalCount: number;
 }
 
+export type CareQueueStatus = 'contact' | 'progress' | 'won' | 'lost' | 'abandoned';
+
 export interface CareQueueOptions {
     scope?: CareScope;
     /** ISO-8601 UTC "teraz" — parametr, nie NOW() w SQL (stabilne w requeście). */
     nowIso: string;
     cursor?: string | null;
     limit?: unknown;
+    status?: CareQueueStatus;
     /** P2-fix: filtr w SQL (przed paginacją), nie po — strona pełna, count zgodny. */
     hidePaused?: boolean;
     /** Zakres po dacie utworzenia oferty (ISO-8601, walidowane w route). */
@@ -208,6 +211,17 @@ function ownerCond(
 const BUCKET_CASE = (nowIso: string): Prisma.Sql =>
     Prisma.sql`CASE WHEN "outcome" IS NULL OR ("outcome" = 'OPEN' AND ("next" IS NULL OR "next" <= ${nowIso})) THEN 0 WHEN "outcome" = 'OPEN' THEN 1 ELSE 2 END`;
 
+function queueStatusWhere(status: CareQueueStatus | undefined, nowIso: string): Prisma.Sql | null {
+    const open = Prisma.sql`("outcome" IS NULL OR "outcome" NOT IN ('WON', 'ABANDONED', 'LOST_COMPETITION', 'LOST_OTHER'))`;
+    if (status === 'contact')
+        return Prisma.sql`${open} AND ("next" IS NULL OR "next" <= ${nowIso})`;
+    if (status === 'progress') return Prisma.sql`${open} AND "next" > ${nowIso}`;
+    if (status === 'won') return Prisma.sql`"outcome" = 'WON'`;
+    if (status === 'lost') return Prisma.sql`"outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')`;
+    if (status === 'abandoned') return Prisma.sql`"outcome" = 'ABANDONED'`;
+    return null;
+}
+
 export function buildCareQueueQueries(
     user: CareUser,
     opts: CareQueueOptions
@@ -221,6 +235,8 @@ export function buildCareQueueQueries(
     const bornStudnie = bornRange('s', opts.from, opts.to);
     const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
     const andBornStudnie = bornStudnie ? Prisma.sql` AND ${bornStudnie}` : Prisma.empty;
+    const statusWhere = queueStatusWhere(opts.status, opts.nowIso);
+    const andStatus = statusWhere ? Prisma.sql` AND (${statusWhere})` : Prisma.empty;
 
     // P1: latest z tabeli latest_followup (triggery trg_fu_latest_*),
     // nie CTE ROW_NUMBER — ta sama reguła (contactedAt DESC, createdAt DESC,
@@ -272,7 +288,7 @@ export function buildCareQueueQueries(
     const data = Prisma.sql`${withSql}
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
             "snoozed", "done", "careUpdatedAt", "bucketWeight" FROM ranked
-        WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
+        WHERE ${cursorSql}${andStatus}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
         LIMIT ${limit + 1}`;
     // P0.4: count bez CTE latest — liczba wierszy nie zależy od follow-upów
@@ -285,7 +301,9 @@ export function buildCareQueueQueries(
     const pauseStudnie = opts.hidePaused
         ? Prisma.sql` AND (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${opts.nowIso}))`
         : Prisma.empty;
-    const count = Prisma.sql`SELECT
+    const count = statusWhere
+        ? Prisma.sql`${withSql} SELECT COUNT(*) AS "c" FROM base WHERE ${statusWhere}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}`
+        : Prisma.sql`SELECT
         (SELECT COUNT(*) FROM offers_rel o
             LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
             WHERE ${scopeRury}${andBornRury}${pauseRury})

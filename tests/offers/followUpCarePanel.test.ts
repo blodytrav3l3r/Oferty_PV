@@ -97,6 +97,32 @@ describe('P2 GET /api/care/panel', () => {
         expect(second.status).toBe(304);
     });
 
+    it('status zawęża kolejkę i zmienia ETag, a błędny status daje 400', async () => {
+        const all = await request(app()).get('/api/care/panel?scope=mine');
+        const lost = await request(app())
+            .get('/api/care/panel?scope=mine&status=lost')
+            .set('If-None-Match', all.headers.etag as string);
+        expect(lost.status).toBe(200);
+        expect(lost.headers.etag).not.toBe(all.headers.etag);
+        expect(queueMock).toHaveBeenLastCalledWith(
+            expect.anything(),
+            expect.anything(),
+            expect.objectContaining({ status: 'lost' })
+        );
+        expect((await request(app()).get('/api/care/panel?status=bogus')).status).toBe(400);
+    });
+
+    it('status zależny od czasu nie używa 304 po przekroczeniu terminu', async () => {
+        const before = await request(app()).get('/api/care/panel?status=progress');
+        const after = await request(app())
+            .get('/api/care/panel?status=progress')
+            .set('If-None-Match', '"care-stary-stan"');
+        expect(before.body.etag).toBeNull();
+        expect(after.status).toBe(200);
+        expect(after.body.etag).toBeNull();
+        expect(queueMock).toHaveBeenCalledTimes(2);
+    });
+
     it('zły scope → 400; scope=all nie-admin → 403', async () => {
         expect((await request(app()).get('/api/care/panel?scope=zzz')).status).toBe(400);
         const err = new Error('scope=all tylko dla admin') as Error & { status: number };

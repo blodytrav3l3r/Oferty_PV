@@ -88,6 +88,7 @@ const queueQuerySchema = z
         cursor: z.string().max(2000).optional(),
         limit: z.coerce.number().int().min(1).max(100).optional(),
         hidePaused: queryBool,
+        status: z.enum(['contact', 'progress', 'won', 'lost', 'abandoned']).optional(),
         ...rangeFields,
         ...repField
     })
@@ -152,6 +153,7 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
             cursor: parsed.data.cursor ?? null,
             limit,
             hidePaused,
+            status: parsed.data.status,
             from: parsed.data.from,
             to: parsed.data.to,
             repOwner
@@ -192,27 +194,31 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
         const repOwner = resolveRepOwner(user, parsed.data.repId);
         // ETag best-effort: brak tabeli na legacy DB nie może wywalić panelu.
         let etag: string | null = null;
-        try {
-            etag =
-                '"care-' +
-                crypto
-                    .createHash('sha1')
-                    .update(
-                        JSON.stringify([
-                            user.id,
-                            scope,
-                            parsed.data.from ?? null,
-                            parsed.data.to ?? null,
-                            repOwner,
-                            parsed.data.hidePaused ?? false,
-                            await getCareEtagInput(prisma, repOwner ?? user.id)
-                        ])
-                    )
-                    .digest('hex') +
-                '"';
-        } catch (e) {
-            logger.debug('Care', 'ETag best-effort pominięty', String(e));
-            etag = null;
+        // W statusach czasowych wynik zmienia się wraz z terminem kontaktu bez zapisu do DB.
+        if (parsed.data.status !== 'contact' && parsed.data.status !== 'progress') {
+            try {
+                etag =
+                    '"care-' +
+                    crypto
+                        .createHash('sha1')
+                        .update(
+                            JSON.stringify([
+                                user.id,
+                                scope,
+                                parsed.data.from ?? null,
+                                parsed.data.to ?? null,
+                                repOwner,
+                                parsed.data.hidePaused ?? false,
+                                parsed.data.status ?? null,
+                                await getCareEtagInput(prisma, repOwner ?? user.id)
+                            ])
+                        )
+                        .digest('hex') +
+                    '"';
+            } catch (e) {
+                logger.debug('Care', 'ETag best-effort pominięty', String(e));
+                etag = null;
+            }
         }
         if (etag) {
             res.set('ETag', etag);
@@ -234,6 +240,7 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                 cursor: parsed.data.cursor ?? null,
                 limit,
                 hidePaused,
+                status: parsed.data.status,
                 from: parsed.data.from,
                 to: parsed.data.to,
                 repOwner

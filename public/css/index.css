@@ -3160,6 +3160,18 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 4px;
     margin-bottom: 8px;
 }
+.care-status-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.care-status-label {
+    margin-right: 4px;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+}
 .care-side-col > .card:first-child {
     flex: 1 1 auto;
     min-height: 0;
@@ -3783,6 +3795,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
     white-space: nowrap;
     border-radius: var(--radius-sm);
 }
+.care-status-filters .care-status-filter-btn.active,
 .care-queue-filters .care-queue-filter-btn.active {
     background: var(--accent);
     color: var(--white);

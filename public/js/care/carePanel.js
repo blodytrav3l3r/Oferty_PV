@@ -8,6 +8,7 @@ let pollMs = POLL_MS;
 let careScope = 'mine';
 let careRep = '';
 let queueFilter = 'all';
+let queueStatus = 'all';
 let queueSearch = '';
 let queueSort = 'sla';
 let queueView = 'list';
@@ -19,6 +20,7 @@ let pendingRangeReload = false;
 let queueCache = [];
 let queueNextCursor = null;
 let queueTotal = 0;
+let pendingQueueFindKey = null;
 // Flagi in-flight przeciw double-submit (odblokowanie zawsze w finally).
 const snoozeInFlight = new Set();
 const postCareInFlight = new Set();
@@ -76,6 +78,18 @@ export function setQueueRange(value) {
     queueRange = nextRange;
     careStoreSet('sok-care-range', queueRange);
     return queueRange;
+}
+
+export function setQueueStatus(value) {
+    const nextStatus = ['contact', 'progress', 'won', 'lost', 'abandoned'].includes(value)
+        ? value
+        : 'all';
+    if (panelLoading && queueStatus !== nextStatus) pendingRangeReload = true;
+    if (queueStatus === nextStatus) return queueStatus;
+    queueStatus = nextStatus;
+    pendingQueueFindKey = null;
+    delete panelEtags[panelKey()];
+    return queueStatus;
 }
 
 function parseLocalCareDate(value, endOfDay) {
@@ -204,6 +218,10 @@ function rangeQuery() {
     return '&from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
 }
 
+function statusQuery() {
+    return queueStatus === 'all' ? '' : '&status=' + encodeURIComponent(queueStatus);
+}
+
 /* ETag per scope+zakres+rep; dla custom daty są częścią klucza. */
 function panelKey() {
     return (
@@ -212,7 +230,9 @@ function panelKey() {
         queueRange +
         '|' +
         (queueRange === 'custom' ? customFromDate + '|' + customToDate + '|' : '') +
-        (careRep || '')
+        (careRep || '') +
+        '|' +
+        queueStatus
     );
 }
 
@@ -1653,6 +1673,10 @@ function renderQueue(items, nextCursor, totalCount) {
         list.appendChild(moreWrap);
     }
     refreshCareIcons(list);
+    if (pendingQueueFindKey && highlightQueueCard(pendingQueueFindKey)) {
+        pendingQueueFindKey = null;
+        careSearchStats.hitAfterMore += 1;
+    }
 }
 
 function renderRequiredRangePrompt() {
@@ -1769,6 +1793,12 @@ function highlightQueueCard(key) {
  */
 export function findOfferInQueue(offerKind, offerId, fallbackLabel) {
     const key = String(offerKind) + ':' + String(offerId);
+    const hadStatusFilter = queueStatus !== 'all';
+    if (hadStatusFilter) {
+        setQueueStatus('all');
+        syncQueueStatusButtons();
+        renderQueue([], null, 0);
+    }
     queueFilter = 'all';
     syncQueueFilterButtons();
     const label = careNormStr(fallbackLabel) || String(offerId || '');
@@ -1778,6 +1808,11 @@ export function findOfferInQueue(offerKind, offerId, fallbackLabel) {
         if (input) input.value = queueSearch;
     } catch {
         /* best-effort */
+    }
+    if (hadStatusFilter) {
+        pendingQueueFindKey = key;
+        loadCarePanel();
+        return false;
     }
     renderQueue(queueCache, queueNextCursor, queueTotal);
     const visible = sortQueueItems(queueCache.filter(matchFilter).filter(matchCareSearch));
@@ -1800,6 +1835,7 @@ export function findOfferInQueue(offerKind, offerId, fallbackLabel) {
 /** Dopaginowanie kolejki cursorem (endpoint /queue, dopisanie bez resetu). */
 async function loadMoreQueue() {
     if (!queueNextCursor) return;
+    const requestKey = panelKey();
     let json = null;
     try {
         json = await getJson(
@@ -1811,6 +1847,7 @@ async function loadMoreQueue() {
                 '&cursor=' +
                 encodeURIComponent(queueNextCursor) +
                 rangeQuery() +
+                statusQuery() +
                 hidePausedQuery() +
                 '&t=' +
                 Date.now()
@@ -1819,7 +1856,7 @@ async function loadMoreQueue() {
         careToastError('Nie udało się doładować kolejki — spróbuj ponownie.');
         return;
     }
-    if (!json || !Array.isArray(json.items)) return;
+    if (requestKey !== panelKey() || !json || !Array.isArray(json.items)) return;
     const seen = new Set(queueCache.map((it) => String(it.offerKind) + ':' + String(it.offerId)));
     for (const it of json.items) {
         const key = String(it.offerKind) + ':' + String(it.offerId);
@@ -2154,6 +2191,15 @@ function syncQueueFilterButtons() {
     });
 }
 
+function syncQueueStatusButtons() {
+    document.querySelectorAll('.care-status-filter-btn').forEach((btn) => {
+        const active = btn.dataset.careStatus === queueStatus;
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('btn-secondary', !active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
 function syncSortViewControls() {
     const sort = document.getElementById('care-sort');
     if (sort) sort.value = queueSort;
@@ -2197,6 +2243,17 @@ function bindPanelControls() {
             queueFilter = btn.dataset.queueFilter || 'all';
             syncQueueFilterButtons();
             renderQueue(queueCache, queueNextCursor, queueTotal);
+        });
+    });
+    document.querySelectorAll('.care-status-filter-btn').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+            if (btn.dataset.careStatus === queueStatus) return;
+            setQueueStatus(btn.dataset.careStatus);
+            syncQueueStatusButtons();
+            renderQueue([], null, 0);
+            loadCarePanel();
         });
     });
     const clear = document.getElementById('care-notif-clear');
@@ -2586,6 +2643,7 @@ async function loadPanelPacket(requestKey) {
                 '&limit=' +
                 QUEUE_LIMIT +
                 rangeQuery() +
+                statusQuery() +
                 hidePausedQuery() +
                 '&t=' +
                 Date.now(),
@@ -2689,6 +2747,7 @@ async function loadCarePanelLegacy(requestKey) {
                     '&limit=' +
                     QUEUE_LIMIT +
                     rangeQuery() +
+                    statusQuery() +
                     hidePausedQuery() +
                     '&t=' +
                     Date.now()
@@ -2731,6 +2790,7 @@ export async function loadCarePanel() {
         ensureRangeUI();
         syncScopeButtons();
         syncQueueFilterButtons();
+        syncQueueStatusButtons();
         syncRangeButtons();
         syncSortViewControls();
         if (!resolveQueueRange().from) {

@@ -13,6 +13,7 @@ import {
     decodeCareCursor,
     encodeCareCursor,
     getCareQueue,
+    type CareQueueOptions,
     type CareUser
 } from '../../src/services/careService';
 
@@ -93,6 +94,59 @@ async function dataIds(db: TestDb, user: CareUser, extra = {}): Promise<string[]
         (row) => `${row.offerKind}:${String(row.offerId).slice(testId.length + 1)}`
     );
 }
+
+describe('filtr statusu kolejki', () => {
+    it('filtruje przed paginacją i liczy pełną liczbę wyników', async () => {
+        const db = await freshDb();
+        try {
+            await prisma.offers_rel.createMany({
+                data: [
+                    { id: `${testId}-lost1`, userId: U1.id, createdAt: PAST },
+                    { id: `${testId}-lost2`, userId: U1.id, createdAt: PAST },
+                    { id: `${testId}-abandoned`, userId: U1.id, createdAt: PAST }
+                ]
+            });
+            await prisma.offer_follow_ups.createMany({
+                data: (
+                    [
+                        ['lost1', 'LOST_COMPETITION'],
+                        ['lost2', 'LOST_OTHER'],
+                        ['abandoned', 'ABANDONED']
+                    ] as const
+                ).map(([id, outcome]) => ({
+                    id: `${testId}-fu-${id}`,
+                    offerKind: 'rury',
+                    offerId: `${testId}-${id}`,
+                    createdByUserId: U1.id,
+                    outcome,
+                    contactedAt: PAST,
+                    createdAt: PAST,
+                    channel: 'PHONE' as const,
+                    result: 'CONTACTED' as const
+                }))
+            });
+            const expected: Array<[string, number]> = [
+                ['contact', 2],
+                ['progress', 1],
+                ['won', 1],
+                ['lost', 2],
+                ['abandoned', 1]
+            ];
+            for (const [status, total] of expected) {
+                const result = await getCareQueue(prisma, U1, {
+                    nowIso: NOW,
+                    status,
+                    limit: 1
+                } as CareQueueOptions);
+                expect(result.items).toHaveLength(1);
+                expect(result.totalCount).toBe(total);
+                expect(result.nextCursor === null).toBe(total === 1);
+            }
+        } finally {
+            await db.close();
+        }
+    });
+});
 
 describe('P0.2 care queue SQL', () => {
     it('latest: przy remisie czasów wygrywa wyższe id (o3 = WON, bucket 2)', async () => {

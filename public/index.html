@@ -566,6 +566,67 @@
                                 </button>
                             </div>
                             <div
+                                class="care-status-filters"
+                                role="group"
+                                aria-label="Status ofert w kolejce"
+                            >
+                                <span class="care-status-label">Status:</span>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm ka-pill care-status-filter-btn active"
+                                    data-care-status="all"
+                                    aria-pressed="true"
+                                    aria-controls="care-queue-list"
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                    data-care-status="contact"
+                                    aria-pressed="false"
+                                    aria-controls="care-queue-list"
+                                >
+                                    Do kontaktu
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                    data-care-status="progress"
+                                    aria-pressed="false"
+                                    aria-controls="care-queue-list"
+                                >
+                                    W toku
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                    data-care-status="won"
+                                    aria-pressed="false"
+                                    aria-controls="care-queue-list"
+                                >
+                                    Wygrane
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                    data-care-status="lost"
+                                    aria-pressed="false"
+                                    aria-controls="care-queue-list"
+                                >
+                                    Utracone
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                    data-care-status="abandoned"
+                                    aria-pressed="false"
+                                    aria-controls="care-queue-list"
+                                >
+                                    Porzucone
+                                </button>
+                            </div>
+                            <div
                                 id="care-queue-miss"
                                 class="care-queue-miss"
                                 role="status"

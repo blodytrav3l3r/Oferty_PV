@@ -590,6 +590,133 @@ describe('carePanel — panel fetch, ETag, błędy, polling, zakresy', () => {
         expect(findMore(els['care-queue-list'])).toBeNull();
     });
 
+    test('status kolejki trafia do panelu i doładowania, a zmiana nie używa starego ETag', async () => {
+        const calls: string[] = [];
+        const item = (offerId: string) => ({
+            offerKind: 'rury',
+            offerId,
+            status: 'LOST',
+            overdueDays: 0,
+            clientName: offerId,
+            value: 10
+        });
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return okJson({
+                        ok: true,
+                        etag: '"lost"',
+                        summary: { noContact: 0, due: 0, openOk: 0, won: 0, lost: 2, abandoned: 0 },
+                        queue: {
+                            items: [item('lost1')],
+                            nextCursor: 'next',
+                            totalCount: 2
+                        },
+                        notifications: { items: [], unreadCount: 0 }
+                    });
+                if (url.includes('/api/care/queue'))
+                    return okJson({ items: [item('lost2')], nextCursor: null, totalCount: 2 });
+                return okJson({});
+            }
+        });
+        context.__careTest.setQueueStatus('lost');
+        await context.__careTest.loadCarePanel();
+        const more = (els['care-queue-list'].children || []).find((node: any) =>
+            (node.textContent || '').startsWith('Pokaż więcej')
+        );
+        // Przycisk może być zagnieżdżony wewnątrz kontenera listy.
+        const findMore = (root: any): any =>
+            (root.children || [])
+                .map((child: any) =>
+                    (child.textContent || '').startsWith('Pokaż więcej') ? child : findMore(child)
+                )
+                .find(Boolean);
+        for (const fn of (more || findMore(els['care-queue-list']))?.handlers || []) await fn();
+        expect(
+            calls.some((call) => call.includes('/api/care/panel?') && call.includes('status=lost'))
+        ).toBe(true);
+        expect(
+            calls.some(
+                (call) =>
+                    call.includes('/api/care/queue?') &&
+                    call.includes('status=lost') &&
+                    call.includes('cursor=next')
+            )
+        ).toBe(true);
+        context.__careTest.setQueueStatus('won');
+        await context.__careTest.loadCarePanel();
+        expect(
+            calls.some((call) => call.includes('/api/care/panel?') && call.includes('status=won'))
+        ).toBe(true);
+    });
+
+    test('powrót do wcześniejszego statusu odtwarza listę mimo zapamiętanego ETag', async () => {
+        const headers: Array<Record<string, string>> = [];
+        const packet = (offerId: string) => ({
+            ok: true,
+            etag: '"same-data"',
+            summary: { noContact: 1, due: 0, openOk: 0, won: 0, lost: 0, abandoned: 0 },
+            queue: {
+                items: [{ offerKind: 'rury', offerId, status: 'NO_CONTACT', clientName: offerId }],
+                nextCursor: null,
+                totalCount: 1
+            },
+            notifications: { items: [], unreadCount: 0 }
+        });
+        const { els, context } = load({
+            fetchMock: (url: string, init?: { headers?: Record<string, string> }) => {
+                if (!url.includes('/api/care/panel')) return okJson({});
+                headers.push(init?.headers ?? {});
+                if (init?.headers?.['If-None-Match'] === '"same-data"')
+                    return { ok: false, status: 304, json: async () => ({}) };
+                return okJson(packet(url.includes('status=lost') ? 'lost' : 'all'));
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        context.__careTest.setQueueStatus('lost');
+        context.__careTest.renderQueue([], null, 0);
+        await context.__careTest.loadCarePanel();
+        context.__careTest.setQueueStatus('all');
+        context.__careTest.renderQueue([], null, 0);
+        await context.__careTest.loadCarePanel();
+        expect(headers).toEqual([{}, {}, {}]);
+        expect(JSON.stringify(els['care-queue-list'])).toContain('all');
+    });
+
+    test('Znajdź w kolejce z filtra statusu czeka na pełną listę i wyróżnia ofertę', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) =>
+                okJson({
+                    ok: true,
+                    etag: '"e1"',
+                    summary: { noContact: 1, due: 0, openOk: 0, won: 0, lost: 0, abandoned: 0 },
+                    queue: {
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: url.includes('status=lost') ? 'other' : 'target',
+                                status: 'NO_CONTACT',
+                                clientName: 'Klient'
+                            }
+                        ],
+                        nextCursor: null,
+                        totalCount: 1
+                    },
+                    notifications: { items: [], unreadCount: 0 }
+                })
+        });
+        context.__careTest.setQueueStatus('lost');
+        await context.__careTest.loadCarePanel();
+        expect(context.__careTest.findOfferInQueue('rury', 'target', 'target')).toBe(false);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(
+            els['care-queue-list'].querySelector('[data-offer="rury:target"]')?.attrs[
+                'aria-current'
+            ]
+        ).toBe('true');
+    });
+
     test('martwy polling: start nawet po nieudanym pierwszym loadzie', async () => {
         const timers: number[] = [];
         const { listeners } = load({
