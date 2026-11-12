@@ -81,7 +81,9 @@ export function setQueueRange(value) {
 }
 
 export function setQueueStatus(value) {
-    const nextStatus = ['contact', 'progress', 'won', 'lost', 'abandoned'].includes(value)
+    const nextStatus = ['contact', 'progress', 'won', 'lost', 'abandoned', 'favorites'].includes(
+        value
+    )
         ? value
         : 'all';
     if (panelLoading && queueStatus !== nextStatus) pendingRangeReload = true;
@@ -219,7 +221,57 @@ function rangeQuery() {
 }
 
 function statusQuery() {
-    return queueStatus === 'all' ? '' : '&status=' + encodeURIComponent(queueStatus);
+    return queueStatus === 'all' || queueStatus === 'favorites'
+        ? ''
+        : '&status=' + encodeURIComponent(queueStatus);
+}
+
+function favoriteOfferKeys() {
+    try {
+        const parsed = JSON.parse(
+            localStorage.getItem('sok-care-favorites:' + careUserId()) || '[]'
+        );
+        return new Set(
+            Array.isArray(parsed) ? parsed.filter((key) => typeof key === 'string') : []
+        );
+    } catch {
+        return new Set();
+    }
+}
+
+function toggleFavoriteOffer(key, button, offerLabel) {
+    const favorites = favoriteOfferKeys();
+    const isFavorite = !favorites.has(key);
+    if (!isFavorite) favorites.delete(key);
+    else favorites.add(key);
+    try {
+        localStorage.setItem('sok-care-favorites:' + careUserId(), JSON.stringify([...favorites]));
+    } catch {
+        careToastError('Nie udało się zapisać ulubionych w tej przeglądarce.');
+        return;
+    }
+    const label = offerLabel || key;
+    if (button) {
+        button.classList.toggle('is-favorite', isFavorite);
+        button.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
+        button.setAttribute(
+            'aria-label',
+            isFavorite ? 'Usuń ' + label + ' z ulubionych' : 'Dodaj ' + label + ' do ulubionych'
+        );
+    }
+    if (!isFavorite && queueStatus === 'favorites') {
+        const row = button?.closest('.care-queue-card');
+        const nextButton =
+            row?.nextElementSibling?.querySelector('.care-favorite-btn') ||
+            row?.previousElementSibling?.querySelector('.care-favorite-btn');
+        row?.remove();
+        if (nextButton) {
+            nextButton.focus();
+            return;
+        }
+        renderQueue(queueCache, queueNextCursor, queueTotal);
+        document.querySelector('.care-status-filter-btn[data-care-status="favorites"]')?.focus();
+    }
 }
 
 /* ETag per scope+zakres+rep; dla custom daty są częścią klucza. */
@@ -1195,6 +1247,11 @@ function openCareContactModal(it) {
 }
 
 function matchFilter(it) {
+    if (
+        queueStatus === 'favorites' &&
+        !favoriteOfferKeys().has(String(it.offerKind) + ':' + String(it.offerId))
+    )
+        return false;
     if (queueFilter === 'urgent') return !!it.escalated || it.overdueDays > 0;
     if (queueFilter === 'today') return it.slaBucket === 'DUE_TODAY';
     if (queueFilter === 'paused') return !!it.paused;
@@ -1206,6 +1263,56 @@ async function snoozeQuick(it, days, row) {
         careToastError('Podaj liczbę dni 1–28.');
         return;
     }
+    const until = new Date(Date.now() + days * 86400000).toISOString();
+    return snoozeUntil(it, until, row, 'Odłożono o ' + days + 'd');
+}
+
+function dateInputValue(date) {
+    const pad = (value) => String(value).padStart(2, '0');
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+}
+
+function snoozeDateLimits() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const min = new Date(today);
+    const maxUntil = new Date(now.getTime() + 28 * 86400000);
+    const max = new Date(maxUntil.getFullYear(), maxUntil.getMonth(), maxUntil.getDate());
+    min.setDate(min.getDate() + 1);
+    const endOfMaxDate = new Date(
+        max.getFullYear(),
+        max.getMonth(),
+        max.getDate(),
+        23,
+        59,
+        59,
+        999
+    );
+    if (endOfMaxDate > maxUntil) max.setDate(max.getDate() - 1);
+    return { min: dateInputValue(min), max: dateInputValue(max) };
+}
+
+function updateSnoozeDateInput(input) {
+    const limits = snoozeDateLimits();
+    input.min = limits.min;
+    input.max = limits.max;
+}
+
+function snoozeToDate(it, dateValue, row) {
+    const limits = snoozeDateLimits();
+    if (!dateValue || dateValue < limits.min || dateValue > limits.max) {
+        careToastError('Wybierz datę od jutra do 28 dni.');
+        return;
+    }
+    const until = new Date(dateValue + 'T23:59:59.999');
+    if (Number.isNaN(until.getTime())) {
+        careToastError('Wybierz prawidłową datę odłożenia.');
+        return;
+    }
+    return snoozeUntil(it, until.toISOString(), row, 'Odłożono do ' + fmtTermDate(until));
+}
+
+async function snoozeUntil(it, until, row, successLabel) {
     const offerKind = it.offerKind;
     const offerId = it.offerId;
     const key = String(offerKind) + ':' + String(offerId);
@@ -1230,7 +1337,6 @@ async function snoozeQuick(it, days, row) {
     } catch {
         /* best-effort */
     }
-    const until = new Date(Date.now() + days * 86400000).toISOString();
     const body = { snoozedUntil: until };
     if (it.careUpdatedAt) body.expectedUpdatedAt = it.careUpdatedAt;
     let ok = false;
@@ -1290,7 +1396,7 @@ async function snoozeQuick(it, days, row) {
     actions.textContent = '';
     const done = document.createElement('span');
     done.className = 'ops-pill ops-ok';
-    done.textContent = 'Odłożono o ' + days + 'd';
+    done.textContent = successLabel;
     const undo = document.createElement('button');
     undo.type = 'button';
     undo.className = 'btn btn-sm btn-secondary';
@@ -1470,6 +1576,7 @@ function renderQueue(items, nextCursor, totalCount) {
                   : 'Brak ofert w tym filtrze.';
         empty.setAttribute('role', 'status');
         list.appendChild(empty);
+        appendQueueMoreButton(list, visible.length);
         if (queueCache.length === 0) {
             const cta = document.createElement('a');
             cta.href = 'app.html#/kartoteka';
@@ -1493,6 +1600,27 @@ function renderQueue(items, nextCursor, totalCount) {
         // L1: numer oferty (bold, lewo) + status + rodzaj (prawo).
         const l1 = document.createElement('div');
         l1.className = 'care-queue-l1';
+        const favoriteKey = String(it.offerKind) + ':' + String(it.offerId);
+        const isFavorite = favoriteOfferKeys().has(favoriteKey);
+        const favoriteLabel = String(it.number || it.clientName || it.offerId || favoriteKey);
+        const favorite = document.createElement('button');
+        favorite.type = 'button';
+        favorite.className = 'btn btn-sm care-favorite-btn' + (isFavorite ? ' is-favorite' : '');
+        favorite.setAttribute(
+            'aria-label',
+            isFavorite
+                ? 'Usuń ' + favoriteLabel + ' z ulubionych'
+                : 'Dodaj ' + favoriteLabel + ' do ulubionych'
+        );
+        favorite.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
+        const favoriteIcon = document.createElement('i');
+        favoriteIcon.setAttribute('data-lucide', 'star');
+        favoriteIcon.setAttribute('aria-hidden', 'true');
+        favorite.appendChild(favoriteIcon);
+        favorite.addEventListener('click', () =>
+            toggleFavoriteOffer(favoriteKey, favorite, favoriteLabel)
+        );
+        l1.appendChild(favorite);
         const no = document.createElement('span');
         no.className = 'care-queue-no';
         const noText = it.number ? String(it.number) : '—';
@@ -1590,10 +1718,10 @@ function renderQueue(items, nextCursor, totalCount) {
         const actions = document.createElement('div');
         actions.className = 'care-queue-btns';
         actions.setAttribute('data-care-actions', '1');
-        // Presety odłożenia + własna liczba dni (limit BE: 28).
+        // Presety odłożenia + wybór terminu w kalendarzu (limit BE: 28).
         const snoozeRow = document.createElement('div');
         snoozeRow.className = 'care-queue-snooze';
-        for (const d of [3, 6, 9]) {
+        for (const d of [3, 6]) {
             const preset = document.createElement('button');
             preset.type = 'button';
             preset.className = 'btn btn-sm btn-secondary care-snooze-preset';
@@ -1604,24 +1732,14 @@ function renderQueue(items, nextCursor, totalCount) {
             snoozeRow.appendChild(preset);
         }
         const custom = document.createElement('input');
-        custom.type = 'number';
-        custom.min = '1';
-        custom.max = '28';
-        custom.step = '1';
-        custom.inputMode = 'numeric';
-        custom.placeholder = 'd';
-        custom.className = 'form-input form-input-sm care-snooze-custom';
-        custom.setAttribute('aria-label', 'Własna liczba dni odłożenia (1–28)');
+        custom.type = 'date';
+        updateSnoozeDateInput(custom);
+        custom.className = 'form-input form-input-sm care-snooze-date';
+        custom.setAttribute('aria-label', 'Data odłożenia kontaktu dla ' + favoriteLabel);
+        custom.addEventListener('focus', () => updateSnoozeDateInput(custom));
         // Pauza blokuje tylko odłożenia; Kontakt celowo aktywny.
         if (it.paused) custom.disabled = true;
-        const applyCustom = () => {
-            const raw = String(custom.value ?? '').trim();
-            if (!/^\d+$/.test(raw)) {
-                careToastError('Podaj liczbę dni 1–28.');
-                return;
-            }
-            snoozeQuick(it, Number(raw), row);
-        };
+        const applyCustom = () => snoozeToDate(it, String(custom.value ?? ''), row);
         custom.addEventListener('keydown', (e) => {
             if (e && e.key === 'Enter') {
                 if (typeof e.preventDefault === 'function') e.preventDefault();
@@ -1633,7 +1751,7 @@ function renderQueue(items, nextCursor, totalCount) {
         customOk.type = 'button';
         customOk.className = 'btn btn-sm btn-secondary care-snooze-ok';
         customOk.textContent = 'OK';
-        customOk.setAttribute('aria-label', 'Odłóż o własną liczbę dni');
+        customOk.setAttribute('aria-label', 'Odłóż ' + favoriteLabel + ' do wybranej daty');
         if (it.paused) customOk.disabled = true;
         customOk.addEventListener('click', applyCustom);
         snoozeRow.appendChild(customOk);
@@ -1661,22 +1779,25 @@ function renderQueue(items, nextCursor, totalCount) {
         grid.appendChild(row);
     }
     list.appendChild(grid);
-    if (queueNextCursor) {
-        const moreWrap = document.createElement('div');
-        moreWrap.className = 'care-queue-more';
-        const more = document.createElement('button');
-        more.type = 'button';
-        more.className = 'btn btn-sm btn-secondary';
-        more.textContent = 'Pokaż więcej (widoczne ' + visible.length + ' z ' + queueTotal + ')';
-        more.addEventListener('click', loadMoreQueue);
-        moreWrap.appendChild(more);
-        list.appendChild(moreWrap);
-    }
+    appendQueueMoreButton(list, visible.length);
     refreshCareIcons(list);
     if (pendingQueueFindKey && highlightQueueCard(pendingQueueFindKey)) {
         pendingQueueFindKey = null;
         careSearchStats.hitAfterMore += 1;
     }
+}
+
+function appendQueueMoreButton(list, visibleCount) {
+    if (!queueNextCursor) return;
+    const moreWrap = document.createElement('div');
+    moreWrap.className = 'care-queue-more';
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'btn btn-sm btn-secondary';
+    more.textContent = 'Pokaż więcej (widoczne ' + visibleCount + ' z ' + queueTotal + ')';
+    more.addEventListener('click', loadMoreQueue);
+    moreWrap.appendChild(more);
+    list.appendChild(moreWrap);
 }
 
 function renderRequiredRangePrompt() {
@@ -2149,6 +2270,8 @@ function ensureRangeUI() {
                     ? filters.querySelector('.care-search-wrap')
                     : null;
             if (searchLabel) group.appendChild(searchLabel);
+            const reset = document.getElementById('care-filters-reset');
+            if (reset) group.appendChild(reset);
         } catch {
             /* fallback: szukaj zostaje w wierszu filtrów */
         }
@@ -2200,6 +2323,39 @@ function syncQueueStatusButtons() {
     });
 }
 
+function resetQueueFilters() {
+    queueFilter = 'all';
+    setQueueStatus('all');
+    setQueueRange('7d');
+    customFromDate = '';
+    customToDate = '';
+    careStoreSet('sok-care-from', '');
+    careStoreSet('sok-care-to', '');
+    setQueueSearch('');
+    setQueueSort('sla');
+    setQueueView('list');
+    const search = document.getElementById('care-queue-search');
+    if (search) search.value = '';
+    for (const id of ['care-range-from', 'care-range-to']) {
+        const input = document.getElementById(id);
+        if (!input) continue;
+        input.value = '';
+        input.setAttribute('aria-invalid', 'false');
+    }
+    const rangeError = document.getElementById('care-range-error');
+    if (rangeError) {
+        rangeError.textContent = '';
+        rangeError.hidden = true;
+    }
+    const sort = document.getElementById('care-sort');
+    if (sort) sort.value = 'sla';
+    syncQueueFilterButtons();
+    syncQueueStatusButtons();
+    syncRangeButtons();
+    syncSortViewControls();
+    refreshQueueRange();
+}
+
 function syncSortViewControls() {
     const sort = document.getElementById('care-sort');
     if (sort) sort.value = queueSort;
@@ -2218,6 +2374,11 @@ function syncSortViewControls() {
 }
 
 function bindPanelControls() {
+    const reset = document.getElementById('care-filters-reset');
+    if (reset && !reset.dataset.bound) {
+        reset.dataset.bound = '1';
+        reset.addEventListener('click', resetQueueFilters);
+    }
     document.querySelectorAll('.care-scope-btn').forEach((btn) => {
         if (btn.dataset.bound) return;
         btn.dataset.bound = '1';

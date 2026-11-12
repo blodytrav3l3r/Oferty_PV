@@ -811,7 +811,7 @@ describe('carePanel — render, a11y, kafelki, search', () => {
         );
     });
 
-    test('snooze: presety +6d/+9d niosą właściwy until, custom 1–28, śmieci bez fetcha', async () => {
+    test('snooze: preset +6d i data z kalendarza niosą właściwy until, błędna data bez fetcha', async () => {
         const calls: string[] = [];
         const posts: Array<{ url: string; body: string }> = [];
         const packet = (paused: boolean) => ({
@@ -886,30 +886,37 @@ describe('carePanel — render, a11y, kafelki, search', () => {
             await context.__careTest.loadCarePanel();
             return els['care-queue-list'].children[0];
         };
-        // +6d i +9d: until ≈ 6 i 9 dni.
+        // Preset +6d zachowuje dotychczasowy termin.
         for (const fn of findBtn(row, '+6d').handlers || []) await fn();
-        const row9 = await freshRow();
-        for (const fn of findBtn(row9, '+9d').handlers || []) await fn();
-        expect(posts).toHaveLength(2);
+        expect(posts).toHaveLength(1);
         expect(daysOf(posts[0].body)).toBeGreaterThan(5.9);
         expect(daysOf(posts[0].body)).toBeLessThan(6.1);
-        expect(daysOf(posts[1].body)).toBeGreaterThan(8.9);
-        expect(daysOf(posts[1].body)).toBeLessThan(9.1);
-        // Custom OK: 12d przechodzi, śmieci nie fetchują.
+        // Kalendarz pozwala odłożyć do końca wybranego dnia.
         const row12 = await freshRow();
         const input = findInput(row12);
         expect(input).not.toBeNull();
-        input.value = '12';
+        expect(input.type).toBe('date');
+        const selectedDate = new Date();
+        selectedDate.setDate(selectedDate.getDate() + 12);
+        const pad = (value: number) => String(value).padStart(2, '0');
+        input.value =
+            selectedDate.getFullYear() +
+            '-' +
+            pad(selectedDate.getMonth() + 1) +
+            '-' +
+            pad(selectedDate.getDate());
         for (const fn of findBtn(row12, 'OK').handlers || []) await fn();
-        expect(posts).toHaveLength(3);
-        expect(daysOf(posts[2].body)).toBeGreaterThan(11.9);
-        expect(daysOf(posts[2].body)).toBeLessThan(12.1);
+        expect(posts).toHaveLength(2);
+        const selectedUntil = new Date(JSON.parse(posts[1].body).snoozedUntil);
+        expect(selectedUntil.getDate()).toBe(selectedDate.getDate());
+        expect(selectedUntil.getHours()).toBe(23);
+        expect(selectedUntil.getMinutes()).toBe(59);
         const rowBad = await freshRow();
         const badInput = findInput(rowBad);
         const before = posts.length;
-        badInput.value = '99';
+        badInput.value = '2099-01-01';
         for (const fn of findBtn(rowBad, 'OK').handlers || []) await fn();
-        badInput.value = 'abc';
+        badInput.value = '';
         for (const fn of badInput.handlers || []) await fn({ key: 'Enter', preventDefault() {} });
         expect(posts).toHaveLength(before);
     });
@@ -970,7 +977,7 @@ describe('carePanel — render, a11y, kafelki, search', () => {
             return out;
         };
         const disabledCount = walk(card).length;
-        expect(disabledCount).toBeGreaterThanOrEqual(5);
+        expect(disabledCount).toBeGreaterThanOrEqual(4);
         // Kontakt celowo aktywny także przy pauzie.
         const findBtn = (root: any, label: string): any => {
             for (const c of root.children || []) {

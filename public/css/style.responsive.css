@@ -476,9 +476,14 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     font-size: var(--fs-md);
     cursor: pointer;
 }
-.sok-datepicker-day:hover {
+.sok-datepicker-day:not(:disabled):hover {
     background: var(--bg-hover);
     color: var(--text-primary);
+}
+.sok-datepicker-day:disabled {
+    color: var(--text-muted);
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 .sok-datepicker-day:focus-visible {
     outline: 2px solid var(--focus-ring);

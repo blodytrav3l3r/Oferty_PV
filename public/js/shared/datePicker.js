@@ -66,6 +66,17 @@
         return y + '-' + pad2(m + 1) + '-' + pad2(d);
     }
 
+    /** @param {HTMLInputElement} input @param {string} value */
+    function isWithinLimits(input, value) {
+        var min = input.min;
+        var max = input.max;
+        if (input.type === 'datetime-local' && !value.includes('T')) {
+            if (min) min = min.slice(0, 10);
+            if (max) max = max.slice(0, 10);
+        }
+        return (!min || value >= min) && (!max || value <= max);
+    }
+
     function buildPanel() {
         var el = document.createElement('div');
         el.className = 'sok-datepicker';
@@ -103,12 +114,18 @@
 
         var selected = activeInput ? parseValue(activeInput.value) : null;
         var today = new Date();
+        var todayButton = panel.querySelector('[data-act="today"]');
+        var todayValue = toValue(today.getFullYear(), today.getMonth(), today.getDate());
+        if (todayButton instanceof HTMLButtonElement && activeInput) {
+            todayButton.disabled = !isWithinLimits(activeInput, todayValue);
+        }
         var firstOffset = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7;
         var start = new Date(viewYear, viewMonth, 1 - firstOffset);
         var cells = [];
         for (var i = 0; i < 42; i++) {
             var day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
             var value = toValue(day.getFullYear(), day.getMonth(), day.getDate());
+            var disabled = Boolean(activeInput && !isWithinLimits(activeInput, value));
             var classes = ['sok-datepicker-day'];
             if (day.getMonth() !== viewMonth) classes.push('is-outside');
             if (
@@ -138,6 +155,7 @@
                     ' ' +
                     day.getFullYear() +
                     '"' +
+                    (disabled ? ' disabled' : '') +
                     (classes.indexOf('is-selected') >= 0 ? ' aria-current="date"' : '') +
                     '>' +
                     day.getDate() +
@@ -184,6 +202,9 @@
         var focusTarget = panel.querySelector(
             '.sok-datepicker-day.is-selected, .sok-datepicker-day.is-today'
         );
+        if (focusTarget && focusTarget.hasAttribute('disabled')) {
+            focusTarget = panel.querySelector('.sok-datepicker-day:not(:disabled)');
+        }
         if (focusTarget instanceof HTMLElement) focusTarget.focus();
     }
 
@@ -206,8 +227,10 @@
                     : '00:00';
             value += 'T' + time;
         }
+        if (value && !isWithinLimits(input, value)) return false;
         input.value = value;
         input.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
     }
 
     /** @param {MouseEvent} event */
@@ -228,19 +251,22 @@
         var act = target.closest('[data-act]');
         if (act && activeInput) {
             var input = activeInput;
+            var committed;
             if (act.getAttribute('data-act') === 'today') {
                 var now = new Date();
-                commit(input, toValue(now.getFullYear(), now.getMonth(), now.getDate()));
+                committed = commit(
+                    input,
+                    toValue(now.getFullYear(), now.getMonth(), now.getDate())
+                );
             } else {
-                commit(input, '');
+                committed = commit(input, '');
             }
-            close();
+            if (committed) close();
             return;
         }
         var day = target.closest('[data-date]');
-        if (day && activeInput) {
-            commit(activeInput, day.getAttribute('data-date') || '');
-            close();
+        if (day && activeInput && !day.hasAttribute('disabled')) {
+            if (commit(activeInput, day.getAttribute('data-date') || '')) close();
         }
     }
 
@@ -262,13 +288,33 @@
         var nextIndex = index + delta;
         if (nextIndex < 0 || nextIndex >= days.length) {
             var nextMonth = new Date(viewYear, viewMonth + (nextIndex < 0 ? -1 : 1), 1);
+            var nextIndexInMonth = nextIndex < 0 ? days.length + delta : delta;
+            var firstOffset =
+                (new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1).getDay() + 6) % 7;
+            var gridStart = new Date(
+                nextMonth.getFullYear(),
+                nextMonth.getMonth(),
+                1 - firstOffset
+            );
+            var targetDate = new Date(
+                gridStart.getFullYear(),
+                gridStart.getMonth(),
+                gridStart.getDate() + nextIndexInMonth
+            );
+            var targetValue = toValue(
+                targetDate.getFullYear(),
+                targetDate.getMonth(),
+                targetDate.getDate()
+            );
+            if (activeInput && !isWithinLimits(activeInput, targetValue)) return;
             viewYear = nextMonth.getFullYear();
             viewMonth = nextMonth.getMonth();
             render();
             days = Array.prototype.slice.call(panel.querySelectorAll('.sok-datepicker-day'));
-            nextIndex = nextIndex < 0 ? days.length + delta : delta;
+            nextIndex = nextIndexInMonth;
         }
         var next = days[nextIndex];
+        if (next && next.hasAttribute('disabled')) return;
         if (next instanceof HTMLElement) next.focus();
     }
 

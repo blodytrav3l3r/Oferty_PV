@@ -10,6 +10,8 @@ export const load = (opts: {
     calls?: string[];
     timers?: number[];
     fuStub?: any;
+    userId?: string;
+    storage?: Map<string, string>;
 }) => {
     const file = path.join(__dirname, '../../../public/js/care/carePanel.js');
     let code = fs.readFileSync(file, 'utf8');
@@ -24,6 +26,7 @@ export const load = (opts: {
     // Harness vm = classic script: rozbrojenie składni ESM.
     code = code.replace(/^export\s+/gm, '');
     const els: Record<string, any> = {};
+    const storage = opts.storage ?? new Map<string, string>();
     const mkEl = (id: string) => {
         const self: any = {
             id,
@@ -143,6 +146,10 @@ export const load = (opts: {
             opts.calls?.push(`${init?.method || 'GET'} ${url}`);
             return opts.fetchMock(url, init);
         },
+        localStorage: {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => storage.set(key, String(value))
+        },
         document: {
             getElementById: (id: string) => els[id] || null,
             querySelectorAll: () => [],
@@ -162,16 +169,16 @@ export const load = (opts: {
             },
             hidden: false
         },
-        window: { currentUser: { role: opts.role ?? 'user' } }
+        window: { currentUser: { id: opts.userId, role: opts.role ?? 'user' } }
     };
     context.window.window = context.window;
     vm.createContext(context);
     vm.runInContext(
         code +
-            '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueStatus, setQueueCustomRange: typeof setQueueCustomRange === "function" ? setQueueCustomRange : undefined, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications, renderQueue };',
+            '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueStatus, setQueueCustomRange: typeof setQueueCustomRange === "function" ? setQueueCustomRange : undefined, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications, renderQueue, resetQueueFilters };',
         context
     );
     context.__careTest.setQueueRange(opts.initialRange ?? '30d');
-    return { els, listeners, context };
+    return { els, listeners, context, storage };
 };
 export const okJson = (body: any) => ({ ok: true, json: async () => body });

@@ -3167,6 +3167,18 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 4px;
     margin-bottom: 8px;
 }
+.care-status-filters .care-status-filter-btn {
+    flex: 1 1 6rem;
+    min-height: 30px;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+}
+.care-status-filters .care-status-filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+}
 .care-status-label {
     margin-right: 4px;
     font-size: var(--fs-xs);
@@ -3276,6 +3288,22 @@ html[data-theme='light'] body.index-page.logged-in::before {
     min-width: 0;
     display: flex;
     flex-direction: column;
+}
+.care-favorite-btn {
+    flex: 0 0 auto;
+    padding: 2px 5px;
+    border: 0;
+    color: var(--text-muted);
+}
+.care-favorite-btn svg {
+    width: 16px;
+    height: 16px;
+}
+.care-favorite-btn.is-favorite {
+    color: var(--accent);
+}
+.care-favorite-btn.is-favorite svg {
+    fill: currentColor;
 }
 .care-queue-title {
     display: flex;
@@ -3411,10 +3439,10 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-snooze-preset {
     flex: 0 0 auto;
 }
-.care-snooze-custom {
-    width: 4.5ch;
-    flex: 0 0 auto;
-    text-align: center;
+.care-snooze-date {
+    width: 10rem;
+    max-width: 100%;
+    flex: 0 1 10rem;
 }
 .care-snooze-ok {
     flex: 0 0 auto;
@@ -3710,6 +3738,12 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-range-group .care-search-wrap {
     flex: 2 1 12rem;
     min-width: 10rem;
+}
+#care-filters-reset {
+    flex: 0 0 auto;
+    min-height: 30px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
 }
 .care-custom-range {
     display: flex;

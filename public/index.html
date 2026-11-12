@@ -573,6 +573,13 @@
                                 <span class="care-status-label">Status:</span>
                                 <button
                                     type="button"
+                                    class="btn btn-sm btn-secondary ka-pill"
+                                    id="care-filters-reset"
+                                >
+                                    Resetuj filtry
+                                </button>
+                                <button
+                                    type="button"
                                     class="btn btn-sm ka-pill care-status-filter-btn active"
                                     data-care-status="all"
                                     aria-pressed="true"
@@ -624,6 +631,15 @@
                                     aria-controls="care-queue-list"
                                 >
                                     Porzucone
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                    data-care-status="favorites"
+                                    aria-pressed="false"
+                                    aria-controls="care-queue-list"
+                                >
+                                    Ulubione
                                 </button>
                             </div>
                             <div

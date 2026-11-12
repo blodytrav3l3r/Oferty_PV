@@ -224,33 +224,47 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         await expect(card.locator('a[href="tel:601000111"]'), 'tel: brak').toHaveCount(1);
     });
 
-    test('(o) presety snooze + custom 28d, odrzut 99', async ({ page }) => {
+    test('(o) presety snooze + kalendarz do 28 dni, odrzut pustej daty', async ({ page }) => {
         await openPanel(page);
         const full = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
         await expect(full, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
-        await full.locator('[aria-label="Odłóż o 9 dni"]').click();
-        await expect(full, 'brak pilla Odłożono o 9d').toContainText('Odłożono o 9d', {
+        await full.locator('[aria-label="Odłóż o 6 dni"]').click();
+        await expect(full, 'brak pilla Odłożono o 6d').toContainText('Odłożono o 6d', {
             timeout: 15000
         });
         const bare = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-bare` });
         await expect(bare, 'karty gołej brak').toHaveCount(1, { timeout: 15000 });
-        await bare.locator('.care-snooze-custom').fill('28');
-        await bare.locator('[aria-label="Odłóż o własną liczbę dni"]').click();
-        await expect(bare, 'brak pilla Odłożono o 28d').toContainText('Odłożono o 28d', {
-            timeout: 15000
-        });
+        const date = bare.locator('.care-snooze-date');
+        const maxDate = await date.getAttribute('max');
+        expect(maxDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        await expect(date).toHaveAttribute('aria-label', /Data odłożenia kontaktu dla/);
+        await expect(date).toHaveAttribute('readonly', 'readonly');
+        await date.press('Enter');
+        await expect(page.locator('.sok-datepicker')).toBeVisible();
+        const maxDay = page.locator('.sok-datepicker [data-date="' + maxDate + '"]');
+        for (let monthStep = 0; monthStep < 2 && (await maxDay.count()) === 0; monthStep++) {
+            await page.locator('.sok-datepicker [data-nav="1"]').click();
+        }
+        await maxDay.click();
+        await expect(bare.locator('.care-snooze-ok')).toHaveAttribute(
+            'aria-label',
+            /do wybranej daty/
+        );
+        await bare.locator('.care-snooze-ok').click();
+        await expect(bare, 'brak odłożenia do wybranej daty').toContainText(
+            'Odłożono do ' + maxDate!.split('-').reverse().join('.'),
+            { timeout: 15000 }
+        );
         await bare.locator('button', { hasText: 'Cofnij' }).click();
         await expect(
-            bare.locator('[aria-label="Odłóż o 9 dni"]'),
+            bare.locator('[aria-label="Odłóż o 6 dni"]'),
             'brak powrotu presetów po Cofnij'
         ).toBeVisible({ timeout: 15000 });
-        await bare.locator('.care-snooze-custom').fill('99');
-        await bare.locator('[aria-label="Odłóż o własną liczbę dni"]').click();
-        await expect(bare, 'śmieci 99 nie mogą odłożyć').not.toContainText('Odłożono o 99d');
-        await expect(
-            bare.locator('[aria-label="Odłóż o 9 dni"]'),
-            'presety zniknęły po odrzucie'
-        ).toBeVisible();
+        await bare.locator('.care-snooze-date').press('Enter');
+        await page.locator('.sok-datepicker [data-act="clear"]').click();
+        await bare.locator('.care-snooze-ok').click();
+        await expect(bare, 'pusta data nie może odłożyć').not.toContainText('Odłożono do');
+        await expect(bare.locator('.care-snooze-date')).toBeVisible();
     });
 
     test('(n) Kontakt otwiera modal opieki bez nawigacji do kartoteki', async ({ page }) => {

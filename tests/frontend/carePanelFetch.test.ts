@@ -590,6 +590,168 @@ describe('carePanel — panel fetch, ETag, błędy, polling, zakresy', () => {
         expect(findMore(els['care-queue-list'])).toBeNull();
     });
 
+    test('reset filtrów czyści widoczne pola własnego zakresu i błąd', () => {
+        const { els, context } = load({ fetchMock: () => okJson({}) });
+        els['care-range-from'] = { value: '2026-10-01', setAttribute() {} };
+        els['care-range-to'] = { value: '2026-10-12', setAttribute() {} };
+        els['care-range-error'] = { textContent: 'Zakres dat jest nieprawidłowy.', hidden: false };
+
+        context.__careTest.resetQueueFilters();
+
+        expect(els['care-range-from'].value).toBe('');
+        expect(els['care-range-to'].value).toBe('');
+        expect(els['care-range-error'].textContent).toBe('');
+        expect(els['care-range-error'].hidden).toBe(true);
+    });
+
+    test('ulubione mają etykietę oferty, pozostawiają kartę w DOM i są per użytkownik', () => {
+        const storage = new Map<string, string>();
+        const offer = {
+            offerKind: 'rury',
+            offerId: 'offer-1',
+            number: 'OF/000001/SA/2026',
+            clientName: 'Budimex S.A.',
+            status: 'NO_CONTACT',
+            overdueDays: 0
+        };
+        const first = load({ storage, userId: 'user-1', fetchMock: () => okJson({}) });
+        first.context.__careTest.renderQueue([offer], null, 1);
+        const originalCard = first.els['care-queue-list'].children[0].children[0];
+        const findButton = (root: any): any => {
+            if (root.className?.includes('care-favorite-btn')) return root;
+            for (const child of root.children || []) {
+                const found = findButton(child);
+                if (found) return found;
+            }
+            return null;
+        };
+        const favorite = findButton(originalCard);
+        expect(favorite.attrs['aria-label']).toContain('OF/000001/SA/2026');
+        for (const handler of favorite.handlers || []) handler();
+
+        expect(first.els['care-queue-list'].children[0].children[0]).toBe(originalCard);
+        expect(favorite.attrs['aria-pressed']).toBe('true');
+        expect(storage.get('sok-care-favorites:user-1')).toBe('["rury:offer-1"]');
+
+        const second = load({ storage, userId: 'user-2', fetchMock: () => okJson({}) });
+        second.context.__careTest.setQueueStatus('favorites');
+        second.context.__careTest.renderQueue([offer], null, 1);
+        expect(second.els['care-queue-list'].children[0].className).toBe('recycled-empty');
+    });
+
+    test('filtr Ulubione pozwala doładować stronę z pasującą ofertą', async () => {
+        const storage = new Map<string, string>([
+            ['sok-care-favorites:user-1', '["rury:favorite-2"]']
+        ]);
+        const { els, context } = load({
+            storage,
+            userId: 'user-1',
+            fetchMock: (url: string) =>
+                url.includes('/api/care/queue')
+                    ? okJson({
+                          items: [
+                              {
+                                  offerKind: 'rury',
+                                  offerId: 'favorite-2',
+                                  number: 'OF/000002/SA/2026',
+                                  clientName: 'Budimex S.A.',
+                                  status: 'NO_CONTACT',
+                                  overdueDays: 0
+                              }
+                          ],
+                          nextCursor: null,
+                          totalCount: 2
+                      })
+                    : okJson({})
+        });
+        context.__careTest.setQueueStatus('favorites');
+        context.__careTest.renderQueue(
+            [{ offerKind: 'rury', offerId: 'other', status: 'NO_CONTACT', overdueDays: 0 }],
+            'next',
+            2
+        );
+        const findMore = (root: any): any => {
+            if ((root.textContent || '').startsWith('Pokaż więcej')) return root;
+            for (const child of root.children || []) {
+                const found = findMore(child);
+                if (found) return found;
+            }
+            return null;
+        };
+        const findOffer = (root: any, key: string): any => {
+            if (root.getAttribute?.('data-offer') === key) return root;
+            for (const child of root.children || []) {
+                const found = findOffer(child, key);
+                if (found) return found;
+            }
+            return null;
+        };
+        const more = findMore(els['care-queue-list']);
+        expect(more).not.toBeNull();
+        for (const handler of more.handlers || []) await handler();
+
+        expect(findOffer(els['care-queue-list'], 'rury:favorite-2')).not.toBeNull();
+    });
+
+    test('odłożenie pokazuje kalendarz zamiast +9 dni i pozwala wybrać datę', async () => {
+        let snoozeBody: any = null;
+        const { els, context } = load({
+            fetchMock: (url: string, init?: any) => {
+                if (url.includes('/snooze')) {
+                    snoozeBody = JSON.parse(init.body);
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({ state: { updatedAt: 'fresh' } })
+                    };
+                }
+                return okJson({});
+            }
+        });
+        context.__careTest.renderQueue(
+            [{ offerKind: 'rury', offerId: 'offer-1', status: 'NO_CONTACT', overdueDays: 0 }],
+            null,
+            1
+        );
+        const findClass = (root: any, className: string): any => {
+            if (
+                String(root.className || '')
+                    .split(' ')
+                    .includes(className)
+            )
+                return root;
+            for (const child of root.children || []) {
+                const found = findClass(child, className);
+                if (found) return found;
+            }
+            return null;
+        };
+        const findButton = (root: any, label: string): any => {
+            if (root.tag === 'button' && root.attrs['aria-label'] === label) return root;
+            for (const child of root.children || []) {
+                const found = findButton(child, label);
+                if (found) return found;
+            }
+            return null;
+        };
+        const card = findClass(els['care-queue-list'], 'care-queue-card');
+        const date = findClass(card, 'care-snooze-date');
+        expect(date.type).toBe('date');
+        expect(findClass(card, 'care-snooze-custom')).toBeNull();
+        expect(findButton(card, 'Odłóż o 9 dni')).toBeNull();
+        expect(date.attrs['aria-label']).toContain('offer-1');
+        const applyDate = findClass(card, 'care-snooze-ok');
+        expect(applyDate.attrs['aria-label']).toContain('offer-1');
+        date.value = date.max;
+        for (const handler of applyDate.handlers || []) await handler();
+
+        expect(Date.parse(snoozeBody.snoozedUntil)).toBeLessThanOrEqual(Date.now() + 28 * 86400000);
+        const savedDate = new Date(snoozeBody.snoozedUntil);
+        expect(savedDate.getDate()).toBe(new Date(date.value + 'T12:00:00').getDate());
+        expect(savedDate.getHours()).toBe(23);
+        expect(savedDate.getMinutes()).toBe(59);
+    });
+
     test('status kolejki trafia do panelu i doładowania, a zmiana nie używa starego ETag', async () => {
         const calls: string[] = [];
         const item = (offerId: string) => ({

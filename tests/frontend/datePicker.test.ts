@@ -41,6 +41,11 @@ beforeAll(() => {
 beforeEach(() => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     input.value = '';
+    input.removeAttribute('min');
+    input.removeAttribute('max');
+    dtInput.value = '';
+    dtInput.removeAttribute('min');
+    dtInput.removeAttribute('max');
 });
 
 const openPanel = (target: HTMLInputElement = input): HTMLElement => {
@@ -75,6 +80,59 @@ describe('kalendarz S.O.K. dla pól daty', () => {
         expect(input.hasAttribute('aria-expanded')).toBe(false);
     });
 
+    it('blokuje wybór dni poza min/max', () => {
+        input.min = '2026-11-15';
+        input.max = '2026-11-20';
+        let changes = 0;
+        input.addEventListener('change', () => changes++);
+        const panel = openPanel();
+        const tooEarly = panel.querySelector('[data-date="2026-11-14"]') as HTMLButtonElement;
+        const tooLate = panel.querySelector('[data-date="2026-11-21"]') as HTMLButtonElement;
+        expect(tooEarly.disabled).toBe(true);
+        expect(tooLate.disabled).toBe(true);
+        clickDay('2026-11-14');
+        expect(input.value).toBe('');
+        expect(changes).toBe(0);
+        expect(panel.hidden).toBe(false);
+        clickDay('2026-11-15');
+        expect(input.value).toBe('2026-11-15');
+        expect(changes).toBe(1);
+    });
+
+    it('blokuje akcję „Dzisiaj” i utrzymuje fokus na granicy min/max', () => {
+        const today = new Date();
+        const min = new Date(today);
+        min.setDate(min.getDate() + 1);
+        const max = new Date(min);
+        max.setDate(max.getDate() + 5);
+        const toValue = (date: Date) =>
+            date.getFullYear() +
+            '-' +
+            String(date.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(date.getDate()).padStart(2, '0');
+        input.min = toValue(min);
+        input.max = toValue(max);
+        input.value = input.min;
+        let changes = 0;
+        input.addEventListener('change', () => changes++);
+
+        const panel = openPanel();
+        const todayButton = panel.querySelector('[data-act="today"]') as HTMLButtonElement;
+        expect(todayButton.disabled).toBe(true);
+        todayButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(input.value).toBe(input.min);
+        expect(changes).toBe(0);
+
+        input.value = input.max;
+        const boundedPanel = openPanel();
+        const maxDay = boundedPanel.querySelector(`[data-date="${input.max}"]`) as HTMLElement;
+        expect(maxDay.hasAttribute('disabled')).toBe(false);
+        maxDay.focus();
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+        expect(document.activeElement?.getAttribute('data-date')).toBe(input.max);
+    });
+
     it('datetime-local: to samo okno + pole godziny, wartość data+czas', () => {
         dtInput.value = '2026-11-10T09:45';
         const panel = openPanel(dtInput);
@@ -84,6 +142,29 @@ describe('kalendarz S.O.K. dla pól daty', () => {
         expect(timeField.value).toBe('09:45');
         clickDay('2026-11-15');
         expect(dtInput.value).toBe('2026-11-15T09:45');
+    });
+
+    it('datetime-local: uwzględnia godziny min/max dla wybranego dnia', () => {
+        dtInput.min = '2026-11-15T12:00';
+        dtInput.max = '2026-11-15T18:00';
+        dtInput.value = '2026-11-15T10:00';
+        expect(dtInput.type).toBe('datetime-local');
+        expect(dtInput.min).toBe('2026-11-15T12:00');
+        let changes = 0;
+        dtInput.addEventListener('change', () => changes++);
+        const panel = openPanel(dtInput);
+        const timeField = panel.querySelector('.sok-datepicker-time input') as HTMLInputElement;
+        const sameDay = panel.querySelector('[data-date="2026-11-15"]') as HTMLButtonElement;
+        expect(sameDay.disabled).toBe(false);
+        sameDay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(dtInput.value).toBe('2026-11-15T10:00');
+        expect(changes).toBe(0);
+        expect(panel.hidden).toBe(false);
+
+        timeField.value = '13:00';
+        sameDay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(dtInput.value).toBe('2026-11-15T13:00');
+        expect(changes).toBe(1);
     });
 
     it('pole date chowa wiersz godziny', () => {
