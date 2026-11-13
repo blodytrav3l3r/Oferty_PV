@@ -109,13 +109,14 @@ function setupParamTiles() {
                     if (val === 'brak') {
                         activateParamValue('kineta', 'brak');
                         activateParamValue('spocznik', 'brak');
-                    } else if (['preco', 'precotop', 'unolith'].includes(getParamValue('kineta'))) {
-                        activateParamValue('spocznikH', '1/1');
                     } else if (
                         getParamValue('kineta') === 'brak' ||
                         getParamValue('spocznik') === 'brak'
                     ) {
-                        activateParamValue('spocznikH', 'brak');
+                        activateParamValue('kineta', 'beton');
+                        activateParamValue('spocznik', 'beton');
+                    } else if (['preco', 'precotop', 'unolith'].includes(getParamValue('kineta'))) {
+                        activateParamValue('spocznikH', '1/1');
                     }
                 }
 

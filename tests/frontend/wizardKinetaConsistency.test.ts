@@ -82,6 +82,16 @@ describe('wizard kineta and spocznik tiles stay consistent', () => {
         expect(activeValue('spocznikH')).toBe('1/2');
     });
 
+    test('selecting a height while Brak is active enables concrete kineta and spocznik', () => {
+        loadWizard();
+
+        clickTile('spocznikH', '1/2');
+
+        expect(activeValue('kineta')).toBe('beton');
+        expect(activeValue('spocznik')).toBe('beton');
+        expect(activeValue('spocznikH')).toBe('1/2');
+    });
+
     test('selecting Brak spocznik clears kineta; PRECO may also be turned off with Brak height', () => {
         loadWizard();
         clickTile('kineta', 'beton');

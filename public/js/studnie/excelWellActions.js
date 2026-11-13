@@ -120,6 +120,14 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     if (
         paramKey === 'spocznikH' &&
         value !== 'brak' &&
+        (well.kineta === 'brak' || well.spocznik === 'brak')
+    ) {
+        well.kineta = 'beton';
+        well.spocznik = 'beton';
+    }
+    if (
+        paramKey === 'spocznikH' &&
+        value !== 'brak' &&
         (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')
     ) {
         well.spocznikH = '1/1';
