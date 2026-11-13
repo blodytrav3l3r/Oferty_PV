@@ -544,13 +544,16 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
         const price = _assessedExcel
             ? _assessedExcel(well, resolved, true, item)
             : resolved.price || 0;
-        const fmt =
-            typeof fmtInt === 'function'
-                ? fmtInt
+        const formatPrice =
+            typeof fmt === 'function'
+                ? fmt
                 : function (n) {
-                      return Math.round(n || 0).toLocaleString('pl-PL');
+                      return Number(n || 0).toLocaleString('pl-PL', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                      });
                   };
-        return fmt(price) + ' PLN';
+        return formatPrice(price) + ' PLN';
     }
 
     /* 2. FALLBACK: pierwszy dostępny produkt */
@@ -601,13 +604,16 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
             const price = _assessedFallback
                 ? _assessedFallback(well, matchedFallback, true, null)
                 : matchedFallback.price || 0;
-            const fmt =
-                typeof fmtInt === 'function'
-                    ? fmtInt
+            const formatPrice =
+                typeof fmt === 'function'
+                    ? fmt
                     : function (n) {
-                          return Math.round(n || 0).toLocaleString('pl-PL');
+                          return Number(n || 0).toLocaleString('pl-PL', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                          });
                       };
-            return fmt(price) + ' PLN';
+            return formatPrice(price) + ' PLN';
         }
     }
 
@@ -683,10 +689,13 @@ function _excelUpdateHeaderProdCodes() {
                     const _prod = _prodById.get(ppid);
                     if (_prod && _prod.price) {
                         const _fmt =
-                            typeof fmtInt === 'function'
-                                ? fmtInt
+                            typeof fmt === 'function'
+                                ? fmt
                                 : function (n) {
-                                      return Math.round(n || 0).toLocaleString('pl-PL');
+                                      return Number(n || 0).toLocaleString('pl-PL', {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2
+                                      });
                                   };
                         prices[idx].textContent = _fmt(_prod.price) + ' PLN';
                     }

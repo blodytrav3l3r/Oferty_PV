@@ -217,6 +217,8 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             it.orderedQuantity = it.orderedQuantity || it.quantity || 0;
         });
 
+        const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
+
         const orderData = {
             id: orderId,
             offerId: offer.id || editingOfferId,
@@ -237,6 +239,9 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
                 transportRate,
                 transportMode: currentRuryTransportMode || 'full',
                 transportSeparate: !!currentRuryTransportSeparate,
+                transportCost: importedTransport ? importedTransport.cost : undefined,
+                transportCount: importedTransport ? importedTransport.count : undefined,
+                externalTransportCost: importedTransport ? importedTransport.cost : null,
                 zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled
             },
             clientName,
@@ -261,6 +266,9 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             transportRate,
             transportMode: currentRuryTransportMode || 'full',
             transportSeparate: !!currentRuryTransportSeparate,
+            transportCost: importedTransport ? importedTransport.cost : undefined,
+            transportCount: importedTransport ? importedTransport.count : undefined,
+            externalTransportCost: importedTransport ? importedTransport.cost : null,
             zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
             items: orderItems,
             kartaBudowy: kartaBudowyData,
@@ -322,6 +330,11 @@ async function saveRuryOrder() {
     const orderData = ordersRury[orderIndex];
     const investmentFields =
         typeof getInvestLocationFields === 'function' ? getInvestLocationFields() : null;
+    const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
+    const updatedTransport =
+        !importedTransport && orderData.externalTransportCost != null
+            ? window.isRuryTransportSeparate.getCalculated(orderCurrentItems || [])
+            : null;
     const updatedOrderData = {
         ...orderData,
         items: structuredClone(orderCurrentItems || []),
@@ -329,6 +342,12 @@ async function saveRuryOrder() {
         transportRate: Number(document.getElementById('transport-rate')?.value || 0),
         transportMode: currentRuryTransportMode || 'full',
         transportSeparate: !!currentRuryTransportSeparate,
+        externalTransportCost: importedTransport ? importedTransport.cost : null,
+        ...(importedTransport
+            ? { transportCost: importedTransport.cost, transportCount: importedTransport.count }
+            : updatedTransport
+              ? { transportCost: updatedTransport.cost, transportCount: updatedTransport.count }
+              : {}),
         zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
         organizationUnit: document.getElementById('offer-organization-unit')?.value || '',
         investName:

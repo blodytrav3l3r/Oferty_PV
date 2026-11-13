@@ -49,7 +49,7 @@ function showStycznaPopup(mode = 'select') {
                 <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-top:1px;">${escapeHtml(p.name)}</div>
             </div>
             <div class="fs-sm-muted">${p.weight ? fmtInt(p.weight) + ' kg' : ''}</div>
-            <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success);">${fmtInt(p.price)} PLN</div>
+            <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success);">${fmt(p.price)} PLN</div>
         </button>`;
     };
 

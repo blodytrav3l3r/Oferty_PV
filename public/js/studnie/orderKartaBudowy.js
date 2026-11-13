@@ -563,15 +563,11 @@ function _generateDefaultUwagi() {
 
     selectedWells.forEach((w) => {
         if (w.malowanieW && w.malowanieW !== 'brak') {
-            const price = parseFloat(w.malowanieWewCena || 0)
-                .toFixed(2)
-                .replace('.', ',');
+            const price = fmt(roundMoney(parseFloat(w.malowanieWewCena || 0)));
             paintingLines.add(`Malowanie wewnątrz (${w.malowanieW}): ${price} PLN/m²`);
         }
         if (w.malowanieZ && w.malowanieZ !== 'brak') {
-            const price = parseFloat(w.malowanieZewCena || 0)
-                .toFixed(2)
-                .replace('.', ',');
+            const price = fmt(roundMoney(parseFloat(w.malowanieZewCena || 0)));
             paintingLines.add(`Malowanie zewnątrz (${w.malowanieZ}): ${price} PLN/m²`);
         }
     });

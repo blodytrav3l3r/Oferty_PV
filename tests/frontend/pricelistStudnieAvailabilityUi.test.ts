@@ -23,8 +23,9 @@ function createGrid(
         },
         studnieProducts: products,
         _studniePricelistDirty: false,
-        fmtInt: (n: number) => String(n),
-        fmt: (n: number) => String(n),
+        fmtInt: (n: number) => Math.round(n).toString(),
+        fmt: (n: number) =>
+            n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
         escapeHtml: (s: string) => s,
         escapeHtmlAttr: (s: string) =>
             s
@@ -45,6 +46,11 @@ function createGrid(
 describe('dostępność w siatce cennika Studni', () => {
     afterEach(() => {
         document.body.innerHTML = '';
+    });
+
+    it('pokazuje cenę produktu z groszami', () => {
+        createGrid([{ id: 'A', name: 'A', componentType: 'przejscie', price: 10.49 }], 'przejscia');
+        expect(document.querySelector('[data-field="price"]')?.textContent).toBe('10,49');
     });
 
     it('zmienia Dost. pełnym polem wyboru i zapisuje liczbę 0/1', () => {

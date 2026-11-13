@@ -8,7 +8,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const readPub = (rel: string) => fs.readFileSync(path.join(ROOT, 'public', rel), 'utf8');
 
 describe('podgląd rabatu PEHD za m²', () => {
-    test('rabat 50% od bazowych 270 PLN/m² pokazuje 135,00 PLN/m²', () => {
+    test('rabat 50% od bazowych 270,20 PLN/m² pokazuje 135,10 PLN/m²', () => {
         const priceAfterDiscount = { innerText: '' };
         const modal = { classList: { contains: () => true } };
         const sandbox: any = {
@@ -36,7 +36,7 @@ describe('podgląd rabatu PEHD za m²', () => {
         vm.runInContext(readPub('js/studnie/actionsWellDiscounts.js'), sandbox);
         vm.runInContext('updateGlobalPehdDiscount(50)', sandbox);
 
-        expect(priceAfterDiscount.innerText).toBe('135.00');
+        expect(priceAfterDiscount.innerText).toBe('135.10');
     });
 });
 

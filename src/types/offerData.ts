@@ -32,6 +32,7 @@ export interface RuryOfferDataBlob {
     transportMode?: string;
     transportCount?: number;
     transportCost?: number;
+    externalTransportCost?: number | null;
     totalNetto?: number;
     totalBrutto?: number;
     items?: unknown[];

@@ -1,6 +1,26 @@
 import { InvalidPriceError, requireFinitePrice } from '../validators/finiteNumbers';
+import { roundMoney } from '../utils/money';
 
 export const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
+
+function roundPrecoGroups(value: unknown): Record<string, number> {
+    let groups = value;
+    if (typeof groups === 'string') {
+        try {
+            groups = JSON.parse(groups);
+        } catch {
+            throw new InvalidPriceError('grupy');
+        }
+    }
+    if (groups == null) return {};
+    if (typeof groups !== 'object' || Array.isArray(groups)) throw new InvalidPriceError('grupy');
+    return Object.fromEntries(
+        Object.entries(groups as Record<string, unknown>).map(([key, value]) => [
+            key,
+            roundMoney(requireFinitePrice(value, `grupy.${key}`))
+        ])
+    );
+}
 
 /** Spłaszcza zagnieżdżony PRECO do wierszy wersji (bez zapisu). */
 export function flattenPrecoRows(input: Record<string, unknown>) {
@@ -35,10 +55,24 @@ export function flattenPrecoRows(input: Record<string, unknown>) {
         ) {
             const obj = value as Record<string, unknown>;
             const { kinety, ...scalarFields } = obj;
+            const config = { ...scalarFields };
+            for (const field of ['skrzynkaWlazowa', 'cenaPelnaWysMB', 'cenaDnoOsadnika']) {
+                if (config[field] != null) {
+                    config[field] = roundMoney(requireFinitePrice(config[field], field));
+                }
+            }
+            for (const label of RANGE_TYPES) {
+                if (Array.isArray(config[label])) {
+                    config[label] = config[label].map((item: Record<string, unknown>) => ({
+                        ...item,
+                        grupy: roundPrecoGroups(item.grupy)
+                    }));
+                }
+            }
             konfigRows.push({
                 id: `preco_konfig_${key}`,
                 key,
-                value: JSON.stringify(scalarFields)
+                value: JSON.stringify(config)
             });
             if (Array.isArray(kinety)) {
                 for (const k of kinety) {
@@ -50,13 +84,14 @@ export function flattenPrecoRows(input: Record<string, unknown>) {
                         order: (kin.order as number) ?? kinetyIdx,
                         dn: requireFinitePrice(kin.dn, `kinety[${kinetyIdx}].dn`),
                         wellDn: dn,
-                        height: requireFinitePrice(
-                            kin.prosta ?? kin.height,
-                            `kinety[${kinetyIdx}].height`
+                        height: roundMoney(
+                            requireFinitePrice(
+                                kin.prosta ?? kin.height,
+                                `kinety[${kinetyIdx}].height`
+                            )
                         ),
-                        cena: requireFinitePrice(
-                            kin.dodWlot ?? kin.cena,
-                            `kinety[${kinetyIdx}].cena`
+                        cena: roundMoney(
+                            requireFinitePrice(kin.dodWlot ?? kin.cena, `kinety[${kinetyIdx}].cena`)
                         )
                     });
                     kinetyIdx++;
@@ -67,7 +102,7 @@ export function flattenPrecoRows(input: Record<string, unknown>) {
                 if (Array.isArray(arr)) {
                     for (const item of arr) {
                         const it = item as Record<string, unknown>;
-                        const grupy = (it.grupy as Record<string, unknown>) ?? {};
+                        const grupy = roundPrecoGroups(it.grupy);
                         const minV = requireFinitePrice(it.min, `zakresy[${zakresIdx}].min`);
                         const maxV = requireFinitePrice(it.max, `zakresy[${zakresIdx}].max`);
                         // Zakres z max <= 0 albo max < min nie dopasuje sie nigdy

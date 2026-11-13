@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-08",
-    "totalEdges": 2849,
+    "generatedAt": "2026-11-13",
+    "totalEdges": 2859,
     "edges": [
         {
             "page": "public/app.html",
@@ -815,6 +815,22 @@
             "page": "public/kartoteka.html",
             "name": "renderTemplate",
             "userFile": "public/js/studnie/offerPrintManager.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/kartoteka.html",
+            "name": "roundMoney",
+            "userFile": "public/js/import-export/rury/externalExportTemplate.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/kartoteka.html",
+            "name": "roundMoney",
+            "userFile": "public/js/import-export/rury/externalImport.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -12310,6 +12326,30 @@
         {
             "page": "public/studnie.html",
             "name": "fmt",
+            "userFile": "public/js/studnie/actionsWellPainting.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
+            "userFile": "public/js/studnie/excelHelpers.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
+            "userFile": "public/js/studnie/excelTableRenderer.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
             "userFile": "public/js/studnie/offerDiscountsPopup.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
@@ -12366,6 +12406,30 @@
         {
             "page": "public/studnie.html",
             "name": "fmt",
+            "userFile": "public/js/studnie/orderKartaBudowy.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
+            "userFile": "public/js/studnie/popupsStyczna.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
+            "userFile": "public/js/studnie/popupsTransitionManager.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
             "userFile": "public/js/studnie/pricelistManager.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
@@ -12382,7 +12446,23 @@
         {
             "page": "public/studnie.html",
             "name": "fmt",
+            "userFile": "public/js/studnie/wellPopups.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
             "userFile": "public/js/studnie/wellTransitions.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
+            "userFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -12431,22 +12511,6 @@
             "page": "public/studnie.html",
             "name": "fmtInt",
             "userFile": "public/js/studnie/displayUnits.js",
-            "defFile": "public/js/shared/formatters.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "fmtInt",
-            "userFile": "public/js/studnie/excelHelpers.js",
-            "defFile": "public/js/shared/formatters.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "fmtInt",
-            "userFile": "public/js/studnie/excelTableRenderer.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -12510,14 +12574,6 @@
         {
             "page": "public/studnie.html",
             "name": "fmtInt",
-            "userFile": "public/js/studnie/popupsTransitionManager.js",
-            "defFile": "public/js/shared/formatters.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "fmtInt",
             "userFile": "public/js/studnie/pricelistManager.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
@@ -12527,22 +12583,6 @@
             "page": "public/studnie.html",
             "name": "fmtInt",
             "userFile": "public/js/studnie/solverAutoSelect.js",
-            "defFile": "public/js/shared/formatters.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "fmtInt",
-            "userFile": "public/js/studnie/wellPopups.js",
-            "defFile": "public/js/shared/formatters.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "fmtInt",
-            "userFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -14768,14 +14808,6 @@
             "name": "invalidateFrozenPricesForWell",
             "userFile": "public/js/studnie/wellManager.js",
             "defFile": "public/js/studnie/orderHelpers.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "invalidateStudnieProductsMap",
-            "userFile": "public/js/studnie/pricelistProductCrud.js",
-            "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -18758,6 +18790,14 @@
         {
             "page": "public/studnie.html",
             "name": "roundMoney",
+            "userFile": "public/js/studnie/actionsWellPainting.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
             "userFile": "public/js/studnie/actionsWellPricing.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
@@ -18782,6 +18822,14 @@
         {
             "page": "public/studnie.html",
             "name": "roundMoney",
+            "userFile": "public/js/studnie/offerSummaryUI.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
             "userFile": "public/js/studnie/offerWellComponents.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
@@ -18798,7 +18846,55 @@
         {
             "page": "public/studnie.html",
             "name": "roundMoney",
+            "userFile": "public/js/studnie/orderDto.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
+            "userFile": "public/js/studnie/orderKartaBudowy.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
+            "userFile": "public/js/studnie/pricelistManager.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
+            "userFile": "public/js/studnie/pricelistRepehd.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
             "userFile": "public/js/studnie/pricingCalculator.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
+            "userFile": "public/js/studnie/wellUIHelpers.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -19121,14 +19217,6 @@
             "userFile": "public/js/studnie/offerSave.js",
             "defFile": "public/js/shared/ui.js",
             "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "saveStudnieProducts",
-            "userFile": "public/js/studnie/pricelistImportExport.js",
-            "defFile": "public/js/studnie/uiHelpers.js",
-            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {
@@ -20519,14 +20607,6 @@
             "page": "public/studnie.html",
             "name": "studnieProducts",
             "userFile": "public/js/studnie/pricelistCellEdit.js",
-            "defFile": "public/js/studnie/globals.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "studnieProducts",
-            "userFile": "public/js/studnie/pricelistImportExport.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
             "confidence": "CONFIRMED"

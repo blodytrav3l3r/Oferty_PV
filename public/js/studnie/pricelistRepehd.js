@@ -15,7 +15,7 @@ window.recalculatePEHD = async function () {
             p.componentType !== 'konus' &&
             p.area > 0
         ) {
-            p.doplataPEHD = Math.round(getPehdEffectiveArea(p) * price);
+            p.doplataPEHD = roundMoney(getPehdEffectiveArea(p) * price);
             count++;
         }
     });

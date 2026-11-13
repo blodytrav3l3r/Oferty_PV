@@ -119,6 +119,24 @@ describe('D-014: corrupt blob → oznaczony dokument, valid → bez zmian', () =
         expect(html).toContain('DANE_USZKODZONE');
     });
 
+    it('rury zamówienie: PDF zachowuje osobny transport z importu', async () => {
+        (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-r-2',
+            userId: 'u1',
+            createdAt: new Date().toISOString(),
+            data: JSON.stringify({
+                transportSeparate: true,
+                externalTransportCost: 100,
+                transportCount: 3,
+                items: []
+            })
+        });
+        const ctx = await buildRuryOrderContextFromOrderId('order-r-2');
+        expect(ctx.transportCost).toBe(100);
+        expect(ctx.transportCount).toBe(3);
+        expect(await generateRuryHTML(ctx)).toContain('100,00');
+    });
+
     it('studnie zamówienie: corrupt JSON → flaga + stempel', async () => {
         (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
             id: 'order-s-1',

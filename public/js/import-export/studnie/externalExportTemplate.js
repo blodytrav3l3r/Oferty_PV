@@ -3,8 +3,12 @@ window.StudnieExternalExportTemplate = {
         if (typeof roundMoney === 'function') return roundMoney(value);
         const numeric = Number(value);
         if (!Number.isFinite(numeric)) return 0;
-        const sign = numeric < 0 ? -1 : 1;
-        return sign * (Math.round((Math.abs(numeric) + Number.EPSILON) * 100) / 100);
+        if (Math.abs(numeric) >= 1e21) return numeric;
+        const [mantissa, exponent = '0'] = Math.abs(numeric).toString().split('e');
+        return (
+            ((numeric < 0 ? -1 : 1) * Math.round(Number(`${mantissa}e${Number(exponent) + 2}`))) /
+            100
+        );
     },
 
     _partForComp(comp) {
@@ -221,7 +225,7 @@ window.StudnieExternalExportTemplate = {
                     INDEKS_CZESCI: productId,
                     ILOSC: quantity,
                     // Cena końcowa po rabacie; RABAT pusty (import bierze cenę wprost).
-                    CENA_JEDNOSTKOWA: Math.round(cenaJednostkowa * 100) / 100,
+                    CENA_JEDNOSTKOWA: this._roundMoney(cenaJednostkowa),
                     WERSJA: 1,
                     RABAT: '',
                     SREDNICA: srednica,
@@ -269,7 +273,7 @@ window.StudnieExternalExportTemplate = {
         if (!data.transportSeparate || !(total > 0)) return null;
         const km = Number(data.transportKm) || 0;
         const rate = Number(data.transportRate) || 0;
-        const perTrip = km * rate;
+        const perTrip = this._roundMoney(km * rate);
         const trips = perTrip > 0 ? this._roundMoney(total / perTrip) : 0;
         const tripsMatchTotal = perTrip > 0 && this._roundMoney(trips * perTrip) === total;
         return {

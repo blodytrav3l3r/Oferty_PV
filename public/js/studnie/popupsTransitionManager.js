@@ -339,7 +339,7 @@ function _tmRenderTableImmediate() {
               ${wellLocked ? '<span class="tm-well-lock"><i data-lucide="lock" aria-hidden="true"></i>Zablokowana</span>' : ''}
               <span class="tm-well-badge">DN${w.wellDn}</span>
               <span class="fs-sm-muted">Rzędna: ${w.rzednaDna}</span>
-              <span class="tm-well-price">${fmtInt(w.price)} PLN</span>
+              <span class="tm-well-price">${fmt(w.price)} PLN</span>
             </div>
             <span class="tm-well-counter">
               ${wellSelCount}/${matchingTrs.length}
@@ -701,7 +701,7 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
                   );
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
-            resultDiv.innerHTML = `<div><span class="text-primary fw-600" style="font-size:var(--fs-sm);">${escapeHtml(product.category)} DN${escapeHtml(String(product.dn ?? ''))}</span><span class="color-success fw-700" style="margin-left:0.5rem;font-size:var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
+            resultDiv.innerHTML = `<div><span class="text-primary fw-600" style="font-size:var(--fs-sm);">${escapeHtml(product.category)} DN${escapeHtml(String(product.dn ?? ''))}</span><span class="color-success fw-700" style="margin-left:0.5rem;font-size:var(--fs-sm);">${product.price != null ? fmt(product.price) : '—'} PLN</span></div>
               <button class="btn btn-primary btn-sm" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>`;
         }
     }

@@ -16,8 +16,12 @@ const _moneyRoundTransport =
         : (/** @type {number} */ v) => {
               const n = Number(v);
               if (!Number.isFinite(n)) return 0;
-              const sign = n < 0 ? -1 : 1;
-              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+              if (Math.abs(n) >= 1e21) return n;
+              const [mantissa, exponent = '0'] = Math.abs(n).toString().split('e');
+              return (
+                  (n < 0 ? -1 : 1) *
+                  (Math.round(Number(`${mantissa}e${Number(exponent) + 2}`)) / 100)
+              );
           };
 
 // Stan zwinięcia kalkulacji transportu (collapseState, per-user; brak → zwinięta jak dziś).
@@ -52,6 +56,31 @@ window.toggleRuryTransportSeparate = function () {
 window.isRuryTransportSeparate = function () {
     return !!currentRuryTransportSeparate;
 };
+window.isRuryTransportSeparate.imported = null;
+window.isRuryTransportSeparate.getImported = function () {
+    const order =
+        window.orderEditMode && typeof window.getCurrentRuryOrder === 'function'
+            ? window.getCurrentRuryOrder()
+            : null;
+    const imported = window.orderEditMode
+        ? order && order.externalTransportCost != null
+            ? {
+                  cost: Number(order.externalTransportCost),
+                  count: Number(order.transportCount) || 1
+              }
+            : null
+        : window.isRuryTransportSeparate.imported;
+    if (!currentRuryTransportSeparate || !imported) return null;
+    if (!window.orderEditMode && window.editingOfferId !== imported.id) return null;
+    if (window.orderEditMode && !order) return null;
+    const km = Number(document.getElementById('transport-km')?.value) || 0;
+    const rate = Number(document.getElementById('transport-rate')?.value) || 0;
+    return km === 0 && rate === 0 ? imported : null;
+};
+window.isRuryTransportSeparate.getCalculated = function (items) {
+    const count = calculateTransports(items).totalTransports;
+    return { count, cost: _moneyRoundTransport(count * getCostPerTrip()) };
+};
 
 /** Zwraca liczbę transportów w zależności od trybu */
 function getRuryTransportCount(items) {
@@ -71,7 +100,7 @@ function getRuryTransportCount(items) {
 function getCostPerTrip() {
     const km = Number(document.getElementById('transport-km')?.value) || 0;
     const rate = Number(document.getElementById('transport-rate')?.value) || 0;
-    return km * rate;
+    return _moneyRoundTransport(km * rate);
 }
 
 /**
@@ -209,12 +238,15 @@ function updateOfferSummary() {
 
     // Oblicz transporty dla zestawienia
     const transportResult = calculateTransports(activeItems);
-    const displayTransports =
-        typeof getRuryTransportCount === 'function'
-            ? getRuryTransportCount(activeItems)
-            : transportResult.totalTransports;
-
-    const totalTransportCostCalc = _moneyRoundTransport(displayTransports * costPerTrip);
+    const importedTransport = window.isRuryTransportSeparate.getImported();
+    const displayTransports = importedTransport
+        ? importedTransport.count
+        : typeof getRuryTransportCount === 'function'
+          ? getRuryTransportCount(activeItems)
+          : transportResult.totalTransports;
+    const totalTransportCostCalc = _moneyRoundTransport(
+        importedTransport ? importedTransport.cost : displayTransports * costPerTrip
+    );
     const finalTotalNetto = _moneyRoundTransport(
         totalProductsNetto + totalTransportCostCalc + totalZabezpieczenie
     );
@@ -239,7 +271,8 @@ function updateOfferSummary() {
                 : displayTransports;
 
     const elTransportRate = document.getElementById('rury-transport-rate');
-    if (elTransportRate) elTransportRate.textContent = fmt(costPerTrip) + ' PLN';
+    if (elTransportRate)
+        elTransportRate.textContent = importedTransport ? '—' : fmt(costPerTrip) + ' PLN';
 
     const elZabezpieczenie = document.getElementById('sum-zabezpieczenie');
     if (elZabezpieczenie) elZabezpieczenie.textContent = fmt(totalZabezpieczenie) + ' PLN';

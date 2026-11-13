@@ -205,12 +205,18 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
             if (w > 0 && q > 0) orderWeight += w * q;
         }
     }
+    const importedTransport =
+        orderData.transportSeparate && orderData.externalTransportCost != null
+            ? Number(orderData.externalTransportCost)
+            : null;
     const orderTrips =
-        orderPerTrip > 0 && orderWeight > 0
-            ? orderMode === 'fractional'
-                ? orderWeight / MAX_TRANSPORT_WEIGHT
-                : Math.ceil(orderWeight / MAX_TRANSPORT_WEIGHT)
-            : 0;
+        importedTransport != null
+            ? Number(orderData.transportCount ?? 0)
+            : orderPerTrip > 0 && orderWeight > 0
+              ? orderMode === 'fractional'
+                  ? orderWeight / MAX_TRANSPORT_WEIGHT
+                  : Math.ceil(orderWeight / MAX_TRANSPORT_WEIGHT)
+              : 0;
     return {
         documentType: 'order',
         offerNumber: orderNumber,
@@ -239,7 +245,7 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
         transportRate: orderRate,
         transportCount: orderTrips,
         transportCostPerTrip: orderPerTrip,
-        transportCost: orderTrips * orderPerTrip,
+        transportCost: importedTransport ?? orderTrips * orderPerTrip,
         createdAt: String(orderData.date ?? order.createdAt ?? new Date().toISOString()),
         validityDays: 0,
         notes: String(orderData.notes ?? ''),

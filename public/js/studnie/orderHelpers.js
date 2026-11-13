@@ -667,7 +667,16 @@ function normalizeTransportMode(mode) {
     return mode === 'full' || mode === 'fractional' ? mode : DEFAULT_TRANSPORT_MODE;
 }
 
-const roundToGroszFrozen = (v) => Math.round((Number(v) || 0) * 100) / 100;
+const roundToGroszFrozen = (value) => {
+    if (typeof roundMoney === 'function') return roundMoney(value);
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    if (Math.abs(numeric) >= 1e21) return numeric;
+    const [mantissa, exponent = '0'] = Math.abs(numeric).toString().split('e');
+    return (
+        ((numeric < 0 ? -1 : 1) * Math.round(Number(`${mantissa}e${Number(exponent) + 2}`))) / 100
+    );
+};
 
 /**
  * Teoretyczny koszt transportu zamowienia (SSoT, skala oferta->zamowienie).
@@ -823,7 +832,7 @@ function freezeTransportShares(liveWells, opts) {
  * (Cena z oferty ze snapshotu, Cena zamowienia biezaca), wiec wyswietlana
  * Roznica tez jest z transportem, a detekcja zmian bez (transport to osobny wymiar).
  */
-const roundToGroszShared = (v) => Math.round((Number(v) || 0) * 100) / 100;
+const roundToGroszShared = roundToGroszFrozen;
 function calcComparableWellPrice(well) {
     const saved = window.isPreviewMode;
     window.isPreviewMode = true;
@@ -939,7 +948,7 @@ function getOrderChanges(order) {
         ? originalSnapshotData.wellDiscounts || null
         : null;
 
-    const roundToGrosz = (v) => Math.round(v * 100) / 100;
+    const roundToGrosz = roundToGroszFrozen;
     const curr = order.wells;
 
     if (slimWells) {

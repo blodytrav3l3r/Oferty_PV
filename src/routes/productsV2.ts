@@ -5,6 +5,7 @@ import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
+import { roundMoney } from '../utils/money';
 import { pricelistLock } from '../middleware/writeLock';
 import {
     findLatestDraft,
@@ -92,7 +93,7 @@ router.put(
                     name: String(item.name ?? ''),
                     category: String(item.category ?? ''),
                     // D-FIX-2: brak/cicha koercja ceny na 0 zabroniona.
-                    price: requireFinitePrice(item.price, `data[${idx}].price`),
+                    price: roundMoney(requireFinitePrice(item.price, `data[${idx}].price`)),
                     transport: item.transport != null ? Number(item.transport) : null,
                     weight: item.weight != null ? Number(item.weight) : null,
                     area: item.area != null ? Number(item.area) : null

@@ -11,8 +11,9 @@ Tryb: **half-up, od zera** (handlowy). `1.005 → 1.01`, `2.675 → 2.68`, `-1.0
 | Frontend | `public/js/shared/formatters.js` | `roundMoney(value)` |
 | Backend  | `src/utils/money.ts`             | `roundMoney(value)` |
 
-Obie implementacje są identyczne: `sign * Math.round((abs + Number.EPSILON) * 100) / 100`.
-`Number.EPSILON` koryguje błąd zapisu binarnego (`1.005` bez korekty daje `1.00`).
+Obie implementacje przesuwają przecinek w zapisie dziesiętnym, zaokrąglają wartość
+bezwzględną do liczby groszy i przywracają znak. Dzięki temu wartości graniczne, np.
+`1.005` i `10.075`, są zaokrąglane handlowo także dla kwot większych od 1.
 Wartości `NaN` / `Infinity` / `null` → `0`.
 
 ## Gdzie stosować

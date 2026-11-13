@@ -66,6 +66,77 @@ beforeEach(() => {
 });
 
 describe('S5 draft routes', () => {
+    it('zaokrągla kwoty cenników do groszy, zachowując precyzję wymiarów', async () => {
+        const rury = await request(app())
+            .put('/api/products')
+            .send({
+                data: [{ id: 'r1', name: 'Rura', price: 10.075, area: 1.2345 }]
+            });
+        expect(rury.status).toBe(200);
+        expect(saveRowsToDraft).toHaveBeenCalledWith(
+            'rury',
+            [expect.objectContaining({ price: 10.08, area: 1.2345 })],
+            'admin1',
+            undefined
+        );
+        const studnie = await request(app())
+            .put('/api/products-studnie')
+            .send({
+                data: [
+                    {
+                        id: 's1',
+                        name: 'Studnia',
+                        price: 10.075,
+                        cena1: 2.675,
+                        doplataPEHD: 1.005,
+                        area: 1.2345
+                    }
+                ]
+            });
+        expect(studnie.status).toBe(200);
+        expect(saveRowsToDraft).toHaveBeenCalledWith(
+            'studnie',
+            [
+                expect.objectContaining({
+                    price: 10.08,
+                    cena1: 2.68,
+                    doplataPEHD: 1.01,
+                    area: 1.2345
+                })
+            ],
+            'admin1',
+            undefined
+        );
+    });
+
+    it('zaokrągla ceny PRECO bez zmiany zakresów i średnic', async () => {
+        const res = await request(app())
+            .put('/api/preco-pricing')
+            .send({
+                data: {
+                    1000: {
+                        skrzynkaWlazowa: 10.075,
+                        kinety: [{ dn: 150, prosta: 2.675, dodWlot: 1.005 }],
+                        spadekKineta: [{ min: 2.123, max: 5.123, grupy: { '150-300': 10.075 } }]
+                    }
+                }
+            });
+        expect(res.status).toBe(200);
+        const rows = saveRowsToDraft.mock.calls[0][1];
+        expect(rows.kinety[0]).toEqual(
+            expect.objectContaining({ dn: 150, height: 2.68, cena: 1.01 })
+        );
+        expect(rows.zakresy[0]).toEqual(
+            expect.objectContaining({
+                min: 2.123,
+                max: 5.123,
+                grupy: JSON.stringify({ '150-300': 10.08 })
+            })
+        );
+        expect(JSON.parse(rows.konfig[0].value)).toEqual(
+            expect.objectContaining({ skrzynkaWlazowa: 10.08 })
+        );
+    });
     it.each([
         ['/api/products', 'rury'],
         ['/api/products-studnie', 'studnie'],

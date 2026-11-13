@@ -81,7 +81,7 @@ function openZakonczeniePopup() {
             <span class="zak-tile-name">${escapeHtml(p.name)}</span>
             <span class="zak-tile-meta">
                 <span class="zak-tile-height">${p.height ? 'H: ' + escapeHtml(p.height) + ' mm' : ''}</span>
-                <span class="zak-tile-price">${fmtInt(p.price)} PLN</span>
+                <span class="zak-tile-price">${fmt(p.price)} PLN</span>
             </span>
             <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
         </button>`;
@@ -232,7 +232,7 @@ function openRedukcjaZakonczeniePopup() {
             <span class="zak-tile-name">${escapeHtml(p.name)}</span>
             <span class="zak-tile-meta">
                 <span class="zak-tile-height">${p.height ? 'H: ' + escapeHtml(p.height) + ' mm' : ''}</span>
-                <span class="zak-tile-price">${fmtInt(p.price)} PLN</span>
+                <span class="zak-tile-price">${fmt(p.price)} PLN</span>
             </span>
             <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
         </button>`;

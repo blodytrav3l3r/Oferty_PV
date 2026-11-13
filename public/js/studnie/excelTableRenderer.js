@@ -205,13 +205,16 @@ function _excelRenderTable(dn) {
                               return pr.id === codeDisp;
                           });
                           if (prod && prod.price) {
-                              const fmt =
-                                  typeof fmtInt === 'function'
-                                      ? fmtInt
+                              const formatPrice =
+                                  typeof fmt === 'function'
+                                      ? fmt
                                       : function (n) {
-                                            return Math.round(n || 0).toLocaleString('pl-PL');
+                                            return Number(n || 0).toLocaleString('pl-PL', {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            });
                                         };
-                              priceHtml = fmt(prod.price) + ' PLN';
+                              priceHtml = formatPrice(prod.price) + ' PLN';
                           }
                       } catch (e) {
                           console.error('priceHtml error:', e);

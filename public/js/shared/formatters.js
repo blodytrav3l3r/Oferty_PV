@@ -9,7 +9,7 @@
  * (half-up, od zera). Używaj na KAŻDEJ granicy kwoty PLN — cena pozycji,
  * suma netto, VAT, brutto, transport. Reguła projektu: docs/MONEY_ROUNDING.md.
  *
- * `Number.EPSILON` koryguje błąd zapisu binarnego (1.005 → 1.01, 2.675 → 2.68).
+ * Przesunięcie dziesiętne poprawnie zaokrągla m.in. 1.005 oraz 10.075.
  * Wartości nieliczbowe (NaN/Infinity/null) → 0.
  * @param {number|string} value
  * @returns {number}
@@ -17,9 +17,9 @@
 function roundMoney(value) {
     const n = Number(value);
     if (!Number.isFinite(n)) return 0;
-    const sign = n < 0 ? -1 : 1;
-    const abs = Math.abs(n);
-    return sign * (Math.round((abs + Number.EPSILON) * 100) / 100);
+    if (Math.abs(n) >= 1e21) return n;
+    const [mantissa, exponent = '0'] = Math.abs(n).toString().split('e');
+    return (n < 0 ? -1 : 1) * (Math.round(Number(`${mantissa}e${Number(exponent) + 2}`)) / 100);
 }
 
 /**

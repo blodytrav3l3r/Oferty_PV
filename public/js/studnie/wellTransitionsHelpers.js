@@ -49,7 +49,7 @@ function editChangePrzejscieType(index) {
     dnSelect.innerHTML = przejsciaProducts
         .map((pr) => {
             const dnLbl = typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
-            return `<option value="${pr.id}">${dnLbl} — ${fmtInt(pr.price)} PLN</option>`;
+            return `<option value="${pr.id}">${dnLbl} — ${fmt(pr.price)} PLN</option>`;
         })
         .join('');
 }

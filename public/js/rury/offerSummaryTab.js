@@ -303,13 +303,21 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     const separateTransport =
         typeof window.isRuryTransportSeparate === 'function' && window.isRuryTransportSeparate();
     if (separateTransport) {
-        const sepTrips = transportResult.totalTransports || 0;
-        const sepTotal = sepTrips * (costPerTrip || 0);
+        const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
+        const sepTrips = importedTransport
+            ? importedTransport.count
+            : transportResult.totalTransports || 0;
+        const sepTotal = importedTransport ? importedTransport.cost : sepTrips * (costPerTrip || 0);
         if (sepTotal > 0) {
-            const tripsLabel =
-                typeof formatTransportCount === 'function'
-                    ? formatTransportCount(sepTrips, currentRuryTransportMode)
-                    : sepTrips;
+            const tripsLabel = importedTransport
+                ? '1'
+                : typeof formatTransportCount === 'function'
+                  ? formatTransportCount(sepTrips, currentRuryTransportMode)
+                  : sepTrips;
+            const transportUnitPrice = importedTransport ? sepTotal : costPerTrip;
+            const transportLabel = importedTransport
+                ? 'Transport bez rozładunku (kwota z importu)'
+                : `Transport bez rozładunku ${escapeHtml(String(tripsLabel))} × ${fmt(costPerTrip)} PLN`;
             let sepOfferCell = '';
             let sepDiffCell = '';
             if (showPriceComparison) {
@@ -330,12 +338,12 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             html += `<tbody><tr style="border-bottom:1px solid var(--border-glass); background:rgba(var(--warn-rgb), 0.05);">
                 <td></td>
                 <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold); white-space:nowrap;">—</td>
-                <td style="text-align:left; font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">Transport bez rozładunku ${escapeHtml(String(tripsLabel))} × ${fmt(costPerTrip)} PLN</td>
-                <td class="text-center">${fmt(costPerTrip)}</td>
+                <td style="text-align:left; font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${transportLabel}</td>
+                <td class="text-center">${fmt(transportUnitPrice)}</td>
                 <td class="text-center">—</td>
-                <td class="text-center">${fmt(costPerTrip)}</td>
+                <td class="text-center">${fmt(transportUnitPrice)}</td>
                 <td style=" color:var(--warn); white-space:nowrap;">—</td>
-                <td style=" color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${fmt(costPerTrip)}</td>
+                <td style=" color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${fmt(transportUnitPrice)}</td>
                 <td style="text-align:center; font-weight: var(--fw-semibold); white-space:nowrap;">${escapeHtml(String(tripsLabel))}</td>
                 <td class="text-center"><span class="order-qty-all">&mdash;</span></td>
                 <td style=" font-weight: var(--fw-bold); color:var(--success); white-space:nowrap;">${fmt(sepTotal)} PLN</td>

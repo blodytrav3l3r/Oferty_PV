@@ -114,6 +114,11 @@ describe('orderFrozenTransport — zamrozone udzialy w zamowieniu', () => {
         expect(h.calcOrderTheoreticalTransport(27705, 27705, 0, 10, 'full')).toBe(0);
     });
 
+    test('porównanie ceny zamówienia stosuje zaokrąglenie handlowe', () => {
+        const h = loadAll({ 'well-1': 10.075 }, {});
+        expect(h.calcComparableWellPrice({ id: 'well-1' })).toBe(10.08);
+    });
+
     test('redistribute: wszystkie elastyczne → proporcja jak dzis (2000; s1 313.95)', () => {
         const shares = h.redistributeFrozenTransport(
             [

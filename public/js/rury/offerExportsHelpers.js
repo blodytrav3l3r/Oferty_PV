@@ -10,8 +10,12 @@ const _moneyRoundXlsx =
         : (/** @type {number} */ v) => {
               const n = Number(v);
               if (!Number.isFinite(n)) return 0;
-              const sign = n < 0 ? -1 : 1;
-              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+              if (Math.abs(n) >= 1e21) return n;
+              const [mantissa, exponent = '0'] = Math.abs(n).toString().split('e');
+              return (
+                  (n < 0 ? -1 : 1) *
+                  (Math.round(Number(`${mantissa}e${Number(exponent) + 2}`)) / 100)
+              );
           };
 
 /**
@@ -23,7 +27,10 @@ const _moneyRoundXlsx =
  * @returns {{ rows: any[][], headerRow: number, totalNetto: number, totalWeight: number }}
  */
 function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
-    const transportCost = xlsxTransports * costPerTrip;
+    const transportCost =
+        offer.transportSeparate && offer.externalTransportCost != null
+            ? Number(offer.externalTransportCost)
+            : xlsxTransports * costPerTrip;
     const rows = [];
 
     rows.push(['OFERTA HANDLOWA']);
@@ -68,7 +75,9 @@ function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
     offer.items.forEach((item, i) => {
         const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
-        const unitAfterDiscount = _moneyRoundXlsx(priceAfterDiscount + pehdCost);
+        const unitAfterDiscount = _moneyRoundXlsx(
+            priceAfterDiscount + pehdCost + (item.surcharge || 0)
+        );
         const tpu = transportDist[item.productId] || 0;
         const unitTotal = _moneyRoundXlsx(unitAfterDiscount + tpu);
         const netto = _moneyRoundXlsx(unitTotal * item.quantity);
@@ -155,6 +164,10 @@ function buildOfferXlsxMetaRows(offer) {
     metaRows.push(['transportRate', offer.transportRate || 0]);
     metaRows.push(['transportMode', offer.transportMode || 'full']);
     metaRows.push(['transportSeparate', offer.transportSeparate ? '1' : '0']);
+    if (offer.externalTransportCost != null) {
+        metaRows.push(['externalTransportCost', offer.externalTransportCost]);
+        metaRows.push(['transportCount', offer.transportCount]);
+    }
     metaRows.push(['itemCount', offer.items.length]);
 
     offer.items.forEach((item, i) => {

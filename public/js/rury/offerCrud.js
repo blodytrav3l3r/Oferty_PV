@@ -11,8 +11,12 @@ const _moneyRoundOfferCrud =
         : (/** @type {number} */ v) => {
               const n = Number(v);
               if (!Number.isFinite(n)) return 0;
-              const sign = n < 0 ? -1 : 1;
-              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+              if (Math.abs(n) >= 1e21) return n;
+              const [mantissa, exponent = '0'] = Math.abs(n).toString().split('e');
+              return (
+                  (n < 0 ? -1 : 1) *
+                  (Math.round(Number(`${mantissa}e${Number(exponent) + 2}`)) / 100)
+              );
           };
 
 window.editingOfferCreatedByUserId = null;
@@ -61,10 +65,13 @@ async function saveOffer() {
         showToast('Dodaj przynajmniej jeden produkt', 'error');
         return;
     }
-    const transportCostPerTrip = fields.transportKm * fields.transportRate;
+    const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
+    const transportCostPerTrip = _moneyRoundOfferCrud(fields.transportKm * fields.transportRate);
 
     const transportResult = calculateTransports(currentOfferItems);
-    const transportCost = transportResult.totalTransports * transportCostPerTrip;
+    const transportCost = importedTransport
+        ? importedTransport.cost
+        : transportResult.totalTransports * transportCostPerTrip;
     const transportDist = calculateTransportDistributionStandalone(
         currentOfferItems,
         transportCostPerTrip
@@ -72,9 +79,15 @@ async function saveOffer() {
 
     let totalNetto = 0;
     currentOfferItems.forEach((item) => {
-        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+        const priceAfterDiscount = _moneyRoundOfferCrud(
+            item.unitPrice * (1 - item.discount / 100) +
+                (item.pehdCostPerUnit || 0) +
+                (item.surcharge || 0)
+        );
         const transportPerUnit = transportDist[item.productId] || 0;
-        totalNetto += _moneyRoundOfferCrud((priceAfterDiscount + transportPerUnit) * item.quantity);
+        totalNetto += _moneyRoundOfferCrud(
+            _moneyRoundOfferCrud(priceAfterDiscount + transportPerUnit) * item.quantity
+        );
     });
     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
     if (currentRuryTransportSeparate) totalNetto += _moneyRoundOfferCrud(transportCost);
@@ -134,8 +147,11 @@ async function saveOffer() {
         transportCostPerTrip: transportCostPerTrip,
         transportMode: currentRuryTransportMode || 'full',
         transportSeparate: !!currentRuryTransportSeparate,
-        transportCount: transportResult.totalTransports,
+        transportCount: importedTransport
+            ? importedTransport.count
+            : transportResult.totalTransports,
         transportCost: transportCost,
+        externalTransportCost: importedTransport ? importedTransport.cost : null,
         zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
         totalNetto: totalNetto,
         totalBrutto: _moneyRoundOfferCrud(totalNetto * 1.23)
@@ -154,6 +170,8 @@ async function saveOffer() {
                 !editingOfferId &&
                 document.getElementById('offer-number')?.dataset.numberGenerated === 'true'
         });
+        if (!importedTransport && window.isRuryTransportSeparate)
+            window.isRuryTransportSeparate.imported = null;
         pendingRuryStampId = null;
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         editingOfferId = result.id || offerDoc.id;
@@ -425,11 +443,21 @@ async function loadOffer(id) {
         notes: normalized.notes,
         paymentTerms: normalized.paymentTerms,
         validity: normalized.validity,
-        transportKm: normalized.transportKm,
-        transportRate: normalized.transportRate
+        transportKm: normalized.externalTransportCost != null ? 0 : normalized.transportKm,
+        transportRate: normalized.externalTransportCost != null ? 0 : normalized.transportRate
     });
     currentRuryTransportMode = normalized.transportMode || 'full';
     currentRuryTransportSeparate = !!normalized.transportSeparate;
+    if (window.isRuryTransportSeparate) {
+        window.isRuryTransportSeparate.imported =
+            normalized.externalTransportCost != null
+                ? {
+                      id,
+                      cost: Number(normalized.externalTransportCost),
+                      count: Number(normalized.transportCount) || 1
+                  }
+                : null;
+    }
     currentOfferItems = structuredClone(normalized.items || []);
 
     // Backfill uid dla starych itemów (flagi 'ordered' nie przechowujemy — obliczamy z ordersRury)

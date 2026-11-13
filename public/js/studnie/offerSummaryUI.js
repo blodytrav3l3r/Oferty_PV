@@ -77,7 +77,7 @@ function updateOfferSummaryUI(totals) {
         }
     } else {
         if (transCostEl)
-            transCostEl.innerHTML = '<i data-lucide="truck" class="icon-md"></i> 0 PLN';
+            transCostEl.innerHTML = `<i data-lucide="truck" class="icon-md"></i> ${escapeHtml(fmt(0))} PLN`;
 
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
@@ -184,7 +184,7 @@ function updateOfferSummaryUI(totals) {
                         p.componentType !== 'kineta' &&
                         p.componentType !== 'konus'
                     ) {
-                        basePrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
+                        basePrice = roundMoney(p.doplataPEHD / getPehdEffectiveArea(p));
                         break;
                     }
                 }
@@ -192,8 +192,8 @@ function updateOfferSummaryUI(totals) {
             const afterPrice = basePrice * (1 - pehdDisc / 100);
             const discDetail =
                 pehdDisc > 0
-                    ? `${afterPrice.toFixed(0)} zł/m² (-${Number(pehdDisc).toFixed(2)}%)`
-                    : `${afterPrice.toFixed(0)} zł/m²`;
+                    ? `${fmt(roundMoney(afterPrice))} zł/m² (-${Number(pehdDisc).toFixed(2)}%)`
+                    : `${fmt(roundMoney(afterPrice))} zł/m²`;
             return `<div class="disc-tile disc-tile--blue"><span class="disc-tile-label">PEHD</span><span class="disc-tile-detail">${discDetail}</span></div>`;
         };
 
@@ -205,8 +205,8 @@ function updateOfferSummaryUI(totals) {
 
             const ref = wellsList[0] || {};
             const parts = [];
-            if (anyW) parts.push(`W:${ref.malowanieWewCena || 0}`);
-            if (anyZ) parts.push(`Z:${ref.malowanieZewCena || 0}`);
+            if (anyW) parts.push(`W:${fmt(roundMoney(ref.malowanieWewCena || 0))}`);
+            if (anyZ) parts.push(`Z:${fmt(roundMoney(ref.malowanieZewCena || 0))}`);
             return `<div class="disc-tile disc-tile--purple"><span class="disc-tile-label"><i data-lucide="paintbrush" class="icon-xxs"></i>Malowanie</span><span class="disc-tile-detail">${parts.join(' ')} zł/m²</span></div>`;
         };
 

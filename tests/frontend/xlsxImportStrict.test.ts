@@ -211,6 +211,22 @@ describe('strict: studnie _groupRowsStrict', () => {
         expect(applied.wells[0].transportCost).toBeUndefined();
     });
 
+    test('transport importowany jest zaokrąglany handlowo do groszy', () => {
+        const grouped = S._groupRowsStrict([row()], null, typeMap);
+        const applied = S._applyWellTransportRows(grouped.wells, [
+            {
+                row: row({
+                    NR_STUDNI: 'S1',
+                    INDEKS_CZESCI: 'TR-STUDNIE',
+                    ILOSC: '1',
+                    CENA_JEDNOSTKOWA: '10,075'
+                })
+            }
+        ]);
+        expect(applied.errors).toHaveLength(0);
+        expect(applied.wells[0].transportCost).toBe(10.08);
+    });
+
     test('legacy _groupRows nietkniety (stare /100 + finalPrice)', () => {
         const wells = S._groupRows([row({ RABAT: '10' })], null, typeMap);
         expect(wells[0].components[0].rabat).toBeCloseTo(0.1);

@@ -155,6 +155,13 @@ describe('orderDto slim snapshot — DoD P1', () => {
         expect(slim[0].transport).toBe(313.95);
     });
 
+    test('snapshot zaokrągla cenę i transport handlowo do groszy', () => {
+        const well = { ...dtoWell(), frozenTransportCost: 10.075 };
+        const slim = dto.buildSlimWells([well], () => ({ price: 1.005, weight: 10 }));
+        expect(slim[0].price).toBe(1.01);
+        expect(slim[0].transport).toBe(10.08);
+    });
+
     test('getOrderChanges: legacy full snapshot i slim dają IDENTYCZNY wynik', () => {
         const helpers = loadOrderHelpers({ 'well-1': 1000, 'well-2': 2000 });
         const liveWells = [

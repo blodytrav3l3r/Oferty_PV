@@ -286,3 +286,111 @@ describe('rury: eksport zewnętrzny = ceny po rabacie', () => {
         expect(T._netUnitPrice({ price: 100, discount: 10 })).toBe(90);
     });
 });
+
+test('eksport rur zaokrągla cenę pozycji i stawkę transportu handlowo do groszy', () => {
+    const template = loadRuryTemplate();
+    const rows = template._offerRows(
+        { transportSeparate: true, transportCount: 1, transportCostPerTrip: 10.075 },
+        [{ productId: 'R1', unitPrice: 1.005, quantity: 1 }]
+    );
+    expect(rows.map((row) => row.CENA_JEDNOSTKOWA)).toEqual([1.01, 10.08]);
+});
+
+test('eksport i import rur zachowuje 100 zł transportu dla trzech kursów', async () => {
+    const template = loadRuryTemplate();
+    const rows = template._offerRows(
+        {
+            transportSeparate: true,
+            transportCount: 3,
+            transportCost: 100,
+            transportCostPerTrip: 100 / 3
+        },
+        [{ productId: 'R1', unitPrice: 50, quantity: 1 }]
+    );
+    const transport = rows.filter((row) => row.INDEKS_CZESCI === 'TR-RURY');
+    expect(transport.map((row) => [row.ILOSC, row.CENA_JEDNOSTKOWA])).toEqual([
+        [2, 33.33],
+        [1, 33.34]
+    ]);
+    const sandbox = baseSandbox();
+    for (const rel of ['shared/xlsxImportShared.js', 'rury/externalImport.js']) {
+        vm.runInContext(fs.readFileSync(path.join(JS_IE, rel), 'utf8'), sandbox);
+        if (sandbox.window.XlsxImportShared)
+            sandbox.XlsxImportShared = sandbox.window.XlsxImportShared;
+    }
+    const imported = sandbox.window.RuryExternalImport._buildItems(rows);
+    expect(imported.errors).toHaveLength(0);
+    expect(imported.transportCost).toBe(100);
+    expect(imported.transportCount).toBe(3);
+    let payload;
+    sandbox.XlsxImportShared.getLoadedOffers = () => [];
+    sandbox.fetch = async (url, options) => {
+        if (url === '/api/offers-rury') payload = JSON.parse(options.body).data[0];
+        return { ok: true, json: async () => ({ results: [{ id: 'offer-1' }] }) };
+    };
+    const result = await sandbox.window.RuryExternalImport.import({ number: 'OF/1', rows });
+    expect(result.success).toBe(true);
+    expect(payload.transportCost).toBe(100);
+    expect(payload.transportCount).toBe(3);
+    expect(payload.externalTransportCost).toBe(100);
+});
+
+test('eksport zachowuje ułamkowy kurs, gdy cena jednostkowa daje dokładną sumę', () => {
+    const rows = loadRuryTemplate()._offerRows(
+        { transportSeparate: true, transportCount: 0.5, transportCost: 100 },
+        [{ productId: 'R1', unitPrice: 50, quantity: 1 }]
+    );
+    const transport = rows.find((row) => row.INDEKS_CZESCI === 'TR-RURY');
+    expect(transport.ILOSC).toBe(0.5);
+    expect(transport.CENA_JEDNOSTKOWA).toBe(200);
+});
+
+test('eksport zamówienia rur zachowuje sumę transportu po podziale groszy', async () => {
+    const sandbox = baseSandbox();
+    let exportedRows;
+    sandbox.XlsxImportShared = {
+        generateExternalXlsx: async (_type, rows) => {
+            exportedRows = rows;
+            return {};
+        }
+    };
+    sandbox.XLSX = { writeFile: () => {} };
+    vm.runInContext(
+        fs.readFileSync(path.join(JS_IE, 'rury/externalExportTemplate.js'), 'utf8'),
+        sandbox
+    );
+    await sandbox.window.RuryExternalExportTemplate.generateAndDownloadOrder({
+        orderNumber: 'ZR1',
+        transportSeparate: true,
+        transportCount: 3,
+        transportCost: 100,
+        transportCostPerTrip: 100 / 3,
+        items: [{ productId: 'R1', quantity: 1, price: 50 }]
+    });
+    const transport = exportedRows.filter((row) => row.INDEKS_CZESCI === 'TR-RURY');
+    expect(transport.map((row) => [row.ILOSC, row.CENA_JEDNOSTKOWA])).toEqual([
+        [2, 33.33],
+        [1, 33.34]
+    ]);
+});
+
+test('eksport studni zaokrągla cenę pozycji handlowo do groszy', () => {
+    const template = loadStudnieTemplate();
+    const rows = template._wellRows(
+        { wells: [{ name: 'S1', config: [{ productId: 'KR-1', quantity: 1, _xp: 10.075 }] }] },
+        'OS/1',
+        null
+    );
+    expect(rows[0].CENA_JEDNOSTKOWA).toBe(10.08);
+});
+
+test('eksport studni zapisuje stawkę transportu z dokładnością do groszy', () => {
+    const template = loadStudnieTemplate();
+    const row = template._transportRow(
+        { transportSeparate: true, transportCost: 10.08, transportKm: 1, transportRate: 10.075 },
+        'OS/1',
+        1
+    );
+    expect(row.CENA_JEDNOSTKOWA).toBe(10.08);
+    expect(row.ILOSC).toBe(1);
+});

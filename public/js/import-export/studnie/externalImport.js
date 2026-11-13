@@ -1,4 +1,15 @@
 window.StudnieExternalImport = {
+    _roundMoney(value) {
+        if (typeof roundMoney === 'function') return roundMoney(value);
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 0;
+        if (Math.abs(numeric) >= 1e21) return numeric;
+        const [mantissa, exponent = '0'] = Math.abs(numeric).toString().split('e');
+        return (
+            ((numeric < 0 ? -1 : 1) * Math.round(Number(`${mantissa}e${Number(exponent) + 2}`))) /
+            100
+        );
+    },
     async findOfferByNumber(number) {
         return (
             XlsxImportShared.getLoadedOffers().find(
@@ -166,10 +177,7 @@ window.StudnieExternalImport = {
                 addError('CENA_JEDNOSTKOWA', row['CENA_JEDNOSTKOWA'], 'cena-nieujemna');
                 continue;
             }
-            const amount =
-                typeof roundMoney === 'function'
-                    ? roundMoney(quantity * unitPrice)
-                    : Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100;
+            const amount = this._roundMoney(quantity * unitPrice);
             if (!wellName) {
                 globalTransportCost += amount;
                 continue;
@@ -201,16 +209,10 @@ window.StudnieExternalImport = {
             const total = existing + amount;
             return {
                 ...well,
-                transportCost:
-                    typeof roundMoney === 'function'
-                        ? roundMoney(total)
-                        : Math.round((total + Number.EPSILON) * 100) / 100
+                transportCost: this._roundMoney(total)
             };
         });
-        const roundedGlobalTransportCost =
-            typeof roundMoney === 'function'
-                ? roundMoney(globalTransportCost)
-                : Math.round((globalTransportCost + Number.EPSILON) * 100) / 100;
+        const roundedGlobalTransportCost = this._roundMoney(globalTransportCost);
         return { wells: nextWells, globalTransportCost: roundedGlobalTransportCost, errors };
     },
 

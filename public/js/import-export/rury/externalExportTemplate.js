@@ -1,4 +1,15 @@
 window.RuryExternalExportTemplate = {
+    _roundMoney(value) {
+        if (typeof roundMoney === 'function') return roundMoney(value);
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 0;
+        if (Math.abs(numeric) >= 1e21) return numeric;
+        const [mantissa, exponent = '0'] = Math.abs(numeric).toString().split('e');
+        return (
+            ((numeric < 0 ? -1 : 1) * Math.round(Number(`${mantissa}e${Number(exponent) + 2}`))) /
+            100
+        );
+    },
     /**
      * Cena końcowa pozycji = katalogowa × (1 − rabat%). Kolumna RABAT zostaje
      * pusta — plik niesie już cenę po rabacie (import bierze ją wprost).
@@ -6,7 +17,62 @@ window.RuryExternalExportTemplate = {
     _netUnitPrice(item) {
         const base = Number(item.unitPrice || item.price || 0) || 0;
         const disc = Number(item.discount) || 0;
-        return Math.round(base * (1 - disc / 100) * 100) / 100;
+        return this._roundMoney(base * (1 - disc / 100));
+    },
+
+    _transportRows(data, number, startIndex) {
+        if (!data.transportSeparate) return [];
+        const count = Number(data.transportCount) || 0;
+        const total = this._roundMoney(
+            Number(data.transportCost) || count * Number(data.transportCostPerTrip || 0)
+        );
+        if (!(total > 0)) return [];
+        const unitPrice = count > 0 ? this._roundMoney(total / count) : 0;
+        if (
+            !Number.isInteger(count) &&
+            count > 0 &&
+            this._roundMoney(count * unitPrice) === total
+        ) {
+            return [
+                {
+                    NUMER_OFERTY: number,
+                    NR_STUDNI: '',
+                    GLEBOKOSC: '',
+                    INDEKS_CZESCI: 'TR-RURY',
+                    ILOSC: count,
+                    CENA_JEDNOSTKOWA: unitPrice,
+                    WERSJA: 1,
+                    RABAT: '',
+                    SREDNICA: '',
+                    ZAKONCZENIE: '',
+                    MAGAZYN: '',
+                    LP: startIndex
+                }
+            ];
+        }
+        const trips = Number.isSafeInteger(count) && count > 0 ? count : 1;
+        const cents = Math.round(total * 100);
+        const price = Math.floor(cents / trips);
+        const extraTrips = cents % trips;
+        return [
+            { count: trips - extraTrips, cents: price },
+            { count: extraTrips, cents: price + 1 }
+        ]
+            .filter((row) => row.count > 0)
+            .map((row, index) => ({
+                NUMER_OFERTY: number,
+                NR_STUDNI: '',
+                GLEBOKOSC: '',
+                INDEKS_CZESCI: 'TR-RURY',
+                ILOSC: row.count,
+                CENA_JEDNOSTKOWA: row.cents / 100,
+                WERSJA: 1,
+                RABAT: '',
+                SREDNICA: '',
+                ZAKONCZENIE: '',
+                MAGAZYN: '',
+                LP: startIndex + index
+            }));
     },
 
     _offerRows(offer, items) {
@@ -30,27 +96,13 @@ window.RuryExternalExportTemplate = {
         }
         // Osobna pozycja transportu (TR-RURY) — tylko gdy flaga na ofercie.
         const offerData = Object.assign({}, offer, (offer && offer.data) || {});
-        if (offerData.transportSeparate) {
-            const sepTrips = Number(offerData.transportCount) || 0;
-            const sepPerTrip = Number(offerData.transportCostPerTrip) || 0;
-            const sepTotal = Number(offerData.transportCost) || sepTrips * sepPerTrip;
-            if (sepTotal > 0) {
-                rows.push({
-                    NUMER_OFERTY: offer.offer_number || offer.number || '',
-                    NR_STUDNI: '',
-                    GLEBOKOSC: '',
-                    INDEKS_CZESCI: 'TR-RURY',
-                    ILOSC: Math.round(sepTrips * 100) / 100,
-                    CENA_JEDNOSTKOWA: sepPerTrip,
-                    WERSJA: 1,
-                    RABAT: '',
-                    SREDNICA: '',
-                    ZAKONCZENIE: '',
-                    MAGAZYN: '',
-                    LP: items.length + 1
-                });
-            }
-        }
+        rows.push(
+            ...this._transportRows(
+                offerData,
+                offer.offer_number || offer.number || '',
+                items.length + 1
+            )
+        );
         return rows;
     },
 
@@ -148,27 +200,7 @@ window.RuryExternalExportTemplate = {
         }));
 
         // Osobna pozycja transportu (TR-RURY) — tylko gdy flaga na zamówieniu.
-        if (full.transportSeparate) {
-            const sepTrips = Number(full.transportCount) || 0;
-            const sepPerTrip = Number(full.transportCostPerTrip) || 0;
-            const sepTotal = Number(full.transportCost) || sepTrips * sepPerTrip;
-            if (sepTotal > 0) {
-                rows.push({
-                    NUMER_OFERTY: full.orderNumber || offerNumber,
-                    NR_STUDNI: '',
-                    GLEBOKOSC: '',
-                    INDEKS_CZESCI: 'TR-RURY',
-                    ILOSC: Math.round(sepTrips * 100) / 100,
-                    CENA_JEDNOSTKOWA: sepPerTrip,
-                    WERSJA: 1,
-                    RABAT: '',
-                    SREDNICA: '',
-                    ZAKONCZENIE: '',
-                    MAGAZYN: '',
-                    LP: items.length + 1
-                });
-            }
-        }
+        rows.push(...this._transportRows(full, full.orderNumber || offerNumber, items.length + 1));
 
         const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
         const safeNumber =

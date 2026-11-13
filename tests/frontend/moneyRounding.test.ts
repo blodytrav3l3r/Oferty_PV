@@ -27,6 +27,9 @@ describe('roundMoney (frontend SSoT)', () => {
         [1, 1],
         [1.004, 1],
         [1.005, 1.01],
+        [10.075, 10.08],
+        [-10.075, -10.08],
+        [10.0749, 10.07],
         [1.015, 1.02],
         [2.675, 2.68],
         [10.555, 10.56],
@@ -74,7 +77,7 @@ describe('konsumenci mają ten sam fallback co SSoT', () => {
         const fn = vm.runInContext(c.constName, context);
         expect(typeof fn).toBe('function');
         const ssoT = loadFormatters().roundMoney;
-        for (const v of [1.005, 2.675, 0.005, 1234.5678, -1.005, 999.999]) {
+        for (const v of [1.005, 10.075, -10.075, 2.675, 0.005, 1234.5678, -1.005, 999.999]) {
             expect(fn(v)).toBe(ssoT(v));
         }
     });

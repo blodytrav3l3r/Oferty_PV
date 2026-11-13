@@ -1,4 +1,15 @@
 window.RuryExternalImport = {
+    _roundMoney(value) {
+        if (typeof roundMoney === 'function') return roundMoney(value);
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 0;
+        if (Math.abs(numeric) >= 1e21) return numeric;
+        const [mantissa, exponent = '0'] = Math.abs(numeric).toString().split('e');
+        return (
+            ((numeric < 0 ? -1 : 1) * Math.round(Number(`${mantissa}e${Number(exponent) + 2}`))) /
+            100
+        );
+    },
     async findOfferByNumber(number) {
         return (
             XlsxImportShared.getLoadedOffers().find(
@@ -15,10 +26,28 @@ window.RuryExternalImport = {
         const items = [];
         const errors = [];
         let transportSeparate = false;
+        let transportCost = 0;
+        let transportCount = 0;
         (rows || []).forEach((r, i) => {
             const rowNo = i + 2;
             if (XlsxImportShared.normalizeHeader(r['INDEKS_CZESCI']) === 'TR-RURY') {
+                const qty = P(r['ILOSC']);
+                const price = P(r['CENA_JEDNOSTKOWA']);
+                if (qty === null || qty <= 0 || price === null || price < 0) {
+                    errors.push({
+                        sheet: 'Import',
+                        row: rowNo,
+                        col: qty === null || qty <= 0 ? 'ILOSC' : 'CENA_JEDNOSTKOWA',
+                        value: String(
+                            (qty === null || qty <= 0 ? r['ILOSC'] : r['CENA_JEDNOSTKOWA']) ?? ''
+                        ),
+                        reason: qty === null || qty <= 0 ? 'ilosc-dodatnia' : 'cena-nieujemna'
+                    });
+                    return;
+                }
                 transportSeparate = true;
+                transportCount += qty;
+                transportCost += this._roundMoney(qty * price);
                 return;
             }
             const qty = P(r['ILOSC']);
@@ -68,7 +97,13 @@ window.RuryExternalImport = {
                 ...(pehdType ? { pehdType } : {})
             });
         });
-        return { items, errors, transportSeparate };
+        return {
+            items,
+            errors,
+            transportSeparate,
+            transportCount,
+            transportCost: this._roundMoney(transportCost)
+        };
     },
 
     async import(offerGroup) {
@@ -100,7 +135,9 @@ window.RuryExternalImport = {
             number: number,
             status: 'draft',
             items: items,
-            transportCost: 0,
+            transportCost: built.transportCost,
+            transportCount: built.transportCount,
+            externalTransportCost: built.transportSeparate ? built.transportCost : null,
             transportSeparate: hasTransportRow
         };
 

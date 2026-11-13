@@ -47,10 +47,10 @@ function getPehdTooltip(p, pricePerM2) {
             ' | Wsp. odpadu: ×' +
             (4 / Math.PI).toFixed(3) +
             ' | Cena: ' +
-            pricePerM2 +
+            fmt(roundMoney(pricePerM2)) +
             ' PLN/m²' +
             ' | Dopłata: ' +
-            Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+            fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
             ' PLN'
         );
     }
@@ -61,9 +61,9 @@ function getPehdTooltip(p, pricePerM2) {
                 'Ściany (bez dna): ' +
                 p.area.toFixed(2) +
                 ' m² | Cena: ' +
-                pricePerM2 +
+                fmt(roundMoney(pricePerM2)) +
                 ' PLN/m² | Dopłata: ' +
-                Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+                fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
                 ' PLN'
             );
         }
@@ -86,17 +86,17 @@ function getPehdTooltip(p, pricePerM2) {
                 ' | ' +
                 dnoLabel +
                 ': ' +
-                Math.round(sqDno * pricePerM2) +
+                fmt(roundMoney(sqDno * pricePerM2)) +
                 ' PLN' +
                 ' | Ściany: ' +
                 (p.area - bArea).toFixed(2) +
                 ' m² × ' +
-                pricePerM2 +
+                fmt(roundMoney(pricePerM2)) +
                 ' = ' +
-                Math.round((p.area - bArea) * pricePerM2) +
+                fmt(roundMoney((p.area - bArea) * pricePerM2)) +
                 ' PLN' +
                 ' | Razem: ' +
-                Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+                fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
                 ' PLN'
             );
         }
@@ -105,9 +105,9 @@ function getPehdTooltip(p, pricePerM2) {
         'Pow. koła: ' +
         p.area.toFixed(2) +
         ' m² | Cena: ' +
-        pricePerM2 +
+        fmt(roundMoney(pricePerM2)) +
         ' PLN/m² | Dopłata: ' +
-        Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+        fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
         ' PLN'
     );
 }

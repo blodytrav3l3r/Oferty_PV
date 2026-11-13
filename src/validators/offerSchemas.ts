@@ -76,7 +76,8 @@ export const offerItemSchema = z
             .finite()
             .nonnegative('Cena nie może być ujemna')
             .transform(roundMoney)
-            .optional()
+            .optional(),
+        unitPrice: z.number().finite().nonnegative().transform(roundMoney).optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
@@ -119,10 +120,10 @@ export const wellComponentSchema = z
         iloscStopni: z.number().int().finite().nonnegative().optional(),
         position: z.number().int().finite().nonnegative().optional(),
         quantity: z.number().int().finite().positive().default(1),
-        price: z.number().finite().nonnegative().optional(),
+        price: z.number().finite().nonnegative().transform(roundMoney).optional(),
         discount: z.number().min(0).max(100).finite().optional(),
         isOverwritten: z.boolean().optional(),
-        overwrittenCost: z.number().finite().nonnegative().optional()
+        overwrittenCost: z.number().finite().nonnegative().transform(roundMoney).optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
@@ -147,8 +148,8 @@ export const wellDataSchema = z
         id: z.string().optional(),
         dn: z.union([z.number(), z.string().min(1, 'Średnica DN jest wymagana')]).optional(),
         type: z.string().optional(),
-        totalPrice: z.number().finite().nonnegative().optional(),
-        price: z.number().finite().nonnegative().optional(),
+        totalPrice: z.number().finite().nonnegative().transform(roundMoney).optional(),
+        price: z.number().finite().nonnegative().transform(roundMoney).optional(),
         transportCost: z.number().finite().nonnegative().transform(roundMoney).optional(),
         discount: z.number().min(0).max(100).finite().optional(),
         zwienczenie: z.string().optional(),
@@ -157,7 +158,7 @@ export const wellDataSchema = z
         height: z.number().finite().positive('Wysokość studni jest wymagana').optional(),
         depth: z.number().finite().nonnegative().optional()
     })
-    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
+    .passthrough();
 
 export const offerStudnieCreateSchema = z
     .object({

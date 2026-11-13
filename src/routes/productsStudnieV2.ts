@@ -5,6 +5,7 @@ import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
+import { roundMoney } from '../utils/money';
 import { pricelistLock } from '../middleware/writeLock';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
@@ -123,7 +124,7 @@ function fromLegacy(p: Record<string, unknown>): StudnieProductRaw {
         height: p.height != null ? Number(p.height) : null,
         weight: p.weight != null ? Number(p.weight) : null,
         // D-FIX-2: brak/cicha koercja ceny na 0 zabroniona.
-        price: requireFinitePrice(p.price, 'price'),
+        price: roundMoney(requireFinitePrice(p.price, 'price')),
         area: p.area != null ? Number(p.area) : null,
         areaExt: p.areaExt != null ? Number(p.areaExt) : null,
         transport: p.transport != null ? Number(p.transport) : null,
@@ -139,19 +140,33 @@ function fromLegacy(p: Record<string, unknown>): StudnieProductRaw {
         spocznikH: p.spocznikH != null ? String(p.spocznikH) : null,
         hMin1: p.hMin1 != null ? Number(p.hMin1) : null,
         hMax1: p.hMax1 != null ? Number(p.hMax1) : null,
-        cena1: p.cena1 != null ? Number(p.cena1) : null,
+        cena1: p.cena1 != null ? roundMoney(requireFinitePrice(p.cena1, 'cena1')) : null,
         hMin2: p.hMin2 != null ? Number(p.hMin2) : null,
         hMax2: p.hMax2 != null ? Number(p.hMax2) : null,
-        cena2: p.cena2 != null ? Number(p.cena2) : null,
+        cena2: p.cena2 != null ? roundMoney(requireFinitePrice(p.cena2, 'cena2')) : null,
         hMin3: p.hMin3 != null ? Number(p.hMin3) : null,
         hMax3: p.hMax3 != null ? Number(p.hMax3) : null,
-        cena3: p.cena3 != null ? Number(p.cena3) : null,
-        doplataPEHD: p.doplataPEHD != null ? Number(p.doplataPEHD) : null,
-        doplataZelbet: p.doplataZelbet != null ? Number(p.doplataZelbet) : null,
+        cena3: p.cena3 != null ? roundMoney(requireFinitePrice(p.cena3, 'cena3')) : null,
+        doplataPEHD:
+            p.doplataPEHD != null
+                ? roundMoney(requireFinitePrice(p.doplataPEHD, 'doplataPEHD'))
+                : null,
+        doplataZelbet:
+            p.doplataZelbet != null
+                ? roundMoney(requireFinitePrice(p.doplataZelbet, 'doplataZelbet'))
+                : null,
         doplataDrabNierdzewna:
-            p.doplataDrabNierdzewna != null ? Number(p.doplataDrabNierdzewna) : null,
-        malowanieWewnetrzne: p.malowanieWewnetrzne != null ? Number(p.malowanieWewnetrzne) : null,
-        malowanieZewnetrzne: p.malowanieZewnetrzne != null ? Number(p.malowanieZewnetrzne) : null
+            p.doplataDrabNierdzewna != null
+                ? roundMoney(requireFinitePrice(p.doplataDrabNierdzewna, 'doplataDrabNierdzewna'))
+                : null,
+        malowanieWewnetrzne:
+            p.malowanieWewnetrzne != null
+                ? roundMoney(requireFinitePrice(p.malowanieWewnetrzne, 'malowanieWewnetrzne'))
+                : null,
+        malowanieZewnetrzne:
+            p.malowanieZewnetrzne != null
+                ? roundMoney(requireFinitePrice(p.malowanieZewnetrzne, 'malowanieZewnetrzne'))
+                : null
     };
 }
 

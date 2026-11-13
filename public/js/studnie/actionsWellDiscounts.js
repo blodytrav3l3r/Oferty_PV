@@ -9,8 +9,12 @@ const _moneyRoundDiscounts =
         : (/** @type {number} */ v) => {
               const n = Number(v);
               if (!Number.isFinite(n)) return 0;
-              const sign = n < 0 ? -1 : 1;
-              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+              if (Math.abs(n) >= 1e21) return n;
+              const [mantissa, exponent = '0'] = Math.abs(n).toString().split('e');
+              return (
+                  (n < 0 ? -1 : 1) *
+                  (Math.round(Number(`${mantissa}e${Number(exponent) + 2}`)) / 100)
+              );
           };
 
 let appConfirmCallback = null;
@@ -228,7 +232,7 @@ function updateGlobalPehdDiscount(value) {
                     product.componentType !== 'kineta' &&
                     product.componentType !== 'konus'
                 ) {
-                    currentPehdPrice = Math.round(
+                    currentPehdPrice = _moneyRoundDiscounts(
                         product.doplataPEHD / getPehdEffectiveArea(product)
                     );
                     break;

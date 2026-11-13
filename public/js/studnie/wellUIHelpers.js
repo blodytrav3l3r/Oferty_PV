@@ -218,7 +218,7 @@ function renderDiscountPanel() {
             '<div class="discount-card-foot"><span class="discount-foot-label">Po rabacie:</span><span class="discount-foot-value ' +
             (isDiscounted ? 'discount-foot-value--discounted' : 'discount-foot-value--plain') +
             '">' +
-            fmtInt(totalAfter) +
+            fmt(totalAfter) +
             ' PLN</span></div>';
         html += '</div>';
     });
@@ -241,7 +241,7 @@ function renderDiscountPanel() {
                 p.componentType !== 'kineta' &&
                 p.componentType !== 'konus'
             ) {
-                currentPehdPrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
+                currentPehdPrice = roundMoney(p.doplataPEHD / getPehdEffectiveArea(p));
                 break;
             }
         }
@@ -250,11 +250,11 @@ function renderDiscountPanel() {
         html += '<div class="discount-card discount-card--pehd">';
         html +=
             '<div class="discount-card-head"><span class="discount-card-title discount-card-title--pehd"><i data-lucide="shield" class="icon-xs"></i> Wk\u0142adka PEHD</span><span class="discount-pehd-price">Bazowo: ' +
-            currentPehdPrice +
+            fmt(currentPehdPrice) +
             ' PLN/m²</span></div>';
         html +=
             '<div style="text-align:right; margin-bottom:0.35rem;"><span class="discount-pehd-after" id="sidebar-pehd-price-after">' +
-            currentPehdPriceAfter.toFixed(2) +
+            fmt(roundMoney(currentPehdPriceAfter)) +
             ' PLN/m²</span></div>';
         html +=
             '<div class="discount-grid"><span class="discount-label discount-label--blue">Globalny Rabat</span><div class="discount-input-wrap"><input type="number" min="0" step="1" value="' +
@@ -299,9 +299,8 @@ function renderDiscountPanel() {
     html +=
         '<div class="discount-total"><span class="discount-total-label">Suma ca\u0142kowita</span><div class="discount-total-values">';
     if (hasDiscount)
-        html += '<span class="discount-total-crossed">' + fmtInt(grandTotal) + ' PLN</span>';
-    html +=
-        '<span class="discount-total-main">' + fmtInt(grandDiscounted) + ' PLN</span></div></div>';
+        html += '<span class="discount-total-crossed">' + fmt(grandTotal) + ' PLN</span>';
+    html += '<span class="discount-total-main">' + fmt(grandDiscounted) + ' PLN</span></div></div>';
 
     panel.innerHTML = html;
     if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({ root: panel });

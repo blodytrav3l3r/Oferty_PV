@@ -304,7 +304,7 @@ function updateOfferDiscountsPopupPrices() {
         }
         const avgEl = document.getElementById(`offer-dn-avg-${dn}`);
         if (avgEl) {
-            avgEl.textContent = `śr. ${typeof fmt === 'function' ? fmt(Math.round(dnAvgPrice)) : Math.round(dnAvgPrice)} PLN`;
+            avgEl.textContent = `śr. ${typeof fmt === 'function' ? fmt(roundMoney(dnAvgPrice)) : roundMoney(dnAvgPrice).toFixed(2)} PLN`;
         }
 
         const el = document.getElementById(`offer-dn-price-${dn}`);
@@ -515,7 +515,7 @@ function renderOfferDiscountsPopupContent() {
                 <div class="flex-gap-35">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.5);"></span>
                     <span id="offer-dn-count-${dn}" style="font-weight: var(--fw-extrabold); font-size: var(--fs-md); color: var(--text-primary);">${escapeHtml(dnCount)}× ${escapeHtml(displayDn)}</span>
-                    <span id="offer-dn-avg-${dn}" style="font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-bold); opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(Math.round(dnAvgPrice))) : escapeHtml(Math.round(dnAvgPrice))} PLN</span>
+                    <span id="offer-dn-avg-${dn}" style="font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-bold); opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(roundMoney(dnAvgPrice))) : escapeHtml(roundMoney(dnAvgPrice).toFixed(2))} PLN</span>
                 </div>
                 <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: var(--fw-extrabold); font-size: var(--fs-md);">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN${dnHasError ? _popBadge2('Błąd wyceny w grupie ' + displayDn) : ''}</div>
             </div>
@@ -542,7 +542,7 @@ function renderOfferDiscountsPopupContent() {
                 product.componentType !== 'kineta' &&
                 product.componentType !== 'konus'
             ) {
-                currentPehdPrice = Math.round(product.doplataPEHD / getPehdEffectiveArea(product));
+                currentPehdPrice = roundMoney(product.doplataPEHD / getPehdEffectiveArea(product));
                 break;
             }
         }
@@ -555,7 +555,7 @@ function renderOfferDiscountsPopupContent() {
             <div class="flex-space-between">
                 <div class="flex-gap-35">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-alt); box-shadow: 0 0 6px rgba(var(--blue-alt-rgb), 0.5);"></span>
-                    <span style="font-weight: var(--fw-extrabold); font-size: var(--fs-md); color: var(--blue-alt);">Wkładka PEHD <span style="font-size: var(--fs-xs); font-weight: var(--fw-semibold); opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${currentPehdPrice} PLN/m²)</span></span>
+                    <span style="font-weight: var(--fw-extrabold); font-size: var(--fs-md); color: var(--blue-alt);">Wkładka PEHD <span style="font-size: var(--fs-xs); font-weight: var(--fw-semibold); opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${fmt(currentPehdPrice)} PLN/m²)</span></span>
                 </div>
                 <div style="color: var(--blue-alt); font-weight: var(--fw-extrabold); font-size: var(--fs-md);"><span id="offer-pehd-price-after-discount">${currentPehdPriceAfter.toFixed(2)}</span> PLN / m²</div>
             </div>

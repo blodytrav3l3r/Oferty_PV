@@ -4,12 +4,41 @@
 
 import { z } from 'zod';
 import { ORGANIZATION_UNIT_VALUES } from '../constants/organizationUnits';
+import { roundMoney } from '../utils/money';
 
 const organizationUnitInput = z
     .enum(ORGANIZATION_UNIT_VALUES)
     .or(z.literal(''))
     .nullable()
     .optional();
+
+function roundPriceFields(value: unknown, keys: readonly string[]): unknown {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+    const record = value as Record<string, unknown>;
+    const result = { ...record };
+    for (const key of keys) {
+        const amount = record[key];
+        if (typeof amount === 'number' && Number.isFinite(amount)) result[key] = roundMoney(amount);
+    }
+    return result;
+}
+
+function roundOrderFields<T extends Record<string, unknown>>(order: T): T {
+    const result = roundPriceFields(order, ['transportCost']) as T;
+    return {
+        ...result,
+        ...(Array.isArray(result.items)
+            ? { items: result.items.map((item) => roundPriceFields(item, ['price', 'unitPrice'])) }
+            : {})
+    };
+}
+
+function roundOrderSnapshot<T extends Record<string, unknown>>(order: T): T {
+    const result = roundOrderFields(order);
+    if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data))
+        return result;
+    return { ...result, data: roundOrderFields(result.data as Record<string, unknown>) };
+}
 
 // =============================================================================
 // ZAMÓWIENIA
@@ -47,7 +76,8 @@ export const studnieOrderItemSchema = z
         organizationUnit: organizationUnitInput,
         status: z.string().optional()
     })
-    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
+    .passthrough()
+    .transform(roundOrderSnapshot);
 
 export const studnieOrdersBatchSchema = z.object({
     data: z.array(studnieOrderItemSchema),
@@ -63,7 +93,8 @@ export const studnieOrderUpdateSchema = z
         organizationUnit: organizationUnitInput,
         data: z.record(z.string(), z.unknown()).optional()
     })
-    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
+    .passthrough()
+    .transform(roundOrderSnapshot);
 
 // =============================================================================
 // P0.3 — KONTRAKT DTO STUDNI W ZAMÓWIENIU (observe → strict)
@@ -288,7 +319,8 @@ export const ruryOrderItemSchema = z
         organizationUnit: organizationUnitInput,
         status: z.string().optional()
     })
-    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
+    .passthrough()
+    .transform(roundOrderSnapshot);
 
 export const ruryOrdersBatchSchema = z.object({
     data: z.array(ruryOrderItemSchema)
@@ -301,7 +333,8 @@ export const ruryOrderUpdateSchema = z
         organizationUnit: organizationUnitInput,
         data: z.record(z.string(), z.unknown()).optional()
     })
-    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
+    .passthrough()
+    .transform(roundOrderSnapshot);
 
 export type RuryOrderItemInput = z.infer<typeof ruryOrderItemSchema>;
 export type RuryOrdersBatchInput = z.infer<typeof ruryOrdersBatchSchema>;

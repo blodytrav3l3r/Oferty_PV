@@ -327,6 +327,16 @@ function wellConfigHash(dtoWell) {
 }
 
 const roundGrosz = (v) => Math.round((Number(v) || 0) * 100) / 100;
+const roundDtoMoney = (value) => {
+    if (typeof roundMoney === 'function') return roundMoney(value);
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    if (Math.abs(numeric) >= 1e21) return numeric;
+    const [mantissa, exponent = '0'] = Math.abs(numeric).toString().split('e');
+    return (
+        ((numeric < 0 ? -1 : 1) * Math.round(Number(`${mantissa}e${Number(exponent) + 2}`))) / 100
+    );
+};
 
 /**
  * Buduje slim snapshot: [{id, name, price, weight, configHash, transport}].
@@ -345,7 +355,7 @@ function buildSlimWells(dtoWells, statsFn) {
         try {
             const s = typeof statsFn === 'function' ? statsFn(w) : null;
             if (s) {
-                price = roundGrosz(s.price);
+                price = roundDtoMoney(s.price);
                 weight = roundGrosz(s.weight);
             }
         } catch (_e) {
@@ -357,7 +367,7 @@ function buildSlimWells(dtoWells, statsFn) {
             price,
             weight,
             configHash: wellConfigHash(w),
-            transport: roundGrosz(w && w.frozenTransportCost != null ? w.frozenTransportCost : 0)
+            transport: roundDtoMoney(w && w.frozenTransportCost != null ? w.frozenTransportCost : 0)
         };
     });
 }

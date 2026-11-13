@@ -247,13 +247,13 @@ function renderStudniePriceList() {
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="area" data-id="${escapeHtmlAttr(p.id)}" >${p.area != null ? fmt(p.area) : '—'}</td>
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMin1" data-id="${escapeHtmlAttr(p.id)}" >${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMax1" data-id="${escapeHtmlAttr(p.id)}" >${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
-        <td class="text-right cursor-success" data-action="editStudnieCell" data-field="cena1" data-id="${escapeHtmlAttr(p.id)}" >${p.cena1 != null ? fmtInt(p.cena1) : '—'}</td>
+        <td class="text-right cursor-success" data-action="editStudnieCell" data-field="cena1" data-id="${escapeHtmlAttr(p.id)}" >${p.cena1 != null ? fmt(p.cena1) : '—'}</td>
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMin2" data-id="${escapeHtmlAttr(p.id)}" >${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMax2" data-id="${escapeHtmlAttr(p.id)}" >${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
-        <td class="text-right cursor-success" data-action="editStudnieCell" data-field="cena2" data-id="${escapeHtmlAttr(p.id)}" >${p.cena2 != null ? fmtInt(p.cena2) : '—'}</td>
+        <td class="text-right cursor-success" data-action="editStudnieCell" data-field="cena2" data-id="${escapeHtmlAttr(p.id)}" >${p.cena2 != null ? fmt(p.cena2) : '—'}</td>
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMin3" data-id="${escapeHtmlAttr(p.id)}" >${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMax3" data-id="${escapeHtmlAttr(p.id)}" >${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
-        <td class="text-right cursor-success" data-action="editStudnieCell" data-field="cena3" data-id="${escapeHtmlAttr(p.id)}" >${p.cena3 != null ? fmtInt(p.cena3) : '—'}</td>
+        <td class="text-right cursor-success" data-action="editStudnieCell" data-field="cena3" data-id="${escapeHtmlAttr(p.id)}" >${p.cena3 != null ? fmt(p.cena3) : '—'}</td>
                 `;
             } else {
                 html += `
@@ -262,11 +262,11 @@ function renderStudniePriceList() {
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="area" data-id="${escapeHtmlAttr(p.id)}" >${p.area != null ? fmt(p.area) : '—'}</td>
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="areaExt" data-id="${escapeHtmlAttr(p.id)}" >${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="transport" data-id="${escapeHtmlAttr(p.id)}" >${p.transport != null ? fmtInt(p.transport) : '—'}</td>
-        <td class="text-right" style="color:var(--success); cursor:help;" title="${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? getPehdTooltip(p, currentPehdPrice) : ''}">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? '+' + fmtInt(Math.round(getPehdEffectiveArea(p) * currentPehdPrice)) : '—'}</td>
-        <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="malowanieWewnetrzne" data-id="${escapeHtmlAttr(p.id)}" >${p.malowanieWewnetrzne != null ? '+' + fmtInt(p.malowanieWewnetrzne) : '—'}</td>
-        <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="malowanieZewnetrzne" data-id="${escapeHtmlAttr(p.id)}" >${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
-        <td class="text-right${p.componentType === 'dennica' ? ' cursor-pointer' : ' ui-text-mute'}" ${p.componentType === 'dennica' ? `data-action="editStudnieCell" data-field="doplataZelbet" data-id="${escapeHtmlAttr(p.id)}"` : ''}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
-        <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="doplataDrabNierdzewna" data-id="${escapeHtmlAttr(p.id)}" >${p.doplataDrabNierdzewna != null ? '+' + fmtInt(p.doplataDrabNierdzewna) : '—'}</td>
+        <td class="text-right" style="color:var(--success); cursor:help;" title="${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? getPehdTooltip(p, currentPehdPrice) : ''}">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? '+' + fmt(roundMoney(getPehdEffectiveArea(p) * currentPehdPrice)) : '—'}</td>
+        <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="malowanieWewnetrzne" data-id="${escapeHtmlAttr(p.id)}" >${p.malowanieWewnetrzne != null ? '+' + fmt(p.malowanieWewnetrzne) : '—'}</td>
+        <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="malowanieZewnetrzne" data-id="${escapeHtmlAttr(p.id)}" >${p.malowanieZewnetrzne != null ? '+' + fmt(p.malowanieZewnetrzne) : '—'}</td>
+        <td class="text-right${p.componentType === 'dennica' ? ' cursor-pointer' : ' ui-text-mute'}" ${p.componentType === 'dennica' ? `data-action="editStudnieCell" data-field="doplataZelbet" data-id="${escapeHtmlAttr(p.id)}"` : ''}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmt(p.doplataZelbet) : '—') : '—'}</td>
+        <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="doplataDrabNierdzewna" data-id="${escapeHtmlAttr(p.id)}" >${p.doplataDrabNierdzewna != null ? '+' + fmt(p.doplataDrabNierdzewna) : '—'}</td>
         ${flagCell(p, 'magazynWL', 'Magazyn Włocławek')}
         ${flagCell(p, 'magazynKLB', 'Magazyn Kluczbork')}
         ${flagCell(p, 'formaStandardowa', 'Forma standardowa Włocławek')}
@@ -275,7 +275,7 @@ function renderStudniePriceList() {
             }
 
             html += `
-        <td class="text-right" data-action="editStudnieCell" data-field="price" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:var(--success);">${fmtInt(p.price)}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="price" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:var(--success);">${fmt(p.price)}</td>
         <td class="text-center text-nowrap">
           <span class="pricelist-actions">
           <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyStudnieProduct" data-id="${escapeHtmlAttr(p.id)}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>

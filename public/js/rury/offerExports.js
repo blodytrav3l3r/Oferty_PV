@@ -17,8 +17,12 @@ const _moneyRoundExports =
         : (/** @type {number} */ v) => {
               const n = Number(v);
               if (!Number.isFinite(n)) return 0;
-              const sign = n < 0 ? -1 : 1;
-              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+              if (Math.abs(n) >= 1e21) return n;
+              const [mantissa, exponent = '0'] = Math.abs(n).toString().split('e');
+              return (
+                  (n < 0 ? -1 : 1) *
+                  (Math.round(Number(`${mantissa}e${Number(exponent) + 2}`)) / 100)
+              );
           };
 
 /* ===== IMPORT OFERTY Z PLIKU JSON ===== */
@@ -72,12 +76,27 @@ function importOfferFromFile() {
 
 /* ===== EKSPORT PDF ===== */
 
-function exportOfferPDF(id) {
-    const offer =
+async function exportOfferPDF(id) {
+    let offer =
         typeof getOfferRuryById === 'function'
             ? getOfferRuryById(id)
             : offers.find((o) => o.id === id);
     if (!offer) return;
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+        showToast('Nie udało się otworzyć okna wydruku', 'error');
+        return;
+    }
+    try {
+        const { storageService } = await import('../shared/StorageService.js');
+        const full = await storageService.getOfferById(id);
+        if (!full || !Array.isArray(full.items)) throw new Error('Brak pełnych danych oferty');
+        offer = full;
+    } catch (_error) {
+        printWin.close();
+        showToast('Nie udało się pobrać pełnej oferty do wydruku', 'error');
+        return;
+    }
 
     let totalNetto = 0,
         totalWeight = 0;
@@ -92,7 +111,10 @@ function exportOfferPDF(id) {
                   .filter((i) => !i.autoAdded && i.weight && i.weight > 0 && i.quantity > 0)
                   .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
             : transportResult.totalTransports;
-    const transportCost = exportTransports * costPerTrip;
+    const transportCost =
+        offer.transportSeparate && offer.externalTransportCost != null
+            ? Number(offer.externalTransportCost)
+            : exportTransports * costPerTrip;
     const transportDist =
         typeof withOfferTransportFlags === 'function'
             ? withOfferTransportFlags(offer, () =>
@@ -101,9 +123,15 @@ function exportOfferPDF(id) {
             : calculateTransportDistributionStandalone(offer.items, costPerTrip);
 
     offer.items.forEach((item) => {
-        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+        const priceAfterDiscount = _moneyRoundExports(
+            item.unitPrice * (1 - item.discount / 100) +
+                (item.pehdCostPerUnit || 0) +
+                (item.surcharge || 0)
+        );
         const transportPerUnit = transportDist[item.productId] || 0;
-        totalNetto += _moneyRoundExports((priceAfterDiscount + transportPerUnit) * item.quantity);
+        totalNetto += _moneyRoundExports(
+            _moneyRoundExports(priceAfterDiscount + transportPerUnit) * item.quantity
+        );
         totalWeight += (item.weight || 0) * item.quantity;
     });
     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
@@ -127,7 +155,6 @@ function exportOfferPDF(id) {
         }
     }
 
-    const printWin = window.open('', '_blank');
     printWin.document
         .write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Oferta ${escapeHtml(offer.number)}</title>
   <style>
@@ -188,10 +215,14 @@ function exportOfferPDF(id) {
     <thead><tr><th scope="col">Lp.</th><th scope="col">Indeks</th><th scope="col">Nazwa</th><th scope="col" class="text-right">Cena jedn.</th><th scope="col" class="text-right">Rabat</th><th scope="col" class="text-right">Po rabacie</th><th scope="col" class="text-right">Transport/szt.</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Netto</th><th scope="col" class="text-right">Brutto</th></tr></thead>
     <tbody>${offer.items
         .map((item, i) => {
-            const pad = item.unitPrice * (1 - item.discount / 100) + (item.pehdCostPerUnit || 0);
+            const pad = _moneyRoundExports(
+                item.unitPrice * (1 - item.discount / 100) +
+                    (item.pehdCostPerUnit || 0) +
+                    (item.surcharge || 0)
+            );
             const tpu = transportDist[item.productId] || 0;
-            const unitTotal = pad + tpu;
-            const n = unitTotal * item.quantity;
+            const unitTotal = _moneyRoundExports(pad + tpu);
+            const n = _moneyRoundExports(unitTotal * item.quantity);
 
             let pName = escapeHtml(item.name);
             if (item.pehdType === 'PEHD-3MM') pName += ' + PEHD 3mm';
@@ -204,7 +235,7 @@ function exportOfferPDF(id) {
   ${transportHtml}
   <div class="summary">
     <div class="summary-row"><span>RAZEM netto (produkty + transport):</span><span>${fmt(totalNetto)} PLN</span></div>
-    ${costPerTrip > 0 ? `<div class="summary-row transport"><span>w tym transport: ${escapeHtml(offer.transportKm || '?')} km × ${fmt(offer.transportRate || 0)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${typeof formatTransportCount === 'function' ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports} kursów</span><span>${fmt(transportCost)} PLN</span></div>` : ''}
+    ${offer.transportSeparate && offer.externalTransportCost != null ? `<div class="summary-row transport"><span>w tym transport (kwota z importu)</span><span>${fmt(transportCost)} PLN</span></div>` : costPerTrip > 0 ? `<div class="summary-row transport"><span>w tym transport: ${escapeHtml(offer.transportKm || '?')} km × ${fmt(offer.transportRate || 0)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${typeof formatTransportCount === 'function' ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports} kursów</span><span>${fmt(transportCost)} PLN</span></div>` : ''}
     <div class="summary-row"><span>RAZEM netto:</span><span>${fmt(totalNetto)} PLN</span></div>
     <div class="summary-row"><span>VAT (23%):</span><span>${fmt(totalVat)} PLN</span></div>
     <div class="summary-row total"><span>SUMA BRUTTO:</span><span>${fmt(totalBrutto)} PLN</span></div>
@@ -514,11 +545,20 @@ const cancelItemDiscounts = async () => {
 /* ===== EKSPORT XLSX ===== */
 
 async function exportOfferXlsx(id) {
-    const offer =
+    let offer =
         typeof getOfferRuryById === 'function'
             ? getOfferRuryById(id)
             : offers.find((o) => o.id === id);
     if (!offer) return;
+    try {
+        const { storageService } = await import('../shared/StorageService.js');
+        const full = await storageService.getOfferById(id);
+        if (!full || !Array.isArray(full.items)) throw new Error('Brak pełnych danych oferty');
+        offer = full;
+    } catch (_error) {
+        showToast('Nie udało się pobrać pełnej oferty do eksportu', 'error');
+        return;
+    }
     await ensureXlsx();
 
     const costPerTrip = offer.transportCostPerTrip || 0;
@@ -696,7 +736,17 @@ function importOfferFromXlsx() {
 
                     const transportKm = parseFloat(meta.transportKm) || 0;
                     const transportRate = parseFloat(meta.transportRate) || 0;
-                    const transportCostPerTrip = transportKm * transportRate;
+                    const transportCostPerTrip = _moneyRoundExports(transportKm * transportRate);
+                    const importedCostRaw = meta.externalTransportCost;
+                    const importedCostNumber = Number(importedCostRaw);
+                    const externalTransportCost =
+                        importedCostRaw != null &&
+                        importedCostRaw !== '' &&
+                        Number.isFinite(importedCostNumber) &&
+                        importedCostNumber >= 0
+                            ? _moneyRoundExports(importedCostNumber)
+                            : null;
+                    const importedCount = Number(meta.transportCount);
                     const transportResult = calculateTransports(items);
                     const importFlags = {
                         transportMode: meta.transportMode || 'full',
@@ -714,16 +764,26 @@ function importOfferFromXlsx() {
 
                     let totalNetto = 0;
                     items.forEach((item) => {
-                        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+                        const priceAfterDiscount = _moneyRoundExports(
+                            item.unitPrice * (1 - item.discount / 100) +
+                                (item.pehdCostPerUnit || 0) +
+                                (item.surcharge || 0)
+                        );
                         const tpu = transportDist[item.productId] || 0;
                         totalNetto += _moneyRoundExports(
-                            (priceAfterDiscount + tpu) * item.quantity
+                            _moneyRoundExports(priceAfterDiscount + tpu) * item.quantity
                         );
                     });
                     totalNetto = _moneyRoundExports(totalNetto);
                     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych.
                     if (importFlags.transportSeparate)
-                        totalNetto += transportResult.totalTransports * transportCostPerTrip;
+                        totalNetto = _moneyRoundExports(
+                            totalNetto +
+                                (externalTransportCost ??
+                                    _moneyRoundExports(
+                                        transportResult.totalTransports * transportCostPerTrip
+                                    ))
+                        );
 
                     const offer = {
                         id: meta.offerId || 'offer_' + Date.now(),
@@ -752,9 +812,16 @@ function importOfferFromXlsx() {
                         transportMode: importFlags.transportMode,
                         transportSeparate: importFlags.transportSeparate,
                         transportCostPerTrip,
-                        transportCount: transportResult.totalTransports,
+                        transportCount:
+                            externalTransportCost != null &&
+                            Number.isFinite(importedCount) &&
+                            importedCount > 0
+                                ? importedCount
+                                : transportResult.totalTransports,
+                        externalTransportCost,
                         transportCost: _moneyRoundExports(
-                            transportResult.totalTransports * transportCostPerTrip
+                            externalTransportCost ??
+                                transportResult.totalTransports * transportCostPerTrip
                         ),
                         totalNetto,
                         totalBrutto: _moneyRoundExports(totalNetto * 1.23),
