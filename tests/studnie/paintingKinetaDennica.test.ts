@@ -63,6 +63,8 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
             calcPrecoPricingPure: () => ({ suma: 0, error: null }),
             showToast: () => {},
             isWellOrdered: () => false,
+            isDennicaLikeProduct: (p: any) => p && ['dennica', 'styczna'].includes(p.componentType),
+            dennicaHeightPenalty: () => 0,
             getOrderForWellId: () => null,
             structuredClone: (v: unknown) => JSON.parse(JSON.stringify(v)),
             window: {}
@@ -76,8 +78,13 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
             path.join(__dirname, '../../public/js/studnie/actionsWellPricing.js'),
             'utf8'
         );
+        const offerPricingCode = fs.readFileSync(
+            path.join(__dirname, '../../public/js/studnie/offerPricingCalc.js'),
+            'utf8'
+        );
         vm.runInContext(paintingCode, context);
         vm.runInContext(pricingCode, context);
+        vm.runInContext(offerPricingCode, context);
         return context;
     }
 
@@ -109,14 +116,14 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         ctx = loadContext();
     });
 
-    test('1. ściany dennicy 1/2: 2π·0.5·(1−0.05) ≈ 2.9845 m²', () => {
+    test('1. ściany dennicy 1/2: H = DN200 × 1/2 = 100 mm, pole ≈ 2.8274 m²', () => {
         const well = makeWell();
-        expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBeCloseTo(2.9845, 3);
+        expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBeCloseTo(2.8274, 3);
     });
 
-    test('2. ściany dennicy 1/1: 2π·0.5·(1−0.1) ≈ 2.8274 m²', () => {
+    test('2. ściany dennicy 1/1: H = DN200 × 1/1 = 200 mm, pole ≈ 2.5133 m²', () => {
         const well = makeWell({ spocznikH: '1/1' });
-        expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBeCloseTo(2.8274, 3);
+        expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBeCloseTo(2.5133, 3);
     });
 
     test('3. brak: dennica i kineta bez dopłaty', () => {
@@ -127,26 +134,26 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         expect(ctx.getItemAssessedPrice(well, product('KIN-10'), false, well.config[0])).toBe(500);
     });
 
-    test('4. kineta: dopłata tylko na kinecie (≈207 zł), dennica 1000 bez zmian', () => {
+    test('4. kineta: dopłata tylko na kinecie (≈236 zł), dennica 1000 bez zmian', () => {
         const well = makeWell({ malowanieW: 'kineta' });
         expect(ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])).toBe(
             1000
         );
         expect(
             ctx.getItemAssessedPrice(well, product('KIN-10'), false, well.config[0])
-        ).toBeCloseTo(500 + 1.0366 * 200, 1);
+        ).toBeCloseTo(500 + 1.1823 * 200, 1);
     });
 
-    test('5. kineta_dennica: dennica ≈596.9 zł, kineta ≈207.3 zł (RED przed fixem: dennica 0)', () => {
+    test('5. kineta_dennica: dennica i kineta liczą powierzchnię ze wspólnej geometrii', () => {
         const well = makeWell();
         expect(
             ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])
-        ).toBeCloseTo(1000 + 2.9845 * 200, 0);
+        ).toBeCloseTo(1000 + 2.8274 * 200, 0);
         expect(
             ctx.getItemAssessedPrice(well, product('KIN-10'), false, well.config[0])
-        ).toBeCloseTo(500 + 1.0366 * 200, 1);
+        ).toBeCloseTo(500 + 1.1823 * 200, 1);
         const b = ctx.getItemPriceBreakdown(well, product('DDD-10-115'), false, well.config[0]);
-        expect(b.malowanieW).toBeCloseTo(2.9845 * 200, 0);
+        expect(b.malowanieW).toBeCloseTo(2.8274 * 200, 0);
     });
 
     test('6. cale: dennica = ściany (jak kineta_dennica), krąg i płyta po area×C', () => {
@@ -217,13 +224,13 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         ).toBeCloseTo(400 + 3.14 * 200, 2);
     });
 
-    test("11. spocznikH='brak': h=0 (kanały+płaskie ≈0.8996 m²), ściany dennicy pełne ≈3.1416 m²", () => {
+    test("11. spocznikH='brak': kanały+płaskie ≈0.9081 m², ściany dennicy pełne ≈3.1416 m²", () => {
         const well = makeWell({ spocznik: 'brak', spocznikH: 'brak' });
-        expect(ctx.calcKinetaPaintingArea(well)).toBeCloseTo(0.8996, 3);
+        expect(ctx.calcKinetaPaintingArea(well)).toBeCloseTo(0.9081, 3);
         expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBeCloseTo(3.1416, 3);
         expect(
             ctx.getItemAssessedPrice(well, product('KIN-10'), false, well.config[0])
-        ).toBeCloseTo(500 + 0.8996 * 200, 1);
+        ).toBeCloseTo(500 + 0.9081 * 200, 1);
     });
 
     test('12. goła dennica 1m bez rur i kinety: A_kin ≈3.927 m² na dennicy we wszystkich wariantach', () => {
@@ -251,6 +258,102 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         expect(
             ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])
         ).toBeCloseTo(1000 + 3.8956 * 200, 0);
+    });
+
+    test('projekcja wspólna: wszystkie wysokości, półwalec i pionowe nadbudowy', () => {
+        const passages = [400, 300, 200].map((dn) => ({ dn, angle: 0 }));
+        const variants = [
+            { fraction: '1/2', area: 1.5135, weight: 244.46 },
+            { fraction: '2/3', area: 1.8063, weight: 312.44 },
+            { fraction: '3/4', area: 1.9527, weight: 346.43 },
+            { fraction: '1/1', area: 2.3918, weight: 448.41 }
+        ];
+
+        variants.forEach(({ fraction, area, weight }) => {
+            const geometry = ctx.calcKinetaPaintingArea(
+                makeWell({ przejscia: passages, spocznikH: fraction }),
+                { details: true }
+            );
+            expect(geometry.paintingAreaM2).toBeCloseTo(area, 3);
+            expect(geometry.estimatedWeightKg).toBeCloseTo(weight, 1);
+        });
+
+        const half = ctx.calcKinetaPaintingArea(
+            makeWell({ przejscia: passages, spocznikH: '1/2' }),
+            { details: true }
+        );
+        const twoQuarters = ctx.calcKinetaPaintingArea(
+            makeWell({ przejscia: passages, spocznikH: '2/4' }),
+            { details: true }
+        );
+        expect(twoQuarters).toEqual(half);
+    });
+
+    test('projekcja ignoruje kąty i kolejność przejść; wspólny hub DN400 jest liczony raz', () => {
+        const passages = [
+            { dn: 400, angle: 0 },
+            { dn: 300, angle: 90 },
+            { dn: 200, angle: 176 }
+        ];
+        const first = ctx.calcKinetaPaintingArea(makeWell({ przejscia: passages }), {
+            details: true
+        });
+        const reordered = ctx.calcKinetaPaintingArea(
+            makeWell({
+                przejscia: [
+                    { dn: 200, angle: 17 },
+                    { dn: 400, angle: 281 },
+                    { dn: 300, angle: 0 }
+                ]
+            }),
+            { details: true }
+        );
+
+        expect(first).toEqual(reordered);
+        expect(first.concreteVolumeM3).toBeCloseTo(0.097782, 5);
+        expect(first.estimatedWeightKg).toBeCloseTo(244.46, 1);
+        expect(ctx.calcKinetaPaintingArea(makeWell())).toBeCloseTo(first.paintingAreaM2, 5);
+    });
+
+    test('brak średnic przejść oznacza brak estymowanej masy', () => {
+        const geometry = ctx.calcKinetaPaintingArea(makeWell({ przejscia: [] }), {
+            details: true
+        });
+        expect(geometry.estimatedWeightKg).toBeNull();
+        expect(geometry.concreteVolumeM3).toBeNull();
+    });
+
+    test('masa katalogowa ma pierwszeństwo; bez niej masa estymowana trafia do sumy i transportu', () => {
+        const well = makeWell({
+            spocznikH: '1/2',
+            przejscia: [
+                { dn: 400, angle: 0 },
+                { dn: 300, angle: 90 },
+                { dn: 200, angle: 176 }
+            ],
+            config: [{ productId: 'KIN-10', quantity: 1 }]
+        });
+        const estimatedStats = ctx.calcWellStats(well);
+        expect(estimatedStats.weight).toBeCloseTo(244.46, 1);
+
+        ctx.studnieProducts = [
+            ...ctx.studnieProducts,
+            { ...product('KIN-10'), id: 'KIN-WEIGHTED', weight: 120 }
+        ];
+        const catalogStats = ctx.calcWellStats({
+            ...well,
+            config: [{ productId: 'KIN-WEIGHTED', quantity: 2 }]
+        });
+        expect(catalogStats.weight).toBe(240);
+
+        ctx.wells = [well];
+        ctx.document = {
+            getElementById: (id: string) => ({ value: id === 'transport-km' ? '10' : '1' })
+        };
+        ctx.currentTransportMode = 'test';
+        ctx.calcTransportCount = (weight: number) => Math.ceil(weight / 200);
+        ctx.MAX_TRANSPORT_WEIGHT = 200;
+        expect(ctx.calculateOfferTotals().totalTransports).toBe(2);
     });
 });
 

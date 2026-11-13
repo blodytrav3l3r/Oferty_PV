@@ -136,43 +136,15 @@ function collectPipeGeometry(well) {
             if (!dnMm && prod) dnMm = parseInt(prod.dn) || 0;
             if (dnMm <= 0) return null;
 
-            return {
-                dnMm,
-                angle: parseFloat(pr.angle) || 0
-            };
+            return { dnMm };
         })
         .filter(Boolean);
 }
 
 function parseSpocznikFraction(spocznikH) {
-    const fractions = { '1/2': 0.5, '2/3': 0.667, '3/4': 0.75, '1/1': 1.0 };
-    return fractions[spocznikH] || 0.5;
-}
-
-function identifyMainChannelAndTributaries(pipes) {
-    if (pipes.length === 0) return { mainPair: [], tributaries: [] };
-    if (pipes.length === 1) return { mainPair: [pipes[0]], tributaries: [] };
-
-    const candidates = [...pipes];
-
-    const getZeroScore = (kat) => Math.min(Math.abs(kat), Math.abs(kat - 360));
-    candidates.sort((a, b) => {
-        if (b.dnMm !== a.dnMm) return b.dnMm - a.dnMm;
-        return getZeroScore(a.angle) - getZeroScore(b.angle);
-    });
-    const glowne = candidates.shift();
-
-    const get180Score = (kat) => Math.abs(kat - 180);
-    candidates.sort((a, b) => {
-        if (b.dnMm !== a.dnMm) return b.dnMm - a.dnMm;
-        return get180Score(a.angle) - get180Score(b.angle);
-    });
-    const przelot = candidates.shift();
-
-    return {
-        mainPair: [glowne, przelot],
-        tributaries: candidates
-    };
+    if (spocznikH === 'brak') return 0;
+    const fractions = { '1/1': 1, '1/2': 1 / 2, '2/4': 1 / 2, '2/3': 2 / 3, '3/4': 3 / 4 };
+    return fractions[spocznikH] || fractions['1/2'];
 }
 
 function getSpocznikHeight(well) {
@@ -180,7 +152,7 @@ function getSpocznikHeight(well) {
     const pipes = collectPipeGeometry(well);
     if (pipes.length === 0) return 0;
     const maxPipeDn = Math.max(...pipes.map((p) => p.dnMm));
-    return (maxPipeDn / 2 / 1000) * parseSpocznikFraction(well.spocznikH) || 0;
+    return (maxPipeDn / 1000) * parseSpocznikFraction(well.spocznikH) || 0;
 }
 
 function hasKinetaItem(well) {
@@ -212,8 +184,8 @@ function calcDennicaWallsArea(well, p) {
     return Math.max(0, 2 * Math.PI * R * (H - hPainted));
 }
 
-function calcStandardKinetaPaintingArea(well, R) {
-    const pipes = collectPipeGeometry(well);
+function calcStandardKinetaPaintingArea(well, R, includeDetails = false) {
+    const pipes = [...collectPipeGeometry(well)].sort((a, b) => a.dnMm - b.dnMm);
 
     if (pipes.length === 0) {
         let dennicaH = 0;
@@ -231,44 +203,80 @@ function calcStandardKinetaPaintingArea(well, R) {
         const H = dennicaH / 1000;
         const floorArea = Math.PI * R * R;
         const wallArea = 2 * Math.PI * R * H;
-        return floorArea + wallArea;
+        const paintingAreaM2 = floorArea + wallArea;
+        return includeDetails
+            ? { paintingAreaM2, concreteVolumeM3: null, estimatedWeightKg: null }
+            : paintingAreaM2;
     }
 
-    const { mainPair, tributaries } = identifyMainChannelAndTributaries(pipes);
-
-    const spocznikHeight = getSpocznikHeight(well);
-
-    let channelArea = 0;
-    let channelFootprint = 0;
-
-    const mainR = (mainPair[0] ? mainPair[0].dnMm : 0) / 2000;
-    if (mainPair.length >= 2 && mainPair[1]) {
-        const przelotR = mainPair[1].dnMm / 2000;
-        const bigR = Math.max(mainR, przelotR);
-        const channelLen = 2 * R;
-        channelArea += Math.PI * bigR * channelLen;
-        channelFootprint += 2 * bigR * channelLen;
-    } else if (mainPair[0]) {
-        const channelLen = R;
-        channelArea += Math.PI * mainR * channelLen;
-        channelFootprint += 2 * mainR * channelLen;
-    }
-
-    tributaries.forEach((trib) => {
-        const r = trib.dnMm / 2000;
-        const channelLen = R;
-        channelArea += Math.PI * r * channelLen;
-        channelFootprint += 2 * r * channelLen;
+    const noEstimate = (paintingAreaM2) => ({
+        paintingAreaM2,
+        concreteVolumeM3: null,
+        estimatedWeightKg: null
     });
 
-    const totalFloor = Math.PI * R * R;
-    const spocznikFlat = Math.max(0, totalFloor - channelFootprint);
+    const fraction = parseSpocznikFraction(well.spocznikH);
+    const maxPipeDnMm = Math.max(...pipes.map((pipe) => pipe.dnMm));
+    const hubDiameterM = maxPipeDnMm / 1000;
+    const hubRadiusM = hubDiameterM / 2;
+    const branchLengthM = Math.max(0, R - hubRadiusM);
+    const getProfile = (dnMm) => {
+        const diameterM = dnMm / 1000;
+        const radiusM = diameterM / 2;
+        const heightM = diameterM * fraction;
+        const straightWallM = Math.max(0, heightM - radiusM);
+        return {
+            diameterM,
+            heightM,
+            crossSectionM2: (Math.PI * radiusM * radiusM) / 2 + diameterM * straightWallM,
+            innerSurfacePerMeterM2: Math.PI * radiusM + 2 * straightWallM
+        };
+    };
+    const profiles = pipes.map((pipe) => getProfile(pipe.dnMm));
+    const hubProfile = getProfile(maxPipeDnMm);
+    const floorAreaM2 = Math.PI * R * R;
+    const hubFootprintM2 = Math.PI * hubRadiusM * hubRadiusM;
+    const branchFootprintM2 = profiles.reduce(
+        (sum, profile) => sum + profile.diameterM * branchLengthM,
+        0
+    );
+    const flatFloorAreaM2 = Math.max(0, floorAreaM2 - hubFootprintM2 - branchFootprintM2);
+    // Orientacyjna aproksymacja: wspólny węzeł ma długość równą DNmax, a ramiona
+    // poza nim są traktowane jako rozłączne, niezależnie od kątów przejść.
+    const hubChannelSurfaceM2 = hubProfile.innerSurfacePerMeterM2 * hubDiameterM;
+    const branchChannelSurfaceM2 = profiles.reduce(
+        (sum, profile) => sum + profile.innerSurfacePerMeterM2 * branchLengthM,
+        0
+    );
+    const maxHeightM = hubProfile.heightM;
+    const totalPipeWidthM = profiles.reduce((sum, profile) => sum + profile.diameterM, 0);
+    const wallPerimeterM = Math.max(0, 2 * Math.PI * R - totalPipeWidthM);
+    const wallSurfaceM2 = wallPerimeterM * maxHeightM;
+    const paintingAreaM2 =
+        hubChannelSurfaceM2 + branchChannelSurfaceM2 + flatFloorAreaM2 + wallSurfaceM2;
 
-    const totalPipeWidth = pipes.reduce((sum, p) => sum + p.dnMm / 1000, 0);
-    const wallPerimeter = Math.max(0, 2 * Math.PI * R - totalPipeWidth);
-    const wallArea = wallPerimeter * spocznikHeight;
+    const grossConcreteVolumeM3 = floorAreaM2 * maxHeightM;
+    const hubVoidVolumeM3 = hubProfile.crossSectionM2 * hubDiameterM;
+    const branchVoidVolumeM3 = profiles.reduce(
+        (sum, profile) => sum + profile.crossSectionM2 * branchLengthM,
+        0
+    );
+    const concreteVolumeM3 = grossConcreteVolumeM3 - hubVoidVolumeM3 - branchVoidVolumeM3;
+    if (
+        !Number.isFinite(paintingAreaM2) ||
+        !Number.isFinite(concreteVolumeM3) ||
+        concreteVolumeM3 <= 0
+    ) {
+        const result = noEstimate(Number.isFinite(paintingAreaM2) ? paintingAreaM2 : 0);
+        return includeDetails ? result : result.paintingAreaM2;
+    }
 
-    return channelArea + spocznikFlat + wallArea;
+    const result = {
+        paintingAreaM2,
+        concreteVolumeM3,
+        estimatedWeightKg: concreteVolumeM3 * 2500
+    };
+    return includeDetails ? result : result.paintingAreaM2;
 }
 
 function calcOsadnikPaintingArea(well, R) {
@@ -289,17 +297,25 @@ function calcOsadnikPaintingArea(well, R) {
     return floorArea + Math.max(0, wallArea - holeArea);
 }
 
-function calcKinetaPaintingArea(well) {
+function calcKinetaPaintingArea(well, options = {}) {
+    const includeDetails = options && options.details === true;
     const dnStudni = parseInt(well.dn);
-    if (!dnStudni || isNaN(dnStudni)) return 0;
+    if (!dnStudni || isNaN(dnStudni)) {
+        return includeDetails
+            ? { paintingAreaM2: 0, concreteVolumeM3: null, estimatedWeightKg: null }
+            : 0;
+    }
 
     const R = dnStudni / 2000;
 
     if (well.wkladkaOsadnikPreco === 'tak') {
-        return calcOsadnikPaintingArea(well, R);
+        const paintingAreaM2 = calcOsadnikPaintingArea(well, R);
+        return includeDetails
+            ? { paintingAreaM2, concreteVolumeM3: null, estimatedWeightKg: null }
+            : paintingAreaM2;
     }
 
-    return calcStandardKinetaPaintingArea(well, R);
+    return calcStandardKinetaPaintingArea(well, R, includeDetails);
 }
 
 function getPehdTypeForComponent(well, componentType) {

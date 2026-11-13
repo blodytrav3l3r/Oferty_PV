@@ -101,9 +101,14 @@ describe('frontend vm: freezeWellPrices snapshotuje live (reuse w edycji)', () =
         expect(item.frozenName).toBe('Krąg');
         item.frozenPrice = 50;
         delete item.frozenStandalonePrice;
+        sb.wells[0].config.push({ productId: 'K2', quantity: 1 });
         vm.runInContext('freezeWellPrices(wells, true)', sb);
         expect(item.frozenPrice).toBe(50);
         expect(item.frozenStandalonePrice).toBe(80);
+        expect(sb.wells[0].config[1].frozenPrice).toBe(90);
+        expect(sb.wells[0].config[1].frozenPriceBase).toBe(100);
+        expect(sb.wells[0].config[1].frozenStandalonePrice).toBe(80);
+        expect(sb.wells[0].config[1].frozenName).toBe('Krąg');
     });
 
     test('isFrozenPriceCtx: preview albo edycja oferty', () => {
@@ -360,7 +365,7 @@ describe('frontend static: mrożenie studni end-to-end w źródle', () => {
     });
     test('load wczytuje freeze (flaga + snapshot), clear gasi', () => {
         expect(mgr).toContain('isOfferEditFrozen = true');
-        expect(mgr).toContain('freezeWellPrices(wells)');
+        expect(mgr).toContain('freezeWellPrices(wells, true)');
         expect(mgr).toContain('isOfferEditFrozen = false');
     });
     test('recalcStudnieToActive czyści frozen* i przelicza', () => {

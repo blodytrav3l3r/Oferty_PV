@@ -45,7 +45,13 @@ describe('syncKineta — psia buda wymusza dennicę bez dna (kineta/spocznik/spo
             spocznik: 'beton',
             spocznikH: '1/2',
             config: [
-                { productId: 'kineta-1000-12', quantity: 1 },
+                {
+                    productId: 'kineta-1000-12',
+                    quantity: 1,
+                    frozenPrice: 321,
+                    frozenPriceBase: 400,
+                    frozenName: 'Zapisana kineta'
+                },
                 { productId: 'dennica-1000-1000', quantity: 1 }
             ]
         };
@@ -74,6 +80,68 @@ describe('syncKineta — psia buda wymusza dennicę bez dna (kineta/spocznik/spo
         expect(well.kineta).toBe('beton');
         expect(well.spocznik).toBe('beton');
         expect(well.spocznikH).toBe('1/2');
-        expect(well.config.some((i) => i.productId === 'kineta-1000-12')).toBe(true);
+        expect(well.config).toContainEqual({
+            productId: 'kineta-1000-12',
+            quantity: 1,
+            frozenPrice: 321,
+            frozenPriceBase: 400,
+            frozenName: 'Zapisana kineta',
+            autoAdded: true
+        });
+    });
+
+    test('Brak kinety ustawia też spocznik i jego wysokość na brak', () => {
+        const ctx = loadCtx();
+        const well = {
+            dn: '1000',
+            kineta: 'brak',
+            spocznik: 'brak',
+            spocznikH: '1/1',
+            config: [{ productId: 'dennica-1000-1000', quantity: 1 }]
+        };
+
+        ctx.syncKineta(well);
+
+        expect(well.kineta).toBe('brak');
+        expect(well.spocznik).toBe('brak');
+        expect(well.spocznikH).toBe('brak');
+    });
+
+    test('Brak wysokości spocznika wyłącza kinetę i spocznik', () => {
+        const ctx = loadCtx();
+        const well = {
+            dn: '1000',
+            kineta: 'beton',
+            spocznik: 'beton',
+            spocznikH: 'brak',
+            config: [{ productId: 'dennica-1000-1000', quantity: 1 }]
+        };
+
+        ctx.syncKineta(well);
+
+        expect(well.kineta).toBe('brak');
+        expect(well.spocznik).toBe('brak');
+        expect(well.spocznikH).toBe('brak');
+    });
+
+    test('Brak spocznika nie może zostać automatycznie zastąpiony betonem', () => {
+        const ctx = loadCtx();
+        const well = {
+            dn: '1000',
+            kineta: 'beton',
+            spocznik: 'brak',
+            spocznikH: '1/2',
+            config: [
+                { productId: 'kineta-1000-12', quantity: 1 },
+                { productId: 'dennica-1000-1000', quantity: 1 }
+            ]
+        };
+
+        ctx.syncKineta(well);
+
+        expect(well.kineta).toBe('brak');
+        expect(well.spocznik).toBe('brak');
+        expect(well.spocznikH).toBe('brak');
+        expect(well.config.some((item) => item.productId === 'kineta-1000-12')).toBe(false);
     });
 });

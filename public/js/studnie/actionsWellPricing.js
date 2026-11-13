@@ -505,9 +505,17 @@ function calcWellStats(well) {
     let priceBase = 0,
         priceDennicaBase = 0,
         priceNadbudowaBase = 0;
+    let kinetaWeight = 0;
+    let kinetaWeightIsEstimated = false;
 
     let belowType = null;
     let psiaSeed = !!well.psiaBuda;
+    const kinetaGeometry =
+        typeof hasKinetaItem === 'function' &&
+        hasKinetaItem(well) &&
+        typeof calcKinetaPaintingArea === 'function'
+            ? calcKinetaPaintingArea(well, { details: true })
+            : null;
     const configReversed = [...(well.config || [])].reverse();
 
     // Komplet odciążający: pierścień nachodzi na krąg (wkład 0), pod płytą
@@ -572,7 +580,24 @@ function calcWellStats(well) {
             priceNadbudowaBase += lineTotalBase;
         }
 
-        weight += (p.weight || 0) * item.quantity;
+        const catalogWeight = Number(p.weight);
+        const hasCatalogWeight = Number.isFinite(catalogWeight) && catalogWeight > 0;
+        const isKinetaEstimatedWeight =
+            p.componentType === 'kineta' &&
+            !hasCatalogWeight &&
+            kinetaGeometry &&
+            Number.isFinite(kinetaGeometry.estimatedWeightKg) &&
+            kinetaGeometry.estimatedWeightKg > 0;
+        const itemWeight = hasCatalogWeight
+            ? catalogWeight
+            : isKinetaEstimatedWeight
+              ? kinetaGeometry.estimatedWeightKg
+              : 0;
+        weight += itemWeight * item.quantity;
+        if (p.componentType === 'kineta') {
+            kinetaWeight += itemWeight * item.quantity;
+            kinetaWeightIsEstimated = kinetaWeightIsEstimated || !!isKinetaEstimatedWeight;
+        }
         areaInt += (p.area || 0) * item.quantity;
         areaExt += (p.areaExt || 0) * item.quantity;
 
@@ -742,6 +767,8 @@ function calcWellStats(well) {
         priceNadbudowa: hasError ? 0 : _moneyRoundPricing(priceNadbudowa),
         priceNadbudowaBase: hasError ? 0 : _moneyRoundPricing(priceNadbudowaBase),
         weight: Math.max(0, weight),
+        kinetaWeight,
+        kinetaWeightIsEstimated,
         height,
         areaInt,
         areaExt,
@@ -955,6 +982,8 @@ function _emptyWellStats(discountError) {
         priceNadbudowa: 0,
         priceNadbudowaBase: 0,
         weight: 0,
+        kinetaWeight: 0,
+        kinetaWeightIsEstimated: false,
         height: 0,
         areaInt: 0,
         areaExt: 0,

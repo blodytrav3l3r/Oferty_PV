@@ -99,20 +99,21 @@ function renderWellConfig() {
         typeof calculateAssignedPrzejscia === 'function' ? calculateAssignedPrzejscia(well) : [];
     // Udział transportu jak w updateSummary (ten sam wzór co kafelek Ceny).
     let _wellTransportCost = 0;
+    let _wellStats = null;
     try {
+        const _cs =
+            typeof safeCalcWellStats === 'function'
+                ? safeCalcWellStats
+                : typeof calcWellStats === 'function'
+                  ? calcWellStats
+                  : null;
+        if (_cs) _wellStats = _cs(well);
         if (typeof calculateOfferTotals === 'function') {
             const _totals = calculateOfferTotals();
-            const _cs =
-                typeof safeCalcWellStats === 'function'
-                    ? safeCalcWellStats
-                    : typeof calcWellStats === 'function'
-                      ? calcWellStats
-                      : null;
-            if (_totals && _cs) {
-                const _st = _cs(well);
+            if (_totals && _wellStats) {
                 if (_totals.globalWeight > 0 && _totals.totalTransportCost > 0) {
                     _wellTransportCost =
-                        _totals.totalTransportCost * (_st.weight / _totals.globalWeight);
+                        _totals.totalTransportCost * (_wellStats.weight / _totals.globalWeight);
                 }
             }
         }
@@ -125,6 +126,26 @@ function renderWellConfig() {
             _wellTransportCost = Number(well.frozenTransportCost);
         }
     } catch (_eTr) {}
+    const findProductById = (productId) =>
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(productId)
+            : typeof studnieProducts !== 'undefined'
+              ? studnieProducts.find((product) => product.id === productId)
+              : null;
+    const kinetaItem = well.config.find((configItem) => {
+        const product = findProductById(configItem.productId);
+        return product && product.componentType === 'kineta';
+    });
+    const kinetaProduct = kinetaItem ? findProductById(kinetaItem.productId) : null;
+    const kinetaWeight = Number(_wellStats && _wellStats.kinetaWeight) || 0;
+    const kinetaWeightIsEstimated = !!(_wellStats && _wellStats.kinetaWeightIsEstimated);
+    const kinetaCarrierIndex = kinetaItem
+        ? well.config.findIndex((configItem) => {
+              if (configItem.isPsiaBuda) return false;
+              const product = findProductById(configItem.productId);
+              return product && ['dennica', 'styczna'].includes(product.componentType);
+          })
+        : -1;
     well.config.forEach((item, index) => {
         const p =
             typeof resolveEffectiveProduct === 'function'
@@ -161,7 +182,12 @@ function renderWellConfig() {
                     ? item.frozenPrice
                     : _assessed(well, p, true, item)) * item.quantity;
         }
-        const totalWeight = (p.weight || 0) * item.quantity;
+        const totalWeight =
+            (p.weight || 0) * item.quantity + (index === kinetaCarrierIndex ? kinetaWeight : 0);
+        const totalWeightLabel =
+            p.weight || totalWeight > 0
+                ? `${index === kinetaCarrierIndex && kinetaWeightIsEstimated ? '≈ ' : ''}${fmtInt(totalWeight)} kg`
+                : '—';
         const badge = typeBadge[p.componentType] || {
             bg: 'var(--slate-700)',
             fg: 'var(--white)',
@@ -284,7 +310,7 @@ function renderWellConfig() {
             <div class="cfg-row-side">
               <div class="cfg-values-grid">
                 <span class="fs-xs-muted">WAGA:</span>
-                <span class="cfg-weight-val">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
+                <span class="cfg-weight-val">${totalWeightLabel}</span>
 
                 <div class="cfg-spacer-60"></div>
 
@@ -299,57 +325,53 @@ function renderWellConfig() {
           </div>
         </div>`;
         // Podwiersz kinety jak w Ofercie (↳ + Kineta + malowanie kinety w cenie).
-        if ((p.componentType === 'dennica' || p.componentType === 'styczna') && !item.isPsiaBuda) {
-            const kinetaItem = (well.config || []).find((c) => {
-                const pr =
-                    typeof getStudnieProductById === 'function'
-                        ? getStudnieProductById(c.productId)
-                        : studnieProducts.find((x) => x.id === c.productId);
-                return pr && pr.componentType === 'kineta';
-            });
-            if (kinetaItem) {
-                const kp =
-                    typeof getStudnieProductById === 'function'
-                        ? getStudnieProductById(kinetaItem.productId)
-                        : studnieProducts.find((x) => x.id === kinetaItem.productId);
-                if (kp) {
-                    const kPrice =
-                        (kinetaItem.frozenPrice != null && frozenCtx
-                            ? kinetaItem.frozenPrice
-                            : _assessed(well, kp, true, kinetaItem)) * (kinetaItem.quantity || 1);
-                    const kPct = kp
-                        ? typeof getWellDiscountPctSafe === 'function'
-                            ? getWellDiscountPctSafe(well, kp, _disc)
-                            : typeof getWellDiscountPct === 'function'
-                              ? getWellDiscountPct(well, kp, _disc)
-                              : 0
-                        : 0;
-                    const kBd =
-                        typeof getItemPriceBreakdownSafe === 'function'
-                            ? getItemPriceBreakdownSafe(well, kp, true, kinetaItem)
-                            : typeof getItemPriceBreakdown === 'function'
-                              ? getItemPriceBreakdown(well, kp, true, kinetaItem)
-                              : null;
-                    const kMalLines = [];
-                    if (kBd && kBd.malowanieW > 0) {
-                        kMalLines.push(
-                            `w cenie: malowanie kinety ${fmt(kBd.malowanieW * (kinetaItem.quantity || 1))} PLN`
-                        );
-                    }
-                    if (kBd && kBd.malowanieZ > 0) {
-                        kMalLines.push(
-                            `w cenie: malowanie zewnątrz ${fmt(kBd.malowanieZ * (kinetaItem.quantity || 1))} PLN`
-                        );
-                    }
-                    const kBadge = typeBadge[kp.componentType] || {
-                        bg: 'var(--slate-700)',
-                        fg: 'var(--white)',
-                        label: '?'
-                    };
-                    const kWeight = (kp.weight || 0) * (kinetaItem.quantity || 1);
-                    // Ten sam kafelek co reszta (config-tile) — statyczny, bez drag/usuń.
-                    // Ukryte zaślepki idx-box i remove-cell trzymają tekst i CENA w linii z resztą.
-                    html += `<div class="config-tile config-tile--static" style="--tile-accent:${kBadge.bg};--tile-fg:${kBadge.fg};">
+        if (
+            (p.componentType === 'dennica' || p.componentType === 'styczna') &&
+            !item.isPsiaBuda &&
+            index === kinetaCarrierIndex &&
+            kinetaItem &&
+            kinetaProduct
+        ) {
+            const kp = kinetaProduct;
+            const kPrice =
+                (kinetaItem.frozenPrice != null && frozenCtx
+                    ? kinetaItem.frozenPrice
+                    : _assessed(well, kp, true, kinetaItem)) * (kinetaItem.quantity || 1);
+            const kPct = kp
+                ? typeof getWellDiscountPctSafe === 'function'
+                    ? getWellDiscountPctSafe(well, kp, _disc)
+                    : typeof getWellDiscountPct === 'function'
+                      ? getWellDiscountPct(well, kp, _disc)
+                      : 0
+                : 0;
+            const kBd =
+                typeof getItemPriceBreakdownSafe === 'function'
+                    ? getItemPriceBreakdownSafe(well, kp, true, kinetaItem)
+                    : typeof getItemPriceBreakdown === 'function'
+                      ? getItemPriceBreakdown(well, kp, true, kinetaItem)
+                      : null;
+            const kMalLines = [];
+            if (kBd && kBd.malowanieW > 0) {
+                kMalLines.push(
+                    `w cenie: malowanie kinety ${fmt(kBd.malowanieW * (kinetaItem.quantity || 1))} PLN`
+                );
+            }
+            if (kBd && kBd.malowanieZ > 0) {
+                kMalLines.push(
+                    `w cenie: malowanie zewnątrz ${fmt(kBd.malowanieZ * (kinetaItem.quantity || 1))} PLN`
+                );
+            }
+            const kBadge = typeBadge[kp.componentType] || {
+                bg: 'var(--slate-700)',
+                fg: 'var(--white)',
+                label: '?'
+            };
+            const kWeight = kinetaWeight;
+            const kWeightLabel =
+                kWeight > 0 ? `${kinetaWeightIsEstimated ? '≈ ' : ''}${fmtInt(kWeight)} kg` : '—';
+            // Ten sam kafelek co reszta (config-tile) — statyczny, bez drag/usuń.
+            // Ukryte zaślepki idx-box i remove-cell trzymają tekst i CENA w linii z resztą.
+            html += `<div class="config-tile config-tile--static" style="--tile-accent:${kBadge.bg};--tile-fg:${kBadge.fg};">
           <div class="cfg-row-main">
             <div class="cfg-col-left">
               <div class="cfg-idx-box" style="visibility:hidden;" aria-hidden="true"><span class="cfg-idx-num">•</span></div>
@@ -358,13 +380,13 @@ function renderWellConfig() {
                 <span class="cfg-type-badge" style="background:${kBadge.bg};color:${kBadge.fg};">${kBadge.label.split(' ')[1] || kBadge.label}</span>
                 <div class="cfg-item-name">↳ + ${escapeHtml(kp.name)}${kPct > 0 ? ` <span class="color-success">(-${String(kPct).replace('.', ',')}%)</span>` : ''}</div>
               </div>
-              <div class="cfg-id-line">${escapeHtml(kp.id)}${kMalLines.length > 0 ? ' | ' + escapeHtml(kMalLines.join(' • ')) : ''}</div>
+              <div class="cfg-id-line">${escapeHtml(kp.id)}${kMalLines.length > 0 ? ' | ' + escapeHtml(kMalLines.join(' • ')) : ''}${kWeight > 0 ? ' | wliczono do wagi dennicy' : ''}</div>
               </div>
             </div>
             <div class="cfg-row-side">
               <div class="cfg-values-grid">
                 <span class="fs-xs-muted">WAGA:</span>
-                <span class="cfg-weight-val">${kWeight > 0 ? fmtInt(kWeight) + ' kg' : '—'}</span>
+                <span class="cfg-weight-val">${kWeightLabel}</span>
                 <div class="cfg-spacer-60"></div>
                 <span class="fs-xs-muted">CENA:</span>
                 <span class="cfg-price-val">${fmt(kPrice)} PLN</span>
@@ -372,9 +394,7 @@ function renderWellConfig() {
               <div class="cfg-remove-cell" style="visibility:hidden;" aria-hidden="true"></div>
             </div>
           </div>
-        </div>`;
-                }
-            }
+            </div>`;
         }
     });
 

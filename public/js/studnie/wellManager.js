@@ -152,6 +152,9 @@ async function updateWellParam(paramKey, value) {
             well.precoFullHeight = 'nie';
         }
     }
+    if (paramKey === 'kineta' && value !== 'brak' && well.spocznikH === 'brak') {
+        well.spocznikH = '1/2';
+    }
     if (
         paramKey === 'kineta' &&
         (value === 'preco' || value === 'precotop' || value === 'unolith')
@@ -187,6 +190,7 @@ async function updateWellParam(paramKey, value) {
     // PRECO / PrecoTop / UnoLith → nie pozwalaj na zmianę spocznikH (wymuszenie 1/1)
     if (
         paramKey === 'spocznikH' &&
+        value !== 'brak' &&
         (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')
     ) {
         well.spocznikH = '1/1';

@@ -1062,6 +1062,9 @@ function _excelKinetaModelUpdate(wIdx, value) {
     if (!well) return;
     const oldVal = well.kineta;
     well.kineta = value;
+    if (value !== 'brak' && well.spocznikH === 'brak') {
+        well.spocznikH = '1/2';
+    }
     if (
         value === 'beton' ||
         value === 'beton_gfk' ||

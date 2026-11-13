@@ -197,6 +197,12 @@ function syncKineta(well) {
         well.spocznikH = 'brak';
     }
 
+    if (well.kineta === 'brak' || well.spocznik === 'brak' || well.spocznikH === 'brak') {
+        well.kineta = 'brak';
+        well.spocznik = 'brak';
+        well.spocznikH = 'brak';
+    }
+
     if (well.kineta && well.kineta !== 'brak') {
         if (!well.spocznik || well.spocznik === 'brak') {
             well.spocznik = 'beton';
@@ -258,6 +264,13 @@ function syncKineta(well) {
         well.spocznikH = '1/1';
     }
 
+    const existingKineta = well.config.find((item) => {
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
+        return p && p.componentType === 'kineta';
+    });
     const newConfig = well.config.filter((item) => {
         const p =
             typeof getStudnieProductById === 'function'
@@ -283,11 +296,15 @@ function syncKineta(well) {
                 (SPOCZNIK_MAP[p.id.split('-').pop()] || '') === well.spocznikH
         );
         if (kinetaProd) {
-            newConfig.push({
-                productId: kinetaProd.id,
-                quantity: 1,
-                autoAdded: true
-            });
+            newConfig.push(
+                existingKineta && existingKineta.productId === kinetaProd.id
+                    ? { ...existingKineta, quantity: 1, autoAdded: true }
+                    : {
+                          productId: kinetaProd.id,
+                          quantity: 1,
+                          autoAdded: true
+                      }
+            );
         }
     }
 

@@ -209,7 +209,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     // freezeWellPrices z zamówień); recalc omija zamrożone przez
     // isOfferEditFrozen (isFrozenPriceCtx). Transport/ilości edytowalne.
     isOfferEditFrozen = true;
-    if (typeof freezeWellPrices === 'function') freezeWellPrices(wells);
+    if (typeof freezeWellPrices === 'function') freezeWellPrices(wells, true);
 
     // Przelicz uszczelki i zsynchronizuj kinete dla wszystkich studni
     wells.forEach((w) => {

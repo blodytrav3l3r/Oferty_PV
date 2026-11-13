@@ -51,6 +51,29 @@ function restoreWizardState(wizardState, preventStepOverride) {
         }
     }
 
+    if (wizardGlobalParams) {
+        const hasKinetaBrak = ['kineta', 'spocznik', 'spocznikH'].some(
+            (paramName) => wizardGlobalParams[paramName] === 'brak'
+        );
+        const setParamTile = (paramName, value) => {
+            const group = document.querySelector(
+                '#wizard-step-2 .param-group[data-param="' + paramName + '"]'
+            );
+            if (!group) return;
+            group.querySelectorAll('.param-tile').forEach((tile) => {
+                tile.classList.toggle('active', tile.getAttribute('data-val') === value);
+            });
+        };
+
+        if (hasKinetaBrak) {
+            setParamTile('kineta', 'brak');
+            setParamTile('spocznik', 'brak');
+            setParamTile('spocznikH', 'brak');
+        } else if (['preco', 'precotop', 'unolith'].includes(wizardGlobalParams.kineta)) {
+            setParamTile('spocznikH', '1/1');
+        }
+    }
+
     if (typeof validateWizardStep2 === 'function') {
         validateWizardStep2();
     }

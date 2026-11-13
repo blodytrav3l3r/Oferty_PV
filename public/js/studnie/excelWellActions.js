@@ -91,6 +91,9 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
         well.precoFullHeight = 'tak';
     }
     if (paramKey === 'kineta') {
+        if (value !== 'brak' && well.spocznikH === 'brak') {
+            well.spocznikH = '1/2';
+        }
         const syncValues = [
             'beton',
             'beton_gfk',
@@ -116,6 +119,7 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     }
     if (
         paramKey === 'spocznikH' &&
+        value !== 'brak' &&
         (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')
     ) {
         well.spocznikH = '1/1';

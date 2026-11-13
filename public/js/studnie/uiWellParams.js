@@ -248,7 +248,7 @@ function renderWellParams() {
         if (def.key === 'wkladkaOsadnikPreco' && !isOsadnik) {
             isGreyedOut = true;
         }
-        // Gdy kineta = preco/precotop/unolith → spocznikH zablokowany na 1/1
+        // PRECO/UnoLith wymuszają 1/1; opcja Brak nadal wyłącza całą kinetę.
         if (
             def.key === 'spocznikH' &&
             (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')

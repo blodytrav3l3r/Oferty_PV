@@ -5,6 +5,20 @@
 function setupParamTiles() {
     const wizardRoot = document.getElementById('wizard-step-2');
     if (!wizardRoot) return;
+    const getParamValue = (paramName) =>
+        wizardRoot.querySelector(`.param-group[data-param="${paramName}"] .param-tile.active`)
+            ?.dataset.val;
+    const activateParamValue = (paramName, value) => {
+        const tile = wizardRoot.querySelector(
+            `.param-group[data-param="${paramName}"] .param-tile[data-val="${value}"]`
+        );
+        if (tile && !tile.classList.contains('active')) tile.click();
+    };
+    const setParamValue = (paramName, value) => {
+        wizardRoot
+            .querySelectorAll(`.param-group[data-param="${paramName}"] .param-tile`)
+            .forEach((tile) => tile.classList.toggle('active', tile.dataset.val === value));
+    };
 
     wizardRoot.querySelectorAll('.param-group').forEach((group) => {
         const paramName = group.getAttribute('data-param');
@@ -59,6 +73,12 @@ function setupParamTiles() {
                         }
                     }
 
+                    if (val === 'brak') {
+                        activateParamValue('spocznikH', 'brak');
+                    } else if (getParamValue('spocznikH') === 'brak') {
+                        activateParamValue('spocznikH', '1/2');
+                    }
+
                     // PRECO / PrecoTop / UnoLith → wymuszenie spocznikH = '1/1'
                     if (val === 'preco' || val === 'precotop' || val === 'unolith') {
                         const spocznikHGroup = wizardRoot.querySelector(
@@ -72,6 +92,30 @@ function setupParamTiles() {
                                 hBtn.click();
                             }
                         }
+                    }
+                }
+
+                if (paramName === 'spocznik') {
+                    if (val === 'brak') {
+                        activateParamValue('kineta', 'brak');
+                        activateParamValue('spocznikH', 'brak');
+                    } else if (getParamValue('kineta') === 'brak') {
+                        activateParamValue('spocznik', 'brak');
+                        activateParamValue('spocznikH', 'brak');
+                    }
+                }
+
+                if (paramName === 'spocznikH') {
+                    if (val === 'brak') {
+                        activateParamValue('kineta', 'brak');
+                        activateParamValue('spocznik', 'brak');
+                    } else if (['preco', 'precotop', 'unolith'].includes(getParamValue('kineta'))) {
+                        activateParamValue('spocznikH', '1/1');
+                    } else if (
+                        getParamValue('kineta') === 'brak' ||
+                        getParamValue('spocznik') === 'brak'
+                    ) {
+                        activateParamValue('spocznikH', 'brak');
                     }
                 }
 
@@ -92,6 +136,18 @@ function setupParamTiles() {
             });
         });
     });
+
+    if (
+        getParamValue('kineta') === 'brak' ||
+        getParamValue('spocznik') === 'brak' ||
+        getParamValue('spocznikH') === 'brak'
+    ) {
+        setParamValue('kineta', 'brak');
+        setParamValue('spocznik', 'brak');
+        setParamValue('spocznikH', 'brak');
+    } else if (['preco', 'precotop', 'unolith'].includes(getParamValue('kineta'))) {
+        setParamValue('spocznikH', '1/1');
+    }
 }
 
 function updateParamTilesUI() {

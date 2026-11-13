@@ -120,4 +120,31 @@ describe('konfiguracja betonowa: ceny jak w ofercie', () => {
         // Podwiersz to pełny kafelek SOK (config-tile), nie goły tekst.
         expect(html()).toContain('config-tile config-tile--static');
     });
+
+    it('szacowana waga kinety nie wyświetla komunikatu o orientacyjności', () => {
+        const kineta = {
+            id: 'KIN-EST',
+            name: 'Kineta DN1000',
+            componentType: 'kineta',
+            dn: 1000,
+            weight: null
+        };
+        const well = baseWell();
+        well.config[2] = { productId: kineta.id, quantity: 1 };
+        const { sandbox, html } = loadRender(well);
+        sandbox.getStudnieProductById = (id: string) => (id === kineta.id ? kineta : PRODUCTS[id]);
+        sandbox.studnieProducts = [...Object.values(PRODUCTS), kineta];
+        sandbox.safeCalcWellStats = () => ({
+            weight: 353,
+            kinetaWeight: 303,
+            kinetaWeightIsEstimated: true
+        });
+
+        sandbox.renderWellConfig();
+
+        expect(html()).toContain('≈ 403 kg');
+        expect(html()).toContain('≈ 303 kg');
+        expect(html()).toContain('wliczono do wagi dennicy');
+        expect(html()).not.toContain('orientacyjna');
+    });
 });
