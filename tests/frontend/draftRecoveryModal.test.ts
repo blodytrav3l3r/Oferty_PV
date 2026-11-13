@@ -94,6 +94,7 @@ describe('draft recovery popup — showModal zamiast paska', () => {
             fields: {
                 number: '',
                 date: '',
+                organizationUnit: 'ASM_KLUCZBORK',
                 clientName: '',
                 clientNumber: '',
                 clientNip: '',

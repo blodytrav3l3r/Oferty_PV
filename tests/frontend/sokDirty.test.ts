@@ -28,6 +28,7 @@ function memStorage() {
 const CLEAN_FIELDS = {
     number: '',
     date: '',
+    organizationUnit: 'ASM_KLUCZBORK',
     clientName: '',
     clientNumber: '',
     clientNip: '',

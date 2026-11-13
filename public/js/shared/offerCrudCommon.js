@@ -322,6 +322,9 @@ function clearOfferFormFields(numberGenerator) {
         transportKm: 100,
         transportRate: 10
     });
+    if (window.draftAutosave?.resetEmptyOfferBaseline) {
+        window.draftAutosave.resetEmptyOfferBaseline();
+    }
     if (typeof numberGenerator === 'function') {
         const numberInput = document.getElementById('offer-number');
         if (numberInput) {

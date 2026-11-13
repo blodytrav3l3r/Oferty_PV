@@ -219,4 +219,36 @@ describe('hasUnsavedChanges stashuje __sokLastDirtyDetail (diagnostyka)', () => 
         seedRury(s, 'ACME', 'ACME');
         expect(s.window.draftAutosave.hasUnsavedChanges()).toBe(false);
     });
+
+    it('nowa oferta używa domyślnej jednostki jako baseline, ale wykrywa jej zmianę', () => {
+        const s = loadDirtyCtx();
+        s.currentUser = { id: 'u1', defaultOrganizationUnit: null };
+        let organizationUnit = 'ASM_KLUCZBORK';
+        s.getOfferFormFields = () => ({ number: '', organizationUnit });
+        s.currentOfferItems = [];
+        s.window.draftAutosave.initKind('offer_rury');
+        s.window.draftAutosave.resetEmptyOfferBaseline();
+
+        organizationUnit = 'WLOCLAWEK';
+        expect(s.window.draftAutosave.hasUnsavedChanges()).toBe(true);
+        expect(s.window.__sokLastDirtyDetail.desc).toEqual(['Pola: organizationUnit']);
+
+        s.currentUser.defaultOrganizationUnit = 'WL_WLOCLAWEK';
+        organizationUnit = 'WL_WLOCLAWEK';
+        expect(s.window.draftAutosave.hasUnsavedChanges()).toBe(true);
+        expect(s.window.__sokLastDirtyDetail.desc).toEqual(['Pola: organizationUnit']);
+
+        s.window.draftAutosave.resetEmptyOfferBaseline();
+        expect(s.window.draftAutosave.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('nowa oferta zaczyna od domyślnej jednostki ustawionej przed inicjalizacją', () => {
+        const s = loadDirtyCtx();
+        s.currentUser = { id: 'u1', defaultOrganizationUnit: 'WL_WLOCLAWEK' };
+        s.getOfferFormFields = () => ({ number: '', organizationUnit: 'WL_WLOCLAWEK' });
+        s.currentOfferItems = [];
+        s.window.draftAutosave.initKind('offer_rury');
+
+        expect(s.window.draftAutosave.hasUnsavedChanges()).toBe(false);
+    });
 });

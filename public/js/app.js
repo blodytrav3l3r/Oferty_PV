@@ -147,6 +147,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderPriceList();
     renderSavedOffers();
     setupOfferForm();
+    if (window.draftAutosave?.resetEmptyOfferBaseline) {
+        window.draftAutosave.resetEmptyOfferBaseline();
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');

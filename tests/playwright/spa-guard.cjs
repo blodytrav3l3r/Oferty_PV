@@ -201,14 +201,25 @@ async function waitModuleFrame(page, mod) {
                 { timeout: 15000 }
             );
             await sleep(1000);
-            const fresh = await fr.evaluate(() => ({
-                dirty: window.__sokIsDirty ? window.__sokIsDirty() : 'NO_FN',
-                notes:
-                    document.getElementById('offer-tab-notes')?.value ||
-                    document.getElementById('offer-notes')?.value ||
-                    ''
-            }));
-            check(`G12 świeży ${mod}: brak brudu`, fresh.dirty === false, `dirty=${fresh.dirty}`);
+            const fresh = await fr.evaluate(() => {
+                const dirty = window.__sokIsDirty ? window.__sokIsDirty() : 'NO_FN';
+                if (dirty && window.draftAutosave?.hasUnsavedChanges) {
+                    window.draftAutosave.hasUnsavedChanges();
+                }
+                return {
+                    dirty,
+                    dirtyDetail: window.__sokLastDirtyDetail || window.__sokDescribeDirty?.() || null,
+                    notes:
+                        document.getElementById('offer-tab-notes')?.value ||
+                        document.getElementById('offer-notes')?.value ||
+                        ''
+                };
+            });
+            check(
+                `G12 świeży ${mod}: brak brudu`,
+                fresh.dirty === false,
+                `dirty=${fresh.dirty} detail=${JSON.stringify(fresh.dirtyDetail)}`
+            );
             if (mod === 'studnie') {
                 check(
                     'G12 pułapka istnieje: notatki pre-wypełnione generatorem',

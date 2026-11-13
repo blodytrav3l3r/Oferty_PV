@@ -15,6 +15,8 @@ var DRAFT_SYNC_MODAL_ID = 'sok-draft-sync-modal';
 
 /** Zarejestrowane rodzaje w tym module/iframe (np. studnie: offer+order). */
 var _draftInitedKinds = [];
+/** Początkowa jednostka pustej oferty; nie może zmieniać się wraz z profilem użytkownika. */
+var _draftEmptyOrganizationUnits = {};
 /** Ostatnio zapisany kanoniczny JSON per klucz (bramka diff, brak zapisu bez zmian). */
 var _draftLastWritten = {};
 /** Stan oferty Studnie po inicjalizacji edytora, przypisany do odczytanego SAVED. */
@@ -470,6 +472,7 @@ function _draftEmptySavedPayload(kind) {
         fields: {
             number: '',
             date: '',
+            organizationUnit: _draftEmptyOrganizationUnit(kind),
             clientName: '',
             clientNumber: '',
             clientNip: '',
@@ -498,6 +501,43 @@ function _draftEmptySavedPayload(kind) {
     if (kind === 'offer_rury' || kind === 'order_rury') raw.items = [];
     else raw.wells = [];
     return window.draftStore.pickDraftPayload(raw);
+}
+
+/**
+ * Zwraca jednostkę bazową pustej oferty, zapamiętaną przy inicjalizacji draftów.
+ * @param {string} kind
+ * @param {boolean} [reset]
+ * @returns {string}
+ */
+function _draftEmptyOrganizationUnit(kind, reset) {
+    var userId = _draftUserId();
+    var baseline = _draftEmptyOrganizationUnits[kind];
+    if (!reset && baseline && baseline.userId === userId) return baseline.value;
+    var fields = null;
+    var getFields = _draftG('getOfferFormFields');
+    try {
+        if (typeof getFields === 'function') fields = getFields();
+    } catch (_e) {}
+    var user = _draftG('currentUser');
+    var organizationUnit =
+        fields && typeof fields.organizationUnit === 'string' && fields.organizationUnit
+            ? fields.organizationUnit
+            : user &&
+                typeof user.defaultOrganizationUnit === 'string' &&
+                user.defaultOrganizationUnit
+              ? user.defaultOrganizationUnit
+              : 'ASM_KLUCZBORK';
+    if (userId) _draftEmptyOrganizationUnits[kind] = { userId: userId, value: organizationUnit };
+    return organizationUnit;
+}
+
+/** Odświeża bazową jednostkę po jawnym utworzeniu lub wyczyszczeniu oferty. */
+function _draftResetEmptyOfferBaseline() {
+    _draftInitedKinds.forEach(function (kind) {
+        if (kind === 'offer_rury' || kind === 'offer_studnie') {
+            _draftEmptyOrganizationUnit(kind, true);
+        }
+    });
 }
 
 /**
@@ -2758,6 +2798,7 @@ window.draftAutosave = {
     flushAll: _draftFlushAll,
     clearContext: _draftClearContext,
     clearDismissed: _draftClearDismissed,
+    resetEmptyOfferBaseline: _draftResetEmptyOfferBaseline,
     checkRecovery: _draftCheckRecovery,
     resetWizardDirty: _draftResetWizardDirty,
     hideBanner: _draftHideBanner,

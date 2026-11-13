@@ -62,6 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nrEl = document.getElementById('offer-number');
         if (nrEl && typeof generateOfferNumberStudnie === 'function')
             nrEl.value = generateOfferNumberStudnie();
+        if (window.draftAutosave?.resetEmptyOfferBaseline) {
+            window.draftAutosave.resetEmptyOfferBaseline();
+        }
 
         createNewWell(null, 1000);
         renderWellsList();
