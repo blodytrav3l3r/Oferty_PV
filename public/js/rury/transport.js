@@ -176,6 +176,506 @@ function calculateTransportDistribution(items, costPerTripOverride) {
     return distribution;
 }
 
+/**
+ * Dzieli kwotę transportu na pozycje w całych groszach metodą największej reszty.
+ * Wynik ma klucz UID pozycji, więc duplikaty tego samego produktu pozostają osobne.
+ */
+function calculateTransportAllocation(items, totalCost) {
+    const totalCents = Math.max(0, Math.round(_moneyRoundTransport(totalCost) * 100));
+    let eligible = items
+        .map((item, index) => {
+            const product = getRuryProductById(item.productId);
+            const weight = item.customLengthM
+                ? Number(item.weight) || 0
+                : Number(product?.weight ?? item.weight) || 0;
+            return { item, index, weight, quantity: Number(item.quantity) || 0 };
+        })
+        .filter(
+            ({ item, weight, quantity }) =>
+                !item.autoAdded &&
+                typeof item.uid === 'string' &&
+                item.uid &&
+                weight > 0 &&
+                quantity > 0
+        );
+    let totalWeight = eligible.reduce((sum, entry) => sum + entry.weight * entry.quantity, 0);
+    if (totalWeight <= 0) {
+        eligible = items
+            .map((item, index) => ({
+                item,
+                index,
+                weight: 1,
+                quantity: Number(item.quantity) || 0
+            }))
+            .filter(
+                ({ item, quantity }) =>
+                    !item.autoAdded && typeof item.uid === 'string' && item.uid && quantity > 0
+            );
+        totalWeight = eligible.reduce((sum, entry) => sum + entry.quantity, 0);
+    }
+    if (totalCents === 0 || totalWeight <= 0) return { version: 1, items: [] };
+
+    const shares = eligible.map((entry) => {
+        const exact = (totalCents * entry.weight * entry.quantity) / totalWeight;
+        return { ...entry, cents: Math.floor(exact), remainder: exact - Math.floor(exact) };
+    });
+    const remainingCents = totalCents - shares.reduce((sum, share) => sum + share.cents, 0);
+    const remainderOrder = [...shares].sort((a, b) => {
+        if (b.remainder !== a.remainder) return b.remainder - a.remainder;
+        const uidA = String(a.item.uid || '');
+        const uidB = String(b.item.uid || '');
+        return (uidA < uidB ? -1 : uidA > uidB ? 1 : 0) || a.index - b.index;
+    });
+    for (let index = 0; index < remainingCents; index++) {
+        remainderOrder[index].cents += 1;
+    }
+
+    return {
+        version: 1,
+        items: shares.map(({ item, quantity, cents }) => {
+            /** @type {{itemUid:string,totalCents:number,segments?:Array<{quantity:number,transportCentsPerUnit:number}>}} */
+            const allocation = { itemUid: item.uid, totalCents: cents };
+            if (Number.isInteger(quantity)) {
+                const baseCents = Math.floor(cents / quantity);
+                const extraUnits = cents % quantity;
+                allocation.segments = [
+                    ...(quantity - extraUnits > 0
+                        ? [{ quantity: quantity - extraUnits, transportCentsPerUnit: baseCents }]
+                        : []),
+                    ...(extraUnits > 0
+                        ? [
+                              {
+                                  quantity: extraUnits,
+                                  transportCentsPerUnit: baseCents + 1
+                              }
+                          ]
+                        : [])
+                ];
+            }
+            return allocation;
+        })
+    };
+}
+
+/** Pure read projection: use a valid saved allocation or calculate legacy data without mutation. */
+function projectTransportAllocation(items, savedAllocation, totalCost) {
+    if (isTransportAllocationValid(items, savedAllocation, totalCost)) {
+        const byUid = new Map(
+            savedAllocation.items
+                .filter((entry) => entry && typeof entry.itemUid === 'string')
+                .map((entry) => [entry.itemUid, entry])
+        );
+        return {
+            version: 1,
+            items: items.flatMap((item) => {
+                const entry = byUid.get(item.uid);
+                return entry ? [{ ...entry }] : [];
+            })
+        };
+    }
+    return calculateTransportAllocation(items, totalCost);
+}
+
+function isTransportAllocationValid(items, allocation, totalCost) {
+    if (allocation?.version !== 1 || !Array.isArray(allocation.items)) return false;
+    const sourceByUid = new Map();
+    for (const item of items) {
+        if (!item?.uid) continue;
+        if (sourceByUid.has(item.uid)) return false;
+        sourceByUid.set(item.uid, item);
+    }
+    const seen = new Set();
+    let totalCents = 0;
+    for (const entry of allocation.items) {
+        if (
+            !entry ||
+            typeof entry.itemUid !== 'string' ||
+            !sourceByUid.has(entry.itemUid) ||
+            seen.has(entry.itemUid) ||
+            !Number.isInteger(entry.totalCents) ||
+            entry.totalCents < 0
+        )
+            return false;
+        seen.add(entry.itemUid);
+        totalCents += entry.totalCents;
+        const source = sourceByUid.get(entry.itemUid);
+        const sourceQuantity = Number(source.orderedQuantity ?? source.quantity);
+        if (!Number.isFinite(sourceQuantity) || sourceQuantity <= 0) return false;
+        if (
+            Number.isInteger(sourceQuantity) &&
+            sourceQuantity > 0 &&
+            (!Array.isArray(entry.segments) ||
+                entry.segments.length < 1 ||
+                entry.segments.length > 2)
+        )
+            return false;
+        if (entry.segments === undefined) continue;
+        if (!Array.isArray(entry.segments) || entry.segments.length > 2) return false;
+        if (!Number.isInteger(sourceQuantity) || sourceQuantity <= 0) return false;
+        let segmentQuantity = 0;
+        let segmentCents = 0;
+        for (const segment of entry.segments) {
+            if (
+                !segment ||
+                !Number.isInteger(segment.quantity) ||
+                segment.quantity <= 0 ||
+                !Number.isInteger(segment.transportCentsPerUnit) ||
+                segment.transportCentsPerUnit < 0
+            )
+                return false;
+            segmentQuantity += segment.quantity;
+            segmentCents += segment.quantity * segment.transportCentsPerUnit;
+        }
+        if (segmentQuantity !== sourceQuantity || segmentCents !== entry.totalCents) return false;
+    }
+    return totalCents === Math.max(0, Math.round(_moneyRoundTransport(totalCost) * 100));
+}
+
+function isValidCurrentOrderTransportAllocation(order) {
+    const items = order?.items;
+    const transportCost = Number(order?.transportCost);
+    if (!Array.isArray(items) || !Number.isFinite(transportCost)) return false;
+    return isTransportAllocationValid(items, order.transportAllocation, transportCost);
+}
+
+function getTransportAllocationCents(allocation, itemUid) {
+    return allocation.items.find((entry) => entry.itemUid === itemUid)?.totalCents || 0;
+}
+
+function getTransportSegments(allocation, itemUid) {
+    return allocation.items.find((entry) => entry.itemUid === itemUid)?.segments || [];
+}
+
+function sortRuryOrdersByCreation(orders) {
+    return [...orders].sort((a, b) => {
+        const createdA = String(a.createdAt || a.date || '');
+        const createdB = String(b.createdAt || b.date || '');
+        return (
+            (createdA < createdB ? -1 : createdA > createdB ? 1 : 0) ||
+            (String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0)
+        );
+    });
+}
+
+/** Returns saved per-unit shares for selected order quantities without changing the source. */
+function selectTransportAllocation(items, allocation, sourceItems = items, orderedOffsets = {}) {
+    const byUid = new Map((allocation?.items || []).map((entry) => [entry.itemUid, entry]));
+    const sourceByUid = new Map(sourceItems.map((item) => [item.uid, item]));
+    return {
+        version: 1,
+        items: items.flatMap((item) => {
+            const source = byUid.get(item.uid);
+            if (!source) return [];
+            const selectedQuantity = Math.max(
+                0,
+                Number(item.orderedQuantity ?? item.quantity) || 0
+            );
+            const sourceQuantity = Number(sourceByUid.get(item.uid)?.quantity) || 0;
+            const offset = Math.max(0, Number(orderedOffsets[item.uid]) || 0);
+            if (!Number.isInteger(selectedQuantity)) {
+                const startCents =
+                    sourceQuantity > 0
+                        ? Math.round((source.totalCents * offset) / sourceQuantity)
+                        : 0;
+                const endCents =
+                    sourceQuantity > 0
+                        ? Math.round(
+                              (source.totalCents * (offset + selectedQuantity)) / sourceQuantity
+                          )
+                        : source.totalCents;
+                const totalCents = endCents - startCents;
+                return [{ itemUid: source.itemUid, totalCents }];
+            }
+            if (!Array.isArray(source.segments)) {
+                const startCents =
+                    sourceQuantity > 0
+                        ? Math.round((source.totalCents * offset) / sourceQuantity)
+                        : 0;
+                const endCents =
+                    sourceQuantity > 0
+                        ? Math.round(
+                              (source.totalCents * (offset + selectedQuantity)) / sourceQuantity
+                          )
+                        : source.totalCents;
+                const totalCents = endCents - startCents;
+                return [{ ...source, totalCents }];
+            }
+            let offsetLeft = offset;
+            let left = selectedQuantity;
+            const selectedSegments = [];
+            for (const segment of source.segments) {
+                const skipped = Math.min(offsetLeft, segment.quantity);
+                offsetLeft -= skipped;
+                const available = segment.quantity - skipped;
+                if (available <= 0) continue;
+                const quantity = Math.min(left, available);
+                if (quantity > 0) {
+                    selectedSegments.push({
+                        quantity,
+                        transportCentsPerUnit: segment.transportCentsPerUnit
+                    });
+                    left -= quantity;
+                }
+                if (left <= 0) break;
+            }
+            const totalCents = selectedSegments.reduce(
+                (sum, segment) => sum + segment.quantity * segment.transportCentsPerUnit,
+                0
+            );
+            return [{ ...source, totalCents, segments: selectedSegments }];
+        })
+    };
+}
+
+function allocateRuryOrderTransport(
+    orderItems,
+    sourceItems,
+    sourceAllocation,
+    otherOrders,
+    currentOrder
+) {
+    const sourceByUid = new Map(sourceItems.map((item) => [item.uid, item]));
+    const sourceAllocationByUid = new Map(
+        (sourceAllocation?.items || []).map((entry) => [entry.itemUid, entry])
+    );
+    const canPreserveCurrentAllocation = isValidCurrentOrderTransportAllocation(currentOrder);
+    const currentAllocationByUid = new Map(
+        (canPreserveCurrentAllocation ? currentOrder.transportAllocation.items : []).map(
+            (entry) => [entry.itemUid, entry]
+        )
+    );
+    const currentQuantityByUid = new Map(
+        (canPreserveCurrentAllocation ? currentOrder.items : [])
+            .filter((item) => currentAllocationByUid.has(item.uid))
+            .map((item) => [item.uid, Number(item.orderedQuantity ?? item.quantity) || 0])
+    );
+    const orderedOthers = sortRuryOrdersByCreation(
+        otherOrders.filter((order) => order.id !== currentOrder?.id && !order.transportSeparate)
+    );
+    const result = [];
+
+    for (const orderItem of orderItems) {
+        const itemUid = orderItem.uid;
+        const quantity = Math.max(0, Number(orderItem.orderedQuantity ?? orderItem.quantity) || 0);
+        if (!itemUid || quantity <= 0) continue;
+        const sourceItem = sourceByUid.get(itemUid);
+        const source = sourceAllocationByUid.get(itemUid);
+        if (!source || !sourceItem) continue;
+        const sourceQuantity = Number(sourceItem.quantity) || 0;
+        const hasFractionalOrder = orderedOthers.some((order) => {
+            const existingItem = (order.items || []).find((item) => item.uid === itemUid);
+            const existingQuantity = Number(
+                existingItem?.orderedQuantity ?? existingItem?.quantity
+            );
+            return existingItem && !Number.isInteger(existingQuantity);
+        });
+        const isUnitBased =
+            Number.isInteger(sourceQuantity) &&
+            Number.isInteger(quantity) &&
+            !hasFractionalOrder &&
+            Array.isArray(source.segments);
+
+        if (isUnitBased) {
+            const pool = source.segments.map((segment) => ({
+                rate: segment.transportCentsPerUnit,
+                quantity: segment.quantity
+            }));
+            const takeUnits = (requestedQuantity, requestedSegments = null) => {
+                let left = requestedQuantity;
+                const picked = new Map();
+                const take = (rate, available) => {
+                    const poolEntry = pool.find((entry) => entry.rate === rate);
+                    if (!poolEntry || poolEntry.quantity < available) return false;
+                    poolEntry.quantity -= available;
+                    picked.set(rate, (picked.get(rate) || 0) + available);
+                    left -= available;
+                    return true;
+                };
+                if (requestedSegments) {
+                    for (const segment of requestedSegments) {
+                        if (!take(segment.transportCentsPerUnit, segment.quantity)) return null;
+                    }
+                } else {
+                    for (const entry of [...pool].sort((a, b) => a.rate - b.rate)) {
+                        const available = Math.min(left, entry.quantity);
+                        if (available > 0 && !take(entry.rate, available)) return null;
+                        if (left <= 0) break;
+                    }
+                }
+                if (left > 0) return null;
+                return [...picked.entries()]
+                    .sort(([rateA], [rateB]) => rateA - rateB)
+                    .map(([transportCentsPerUnit, segmentQuantity]) => ({
+                        quantity: segmentQuantity,
+                        transportCentsPerUnit
+                    }));
+            };
+
+            let valid = true;
+            for (const other of orderedOthers) {
+                const otherItem = (other.items || []).find((item) => item.uid === itemUid);
+                if (!otherItem) continue;
+                const otherQuantity = Number(otherItem.orderedQuantity ?? otherItem.quantity) || 0;
+                if (otherQuantity <= 0) continue;
+                const saved = (other.transportAllocation?.items || []).find(
+                    (entry) => entry.itemUid === itemUid
+                );
+                const consumed = takeUnits(
+                    otherQuantity,
+                    Array.isArray(saved?.segments) ? saved.segments : null
+                );
+                if (!consumed) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (!valid) return { valid: false, reason: 'transport-pool-conflict' };
+
+            const oldSegments = currentAllocationByUid.get(itemUid)?.segments || [];
+            const oldQuantity = currentQuantityByUid.get(itemUid) || 0;
+            const preservedQuantity = Math.min(quantity, oldQuantity);
+            const preservedSegments = [];
+            let preserveLeft = preservedQuantity;
+            for (const segment of oldSegments) {
+                const keep = Math.min(preserveLeft, segment.quantity);
+                if (keep > 0) {
+                    preservedSegments.push({
+                        quantity: keep,
+                        transportCentsPerUnit: segment.transportCentsPerUnit
+                    });
+                    preserveLeft -= keep;
+                }
+                if (preserveLeft <= 0) break;
+            }
+            if (preserveLeft > 0) preservedSegments.length = 0;
+            const consumedPreserved = preservedSegments.length
+                ? takeUnits(preservedQuantity, preservedSegments)
+                : [];
+            if (consumedPreserved === null)
+                return { valid: false, reason: 'transport-pool-conflict' };
+            const additionalSegments = takeUnits(quantity - preservedQuantity);
+            if (!additionalSegments) return { valid: false, reason: 'transport-pool-conflict' };
+            const combined = [...(consumedPreserved || []), ...additionalSegments];
+            const grouped = new Map();
+            combined.forEach((segment) => {
+                grouped.set(
+                    segment.transportCentsPerUnit,
+                    (grouped.get(segment.transportCentsPerUnit) || 0) + segment.quantity
+                );
+            });
+            const segments = [...grouped.entries()]
+                .sort(([rateA], [rateB]) => rateA - rateB)
+                .map(([transportCentsPerUnit, segmentQuantity]) => ({
+                    quantity: segmentQuantity,
+                    transportCentsPerUnit
+                }));
+            result.push({
+                itemUid,
+                totalCents: segments.reduce(
+                    (sum, segment) => sum + segment.quantity * segment.transportCentsPerUnit,
+                    0
+                ),
+                segments
+            });
+            continue;
+        }
+
+        let remainingQuantity = sourceQuantity;
+        let remainingCents = Number(source.totalCents) || 0;
+        const takeFraction = (takeQuantity, fixedCents = null) => {
+            if (takeQuantity < 0 || takeQuantity > remainingQuantity) return null;
+            const cents =
+                fixedCents == null
+                    ? takeQuantity >= remainingQuantity
+                        ? remainingCents
+                        : Math.floor((remainingCents * takeQuantity) / remainingQuantity)
+                    : fixedCents;
+            if (cents < 0 || cents > remainingCents) return null;
+            remainingQuantity -= takeQuantity;
+            remainingCents -= cents;
+            return cents;
+        };
+        for (const other of orderedOthers) {
+            const otherItem = (other.items || []).find((item) => item.uid === itemUid);
+            if (!otherItem) continue;
+            const otherQuantity = Number(otherItem.orderedQuantity ?? otherItem.quantity) || 0;
+            if (otherQuantity <= 0) continue;
+            const saved = (other.transportAllocation?.items || []).find(
+                (entry) => entry.itemUid === itemUid
+            );
+            const consumed = takeFraction(
+                otherQuantity,
+                Number.isInteger(saved?.totalCents) ? saved.totalCents : null
+            );
+            if (consumed == null) return { valid: false, reason: 'transport-pool-conflict' };
+        }
+
+        const oldEntry = currentAllocationByUid.get(itemUid);
+        const oldQuantity = currentQuantityByUid.get(itemUid) || 0;
+        const preservedQuantity = Math.min(quantity, oldQuantity);
+        const oldCents = Number(oldEntry?.totalCents) || 0;
+        const preservedCents =
+            oldQuantity > 0
+                ? preservedQuantity >= oldQuantity
+                    ? oldCents
+                    : Math.floor((oldCents * preservedQuantity) / oldQuantity)
+                : 0;
+        if (takeFraction(preservedQuantity, preservedCents) == null)
+            return { valid: false, reason: 'transport-pool-conflict' };
+        const additionalQuantity = quantity - preservedQuantity;
+        const additionalCents = takeFraction(additionalQuantity);
+        if (additionalCents == null) return { valid: false, reason: 'transport-pool-conflict' };
+        result.push({ itemUid, totalCents: preservedCents + additionalCents });
+    }
+
+    return {
+        valid: true,
+        allocation: { version: 1, items: result },
+        transportCost: result.reduce((sum, item) => sum + item.totalCents, 0) / 100
+    };
+}
+
+function getCurrentRuryTransportAllocation(items, totalCost) {
+    const order =
+        window.orderEditMode && typeof window.getCurrentRuryOrder === 'function'
+            ? window.getCurrentRuryOrder()
+            : null;
+    if (!order) {
+        return currentRuryTransportSeparate
+            ? { version: 1, items: [] }
+            : calculateTransportAllocation(items, totalCost);
+    }
+    if (order.transportSeparate) return { version: 1, items: [] };
+    if (order.transportAllocation?.version === 1) {
+        const savedOrderCost = Number(order.transportCost);
+        return projectTransportAllocation(
+            items,
+            order.transportAllocation,
+            Number.isFinite(savedOrderCost) ? savedOrderCost : totalCost
+        );
+    }
+
+    const snapshot = order.originalSnapshot || {};
+    const sourceItems = snapshot.transportSourceItems || snapshot.items || [];
+    const sourceCost =
+        Number(snapshot.transportCost) ||
+        withOfferTransportFlags(snapshot, () => getRuryTransportCount(sourceItems)) *
+            ((Number(snapshot.transportKm) || 0) * (Number(snapshot.transportRate) || 0));
+    const sourceAllocation = projectTransportAllocation(
+        sourceItems,
+        snapshot.transportAllocation,
+        sourceCost
+    );
+    const projection = allocateRuryOrderTransport(
+        items,
+        sourceItems,
+        sourceAllocation,
+        typeof ordersRury !== 'undefined' ? ordersRury : [],
+        order
+    );
+    return projection.valid ? projection.allocation : { version: 1, items: [] };
+}
+
 /** Samodzielny pomocnik dla kontekstów zapisu/eksportu (bez DOM) */
 function calculateTransportDistributionStandalone(items, costPerTrip) {
     return calculateTransportDistribution(items, costPerTrip);
@@ -890,4 +1390,12 @@ window.toggleOrderTransportBreakdown = function () {
 
 /* ===== Rejestracja globali ===== */
 window.calculateTransportDistributionStandalone = calculateTransportDistributionStandalone;
+window.calculateTransportAllocation = calculateTransportAllocation;
+window.projectTransportAllocation = projectTransportAllocation;
+window.isTransportAllocationValid = isTransportAllocationValid;
+window.getTransportAllocationCents = getTransportAllocationCents;
+window.getTransportSegments = getTransportSegments;
+window.selectTransportAllocation = selectTransportAllocation;
+window.getCurrentRuryTransportAllocation = getCurrentRuryTransportAllocation;
+window.allocateRuryOrderTransport = allocateRuryOrderTransport;
 window.withOfferTransportFlags = withOfferTransportFlags;

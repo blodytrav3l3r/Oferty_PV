@@ -218,6 +218,31 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         });
 
         const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
+        const offerTransportCost =
+            Number(offer.transportCost) ||
+            (Number(offer.transportCount) || 0) *
+                (Number(offer.transportCostPerTrip) ||
+                    Number(offer.transportKm || 0) * Number(offer.transportRate || 0));
+        const offerAllocation = projectTransportAllocation(
+            offer.items || [],
+            offer.transportAllocation,
+            offerTransportCost
+        );
+        const orderTransportProjection = currentRuryTransportSeparate
+            ? { valid: true, allocation: { version: 1, items: [] }, transportCost: 0 }
+            : allocateRuryOrderTransport(
+                  orderItems,
+                  offer.items || [],
+                  offerAllocation,
+                  getOrdersForOffer(offer.id),
+                  null
+              );
+        if (!orderTransportProjection.valid) {
+            showToast('Konflikt alokacji transportu: brak wolnej ilości lub groszy', 'error');
+            return;
+        }
+        const orderAllocation = orderTransportProjection.allocation;
+        const orderTransportCost = orderTransportProjection.transportCost;
 
         const orderData = {
             id: orderId,
@@ -235,13 +260,15 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
                 '',
             originalSnapshot: {
                 items: snapshotItems,
+                transportSourceItems: structuredClone(offer.items || []),
                 transportKm,
                 transportRate,
-                transportMode: currentRuryTransportMode || 'full',
-                transportSeparate: !!currentRuryTransportSeparate,
-                transportCost: importedTransport ? importedTransport.cost : undefined,
-                transportCount: importedTransport ? importedTransport.count : undefined,
-                externalTransportCost: importedTransport ? importedTransport.cost : null,
+                transportMode: offer.transportMode || 'full',
+                transportSeparate: !!offer.transportSeparate,
+                transportCost: offerTransportCost,
+                transportCount: offer.transportCount,
+                externalTransportCost: offer.externalTransportCost ?? null,
+                ...(!offer.transportSeparate ? { transportAllocation: offerAllocation } : {}),
                 zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled
             },
             clientName,
@@ -266,9 +293,14 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             transportRate,
             transportMode: currentRuryTransportMode || 'full',
             transportSeparate: !!currentRuryTransportSeparate,
-            transportCost: importedTransport ? importedTransport.cost : undefined,
+            transportCost: importedTransport
+                ? importedTransport.cost
+                : !currentRuryTransportSeparate
+                  ? orderTransportCost
+                  : undefined,
             transportCount: importedTransport ? importedTransport.count : undefined,
             externalTransportCost: importedTransport ? importedTransport.cost : null,
+            ...(!currentRuryTransportSeparate ? { transportAllocation: orderAllocation } : {}),
             zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
             items: orderItems,
             kartaBudowy: kartaBudowyData,
@@ -335,6 +367,33 @@ async function saveRuryOrder() {
         !importedTransport && orderData.externalTransportCost != null
             ? window.isRuryTransportSeparate.getCalculated(orderCurrentItems || [])
             : null;
+    const snapshot = orderData.originalSnapshot;
+    const snapshotItems = snapshot?.transportSourceItems || snapshot?.items || [];
+    const snapshotCost = snapshot
+        ? Number(snapshot.transportCost) ||
+          withOfferTransportFlags(snapshot, () => getRuryTransportCount(snapshotItems)) *
+              ((Number(snapshot.transportKm) || 0) * (Number(snapshot.transportRate) || 0))
+        : 0;
+    const orderSourceAllocation = projectTransportAllocation(
+        snapshotItems,
+        snapshot?.transportAllocation,
+        snapshotCost
+    );
+    const orderTransportProjection = currentRuryTransportSeparate
+        ? { valid: true, allocation: { version: 1, items: [] }, transportCost: 0 }
+        : allocateRuryOrderTransport(
+              orderCurrentItems || [],
+              snapshotItems,
+              orderSourceAllocation,
+              getOrdersForOffer(orderData.offerId),
+              orderData
+          );
+    if (!orderTransportProjection.valid) {
+        showToast('Konflikt alokacji transportu: brak wolnej ilości lub groszy', 'error');
+        return;
+    }
+    const orderAllocation = orderTransportProjection.allocation;
+    const orderTransportCost = orderTransportProjection.transportCost;
     const updatedOrderData = {
         ...orderData,
         items: structuredClone(orderCurrentItems || []),
@@ -342,6 +401,8 @@ async function saveRuryOrder() {
         transportRate: Number(document.getElementById('transport-rate')?.value || 0),
         transportMode: currentRuryTransportMode || 'full',
         transportSeparate: !!currentRuryTransportSeparate,
+        ...(!currentRuryTransportSeparate ? { transportAllocation: orderAllocation } : {}),
+        ...(!currentRuryTransportSeparate ? { transportCost: orderTransportCost } : {}),
         externalTransportCost: importedTransport ? importedTransport.cost : null,
         ...(importedTransport
             ? { transportCost: importedTransport.cost, transportCount: importedTransport.count }

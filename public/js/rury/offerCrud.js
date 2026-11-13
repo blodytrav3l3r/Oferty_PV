@@ -69,13 +69,16 @@ async function saveOffer() {
     const transportCostPerTrip = _moneyRoundOfferCrud(fields.transportKm * fields.transportRate);
 
     const transportResult = calculateTransports(currentOfferItems);
-    const transportCost = importedTransport
-        ? importedTransport.cost
-        : transportResult.totalTransports * transportCostPerTrip;
-    const transportDist = calculateTransportDistributionStandalone(
-        currentOfferItems,
-        transportCostPerTrip
+    const transportCount =
+        typeof getRuryTransportCount === 'function'
+            ? getRuryTransportCount(currentOfferItems)
+            : transportResult.totalTransports;
+    const transportCost = _moneyRoundOfferCrud(
+        importedTransport ? importedTransport.cost : transportCount * transportCostPerTrip
     );
+    const transportAllocation = currentRuryTransportSeparate
+        ? { version: 1, items: [] }
+        : calculateTransportAllocation(currentOfferItems, transportCost);
 
     let totalNetto = 0;
     currentOfferItems.forEach((item) => {
@@ -84,9 +87,9 @@ async function saveOffer() {
                 (item.pehdCostPerUnit || 0) +
                 (item.surcharge || 0)
         );
-        const transportPerUnit = transportDist[item.productId] || 0;
+        const transportCents = getTransportAllocationCents(transportAllocation, item.uid);
         totalNetto += _moneyRoundOfferCrud(
-            _moneyRoundOfferCrud(priceAfterDiscount + transportPerUnit) * item.quantity
+            (_moneyRoundOfferCrud(priceAfterDiscount) * 100 * item.quantity + transportCents) / 100
         );
     });
     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
@@ -147,11 +150,10 @@ async function saveOffer() {
         transportCostPerTrip: transportCostPerTrip,
         transportMode: currentRuryTransportMode || 'full',
         transportSeparate: !!currentRuryTransportSeparate,
-        transportCount: importedTransport
-            ? importedTransport.count
-            : transportResult.totalTransports,
+        transportCount: importedTransport ? importedTransport.count : transportCount,
         transportCost: transportCost,
         externalTransportCost: importedTransport ? importedTransport.cost : null,
+        ...(!currentRuryTransportSeparate ? { transportAllocation } : {}),
         zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
         totalNetto: totalNetto,
         totalBrutto: _moneyRoundOfferCrud(totalNetto * 1.23)

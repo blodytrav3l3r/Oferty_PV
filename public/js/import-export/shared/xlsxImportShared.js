@@ -87,6 +87,97 @@ window.XlsxImportShared = {
                     });
 
                     const offers = this.groupRowsIntoOffers(normalized);
+                    const metadataSheet = wb.Sheets['_SOK_META'];
+                    if (metadataSheet) {
+                        const metadataRows = XLSX.utils.sheet_to_json(metadataSheet, {
+                            defval: '',
+                            raw: false
+                        });
+                        const metadataByOffer = new Map();
+                        metadataRows.forEach((row) => {
+                            const normalizedRow = {};
+                            Object.keys(row).forEach((key) => {
+                                normalizedRow[this.normalizeHeader(key)] = row[key];
+                            });
+                            if (Number(normalizedRow.VERSION) !== 1) return;
+                            const number = String(normalizedRow.OFFER_NUMBER || '');
+                            const itemUid = String(normalizedRow.ITEM_UID || '');
+                            if (!number || !itemUid) return;
+                            let metadata = metadataByOffer.get(number);
+                            if (!metadata) {
+                                metadata = {
+                                    version: 1,
+                                    offerNumber: String(normalizedRow.OFFER_NUMBER || ''),
+                                    items: []
+                                };
+                                metadataByOffer.set(number, metadata);
+                            }
+                            const source = String(normalizedRow.SOURCE_ITEM_JSON || '');
+                            let sourceItem;
+                            try {
+                                sourceItem = source ? JSON.parse(source) : null;
+                            } catch (_error) {
+                                return;
+                            }
+                            let segment = null;
+                            try {
+                                segment = normalizedRow.SEGMENT_JSON
+                                    ? JSON.parse(String(normalizedRow.SEGMENT_JSON))
+                                    : null;
+                            } catch (_error) {
+                                return;
+                            }
+                            let rowSnapshot = null;
+                            try {
+                                rowSnapshot = normalizedRow.ROW_JSON
+                                    ? JSON.parse(String(normalizedRow.ROW_JSON))
+                                    : null;
+                            } catch (_error) {
+                                return;
+                            }
+                            const allocation = {
+                                itemUid,
+                                totalCents: Number(normalizedRow.TOTAL_CENTS)
+                            };
+                            const key = itemUid;
+                            const existing = metadata.items.find((item) => item.itemUid === key);
+                            if (!existing) {
+                                metadata.items.push({
+                                    ...allocation,
+                                    sourceItem,
+                                    segments: segment ? [segment] : [],
+                                    lineCents: Number(normalizedRow.LINE_CENTS) || 0,
+                                    rowLps: [String(normalizedRow.ROW_LP || '')],
+                                    rowDetails: [
+                                        {
+                                            rowLp: String(normalizedRow.ROW_LP || ''),
+                                            segment,
+                                            lineCents: Number(normalizedRow.LINE_CENTS) || 0,
+                                            rowSnapshot
+                                        }
+                                    ]
+                                });
+                            } else {
+                                existing.rowLps.push(String(normalizedRow.ROW_LP || ''));
+                                if (segment) existing.segments.push(segment);
+                                existing.lineCents += Number(normalizedRow.LINE_CENTS) || 0;
+                                existing.rowDetails.push({
+                                    rowLp: String(normalizedRow.ROW_LP || ''),
+                                    segment,
+                                    lineCents: Number(normalizedRow.LINE_CENTS) || 0,
+                                    rowSnapshot
+                                });
+                            }
+                        });
+                        offers.forEach((offer) => {
+                            const metadata =
+                                metadataByOffer.get(String(offer.number)) ||
+                                (offers.length === 1 && metadataByOffer.size === 1
+                                    ? metadataByOffer.values().next().value
+                                    : null);
+                            if (metadata) offer.transportAllocation = metadata;
+                        });
+                    }
 
                     resolve({ rows: normalized, offers, totalRows: normalized.length });
                 } catch (err) {
@@ -115,11 +206,32 @@ window.XlsxImportShared = {
             : [];
     },
 
-    async generateExternalXlsx(module, rows) {
+    async generateExternalXlsx(module, rows, metadataRows = []) {
         await ensureXlsx();
         const ws = XLSX.utils.json_to_sheet(rows, { header: this.REQUIRED_COLS });
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Import');
+        if (metadataRows.length) {
+            const metadataSheet = XLSX.utils.json_to_sheet(metadataRows, {
+                header: [
+                    'VERSION',
+                    'OFFER_NUMBER',
+                    'OFFER_ID',
+                    'ITEM_UID',
+                    'ROW_LP',
+                    'TOTAL_CENTS',
+                    'SEGMENT_JSON',
+                    'LINE_CENTS',
+                    'ROW_JSON',
+                    'SOURCE_ITEM_JSON'
+                ]
+            });
+            XLSX.utils.book_append_sheet(wb, metadataSheet, '_SOK_META');
+            const metadataIndex = wb.SheetNames.indexOf('_SOK_META');
+            wb.Workbook = wb.Workbook || {};
+            wb.Workbook.Sheets = wb.Workbook.Sheets || [];
+            wb.Workbook.Sheets[metadataIndex] = { Hidden: 1 };
+        }
         return wb;
     },
 

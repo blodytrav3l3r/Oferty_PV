@@ -28,6 +28,14 @@ export interface RuryOfferData {
     transportCount?: number;
     transportCostPerTrip?: number;
     transportCost?: number;
+    transportAllocation?: {
+        version: 1;
+        items: Array<{
+            itemUid: string;
+            totalCents: number;
+            segments?: Array<{ quantity: number; transportCentsPerUnit: number }>;
+        }>;
+    };
     createdAt: string;
     validityDays: number;
     notes: string;

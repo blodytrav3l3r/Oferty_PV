@@ -54,10 +54,19 @@ function renderOfferSummaryTab() {
     const items = getActiveItemsArray();
     const transportResult = calculateTransports(items);
     const costPerTrip = getCostPerTrip();
-    renderOfferSummaryTableTab(transportResult, costPerTrip);
+    const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
+    const transportCount =
+        typeof getRuryTransportCount === 'function'
+            ? getRuryTransportCount(items)
+            : transportResult.totalTransports;
+    const totalTransportCost = importedTransport
+        ? importedTransport.cost
+        : transportCount * costPerTrip;
+    const allocation = getCurrentRuryTransportAllocation(items, totalTransportCost);
+    renderOfferSummaryTableTab(transportResult, costPerTrip, allocation);
 }
 
-function renderOfferSummaryTableTab(transportResult, costPerTrip) {
+function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAllocation) {
     const container = document.getElementById('offer-tab-summary-body');
     if (!container) return;
 
@@ -82,31 +91,20 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                   .map((si) => [si.uid, si])
           )
         : null;
-
-    const transportDist = calculateTransportDistribution(items, costPerTrip);
-
-    let snapTransportDist = {};
-    if (showPriceComparison && orderData.originalSnapshot) {
-        const snap = orderData.originalSnapshot;
-        const snapKm = snap.transportKm || 0;
-        const snapRate = snap.transportRate || 0;
-        const snapCostPerTrip = snapKm * snapRate;
-        const snapMode = snap.transportMode || 'full';
-        const snapItems = snap.items || [];
-        if (
-            snapItems.length > 0 &&
-            snapCostPerTrip > 0 &&
-            typeof calculateTransportDistribution === 'function'
-        ) {
-            const savedMode = currentRuryTransportMode;
-            const savedSeparate = currentRuryTransportSeparate;
-            currentRuryTransportMode = snapMode;
-            currentRuryTransportSeparate = !!snap.transportSeparate;
-            snapTransportDist = calculateTransportDistribution(snapItems, snapCostPerTrip);
-            currentRuryTransportMode = savedMode;
-            currentRuryTransportSeparate = savedSeparate;
-        }
-    }
+    const snap = showPriceComparison ? orderData.originalSnapshot : null;
+    const snapItems = snap?.items || [];
+    const snapCostPerTrip = (snap?.transportKm || 0) * (snap?.transportRate || 0);
+    const snapTotalTransportCost = snap
+        ? Number(snap.transportCost) ||
+          withOfferTransportFlags(snap, () => getRuryTransportCount(snapItems)) * snapCostPerTrip
+        : 0;
+    const snapshotAllocation = snap
+        ? projectTransportAllocation(
+              snap.transportSourceItems || snapItems,
+              snap.transportAllocation,
+              snapTotalTransportCost
+          )
+        : { version: 1, items: [] };
 
     let progressHtml = '';
     if (!window.orderEditMode && typeof computeOrderedQuantities === 'function') {
@@ -184,13 +182,25 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     const catGroups = {};
 
     sortedItems.forEach(({ item }, i) => {
+        const displayQuantity =
+            window.orderEditMode && Number(item.orderedQuantity) > 0
+                ? Number(item.orderedQuantity)
+                : item.quantity;
         const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
         const surcharge = item.surcharge || 0;
         const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
-        const tpu = transportDist[item.productId] || 0;
-        const unitTotal = priceAfterDiscount + tpu;
-        const netto = unitTotal * item.quantity;
+        const roundedBaseCents = Math.round(_moneyRoundTransport(priceAfterDiscount) * 100);
+        const transportCents = getTransportAllocationCents(transportAllocation, item.uid);
+        const segments = getTransportSegments(transportAllocation, item.uid);
+        const tpu =
+            Number.isInteger(displayQuantity) && displayQuantity > 0
+                ? transportCents / 100 / displayQuantity
+                : 0;
+        const unitTotal = _moneyRoundTransport(roundedBaseCents / 100 + tpu);
+        const netto = _moneyRoundTransport(
+            (roundedBaseCents * displayQuantity + transportCents) / 100
+        );
 
         totalNetto += netto;
 
@@ -200,8 +210,14 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             if (snapItem) {
                 const bpa = snapItem.unitPrice * (1 - (snapItem.discount || 0) / 100);
                 const ppu = (snapItem.pehdCostPerUnit || 0) + (snapItem.surcharge || 0);
-                const tpuS = snapTransportDist[snapItem.productId] || 0;
-                snapOfferPrice = (bpa + ppu + tpuS) * (snapItem.quantity || 0);
+                const snapshotTransportCents = getTransportAllocationCents(
+                    snapshotAllocation,
+                    snapItem.uid
+                );
+                const snapshotBaseCents = Math.round(_moneyRoundTransport(bpa + ppu) * 100);
+                snapOfferPrice = _moneyRoundTransport(
+                    (snapshotBaseCents * (snapItem.quantity || 0) + snapshotTransportCents) / 100
+                );
                 totalOffer += snapOfferPrice;
             }
         }
@@ -287,10 +303,10 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             <td style="text-align:left; font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${pName}</td>
             <td class="text-center">${fmt(item.unitPrice)}</td>
             <td class="text-center">${item.discount}%</td>
-            <td class="text-center">${fmt(priceAfterDiscount)}</td>
-            <td style=" color:var(--warn); white-space:nowrap;">${tpu > 0 ? fmt(tpu) : '—'}</td>
-            <td style=" color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${fmt(unitTotal)}</td>
-            <td style="text-align:center; font-weight: var(--fw-semibold); white-space:nowrap;">${item.quantity} szt.</td>
+            <td class="text-center">${fmt(_moneyRoundTransport(priceAfterDiscount))}</td>
+            <td style=" color:var(--warn); white-space:nowrap;">${segments.length > 1 ? `${fmt(segments[0].transportCentsPerUnit / 100)}–${fmt(segments[1].transportCentsPerUnit / 100)}` : !Number.isInteger(item.quantity) && transportCents ? `${fmt(transportCents / 100)} / poz.` : tpu > 0 ? fmt(tpu) : '—'}</td>
+            <td style=" color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${segments.length > 1 ? `${fmt(_moneyRoundTransport(roundedBaseCents / 100 + segments[0].transportCentsPerUnit / 100))}–${fmt(_moneyRoundTransport(roundedBaseCents / 100 + segments[1].transportCentsPerUnit / 100))}` : Number.isInteger(item.quantity) ? fmt(unitTotal) : fmt(_moneyRoundTransport(roundedBaseCents / 100))}</td>
+            <td style="text-align:center; font-weight: var(--fw-semibold); white-space:nowrap;">${displayQuantity} szt.</td>
             ${summaryOrderCell}
             <td style=" font-weight: var(--fw-bold); color:var(--success); white-space:nowrap;">${fmt(netto)} PLN</td>
             ${offerCell}${diffCell}

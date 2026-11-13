@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-13",
-    "totalEdges": 2859,
+    "totalEdges": 2880,
     "edges": [
         {
             "page": "public/app.html",
@@ -1053,6 +1053,22 @@
         },
         {
             "page": "public/rury.html",
+            "name": "_moneyRoundTransport",
+            "userFile": "public/js/rury/offerRendering.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "_moneyRoundTransport",
+            "userFile": "public/js/rury/offerSummaryTab.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
             "name": "_pricelistDirty",
             "userFile": "public/js/rury/offerNavigation.js",
             "defFile": "public/js/rury/pricelistUi.js",
@@ -1072,6 +1088,14 @@
             "name": "_rebuildRuryOffersMap",
             "userFile": "public/js/rury/offerExports.js",
             "defFile": "public/js/rury/productHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "allocateRuryOrderTransport",
+            "userFile": "public/js/rury/orderCrud.js",
+            "defFile": "public/js/rury/transport.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -1293,18 +1317,10 @@
         },
         {
             "page": "public/rury.html",
-            "name": "calculateTransportDistribution",
-            "userFile": "public/js/rury/offerRendering.js",
+            "name": "calculateTransportAllocation",
+            "userFile": "public/js/rury/offerCrud.js",
             "defFile": "public/js/rury/transport.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/rury.html",
-            "name": "calculateTransportDistribution",
-            "userFile": "public/js/rury/offerSummaryTab.js",
-            "defFile": "public/js/rury/transport.js",
-            "defKind": "lexical",
+            "defKind": "window",
             "confidence": "CONFIRMED"
         },
         {
@@ -1317,22 +1333,6 @@
         },
         {
             "page": "public/rury.html",
-            "name": "calculateTransportDistributionStandalone",
-            "userFile": "public/js/rury/offerCrud.js",
-            "defFile": "public/js/rury/transport.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/rury.html",
-            "name": "calculateTransportDistributionStandalone",
-            "userFile": "public/js/rury/offerExports.js",
-            "defFile": "public/js/rury/transport.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/rury.html",
             "name": "calculateTransports",
             "userFile": "public/js/rury/offerCrud.js",
             "defFile": "public/js/rury/transport.js",
@@ -1343,6 +1343,14 @@
             "page": "public/rury.html",
             "name": "calculateTransports",
             "userFile": "public/js/rury/offerExports.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "calculateTransports",
+            "userFile": "public/js/rury/offerRendering.js",
             "defFile": "public/js/rury/transport.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -1655,14 +1663,6 @@
             "page": "public/rury.html",
             "name": "currentRuryTransportSeparate",
             "userFile": "public/js/rury/offerCrud.js",
-            "defFile": "public/js/rury/transport.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/rury.html",
-            "name": "currentRuryTransportSeparate",
-            "userFile": "public/js/rury/offerSummaryTab.js",
             "defFile": "public/js/rury/transport.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -2342,6 +2342,14 @@
         {
             "page": "public/rury.html",
             "name": "getCostPerTrip",
+            "userFile": "public/js/rury/offerRendering.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getCostPerTrip",
             "userFile": "public/js/rury/offerSummaryTab.js",
             "defFile": "public/js/rury/transport.js",
             "defKind": "lexical",
@@ -2392,6 +2400,22 @@
             "name": "getCurrentRuryOrder",
             "userFile": "public/js/shared/offerCrudCommon.js",
             "defFile": "public/js/rury/orderEditMode.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getCurrentRuryTransportAllocation",
+            "userFile": "public/js/rury/offerRendering.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getCurrentRuryTransportAllocation",
+            "userFile": "public/js/rury/offerSummaryTab.js",
+            "defFile": "public/js/rury/transport.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -2496,6 +2520,14 @@
             "name": "getOfferRuryById",
             "userFile": "public/js/shared/draftAutosave.js",
             "defFile": "public/js/rury/productHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getOfferTransportPresentation",
+            "userFile": "public/js/rury/offerExports.js",
+            "defFile": "public/js/rury/offerExportsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -2757,6 +2789,46 @@
         },
         {
             "page": "public/rury.html",
+            "name": "getRuryTransportCount",
+            "userFile": "public/js/rury/offerCrud.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getRuryTransportCount",
+            "userFile": "public/js/rury/offerExports.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getRuryTransportCount",
+            "userFile": "public/js/rury/offerRendering.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getRuryTransportCount",
+            "userFile": "public/js/rury/offerSummaryTab.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getRuryTransportCount",
+            "userFile": "public/js/rury/orderCrud.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
             "name": "getSortedRuryItems",
             "userFile": "public/js/rury/offerRendering.js",
             "defFile": "public/js/rury/productHelpers.js",
@@ -2776,6 +2848,54 @@
             "name": "getSortedRuryItems",
             "userFile": "public/js/rury/orderKartaBudowy.js",
             "defFile": "public/js/rury/productHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getTransportAllocationCents",
+            "userFile": "public/js/rury/offerCrud.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getTransportAllocationCents",
+            "userFile": "public/js/rury/offerExports.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getTransportAllocationCents",
+            "userFile": "public/js/rury/offerRendering.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getTransportAllocationCents",
+            "userFile": "public/js/rury/offerSummaryTab.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getTransportSegments",
+            "userFile": "public/js/rury/offerRendering.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "getTransportSegments",
+            "userFile": "public/js/rury/offerSummaryTab.js",
+            "defFile": "public/js/rury/transport.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -3222,6 +3342,14 @@
         {
             "page": "public/rury.html",
             "name": "ordersRury",
+            "userFile": "public/js/rury/transport.js",
+            "defFile": "public/js/rury/orderCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "ordersRury",
             "userFile": "public/js/shared/draftAutosave.js",
             "defFile": "public/js/rury/orderCrud.js",
             "defKind": "lexical",
@@ -3232,6 +3360,30 @@
             "name": "PRINT_TOKENS_CSS",
             "userFile": "public/js/rury/offerExports.js",
             "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "projectTransportAllocation",
+            "userFile": "public/js/rury/offerExports.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "projectTransportAllocation",
+            "userFile": "public/js/rury/offerSummaryTab.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "projectTransportAllocation",
+            "userFile": "public/js/rury/orderCrud.js",
+            "defFile": "public/js/rury/transport.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -4151,6 +4303,22 @@
             "page": "public/rury.html",
             "name": "withOfferTransportFlags",
             "userFile": "public/js/rury/offerExports.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "withOfferTransportFlags",
+            "userFile": "public/js/rury/offerSummaryTab.js",
+            "defFile": "public/js/rury/transport.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/rury.html",
+            "name": "withOfferTransportFlags",
+            "userFile": "public/js/rury/orderCrud.js",
             "defFile": "public/js/rury/transport.js",
             "defKind": "window",
             "confidence": "CONFIRMED"

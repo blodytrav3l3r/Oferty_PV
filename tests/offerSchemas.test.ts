@@ -274,6 +274,101 @@ describe('offersBatchSchema', () => {
         expect(result.success).toBe(true);
     });
 
+    it('waliduje alokację groszy ze spłaszczonego payloadu zapisu oferty', () => {
+        const batch = {
+            data: [
+                {
+                    clientId: 'client-1',
+                    transportCost: 1,
+                    transportAllocation: {
+                        version: 1,
+                        items: [
+                            {
+                                itemUid: 'tube-1',
+                                totalCents: 100,
+                                segments: [
+                                    { quantity: 2, transportCentsPerUnit: 33 },
+                                    { quantity: 1, transportCentsPerUnit: 34 }
+                                ]
+                            }
+                        ]
+                    },
+                    items: [{ uid: 'tube-1', productId: 'prod-1', quantity: 3 }]
+                }
+            ]
+        };
+        expect(offersBatchSchema.safeParse(batch).success).toBe(true);
+    });
+
+    it('odrzuca alokację o niezgodnej ilości, kwocie lub UID', () => {
+        const base = {
+            clientId: 'client-1',
+            transportCost: 1,
+            transportAllocation: {
+                version: 1,
+                items: [
+                    {
+                        itemUid: 'tube-1',
+                        totalCents: 100,
+                        segments: [{ quantity: 3, transportCentsPerUnit: 33 }]
+                    }
+                ]
+            },
+            items: [{ uid: 'tube-1', productId: 'prod-1', quantity: 3 }]
+        };
+        expect(offersBatchSchema.safeParse({ data: [base] }).success).toBe(false);
+        expect(
+            offersBatchSchema.safeParse({
+                data: [{ ...base, transportAllocation: { ...base.transportAllocation, items: [] } }]
+            }).success
+        ).toBe(false);
+        expect(
+            offersBatchSchema.safeParse({
+                data: [
+                    {
+                        ...base,
+                        transportAllocation: {
+                            ...base.transportAllocation,
+                            items: [
+                                {
+                                    ...base.transportAllocation.items[0],
+                                    itemUid: 'unknown'
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }).success
+        ).toBe(false);
+        expect(
+            offersBatchSchema.safeParse({
+                data: [
+                    {
+                        ...base,
+                        transportAllocation: {
+                            version: 1,
+                            items: [
+                                {
+                                    itemUid: 'tube-1',
+                                    totalCents: 100,
+                                    segments: [
+                                        { quantity: 1, transportCentsPerUnit: 32 },
+                                        { quantity: 1, transportCentsPerUnit: 33 },
+                                        { quantity: 1, transportCentsPerUnit: 35 }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }).success
+        ).toBe(false);
+    });
+
+    it('pozostawia legacy payloady bez alokacji obsługiwane', () => {
+        expect(offersBatchSchema.safeParse(validBatch).success).toBe(true);
+    });
+
     it('powinien odrzucać brakującą tablicę data', () => {
         const batch = {};
         const result = offersBatchSchema.safeParse(batch);

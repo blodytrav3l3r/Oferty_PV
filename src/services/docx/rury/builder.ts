@@ -158,7 +158,8 @@ export function buildRurySectionChildren(
         resolveRuryTransport(offerData, items),
         {
             separate: isRuryTransportSeparateFlag(offerData.transportSeparate),
-            distributeTotal: resolveRuryTransportTotal(offerData, items)
+            distributeTotal: resolveRuryTransportTotal(offerData, items),
+            allocation: offerData.transportAllocation
         }
     );
     children.push(...catParagraphs);

@@ -16,12 +16,13 @@ const SZ_RURY_DH = 20; // 10pt
 const SZ_RURY_TH = 14; // 7pt
 const SZ_RURY_TB = 16; // 8pt
 const SZ_RURY_PID = 14; // 7pt
-import { fmtCurrency, fmtInt, textCell } from '../helpers';
+import { fmtCurrency, textCell } from '../helpers';
 import {
-    distributeRuryTransportCost,
     isRuryTransportSeparateFlag,
+    projectRuryTransportAllocation,
     resolveRuryTransportTotal
 } from '../../ruryTransport';
+import { roundMoney } from '../../../utils/money';
 
 const CATEGORY_ORDER = [
     'Rury Betonowe',
@@ -77,7 +78,7 @@ function getCategory(item: Record<string, unknown>): string {
 export function buildItemsTable(
     items: Record<string, unknown>[],
     transport?: { total: number; trips: number },
-    opts?: { separate?: boolean; distributeTotal?: number }
+    opts?: { separate?: boolean; distributeTotal?: number; allocation?: unknown }
 ): {
     paragraphs: (Paragraph | Table)[];
     grandTotal: number;
@@ -90,14 +91,17 @@ export function buildItemsTable(
     // wiersza TR-RURY brak. Osobna pozycja: koszt tylko wierszem.
     const separate = !!opts?.separate;
     const distributeTotal = !separate ? Number(opts?.distributeTotal ?? 0) || 0 : 0;
-    const transportShares =
+    const transportProjection =
         distributeTotal > 0
-            ? distributeRuryTransportCost(items, distributeTotal)
-            : items.map(() => 0);
-    const transportDistributed = transportShares.some((s) => s > 0);
-    const shareByItem = new Map<Record<string, unknown>, number>(
-        items.map((it, i) => [it, transportShares[i] ?? 0])
+            ? projectRuryTransportAllocation(items, distributeTotal, opts?.allocation)
+            : [];
+    const allocationByItem = new Map(
+        transportProjection.map((allocation) => [items[allocation.index], allocation])
     );
+    const transportShares = items.map(
+        (item) => (allocationByItem.get(item)?.totalCents ?? 0) / 100
+    );
+    const transportDistributed = transportShares.some((s) => s > 0);
 
     // Group by category → diameter
     const groupedByCat: Record<string, Record<string, Record<string, unknown>[]>> = {};
@@ -182,24 +186,20 @@ export function buildItemsTable(
                 const lengthM = Number(item.lengthM ?? 0);
                 const meters = Number(item.meters ?? 0);
                 const hasLength = lengthM > 0;
-                const displayMeters = hasLength
-                    ? meters > 0
-                        ? meters
-                        : (lengthM / 1000) * quantity
-                    : 0;
                 const pehdType = String(item.pehdType ?? '');
                 const pehdCost = Number(item.pehdCostPerUnit ?? 0);
                 const surcharge = Number(item.surcharge ?? 0);
-                const transportShare = shareByItem.get(item) ?? 0;
-                const transportPerUnit =
-                    transportShare > 0 && quantity > 0 ? transportShare / quantity : 0;
-                const itemPrice =
-                    unitPrice * (1 - discount / 100) + pehdCost + surcharge + transportPerUnit;
-                const netto = itemPrice * quantity;
+                const allocation = allocationByItem.get(item);
+                const fractionalTransportCents = allocation?.segments
+                    ? 0
+                    : (allocation?.totalCents ?? 0);
+                const baseUnitPrice = roundMoney(
+                    unitPrice * (1 - discount / 100) + pehdCost + surcharge
+                );
+                const segments = allocation?.segments?.length
+                    ? allocation.segments
+                    : [{ quantity, transportCentsPerUnit: 0 }];
                 const rowFill = globalLp % 2 !== 0 ? undefined : DOCX_COLORS.rowAlt;
-
-                catTotal += netto;
-                grandTotal += netto;
 
                 const nameRuns: TextRun[] = [
                     new TextRun({
@@ -228,61 +228,97 @@ export function buildItemsTable(
                         })
                     );
 
-                rows.push(
-                    new TableRow({
-                        children: [
-                            textCell(String(globalLp), {
-                                size: SZ_RURY_TB,
-                                alignment: AlignmentType.CENTER,
-                                fill: rowFill
-                            }),
-                            new TableCell({
-                                children: [
-                                    new Paragraph({
-                                        children: nameRuns,
-                                        spacing: { before: 15, after: 0 }
+                if (fractionalTransportCents > 0) {
+                    nameRuns.push(
+                        new TextRun({
+                            text: `\nTransport wliczony: ${fmtCurrency(fractionalTransportCents / 100)} PLN`,
+                            size: SZ_RURY_PID,
+                            font: FONT,
+                            color: DOCX_COLORS.headerText
+                        })
+                    );
+                }
+
+                for (const segment of segments) {
+                    const segmentMeters = hasLength
+                        ? meters > 0
+                            ? (meters / quantity) * segment.quantity
+                            : (lengthM / 1000) * segment.quantity
+                        : 0;
+                    const segmentNetto = roundMoney(
+                        baseUnitPrice * segment.quantity +
+                            (fractionalTransportCents > 0
+                                ? (fractionalTransportCents / 100) * (segment.quantity / quantity)
+                                : (segment.transportCentsPerUnit * segment.quantity) / 100)
+                    );
+                    const displayedUnitPrice = roundMoney(
+                        baseUnitPrice +
+                            (fractionalTransportCents > 0 ? 0 : segment.transportCentsPerUnit / 100)
+                    );
+                    catTotal += segmentNetto;
+                    grandTotal += segmentNetto;
+                    rows.push(
+                        new TableRow({
+                            children: [
+                                textCell(String(globalLp), {
+                                    size: SZ_RURY_TB,
+                                    alignment: AlignmentType.CENTER,
+                                    fill: rowFill
+                                }),
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: nameRuns,
+                                            spacing: { before: 15, after: 0 }
+                                        }),
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: productId,
+                                                    size: SZ_RURY_PID,
+                                                    font: FONT,
+                                                    color: DOCX_COLORS.headerText
+                                                })
+                                            ],
+                                            spacing: { before: 0, after: 15 }
+                                        })
+                                    ],
+                                    shading: rowFill
+                                        ? { type: ShadingType.SOLID, color: rowFill, fill: rowFill }
+                                        : undefined,
+                                    borders: CELL_BORDERS
+                                }),
+                                textCell(hasLength ? segmentMeters.toFixed(2) : '\u2014', {
+                                    size: SZ_RURY_TB,
+                                    alignment: AlignmentType.CENTER,
+                                    fill: rowFill
+                                }),
+                                textCell(
+                                    segment.quantity.toLocaleString('pl-PL', {
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 2
                                     }),
-                                    new Paragraph({
-                                        children: [
-                                            new TextRun({
-                                                text: productId,
-                                                size: SZ_RURY_PID,
-                                                font: FONT,
-                                                color: DOCX_COLORS.headerText
-                                            })
-                                        ],
-                                        spacing: { before: 0, after: 15 }
-                                    })
-                                ],
-                                shading: rowFill
-                                    ? { type: ShadingType.SOLID, color: rowFill, fill: rowFill }
-                                    : undefined,
-                                borders: CELL_BORDERS
-                            }),
-                            textCell(hasLength ? displayMeters.toFixed(2) : '\u2014', {
-                                size: SZ_RURY_TB,
-                                alignment: AlignmentType.CENTER,
-                                fill: rowFill
-                            }),
-                            textCell(fmtInt(quantity), {
-                                size: SZ_RURY_TB,
-                                alignment: AlignmentType.CENTER,
-                                fill: rowFill
-                            }),
-                            textCell(fmtCurrency(unitPrice), {
-                                size: SZ_RURY_TB,
-                                alignment: AlignmentType.RIGHT,
-                                fill: rowFill
-                            }),
-                            textCell(fmtCurrency(netto), {
-                                bold: true,
-                                size: SZ_RURY_TB,
-                                alignment: AlignmentType.RIGHT,
-                                fill: rowFill
-                            })
-                        ]
-                    })
-                );
+                                    {
+                                        size: SZ_RURY_TB,
+                                        alignment: AlignmentType.CENTER,
+                                        fill: rowFill
+                                    }
+                                ),
+                                textCell(fmtCurrency(displayedUnitPrice), {
+                                    size: SZ_RURY_TB,
+                                    alignment: AlignmentType.RIGHT,
+                                    fill: rowFill
+                                }),
+                                textCell(fmtCurrency(segmentNetto), {
+                                    bold: true,
+                                    size: SZ_RURY_TB,
+                                    alignment: AlignmentType.RIGHT,
+                                    fill: rowFill
+                                })
+                            ]
+                        })
+                    );
+                }
                 globalLp++;
             }
         }

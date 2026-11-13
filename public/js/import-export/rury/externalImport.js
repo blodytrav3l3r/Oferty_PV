@@ -21,15 +21,202 @@ window.RuryExternalImport = {
     // Czyste budowanie pozycji z wierszy (bez I/O — testowalne).
     // Bledne wiersze pomijane z wpisem bledu (D-FIX-2: zakaz cichego 0).
     // Rabat w skali 0-100 (jak wellComponentSchema, bez /100).
-    _buildItems(rows) {
+    _buildItems(rows, transportAllocation) {
         const P = XlsxImportShared.parsePlNumber;
         const items = [];
         const errors = [];
+        const metadataItems =
+            transportAllocation &&
+            transportAllocation.version === 1 &&
+            Array.isArray(transportAllocation.items)
+                ? transportAllocation.items
+                : [];
+        const metadataByLp = new Map();
+        const rowsByLp = new Map();
+        const invalidMetadataUids = new Set();
+        const conflictError = (metadata, lp, row, column) => ({
+            sheet: 'Import',
+            row: Math.max(2, Number(lp) + 1 || 2),
+            col: column,
+            value: String(row?.[column] ?? ''),
+            reason: 'wiersz-niezgodny-z-metadanymi',
+            itemUid: metadata.itemUid
+        });
+        (rows || []).forEach((row) => {
+            const lp = String(row['LP'] || '');
+            if (lp) rowsByLp.set(lp, row);
+        });
+        metadataItems.forEach((metadata) => {
+            (metadata.rowLps || []).forEach((lp) => metadataByLp.set(String(lp), metadata));
+            const rowLps = (metadata.rowLps || []).map(String);
+            const rowDetails = new Map(
+                (metadata.rowDetails || []).map((detail) => [String(detail.rowLp), detail])
+            );
+            rowLps.forEach((lp) => {
+                const row = rowsByLp.get(lp);
+                const source = metadata.sourceItem;
+                const rowDetail = rowDetails.get(lp);
+                let segment = rowDetail?.segment || null;
+                let lineCents = Number(rowDetail?.lineCents) || 0;
+                let visibleMetadataMatches = true;
+                const rowSnapshot = rowDetail?.rowSnapshot;
+                if (row && !rowSnapshot) {
+                    visibleMetadataMatches = false;
+                    invalidMetadataUids.add(metadata.itemUid);
+                    errors.push(conflictError(metadata, lp, row, 'ROW_JSON'));
+                } else if (row && rowSnapshot) {
+                    [
+                        'NUMER_OFERTY',
+                        'NR_STUDNI',
+                        'GLEBOKOSC',
+                        'INDEKS_CZESCI',
+                        'ILOSC',
+                        'CENA_JEDNOSTKOWA',
+                        'WERSJA',
+                        'RABAT',
+                        'SREDNICA',
+                        'ZAKONCZENIE',
+                        'MAGAZYN',
+                        'LP'
+                    ].forEach((field) => {
+                        const expected = rowSnapshot[field];
+                        const actual = row[field];
+                        const numeric = [
+                            'GLEBOKOSC',
+                            'ILOSC',
+                            'CENA_JEDNOSTKOWA',
+                            'WERSJA',
+                            'RABAT',
+                            'SREDNICA'
+                        ].includes(field);
+                        const expectedText = String(expected ?? '').trim();
+                        const actualText = String(actual ?? '').trim();
+                        const matches = numeric
+                            ? expectedText === '' || actualText === ''
+                                ? expectedText === actualText
+                                : P(expected) !== null &&
+                                  P(actual) !== null &&
+                                  P(expected) === P(actual)
+                            : expectedText === actualText;
+                        if (matches) return;
+                        visibleMetadataMatches = false;
+                        invalidMetadataUids.add(metadata.itemUid);
+                        errors.push(conflictError(metadata, lp, row, field));
+                    });
+                }
+                if (!visibleMetadataMatches) return;
+                if (!segment && !lineCents && row && source) {
+                    const qty = P(row['ILOSC']);
+                    const price = P(row['CENA_JEDNOSTKOWA']);
+                    if (XlsxImportShared.normalizeHeader(row['INDEKS_CZESCI']) === 'TR-RURY') {
+                        lineCents = Number(metadata.lineCents) || 0;
+                    } else {
+                        segment = (metadata.segments || []).find((candidate) => {
+                            const base = this._roundMoney(
+                                (Number(source.unitPrice || source.price || 0) || 0) *
+                                    (1 - (Number(source.discount) || 0) / 100)
+                            );
+                            const expectedPrice = this._roundMoney(
+                                base + Number(candidate.transportCentsPerUnit || 0) / 100
+                            );
+                            return (
+                                Number(candidate.quantity) === qty &&
+                                Math.abs(expectedPrice - (price ?? NaN)) < 0.001
+                            );
+                        });
+                    }
+                }
+                const quantity = P(row?.['ILOSC']);
+                const visiblePrice = P(row?.['CENA_JEDNOSTKOWA']);
+                const validLine =
+                    row &&
+                    source &&
+                    XlsxImportShared.normalizeHeader(row['INDEKS_CZESCI']) === 'TR-RURY' &&
+                    lineCents > 0 &&
+                    quantity === 1 &&
+                    Math.abs((visiblePrice ?? NaN) - lineCents / 100) < 0.001;
+                const validSegment =
+                    row &&
+                    source &&
+                    segment &&
+                    XlsxImportShared.normalizeHeader(row['INDEKS_CZESCI']) ===
+                        XlsxImportShared.normalizeHeader(source.productId) &&
+                    quantity === Number(segment.quantity) &&
+                    Number(
+                        rowDetails.get(lp)?.segment?.transportCentsPerUnit ??
+                            segment.transportCentsPerUnit
+                    ) === Number(segment.transportCentsPerUnit) &&
+                    Math.abs(
+                        (visiblePrice ?? NaN) -
+                            this._roundMoney(
+                                this._roundMoney(
+                                    (Number(source.unitPrice || source.price || 0) || 0) *
+                                        (1 - (Number(source.discount) || 0) / 100)
+                                ) +
+                                    Number(segment.transportCentsPerUnit || 0) / 100
+                            )
+                    ) < 0.001;
+                const validBase =
+                    row &&
+                    source &&
+                    !segment &&
+                    !lineCents &&
+                    XlsxImportShared.normalizeHeader(row['INDEKS_CZESCI']) ===
+                        XlsxImportShared.normalizeHeader(source.productId) &&
+                    quantity === Number(source.quantity) &&
+                    Math.abs(
+                        (visiblePrice ?? NaN) -
+                            this._roundMoney(
+                                (Number(source.unitPrice || source.price || 0) || 0) *
+                                    (1 - (Number(source.discount) || 0) / 100)
+                            )
+                    ) < 0.001;
+                if (!validLine && !validSegment && !validBase) {
+                    invalidMetadataUids.add(metadata.itemUid);
+                    errors.push(
+                        conflictError(
+                            metadata,
+                            lp,
+                            row,
+                            row &&
+                                XlsxImportShared.normalizeHeader(row['INDEKS_CZESCI']) === 'TR-RURY'
+                                ? 'CENA_JEDNOSTKOWA'
+                                : 'ILOSC'
+                        )
+                    );
+                }
+            });
+        });
+        const addedMetadataUids = new Set();
+        const restoredAllocations = [];
         let transportSeparate = false;
         let transportCost = 0;
         let transportCount = 0;
         (rows || []).forEach((r, i) => {
             const rowNo = i + 2;
+            const mappedItem = metadataByLp.get(String(r['LP'] || ''));
+            if (mappedItem && mappedItem.sourceItem && mappedItem.itemUid) {
+                if (invalidMetadataUids.has(mappedItem.itemUid)) return;
+                if (!addedMetadataUids.has(mappedItem.itemUid)) {
+                    const sourceItem = Object.assign({}, mappedItem.sourceItem, {
+                        uid: mappedItem.itemUid
+                    });
+                    items.push(sourceItem);
+                    addedMetadataUids.add(mappedItem.itemUid);
+                    const allocation = {
+                        itemUid: mappedItem.itemUid,
+                        totalCents: mappedItem.totalCents
+                    };
+                    if (mappedItem.segments && mappedItem.segments.length) {
+                        allocation.segments = mappedItem.segments.map((segment) => ({
+                            quantity: segment.quantity,
+                            transportCentsPerUnit: segment.transportCentsPerUnit
+                        }));
+                    }
+                    restoredAllocations.push(allocation);
+                }
+                return;
+            }
             if (XlsxImportShared.normalizeHeader(r['INDEKS_CZESCI']) === 'TR-RURY') {
                 const qty = P(r['ILOSC']);
                 const price = P(r['CENA_JEDNOSTKOWA']);
@@ -100,6 +287,10 @@ window.RuryExternalImport = {
         return {
             items,
             errors,
+            invalid: invalidMetadataUids.size > 0,
+            ...(restoredAllocations.length
+                ? { transportAllocation: { version: 1, items: restoredAllocations } }
+                : {}),
             transportSeparate,
             transportCount,
             transportCost: this._roundMoney(transportCost)
@@ -108,11 +299,11 @@ window.RuryExternalImport = {
 
     async import(offerGroup) {
         const number = offerGroup.number;
-        const built = this._buildItems(offerGroup.rows || []);
+        const built = this._buildItems(offerGroup.rows || [], offerGroup.transportAllocation);
         const items = built.items;
         const hasTransportRow = built.transportSeparate;
         // Zero poprawnych pozycji: brak POST (blokada), bledy do raportu.
-        if (!items.length) {
+        if (built.invalid || !items.length) {
             return { invalid: true, number, errors: built.errors };
         }
 
@@ -138,7 +329,8 @@ window.RuryExternalImport = {
             transportCost: built.transportCost,
             transportCount: built.transportCount,
             externalTransportCost: built.transportSeparate ? built.transportCost : null,
-            transportSeparate: hasTransportRow
+            transportSeparate: hasTransportRow,
+            ...(built.transportAllocation ? { transportAllocation: built.transportAllocation } : {})
         };
 
         if (action === 'clone') {

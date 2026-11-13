@@ -137,6 +137,73 @@ describe('D-014: corrupt blob → oznaczony dokument, valid → bez zmian', () =
         expect(await generateRuryHTML(ctx)).toContain('100,00');
     });
 
+    it('rury zamówienie: PDF używa zapisanej częściowej alokacji zamiast pełnego kursu', async () => {
+        (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-r-partial',
+            userId: 'u1',
+            createdAt: new Date().toISOString(),
+            data: JSON.stringify({
+                transportSeparate: false,
+                transportKm: 100,
+                transportRate: 10,
+                transportCost: 0.34,
+                transportAllocation: {
+                    version: 1,
+                    items: [
+                        {
+                            itemUid: 'partial-item',
+                            totalCents: 34,
+                            segments: [{ quantity: 1, transportCentsPerUnit: 34 }]
+                        }
+                    ]
+                },
+                items: [
+                    {
+                        uid: 'partial-item',
+                        productId: 'RTB-0-03-25-K00',
+                        name: 'Rura betonowa DN300',
+                        unitPrice: 100,
+                        quantity: 1,
+                        weight: 500
+                    }
+                ]
+            })
+        });
+        const ctx = await buildRuryOrderContextFromOrderId('order-r-partial');
+        expect(ctx.transportCost).toBe(0.34);
+        const html = await generateRuryHTML(ctx);
+        expect(html).toContain('100,34');
+        expect(html).not.toContain('1 100,00');
+    });
+
+    it('rury zamówienie: uszkodzona alokacja nie przerywa PDF i zachowuje koszt zapisany', async () => {
+        (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-r-bad-allocation',
+            userId: 'u1',
+            createdAt: new Date().toISOString(),
+            data: JSON.stringify({
+                transportSeparate: false,
+                transportKm: 100,
+                transportRate: 10,
+                transportCost: 0.34,
+                transportAllocation: {},
+                items: [
+                    {
+                        uid: 'bad-allocation-item',
+                        productId: 'RTB-0-03-25-K00',
+                        name: 'Rura betonowa DN300',
+                        unitPrice: 100,
+                        quantity: 1,
+                        weight: 500
+                    }
+                ]
+            })
+        });
+        const ctx = await buildRuryOrderContextFromOrderId('order-r-bad-allocation');
+        expect(ctx.transportCost).toBe(0.34);
+        expect(await generateRuryHTML(ctx)).toContain('100,34');
+    });
+
     it('studnie zamówienie: corrupt JSON → flaga + stempel', async () => {
         (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
             id: 'order-s-1',

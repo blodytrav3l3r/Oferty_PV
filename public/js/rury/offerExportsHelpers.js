@@ -18,15 +18,78 @@ const _moneyRoundXlsx =
               );
           };
 
+function getOfferTransportPresentation(item, transportAllocation) {
+    const allocation = (transportAllocation?.items || []).find(
+        (entry) => entry.itemUid === item.uid
+    );
+    const totalCents = Number(allocation?.totalCents) || 0;
+    const segments = Array.isArray(allocation?.segments) ? allocation.segments : [];
+    const baseUnit = _moneyRoundXlsx(
+        Number(item.unitPrice || item.price || 0) * (1 - (Number(item.discount) || 0) / 100) +
+            (Number(item.pehdCostPerUnit) || 0) +
+            (Number(item.surcharge) || 0)
+    );
+    const baseUnitCents = Math.round(baseUnit * 100);
+    const segmentsValid =
+        Number.isInteger(Number(item.quantity)) &&
+        segments.length > 0 &&
+        segments.every(
+            (segment) =>
+                Number.isInteger(Number(segment.quantity)) &&
+                Number.isInteger(Number(segment.transportCentsPerUnit))
+        ) &&
+        segments.reduce((sum, segment) => sum + segment.quantity, 0) === Number(item.quantity) &&
+        segments.reduce(
+            (sum, segment) => sum + segment.quantity * segment.transportCentsPerUnit,
+            0
+        ) === totalCents;
+    const rows = segmentsValid
+        ? segments.map((segment) => ({
+              quantity: segment.quantity,
+              transportCentsPerUnit: segment.transportCentsPerUnit,
+              unitPriceCents: baseUnitCents + segment.transportCentsPerUnit,
+              lineCents: (baseUnitCents + segment.transportCentsPerUnit) * segment.quantity,
+              isTransportAdjustment: false
+          }))
+        : [
+              {
+                  quantity: Number(item.quantity) || 0,
+                  transportCentsPerUnit: 0,
+                  unitPriceCents: baseUnitCents,
+                  lineCents: Math.round(
+                      _moneyRoundXlsx((baseUnitCents * (Number(item.quantity) || 0)) / 100) * 100
+                  ),
+                  isTransportAdjustment: false
+              },
+              ...(totalCents > 0
+                  ? [
+                        {
+                            quantity: 1,
+                            transportCentsPerUnit: totalCents,
+                            unitPriceCents: totalCents,
+                            lineCents: totalCents,
+                            isTransportAdjustment: true
+                        }
+                    ]
+                  : [])
+          ];
+    return {
+        rows,
+        totalNettoCents: rows.reduce((sum, row) => sum + row.lineCents, 0),
+        totalTransportCents: totalCents,
+        segmentsValid
+    };
+}
+
 /**
  * Buduje wiersze arkusza "Oferta" dla XLSX.
  * @param {object} offer
- * @param {object} transportDist
+ * @param {object} transportAllocation
  * @param {number} costPerTrip
  * @param {number} xlsxTransports
- * @returns {{ rows: any[][], headerRow: number, totalNetto: number, totalWeight: number }}
+ * @returns {{ rows: any[][], headerRow: number, totalNetto: number, totalWeight: number, itemRowMap: Record<number, number[]> }}
  */
-function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
+function buildOfferXlsxRows(offer, transportAllocation, costPerTrip, xlsxTransports) {
     const transportCost =
         offer.transportSeparate && offer.externalTransportCost != null
             ? Number(offer.externalTransportCost)
@@ -71,19 +134,18 @@ function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
 
     let totalNetto = 0;
     let totalWeight = 0;
+    /** @type {Record<number, number[]>} */
+    const itemRowMap = {};
 
     offer.items.forEach((item, i) => {
-        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
-        const pehdCost = item.pehdCostPerUnit || 0;
+        const presentation = getOfferTransportPresentation(item, transportAllocation);
         const unitAfterDiscount = _moneyRoundXlsx(
-            priceAfterDiscount + pehdCost + (item.surcharge || 0)
+            Number(item.unitPrice || item.price || 0) * (1 - (Number(item.discount) || 0) / 100) +
+                (Number(item.pehdCostPerUnit) || 0) +
+                (Number(item.surcharge) || 0)
         );
-        const tpu = transportDist[item.productId] || 0;
-        const unitTotal = _moneyRoundXlsx(unitAfterDiscount + tpu);
-        const netto = _moneyRoundXlsx(unitTotal * item.quantity);
-        const brutto = _moneyRoundXlsx(netto * 1.23);
-
-        totalNetto += netto;
+        const displayRows = presentation.rows;
+        itemRowMap[i] = [];
         totalWeight += (item.weight || 0) * item.quantity;
 
         let pName = item.name;
@@ -92,21 +154,34 @@ function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
         if (item.pehdType === 'PEHD-4MM') pehdLabel = 'PEHD 4mm';
         if (item.autoAdded) pName += ' (dodane automatycznie)';
 
-        rows.push([
-            i + 1,
-            item.productId,
-            pName,
-            pehdLabel,
-            item.unitPrice,
-            item.quantity,
-            item.meters || 0,
-            item.discount,
-            unitAfterDiscount,
-            tpu > 0 ? tpu : '',
-            netto,
-            brutto,
-            item.weight || ''
-        ]);
+        displayRows.forEach((displayRow) => {
+            const segmentNetto = _moneyRoundXlsx(displayRow.lineCents / 100);
+            totalNetto += segmentNetto;
+            if (!displayRow.isTransportAdjustment) itemRowMap[i].push(rows.length);
+            rows.push([
+                displayRow.isTransportAdjustment ? '' : i + 1,
+                displayRow.isTransportAdjustment ? 'TR-RURY' : item.productId,
+                displayRow.isTransportAdjustment ? `Transport wliczony w cenę — ${pName}` : pName,
+                displayRow.isTransportAdjustment ? '' : pehdLabel,
+                displayRow.isTransportAdjustment ? '' : item.unitPrice,
+                displayRow.quantity,
+                displayRow.isTransportAdjustment
+                    ? ''
+                    : item.meters
+                      ? (item.meters / item.quantity) * displayRow.quantity
+                      : 0,
+                displayRow.isTransportAdjustment ? '' : item.discount,
+                displayRow.isTransportAdjustment ? '' : unitAfterDiscount,
+                displayRow.isTransportAdjustment
+                    ? 'kwota pozycji'
+                    : displayRow.transportCentsPerUnit > 0
+                      ? displayRow.transportCentsPerUnit / 100
+                      : '',
+                segmentNetto,
+                _moneyRoundXlsx(segmentNetto * 1.23),
+                displayRow.isTransportAdjustment ? '' : item.weight || ''
+            ]);
+        });
     });
 
     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
@@ -129,15 +204,16 @@ function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
         rows.push(['Uwagi:', offer.notes]);
     }
 
-    return { rows, headerRow, totalNetto, totalWeight };
+    return { rows, headerRow, totalNetto, totalWeight, itemRowMap };
 }
 
 /**
  * Buduje wiersze arkusza "Dane" (metadata) dla XLSX.
  * @param {object} offer
+ * @param {Record<number, number[]>} [itemRowMap]
  * @returns {any[][]}
  */
-function buildOfferXlsxMetaRows(offer) {
+function buildOfferXlsxMetaRows(offer, itemRowMap = /** @type {Record<number, number[]>} */ ({})) {
     const metaRows = [['KEY', 'VALUE']];
     metaRows.push(['offerId', offer.id]);
     metaRows.push(['number', offer.number]);
@@ -164,6 +240,10 @@ function buildOfferXlsxMetaRows(offer) {
     metaRows.push(['transportRate', offer.transportRate || 0]);
     metaRows.push(['transportMode', offer.transportMode || 'full']);
     metaRows.push(['transportSeparate', offer.transportSeparate ? '1' : '0']);
+    if (offer.transportAllocation) {
+        metaRows.push(['transportAllocation', JSON.stringify(offer.transportAllocation)]);
+    }
+    metaRows.push(['itemRowMap', JSON.stringify(itemRowMap)]);
     if (offer.externalTransportCost != null) {
         metaRows.push(['externalTransportCost', offer.externalTransportCost]);
         metaRows.push(['transportCount', offer.transportCount]);
@@ -180,3 +260,4 @@ function buildOfferXlsxMetaRows(offer) {
 /* ===== Rejestracja globali ===== */
 window.buildOfferXlsxRows = buildOfferXlsxRows;
 window.buildOfferXlsxMetaRows = buildOfferXlsxMetaRows;
+window.getOfferTransportPresentation = getOfferTransportPresentation;

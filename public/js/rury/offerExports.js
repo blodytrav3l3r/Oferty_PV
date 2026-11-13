@@ -111,16 +111,16 @@ async function exportOfferPDF(id) {
                   .filter((i) => !i.autoAdded && i.weight && i.weight > 0 && i.quantity > 0)
                   .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
             : transportResult.totalTransports;
-    const transportCost =
+    const transportCost = _moneyRoundExports(
         offer.transportSeparate && offer.externalTransportCost != null
             ? Number(offer.externalTransportCost)
-            : exportTransports * costPerTrip;
-    const transportDist =
-        typeof withOfferTransportFlags === 'function'
-            ? withOfferTransportFlags(offer, () =>
-                  calculateTransportDistributionStandalone(offer.items, costPerTrip)
-              )
-            : calculateTransportDistributionStandalone(offer.items, costPerTrip);
+            : Number(offer.transportCost ?? exportTransports * costPerTrip)
+    );
+    const transportAllocation = offer.transportSeparate
+        ? { version: 1, items: [] }
+        : withOfferTransportFlags(offer, () =>
+              projectTransportAllocation(offer.items, offer.transportAllocation, transportCost)
+          );
 
     offer.items.forEach((item) => {
         const priceAfterDiscount = _moneyRoundExports(
@@ -128,9 +128,9 @@ async function exportOfferPDF(id) {
                 (item.pehdCostPerUnit || 0) +
                 (item.surcharge || 0)
         );
-        const transportPerUnit = transportDist[item.productId] || 0;
+        const transportCents = getTransportAllocationCents(transportAllocation, item.uid);
         totalNetto += _moneyRoundExports(
-            _moneyRoundExports(priceAfterDiscount + transportPerUnit) * item.quantity
+            (_moneyRoundExports(priceAfterDiscount) * 100 * item.quantity + transportCents) / 100
         );
         totalWeight += (item.weight || 0) * item.quantity;
     });
@@ -215,20 +215,20 @@ async function exportOfferPDF(id) {
     <thead><tr><th scope="col">Lp.</th><th scope="col">Indeks</th><th scope="col">Nazwa</th><th scope="col" class="text-right">Cena jedn.</th><th scope="col" class="text-right">Rabat</th><th scope="col" class="text-right">Po rabacie</th><th scope="col" class="text-right">Transport/szt.</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Netto</th><th scope="col" class="text-right">Brutto</th></tr></thead>
     <tbody>${offer.items
         .map((item, i) => {
-            const pad = _moneyRoundExports(
-                item.unitPrice * (1 - item.discount / 100) +
-                    (item.pehdCostPerUnit || 0) +
-                    (item.surcharge || 0)
-            );
-            const tpu = transportDist[item.productId] || 0;
-            const unitTotal = _moneyRoundExports(pad + tpu);
-            const n = _moneyRoundExports(unitTotal * item.quantity);
-
             let pName = escapeHtml(item.name);
             if (item.pehdType === 'PEHD-3MM') pName += ' + PEHD 3mm';
             if (item.pehdType === 'PEHD-4MM') pName += ' + PEHD 4mm';
-
-            return `<tr><td>${i + 1}</td><td>${escapeHtml(item.productId)}</td><td>${pName}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(unitTotal)}</td><td class="text-right">${tpu > 0 ? fmt(tpu) : '—'}</td><td class="text-right">${item.quantity}</td><td class="text-right">${fmt(n)}</td><td class="text-right">${fmt(n * 1.23)}</td></tr>`;
+            const presentation = getOfferTransportPresentation(item, transportAllocation);
+            return presentation.rows
+                .map((row) => {
+                    const lineNetto = _moneyRoundExports(row.lineCents / 100);
+                    if (row.isTransportAdjustment) {
+                        return `<tr><td>${i + 1}</td><td>TR-RURY</td><td>Transport wliczony w cenę — ${pName}</td><td class="text-right">${fmt(lineNetto)}</td><td class="text-right">—</td><td class="text-right">—</td><td class="text-right">—</td><td class="text-right">1</td><td class="text-right">${fmt(lineNetto)}</td><td class="text-right">${fmt(_moneyRoundExports(lineNetto * 1.23))}</td></tr>`;
+                    }
+                    const transportPerUnit = row.transportCentsPerUnit / 100;
+                    return `<tr><td>${i + 1}</td><td>${escapeHtml(item.productId)}</td><td>${pName}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(row.unitPriceCents / 100 - transportPerUnit)}</td><td class="text-right">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</td><td class="text-right">${row.quantity}</td><td class="text-right">${fmt(lineNetto)}</td><td class="text-right">${fmt(_moneyRoundExports(lineNetto * 1.23))}</td></tr>`;
+                })
+                .join('');
         })
         .join('')}</tbody>
   </table>
@@ -563,12 +563,6 @@ async function exportOfferXlsx(id) {
 
     const costPerTrip = offer.transportCostPerTrip || 0;
     const transportResult = calculateTransports(offer.items);
-    const transportDist =
-        typeof withOfferTransportFlags === 'function'
-            ? withOfferTransportFlags(offer, () =>
-                  calculateTransportDistributionStandalone(offer.items, costPerTrip)
-              )
-            : calculateTransportDistributionStandalone(offer.items, costPerTrip);
     const xlsxMode = offer.transportMode || 'full';
     const xlsxTransports =
         xlsxMode === 'fractional'
@@ -576,13 +570,21 @@ async function exportOfferXlsx(id) {
                   .filter((i) => !i.autoAdded && i.weight && i.weight > 0 && i.quantity > 0)
                   .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
             : transportResult.totalTransports;
-    const { rows, headerRow } = buildOfferXlsxRows(
+    const xlsxTransportCost = _moneyRoundExports(
+        Number(offer.transportCost ?? xlsxTransports * costPerTrip)
+    );
+    const transportAllocation = offer.transportSeparate
+        ? { version: 1, items: [] }
+        : withOfferTransportFlags(offer, () =>
+              projectTransportAllocation(offer.items, offer.transportAllocation, xlsxTransportCost)
+          );
+    const { rows, headerRow, itemRowMap } = buildOfferXlsxRows(
         offer,
-        transportDist,
+        transportAllocation,
         costPerTrip,
         xlsxTransports
     );
-    const metaRows = buildOfferXlsxMetaRows(offer);
+    const metaRows = buildOfferXlsxMetaRows(offer, itemRowMap);
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
 
@@ -603,7 +605,7 @@ async function exportOfferXlsx(id) {
     ];
 
     const itemStartRow = headerRow + 1;
-    const itemEndRow = itemStartRow + offer.items.length;
+    const itemEndRow = rows.findIndex((row) => row[8] === 'RAZEM Netto:');
     for (let r = itemStartRow; r < itemEndRow; r++) {
         ['E', 'I', 'J', 'K', 'L'].forEach((col) => {
             const ref = col + (r + 1);
@@ -688,6 +690,27 @@ function importOfferFromXlsx() {
                             }
                         }
                     }
+                    const sourceItems = structuredClone(items);
+                    let itemRowMap = {};
+                    try {
+                        itemRowMap = meta.itemRowMap ? JSON.parse(meta.itemRowMap) : {};
+                    } catch (_e) {
+                        showToast(
+                            'Nie udało się odczytać mapowania wierszy z metadanych.',
+                            'warning'
+                        );
+                    }
+                    let savedTransportAllocation = null;
+                    try {
+                        savedTransportAllocation = meta.transportAllocation
+                            ? JSON.parse(meta.transportAllocation)
+                            : null;
+                    } catch (_e) {
+                        showToast(
+                            'Nie udało się odczytać podziału transportu z metadanych.',
+                            'warning'
+                        );
+                    }
 
                     // Teraz sprawdź arkusz Oferta pod kątem edycji ilości i rabatu przez użytkownika
                     const ofertaSheet = wb.Sheets['Oferta'];
@@ -710,11 +733,21 @@ function importOfferFromXlsx() {
                         if (headerRowIdx >= 0 && items.length > 0) {
                             // Odczytaj edytowane wartości z arkusza kalkulacyjnego
                             for (let i = 0; i < items.length; i++) {
-                                const row = ofertaData[headerRowIdx + 1 + i];
-                                if (!row) continue;
+                                const rowIndexes = Array.isArray(itemRowMap[i])
+                                    ? itemRowMap[i]
+                                    : [headerRowIdx + 1 + i];
+                                const visibleRows = rowIndexes
+                                    .map((rowIndex) => ofertaData[rowIndex])
+                                    .filter(Boolean);
+                                if (visibleRows.length === 0) continue;
 
-                                const newQty = parseFloat(row[5]);
-                                const newDiscount = parseFloat(row[7]);
+                                const visibleQuantities = visibleRows
+                                    .map((row) => parseFloat(row[5]))
+                                    .filter((quantity) => !isNaN(quantity) && quantity >= 0);
+                                const newQty = visibleQuantities.length
+                                    ? visibleQuantities.reduce((sum, quantity) => sum + quantity, 0)
+                                    : NaN;
+                                const newDiscount = parseFloat(visibleRows[0][7]);
 
                                 if (!isNaN(newQty) && newQty >= 0) {
                                     items[i].quantity = newQty;
@@ -752,15 +785,26 @@ function importOfferFromXlsx() {
                         transportMode: meta.transportMode || 'full',
                         transportSeparate: String(meta.transportSeparate) === '1'
                     };
-                    const transportDist =
-                        typeof withOfferTransportFlags === 'function'
-                            ? withOfferTransportFlags(importFlags, () =>
-                                  calculateTransportDistributionStandalone(
-                                      items,
-                                      transportCostPerTrip
-                                  )
+                    const importTransports = withOfferTransportFlags(importFlags, () =>
+                        typeof getRuryTransportCount === 'function'
+                            ? getRuryTransportCount(items)
+                            : transportResult.totalTransports
+                    );
+                    const transportCost = _moneyRoundExports(
+                        externalTransportCost ?? importTransports * transportCostPerTrip
+                    );
+                    const quantitiesUnchanged = items.every(
+                        (item, index) => item.quantity === sourceItems[index]?.quantity
+                    );
+                    const transportAllocation = importFlags.transportSeparate
+                        ? { version: 1, items: [] }
+                        : withOfferTransportFlags(importFlags, () =>
+                              projectTransportAllocation(
+                                  items,
+                                  quantitiesUnchanged ? savedTransportAllocation : null,
+                                  transportCost
                               )
-                            : calculateTransportDistributionStandalone(items, transportCostPerTrip);
+                          );
 
                     let totalNetto = 0;
                     items.forEach((item) => {
@@ -769,21 +813,20 @@ function importOfferFromXlsx() {
                                 (item.pehdCostPerUnit || 0) +
                                 (item.surcharge || 0)
                         );
-                        const tpu = transportDist[item.productId] || 0;
+                        const transportCents = getTransportAllocationCents(
+                            transportAllocation,
+                            item.uid
+                        );
                         totalNetto += _moneyRoundExports(
-                            _moneyRoundExports(priceAfterDiscount + tpu) * item.quantity
+                            (_moneyRoundExports(priceAfterDiscount) * 100 * item.quantity +
+                                transportCents) /
+                                100
                         );
                     });
                     totalNetto = _moneyRoundExports(totalNetto);
                     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych.
                     if (importFlags.transportSeparate)
-                        totalNetto = _moneyRoundExports(
-                            totalNetto +
-                                (externalTransportCost ??
-                                    _moneyRoundExports(
-                                        transportResult.totalTransports * transportCostPerTrip
-                                    ))
-                        );
+                        totalNetto = _moneyRoundExports(totalNetto + transportCost);
 
                     const offer = {
                         id: meta.offerId || 'offer_' + Date.now(),
@@ -819,10 +862,8 @@ function importOfferFromXlsx() {
                                 ? importedCount
                                 : transportResult.totalTransports,
                         externalTransportCost,
-                        transportCost: _moneyRoundExports(
-                            externalTransportCost ??
-                                transportResult.totalTransports * transportCostPerTrip
-                        ),
+                        transportCost,
+                        ...(!importFlags.transportSeparate ? { transportAllocation } : {}),
                         totalNetto,
                         totalBrutto: _moneyRoundExports(totalNetto * 1.23),
                         createdAt: new Date().toISOString(),

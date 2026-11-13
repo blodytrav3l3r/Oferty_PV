@@ -4,6 +4,7 @@ import { getRuryCategoryMap } from '../pricelist/catalog';
 import { canReadWithShare } from '../../utils/ownership';
 import type { User } from '../../helpers';
 import { mapWellsToItems } from './helpers';
+import { getValidRuryTransportAllocationTotalCents } from '../ruryTransport';
 import { lookupOfferUsers } from './offerUsers';
 import type { RuryOfferData, StudnieOfferData } from './types';
 import type {
@@ -140,6 +141,7 @@ export async function buildRuryOfferContextFromOfferId(
         transportCost: Number(
             offerData.transportCost ?? decimalMoneyValueToNumber(offer.transportCost) ?? 0
         ),
+        transportAllocation: offerData.transportAllocation as RuryOfferData['transportAllocation'],
         createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
         validityDays: Number(offerData.validityDays ?? 30),
         notes: String(offerData.notes ?? ''),
@@ -217,6 +219,23 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
                   ? orderWeight / MAX_TRANSPORT_WEIGHT
                   : Math.ceil(orderWeight / MAX_TRANSPORT_WEIGHT)
               : 0;
+    const validAllocationCents = getValidRuryTransportAllocationTotalCents(
+        items as Record<string, unknown>[],
+        orderData.transportAllocation
+    );
+    const allocationTransportCost =
+        validAllocationCents === null ? null : validAllocationCents / 100;
+    const storedTransportCost = Number(orderData.transportCost);
+    const hasStoredTransportCost =
+        orderData.transportCost !== undefined &&
+        orderData.transportCost !== null &&
+        Number.isFinite(storedTransportCost) &&
+        storedTransportCost >= 0;
+    const orderTransportCost =
+        importedTransport ??
+        (hasStoredTransportCost
+            ? storedTransportCost
+            : (allocationTransportCost ?? orderTrips * orderPerTrip));
     return {
         documentType: 'order',
         offerNumber: orderNumber,
@@ -245,7 +264,8 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
         transportRate: orderRate,
         transportCount: orderTrips,
         transportCostPerTrip: orderPerTrip,
-        transportCost: importedTransport ?? orderTrips * orderPerTrip,
+        transportCost: orderTransportCost,
+        transportAllocation: orderData.transportAllocation as RuryOfferData['transportAllocation'],
         createdAt: String(orderData.date ?? order.createdAt ?? new Date().toISOString()),
         validityDays: 0,
         notes: String(orderData.notes ?? ''),

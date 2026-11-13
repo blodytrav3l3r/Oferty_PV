@@ -107,7 +107,8 @@ export async function buildCombinedDocument(
             distributeTotal: resolveRuryTransportTotal(
                 ruryOfferData,
                 ruryCtx.items as Record<string, unknown>[]
-            )
+            ),
+            allocation: ruryOfferData.transportAllocation
         }
     );
 

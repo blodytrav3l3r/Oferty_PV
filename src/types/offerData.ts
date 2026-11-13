@@ -32,6 +32,14 @@ export interface RuryOfferDataBlob {
     transportMode?: string;
     transportCount?: number;
     transportCost?: number;
+    transportAllocation?: {
+        version: 1;
+        items: Array<{
+            itemUid: string;
+            totalCents: number;
+            segments?: Array<{ quantity: number; transportCentsPerUnit: number }>;
+        }>;
+    };
     externalTransportCost?: number | null;
     totalNetto?: number;
     totalBrutto?: number;
@@ -102,6 +110,7 @@ export interface StudnieOrderDataBlob extends StudnieOfferDataBlob {
 
 /** Element oferty rur (offer_item) */
 export interface RuryOfferItem {
+    uid?: string;
     productId?: string;
     quantity?: number;
     unitPrice?: number;

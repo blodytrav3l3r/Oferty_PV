@@ -180,6 +180,7 @@ export async function generateRuryOrderDOCX(orderId: string): Promise<Buffer> {
             transportCount: ctx.transportCount,
             transportCostPerTrip: ctx.transportCostPerTrip,
             transportCost: ctx.transportCost,
+            transportAllocation: ctx.transportAllocation,
             productionOrderNumber: ctx.productionOrderNumber
         },
         client,

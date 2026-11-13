@@ -1,7 +1,7 @@
 import path from 'path';
 import { DOCX_COLORS } from '../docx/colors';
 import { escapeHtml, formatDatePL, computeUnitPriceNetto } from './helpers';
-import { distributeRuryTransportCost, isRuryTransportSeparateFlag } from '../ruryTransport';
+import { isRuryTransportSeparateFlag, projectRuryTransportAllocation } from '../ruryTransport';
 import { buildContactSectionHTML } from './offerUsers';
 import type { RuryOfferData } from './types';
 import { loadPdfTemplate } from './templateCache';
@@ -53,7 +53,7 @@ export function buildRurySectionHTML(data: RuryOfferData): {
     };
 
     const fmtIntLocal = (val: number) => {
-        return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     };
 
     const items = data.items as Record<string, unknown>[];
@@ -61,13 +61,16 @@ export function buildRurySectionHTML(data: RuryOfferData): {
     // TR-RURY; cena wliczona → koszt dzielony wagowo na pozycje (brak wiersza).
     const separateTransport = isRuryTransportSeparateFlag(data.transportSeparate);
     const transportTotal = Number(data.transportCost ?? 0);
-    const transportShares = separateTransport
-        ? items.map(() => 0)
-        : distributeRuryTransportCost(items, transportTotal);
-    const transportDistributed = transportShares.some((s) => s > 0);
-    const shareByItem = new Map<Record<string, unknown>, number>(
-        items.map((it, i) => [it, transportShares[i] ?? 0])
+    const transportProjection = separateTransport
+        ? []
+        : projectRuryTransportAllocation(items, transportTotal, data.transportAllocation);
+    const allocationByItem = new Map(
+        transportProjection.map((allocation) => [items[allocation.index], allocation])
     );
+    const transportShares = items.map(
+        (item) => (allocationByItem.get(item)?.totalCents ?? 0) / 100
+    );
+    const transportDistributed = transportShares.some((s) => s > 0);
     const groupedByCat: Record<string, Record<string, Record<string, unknown>[]>> = {};
     for (const item of items) {
         const cat = getProductCategory(item);
@@ -128,41 +131,60 @@ export function buildRurySectionHTML(data: RuryOfferData): {
                 const lengthM = Number(item.lengthM ?? 0);
                 const meters = Number(item.meters ?? 0);
                 const hasLength = lengthM > 0;
-                const displayMeters = hasLength
-                    ? meters > 0
-                        ? meters
-                        : (lengthM / 1000) * quantity
-                    : 0;
                 const pehdType = String(item.pehdType ?? '');
                 const pehdCost = Number(item.pehdCostPerUnit ?? 0);
                 const surcharge = Number(item.surcharge ?? 0);
-                const transportShare = shareByItem.get(item) ?? 0;
-                const transportPerUnit =
-                    transportShare > 0 && quantity > 0 ? transportShare / quantity : 0;
-                const itemPrice = computeUnitPriceNetto({
-                    unitPrice,
-                    discountPct: discount,
-                    pehdCostPerUnit: pehdCost,
-                    surcharge,
-                    transportPerUnit
-                });
-                const netto = roundMoney(itemPrice * quantity);
-
-                catTotal += netto;
-                grandTotalNet += netto;
+                const allocation = allocationByItem.get(item);
+                const fractionalTransportCents = allocation?.segments
+                    ? 0
+                    : (allocation?.totalCents ?? 0);
+                const baseUnitPrice = roundMoney(
+                    computeUnitPriceNetto({
+                        unitPrice,
+                        discountPct: discount,
+                        pehdCostPerUnit: pehdCost,
+                        surcharge
+                    })
+                );
+                const segments = allocation?.segments?.length
+                    ? allocation.segments
+                    : [{ quantity, transportCentsPerUnit: 0 }];
 
                 let displayName = name;
                 if (pehdType === 'PEHD-3MM') displayName += ' PEHD 3mm';
                 if (pehdType === 'PEHD-4MM') displayName += ' PEHD 4mm';
 
-                tabelaPozycji += `<tr>
+                for (const segment of segments) {
+                    const segmentMeters = hasLength
+                        ? meters > 0
+                            ? (meters / quantity) * segment.quantity
+                            : (lengthM / 1000) * segment.quantity
+                        : 0;
+                    const segmentNetto = roundMoney(
+                        baseUnitPrice * segment.quantity +
+                            (fractionalTransportCents > 0
+                                ? (fractionalTransportCents / 100) * (segment.quantity / quantity)
+                                : (segment.transportCentsPerUnit * segment.quantity) / 100)
+                    );
+                    const displayedUnitPrice = roundMoney(
+                        baseUnitPrice +
+                            (fractionalTransportCents > 0 ? 0 : segment.transportCentsPerUnit / 100)
+                    );
+                    catTotal += segmentNetto;
+                    grandTotalNet += segmentNetto;
+                    const transportSubline =
+                        fractionalTransportCents > 0
+                            ? `<br><span style="font-size:6.5pt;color:#${DOCX_COLORS.headerText};">Transport wliczony: ${formatCurrency(fractionalTransportCents / 100)} PLN</span>`
+                            : '';
+                    tabelaPozycji += `<tr>
               <td class="text-center">${globalLp}</td>
-              <td>${escapeHtml(displayName)}<br><span style="font-size:6.5pt;color:#${DOCX_COLORS.headerText};">${escapeHtml(productId)}</span></td>
-              <td class="text-center">${hasLength ? displayMeters.toFixed(2) : '\u2014'}</td>
-              <td class="text-center">${fmtIntLocal(quantity)}</td>
-              <td class="text-right">${formatCurrency(unitPrice)}</td>
-              <td class="text-right bold nowrap">${formatCurrency(netto)}</td>
+              <td>${escapeHtml(displayName)}<br><span style="font-size:6.5pt;color:#${DOCX_COLORS.headerText};">${escapeHtml(productId)}</span>${transportSubline}</td>
+              <td class="text-center">${hasLength ? segmentMeters.toFixed(2) : '\u2014'}</td>
+              <td class="text-center">${fmtIntLocal(segment.quantity)}</td>
+              <td class="text-right">${formatCurrency(displayedUnitPrice)}</td>
+              <td class="text-right bold nowrap">${formatCurrency(segmentNetto)}</td>
             </tr>`;
+                }
                 globalLp++;
             }
         }

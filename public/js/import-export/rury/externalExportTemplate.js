@@ -77,33 +77,110 @@ window.RuryExternalExportTemplate = {
 
     _offerRows(offer, items) {
         const rows = [];
+        const metadataRows = [];
+        const offerData = Object.assign({}, offer, (offer && offer.data) || {});
+        const allocations =
+            offerData.transportAllocation &&
+            offerData.transportAllocation.version === 1 &&
+            Array.isArray(offerData.transportAllocation.items)
+                ? offerData.transportAllocation.items
+                : [];
+        let lp = 1;
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            rows.push({
-                NUMER_OFERTY: offer.offer_number || offer.number || '',
-                NR_STUDNI: item.pehdType || '',
-                GLEBOKOSC: '',
-                INDEKS_CZESCI: item.productId || '',
-                ILOSC: item.quantity || 0,
-                CENA_JEDNOSTKOWA: this._netUnitPrice(item),
-                WERSJA: 1,
-                RABAT: '',
-                SREDNICA: '',
-                ZAKONCZENIE: '',
-                MAGAZYN: '',
-                LP: i + 1
+            const itemUid = String(item.uid || item.id || 'rury-' + (i + 1));
+            const allocation = allocations.find((entry) => String(entry.itemUid) === itemUid);
+            const segments =
+                allocation && Array.isArray(allocation.segments) ? allocation.segments : [];
+            const usableSegments =
+                Number.isInteger(Number(item.quantity)) &&
+                segments.length > 0 &&
+                segments.every(
+                    (segment) =>
+                        Number.isInteger(Number(segment.quantity)) &&
+                        Number(segment.quantity) > 0 &&
+                        Number.isInteger(Number(segment.transportCentsPerUnit)) &&
+                        Number(segment.transportCentsPerUnit) >= 0
+                ) &&
+                segments.reduce((sum, segment) => sum + Number(segment.quantity), 0) ===
+                    Number(item.quantity) &&
+                segments.reduce(
+                    (sum, segment) =>
+                        sum + Number(segment.quantity) * Number(segment.transportCentsPerUnit),
+                    0
+                ) === Number(allocation.totalCents);
+            const displaySegments = usableSegments
+                ? segments
+                : [{ quantity: Number(item.quantity) || 0, transportCentsPerUnit: 0 }];
+            displaySegments.forEach((segment) => {
+                const rowLp = lp++;
+                const transportCents = Number(segment.transportCentsPerUnit) || 0;
+                const exportedRow = {
+                    NUMER_OFERTY: offer.offer_number || offer.number || '',
+                    NR_STUDNI: item.pehdType || '',
+                    GLEBOKOSC: '',
+                    INDEKS_CZESCI: item.productId || '',
+                    ILOSC: segment.quantity,
+                    CENA_JEDNOSTKOWA: this._roundMoney(
+                        this._netUnitPrice(item) + transportCents / 100
+                    ),
+                    WERSJA: 1,
+                    RABAT: '',
+                    SREDNICA: '',
+                    ZAKONCZENIE: '',
+                    MAGAZYN: '',
+                    LP: rowLp
+                };
+                rows.push(exportedRow);
+                if (allocation) {
+                    metadataRows.push({
+                        VERSION: 1,
+                        OFFER_NUMBER: offer.offer_number || offer.number || '',
+                        OFFER_ID: offer.id || '',
+                        ITEM_UID: itemUid,
+                        ROW_LP: rowLp,
+                        TOTAL_CENTS: allocation.totalCents,
+                        SEGMENT_JSON: usableSegments ? JSON.stringify(segment) : '',
+                        LINE_CENTS: 0,
+                        ROW_JSON: JSON.stringify(exportedRow),
+                        SOURCE_ITEM_JSON: JSON.stringify(item)
+                    });
+                }
+                if (!usableSegments && allocation && Number(allocation.totalCents) > 0) {
+                    const adjustmentLp = lp++;
+                    const adjustmentRow = {
+                        NUMER_OFERTY: offer.offer_number || offer.number || '',
+                        NR_STUDNI: 'Transport wliczony w cenę',
+                        GLEBOKOSC: '',
+                        INDEKS_CZESCI: 'TR-RURY',
+                        ILOSC: 1,
+                        CENA_JEDNOSTKOWA: Number(allocation.totalCents) / 100,
+                        WERSJA: 1,
+                        RABAT: '',
+                        SREDNICA: '',
+                        ZAKONCZENIE: '',
+                        MAGAZYN: '',
+                        LP: adjustmentLp
+                    };
+                    rows.push(adjustmentRow);
+                    metadataRows.push({
+                        VERSION: 1,
+                        OFFER_NUMBER: offer.offer_number || offer.number || '',
+                        OFFER_ID: offer.id || '',
+                        ITEM_UID: itemUid,
+                        ROW_LP: adjustmentLp,
+                        TOTAL_CENTS: allocation.totalCents,
+                        SEGMENT_JSON: '',
+                        LINE_CENTS: allocation.totalCents,
+                        ROW_JSON: JSON.stringify(adjustmentRow),
+                        SOURCE_ITEM_JSON: JSON.stringify(item)
+                    });
+                }
             });
         }
         // Osobna pozycja transportu (TR-RURY) — tylko gdy flaga na ofercie.
-        const offerData = Object.assign({}, offer, (offer && offer.data) || {});
-        rows.push(
-            ...this._transportRows(
-                offerData,
-                offer.offer_number || offer.number || '',
-                items.length + 1
-            )
-        );
-        return rows;
+        rows.push(...this._transportRows(offerData, offer.offer_number || offer.number || '', lp));
+        return { rows, metadataRows };
     },
 
     async generateAndDownload(offerId) {
@@ -120,14 +197,19 @@ window.RuryExternalExportTemplate = {
                     (full.data && Array.isArray(full.data.items) && full.data.items) ||
                     full.items ||
                     [];
-                const rows = this._offerRows(full, items);
+                const exported = this._offerRows(full, items);
+                const rows = exported.rows;
                 if (!rows.length) {
                     await appAlert('Brak pozycji do eksportu dla wybranej oferty.', {
                         type: 'warning'
                     });
                     return;
                 }
-                const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
+                const wb = await XlsxImportShared.generateExternalXlsx(
+                    'rury',
+                    rows,
+                    exported.metadataRows
+                );
                 XLSX.writeFile(wb, 'eksport_rury_zewn.xlsx');
                 return;
             } catch (_fetchErr) {
@@ -142,6 +224,7 @@ window.RuryExternalExportTemplate = {
         }
 
         const rows = [];
+        const metadataRows = [];
         for (const offer of offers) {
             if (offerId && offer.id !== offerId) continue;
             if (offer.type === 'studnia_oferta') continue;
@@ -149,7 +232,9 @@ window.RuryExternalExportTemplate = {
                 offer.data && Array.isArray(offer.data.items)
                     ? offer.data.items
                     : offer.items || [];
-            rows.push(...this._offerRows(offer, items));
+            const exported = this._offerRows(offer, items);
+            rows.push(...exported.rows);
+            metadataRows.push(...exported.metadataRows);
         }
 
         if (!rows.length) {
@@ -157,7 +242,7 @@ window.RuryExternalExportTemplate = {
             return;
         }
 
-        const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
+        const wb = await XlsxImportShared.generateExternalXlsx('rury', rows, metadataRows);
         XLSX.writeFile(wb, 'eksport_rury_zewn.xlsx');
     },
 
@@ -184,25 +269,13 @@ window.RuryExternalExportTemplate = {
             return;
         }
 
-        const rows = items.map((item, i) => ({
-            NUMER_OFERTY: full.orderNumber || offerNumber,
-            NR_STUDNI: item.pehdType || '',
-            GLEBOKOSC: '',
-            INDEKS_CZESCI: item.productId || '',
-            ILOSC: item.quantity || 0,
-            CENA_JEDNOSTKOWA: this._netUnitPrice(item),
-            WERSJA: 1,
-            RABAT: '',
-            SREDNICA: '',
-            ZAKONCZENIE: '',
-            MAGAZYN: '',
-            LP: i + 1
-        }));
+        const exported = this._offerRows(
+            Object.assign({}, full, { offer_number: full.orderNumber || offerNumber }),
+            items
+        );
+        const rows = exported.rows;
 
-        // Osobna pozycja transportu (TR-RURY) — tylko gdy flaga na zamówieniu.
-        rows.push(...this._transportRows(full, full.orderNumber || offerNumber, items.length + 1));
-
-        const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
+        const wb = await XlsxImportShared.generateExternalXlsx('rury', rows, exported.metadataRows);
         const safeNumber =
             typeof window !== 'undefined' &&
             window.ExportFilenames &&

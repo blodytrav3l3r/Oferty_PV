@@ -65,6 +65,80 @@ export type {
 // OFERTY RURY
 // =============================================================================
 
+const transportAllocationSchema = z.object({
+    version: z.literal(1),
+    items: z.array(
+        z.object({
+            itemUid: z.string().min(1),
+            totalCents: z.number().int().nonnegative(),
+            segments: z
+                .array(
+                    z.object({
+                        quantity: z.number().int().positive(),
+                        transportCentsPerUnit: z.number().int().nonnegative()
+                    })
+                )
+                .max(2)
+                .optional()
+        })
+    )
+});
+
+function validateTransportAllocation(
+    value: unknown,
+    rawItems: unknown,
+    rawTransportCost?: unknown
+): string | null {
+    const parsed = transportAllocationSchema.safeParse(value);
+    if (!parsed.success) return 'Nieprawidłowa alokacja transportu';
+    const items = Array.isArray(rawItems)
+        ? rawItems.filter(
+              (item): item is Record<string, unknown> =>
+                  Boolean(item) && typeof item === 'object' && !Array.isArray(item)
+          )
+        : [];
+    const sourceByUid = new Map<string, Record<string, unknown>>();
+    for (const item of items) {
+        if (typeof item.uid !== 'string' || !item.uid) continue;
+        if (sourceByUid.has(item.uid)) return 'Powtórzony UID pozycji';
+        sourceByUid.set(item.uid, item);
+    }
+    const seen = new Set<string>();
+    for (const entry of parsed.data.items) {
+        if (seen.has(entry.itemUid)) return 'Powtórzony UID alokacji transportu';
+        seen.add(entry.itemUid);
+        const source = sourceByUid.get(entry.itemUid);
+        if (!source) return 'Alokacja wskazuje nieznaną pozycję';
+        const quantity = Number(source.quantity ?? 1);
+        if (!Number.isFinite(quantity)) return 'Nieprawidłowa ilość pozycji';
+        if (Number.isInteger(quantity)) {
+            const segmentQuantity = entry.segments?.reduce(
+                (sum, segment) => sum + segment.quantity,
+                0
+            );
+            const segmentCents = entry.segments?.reduce(
+                (sum, segment) => sum + segment.quantity * segment.transportCentsPerUnit,
+                0
+            );
+            if (segmentQuantity !== quantity || segmentCents !== entry.totalCents) {
+                return 'Suma segmentów alokacji jest niezgodna z pozycją';
+            }
+        } else if (entry.segments !== undefined) {
+            return 'Ilość ułamkowa nie może mieć segmentów';
+        }
+    }
+    const transportCost = Number(rawTransportCost);
+    if (
+        Number.isFinite(transportCost) &&
+        transportCost >= 0 &&
+        Math.round(roundMoney(transportCost) * 100) !==
+            parsed.data.items.reduce((sum, entry) => sum + entry.totalCents, 0)
+    ) {
+        return 'Suma alokacji nie zgadza się z kosztem transportu';
+    }
+    return null;
+}
+
 export const offerItemSchema = z
     .object({
         id: z.string().optional(),
@@ -81,6 +155,22 @@ export const offerItemSchema = z
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
+const offerDataSchema = z.record(z.string(), z.unknown()).superRefine((data, ctx) => {
+    if (data.transportAllocation === undefined) return;
+    const error = validateTransportAllocation(
+        data.transportAllocation,
+        data.items,
+        data.transportCost
+    );
+    if (error) {
+        ctx.addIssue({
+            code: 'custom',
+            path: ['transportAllocation'],
+            message: error
+        });
+    }
+});
+
 export const offerCreateSchema = z
     .object({
         id: z.string().optional(),
@@ -90,8 +180,20 @@ export const offerCreateSchema = z
         status: z.enum(['active', 'draft']).optional(),
         organizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).or(z.literal('')).nullable().optional(),
         transportCost: z.number().finite().min(0).transform(roundMoney).default(0),
+        transportAllocation: transportAllocationSchema.optional(),
         items: z.array(offerItemSchema),
-        data: z.record(z.string(), z.unknown()).optional()
+        data: offerDataSchema.optional()
+    })
+    .superRefine((offer, ctx) => {
+        if (offer.transportAllocation === undefined) return;
+        const error = validateTransportAllocation(
+            offer.transportAllocation,
+            offer.items,
+            offer.transportCost
+        );
+        if (error) {
+            ctx.addIssue({ code: 'custom', path: ['transportAllocation'], message: error });
+        }
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 

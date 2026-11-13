@@ -49,7 +49,16 @@ function renderOfferItems() {
             item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     });
 
-    const transportDist = calculateTransportDistribution(_items);
+    const tripCost = getCostPerTrip();
+    const transportCount =
+        typeof getRuryTransportCount === 'function'
+            ? getRuryTransportCount(_items)
+            : calculateTransports(_items).totalTransports;
+    const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
+    const transportAllocation = getCurrentRuryTransportAllocation(
+        _items,
+        importedTransport ? importedTransport.cost : transportCount * tripCost
+    );
 
     const { flat } = getSortedRuryItems(_items);
 
@@ -80,14 +89,40 @@ function renderOfferItems() {
         }
         html += `<tr class="offer-diam-header"><td colspan="14">⌀ ${dk}</td></tr>`;
         displayEntries.forEach(({ item, originalIndex: i }) => {
+            const displayQuantity =
+                window.orderEditMode && Number(item.orderedQuantity) > 0
+                    ? Number(item.orderedQuantity)
+                    : item.quantity;
             const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
             const pehdCost = item.pehdCostPerUnit || 0;
             const surcharge = item.surcharge || 0;
             const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
 
-            const transportPerUnit = transportDist[item.productId] || 0;
-            const unitTotal = priceAfterDiscount + transportPerUnit;
-            const netto = unitTotal * item.quantity;
+            const baseCents = Math.round(_moneyRoundTransport(priceAfterDiscount) * 100);
+            const transportCents = getTransportAllocationCents(transportAllocation, item.uid);
+            const transportSegments = getTransportSegments(transportAllocation, item.uid);
+            const transportPerUnit =
+                Number.isInteger(displayQuantity) && displayQuantity > 0
+                    ? transportCents / 100 / displayQuantity
+                    : 0;
+            const unitTotal = _moneyRoundTransport(baseCents / 100 + transportPerUnit);
+            const netto = _moneyRoundTransport(
+                (baseCents * displayQuantity + transportCents) / 100
+            );
+            const unitTotalLabel =
+                transportSegments.length > 1
+                    ? `${fmt(_moneyRoundTransport(baseCents / 100 + transportSegments[0].transportCentsPerUnit / 100))}–${fmt(_moneyRoundTransport(baseCents / 100 + transportSegments[1].transportCentsPerUnit / 100))}`
+                    : !Number.isInteger(displayQuantity) && transportCents
+                      ? fmt(_moneyRoundTransport(baseCents / 100))
+                      : fmt(unitTotal);
+            const transportLabel =
+                transportSegments.length > 1
+                    ? `${fmt(transportSegments[0].transportCentsPerUnit / 100)}–${fmt(transportSegments[1].transportCentsPerUnit / 100)}`
+                    : !Number.isInteger(displayQuantity) && transportCents
+                      ? `${fmt(transportCents / 100)} / poz.`
+                      : transportPerUnit > 0
+                        ? fmt(transportPerUnit)
+                        : '—';
             const hasLength = item.lengthM && item.lengthM > 0;
             const metersVal = hasLength ? item.meters || 0 : '';
             const autoTag = item.autoAdded
@@ -189,12 +224,12 @@ function renderOfferItems() {
                   ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" data-csp-2="$select" data-csp-3="updateItemMeters" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, '$value']))}" data-csp-3-on="change" title="Metry bieżące" aria-label="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'quantity', '$value']))}" data-csp-3-on="change" aria-label="Ilość [szt.]"${lockAttr}> szt.</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${displayQuantity}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'quantity', '$value']))}" data-csp-3-on="change" aria-label="Ilość [szt.]"${lockAttr}> szt.</span></td>
           ${orderCell}
           <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'discount', '$value']))}" data-csp-3-on="change" aria-label="Rabat [%]"${lockAttr}>%</span></td>
-          <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(unitTotal)}</span></td>
+          <td class="rury-col-num text-right" ><span class="text-center-block">${unitTotalLabel}</span></td>
           <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'surcharge', '$value']))}" data-csp-3-on="change" aria-label="Dopłata [PLN]"${lockAttr}></span></td>
-          <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
+          <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportLabel}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight: var(--fw-semibold)"><span class="text-center-block">${fmt(netto)}</span></td>
           <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtmlAttr(item.commercialVersion || '')}" data-csp="updateItemText" data-csp-args="${escapeHtmlAttr(JSON.stringify([i, 'commercialVersion', '$value']))}" data-csp-on="change" placeholder="Notatki"${lockAttr}></span></td>
           <td style="text-align:right;white-space:nowrap;">
