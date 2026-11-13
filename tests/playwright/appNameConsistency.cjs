@@ -294,7 +294,9 @@ async function startServer() {
             .catch(() => 0);
 
         // Przejdź do modułu rur
-        await page.goto(`${BASE}/app.html#/rury`, {
+        // Wymuś nowy dokument: przejście `#/studnie` → `#/rury` w tej samej
+        // karcie uruchamia guard niezapisanych zmian i miesza test nazwy z G12.
+        await page.goto(`${BASE}/app.html?e2e=appname-rury#/rury`, {
             waitUntil: 'domcontentloaded',
             timeout: 30000
         });

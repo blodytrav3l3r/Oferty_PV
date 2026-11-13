@@ -185,17 +185,16 @@ async function waitModuleFrame(page, mod) {
             `status=${loginResp.status()}`
         );
 
-        let frame = await enterModule(page, 'rury');
-        await frame.waitForFunction(
-            () => window.currentUser && window.currentUser.id !== undefined,
-            null,
-            { timeout: 15000 }
-        );
-
         // G12: świeże moduły bez edycji = czysto (studnie pre-wypełniają notatki
-        // generatorem — to nie brud; rury kontrolnie tak samo).
+        // generatorem — to nie brud; rury kontrolnie tak samo). Każdy moduł
+        // otwieramy w nowym dokumencie, żeby stan poprzedniej ramki nie wpływał
+        // na pomiar świeżego formularza.
         for (const mod of ['studnie', 'rury']) {
-            const fr = await enterModule(page, mod);
+            await page.goto(`${BASE}/app.html?g12=${mod}#/${mod}`, {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+            });
+            const fr = await waitModuleFrame(page, mod);
             await fr.waitForFunction(
                 () => window.currentUser && window.currentUser.id !== undefined,
                 null,
@@ -227,8 +226,8 @@ async function waitModuleFrame(page, mod) {
             check(`G12 wyjście ze świeżego ${mod}: bez popupu`, silent === true, String(silent));
         }
 
-        // G12 przeładował stronę 2× — odnów ramkę rur przed G0.
-        frame = await enterModule(page, 'rury');
+        // G12 przeładował stronę 2× — otwórz świeże rury przed G0.
+        const frame = await enterModule(page, 'rury');
         await frame.waitForFunction(
             () => window.currentUser && window.currentUser.id !== undefined,
             null,
