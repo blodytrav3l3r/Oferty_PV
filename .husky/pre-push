@@ -1,10 +1,9 @@
 #!/bin/sh
-# Pre-push S.O.K. sprawdza najpierw połączenie z izolowaną bazą testową.
-# Kroki niezależne w grupach A–C idą równolegle, a grupy idą sekwencyjnie:
+# Pre-push uruchamia szybkie kontrole lokalne; testy wykonuje CI po pushu.
+# Kroki niezależne w grupach A–C idą równolegle:
 #   A: version + encoding + appname + licenses + collisions + ratchet + prices (~13 s)
 #   B: lint BE + lint FE (~25 s)
 #   C: typecheck BE + typecheck FE (~37 s)
-#   D: test:quick:lite + test:git-safety (~225 s, najdłuższy krok)
 # Logi kroków lądują w plikach tymczasowych — wypisywane tylko przy FAIL,
 # żeby komunikaty z różnych kroków się nie przeplatały.
 
@@ -36,8 +35,6 @@ run_parallel() {
     return $fail
 }
 
-node scripts/postgres-test-url.cjs || { echo "❌ Konfiguracja PostgreSQL do testów — sprawdź POSTGRES_TEST_URL"; exit 1; }
-
 echo "── pre-push A: wersja/kodowanie/nazwa ──"
 run_parallel \
     "npm run version:check" \
@@ -57,13 +54,5 @@ echo "── pre-push C: typecheck ──"
 run_parallel \
     "npm run typecheck" \
     "npm run typecheck:frontend" || { echo "❌ Typecheck"; exit 1; }
-
-echo "── pre-push D: testy (sekwencyjnie) ──"
-# UWAGA: testy MUSZĄ iść szeregowo, nie równolegle — suity git-safety
-# tworzą/usuwają tmp_git_safety_*.txt w root repo, a równoległe suity
-# skanujące drzewo (np. appNameCheck) łapią ENOENT na znikających plikach
-# i testy git-safety łapią index.lock. Zweryfikowane dwoma pushami.
-npm run test:quick:lite 2>&1 || { echo "❌ Testy — uruchom npm run test:quick:lite"; exit 1; }
-npm run test:git-safety 2>&1 || { echo "❌ Testy git-safety — uruchom npm run test:git-safety"; exit 1; }
 
 echo "✓ pre-push zielony"
