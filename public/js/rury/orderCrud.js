@@ -218,11 +218,12 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         });
 
         const importedTransport = window.isRuryTransportSeparate?.getImported?.() || null;
-        const offerTransportCost =
-            Number(offer.transportCost) ||
-            (Number(offer.transportCount) || 0) *
-                (Number(offer.transportCostPerTrip) ||
-                    Number(offer.transportKm || 0) * Number(offer.transportRate || 0));
+        const offerTransportCost = importedTransport
+            ? Number(importedTransport.cost) || 0
+            : Number(offer.transportCost) ||
+              (Number(offer.transportCount) || 0) *
+                  (Number(offer.transportCostPerTrip) ||
+                      Number(offer.transportKm || 0) * Number(offer.transportRate || 0));
         const offerAllocation = projectTransportAllocation(
             offer.items || [],
             offer.transportAllocation,

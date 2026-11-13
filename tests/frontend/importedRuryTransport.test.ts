@@ -3,6 +3,27 @@ import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
 
+const ROOT = path.join(__dirname, '..', '..');
+
+function loadTransport(context) {
+    context.MAX_TRANSPORT_WEIGHT = 24000;
+    context.getRuryProductById = () => null;
+    context.calculateTransports = () => ({ totalTransports: 0, lines: [] });
+    vm.runInContext(
+        fs.readFileSync(path.join(ROOT, 'public/js/rury/transport.js'), 'utf8'),
+        context,
+        { filename: 'transport.js' }
+    );
+}
+
+function loadOfferExportsHelpers(context) {
+    vm.runInContext(
+        fs.readFileSync(path.join(ROOT, 'public/js/rury/offerExportsHelpers.js'), 'utf8'),
+        context,
+        { filename: 'offerExportsHelpers.js' }
+    );
+}
+
 test('transport z importu pozostaje w podsumowaniu do czasu zmiany km lub stawki', () => {
     const elements = {
         'transport-km': { value: '0' },
@@ -277,6 +298,8 @@ test('druk oferty pobiera pełne dane zamiast używać skróconej listy', async 
     };
     context.window = context;
     vm.createContext(context);
+    loadTransport(context);
+    loadOfferExportsHelpers(context);
     const code = fs
         .readFileSync(path.join(__dirname, '../../public/js/rury/offerExports.js'), 'utf8')
         .replace("await import('../shared/StorageService.js')", '({ storageService: storage })');
@@ -300,6 +323,7 @@ test('XLSX pobiera pełną ofertę i zachowuje zaimportowaną kwotę transportu 
     const context = {
         window: {},
         offers: [{ id: 'offer-1' }],
+        structuredClone: (value) => JSON.parse(JSON.stringify(value)),
         calculateTransports: () => ({ totalTransports: 3, lines: [] }),
         calculateTransportDistributionStandalone: () => ({}),
         ensureXlsx: async () => {},
@@ -318,13 +342,8 @@ test('XLSX pobiera pełną ofertę i zachowuje zaimportowaną kwotę transportu 
     };
     context.window = context;
     vm.createContext(context);
-    vm.runInContext(
-        fs.readFileSync(
-            path.join(__dirname, '../../public/js/rury/offerExportsHelpers.js'),
-            'utf8'
-        ),
-        context
-    );
+    loadTransport(context);
+    loadOfferExportsHelpers(context);
     const code = fs
         .readFileSync(path.join(__dirname, '../../public/js/rury/offerExports.js'), 'utf8')
         .replaceAll("await import('../shared/StorageService.js')", '({ storageService: storage })');
@@ -354,7 +373,7 @@ test('XLSX pobiera pełną ofertę i zachowuje zaimportowaną kwotę transportu 
     context.saveOffersData = () => {};
     context.renderSavedOffers = () => {};
     context.logger = {
-        error: (error) => {
+        error: (_tag, error) => {
             throw error;
         }
     };

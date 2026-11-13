@@ -29,6 +29,13 @@ describe('frontend vm: rury renderOfferItems nie rusza unitPrice edycji', () => 
             getPipeInnerArea: () => 0,
             getProductDiameter: () => 300,
             isOneMetrePipe: () => false,
+            getCostPerTrip: () => 0,
+            getRuryTransportCount: () => 0,
+            getCurrentRuryTransportAllocation: () => ({ version: 1, items: [] }),
+            getTransportAllocationCents: () => 0,
+            getTransportSegments: () => [],
+            calculateTransports: () => ({ totalTransports: 0, lines: [] }),
+            _moneyRoundTransport: (value) => Math.round(Number(value) * 100) / 100,
             getSortedRuryItems: (list) => ({
                 flat: [
                     {

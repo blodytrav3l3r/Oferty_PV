@@ -9,6 +9,7 @@ function loadTransport() {
         MAX_TRANSPORT_WEIGHT: 24000,
         getRuryProductById: () => null,
         calculateTransports: () => ({ totalTransports: 0 }),
+        calculateTransportTrips: () => ({ saved: 0 }),
         console
     };
     vm.createContext(sandbox);
@@ -87,9 +88,11 @@ describe('frontend vm: dokładna alokacja transportu rur', () => {
 
     it('osobny transport nie jest rozdzielany na pozycje', () => {
         const transport = loadTransport();
-        const distribution = transport['calculateTransportDistributionStandalone'](
-            [{ uid: 'pipe', productId: 'P', weight: 1, quantity: 3 }],
-            1
+        const distribution = transport['withOfferTransportFlags']({ transportSeparate: true }, () =>
+            transport['calculateTransportDistributionStandalone'](
+                [{ uid: 'pipe', productId: 'P', weight: 1, quantity: 3 }],
+                1
+            )
         );
         expect(distribution).toEqual({});
     });
@@ -316,7 +319,7 @@ describe('frontend vm: dokładna alokacja transportu rur', () => {
             null
         );
         const second = makeOrder('order-2', '2026-01-02', 2, secondAllocation.allocation);
-        const savedSecondAllocation = structuredClone(second.transportAllocation);
+        const savedSecondAllocation = JSON.parse(JSON.stringify(second.transportAllocation));
         const editedFirstAllocation = transport['allocateRuryOrderTransport'](
             [{ uid: 'pipe', orderedQuantity: 1 }],
             sourceItems,

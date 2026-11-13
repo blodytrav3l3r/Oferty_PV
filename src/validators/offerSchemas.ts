@@ -171,7 +171,7 @@ const offerDataSchema = z.record(z.string(), z.unknown()).superRefine((data, ctx
     }
 });
 
-export const offerCreateSchema = z
+const offerBaseSchema = z
     .object({
         id: z.string().optional(),
         generateOfferNumber: z.boolean().optional(),
@@ -184,23 +184,42 @@ export const offerCreateSchema = z
         items: z.array(offerItemSchema),
         data: offerDataSchema.optional()
     })
-    .superRefine((offer, ctx) => {
-        if (offer.transportAllocation === undefined) return;
-        const error = validateTransportAllocation(
-            offer.transportAllocation,
-            offer.items,
-            offer.transportCost
-        );
-        if (error) {
-            ctx.addIssue({ code: 'custom', path: ['transportAllocation'], message: error });
-        }
-    })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
-export const offerUpdateSchema = offerCreateSchema.partial();
+function validateOfferTransportAllocation(
+    offer: {
+        transportAllocation?: z.infer<typeof transportAllocationSchema>;
+        items?: z.infer<typeof offerItemSchema>[];
+        transportCost?: number;
+    },
+    ctx: z.RefinementCtx
+): void {
+    if (
+        offer.transportAllocation === undefined ||
+        !Array.isArray(offer.items) ||
+        offer.transportCost === undefined
+    )
+        return;
+    const error = validateTransportAllocation(
+        offer.transportAllocation,
+        offer.items,
+        offer.transportCost
+    );
+    if (error) {
+        ctx.addIssue({ code: 'custom', path: ['transportAllocation'], message: error });
+    }
+}
+
+export const offerCreateSchema = offerBaseSchema.superRefine(validateOfferTransportAllocation);
+
+export const offerUpdateSchema = offerBaseSchema
+    .partial()
+    .superRefine(validateOfferTransportAllocation);
 
 export const offersBatchSchema = z.object({
-    data: z.array(offerCreateSchema.partial({ clientId: true }))
+    data: z.array(
+        offerBaseSchema.partial({ clientId: true }).superRefine(validateOfferTransportAllocation)
+    )
 });
 
 // =============================================================================

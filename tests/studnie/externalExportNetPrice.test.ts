@@ -270,7 +270,7 @@ describe('rury: eksport zewnętrzny = ceny po rabacie', () => {
     const T = loadRuryTemplate();
 
     test('oferta: unitPrice katalogowy x (1 - rabat%), RABAT pusty', () => {
-        const rows = T._offerRows({ offer_number: 'OF/1' }, [
+        const { rows } = T._offerRows({ offer_number: 'OF/1' }, [
             { productId: 'RTB-1', quantity: 1, unitPrice: 460, discount: 20 },
             { productId: 'ZT-1', quantity: 3, unitPrice: 40, discount: 0 }
         ]);
@@ -289,7 +289,7 @@ describe('rury: eksport zewnętrzny = ceny po rabacie', () => {
 
 test('eksport rur zaokrągla cenę pozycji i stawkę transportu handlowo do groszy', () => {
     const template = loadRuryTemplate();
-    const rows = template._offerRows(
+    const { rows } = template._offerRows(
         { transportSeparate: true, transportCount: 1, transportCostPerTrip: 10.075 },
         [{ productId: 'R1', unitPrice: 1.005, quantity: 1 }]
     );
@@ -298,7 +298,7 @@ test('eksport rur zaokrągla cenę pozycji i stawkę transportu handlowo do gros
 
 test('eksport i import rur zachowuje 100 zł transportu dla trzech kursów', async () => {
     const template = loadRuryTemplate();
-    const rows = template._offerRows(
+    const { rows } = template._offerRows(
         {
             transportSeparate: true,
             transportCount: 3,
@@ -336,7 +336,7 @@ test('eksport i import rur zachowuje 100 zł transportu dla trzech kursów', asy
 });
 
 test('eksport zachowuje ułamkowy kurs, gdy cena jednostkowa daje dokładną sumę', () => {
-    const rows = loadRuryTemplate()._offerRows(
+    const { rows } = loadRuryTemplate()._offerRows(
         { transportSeparate: true, transportCount: 0.5, transportCost: 100 },
         [{ productId: 'R1', unitPrice: 50, quantity: 1 }]
     );

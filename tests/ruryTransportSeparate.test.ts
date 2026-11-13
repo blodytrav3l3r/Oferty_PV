@@ -1,7 +1,7 @@
 /**
  * Rury PDF/DOCX: wiersz "Transport bez rozładunku" tylko przy osobnej pozycji.
- * Przy cenie wliczonej koszt dzielony wagowo na pozycje (lustro frontendu),
- * RAZEM bez zmian. Fallback (brak wagi) pokazuje wiersz, żeby koszt nie zniknął.
+ * Przy cenie wliczonej koszt dzielony na pozycje (lustro frontendu),
+ * RAZEM bez zmian. Brak wag korzysta z ilości, tak jak DOCX.
  */
 import { buildRurySectionHTML } from '../src/services/pdf/ruryHtml';
 import type { RuryOfferData } from '../src/services/pdf/types';
@@ -258,12 +258,34 @@ describe('rury PDF: wiersz transportu', () => {
         expect(section.grandTotal).toBeCloseTo(baseNetto + 1000, 2);
     });
 
-    it('cena wliczona bez wagi: fallback pokazuje wiersz (koszt nie znika)', () => {
+    it('cena wliczona bez wagi: fallback dzieli koszt po ilości', () => {
         const data = ruryData({ transportSeparate: false });
         data.items = [ruryItem({ weight: 0 }), ruryItem({ weight: 0 })];
         const section = buildRurySectionHTML(data);
-        expect(section.tables + section.summary).toContain('Transport bez rozładunku');
+        expect(section.tables + section.summary).not.toContain('Transport bez rozładunku');
         expect(section.grandTotal).toBeCloseTo(baseNetto + 1000, 2);
+    });
+
+    it('cena wliczona bez wagi zachowuje poprawną zapisaną alokację', () => {
+        const section = buildRurySectionHTML(
+            ruryData({
+                items: [ruryItem({ uid: 'saved-allocation', weight: 0 })],
+                transportCost: 1,
+                transportAllocation: {
+                    version: 1,
+                    items: [
+                        {
+                            itemUid: 'saved-allocation',
+                            totalCents: 100,
+                            segments: [{ quantity: 2, transportCentsPerUnit: 50 }]
+                        }
+                    ]
+                }
+            })
+        );
+        expect(section.tables + section.summary).not.toContain('Transport bez rozładunku');
+        expect(section.tables).toContain('0,50');
+        expect(section.grandTotal).toBe(201);
     });
 
     it('cena wliczona: prezentuje podział grosza na segmenty bez straty sumy', () => {

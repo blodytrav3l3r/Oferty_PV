@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /**
  * @jest-environment jsdom
  */

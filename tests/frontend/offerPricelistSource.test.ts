@@ -87,7 +87,7 @@ describe('oferta: ceny z wersji pieczątki', () => {
         const applyAt = studnieMgr.indexOf(
             'await applyStudnieOfferPricelist(normalized.pricelistVersionId);'
         );
-        const freezeAt = studnieMgr.indexOf('freezeWellPrices(wells)');
+        const freezeAt = studnieMgr.indexOf('freezeWellPrices(wells, true)');
         expect(applyAt).toBeGreaterThan(-1);
         expect(freezeAt).toBeGreaterThan(applyAt);
         expect(studnieMgr).toContain('async function applyStudnieOfferPricelist(stampId)');

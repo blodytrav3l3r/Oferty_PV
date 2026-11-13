@@ -647,7 +647,18 @@ function getCurrentRuryTransportAllocation(items, totalCost) {
     }
     if (order.transportSeparate) return { version: 1, items: [] };
     if (order.transportAllocation?.version === 1) {
-        const savedOrderCost = Number(order.transportCost);
+        const storedOrderCost = Number(order.transportCost);
+        const storedItems = Array.isArray(order.transportAllocation.items)
+            ? order.transportAllocation.items
+            : [];
+        const allocationCost =
+            storedItems.reduce((sum, item) => sum + (Number(item?.totalCents) || 0), 0) / 100;
+        const savedOrderCost =
+            order.transportCost != null &&
+            order.transportCost !== '' &&
+            Number.isFinite(storedOrderCost)
+                ? storedOrderCost
+                : allocationCost;
         return projectTransportAllocation(
             items,
             order.transportAllocation,

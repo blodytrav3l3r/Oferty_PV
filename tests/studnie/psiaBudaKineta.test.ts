@@ -71,7 +71,13 @@ describe('syncKineta — psia buda wymusza dennicę bez dna (kineta/spocznik/spo
             spocznik: 'beton',
             spocznikH: '1/2',
             config: [
-                { productId: 'kineta-1000-12', quantity: 1 },
+                {
+                    productId: 'kineta-1000-12',
+                    quantity: 1,
+                    frozenPrice: 321,
+                    frozenPriceBase: 400,
+                    frozenName: 'Zapisana kineta'
+                },
                 { productId: 'dennica-1000-1000', quantity: 1 }
             ]
         };

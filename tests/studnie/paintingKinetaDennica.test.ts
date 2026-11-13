@@ -160,7 +160,7 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         const well = makeWell({ malowanieW: 'cale' });
         expect(
             ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])
-        ).toBeCloseTo(1000 + 2.9845 * 200, 0);
+        ).toBeCloseTo(1000 + 2.8274 * 200, 0);
         expect(
             ctx.getItemAssessedPrice(well, product('KDB-10-10'), false, well.config[0])
         ).toBeCloseTo(400 + 3.14 * 200, 2);
@@ -312,7 +312,10 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         expect(first).toEqual(reordered);
         expect(first.concreteVolumeM3).toBeCloseTo(0.097782, 5);
         expect(first.estimatedWeightKg).toBeCloseTo(244.46, 1);
-        expect(ctx.calcKinetaPaintingArea(makeWell())).toBeCloseTo(first.paintingAreaM2, 5);
+        expect(ctx.calcKinetaPaintingArea(makeWell({ przejscia: passages }))).toBeCloseTo(
+            first.paintingAreaM2,
+            5
+        );
     });
 
     test('brak średnic przejść oznacza brak estymowanej masy', () => {

@@ -260,7 +260,7 @@ window.RuryExternalImport = {
                 return;
             }
             let discount = 0;
-            if (r['RABAT'] !== '') {
+            if (r['RABAT'] != null && r['RABAT'] !== '') {
                 const d = P(r['RABAT']);
                 if (d === null || d < 0 || d > 100) {
                     errors.push({
