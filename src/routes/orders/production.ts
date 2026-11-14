@@ -26,6 +26,7 @@ import {
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { assertDocLockForWrite } from '../../utils/docLocks';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
+import { isCurrentProductionNumber, parseProductionNumber } from '../../utils/productionNumber';
 import {
     incrementPrintCount,
     preservePrintCounts,
@@ -47,7 +48,111 @@ import type {
 
 const router = express.Router();
 
-type RawDb = Pick<typeof prisma, '$executeRaw'>;
+type RawDb = Pick<typeof prisma, '$executeRaw' | '$queryRaw' | 'production_global_number_claims'>;
+
+type SequenceEntry = { userId: string; year: number; seq: number };
+type RecycleEntry = SequenceEntry & { hasGlobalClaim: boolean };
+
+type ClaimDb = Pick<typeof prisma, '$queryRaw' | 'production_global_number_claims'>;
+
+type ExistingProductionNumber = { ownerId: string | null; value: string | null };
+
+function getProductionNumber(data: string | null, columnValue?: string | null): string | null {
+    if (typeof columnValue === 'string' && columnValue.length > 0) return columnValue;
+    const parsed = parseJsonField<Record<string, unknown>>(data, {});
+    return typeof parsed.productionOrderNumber === 'string' &&
+        parsed.productionOrderNumber.length > 0
+        ? parsed.productionOrderNumber
+        : null;
+}
+
+async function assertProductionNumberClaim(
+    userId: string,
+    value: string,
+    db: ClaimDb,
+    existing?: ExistingProductionNumber
+): Promise<void> {
+    if (!value) return;
+    const unchanged = existing?.value === value;
+    if (!isCurrentProductionNumber(value)) {
+        if (unchanged) return;
+        throw {
+            status: 409,
+            code: 'INVALID_PRODUCTION_NUMBER_FORMAT',
+            message: 'Nowy numer zlecenia ma nieprawidłowy format'
+        };
+    }
+    const parsed = parseProductionNumber(value);
+    if (!parsed) throw new Error('CURRENT_PRODUCTION_NUMBER_PARSE_FAILED');
+    const [claim] = await db.$queryRaw<Array<{ userId: string }>>`
+        SELECT "userId" FROM "production_global_number_claims"
+        WHERE "year" = ${parsed.year} AND "seqNumber" = ${parsed.seqNumber}
+        FOR UPDATE
+    `;
+    if (!claim && unchanged) return;
+    if (!claim || (claim.userId !== userId && (!unchanged || claim.userId !== existing?.ownerId))) {
+        throw {
+            status: 409,
+            code: 'PRODUCTION_NUMBER_NOT_CLAIMED',
+            message: 'Numer nie jest zarezerwowany dla tego użytkownika'
+        };
+    }
+    if (claim.userId !== userId) {
+        await db.production_global_number_claims.update({
+            where: { year_seqNumber: { year: parsed.year, seqNumber: parsed.seqNumber } },
+            data: { userId }
+        });
+    }
+}
+
+async function findActiveProductionSequences(
+    entries: SequenceEntry[],
+    db: RawDb
+): Promise<Set<string>> {
+    if (entries.length === 0) return new Set();
+    const candidates = entries.map(
+        (entry) => Prisma.sql`(${entry.userId}, ${entry.year}, ${entry.seq})`
+    );
+    const active = await db.$queryRaw<Array<{ year: number; seqNumber: number }>>`
+        WITH candidate("userId", "year", "seqNumber") AS (VALUES ${Prisma.join(candidates)}),
+        number_values AS (
+            SELECT "productionNumber" AS number
+            FROM "production_orders_rel"
+            WHERE "productionNumber" IS NOT NULL
+            UNION ALL
+            SELECT substring("data" from '"productionOrderNumber"\s*:\s*"([^"]+)"') AS number
+            FROM "production_orders_rel"
+            WHERE "data" IS NOT NULL
+        ), parsed AS (
+            SELECT
+                CASE WHEN number ~ '^[^/]+/[^/]+/[0-9]+/[0-9]{2}$'
+                    THEN 2000 + split_part(number, '/', 4)::INTEGER
+                    ELSE 2000 + split_part(number, '/', 3)::INTEGER END AS year,
+                CASE WHEN number ~ '^[^/]+/[^/]+/[0-9]+/[0-9]{2}$'
+                    THEN CASE WHEN length(ltrim(split_part(number, '/', 3), '0')) > 10
+                        THEN 2147483648::NUMERIC
+                        ELSE COALESCE(NULLIF(ltrim(split_part(number, '/', 3), '0'), ''), '0')::NUMERIC END
+                    ELSE CASE WHEN length(ltrim(split_part(number, '/', 2), '0')) > 10
+                        THEN 2147483648::NUMERIC
+                        ELSE COALESCE(NULLIF(ltrim(split_part(number, '/', 2), '0'), ''), '0')::NUMERIC END
+                END AS seq
+            FROM number_values
+            WHERE number ~ '^[^/]+/[^/]+/[0-9]+/[0-9]{2}$'
+               OR number ~ '^[^/]+/[0-9]+/[0-9]{2}$'
+        )
+        SELECT DISTINCT candidate."year", candidate."seqNumber"
+        FROM candidate
+        WHERE EXISTS (
+            SELECT 1 FROM parsed
+            WHERE parsed.year = candidate."year" AND parsed.seq = candidate."seqNumber"
+        ) OR EXISTS (
+            SELECT 1 FROM "production_global_number_claims" AS claim
+            WHERE claim."year" = candidate."year"
+              AND claim."seqNumber" = candidate."seqNumber"
+        )
+    `;
+    return new Set(active.map((row) => `${row.year}:${row.seqNumber}`));
+}
 
 async function recycleProductionNumber(
     userId: string,
@@ -57,50 +162,63 @@ async function recycleProductionNumber(
     const prodNum =
         typeof oldData.productionOrderNumber === 'string' ? oldData.productionOrderNumber : '';
     if (!prodNum) return;
-    const parts = prodNum.split('/');
-    if (parts.length < 4) return;
-    const seqNumber = parseInt(parts[2], 10);
-    const yearShort = parseInt(parts[3], 10);
-    const fullYear = 2000 + yearShort;
-    if (seqNumber > 0) {
-        await db.$executeRaw`
-            INSERT INTO "recycled_production_numbers" ("userId", "year", "seqNumber")
-            VALUES (${userId}, ${fullYear}, ${seqNumber})
-            ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING
-        `;
+    const parsed = parseProductionNumber(prodNum);
+    if (!parsed) return;
+    const entry = { userId, year: parsed.year, seq: parsed.seqNumber };
+    if (isCurrentProductionNumber(prodNum)) {
+        await db.production_global_number_claims.deleteMany({
+            where: { userId, year: parsed.year, seqNumber: parsed.seqNumber }
+        });
     }
+    const active = await findActiveProductionSequences([entry], db);
+    if (active.has(`${entry.year}:${entry.seq}`)) return;
+    await db.$executeRaw`
+        INSERT INTO "recycled_production_numbers_global" ("userId", "year", "seqNumber")
+        VALUES (${userId}, ${parsed.year}, ${parsed.seqNumber})
+        ON CONFLICT ("year", "seqNumber") DO NOTHING
+    `;
 }
 
-function parseRecycleEntry(
-    userId: string,
-    oldData: Record<string, unknown>
-): { userId: string; year: number; seq: number } | null {
+function parseRecycleEntry(userId: string, oldData: Record<string, unknown>): RecycleEntry | null {
     const prodNum =
         typeof oldData.productionOrderNumber === 'string' ? oldData.productionOrderNumber : '';
     if (!prodNum) return null;
-    const parts = prodNum.split('/');
-    if (parts.length < 4) return null;
-    const seqNumber = parseInt(parts[2], 10);
-    const yearShort = parseInt(parts[3], 10);
-    const fullYear = 2000 + yearShort;
-    if (!(seqNumber > 0)) return null;
-    return { userId, year: fullYear, seq: seqNumber };
+    const parsed = parseProductionNumber(prodNum);
+    if (!parsed) return null;
+    return {
+        userId,
+        year: parsed.year,
+        seq: parsed.seqNumber,
+        hasGlobalClaim: isCurrentProductionNumber(prodNum)
+    };
 }
 
 /**
  * P0.3: hurtowy zwrot numerów — JEDEN INSERT zamiast N w pętli.
  * Semantyka 1:1 z recycleProductionNumber (ON CONFLICT DO NOTHING).
  */
-async function recycleProductionNumbersBulk(
-    entries: Array<{ userId: string; year: number; seq: number }>,
-    db: RawDb = prisma
-) {
+async function recycleProductionNumbersBulk(entries: RecycleEntry[], db: RawDb = prisma) {
     if (entries.length === 0) return;
-    const rows = entries.map((e) => Prisma.sql`(${e.userId}, ${e.year}, ${e.seq})`);
+    const claimedEntries = entries.filter(({ hasGlobalClaim }) => hasGlobalClaim);
+    if (claimedEntries.length > 0) {
+        await db.production_global_number_claims.deleteMany({
+            where: {
+                OR: claimedEntries.map(({ userId, year, seq }) => ({
+                    userId,
+                    year,
+                    seqNumber: seq
+                }))
+            }
+        });
+    }
+    const active = await findActiveProductionSequences(entries, db);
+    const recyclable = entries.filter((entry) => !active.has(`${entry.year}:${entry.seq}`));
+    if (recyclable.length === 0) return;
+    const rows = recyclable.map((e) => Prisma.sql`(${e.userId}, ${e.year}, ${e.seq})`);
     await db.$executeRaw`
-        INSERT INTO "recycled_production_numbers" ("userId", "year", "seqNumber")
+        INSERT INTO "recycled_production_numbers_global" ("userId", "year", "seqNumber")
         VALUES ${Prisma.join(rows)}
-        ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING
+        ON CONFLICT ("year", "seqNumber") DO NOTHING
     `;
 }
 
@@ -284,6 +402,7 @@ router.put(
                     {
                         id: string;
                         data: string | null;
+                        productionNumber: string | null;
                         userId: string | null;
                         version: number | null;
                     }
@@ -291,7 +410,13 @@ router.put(
                 if (batchIds.length > 0) {
                     const rows = await tx.production_orders_rel.findMany({
                         where: { id: { in: batchIds } },
-                        select: { id: true, data: true, userId: true, version: true }
+                        select: {
+                            id: true,
+                            data: true,
+                            productionNumber: true,
+                            userId: true,
+                            version: true
+                        }
                     });
                     for (const r of rows) oldById.set(r.id, r);
                 }
@@ -348,6 +473,17 @@ router.put(
                             };
                         }
                         targetUserId = created.effectiveUserId;
+                    }
+
+                    const oldNumber = old
+                        ? getProductionNumber(old.data, old.productionNumber)
+                        : null;
+                    const numberToValidate = prodNum ?? oldNumber;
+                    if (numberToValidate) {
+                        await assertProductionNumberClaim(targetUserId, numberToValidate, tx, {
+                            ownerId: old?.userId ?? null,
+                            value: oldNumber
+                        });
                     }
 
                     // Twarda blokada edycji PZ: cudzy świeży lock = 423, cały batch cofnięty.
@@ -417,6 +553,7 @@ router.put(
                         oldById.set(docId, {
                             id: docId,
                             data: dataStr,
+                            productionNumber: prodNum ?? null,
                             userId: targetUserId,
                             version: 1
                         });
@@ -452,6 +589,7 @@ router.put(
                         oldById.set(docId, {
                             id: docId,
                             data: dataStr,
+                            productionNumber: prodNum ?? old.productionNumber,
                             userId: targetUserId,
                             version: clientVersion + 1
                         });
@@ -479,9 +617,20 @@ router.put(
                         oldById.set(docId, {
                             id: docId,
                             data: dataStr,
+                            productionNumber: prodNum ?? old.productionNumber,
                             userId: targetUserId,
                             version: legacyNext
                         });
+                    }
+                    if (old && oldNumber && prodNum !== undefined && prodNum !== oldNumber) {
+                        await recycleProductionNumber(
+                            old.userId || '',
+                            {
+                                ...parseJsonField<Record<string, unknown>>(old.data, {}),
+                                productionOrderNumber: oldNumber
+                            },
+                            tx
+                        );
                     }
                 }
             }, HOT_TX_OPTS);
@@ -599,125 +748,153 @@ router.post(
             const createdAt = normalizeDate(createdAtRaw);
             const updatedAt = normalizeDate(updatedAtRaw);
 
-            const old = await prisma.production_orders_rel.findUnique({
-                where: { id: docId },
-                select: { data: true, userId: true, version: true }
-            });
-
-            // P0.1: zapis wymaga prawa względem właściciela (create: self/sub/admin).
-            const reqUser = typeof incomingUserId === 'string' ? incomingUserId : undefined;
-            let targetUserId: string;
-            if (old) {
-                const assigned = resolveAssignUserId(authReq.user, old.userId, reqUser);
-                if (!assigned.allowed) {
-                    return res
-                        .status(403)
-                        .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
-                }
-                targetUserId = assigned.effectiveUserId;
-            } else {
-                const created = resolveWriteUserId(authReq.user, reqUser);
-                if (!created.allowed) {
-                    return res
-                        .status(403)
-                        .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
-                }
-                targetUserId = created.effectiveUserId;
-            }
-
-            // Twarda blokada edycji PZ: cudzy świeży lock = 423.
-            if (old) {
-                await assertDocLockForWrite(prisma, {
-                    docType: 'production',
-                    docId,
-                    user: { id: authReq.user?.id || '' }
+            await prisma.$transaction(async (tx) => {
+                const old = await tx.production_orders_rel.findUnique({
+                    where: { id: docId },
+                    select: { data: true, productionNumber: true, userId: true, version: true }
                 });
-            }
 
-            if (old) {
-                await logAudit(
-                    'production_order',
-                    docId,
-                    authReq.user?.id || '',
-                    'update',
-                    rest,
-                    parseJsonField<Record<string, unknown>>(old.data, {})
-                );
-            } else {
-                await logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
-            }
-
-            // Błąd #48 (POST): merge ze starym blobem jak w PUT — chudy update
-            // nie może wycinać wellName/productName. Create zapisuje rest wprost.
-            const oldPostData = old ? parseJsonField<Record<string, unknown>>(old.data, {}) : null;
-            const dataStr = JSON.stringify(
-                oldPostData ? preservePrintCounts({ ...oldPostData, ...rest }, oldPostData) : rest
-            );
-
-            if (!old) {
-                await prisma.production_orders_rel.create({
-                    data: {
-                        id: docId,
-                        userId: targetUserId,
-                        creatorId: authReq.user?.id || '',
-                        orderId: orderId || '',
-                        wellId: wellId || '',
-                        elementIndex: elementIndex || 0,
-                        elementKey: elementKey || '',
-                        createdAt: createdAt,
-                        updatedAt: updatedAt,
-                        data: dataStr,
-                        productionNumber: prodNum ?? null,
-                        version: 1
+                const reqUser = typeof incomingUserId === 'string' ? incomingUserId : undefined;
+                let targetUserId: string;
+                if (old) {
+                    const assigned = resolveAssignUserId(authReq.user, old.userId, reqUser);
+                    if (!assigned.allowed) {
+                        throw {
+                            status: 403,
+                            message: 'Brak uprawnień do zapisu dla tego użytkownika'
+                        };
                     }
-                });
-            } else if (clientVersion != null) {
-                // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE id+version).
-                const upd = await prisma.production_orders_rel.updateMany({
-                    where: { id: docId, version: clientVersion },
-                    data: {
-                        userId: targetUserId,
-                        creatorId: authReq.user?.id || '',
-                        orderId: orderId || '',
-                        wellId: wellId || '',
-                        elementIndex: elementIndex || 0,
-                        elementKey: elementKey || '',
-                        updatedAt: updatedAt,
-                        data: dataStr,
-                        productionNumber: prodNum,
-                        version: { increment: 1 }
+                    targetUserId = assigned.effectiveUserId;
+                } else {
+                    const created = resolveWriteUserId(authReq.user, reqUser);
+                    if (!created.allowed) {
+                        throw {
+                            status: 403,
+                            message: 'Brak uprawnień do zapisu dla tego użytkownika'
+                        };
                     }
-                });
-                if (upd.count === 0) {
-                    if (idemKey)
-                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, {
-                            error: 'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
-                            code: 'VERSION_CONFLICT',
-                            serverVersion: old.version ?? 1
-                        });
-                    return res.status(409).json({
-                        error: 'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
-                        code: 'VERSION_CONFLICT',
-                        serverVersion: old.version ?? 1
+                    targetUserId = created.effectiveUserId;
+                }
+
+                const oldNumber = old ? getProductionNumber(old.data, old.productionNumber) : null;
+                const numberToValidate = prodNum ?? oldNumber;
+                if (numberToValidate) {
+                    await assertProductionNumberClaim(targetUserId, numberToValidate, tx, {
+                        ownerId: old?.userId ?? null,
+                        value: oldNumber
                     });
                 }
-            } else {
-                await prisma.production_orders_rel.update({
-                    where: { id: docId },
-                    data: {
-                        userId: targetUserId,
-                        creatorId: authReq.user?.id || '',
-                        orderId: orderId || '',
-                        wellId: wellId || '',
-                        elementIndex: elementIndex || 0,
-                        elementKey: elementKey || '',
-                        updatedAt: updatedAt,
-                        data: dataStr,
-                        productionNumber: prodNum,
-                        version: { increment: 1 }
+
+                if (old) {
+                    await assertDocLockForWrite(tx, {
+                        docType: 'production',
+                        docId,
+                        user: { id: authReq.user?.id || '' }
+                    });
+                }
+
+                if (old) {
+                    await logAudit(
+                        'production_order',
+                        docId,
+                        authReq.user?.id || '',
+                        'update',
+                        rest,
+                        parseJsonField<Record<string, unknown>>(old.data, {}),
+                        tx
+                    );
+                } else {
+                    await logAudit(
+                        'production_order',
+                        docId,
+                        authReq.user?.id || '',
+                        'create',
+                        rest,
+                        null,
+                        tx
+                    );
+                }
+
+                const oldPostData = old
+                    ? parseJsonField<Record<string, unknown>>(old.data, {})
+                    : null;
+                const dataStr = JSON.stringify(
+                    oldPostData
+                        ? preservePrintCounts({ ...oldPostData, ...rest }, oldPostData)
+                        : rest
+                );
+
+                if (!old) {
+                    await tx.production_orders_rel.create({
+                        data: {
+                            id: docId,
+                            userId: targetUserId,
+                            creatorId: authReq.user?.id || '',
+                            orderId: orderId || '',
+                            wellId: wellId || '',
+                            elementIndex: elementIndex || 0,
+                            elementKey: elementKey || '',
+                            createdAt: createdAt,
+                            updatedAt: updatedAt,
+                            data: dataStr,
+                            productionNumber: prodNum ?? null,
+                            version: 1
+                        }
+                    });
+                } else if (clientVersion != null) {
+                    const upd = await tx.production_orders_rel.updateMany({
+                        where: { id: docId, version: clientVersion },
+                        data: {
+                            userId: targetUserId,
+                            creatorId: authReq.user?.id || '',
+                            orderId: orderId || '',
+                            wellId: wellId || '',
+                            elementIndex: elementIndex || 0,
+                            elementKey: elementKey || '',
+                            updatedAt: updatedAt,
+                            data: dataStr,
+                            productionNumber: prodNum,
+                            version: { increment: 1 }
+                        }
+                    });
+                    if (upd.count === 0) {
+                        throw {
+                            status: 409,
+                            code: 'VERSION_CONFLICT',
+                            message:
+                                'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
+                            serverVersion: old.version ?? 1
+                        };
                     }
-                });
-            }
+                } else {
+                    await tx.production_orders_rel.update({
+                        where: { id: docId },
+                        data: {
+                            userId: targetUserId,
+                            creatorId: authReq.user?.id || '',
+                            orderId: orderId || '',
+                            wellId: wellId || '',
+                            elementIndex: elementIndex || 0,
+                            elementKey: elementKey || '',
+                            updatedAt: updatedAt,
+                            data: dataStr,
+                            productionNumber: prodNum,
+                            version: { increment: 1 }
+                        }
+                    });
+                }
+
+                if (old && oldNumber && prodNum !== undefined && prodNum !== oldNumber) {
+                    await recycleProductionNumber(
+                        old.userId || '',
+                        {
+                            ...oldPostData,
+                            productionOrderNumber: oldNumber
+                        },
+                        tx
+                    );
+                }
+            }, HOT_TX_OPTS);
 
             searchCache.invalidateNamespace('production');
             // P1-A: odpowiedź finałowa (< 500) ląduje pod kluczem do replay.
@@ -728,6 +905,25 @@ router.post(
                 });
             res.json({ ok: true, id: docId });
         } catch (e: unknown) {
+            if ((e as { status?: number }).status === 409) {
+                const conflict = e as { message?: string; code?: string; serverVersion?: number };
+                if (idemKey)
+                    await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, {
+                        error: conflict.message || 'Konflikt numeru produkcyjnego',
+                        code: conflict.code || 'PRODUCTION_NUMBER_CONFLICT',
+                        serverVersion: conflict.serverVersion
+                    });
+                return res.status(409).json({
+                    error: conflict.message || 'Konflikt numeru produkcyjnego',
+                    code: conflict.code || 'PRODUCTION_NUMBER_CONFLICT',
+                    ...(conflict.serverVersion ? { serverVersion: conflict.serverVersion } : {})
+                });
+            }
+            if ((e as { status?: number }).status === 403) {
+                return res.status(403).json({
+                    error: (e as { message?: string }).message || 'Brak uprawnień'
+                });
+            }
             // Twarda blokada: cudzy lock na zleceniu.
             if ((e as { status?: number }).status === 423) {
                 return res.status(423).json({
@@ -831,7 +1027,7 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
             const finalIdSet = new Set(finalIds);
             // P0.3: audyt sekwencyjnie w kolejności wejścia (efekt uboczny bez
             // zmian), recycle jednym INSERT-em zamiast N w pętli — ta sama tx.
-            const recycleEntries: Array<{ userId: string; year: number; seq: number }> = [];
+            const recycleEntries: RecycleEntry[] = [];
             for (const order of deletable) {
                 if (!finalIdSet.has(order.id)) continue;
                 const oldData = parseJsonField<Record<string, unknown>>(order.data, {});
@@ -893,14 +1089,88 @@ router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req,
         }
         const seqs = [...new Set(parsed.data.seqNumbers)];
         const targetYear = parsed.data.year ?? new Date().getFullYear();
-        const rows = seqs.map((seq) => Prisma.sql`(${userId}, ${targetYear}, ${seq})`);
-        await prisma.$executeRaw`
-            INSERT INTO "recycled_production_numbers" ("userId", "year", "seqNumber")
-            VALUES ${Prisma.join(rows)}
-            ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING
-        `;
-        res.json({ ok: true, returned: seqs.length });
+        const returned = await prisma.$transaction(async (tx) => {
+            const counter = await tx.production_global_order_counters.findUnique({
+                where: { year: targetYear }
+            });
+            if (!counter) return null;
+            if (seqs.some((seq) => seq > counter.lastNumber)) return null;
+
+            const params = Prisma.join(seqs);
+            const claimed = await tx.$queryRaw<Array<{ seqNumber: number }>>`
+                SELECT "seqNumber"
+                FROM "production_global_number_claims"
+                WHERE "userId" = ${userId} AND "year" = ${targetYear}
+                  AND "seqNumber" IN (${params})
+                FOR UPDATE
+            `;
+            const recycled = await tx.recycled_production_numbers_global.findMany({
+                where: { userId, year: targetYear, seqNumber: { in: seqs } },
+                select: { seqNumber: true }
+            });
+            const accepted = new Set([
+                ...claimed.map((row) => row.seqNumber),
+                ...recycled.map((row) => row.seqNumber)
+            ]);
+            if (seqs.some((seq) => !accepted.has(seq))) return null;
+
+            const candidates = claimed.map(({ seqNumber }) => ({
+                userId,
+                year: targetYear,
+                seq: seqNumber,
+                hasGlobalClaim: true
+            }));
+            if (candidates.length > 0) {
+                const deleted = await tx.production_global_number_claims.deleteMany({
+                    where: {
+                        userId,
+                        year: targetYear,
+                        seqNumber: { in: candidates.map(({ seq }) => seq) }
+                    }
+                });
+                if (deleted.count !== candidates.length) {
+                    throw {
+                        status: 409,
+                        code: 'RECYCLE_NUMBER_CONFLICT',
+                        message: 'Numer nie należy już do aktywnego przydziału'
+                    };
+                }
+            }
+            const active = await findActiveProductionSequences(candidates, tx);
+            if (active.size > 0) {
+                throw {
+                    status: 409,
+                    code: 'RECYCLE_NUMBER_CONFLICT',
+                    message: 'Numer jest już zapisany w zleceniu produkcyjnym'
+                };
+            }
+
+            if (candidates.length > 0) {
+                const rows = candidates.map(
+                    ({ seq }) => Prisma.sql`(${userId}, ${targetYear}, ${seq})`
+                );
+                await tx.$executeRaw`
+                    INSERT INTO "recycled_production_numbers_global" ("userId", "year", "seqNumber")
+                    VALUES ${Prisma.join(rows)}
+                    ON CONFLICT ("year", "seqNumber") DO NOTHING
+                `;
+            }
+            return seqs.length;
+        }, HOT_TX_OPTS);
+        if (returned === null) {
+            return res.status(409).json({
+                error: 'Numery nie należą do aktywnego przydziału albo nie są dostępne',
+                code: 'RECYCLE_NUMBER_CONFLICT'
+            });
+        }
+        res.json({ ok: true, returned });
     } catch (e: unknown) {
+        if ((e as { status?: number }).status === 409) {
+            return res.status(409).json({
+                error: (e as { message?: string }).message || 'Konflikt zwrotu numeru',
+                code: (e as { code?: string }).code || 'RECYCLE_NUMBER_CONFLICT'
+            });
+        }
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Production', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -1074,7 +1344,6 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                     docId,
                     user: { id: authReq.user?.id || '' }
                 });
-                await recycleProductionNumber(existing.userId || '', oldData, tx);
                 await logAudit(
                     'production_order',
                     docId,
@@ -1091,6 +1360,7 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                         where: { id: docId, userId: authReq.user?.id }
                     });
                 }
+                await recycleProductionNumber(existing.userId || '', oldData, tx);
             }, HOT_TX_OPTS);
         } catch (e: unknown) {
             if ((e as { status?: number }).status === 403) {

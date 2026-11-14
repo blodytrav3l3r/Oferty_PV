@@ -325,6 +325,20 @@
         return { module, params };
     }
 
+    function syncCennikNavigation(user) {
+        const link = document.getElementById('spa-app-cennik');
+        if (!link) return;
+        const isAdmin = user?.role === 'admin';
+        link.hidden = !isAdmin;
+        link.classList.toggle('hidden', !isAdmin);
+    }
+
+    function redirectNonAdminCennik(module) {
+        if (module !== 'cennik' || window.currentUser?.role === 'admin') return false;
+        window.location.hash = _lastCleanHash || '#/' + (currentModule || 'pulpit');
+        return true;
+    }
+
     function updateAppNav(module) {
         const navIds = {
             rury: 'spa-app-rury',
@@ -644,6 +658,8 @@
             return;
         }
 
+        if (redirectNonAdminCennik(module)) return;
+
         // Guard: zmiana modułu przy niezapisanych zmianach → popup aplikacji (Z-30 SPA)
         if (_navForceOnce) {
             _navForceOnce = false; // nawigacja potwierdzona — przepuść
@@ -918,6 +934,7 @@
             }
 
             window.currentUser = user;
+            syncCennikNavigation(user);
         } catch (_e) {
             if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
             else window.location.href = 'index.html';

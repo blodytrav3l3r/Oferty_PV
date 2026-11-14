@@ -75,18 +75,24 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: jest.fn(async () => null),
             upsert: jest.fn(async () => ({}))
         },
-        recycled_production_numbers: { findMany: jest.fn(async () => []) },
+        recycled_production_numbers_global: { findMany: jest.fn(async () => []) },
         $transaction: jest.fn(async (cb: any) =>
             cb({
-                recycled_production_numbers: {
+                recycled_production_numbers_global: {
                     findMany: async () => [],
                     deleteMany: async () => ({ count: 0 })
                 },
+                production_global_number_claims: {
+                    createMany: async () => ({ count: 1 }),
+                    deleteMany: async () => ({ count: 0 })
+                },
                 $executeRaw: async () => 1,
-                $queryRaw: async (strings: TemplateStringsArray) =>
-                    strings[0]?.includes('FROM "recycled_production_numbers"')
+                $queryRaw: async (strings: TemplateStringsArray) => {
+                    if (strings[0]?.includes('WITH candidate')) return [];
+                    return strings[0]?.includes('FROM "recycled_production_numbers_global"')
                         ? []
-                        : [{ lastNumber: 5 }]
+                        : [{ lastNumber: 5 }];
+                }
             })
         )
     }

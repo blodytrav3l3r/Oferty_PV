@@ -11,11 +11,19 @@ import {
 } from '../../utils/idempotency';
 import { logger } from '../../utils/logger';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
+import { formatProductionNumber } from '../../utils/productionNumber';
 
 const router = express.Router();
 
 /** Maks. liczb w jednym claim-zakresu — jak limit batch-delete (production.ts). */
 const CLAIM_RANGE_MAX = 200;
+const PRODUCTION_START_SETTING = 'production_order_start_number';
+
+async function getProductionOrderStartNumber(): Promise<number> {
+    const setting = await prisma.settings.findUnique({ where: { key: PRODUCTION_START_SETTING } });
+    const value = Number(setting?.value);
+    return Number.isSafeInteger(value) && value >= 1 ? value : 1;
+}
 
 // E3b: zod zamiast ręcznego typeof — unknown keys ignorowane (strip, default z.object),
 // count musi być int 1..200. Komunikaty bez zmian (testy + frontend orderBulk.js).
@@ -41,19 +49,26 @@ async function claimProductionSeqs(
             return await prisma.$transaction(async (tx) => {
                 const recycled = await tx.$queryRaw<Array<{ seqNumber: number }>>`
                     SELECT "seqNumber"
-                    FROM "recycled_production_numbers"
-                    WHERE "userId" = ${userId} AND "year" = ${year}
+                    FROM "recycled_production_numbers_global"
+                    WHERE "year" = ${year}
                     ORDER BY "seqNumber" ASC
                     LIMIT ${count}
                     FOR UPDATE
                 `;
                 const wanted = recycled.map((r) => r.seqNumber);
                 if (wanted.length > 0) {
-                    const del = await tx.recycled_production_numbers.deleteMany({
-                        where: { userId, year, seqNumber: { in: wanted } }
+                    const del = await tx.recycled_production_numbers_global.deleteMany({
+                        where: { year, seqNumber: { in: wanted } }
                     });
                     // Ktoś sprzątnął część puli spod nas — retry z nowym odczytem.
                     if (del.count !== wanted.length) throw new Error('RECYCLED_RACE_RETRY');
+
+                    await tx.$executeRaw`INSERT INTO production_global_order_counters (year, "lastNumber")
+                        VALUES (${year}, ${startNum - 1})
+                        ON CONFLICT(year) DO NOTHING`;
+                    await tx.$executeRaw`UPDATE production_global_order_counters
+                        SET "lastNumber" = GREATEST("lastNumber", ${Math.max(...wanted)})
+                        WHERE year = ${year}`;
                 }
                 const out: number[] = [...wanted];
                 // Rezerwacja zakresu: dokładamy atomowymi inkrementami, pomijając
@@ -64,18 +79,18 @@ async function claimProductionSeqs(
                 while (need > 0) {
                     if (++guard > 5) throw new Error('RANGE_RESERVE_FAIL');
                     // Baza wiersza licznika (pierwszy claim) albo nic.
-                    await tx.$executeRaw`INSERT INTO production_order_counters ("userId", year, "lastNumber")
-                        VALUES (${userId}, ${year}, ${startNum - 1})
-                        ON CONFLICT("userId", year) DO NOTHING`;
+                    await tx.$executeRaw`INSERT INTO production_global_order_counters (year, "lastNumber")
+                        VALUES (${year}, ${startNum - 1})
+                        ON CONFLICT(year) DO NOTHING`;
                     // Atomowa rezerwacja: jeden UPDATE, głowa po inkrementacji.
-                    await tx.$executeRaw`UPDATE production_order_counters
+                    await tx.$executeRaw`UPDATE production_global_order_counters
                         SET "lastNumber" = "lastNumber" + ${need}
-                        WHERE "userId" = ${userId} AND year = ${year}`;
+                        WHERE year = ${year}`;
                     const head = (
                         await tx.$queryRaw<
                             Array<{ lastNumber: number }>
                         >`SELECT "lastNumber" AS "lastNumber"
-                        FROM production_order_counters WHERE "userId" = ${userId} AND year = ${year}`
+                        FROM production_global_order_counters WHERE year = ${year}`
                     )[0]?.lastNumber;
                     if (typeof head !== 'number') throw new Error('COUNTER_READ_FAIL');
                     for (let s = head - need + 1; s <= head && out.length < count; s++) {
@@ -83,7 +98,11 @@ async function claimProductionSeqs(
                     }
                     need = count - out.length;
                 }
-                return out.sort((a, b) => a - b);
+                const allocated = out.sort((a, b) => a - b);
+                await tx.production_global_number_claims.createMany({
+                    data: allocated.map((seqNumber) => ({ userId, year, seqNumber }))
+                });
+                return allocated;
             }, HOT_TX_OPTS);
         } catch (e) {
             // Retry tylko przy wyścigu o recycled, reszta od razu w górę.
@@ -98,21 +117,19 @@ async function claimProductionSeqs(
 
 /* ===== RECYKLING NUMERÓW ===== */
 
-router.get('/recycled', requireAuth, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
+router.get('/recycled', requireAuth, async (_req, res) => {
     try {
         const year = new Date().getFullYear();
         const yearShort = String(year).slice(-2);
         const letterKey = 'year_letter_' + year;
         const letterRow = await prisma.settings.findUnique({ where: { key: letterKey } });
         const yearLetter = letterRow ? letterRow.value : '?';
-        const rows = await prisma.recycled_production_numbers.findMany({
-            where: { userId: authReq.user?.id, year },
+        const rows = await prisma.recycled_production_numbers_global.findMany({
+            where: { year },
             orderBy: { seqNumber: 'asc' }
         });
         res.json({
             recycled: rows.map((r) => r.seqNumber),
-            symbol: authReq.user?.symbol || '??',
             yearLetter,
             yearShort
         });
@@ -139,10 +156,9 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
 
         const user = await prisma.users.findUnique({
             where: { id: userId },
-            select: { symbol: true, productionOrderStartNumber: true }
+            select: { symbol: true }
         });
         if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
-
         const symbol = user.symbol || '??';
 
         const counter = await prisma.order_counters.findUnique({
@@ -257,31 +273,24 @@ router.post('/claim-production-number/:userId', requireAuth, WRITE_LIMITER, asyn
                 });
         }
         const year = new Date().getFullYear();
-        const yearShort = String(year).slice(-2);
-
-        const user = await prisma.users.findUnique({
-            where: { id: userId },
-            select: { symbol: true, productionOrderStartNumber: true }
-        });
+        const user = await prisma.users.findUnique({ where: { id: userId }, select: { id: true } });
         if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
-
-        const symbol = user.symbol || '??';
-        const startNum = user.productionOrderStartNumber || 1;
 
         // Pobierz literę roku
         const letterKey = 'year_letter_' + year;
         const letterRow = await prisma.settings.findUnique({
             where: { key: letterKey }
         });
-        const yearLetter = letterRow ? letterRow.value : '?';
+        const yearLetter = letterRow?.value || '?';
 
         // Sprawdź czy są numery z recyklingu (recycled)
 
         // P0-B: atomowy claim (recycled albo licznik) w jednej transakcji.
+        const startNum = await getProductionOrderStartNumber();
         const [nextNumber] = await claimProductionSeqs(userId, year, startNum, 1);
 
-        const formatted = `${symbol}/${yearLetter}/${String(nextNumber).padStart(5, '0')}/${yearShort}`;
-        const prodPayload = { number: formatted, nextSeq: nextNumber, symbol, yearLetter, year };
+        const formatted = formatProductionNumber(yearLetter, nextNumber, year);
+        const prodPayload = { number: formatted, nextSeq: nextNumber, yearLetter, year };
         if (idemProdKey)
             await completeIdempotencyKey(
                 idemProdUser,
@@ -353,12 +362,7 @@ router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, asy
         }
         const count = parsed.data.count;
         const year = new Date().getFullYear();
-        const yearShort = String(year).slice(-2);
-
-        const user = await prisma.users.findUnique({
-            where: { id: userId },
-            select: { symbol: true, productionOrderStartNumber: true }
-        });
+        const user = await prisma.users.findUnique({ where: { id: userId }, select: { id: true } });
         if (!user) {
             const notFound = { error: 'Użytkownik nie znaleziony' };
             if (idemBulkKey)
@@ -372,20 +376,16 @@ router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, asy
             return res.status(404).json(notFound);
         }
 
-        const symbol = user.symbol || '??';
-        const startNum = user.productionOrderStartNumber || 1;
-
         const letterKey = 'year_letter_' + year;
         const letterRow = await prisma.settings.findUnique({
             where: { key: letterKey }
         });
-        const yearLetter = letterRow ? letterRow.value : '?';
+        const yearLetter = letterRow?.value || '?';
 
+        const startNum = await getProductionOrderStartNumber();
         const seqs = await claimProductionSeqs(userId, year, startNum, count);
-        const numbers = seqs.map(
-            (seq) => `${symbol}/${yearLetter}/${String(seq).padStart(5, '0')}/${yearShort}`
-        );
-        const bulkPayload = { numbers, seqs, symbol, yearLetter, year };
+        const numbers = seqs.map((seq) => formatProductionNumber(yearLetter, seq, year));
+        const bulkPayload = { numbers, seqs, yearLetter, year };
         if (idemBulkKey)
             await completeIdempotencyKey(
                 idemBulkUser,

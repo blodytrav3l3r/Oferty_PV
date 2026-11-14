@@ -4,6 +4,18 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.58.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.57.0...v1.58.0) (2026-11-14)
+
+### Features
+
+- **orders:** globalna numeracja zleceń produkcyjnych bez inicjałów oraz wspólna pula recyklingu
+- **ui:** menedżer cenników widoczny wyłącznie dla administratorów
+
+### Bug Fixes
+
+- **orders:** blokuj ponowne użycie numeru podczas równoległego zapisu i zwrotu
+- **prisma:** odtwórz rezerwacje numerów historycznych bez ryzyka przepełnienia sekwencji
+
 ## [1.57.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.56.8...v1.57.0) (2026-11-12)
 
 ### Features

@@ -41,19 +41,23 @@ jest.mock('../../src/utils/productionSearchUtils', () => ({
 
 /* In-memory baza: users / settings / recycled / counters / production_orders_rel */
 const store: {
-    users: Record<string, { symbol: string; productionOrderStartNumber: number }>;
+    users: Record<string, { id?: string; symbol: string; productionOrderStartNumber: number }>;
     settings: Record<string, string>;
     recycled: Array<{ userId: string; year: number; seqNumber: number }>;
+    claims: Array<{ userId: string; year: number; seqNumber: number }>;
     counters: Record<string, number>;
     orders: Record<string, any>;
+    lastSql: string;
     failUpsertAfter: number;
     upsertCalls: number;
 } = {
     users: {},
     settings: {},
     recycled: [],
+    claims: [],
     counters: {},
     orders: {},
+    lastSql: '',
     failUpsertAfter: -1,
     upsertCalls: 0
 };
@@ -72,37 +76,24 @@ jest.mock('../../src/prismaClient', () => ({
                     : null
             )
         },
-        recycled_production_numbers: {
-            findFirst: jest.fn(async ({ where }: any) => {
-                const rows = store.recycled
-                    .filter((r) => r.userId === where.userId && r.year === where.year)
-                    .sort((a, b) => a.seqNumber - b.seqNumber);
-                return rows[0] || null;
-            }),
+        recycled_production_numbers_global: {
             findMany: jest.fn(async ({ where, orderBy, take }: any) => {
                 let rows = store.recycled.filter(
-                    (r) => r.userId === where.userId && r.year === where.year
+                    (r) =>
+                        r.year === where.year &&
+                        (!where.userId || r.userId === where.userId) &&
+                        (!where.seqNumber?.in || where.seqNumber.in.includes(r.seqNumber))
                 );
                 if (orderBy && orderBy.seqNumber === 'asc')
                     rows = rows.sort((a, b) => a.seqNumber - b.seqNumber);
                 if (typeof take === 'number') rows = rows.slice(0, take);
                 return rows.map((r) => ({ ...r }));
             }),
-            delete: jest.fn(async ({ where }: any) => {
-                const k = where.userId_year_seqNumber;
-                const i = store.recycled.findIndex(
-                    (r) => r.userId === k.userId && r.year === k.year && r.seqNumber === k.seqNumber
-                );
-                if (i < 0) throw new Error('not found');
-                store.recycled.splice(i, 1);
-                return {};
-            }),
             deleteMany: jest.fn(async ({ where }: any) => {
                 const before = store.recycled.length;
                 store.recycled = store.recycled.filter(
                     (r) =>
                         !(
-                            r.userId === where.userId &&
                             r.year === where.year &&
                             (!where.seqNumber?.in || where.seqNumber.in.includes(r.seqNumber))
                         )
@@ -110,27 +101,21 @@ jest.mock('../../src/prismaClient', () => ({
                 return { count: before - store.recycled.length };
             })
         },
-        production_order_counters: {
+        production_global_order_counters: {
             findUnique: jest.fn(async ({ where }: any) => {
-                const key = where.userId_year.userId + '|' + where.userId_year.year;
-                return store.counters[key] === undefined
-                    ? null
-                    : { lastNumber: store.counters[key] };
-            }),
-            upsert: jest.fn(async ({ where, create, update }: any) => {
-                const k = where.userId_year;
-                const key = k.userId + '|' + k.year;
-                // Małe opóźnienie, żeby równoległe requesty realnie się przeplotły bez locka.
-                await new Promise((r) => setTimeout(r, 5));
-                if (store.counters[key] === undefined) {
-                    store.counters[key] = create.lastNumber;
-                } else if (typeof update.lastNumber === 'number') {
-                    store.counters[key] = update.lastNumber;
-                } else {
-                    store.counters[key] += update.lastNumber.increment;
-                }
-                return { lastNumber: store.counters[key] };
+                const value = store.counters[String(where.year)];
+                return value === undefined ? null : { year: where.year, lastNumber: value };
             })
+        },
+        production_global_number_claims: {
+            findUnique: jest.fn(
+                async ({ where }: any) =>
+                    store.claims.find(
+                        (claim) =>
+                            claim.year === where.year_seqNumber.year &&
+                            claim.seqNumber === where.year_seqNumber.seqNumber
+                    ) || null
+            )
         },
         production_orders_rel: {
             findUnique: jest.fn(async ({ where }: any) => store.orders[where.id] || null),
@@ -153,6 +138,7 @@ jest.mock('../../src/prismaClient', () => ({
         $transaction: jest.fn(async (fn: any) => {
             const undo = {
                 recycled: [] as any[],
+                claims: [] as any[],
                 counters: {} as Record<string, number>,
                 orders: {} as Record<string, any>
             };
@@ -242,11 +228,14 @@ jest.mock('../../src/prismaClient', () => ({
                         return { count: 1 };
                     })
                 },
-                recycled_production_numbers: {
+                recycled_production_numbers_global: {
                     findMany: jest.fn(async ({ where, orderBy, take }: any) => {
                         await new Promise((r) => setTimeout(r, 5));
                         let rows = store.recycled.filter(
-                            (x) => x.userId === where.userId && x.year === where.year
+                            (x) =>
+                                x.year === where.year &&
+                                (!where.userId || x.userId === where.userId) &&
+                                (!where.seqNumber?.in || where.seqNumber.in.includes(x.seqNumber))
                         );
                         if (orderBy && orderBy.seqNumber === 'asc')
                             rows = rows.sort((a, b) => a.seqNumber - b.seqNumber);
@@ -257,7 +246,6 @@ jest.mock('../../src/prismaClient', () => ({
                         const before = store.recycled.length;
                         const gone = store.recycled.filter(
                             (r) =>
-                                r.userId === where.userId &&
                                 r.year === where.year &&
                                 (!where.seqNumber?.in || where.seqNumber.in.includes(r.seqNumber))
                         );
@@ -265,7 +253,6 @@ jest.mock('../../src/prismaClient', () => ({
                         store.recycled = store.recycled.filter(
                             (r) =>
                                 !(
-                                    r.userId === where.userId &&
                                     r.year === where.year &&
                                     (!where.seqNumber?.in ||
                                         where.seqNumber.in.includes(r.seqNumber))
@@ -274,16 +261,80 @@ jest.mock('../../src/prismaClient', () => ({
                         return { count: before - store.recycled.length };
                     })
                 },
+                production_global_order_counters: {
+                    findUnique: jest.fn(async ({ where }: any) => {
+                        const value = store.counters[String(where.year)];
+                        return value === undefined ? null : { year: where.year, lastNumber: value };
+                    })
+                },
+                production_global_number_claims: {
+                    findUnique: jest.fn(
+                        async ({ where }: any) =>
+                            store.claims.find(
+                                (claim) =>
+                                    claim.year === where.year_seqNumber.year &&
+                                    claim.seqNumber === where.year_seqNumber.seqNumber
+                            ) || null
+                    ),
+                    createMany: jest.fn(async ({ data }: any) => {
+                        for (const claim of data) {
+                            if (
+                                store.claims.some(
+                                    (row) =>
+                                        row.year === claim.year && row.seqNumber === claim.seqNumber
+                                )
+                            )
+                                throw new Error('duplicate global number claim');
+                            store.claims.push({ ...claim });
+                            undo.claims.push({ added: true, row: { ...claim } });
+                        }
+                        return { count: data.length };
+                    }),
+                    update: jest.fn(async ({ where, data }: any) => {
+                        const claim = store.claims.find(
+                            (row) =>
+                                row.year === where.year_seqNumber.year &&
+                                row.seqNumber === where.year_seqNumber.seqNumber
+                        );
+                        if (!claim) throw new Error('global number claim not found');
+                        const previous = { ...claim };
+                        claim.userId = data.userId;
+                        undo.claims.push({ added: false, changed: true, row: previous });
+                        return { ...claim };
+                    }),
+                    deleteMany: jest.fn(async ({ where }: any) => {
+                        const matches = (row: any) => {
+                            if (where.OR) {
+                                return where.OR.some(
+                                    (candidate: any) =>
+                                        row.userId === candidate.userId &&
+                                        row.year === candidate.year &&
+                                        row.seqNumber === candidate.seqNumber
+                                );
+                            }
+                            return (
+                                row.userId === where.userId &&
+                                row.year === where.year &&
+                                (!where.seqNumber?.in || where.seqNumber.in.includes(row.seqNumber))
+                            );
+                        };
+                        const gone = store.claims.filter(matches);
+                        undo.claims.push(...gone.map((row) => ({ added: false, row: { ...row } })));
+                        store.claims = store.claims.filter((row) => !matches(row));
+                        return { count: gone.length };
+                    })
+                },
                 $executeRaw: jest.fn(async (strings: any, ...values: any[]) => {
                     const head: string = strings[0] || '';
-                    if (head.includes('INSERT')) {
-                        const [userId, year, base] = values;
-                        const key = userId + '|' + year;
+                    store.lastSql = strings.join('?');
+                    if (head.includes('INSERT INTO production_global_order_counters')) {
+                        const [year, base] = values;
+                        const key = String(year);
                         snapCounter(key);
                         if (store.counters[key] === undefined) store.counters[key] = base;
-                    } else if (head.includes('UPDATE')) {
-                        const [n, userId, year] = values;
-                        const key = userId + '|' + year;
+                    } else if (head.includes('UPDATE production_global_order_counters')) {
+                        const [n, year] = values;
+                        const key = String(year);
                         snapCounter(key);
                         store.counters[key] = (store.counters[key] ?? 0) + n;
                     }
@@ -291,9 +342,27 @@ jest.mock('../../src/prismaClient', () => ({
                 }),
                 $queryRaw: jest.fn(async (strings: any, ...values: any[]) => {
                     const sql: string = strings[0] || '';
-                    if (sql.includes('FROM "recycled_production_numbers"')) {
-                        const [userId, year, take] = values;
-                        const lockKey = `${userId}|${year}`;
+                    if (sql.includes('WITH candidate')) return [];
+                    if (
+                        sql.includes('SELECT "userId"') &&
+                        sql.includes('production_global_number_claims')
+                    ) {
+                        const [year, seqNumber] = values;
+                        const claim = store.claims.find(
+                            (row) => row.year === year && row.seqNumber === seqNumber
+                        );
+                        return claim ? [{ userId: claim.userId }] : [];
+                    }
+                    if (sql.includes('FROM "production_global_number_claims"')) {
+                        const userId = values[0];
+                        const year = values[1];
+                        return store.claims
+                            .filter((row) => row.userId === userId && row.year === year)
+                            .map((row) => ({ seqNumber: row.seqNumber }));
+                    }
+                    if (sql.includes('FROM "recycled_production_numbers_global"')) {
+                        const [year, take] = values;
+                        const lockKey = String(year);
                         const previous = recycledClaimLocks.get(lockKey) ?? Promise.resolve();
                         let release!: () => void;
                         const lock = new Promise<void>((resolve) => {
@@ -307,18 +376,30 @@ jest.mock('../../src/prismaClient', () => ({
                                 recycledClaimLocks.delete(lockKey);
                         };
                         return store.recycled
-                            .filter((row) => row.userId === userId && row.year === year)
+                            .filter((row) => row.year === year)
                             .sort((a, b) => a.seqNumber - b.seqNumber)
                             .slice(0, take)
                             .map((row) => ({ seqNumber: row.seqNumber }));
                     }
-                    const [userId, year] = values;
-                    return [{ lastNumber: store.counters[userId + '|' + year] ?? 0 }];
+                    const [year] = values;
+                    return [{ lastNumber: store.counters[String(year)] ?? 0 }];
                 })
             };
             try {
                 return await fn(tx);
             } catch (e) {
+                for (const change of undo.claims) {
+                    const index = store.claims.findIndex(
+                        (row) =>
+                            row.userId === change.row.userId &&
+                            row.year === change.row.year &&
+                            row.seqNumber === change.row.seqNumber
+                    );
+                    if (change.added && index >= 0) store.claims.splice(index, 1);
+                    if (!change.added && index < 0) store.claims.push(change.row);
+                    if (!change.added && change.changed && index >= 0)
+                        store.claims[index] = change.row;
+                }
                 for (const r of undo.recycled) {
                     if (
                         !store.recycled.some(
@@ -364,11 +445,16 @@ function createApp() {
 const YEAR = new Date().getFullYear();
 
 beforeEach(() => {
-    store.users = { u1: { symbol: 'T', productionOrderStartNumber: 1 } };
+    store.users = {
+        u1: { id: 'u1', symbol: 'T', productionOrderStartNumber: 1 },
+        u2: { id: 'u2', symbol: 'KK', productionOrderStartNumber: 50 }
+    };
     store.settings = { ['year_letter_' + YEAR]: 'A' };
     store.recycled = [];
+    store.claims = [];
     store.counters = {};
     store.orders = {};
+    store.lastSql = '';
     store.failUpsertAfter = -1;
     store.upsertCalls = 0;
 });
@@ -381,11 +467,11 @@ describe('POST /claim-production-numbers/:userId', () => {
             .send({ count: 5 });
         expect(res.status).toBe(200);
         expect(res.body.numbers).toEqual([
-            `T/A/00001/${String(YEAR).slice(-2)}`,
-            `T/A/00002/${String(YEAR).slice(-2)}`,
-            `T/A/00003/${String(YEAR).slice(-2)}`,
-            `T/A/00004/${String(YEAR).slice(-2)}`,
-            `T/A/00005/${String(YEAR).slice(-2)}`
+            `A/00001/${String(YEAR).slice(-2)}`,
+            `A/00002/${String(YEAR).slice(-2)}`,
+            `A/00003/${String(YEAR).slice(-2)}`,
+            `A/00004/${String(YEAR).slice(-2)}`,
+            `A/00005/${String(YEAR).slice(-2)}`
         ]);
         expect(res.body.seqs).toEqual([1, 2, 3, 4, 5]);
     });
@@ -400,8 +486,12 @@ describe('POST /claim-production-numbers/:userId', () => {
             .post('/api/orders-studnie/claim-production-numbers/u1')
             .send({ count: 3 });
         expect(res.status).toBe(200);
-        expect(res.body.seqs).toEqual([1, 3, 7]);
+        expect(res.body.seqs).toEqual([3, 7, 8]);
         expect(store.recycled).toEqual([]);
+        const next = await request(app)
+            .post('/api/orders-studnie/claim-production-number/u2')
+            .send({});
+        expect(next.body.nextSeq).toBe(9);
     });
 
     test('walidacja count: 0 / 201 / brak → 400', async () => {
@@ -465,8 +555,105 @@ describe('POST /claim-production-numbers/:userId', () => {
         expect(a.status).toBe(200);
         expect(b.status).toBe(200);
         expect(new Set([a.body.nextSeq, b.body.nextSeq]).size).toBe(2);
-        expect([a.body.nextSeq, b.body.nextSeq].sort()).toEqual([1, 5]);
+        expect([a.body.nextSeq, b.body.nextSeq].sort()).toEqual([5, 6]);
         expect(store.recycled).toEqual([]);
+    });
+
+    test('różni użytkownicy korzystają z jednego globalnego licznika', async () => {
+        const app = createApp();
+        const [a, b] = await Promise.all([
+            request(app).post('/api/orders-studnie/claim-production-number/u1').send({}),
+            request(app).post('/api/orders-studnie/claim-production-number/u2').send({})
+        ]);
+        expect(a.status).toBe(200);
+        expect(b.status).toBe(200);
+        expect([a.body.number, b.body.number].sort()).toEqual([
+            `A/00001/${String(YEAR).slice(-2)}`,
+            `A/00002/${String(YEAR).slice(-2)}`
+        ]);
+        expect(a.body.number).not.toContain('T/');
+        expect(b.body.number).not.toContain('KK/');
+    });
+
+    test('globalny numer startowy działa tylko przy pierwszej inicjalizacji licznika', async () => {
+        store.settings.production_order_start_number = '7';
+        const app = createApp();
+        const first = await request(app)
+            .post('/api/orders-studnie/claim-production-number/u1')
+            .send({});
+        const second = await request(app)
+            .post('/api/orders-studnie/claim-production-number/u2')
+            .send({});
+        expect(first.body.nextSeq).toBe(7);
+        expect(second.body.nextSeq).toBe(8);
+    });
+
+    test('panel odzysku pokazuje wspólną pulę bez symboli użytkowników', async () => {
+        store.recycled = [
+            { userId: 'u1', year: YEAR, seqNumber: 8 },
+            { userId: 'u2', year: YEAR, seqNumber: 3 }
+        ];
+        const response = await request(createApp()).get('/api/orders-studnie/recycled');
+        expect(response.status).toBe(200);
+        expect(response.body.recycled).toEqual([3, 8]);
+        expect(response.body).not.toHaveProperty('symbol');
+    });
+});
+
+describe('POST /production current-format claims', () => {
+    test('rejects a canonical global number that was not claimed for the owner', async () => {
+        const response = await request(createApp())
+            .post('/api/orders-studnie/production')
+            .send({
+                id: 'unclaimed-number',
+                userId: 'u1',
+                wellId: 'w1',
+                productionOrderNumber: `A/00001/${String(YEAR).slice(-2)}`
+            });
+        expect(response.status).toBe(409);
+        expect(response.body.code).toBe('PRODUCTION_NUMBER_NOT_CLAIMED');
+        expect(store.orders['unclaimed-number']).toBeUndefined();
+    });
+
+    test('rejects noncanonical three-segment numbers', async () => {
+        const response = await request(createApp()).post('/api/orders-studnie/production').send({
+            id: 'malformed-number',
+            userId: 'u1',
+            wellId: 'w1',
+            productionOrderNumber: 'A/1/26'
+        });
+        expect(response.status).toBe(409);
+        expect(response.body.code).toBe('INVALID_PRODUCTION_NUMBER_FORMAT');
+    });
+
+    test('rejects legacy four-segment format for a new production order', async () => {
+        const response = await request(createApp())
+            .post('/api/orders-studnie/production')
+            .send({
+                id: 'legacy-new-number',
+                userId: 'u1',
+                wellId: 'w1',
+                productionOrderNumber: `KK/A/00001/${String(YEAR).slice(-2)}`
+            });
+        expect(response.status).toBe(409);
+        expect(response.body.code).toBe('INVALID_PRODUCTION_NUMBER_FORMAT');
+    });
+
+    test('saves a claimed global number atomically', async () => {
+        store.claims = [{ userId: 'u1', year: YEAR, seqNumber: 1 }];
+        const response = await request(createApp())
+            .post('/api/orders-studnie/production')
+            .send({
+                id: 'claimed-number',
+                userId: 'u1',
+                wellId: 'w1',
+                productionOrderNumber: `A/00001/${String(YEAR).slice(-2)}`
+            });
+        expect(response.status).toBe(200);
+        expect(store.orders['claimed-number'].productionNumber).toBe(
+            `A/00001/${String(YEAR).slice(-2)}`
+        );
+        expect(store.claims).toEqual([{ userId: 'u1', year: YEAR, seqNumber: 1 }]);
     });
 });
 
@@ -518,6 +705,36 @@ describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
             mockUser.id = 'admin-1';
             mockUser.role = 'admin';
         }
+    });
+
+    test('przenosi rezerwację numeru przy przekazaniu PZ innemu opiekunowi', async () => {
+        const productionOrderNumber = `A/00012/${String(YEAR).slice(-2)}`;
+        store.claims = [{ userId: 'u1', year: YEAR, seqNumber: 12 }];
+        store.orders['transfer'] = {
+            id: 'transfer',
+            userId: 'u1',
+            version: 1,
+            productionNumber: productionOrderNumber,
+            data: JSON.stringify({ productionOrderNumber })
+        };
+
+        const response = await request(createApp())
+            .put('/api/orders-studnie/production')
+            .send({
+                data: [
+                    {
+                        id: 'transfer',
+                        userId: 'u2',
+                        version: 1,
+                        wellId: 'w1',
+                        productionOrderNumber
+                    }
+                ]
+            });
+
+        expect(response.status).toBe(200);
+        expect(store.orders['transfer'].userId).toBe('u2');
+        expect(store.claims).toEqual([{ userId: 'u2', year: YEAR, seqNumber: 12 }]);
     });
 });
 
@@ -606,18 +823,21 @@ describe('POST /production/recycle-numbers', () => {
     });
 
     test('zwrot numerów → $executeRaw z ON CONFLICT', async () => {
-        const prisma = (await import('../../src/prismaClient')).default as any;
+        store.counters[String(YEAR)] = 10;
+        store.claims = [
+            { userId: 'u1', year: YEAR, seqNumber: 5 },
+            { userId: 'u1', year: YEAR, seqNumber: 6 }
+        ];
         const app = createApp();
         const res = await request(app)
             .post('/api/orders-studnie/production/recycle-numbers')
             .send({ userId: 'u1', seqNumbers: [5, 6, 5] });
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ ok: true, returned: 2 });
-        const [queryParts] = prisma.$executeRaw.mock.calls.at(-1);
-        const sql = queryParts.join('?');
-        expect(sql).toContain('INSERT INTO "recycled_production_numbers"');
+        const sql = store.lastSql;
+        expect(sql).toContain('INSERT INTO "recycled_production_numbers_global"');
         expect(sql).toContain('"userId", "year", "seqNumber"');
-        expect(sql).toContain('ON CONFLICT ("userId", "year", "seqNumber") DO NOTHING');
+        expect(sql).toContain('ON CONFLICT ("year", "seqNumber") DO NOTHING');
     });
 
     test('E3a strict: śmieć w seqNumbers / year → 400 z details', async () => {
@@ -638,6 +858,8 @@ describe('POST /production/recycle-numbers', () => {
     });
 
     test('E3a: jawny poprawny year przechodzi', async () => {
+        store.counters['2026'] = 10;
+        store.claims = [{ userId: 'u1', year: 2026, seqNumber: 7 }];
         const app = createApp();
         const res = await request(app)
             .post('/api/orders-studnie/production/recycle-numbers')

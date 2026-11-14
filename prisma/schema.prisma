@@ -513,11 +513,26 @@ model orders_rury_rel {
 }
 
 model production_order_counters {
+  // Legacy per-user counters retained for historical compatibility; runtime uses the global table.
   userId     String
   year       Int
   lastNumber Int?   @default(0)
 
   @@id([userId, year])
+}
+
+model production_global_order_counters {
+  year       Int @id
+  lastNumber Int @default(0)
+}
+
+model production_global_number_claims {
+  userId    String
+  year      Int
+  seqNumber Int
+
+  @@id([year, seqNumber])
+  @@index([userId, year, seqNumber], map: "idx_prod_global_claim_owner")
 }
 
 model production_orders_rel {
@@ -550,11 +565,21 @@ model production_orders_rel {
 }
 
 model recycled_production_numbers {
+  // Legacy per-user pool retained for the migration source; runtime uses the global pool.
   userId    String
   year      Int
   seqNumber Int
 
   @@id([userId, year, seqNumber])
+}
+
+model recycled_production_numbers_global {
+  userId    String
+  year      Int
+  seqNumber Int
+
+  @@id([year, seqNumber])
+  @@index([userId, year, seqNumber], map: "idx_recycled_prod_global_owner")
 }
 
 model sessions {

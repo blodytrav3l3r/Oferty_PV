@@ -205,6 +205,60 @@ describe('SPA: deep-link do panelu wersji', () => {
     });
 });
 
+describe('SPA: dostęp do menedżera cenników', () => {
+    function loadPricingNavGuards(user: any, currentModule: string | null = null) {
+        const router = read('public/js/spa/router.js');
+        const start = router.indexOf('function syncCennikNavigation(user) {');
+        const end = router.indexOf('function updateAppNav(module)', start);
+        if (start < 0 || end <= start) throw new Error('brak guardów nawigacji cennika');
+
+        const calls: string[] = [];
+        const link: any = {
+            hidden: true,
+            classList: {
+                toggle(name: string, enabled: boolean) {
+                    calls.push(`${name}:${enabled}`);
+                }
+            }
+        };
+        const context: any = {
+            document: { getElementById: (id: string) => (id === 'spa-app-cennik' ? link : null) },
+            window: { currentUser: user, location: { hash: '#/cennik' } },
+            currentModule,
+            _lastCleanHash: currentModule ? `#/${currentModule}` : null
+        };
+        vm.createContext(context);
+        vm.runInContext(router.slice(start, end), context);
+        return { context, link, calls };
+    }
+
+    it('pokazuje link tylko adminowi po autoryzacji', () => {
+        const admin = loadPricingNavGuards({ role: 'admin' });
+        admin.context.syncCennikNavigation(admin.context.window.currentUser);
+        expect(admin.link.hidden).toBe(false);
+        expect(admin.calls).toContain('hidden:false');
+
+        const regular = loadPricingNavGuards({ role: 'user' });
+        regular.context.syncCennikNavigation(regular.context.window.currentUser);
+        expect(regular.link.hidden).toBe(true);
+        expect(regular.calls).toContain('hidden:true');
+    });
+
+    it('blokuje bezpośredni hash #/cennik dla nie-admina i zachowuje trasę admina', () => {
+        const regular = loadPricingNavGuards({ role: 'user' }, 'rury');
+        expect(regular.context.redirectNonAdminCennik('cennik')).toBe(true);
+        expect(regular.context.window.location.hash).toBe('#/rury');
+
+        const admin = loadPricingNavGuards({ role: 'admin' });
+        expect(admin.context.redirectNonAdminCennik('cennik')).toBe(false);
+        expect(admin.context.window.location.hash).toBe('#/cennik');
+
+        const router = read('public/js/spa/router.js');
+        expect(router).toContain('if (redirectNonAdminCennik(module)) return;');
+        expect(router).toContain('syncCennikNavigation(user);');
+    });
+});
+
 describe('S3: hub cenników — usunięty', () => {
     it('strona Centrum cenników nie istnieje w repo', () => {
         expect(fs.existsSync(path.join(ROOT, 'public/cenniki.html'))).toBe(false);

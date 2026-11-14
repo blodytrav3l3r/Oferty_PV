@@ -4,12 +4,14 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 import { validateData } from '../validators/authSchema';
 import {
     yearLetterSchema,
+    productionStartNumberSchema,
     magazynCodesSchema,
     DEFAULT_MAGAZYN_CODES
 } from '../validators/offerSchemas';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
+const PRODUCTION_START_SETTING = 'production_order_start_number';
 
 /* ===== LITERA ROKU (Litera roku obrotowego) ===== */
 
@@ -50,6 +52,40 @@ router.put(
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Settings', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+        }
+    }
+);
+
+router.get('/production-start-number', requireAuth, async (_req, res) => {
+    try {
+        const row = await prisma.settings.findUnique({ where: { key: PRODUCTION_START_SETTING } });
+        const parsed = Number(row?.value);
+        res.json({ startNumber: Number.isSafeInteger(parsed) && parsed >= 1 ? parsed : 1 });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Settings', 'Błąd odczytu globalnego startu numeracji', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
+router.put(
+    '/production-start-number',
+    requireAuth,
+    requireAdmin,
+    validateData(productionStartNumberSchema),
+    async (req, res) => {
+        try {
+            const { startNumber } = req.body;
+            await prisma.settings.upsert({
+                where: { key: PRODUCTION_START_SETTING },
+                update: { value: String(startNumber) },
+                create: { key: PRODUCTION_START_SETTING, value: String(startNumber) }
+            });
+            res.json({ ok: true, startNumber });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            logger.error('Settings', 'Błąd zapisu globalnego startu numeracji', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }

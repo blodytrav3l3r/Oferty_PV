@@ -36,7 +36,6 @@ const victim = {
     phone: '600100200',
     symbol: 'WN',
     orderStartNumber: 5,
-    productionOrderStartNumber: 7,
     subUsers: []
 };
 
@@ -245,7 +244,6 @@ describe('frontend jsdom: modal użytkownika', () => {
         setValue('new-user-email', 'jan@e.pl');
         setValue('new-user-phone', '600700800');
         setValue('new-user-order-start', '3');
-        setValue('new-user-prod-order-start', '4');
         submit(overlay);
         await flush();
 
@@ -265,9 +263,9 @@ describe('frontend jsdom: modal użytkownika', () => {
             email: 'jan@e.pl',
             phone: '600700800',
             subUsers: [],
-            orderStartNumber: 3,
-            productionOrderStartNumber: 4
+            orderStartNumber: 3
         });
+        expect('productionOrderStartNumber' in body).toBe(false);
         expect(document.getElementById('user-modal')).toBeNull();
         expect(document.body.style.overflow).toBe('');
     });

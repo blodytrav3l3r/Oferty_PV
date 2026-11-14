@@ -249,8 +249,7 @@ describe('POST /api/auth/register', () => {
                 firstName: '',
                 lastName: '',
                 subUsers: '[]',
-                orderStartNumber: 1,
-                productionOrderStartNumber: 1
+                orderStartNumber: 1
             })
         });
         const hash = (createUser.mock.calls[0][0] as { data: { password: string } }).data.password;
@@ -289,10 +288,10 @@ describe('POST /api/auth/register', () => {
         expect(createUser).toHaveBeenCalledWith({
             data: expect.objectContaining({
                 subUsers: '["u2"]',
-                orderStartNumber: 77,
-                productionOrderStartNumber: 88
+                orderStartNumber: 77
             })
         });
+        expect(createUser.mock.calls[0][0].data.productionOrderStartNumber).toBeUndefined();
         expect(res.body.user.defaultOrganizationUnit).toBe('ASM_KLUCZBORK');
         expect(res.body.user.subUsers).toEqual(['u2']);
     });

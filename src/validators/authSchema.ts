@@ -29,7 +29,6 @@ export const registerSchema = z.object({
     symbol: z.string().optional(),
     subUsers: z.array(z.string()).optional(),
     orderStartNumber: z.union([z.string(), z.number()]).optional(),
-    productionOrderStartNumber: z.union([z.string(), z.number()]).optional(),
     defaultOrganizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).nullable().optional()
 });
 

@@ -83,7 +83,6 @@ const mockUsers = [
         symbol: 'A',
         subUsers: '["user-id"]',
         orderStartNumber: 1,
-        productionOrderStartNumber: 1,
         createdAt: new Date().toISOString()
     },
     {
@@ -97,7 +96,6 @@ const mockUsers = [
         symbol: 'U1',
         subUsers: '[]',
         orderStartNumber: 5,
-        productionOrderStartNumber: 1,
         createdAt: new Date().toISOString()
     }
 ];

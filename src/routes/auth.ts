@@ -107,7 +107,6 @@ router.post(
             symbol,
             subUsers,
             orderStartNumber,
-            productionOrderStartNumber,
             defaultOrganizationUnit
         } = req.body;
 
@@ -138,7 +137,6 @@ router.post(
                         symbol: symbol || '',
                         subUsers: subUsersString,
                         orderStartNumber: parseInt(orderStartNumber, 10) || 1,
-                        productionOrderStartNumber: parseInt(productionOrderStartNumber, 10) || 1,
                         createdAt: new Date().toISOString()
                     }
                 });

@@ -68,7 +68,6 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
                 symbol: user.symbol,
                 subUsers: subUsers,
                 orderStartNumber: user.orderStartNumber,
-                productionOrderStartNumber: user.productionOrderStartNumber || 1,
                 defaultOrganizationUnit: defaultOrganizationUnitByUser.get(user.id) || null,
                 createdAt: user.createdAt,
                 nextOrderNumber
@@ -102,7 +101,6 @@ router.put(
             symbol,
             subUsers,
             orderStartNumber,
-            productionOrderStartNumber,
             defaultOrganizationUnit
         } = req.body;
         const userId = req.params.id;
@@ -137,11 +135,6 @@ router.put(
                 orderStartNumber !== undefined
                     ? parseInt(orderStartNumber, 10) || 1
                     : user.orderStartNumber;
-            const newProdOrderStartNumber =
-                productionOrderStartNumber !== undefined
-                    ? parseInt(productionOrderStartNumber, 10) || 1
-                    : user.productionOrderStartNumber || 1;
-
             const newSubUsersString =
                 subUsers !== undefined
                     ? Array.isArray(subUsers)
@@ -159,8 +152,7 @@ router.put(
                 email: newEmail,
                 symbol: newSymbol,
                 subUsers: newSubUsersString,
-                orderStartNumber: newOrderStartNumber,
-                productionOrderStartNumber: newProdOrderStartNumber
+                orderStartNumber: newOrderStartNumber
             };
 
             if (defaultOrganizationUnit === undefined) {

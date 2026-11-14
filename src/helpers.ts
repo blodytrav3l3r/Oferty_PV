@@ -14,6 +14,7 @@ export interface UserDoc {
     subUsers?: string | null;
     createdAt?: Date | string | null;
     orderStartNumber?: number | null;
+    /** Legacy DB column retained for backwards compatibility; numbering is global. */
     productionOrderStartNumber?: number | null;
 }
 

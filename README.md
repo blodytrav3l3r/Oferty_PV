@@ -4,7 +4,7 @@
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
 </div>
 
-**Wersja:** 1.57.0  
+**Wersja:** 1.58.0  
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline<br>
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** Łukasz Kobyłka
