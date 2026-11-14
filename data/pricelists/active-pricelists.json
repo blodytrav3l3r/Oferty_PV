@@ -11,7 +11,7 @@
             "version": "Rv1-20261110",
             "status": "APPROVED",
             "effectiveFrom": "2026-11-10T19:04:21.594Z",
-            "createdBy": "bootstrap",
+            "createdBy": null,
             "note": "Wersja bazowa z data/seed_*.json (bootstrap startu)",
             "labelOverride": null,
             "sha256": "cad244d4615112210dd9c234d408f633d45c3293446549af704a241f00b60c51",
@@ -28,7 +28,7 @@
             "version": "Sv1-20261110",
             "status": "APPROVED",
             "effectiveFrom": "2026-11-10T19:04:21.594Z",
-            "createdBy": "bootstrap",
+            "createdBy": null,
             "note": "Wersja bazowa z data/seed_*.json (bootstrap startu)",
             "labelOverride": null,
             "sha256": "a71654cbfe4369ac7c1635da516b194d96225708deb1a88addfe655829e4b23b",
@@ -45,7 +45,7 @@
             "version": "Pv1-20261110",
             "status": "APPROVED",
             "effectiveFrom": "2026-11-10T19:04:21.594Z",
-            "createdBy": "bootstrap",
+            "createdBy": null,
             "note": "Wersja bazowa z data/seed_*.json (bootstrap startu)",
             "labelOverride": null,
             "sha256": "5c0dcd32d03d4dc7d505b1d6da69a94dafb68bc2ae00bf50d6cd75ce259c7520",
@@ -29578,5 +29578,5 @@
         "preco.pricelist_item_preco_kinety": 54,
         "preco.pricelist_item_preco_zakresy": 179
     },
-    "sha256": "ac011b0ddb41cd68d88892068f8e5968435ad4b4541f3e56f951537dc64d7d68"
+    "sha256": "14416286428b1fa560de3de6833139d4c83a67727d667d384df11ede2bf0bc67"
 }
