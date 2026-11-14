@@ -186,6 +186,12 @@ function getWellUwagiSummary() {
     return `Uwagi do studni:\n${rows.join('\n')}`;
 }
 
+function getExternalPaintingSurfaceNote() {
+    if (!Array.isArray(wells)) return null;
+    if (!wells.some((well) => well?.malowanieZ === 'zewnatrz')) return null;
+    return 'Powierzchnia malowania zewnętrznego dennicy nie obejmuje spodu';
+}
+
 // Rdzeń wspólny w shared/offerNotesGenerator.js (TASK-045)
 window.generateOfferNotes = createOfferNotesGenerator([
     getMaterialSummary,
@@ -195,6 +201,7 @@ window.generateOfferNotes = createOfferNotesGenerator([
     () => getParamSummary('agresjaMrozowa', 'Agresja mrozowa'),
     () => getParamSummary('malowanieW', 'Malowanie wewnątrz'),
     () => getParamSummary('malowanieZ', 'Malowanie zewnątrz'),
+    getExternalPaintingSurfaceNote,
     () => getParamSummary('kineta', 'Kineta'),
     () => getParamSummary('stopnie', 'Rodzaj stopni'),
     () => getParamSummary('uszczelka', 'Uszczelka'),

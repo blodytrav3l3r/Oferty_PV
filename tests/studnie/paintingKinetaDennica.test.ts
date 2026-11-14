@@ -387,4 +387,44 @@ describe('Malowanie — etykiety dopłat w ofercie (offerWellComponents)', () =>
         expect(idxDennicy).toBeGreaterThan(idxKinety);
         expect(idxPrzejsc).toBeGreaterThan(idxDennicy);
     });
+
+    test('oferta wyjaśnia zakres powierzchni przy malowaniu zewnętrznym', () => {
+        expect(src).toContain("well.malowanieZ === 'zewnatrz'");
+        expect(src).toContain('Powierzchnia malowania zewnętrznego nie uwzględnia spodu dennicy.');
+    });
+});
+
+describe('Notatka oferty o powierzchni malowania dennicy', () => {
+    const generator = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/offerNotesGenerator.js'),
+        'utf8'
+    );
+
+    function getNote(wells: unknown[], editingOfferIdStudnie: string | null = null) {
+        const context: any = {
+            wells,
+            editingOfferIdStudnie,
+            createOfferNotesGenerator: () => () => {},
+            window: {}
+        };
+        vm.createContext(context);
+        vm.runInContext(generator, context);
+        return vm.runInContext('getExternalPaintingSurfaceNote()', context);
+    }
+
+    test('dodaje informację do nowej oferty z malowaniem zewnętrznym', () => {
+        expect(getNote([{ malowanieZ: 'zewnatrz' }])).toBe(
+            'Powierzchnia malowania zewnętrznego dennicy nie obejmuje spodu'
+        );
+    });
+
+    test('opisuje także historyczną ofertę na podstawie jej zapisanego wyboru', () => {
+        expect(getNote([{ malowanieZ: 'zewnatrz' }], 'offer_saved_1')).toBe(
+            'Powierzchnia malowania zewnętrznego dennicy nie obejmuje spodu'
+        );
+    });
+
+    test('pomija informację, gdy malowanie zewnętrzne nie jest wybrane', () => {
+        expect(getNote([{ malowanieZ: 'brak' }])).toBeNull();
+    });
 });

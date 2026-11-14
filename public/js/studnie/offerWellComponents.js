@@ -190,6 +190,7 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
                     <span class="well-detail-value">${fmt(stats.areaExt)} m²</span>
                 </div>
             </div>
+            ${well.malowanieZ === 'zewnatrz' ? '<p class="text-muted text-xs" role="note">Powierzchnia malowania zewnętrznego nie uwzględnia spodu dennicy.</p>' : ''}
             <div style="margin-top:0.8rem; border-top:1px solid rgba(var(--white-rgb), 0.05); padding-top:0.5rem;">
                 <div style="font-size: var(--fs-xs); text-transform:uppercase; color:var(--text-muted); font-weight: var(--fw-semibold); margin-bottom:0.3rem;">Konfiguracja elementów:</div>
                 <table style="width:100%; font-size: var(--fs-base);">
