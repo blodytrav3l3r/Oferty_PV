@@ -571,6 +571,7 @@ describe('Production Orders (PZ) routes', () => {
                 }
             ]);
             (prisma.production_orders_rel.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
 
             const res = await request(app)
                 .post('/api/orders/production/batch-delete')

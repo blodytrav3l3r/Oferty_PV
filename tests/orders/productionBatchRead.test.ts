@@ -194,6 +194,7 @@ describe('P0.3 hurtowy recycle (batch-delete)', () => {
         ];
         (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue(rows);
         (prisma.production_orders_rel.deleteMany as jest.Mock).mockResolvedValue({ count: 3 });
+        (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
 
         const res = await request(app)
             .post('/api/orders/production/batch-delete')
