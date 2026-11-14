@@ -241,8 +241,11 @@ describe('Liczniki wydruków (print-count)', () => {
 describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () => {
     let app: express.Application;
 
+    const productionNumber = (seqNumber: number) =>
+        `A/${String(seqNumber).padStart(5, '0')}/${String(new Date().getFullYear()).slice(-2)}`;
+
     const OLD_BLOB = JSON.stringify({
-        productionOrderNumber: 'PZ/1',
+        productionOrderNumber: productionNumber(1),
         status: 'draft',
         printCountZlecenia: 5,
         printCountEtykieta: 2,
@@ -258,7 +261,7 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
         orderId: 'o-1',
         wellId: 'w-1',
         status: 'draft',
-        productionOrderNumber: 'PZ/1',
+        productionOrderNumber: productionNumber(1),
         version: 3,
         ...extra
     });
@@ -275,6 +278,7 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
             }
         ]);
         (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+        (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ userId: 'user-id' }]);
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
     });
 
@@ -325,6 +329,7 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
             }
         ]);
         (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+        (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ userId: 'user-id' }]);
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
 
         res = await request(app)
@@ -357,7 +362,15 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
         const res = await request(app)
             .put('/api/orders-studnie/production')
             .send({
-                data: [skinny(), { ...skinny(), id: 'pz-2', printCountZlecenia: 9 }]
+                data: [
+                    skinny(),
+                    {
+                        ...skinny(),
+                        id: 'pz-2',
+                        productionOrderNumber: productionNumber(2),
+                        printCountZlecenia: 9
+                    }
+                ]
             });
 
         expect(res.status).toBe(200);

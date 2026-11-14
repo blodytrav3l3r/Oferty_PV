@@ -1,7 +1,7 @@
 /**
  * P0-A: UNIQUE(userId, productionNumber) jako ostatnia linia obrony.
  * Dubel finalnego numeru -> 409 PRODUCTION_NUMBER_CONFLICT (P2002 safety net),
- * inny user + ten sam numer -> OK, update bez numeru nie kasuje kolumny.
+ * claim jest globalny, a update bez numeru nie kasuje kolumny.
  */
 import request from 'supertest';
 import express from 'express';
@@ -45,7 +45,11 @@ jest.mock('../../src/utils/productionSearchUtils', () => ({
 }));
 
 /* In-memory store z egzekwowanym UNIQUE(userId, productionNumber) jak w DB. */
-const store: { orders: Record<string, any>; lastUpdate: any } = { orders: {}, lastUpdate: null };
+const store: {
+    orders: Record<string, any>;
+    claims: Array<{ userId: string; year: number; seqNumber: number }>;
+    lastUpdate: any;
+} = { orders: {}, claims: [], lastUpdate: null };
 
 function p2002(): any {
     const e: any = new Error('Unique constraint failed');
@@ -111,7 +115,13 @@ jest.mock('../../src/prismaClient', () => {
             }),
             deleteMany: jest.fn(async () => ({ count: 0 }))
         },
-        $queryRaw: jest.fn(async () => []),
+        $queryRaw: jest.fn(async (_strings: any, ...values: any[]) => {
+            const [year, seqNumber] = values;
+            const claim = store.claims.find(
+                (row) => row.year === year && row.seqNumber === seqNumber
+            );
+            return claim ? [{ userId: claim.userId }] : [];
+        }),
         $executeRaw: jest.fn(async () => 1)
     };
     // P0-C: PUT batch działa w $transaction — tx deleguje do tych samych mocków.
@@ -137,13 +147,26 @@ function createApp() {
 
 beforeEach(() => {
     store.orders = {};
+    store.claims = [];
     store.lastUpdate = null;
 });
+
+const YEAR = new Date().getFullYear();
+function currentNumber(seqNumber: number): string {
+    return `A/${String(seqNumber).padStart(5, '0')}/${String(YEAR).slice(-2)}`;
+}
+function reserveNumber(userId: string, seqNumber: number): string {
+    store.claims.push({ userId, year: YEAR, seqNumber });
+    return currentNumber(seqNumber);
+}
 
 describe('P0-A UNIQUE productionNumber', () => {
     test('dubel numeru tego samego usera -> 409 PRODUCTION_NUMBER_CONFLICT', async () => {
         const app = createApp();
-        const body = { wellId: 'w1', productionOrderNumber: 'T/A/00001/26' };
+        const body = {
+            wellId: 'w1',
+            productionOrderNumber: reserveNumber('admin-1', 1)
+        };
         const first = await request(app).post('/api/orders-studnie/production/').send(body);
         expect(first.status).toBe(200);
         const second = await request(app).post('/api/orders-studnie/production/').send(body);
@@ -151,39 +174,43 @@ describe('P0-A UNIQUE productionNumber', () => {
         expect(second.body.code).toBe('PRODUCTION_NUMBER_CONFLICT');
     });
 
-    test('ten sam numer u innego usera -> OK', async () => {
+    test('ten sam globalny numer nie może być przypisany innemu userowi', async () => {
         const app = createApp();
+        const number = reserveNumber('u1', 1);
         const first = await request(app)
             .post('/api/orders-studnie/production/')
-            .send({ wellId: 'w1', userId: 'u1', productionOrderNumber: 'T/A/00001/26' });
+            .send({ wellId: 'w1', userId: 'u1', productionOrderNumber: number });
         expect(first.status).toBe(200);
         const second = await request(app)
             .post('/api/orders-studnie/production/')
-            .send({ wellId: 'w1', userId: 'u2', productionOrderNumber: 'T/A/00001/26' });
-        expect(second.status).toBe(200);
+            .send({ wellId: 'w1', userId: 'u2', productionOrderNumber: number });
+        expect(second.status).toBe(409);
+        expect(second.body.code).toBe('PRODUCTION_NUMBER_NOT_CLAIMED');
     });
 
     test('update bez numeru nie kasuje kolumny (undefined pomijane)', async () => {
         const app = createApp();
+        const number = reserveNumber('admin-1', 1);
         const created = await request(app)
             .post('/api/orders-studnie/production/')
-            .send({ wellId: 'w1', productionOrderNumber: 'T/A/00001/26' });
+            .send({ wellId: 'w1', productionOrderNumber: number });
         const id = created.body.id;
         const updated = await request(app)
             .post('/api/orders-studnie/production/')
-            .send({ id, wellId: 'w1' });
+            .send({ id, wellId: 'w1', version: 1 });
         expect(updated.status).toBe(200);
         expect(store.lastUpdate.productionNumber).toBeUndefined();
-        expect(store.orders[id].productionNumber).toBe('T/A/00001/26');
+        expect(store.orders[id].productionNumber).toBe(number);
     });
 
     test('PUT batch zapisuje numer do kolumny', async () => {
         const app = createApp();
+        const number = reserveNumber('admin-1', 2);
         const res = await request(app)
             .put('/api/orders-studnie/production/')
-            .send({ data: [{ wellId: 'w1', productionOrderNumber: 'T/A/00002/26' }] });
+            .send({ data: [{ wellId: 'w1', productionOrderNumber: number }] });
         expect(res.status).toBe(200);
         const saved = Object.values(store.orders)[0] as any;
-        expect(saved.productionNumber).toBe('T/A/00002/26');
+        expect(saved.productionNumber).toBe(number);
     });
 });

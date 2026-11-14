@@ -4,6 +4,7 @@ import productionRouter from '../../src/routes/orders/production';
 import prisma from '../../src/prismaClient';
 
 const mockUser: any = { id: 'user-id', role: 'user', subUsers: [] };
+const TEST_PRODUCTION_NUMBER = `A/00001/${String(new Date().getFullYear()).slice(-2)}`;
 
 jest.mock('../../src/middleware/auth', () => ({
     requireAuth: (req: any, _res: any, next: any) => {
@@ -105,6 +106,7 @@ describe('Production Orders (PZ) routes', () => {
         it('tworzy nowe PZ i zwraca id', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
             (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ userId: 'user-id' }]);
 
             const res = await request(app)
                 .post('/api/orders/production')
@@ -113,7 +115,7 @@ describe('Production Orders (PZ) routes', () => {
                     wellId: 'w-1',
                     orderId: 'o-1',
                     elementIndex: 2,
-                    productionOrderNumber: 'AB/PZ/000001/26'
+                    productionOrderNumber: TEST_PRODUCTION_NUMBER
                 });
 
             expect(res.statusCode).toBe(200);
@@ -197,13 +199,14 @@ describe('Production Orders (PZ) routes', () => {
             );
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
             (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ userId: 'user-id' }]);
 
             const send = () =>
                 request(app)
                     .post('/api/orders/production')
                     .set('x-user-id', 'user-id')
                     .set('Idempotency-Key', 'key-123')
-                    .send({ wellId: 'w-1', productionOrderNumber: 'AB/PZ/000001/26' });
+                    .send({ wellId: 'w-1', productionOrderNumber: TEST_PRODUCTION_NUMBER });
             const first = await send();
             const second = await send();
             expect(first.statusCode).toBe(200);

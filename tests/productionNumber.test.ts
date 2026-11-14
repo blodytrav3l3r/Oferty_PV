@@ -7,7 +7,8 @@ describe('production number format', () => {
 
     test.each([
         ['A/00042/26', { year: 2026, seqNumber: 42 }],
-        ['SA/A/00042/26', { year: 2026, seqNumber: 42 }]
+        ['SA/A/00042/26', { year: 2026, seqNumber: 42 }],
+        ['XX/PZ/00042/26', { year: 2026, seqNumber: 42 }]
     ])('parses current and legacy formats: %s', (value, expected) => {
         expect(parseProductionNumber(value)).toEqual(expected);
     });

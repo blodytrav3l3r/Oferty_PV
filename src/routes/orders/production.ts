@@ -111,7 +111,8 @@ async function findActiveProductionSequences(
 ): Promise<Set<string>> {
     if (entries.length === 0) return new Set();
     const candidates = entries.map(
-        (entry) => Prisma.sql`(${entry.userId}, ${entry.year}, ${entry.seq})`
+        (entry) =>
+            Prisma.sql`(${entry.userId}::text, ${entry.year}::integer, ${entry.seq}::integer)`
     );
     const active = await db.$queryRaw<Array<{ year: number; seqNumber: number }>>`
         WITH candidate("userId", "year", "seqNumber") AS (VALUES ${Prisma.join(candidates)}),

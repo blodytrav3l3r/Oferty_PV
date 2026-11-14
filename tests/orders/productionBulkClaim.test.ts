@@ -444,6 +444,11 @@ function createApp() {
 
 const YEAR = new Date().getFullYear();
 
+function reserveProductionNumber(seqNumber: number): string {
+    store.claims.push({ userId: 'admin-1', year: YEAR, seqNumber });
+    return `A/${String(seqNumber).padStart(5, '0')}/${String(YEAR).slice(-2)}`;
+}
+
 beforeEach(() => {
     store.users = {
         u1: { id: 'u1', symbol: 'T', productionOrderStartNumber: 1 },
@@ -528,15 +533,13 @@ describe('POST /claim-production-numbers/:userId', () => {
         expect(all.length).toBe(600);
         // Zero duplikatów (DoD: 0 duplicate production numbers).
         expect(new Set(all).size).toBe(600);
-        // Recycled {4,9} zużyte dokładnie raz + świeże 1..600 z pominięciem {4,9}
-        // (deficyt po skipie recycled uzupełnia rezerwacja — count gwarantowany).
+        // Recycled {4,9} zużyte dokładnie raz; licznik przesuwa high-water mark
+        // co najmniej do 9, więc nowe numery zaczynają się od 10.
         expect(all).toEqual(expect.arrayContaining([4, 9]));
         const fromCounter = all
             .filter((s: number) => s !== 4 && s !== 9)
             .sort((x: number, y: number) => x - y);
-        expect(fromCounter).toEqual(
-            Array.from({ length: 600 }, (_, i) => i + 1).filter((s) => s !== 4 && s !== 9)
-        );
+        expect(fromCounter).toEqual(Array.from({ length: 598 }, (_, i) => i + 10));
         // Każdy claim posortowany rosnąco.
         for (const r of [a, b, c]) {
             const seqs = r.body.seqs as number[];
@@ -660,9 +663,10 @@ describe('POST /production current-format claims', () => {
 describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
     test('sukces → saved ze wszystkimi id', async () => {
         const app = createApp();
+        const numbers = [reserveProductionNumber(1), reserveProductionNumber(2)];
         const data = [
-            { id: 'a', wellId: 'w1', productionOrderNumber: 'T/A/00001/26' },
-            { id: 'b', wellId: 'w1', productionOrderNumber: 'T/A/00002/26' }
+            { id: 'a', wellId: 'w1', productionOrderNumber: numbers[0] },
+            { id: 'b', wellId: 'w1', productionOrderNumber: numbers[1] }
         ];
         const res = await request(app).put('/api/orders-studnie/production').send({ data });
         expect(res.status).toBe(200);
@@ -675,9 +679,10 @@ describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
     test('pad drugiego upsertu → 500, saved=[] i NIC nie zapisane (rollback)', async () => {
         store.failUpsertAfter = 1;
         const app = createApp();
+        const numbers = [reserveProductionNumber(1), reserveProductionNumber(2)];
         const data = [
-            { id: 'a', wellId: 'w1', productionOrderNumber: 'T/A/00001/26' },
-            { id: 'b', wellId: 'w1', productionOrderNumber: 'T/A/00002/26' }
+            { id: 'a', wellId: 'w1', productionOrderNumber: numbers[0] },
+            { id: 'b', wellId: 'w1', productionOrderNumber: numbers[1] }
         ];
         const res = await request(app).put('/api/orders-studnie/production').send({ data });
         expect(res.status).toBe(500);

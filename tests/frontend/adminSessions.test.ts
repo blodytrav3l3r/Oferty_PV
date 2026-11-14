@@ -331,7 +331,7 @@ describe('pulpit admina: sesje', () => {
         expect(html).toContain('@vict');
         expect(html).toContain('v@e.pl');
         expect(html).toContain('Nr zam.');
-        expect(html).toContain('Nr zlec.');
+        expect(html).not.toContain('Nr zlec.');
         // Kafel „Nowy użytkownik" jest pierwszy i otwiera modal (CSP, bez inline onclick).
         expect(
             html.trimStart().startsWith('<article class="admin-user-tile admin-user-tile--new"')

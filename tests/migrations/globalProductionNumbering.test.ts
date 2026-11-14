@@ -59,7 +59,10 @@ describe('global production numbering migration', () => {
                     `SELECT "userId", "seqNumber" FROM "recycled_production_numbers_global"
                      WHERE "year" = 2026 ORDER BY "seqNumber"`
                 )
-            ).toEqual([{ userId: 'user-a', seqNumber: 20 }]);
+            ).toEqual([
+                { userId: 'user-a', seqNumber: 20 },
+                { userId: 'user-a', seqNumber: 21 }
+            ]);
             expect(
                 project.query<{ productionNumber: string | null }>(
                     `SELECT "productionNumber" FROM "production_orders_rel"

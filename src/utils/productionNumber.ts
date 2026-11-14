@@ -28,7 +28,9 @@ export function parseProductionNumber(value: string): ParsedProductionNumber | n
     const parts = value.split('/');
     const isCurrentFormat = isCurrentProductionNumber(value);
     const isLegacyFormat =
-        parts.length === 4 && parts[0].length > 0 && Array.from(parts[1]).length === 1;
+        parts.length === 4 &&
+        parts[0].length > 0 &&
+        (parts[1] === 'PZ' || Array.from(parts[1]).length === 1);
     if (!isCurrentFormat && !isLegacyFormat) return null;
 
     const seqIndex = isCurrentFormat ? 1 : 2;

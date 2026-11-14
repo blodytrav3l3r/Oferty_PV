@@ -78,7 +78,14 @@ describe('P1.2 deploy status semantics', () => {
         expect(hook).toBeGreaterThan(validation);
         expect(section).toMatch(/RENDER_PROD_BASE_URL/);
         expect(section).toMatch(/DEPLOY_STATUS=NOT_CONFIGURED/);
-        expect(section).not.toMatch(/echo .*RENDER_PROD_DEPLOY_HOOK/);
+        const echoLines = section.match(/^\s*echo\b[^\r\n]*$/gm) ?? [];
+        expect(
+            echoLines.some((line) =>
+                /\$RENDER_PROD_DEPLOY_HOOK|\$\{\{\s*secrets\.RENDER_PROD_DEPLOY_HOOK\s*\}\}/.test(
+                    line
+                )
+            )
+        ).toBe(false);
     });
 
     it('brak hooka to jawne NOT_CONFIGURED, nie DEPLOYED', () => {

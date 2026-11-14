@@ -2,8 +2,8 @@
  * A2: Idempotency-Key HTTP na izolowanym schemacie PostgreSQL workera.
  * - claim ×2 tym samym kluczem + body → IDENTYCZNE numery (replay, licznik +3 raz);
  * - ten sam klucz + inny body → 409 IDEMPOTENCY_KEY_REUSE;
- * - PUT bulk ×2 tym samym payloadem (stabilne client-id) → 3 wiersze, zero dubli
- *   (upsert po id w all-or-nothing Tx — retry bezpieczny bez klucza).
+ * - PUT bulk dla zarezerwowanych numerów → powtórka bez aktualnej wersji kończy
+ *   się 409 i nie tworzy duplikatów.
  */
 import request from 'supertest';
 import express from 'express';
@@ -105,27 +105,33 @@ describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
         expect(r2.body.code).toBe('IDEMPOTENCY_KEY_REUSE');
     });
 
-    test('PUT bulk ×2 tym samym payloadem → 3 wiersze, zero dubli', async () => {
+    test('PUT bulk: powtórka bez wersji → 409 i bez duplikatów', async () => {
         const a = app();
-        // Numery unikalne per run (worker-DB współdzielona między runami pliku).
-        const stamp = String(Date.now() % 100000).padStart(5, '0');
+        const claim = await request(a)
+            .post('/api/orders-studnie/claim-production-numbers/admin-1')
+            .send({ count: 3 });
+        expect(claim.status).toBe(200);
+        const numbers = claim.body.numbers as string[];
+        expect(numbers).toHaveLength(3);
         const items = [1, 2, 3].map((i) => ({
             id: `idem-put-${Date.now()}-${i}`,
             userId: 'admin-1',
             wellId: 'w1',
             elementIndex: i,
-            productionOrderNumber: `TT/?/${stamp}${i}/26`
+            productionOrderNumber: numbers[i - 1]
         }));
         const r1 = await request(a).put('/api/orders-studnie/production').send({ data: items });
         expect(r1.status).toBe(200);
         expect(r1.body.saved).toHaveLength(3);
         const r2 = await request(a).put('/api/orders-studnie/production').send({ data: items });
-        expect(r2.status).toBe(200);
-        expect(r2.body.saved).toHaveLength(3);
+        expect(r2.status).toBe(409);
+        expect(r2.body.code).toBe('VERSION_CONFLICT');
+        expect(r2.body.saved).toEqual([]);
         const rows = await prisma.production_orders_rel.findMany({
             where: { id: { in: items.map((x) => x.id) } }
         });
         expect(rows).toHaveLength(3);
+        expect(rows.map((row) => row.version)).toEqual([1, 1, 1]);
     });
 
     test('D-008 single retry tym samym kluczem → ten sam numer, licznik +1 raz', async () => {
