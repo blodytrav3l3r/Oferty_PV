@@ -250,7 +250,7 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
         printLastEtykietaAt: '2026-09-17T11:00:00.000Z'
     });
 
-    // Chudy obiekt jak z `/index` (modal/accept-flow): bez pól print*, bez version
+    // Chudy obiekt jak z `/index` (modal/accept-flow): bez pól print*.
     const skinny = (extra: Record<string, unknown> = {}) => ({
         id: 'pz-1',
         type: 'production_order',
@@ -259,6 +259,7 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
         wellId: 'w-1',
         status: 'draft',
         productionOrderNumber: 'PZ/1',
+        version: 3,
         ...extra
     });
 
@@ -273,7 +274,6 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
                 version: 3
             }
         ]);
-        (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
         (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
     });
@@ -285,20 +285,15 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
         return JSON.parse(call[0].data.data);
     }
 
-    it('chudy PUT bez version (unconditional) zachowuje liczniki i daty', async () => {
+    it('chudy PUT bez version odrzuca zapis bez zmiany liczników', async () => {
         const res = await request(app)
             .put('/api/orders-studnie/production')
-            .send({ data: [skinny()] });
+            .send({ data: [skinny({ version: undefined })] });
 
-        expect(res.status).toBe(200);
-        expect(prisma.production_orders_rel.update).toHaveBeenCalled();
-        const written = writtenBlob();
-        expect(written.printCountZlecenia).toBe(5);
-        expect(written.printCountEtykieta).toBe(2);
-        expect(written.printLastZleceniaAt).toBe('2026-09-17T10:00:00.000Z');
-        expect(written.printLastEtykietaAt).toBe('2026-09-17T11:00:00.000Z');
-        // Reszta bloba z requestu zachowana
-        expect(written.status).toBe('draft');
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('VERSION_CONFLICT');
+        expect(prisma.production_orders_rel.update).not.toHaveBeenCalled();
+        expect(prisma.production_orders_rel.updateMany).not.toHaveBeenCalled();
     });
 
     it('chudy PUT z version (optimistic) zachowuje liczniki', async () => {
@@ -329,7 +324,7 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
                 version: 3
             }
         ]);
-        (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
+        (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
 
         res = await request(app)
@@ -366,9 +361,9 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
             });
 
         expect(res.status).toBe(200);
-        const updateMock = prisma.production_orders_rel.update as jest.Mock;
-        expect(updateMock).toHaveBeenCalledTimes(2);
-        expect(JSON.parse(updateMock.mock.calls[0][0].data.data).printCountZlecenia).toBe(5);
-        expect(JSON.parse(updateMock.mock.calls[1][0].data.data).printCountZlecenia).toBe(9);
+        const updateManyMock = prisma.production_orders_rel.updateMany as jest.Mock;
+        expect(updateManyMock).toHaveBeenCalledTimes(2);
+        expect(JSON.parse(updateManyMock.mock.calls[0][0].data.data).printCountZlecenia).toBe(5);
+        expect(JSON.parse(updateManyMock.mock.calls[1][0].data.data).printCountZlecenia).toBe(9);
     });
 });

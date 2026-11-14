@@ -33,6 +33,52 @@ function loadSrcHelpers() {
     return context;
 }
 
+function loadRouterInitHarness(meProbe: jest.Mock) {
+    const src = read('public/js/spa/router.js');
+    const listeners: Record<string, () => unknown> = {};
+    let retryHandler: (() => unknown) | null = null;
+    const retryButton = {
+        addEventListener: jest.fn((_event: string, handler: () => unknown) => {
+            retryHandler = handler;
+        })
+    };
+    const spaMain = {
+        innerHTML: '',
+        focus: jest.fn(),
+        querySelector: jest.fn((selector: string) =>
+            selector === '[data-auth-retry]' ? retryButton : null
+        )
+    };
+    const document = {
+        addEventListener: jest.fn((event: string, handler: () => unknown) => {
+            listeners[event] = handler;
+        }),
+        getElementById: jest.fn((id: string) => (id === 'spa-main' ? spaMain : null)),
+        querySelectorAll: jest.fn(() => []),
+        body: { classList: { add: jest.fn(), remove: jest.fn(), toggle: jest.fn() } }
+    };
+    const window: any = {
+        location: { hash: '#/rury', href: '' },
+        meProbe,
+        navigateToLogin: jest.fn(),
+        addEventListener: jest.fn(),
+        clearTimeout: jest.fn(),
+        setTimeout: jest.fn(),
+        showToast: jest.fn()
+    };
+    const context: any = { window, document, URLSearchParams, logger: { warn: jest.fn() } };
+    vm.createContext(context);
+    vm.runInContext(src, context);
+
+    return {
+        init: () => listeners.DOMContentLoaded(),
+        navigateToLogin: window.navigateToLogin as jest.Mock,
+        spaMain,
+        retryButton,
+        getRetryHandler: () => retryHandler
+    };
+}
+
 describe('router: scalanie query modułu', () => {
     it('pulpit zachowuje własny parametr host i dokłada cache-bust', () => {
         const ctx = loadSrcHelpers();
@@ -120,6 +166,65 @@ describe('pulpit: rejestracja i nawigacja', () => {
         const idle = read('public/js/shared/sessionIdle.js');
         expect(idle).toContain('window.navigateToLogin');
         expect(idle).toContain('function goLoginPage()');
+    });
+});
+
+describe('router: stan sesji podczas startu', () => {
+    it('401 przekierowuje do logowania', async () => {
+        const meProbe = jest.fn().mockResolvedValue({ status: 401, ok: false, user: null });
+        const harness = loadRouterInitHarness(meProbe);
+
+        await harness.init();
+
+        expect(meProbe).toHaveBeenCalledTimes(1);
+        expect(harness.navigateToLogin).toHaveBeenCalledTimes(1);
+        expect(harness.spaMain.innerHTML).toBe('');
+    });
+
+    it('odpowiedź 200 bez użytkownika przekierowuje do logowania', async () => {
+        const meProbe = jest.fn().mockResolvedValue({ status: 200, ok: true, user: null });
+        const harness = loadRouterInitHarness(meProbe);
+
+        await harness.init();
+
+        expect(harness.navigateToLogin).toHaveBeenCalledTimes(1);
+        expect(harness.spaMain.innerHTML).toBe('');
+    });
+
+    it('503 pokazuje stan błędu i ponawia probe po kliknięciu', async () => {
+        const meProbe = jest
+            .fn()
+            .mockResolvedValueOnce({ status: 503, ok: false, user: null })
+            .mockResolvedValueOnce({ status: 401, ok: false, user: null });
+        const harness = loadRouterInitHarness(meProbe);
+
+        await harness.init();
+
+        expect(harness.navigateToLogin).not.toHaveBeenCalled();
+        expect(harness.spaMain.innerHTML).toContain('Nie można połączyć się z serwerem');
+        expect(harness.retryButton.addEventListener).toHaveBeenCalledWith(
+            'click',
+            expect.any(Function)
+        );
+
+        await harness.getRetryHandler()?.();
+
+        expect(meProbe).toHaveBeenCalledTimes(2);
+        expect(harness.navigateToLogin).toHaveBeenCalledTimes(1);
+    });
+
+    it('błąd sieci pokazuje stan ponowienia zamiast przekierowania', async () => {
+        const meProbe = jest.fn().mockRejectedValue(new Error('network unavailable'));
+        const harness = loadRouterInitHarness(meProbe);
+
+        await harness.init();
+
+        expect(harness.navigateToLogin).not.toHaveBeenCalled();
+        expect(harness.spaMain.innerHTML).toContain('Nie można połączyć się z serwerem');
+        expect(harness.retryButton.addEventListener).toHaveBeenCalledWith(
+            'click',
+            expect.any(Function)
+        );
     });
 });
 

@@ -123,6 +123,26 @@ describe('Production Orders (PZ) routes', () => {
             expect(prisma.production_orders_rel.create).toHaveBeenCalled();
         });
 
+        it('odrzuca aktualizację istniejącego PZ bez version', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                version: 4,
+                data: '{}'
+            });
+
+            const res = await request(app)
+                .post('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ id: 'pz-1', wellId: 'w-1', status: 'draft' });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(4);
+            expect(prisma.production_orders_rel.update).not.toHaveBeenCalled();
+            expect(prisma.production_orders_rel.updateMany).not.toHaveBeenCalled();
+        });
+
         it('zwraca 400 przy braku wellId (walidacja productionOrderCreateSchema)', async () => {
             const res = await request(app)
                 .post('/api/orders/production')
@@ -335,7 +355,7 @@ describe('Production Orders (PZ) routes', () => {
                     })
                 }
             ]);
-            (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
+            (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
 
             const res = await request(app)
                 .put('/api/orders/production')
@@ -345,6 +365,7 @@ describe('Production Orders (PZ) routes', () => {
                         {
                             id: 'pz-1',
                             wellId: 'w-1',
+                            version: 1,
                             status: 'accepted',
                             productionOrderNumber: 'SA/N/00001/26'
                         }
@@ -353,7 +374,7 @@ describe('Production Orders (PZ) routes', () => {
 
             expect(res.statusCode).toBe(200);
             const savedData = JSON.parse(
-                (prisma.production_orders_rel.update as jest.Mock).mock.calls[0][0].data
+                (prisma.production_orders_rel.updateMany as jest.Mock).mock.calls[0][0].data
                     .data as string
             );
             expect(savedData.status).toBe('accepted');
@@ -464,7 +485,7 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.body.saved).toEqual([]);
         });
 
-        it('P0-V: zapis bez version → legacy, sukces z version=old+1', async () => {
+        it('P0-V: batch odrzuca aktualizację istniejącego PZ bez version', async () => {
             (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
                 {
                     id: 'pz-1',
@@ -473,16 +494,18 @@ describe('Production Orders (PZ) routes', () => {
                     data: '{}'
                 }
             ]);
-            (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .put('/api/orders/production')
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'pz-1', wellId: 'w-1', status: 'draft' }] });
 
-            expect(res.statusCode).toBe(200);
-            expect(res.body.saved).toEqual([{ id: 'pz-1', version: 5 }]);
-            expect(prisma.production_orders_rel.update).toHaveBeenCalled();
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(4);
+            expect(res.body.saved).toEqual([]);
+            expect(prisma.production_orders_rel.update).not.toHaveBeenCalled();
+            expect(prisma.production_orders_rel.updateMany).not.toHaveBeenCalled();
         });
     });
 

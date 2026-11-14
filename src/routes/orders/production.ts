@@ -557,7 +557,15 @@ router.put(
                             userId: targetUserId,
                             version: 1
                         });
-                    } else if (clientVersion != null) {
+                    } else {
+                        if (clientVersion == null) {
+                            throw {
+                                status: 409,
+                                code: 'VERSION_CONFLICT',
+                                message: 'Brak wersji zlecenia — odśwież dane i spróbuj ponownie',
+                                serverVersion: old.version ?? 1
+                            };
+                        }
                         // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE
                         // id+version). 0 wierszy = ktoś zapisał wcześniej.
                         const upd = await tx.production_orders_rel.updateMany({
@@ -592,34 +600,6 @@ router.put(
                             productionNumber: prodNum ?? old.productionNumber,
                             userId: targetUserId,
                             version: clientVersion + 1
-                        });
-                    } else {
-                        await tx.production_orders_rel.update({
-                            where: { id: docId },
-                            data: {
-                                userId: targetUserId,
-                                creatorId: authReq.user?.id,
-                                orderId: orderId || '',
-                                wellId: wellId || '',
-                                elementIndex: elementIndex || 0,
-                                elementKey: elementKey || '',
-                                createdAt: createdAtStr || new Date().toISOString(),
-                                updatedAt: updatedAtStr || new Date().toISOString(),
-                                data: dataStr,
-                                productionNumber: prodNum,
-                                version: { increment: 1 }
-                            }
-                        });
-                        // Gałąź bez predykatu (legacy, brak version w requeście):
-                        // nowa wersja = stara + 1.
-                        const legacyNext = (old.version ?? 1) + 1;
-                        saved.push({ id: docId, version: legacyNext });
-                        oldById.set(docId, {
-                            id: docId,
-                            data: dataStr,
-                            productionNumber: prodNum ?? old.productionNumber,
-                            userId: targetUserId,
-                            version: legacyNext
                         });
                     }
                     if (old && oldNumber && prodNum !== undefined && prodNum !== oldNumber) {
@@ -841,9 +821,18 @@ router.post(
                             version: 1
                         }
                     });
-                } else if (clientVersion != null) {
+                } else {
+                    const expectedVersion = clientVersion;
+                    if (expectedVersion == null) {
+                        throw {
+                            status: 409,
+                            code: 'VERSION_CONFLICT',
+                            message: 'Brak wersji zlecenia — odśwież dane i spróbuj ponownie',
+                            serverVersion: old.version ?? 1
+                        };
+                    }
                     const upd = await tx.production_orders_rel.updateMany({
-                        where: { id: docId, version: clientVersion },
+                        where: { id: docId, version: expectedVersion },
                         data: {
                             userId: targetUserId,
                             creatorId: authReq.user?.id || '',
@@ -866,22 +855,6 @@ router.post(
                             serverVersion: old.version ?? 1
                         };
                     }
-                } else {
-                    await tx.production_orders_rel.update({
-                        where: { id: docId },
-                        data: {
-                            userId: targetUserId,
-                            creatorId: authReq.user?.id || '',
-                            orderId: orderId || '',
-                            wellId: wellId || '',
-                            elementIndex: elementIndex || 0,
-                            elementKey: elementKey || '',
-                            updatedAt: updatedAt,
-                            data: dataStr,
-                            productionNumber: prodNum,
-                            version: { increment: 1 }
-                        }
-                    });
                 }
 
                 if (old && oldNumber && prodNum !== undefined && prodNum !== oldNumber) {

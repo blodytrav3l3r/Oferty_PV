@@ -919,6 +919,7 @@ jobs:
                 e2e-smoke,
                 e2e-appname,
                 excel-gates,
+                axe-a11y,
                 drift-check,
                 migrate-deploy-verify
             ]
@@ -926,15 +927,45 @@ jobs:
         environment: production
         env:
             RENDER_PROD_DEPLOY_HOOK: ${{ secrets.RENDER_PROD_DEPLOY_HOOK }}
+            RENDER_PROD_BASE_URL: ${{ vars.RENDER_PROD_BASE_URL }}
         steps:
             - uses: actions/checkout@v7
 
+            - name: Validate production deploy target
+              run: |
+                  set -euo pipefail
+                  if [[ -z "$RENDER_PROD_BASE_URL" ]]; then
+                    echo "DEPLOY_STATUS=NOT_CONFIGURED (brak repo variable RENDER_PROD_BASE_URL; webhook nie został wywołany)" >> "$GITHUB_STEP_SUMMARY"
+                    echo "::error::Brak repo variable RENDER_PROD_BASE_URL — deployment zatrzymany przed webhookiem."
+                    exit 1
+                  fi
+                  if ! node -e 'const u = new URL(process.argv[1]); process.exit(u.protocol === "https:" && !u.username && !u.password && u.pathname === "/" && !u.search && !u.hash ? 0 : 1)' "$RENDER_PROD_BASE_URL"; then
+                    echo "DEPLOY_STATUS=NOT_CONFIGURED (RENDER_PROD_BASE_URL musi być poprawnym adresem HTTPS bez ścieżki; webhook nie został wywołany)" >> "$GITHUB_STEP_SUMMARY"
+                    echo "::error::RENDER_PROD_BASE_URL musi być poprawnym adresem HTTPS bez ścieżki."
+                    exit 1
+                  fi
+
             - name: Deploy to Render (production)
               if: env.RENDER_PROD_DEPLOY_HOOK != ''
+              env:
+                  APP_URL: ${{ vars.RENDER_PROD_BASE_URL }}
+                  DEPLOY_CHECK_RETRIES: '60'
+                  DEPLOY_CHECK_INTERVAL_MS: '5000'
+                  DEPLOY_CHECK_TIMEOUT_MS: '5000'
               run: |
-                  set -o pipefail
-                  curl -sSf -o /dev/null -X POST "$RENDER_PROD_DEPLOY_HOOK"
-                  echo "DEPLOY_STATUS=TRIGGERED (readiness not verified)" >> "$GITHUB_STEP_SUMMARY"
+                  set -euo pipefail
+                  if ! curl -sSf -o /dev/null -X POST "$RENDER_PROD_DEPLOY_HOOK" 2>/dev/null; then
+                    echo "DEPLOY_STATUS=FAILED (Render webhook request failed)" >> "$GITHUB_STEP_SUMMARY"
+                    echo "::error::Render deployment webhook request failed."
+                    exit 1
+                  fi
+                  if ! npm run deploy:check; then
+                    echo "DEPLOY_STATUS=FAILED (readiness/version not confirmed)" >> "$GITHUB_STEP_SUMMARY"
+                    echo "::error::Deployment readiness or expected version was not confirmed."
+                    exit 1
+                  fi
+                  EXPECTED_VERSION="$(node -p "require('./package.json').version")"
+                  echo "DEPLOY_STATUS=DEPLOYED (readiness and version $EXPECTED_VERSION verified)" >> "$GITHUB_STEP_SUMMARY"
 
             - name: Skip — brak RENDER_PROD_DEPLOY_HOOK (NOT_CONFIGURED, nie DEPLOYED)
               if: env.RENDER_PROD_DEPLOY_HOOK == ''

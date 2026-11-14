@@ -59,12 +59,26 @@ describe('P1.1 load status semantics', () => {
 });
 
 describe('P1.2 deploy status semantics', () => {
-    it('hook produkcyjny raportuje TRIGGERED bez potwierdzenia gotowości', () => {
+    it('hook produkcyjny raportuje DEPLOYED dopiero po readiness i zgodnej wersji', () => {
         const idx = CI.indexOf('deploy-production');
         const section = CI.slice(idx);
-        expect(section).toMatch(/DEPLOY_STATUS=TRIGGERED \(readiness not verified\)/);
-        expect(section).not.toMatch(/DEPLOY_STATUS=DEPLOYED/);
+        expect(section).toMatch(/DEPLOY_STATUS=DEPLOYED/);
+        expect(section).not.toMatch(/readiness not verified/);
+        expect(section).toMatch(/npm run deploy:check/);
+        expect(section).toMatch(/APP_URL: \$\{\{ vars\.RENDER_PROD_BASE_URL \}\}/);
         expect(section).toMatch(/GITHUB_STEP_SUMMARY/);
+    });
+
+    it('waliduje URL produkcji przed wywołaniem hooka i nie pokazuje jego wartości', () => {
+        const idx = CI.indexOf('    deploy-production:');
+        const section = CI.slice(idx);
+        const validation = section.indexOf('Validate production deploy target');
+        const hook = section.indexOf('curl -sSf -o /dev/null -X POST "$RENDER_PROD_DEPLOY_HOOK"');
+        expect(validation).toBeGreaterThan(-1);
+        expect(hook).toBeGreaterThan(validation);
+        expect(section).toMatch(/RENDER_PROD_BASE_URL/);
+        expect(section).toMatch(/DEPLOY_STATUS=NOT_CONFIGURED/);
+        expect(section).not.toMatch(/echo .*RENDER_PROD_DEPLOY_HOOK/);
     });
 
     it('brak hooka to jawne NOT_CONFIGURED, nie DEPLOYED', () => {
@@ -112,10 +126,11 @@ describe('P2.3 e2e classification', () => {
         expect(driftCheck).toMatch(/prisma validate/);
     });
 
-    it('deploy wymaga blocking jobow (bez extended)', () => {
+    it('deploy wymaga blocking jobow, w tym axe (bez extended)', () => {
         const idx = CI.indexOf('deploy-production');
         const section = CI.slice(idx, idx + 1200);
         expect(section).toMatch(/e2e-smoke/);
+        expect(section).toMatch(/axe-a11y/);
         expect(section).not.toMatch(/e2e-extended/);
     });
 

@@ -908,38 +908,61 @@
         document.getElementById('spa-main')?.focus();
     }
 
+    function showAuthUnavailable() {
+        const container = document.getElementById('spa-main');
+        if (!container) return;
+        container.innerHTML =
+            '<div class="empty-state" role="alert"><h3>Nie można połączyć się z serwerem</h3>' +
+            '<p>Sprawdź połączenie i spróbuj ponownie.</p>' +
+            '<button type="button" class="btn btn-primary" data-auth-retry>Spróbuj ponownie</button></div>';
+        const retryButton = container.querySelector('[data-auth-retry]');
+        if (retryButton) retryButton.addEventListener('click', init);
+    }
+
     async function init() {
-        // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly
-        // (redirect na index.html tylko gdy brak usera lub 401). `authReady()`
-        // (shared/auth.js) cache'uje ten request, wiec panel wersji na tym samym
-        // dokumencie nie strzela drugi raz.
+        // `meProbe()` współdzieli żądanie /api/auth/me, ale zachowuje status
+        // odpowiedzi. Dzięki temu awaria serwera nie wygląda jak wylogowanie.
+        let authProbe;
         try {
-            let user = null;
-            if (typeof window.authReady === 'function') {
-                user = await window.authReady();
+            if (typeof window.meProbe === 'function') {
+                authProbe = await window.meProbe();
             } else {
                 const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
                 const authData = await authRes.json();
-                user = (authData && authData.user) || null;
+                authProbe = {
+                    status: authRes.status,
+                    ok: authRes.ok,
+                    user: (authData && authData.user) || null
+                };
             }
-            if (!user) {
-                if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
-                else window.location.href = 'index.html';
-                return;
-            }
-
-            // Wyświetl użytkownika w nagłówku
-            if (window.headerUser) {
-                window.headerUser.render(user);
-            }
-
-            window.currentUser = user;
-            syncCennikNavigation(user);
         } catch (_e) {
+            showAuthUnavailable();
+            return;
+        }
+
+        if (authProbe.status === 401 || authProbe.status === 403) {
             if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
             else window.location.href = 'index.html';
             return;
         }
+        if (!authProbe.ok) {
+            showAuthUnavailable();
+            return;
+        }
+        const user = authProbe.user || null;
+        if (!user) {
+            if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
+            else window.location.href = 'index.html';
+            return;
+        }
+
+        // Wyświetl użytkownika w nagłówku
+        if (window.headerUser) {
+            window.headerUser.render(user);
+        }
+
+        window.currentUser = user;
+        syncCennikNavigation(user);
 
         // Domyślny hash
         if (

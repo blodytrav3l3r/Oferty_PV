@@ -186,6 +186,73 @@ async function checkHealth(url, opts) {
     return false;
 }
 
+async function fetchWithTimeout(fetchFn, url, timeoutMs) {
+    const controller = new AbortController();
+    let timer;
+    try {
+        const timeoutPromise = new Promise((_, reject) => {
+            timer = setTimeout(() => {
+                controller.abort();
+                reject(new Error('timeout'));
+            }, timeoutMs);
+        });
+        const requestPromise = (async () => {
+            const response = await fetchFn(url, { signal: controller.signal });
+            const body =
+                response?.status === 200 && typeof response.json === 'function'
+                    ? await response.json()
+                    : undefined;
+            return { status: response?.status, body };
+        })();
+        return await Promise.race([requestPromise, timeoutPromise]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+async function checkDeployment(baseUrl, expectedVersion, opts) {
+    const {
+        fetchFn = globalThis.fetch,
+        retries = 12,
+        intervalMs = 5000,
+        timeoutMs = 1500
+    } = opts || {};
+    if (typeof baseUrl !== 'string' || typeof expectedVersion !== 'string' || !expectedVersion) {
+        return false;
+    }
+
+    let base;
+    try {
+        base = new URL(baseUrl).toString().replace(/\/$/, '');
+    } catch {
+        return false;
+    }
+
+    for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+            const health = await fetchWithTimeout(fetchFn, `${base}/health/ready`, timeoutMs);
+            if (health?.status === 200) {
+                const versionResponse = await fetchWithTimeout(
+                    fetchFn,
+                    `${base}/api/version`,
+                    timeoutMs
+                );
+                if (
+                    versionResponse?.status === 200 &&
+                    versionResponse.body?.version === expectedVersion
+                )
+                    return true;
+            }
+        } catch {
+            // Odpowiedź przejściowa, brak JSON lub timeout: retry do limitu prób.
+        }
+        if (attempt + 1 < retries) {
+            await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        }
+    }
+    return false;
+}
+
 module.exports = {
     TAG_RE,
     TARGETS,
@@ -200,5 +267,6 @@ module.exports = {
     planRollback,
     rollbackSteps,
     runSequential,
-    checkHealth
+    checkHealth,
+    checkDeployment
 };

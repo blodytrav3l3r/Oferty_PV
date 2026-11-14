@@ -399,6 +399,60 @@ describe('deploy-core', () => {
         });
     });
 
+    describe('checkDeployment', () => {
+        it('wymaga gotowości i zgodnej wersji aplikacji', async () => {
+            const fetchFn = jest
+                .fn()
+                .mockResolvedValueOnce({ status: 200 })
+                .mockResolvedValueOnce({ status: 200, json: async () => ({ version: '1.58.0' }) });
+
+            await expect(
+                core.checkDeployment('https://sok.example', '1.58.0', {
+                    fetchFn,
+                    retries: 1,
+                    intervalMs: 1
+                })
+            ).resolves.toBe(true);
+            expect(fetchFn.mock.calls.map(([url]) => url)).toEqual([
+                'https://sok.example/health/ready',
+                'https://sok.example/api/version'
+            ]);
+        });
+
+        it('ponawia polling, gdy serwer jest gotowy, ale nadal podaje starą wersję', async () => {
+            const fetchFn = jest
+                .fn()
+                .mockResolvedValueOnce({ status: 200 })
+                .mockResolvedValueOnce({ status: 200, json: async () => ({ version: '1.57.0' }) })
+                .mockResolvedValueOnce({ status: 200 })
+                .mockResolvedValueOnce({ status: 200, json: async () => ({ version: '1.58.0' }) });
+
+            await expect(
+                core.checkDeployment('https://sok.example/', '1.58.0', {
+                    fetchFn,
+                    retries: 2,
+                    intervalMs: 1
+                })
+            ).resolves.toBe(true);
+            expect(fetchFn).toHaveBeenCalledTimes(4);
+        });
+
+        it('zwraca false po wyczerpaniu prób bez potwierdzenia wersji', async () => {
+            const fetchFn = jest
+                .fn()
+                .mockResolvedValueOnce({ status: 200 })
+                .mockResolvedValueOnce({ status: 200, json: async () => ({ version: '1.57.0' }) });
+
+            await expect(
+                core.checkDeployment('https://sok.example', '1.58.0', {
+                    fetchFn,
+                    retries: 1,
+                    intervalMs: 1
+                })
+            ).resolves.toBe(false);
+        });
+    });
+
     describe('docker-compose.yml (PostgreSQL)', () => {
         it('uses PostgreSQL 18, a persistent named volume, and explicit app DATABASE_URL', () => {
             const text = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');

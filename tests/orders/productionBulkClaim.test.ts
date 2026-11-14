@@ -785,14 +785,23 @@ describe('PUT /production version counter (P0-D: brak cichego overwrite)', () =>
         expect(store.orders['v4'].version).toBe(2);
     });
 
-    test('brak version (stary klient) → zapis przejściowy + bump', async () => {
+    test('brak version przy istniejącym PZ → 409 bez nadpisania', async () => {
         store.orders['v5'] = { id: 'v5', userId: 'admin-1', version: 3, data: '{}' };
         const app = createApp();
         const res = await request(app)
             .put('/api/orders-studnie/production')
-            .send({ data: [{ id: 'v5', wellId: 'w1' }] });
-        expect(res.status).toBe(200);
-        expect(store.orders['v5'].version).toBe(4);
+            .send({
+                data: [
+                    { id: 'new-pz', wellId: 'w2' },
+                    { id: 'v5', wellId: 'w1' }
+                ]
+            });
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('VERSION_CONFLICT');
+        expect(res.body.serverVersion).toBe(3);
+        expect(res.body.saved).toEqual([]);
+        expect(store.orders['v5'].version).toBe(3);
+        expect(store.orders['new-pz']).toBeUndefined();
     });
 });
 
