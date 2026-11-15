@@ -256,15 +256,19 @@ function trackWrites(page) {
         );
 
         const tilesPage = await context.newPage();
-        await tilesPage.goto(`${BASE}/index.html`, {
+        await tilesPage.goto(`${BASE}/app.html#/pulpit`, {
             waitUntil: 'domcontentloaded',
             timeout: 30000
         });
-        await tilesPage.locator('#admin-panel:not(.hidden)').waitFor({ timeout: 20000 });
-        const tiles = await tilesPage.evaluate(() => {
-            const links = Array.from(document.querySelectorAll('#pricelist-tiles a.pv-admin-tile'));
-            return links.map((a) => ({ href: a.getAttribute('href'), text: a.textContent }));
-        });
+        const pulpitFrame = tilesPage.frameLocator('#spa-iframe-pulpit');
+        await pulpitFrame
+            .locator('#admin-panel:not(.hidden)')
+            .waitFor({ state: 'visible', timeout: 20000 });
+        const tiles = await pulpitFrame
+            .locator('#pricelist-tiles a.pv-admin-tile')
+            .evaluateAll((links) =>
+                links.map((link) => ({ href: link.getAttribute('href'), text: link.textContent }))
+            );
         check('P1 3 kafelki cenników', tiles.length === 3, `links=${tiles.length}`);
         check(
             'P1 deep-link PRECO',
