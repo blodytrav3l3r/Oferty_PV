@@ -11,6 +11,7 @@ import {
     AuthenticatedRequest
 } from '../middleware/auth';
 import { LOGIN_LIMITER, CHANGE_PASSWORD_LIMITER } from '../middleware/rateLimiters';
+import { createRateLimiter } from '../middleware/rateLimiter';
 import {
     loginSchema,
     registerSchema,
@@ -24,6 +25,15 @@ import { DEFAULT_ORGANIZATION_UNIT_KEY, isOrganizationUnit } from '../constants/
 const router = express.Router();
 
 const loginLimiter = LOGIN_LIMITER;
+const loginIpLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 60,
+    message: 'Zbyt wiele prób logowania. Odczekaj minutę.',
+    name: 'login_ip'
+});
+
+// Publiczny hash atrapowy; zapewnia koszt bcrypt także dla nieznanych loginów.
+const DUMMY_PASSWORD_HASH = '$2b$10$RdQUGqPxaHvZZ6jmSrBYOeSvRl2eDCjrqp6bvZzqjQtn0Q0PdPM8q';
 
 // Secure flag na ciastku — ustawiana, gdy żądanie realnie przyszło po HTTPS
 // (respektuje trust proxy). Dzięki temu login działa po HTTP na LAN bez flagi
@@ -34,7 +44,7 @@ const isCookieSecure = (req: express.Request) =>
     isHttpsEnabled() && (req.secure || process.env.COOKIE_SECURE === 'true');
 
 // POST /api/auth/login
-router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) => {
+router.post('/login', loginIpLimiter, loginLimiter, validateData(loginSchema), async (req, res) => {
     const { username, password } = req.body;
 
     try {
@@ -42,7 +52,11 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             where: { username }
         });
 
-        if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+        const passwordMatches = await bcrypt.compare(
+            password,
+            user?.password || DUMMY_PASSWORD_HASH
+        );
+        if (!user || !user.password || !passwordMatches) {
             return res.status(401).json({ error: 'Nieprawidłowy login lub hasło' });
         }
 

@@ -13,6 +13,8 @@ import {
 import type { StudnieOfferData, UserContactInfo } from '../../services/pdfGenerator';
 import { mapPdfError } from '../../services/pdf/pdfEngine';
 import { exportFilename } from '../../utils/exportFilenames';
+import { projectStudnieExportAmounts } from '../../services/studnieExportAmounts';
+import { roundMoney } from '../../utils/money';
 import {
     generateKartaBudowyDOCX,
     generateStudnieDOCXFromContext,
@@ -21,6 +23,19 @@ import {
 import router from './studnieOrders.crud';
 
 const exportOrdersLimiter = EXPORT_LIMITER;
+
+function withTransportTotals(items: Array<Record<string, unknown>>) {
+    return items.map((item) => ({
+        ...item,
+        totalPrice: Number(item.price ?? 0) + Number(item.transportCost ?? 0)
+    }));
+}
+
+function getExportSavedTotal(items: Array<Record<string, unknown>>, transportTotal: unknown) {
+    if (typeof transportTotal !== 'number') return undefined;
+    const priceTotal = items.reduce((sum, item) => sum + Number(item.price ?? 0), 0);
+    return roundMoney(priceTotal + transportTotal);
+}
 
 /* ===== EKSPORT KARTY BUDOWY ===== */
 
@@ -193,7 +208,27 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
             logger.warn('Orders', 'Błąd lookupOfferUsers w studnie export-offer-pdf', e);
         }
 
-        const totalTransportCost = Number(body.transportKm ?? 0) * Number(body.transportRate ?? 0);
+        const separateTransport = body.transportSeparate === true;
+        const projectedItems = withTransportTotals(items);
+        const projectedAmounts = projectStudnieExportAmounts(
+            projectedItems,
+            separateTransport,
+            getExportSavedTotal(items, body.transportTotal)
+        );
+        const printItems =
+            body.transportSeparate === undefined
+                ? items
+                : items.map((item, index) => ({
+                      ...item,
+                      price: projectedAmounts[index].price,
+                      transportCost: separateTransport
+                          ? projectedAmounts[index].transportCost
+                          : Number(item.transportCost ?? 0)
+                  }));
+        const totalTransportCost =
+            body.transportSeparate === undefined
+                ? Number(body.transportKm ?? 0) * Number(body.transportRate ?? 0)
+                : items.reduce((sum, item) => sum + Number(item.transportCost ?? 0), 0);
 
         const ctx: StudnieOfferData = {
             offerNumber: String(body.orderNumber || body.offerNumber || docId.substring(0, 8)),
@@ -207,8 +242,9 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
             investContractor: String(body.investContractor ?? ''),
             investLocationDescription: String(body.investLocationDescription ?? ''),
             investContacts: Array.isArray(body.investContacts) ? body.investContacts : [],
-            items,
+            items: printItems,
             transportCost: totalTransportCost,
+            transportSeparate: separateTransport,
             createdAt: String(body.date ?? new Date().toISOString()),
             validityDays: Number(body.validityDays ?? 30),
             notes: String(body.notes ?? ''),
@@ -287,10 +323,17 @@ router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (r
             paymentTerms: body.paymentTerms ?? ''
         };
 
+        if (body.transportSeparate !== undefined) {
+            offerData.transportSeparate = body.transportSeparate;
+            offerData.transportKm = body.transportKm;
+            offerData.transportRate = body.transportRate;
+            offerData.totalNetto = getExportSavedTotal(items, body.transportTotal);
+        }
+
         const ctx = {
             offerNumber: String(body.orderNumber || body.offerNumber || docId.substring(0, 8)),
             offerData,
-            wells: items,
+            wells: body.transportSeparate === undefined ? items : withTransportTotals(items),
             authorUser,
             guardianUser
         };

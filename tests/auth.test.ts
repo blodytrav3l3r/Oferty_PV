@@ -175,10 +175,61 @@ describe('Auth Routes - Z-70', () => {
 
         it('powinien zwrócić 401 gdy user nie istnieje', async () => {
             (prisma.users.findUnique as jest.Mock).mockResolvedValue(null);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
             const res = await request(app)
                 .post('/api/auth/login')
                 .send({ username: 'nouser', password: 'xxxx' });
             expect(res.statusCode).toBe(401);
+            expect(bcrypt.compare).toHaveBeenCalledWith(
+                'xxxx',
+                expect.stringMatching(/^\$2[aby]\$10\$/)
+            );
+            expect(createSession).not.toHaveBeenCalled();
+        });
+
+        it('ogranicza próby z jednego IP także przy różnych loginach, bez blokowania innego IP', async () => {
+            app.set('trust proxy', true);
+            (prisma.users.findUnique as jest.Mock).mockResolvedValue(null);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+            for (let index = 0; index < 60; index++) {
+                const response = await request(app)
+                    .post('/api/auth/login')
+                    .set('X-Forwarded-For', '192.0.2.11')
+                    .send({ username: `user${index}`, password: 'wrong' });
+                expect(response.status).toBe(401);
+            }
+            const blocked = await request(app)
+                .post('/api/auth/login')
+                .set('X-Forwarded-For', '192.0.2.11')
+                .send({ username: 'another', password: 'wrong' });
+            expect(blocked.status).toBe(429);
+            expect(bcrypt.compare).toHaveBeenCalledTimes(60);
+
+            const otherIp = await request(app)
+                .post('/api/auth/login')
+                .set('X-Forwarded-For', '192.0.2.12')
+                .send({ username: 'another', password: 'wrong' });
+            expect(otherIp.status).toBe(401);
+        });
+
+        it('zachowuje limit dziesięciu prób na ten sam login i IP', async () => {
+            app.set('trust proxy', true);
+            (prisma.users.findUnique as jest.Mock).mockResolvedValue(null);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+            for (let index = 0; index < 10; index++) {
+                const response = await request(app)
+                    .post('/api/auth/login')
+                    .set('X-Forwarded-For', '192.0.2.13')
+                    .send({ username: 'same-user', password: 'wrong' });
+                expect(response.status).toBe(401);
+            }
+            const blocked = await request(app)
+                .post('/api/auth/login')
+                .set('X-Forwarded-For', '192.0.2.13')
+                .send({ username: 'same-user', password: 'wrong' });
+            expect(blocked.status).toBe(429);
+            expect(bcrypt.compare).toHaveBeenCalledTimes(10);
         });
     });
 

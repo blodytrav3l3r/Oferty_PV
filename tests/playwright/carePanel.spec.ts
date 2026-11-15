@@ -179,7 +179,8 @@ test.describe.serial('e2e: panel opieki', () => {
         expect(login.status(), 'Login failed').toBe(200);
 
         await page.goto(`${BASE}/`);
-        const panel = page.locator('#followup-panel');
+        const frame = page.frameLocator('#spa-iframe-pulpit');
+        const panel = frame.locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
 
         // Loading indicator (data-care-loading) znika po pierwszym renderze.
@@ -187,8 +188,8 @@ test.describe.serial('e2e: panel opieki', () => {
             timeout: 15000
         });
         // Kolejka i liczniki wyrenderowane (nie placeholder "Ladowanie").
-        await expect(page.locator('#care-queue-list'), 'kolejka niewidoczna').toBeVisible();
-        await expect(page.locator('#care-buckets'), 'liczniki niewidoczne').toBeVisible();
-        await expect(page.locator('#care-notif-list'), 'centrum niewidoczne').toBeVisible();
+        await expect(frame.locator('#care-queue-list'), 'kolejka niewidoczna').toBeVisible();
+        await expect(frame.locator('#care-buckets'), 'liczniki niewidoczne').toBeVisible();
+        await expect(frame.locator('#care-notif-list'), 'centrum niewidoczne').toBeVisible();
     });
 });

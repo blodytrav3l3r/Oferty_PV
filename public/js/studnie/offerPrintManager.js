@@ -73,13 +73,22 @@ function buildInvestInfoHtml() {
  * trzymaja wartosc — zmiana sasiada nie rusza ich ceny.
  * Zwraca Map<Well, number>.
  */
-function calculateWellTransportMap(wellsList) {
+function calculateWellTransportMap(wellsList, includeSeparate = false) {
     const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
 
     const map = new Map();
     if (transportKm <= 0 || transportRate <= 0) {
-        wellsList.forEach((w) => map.set(w, 0));
+        wellsList.forEach((w) => {
+            const frozen =
+                includeSeparate &&
+                typeof orderEditMode !== 'undefined' &&
+                orderEditMode &&
+                w &&
+                w.frozenTransportCost != null &&
+                isFinite(Number(w.frozenTransportCost));
+            map.set(w, frozen ? Number(w.frozenTransportCost) : 0);
+        });
         return { map, totalTransportCost: 0 };
     }
 
@@ -92,7 +101,12 @@ function calculateWellTransportMap(wellsList) {
 
     const totalTransports =
         typeof calcTransportCount === 'function'
-            ? calcTransportCount(globalWeight, currentTransportMode || 'full')
+            ? calcTransportCount(
+                  globalWeight,
+                  typeof currentTransportMode !== 'undefined'
+                      ? currentTransportMode || 'full'
+                      : 'full'
+              )
             : Math.ceil(globalWeight / MAX_TRANSPORT_WEIGHT);
     const costPerTrip = transportKm * transportRate;
     const totalTransportCost = totalTransports * costPerTrip;
@@ -103,7 +117,7 @@ function calculateWellTransportMap(wellsList) {
         // Osobna pozycja: koszt nie wchodzi w ceny studni (wiersz TR-STUDNIE).
         const separate =
             typeof isTransportSeparateRow === 'function' && isTransportSeparateRow(null);
-        if (separate) {
+        if (separate && !includeSeparate) {
             share = 0;
         } else if (
             typeof orderEditMode !== 'undefined' &&
@@ -655,6 +669,17 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
     const currentOrder = typeof getCurrentOfferOrder === 'function' ? getCurrentOfferOrder() : null;
     const orderNumber = currentOrder?.orderNumber || orderId;
     const offerNumber = currentOrder?.offerNumber || getVal('offer-number') || '';
+    const transportSeparate =
+        typeof isTransportSeparateRow === 'function' && isTransportSeparateRow(null);
+    const transportResult = calculateWellTransportMap(items, true);
+    const transportMap = transportResult.map;
+    const hasFrozenTransport =
+        typeof orderEditMode !== 'undefined' &&
+        orderEditMode &&
+        items.some(
+            (well) =>
+                well?.frozenTransportCost != null && isFinite(Number(well.frozenTransportCost))
+        );
 
     const exportItems = items.map((well) => {
         const stats =
@@ -674,7 +699,12 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
             DN: String(well.dn ?? ''),
             height: Number(stats.height) || 0,
             zwienczenie: zwienczenieName,
-            transportCost: 0,
+            transportCost: transportMap.get(well) || 0,
+            transportFrozen:
+                typeof orderEditMode !== 'undefined' &&
+                !!orderEditMode &&
+                well.frozenTransportCost != null &&
+                isFinite(Number(well.frozenTransportCost)),
             dodatkowe_info: well.dodatkowe_info || ''
         };
     });
@@ -700,6 +730,10 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
         date: document.getElementById('offer-date')?.value || new Date().toISOString(),
         transportKm,
         transportRate,
+        transportSeparate,
+        transportTotal: hasFrozenTransport
+            ? [...transportMap.values()].reduce((sum, share) => sum + share, 0)
+            : transportResult.totalTransportCost,
         orderNumber,
         offerNumber
     };

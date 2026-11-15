@@ -18,12 +18,15 @@ import {
 } from '../constants';
 import { fmtCurrency, fmtInt, textCell } from '../helpers';
 import { DnSummary } from './sections';
+import { projectStudnieExportAmounts } from '../../studnieExportAmounts';
+import { roundMoney } from '../../../utils/money';
 
 // ─── Główny budowniczy tabel (Main Table Builder) ───────────────────
 
 export function buildWellTables(
     wells: unknown[],
-    separateTransport = false
+    separateTransport = false,
+    savedTotal?: unknown
 ): {
     paragraphs: (Paragraph | Table)[];
     summaries: DnSummary[];
@@ -31,18 +34,12 @@ export function buildWellTables(
     transportTotal: number;
 } {
     const dnOrder = ['1000', '1200', '1500', '2000', '2500', 'styczna', 'Inne'];
-    const itemsByDN = groupWellsByDn(wells, separateTransport);
-    let grandTotal = 0;
-    let transportTotal = 0;
-
-    wells.forEach((w) => {
-        const well = w as Record<string, unknown>;
-        const share = separateTransport ? Number(well.transportCost ?? 0) : 0;
-        transportTotal += share;
-        grandTotal += separateTransport
-            ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
-            : Number(well.totalPrice ?? well.price ?? 0);
-    });
+    const itemsByDN = groupWellsByDn(wells, separateTransport, savedTotal);
+    const amounts = projectStudnieExportAmounts(wells, separateTransport, savedTotal);
+    const grandTotal = roundMoney(amounts.reduce((sum, amount) => sum + amount.price, 0));
+    const transportTotal = roundMoney(
+        amounts.reduce((sum, amount) => sum + amount.transportCost, 0)
+    );
 
     const paragraphs: (Paragraph | Table)[] = [];
     const summaries: DnSummary[] = [];
@@ -84,17 +81,16 @@ export function buildWellTables(
 
 export function groupWellsByDn(
     wells: unknown[],
-    separateTransport = false
+    separateTransport = false,
+    savedTotal?: unknown
 ): Record<string, Record<string, unknown>[]> {
     const itemsByDN: Record<string, Record<string, unknown>[]> = {};
+    const amounts = projectStudnieExportAmounts(wells, separateTransport, savedTotal);
 
-    wells.forEach((w) => {
+    wells.forEach((w, index) => {
         const well = w as Record<string, unknown>;
         const dn = String(well.DN ?? well.dn ?? 'Inne');
-        const share = separateTransport ? Number(well.transportCost ?? 0) : 0;
-        const wellPrice = separateTransport
-            ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
-            : Number(well.totalPrice ?? well.price ?? 0);
+        const wellPrice = amounts[index].price;
         const cleanZwienczenie = String(well.zwienczenie ?? '\u2014')
             .replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ')
             .replace(/\s*(bez\s+stopni|z\s+drabinką|drabinka|ze\s+stopniami|-B|-D|-N)/gi, '')

@@ -20,6 +20,14 @@ describe('requirePostgresDatabaseUrl', () => {
         expect(requirePostgresDatabaseUrl(url)).toBe(url);
     });
 
+    test('akceptuje lokalne IPv6, ale wymaga TLS dla zdalnego IPv6', () => {
+        const localUrl = 'postgresql://user:password@[::1]:5432/sok';
+        expect(requirePostgresDatabaseUrl(localUrl)).toBe(localUrl);
+        expect(() =>
+            requirePostgresDatabaseUrl('postgresql://user:password@[2001:db8::1]/sok')
+        ).toThrow(/verify-full/);
+    });
+
     test('wymaga zweryfikowanego TLS dla zdalnych połączeń PostgreSQL', () => {
         expect(() =>
             requirePostgresDatabaseUrl('postgresql://user:password@example.test/sok')

@@ -176,7 +176,7 @@ export function buildStudnieSectionChildren(
         summaries,
         grandTotal,
         transportTotal
-    } = buildWellTables(wells, separateTransport);
+    } = buildWellTables(wells, separateTransport, isOrder ? undefined : offerData.totalNetto);
     children.push(...dnParagraphs);
 
     // 4b. Osobna pozycja transportu (TR-STUDNIE) przed podsumowaniem

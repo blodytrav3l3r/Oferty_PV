@@ -227,7 +227,9 @@ test.describe('SPA: pulpit jako moduł', () => {
             // Shell (main frame) zawsze dostaje prawdziwą odpowiedź.
             if (route.request().frame() === page.mainFrame()) return route.continue();
             await authGate;
+            if (frameAuth === 'ok') return route.continue();
             const status = frameAuth === 'error' ? 500 : 401;
+            if (status === 401) frameAuth = 'ok';
             return route.fulfill({ status, contentType: 'application/json', body: '{}' });
         });
 
@@ -255,8 +257,11 @@ test.describe('SPA: pulpit jako moduł', () => {
         frameAuth = 'auth';
         await page.reload();
         await page.waitForURL(/\/index\.html$/, { timeout: 15000 });
-        // Sesja w oknie najwyższym jest ważna — wejście pokazuje dashboard.
-        await expect(page.locator('#user-section')).toBeVisible();
+        // Sesja w oknie najwyższym jest ważna — wejście wraca do pulpitu w ramce.
+        await page.waitForURL(/app\.html#\/pulpit$/, { timeout: 15000 });
+        await expect(
+            page.frameLocator('#spa-iframe-pulpit').locator('#user-section')
+        ).toBeVisible();
     });
 
     test('odświeżenie #/pulpit odtwarza moduł', async ({ page }) => {

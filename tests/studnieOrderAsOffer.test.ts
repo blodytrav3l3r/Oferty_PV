@@ -4,6 +4,7 @@ import vm from 'vm';
 import fs from 'fs';
 import path from 'path';
 import studnieOrdersRouter from '../src/routes/orders/studnieOrders';
+import { projectStudnieExportAmounts } from '../src/services/studnieExportAmounts';
 
 interface MockUser {
     id: string;
@@ -189,6 +190,142 @@ describe('Studnie Order As Offer export — POST /:id/export-offer-pdf|docx', ()
         currentUser = { id: 'user1', role: 'user', subUsers: [] };
         (prisma.orders_studnie_rel.findUnique as jest.Mock).mockReset();
         app = createApp();
+    });
+
+    it.each([
+        ['pdf', false],
+        ['pdf', true],
+        ['docx', false],
+        ['docx', true]
+    ])('eksport %s zachowuje transport pozycji, osobny: %s', async (format, separate) => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+        const res = await request(app)
+            .post(`/api/orders-studnie/ord-1/export-offer-${format}`)
+            .send({ ...validPayload, transportSeparate: separate });
+        expect(res.statusCode).toBe(200);
+        if (format === 'pdf') {
+            const ctx = (generateStudniePDFFromContext as jest.Mock).mock.calls[0][0];
+            expect(ctx.transportSeparate).toBe(separate);
+            expect(ctx.items[0].price).toBe(separate ? 1500 : 1700);
+            expect(ctx.items[0].transportCost).toBe(200);
+        } else {
+            const ctx = (generateStudnieDOCXFromContext as jest.Mock).mock.calls[0][0];
+            expect(ctx.offerData.transportSeparate).toBe(separate);
+            expect(ctx.wells[0].totalPrice).toBe(1700);
+            expect(ctx.wells[0].transportCost).toBe(200);
+        }
+    });
+
+    it.each([
+        ['pdf', false],
+        ['pdf', true],
+        ['docx', false],
+        ['docx', true]
+    ])('eksport %s zachowuje pół grosza transportu, osobny: %s', async (format, separate) => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+        const items = Array.from({ length: 3 }, () => ({
+            productName: 'Studnia',
+            price: 1,
+            quantity: 1,
+            DN: '1000',
+            transportCost: 0.105 / 3
+        }));
+        const res = await request(app)
+            .post(`/api/orders-studnie/ord-1/export-offer-${format}`)
+            .send({ ...validPayload, items, transportSeparate: separate, transportTotal: 0.105 });
+        expect(res.statusCode).toBe(200);
+        if (format === 'pdf') {
+            const ctx = (generateStudniePDFFromContext as jest.Mock).mock.calls[0][0];
+            const total = ctx.items.reduce(
+                (sum: number, item: any) => sum + item.price + (separate ? item.transportCost : 0),
+                0
+            );
+            expect(total).toBeCloseTo(3.11, 8);
+        } else {
+            const ctx = (generateStudnieDOCXFromContext as jest.Mock).mock.calls[0][0];
+            expect(ctx.offerData.totalNetto).toBe(3.11);
+        }
+    });
+
+    it.each([
+        ['pdf', false],
+        ['pdf', true],
+        ['docx', false],
+        ['docx', true]
+    ])('eksport %s zachowuje mieszaną sumę transportu, osobny: %s', async (format, separate) => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+        const shares = [0.01, 0.034999999999999996, 0.06999999999999999];
+        const items = shares.map((transportCost) => ({
+            productName: 'Studnia',
+            price: 1,
+            quantity: 1,
+            DN: '1000',
+            transportCost
+        }));
+        const transportTotal = shares.reduce((sum, share) => sum + share, 0);
+        const res = await request(app)
+            .post(`/api/orders-studnie/ord-1/export-offer-${format}`)
+            .send({
+                ...validPayload,
+                items,
+                transportSeparate: separate,
+                transportTotal
+            });
+        expect(res.statusCode).toBe(200);
+        if (format === 'pdf') {
+            const ctx = (generateStudniePDFFromContext as jest.Mock).mock.calls[0][0];
+            const total = ctx.items.reduce(
+                (sum: number, item: any) => sum + item.price + (separate ? item.transportCost : 0),
+                0
+            );
+            expect(total).toBeCloseTo(3.12, 8);
+        } else {
+            const ctx = (generateStudnieDOCXFromContext as jest.Mock).mock.calls[0][0];
+            expect(ctx.offerData.totalNetto).toBe(3.12);
+        }
+    });
+
+    it.each([
+        ['pdf', false],
+        ['pdf', true],
+        ['docx', false],
+        ['docx', true]
+    ])('eksport %s nie zmienia zamrożonego udziału, osobny: %s', async (format, separate) => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+        const shares = [0.02, 0.0025, 0.0025];
+        const items = shares.map((transportCost, index) => ({
+            productName: 'Studnia',
+            price: 1,
+            quantity: 1,
+            DN: '1000',
+            transportCost,
+            transportFrozen: index === 0
+        }));
+        const res = await request(app)
+            .post(`/api/orders-studnie/ord-1/export-offer-${format}`)
+            .send({
+                ...validPayload,
+                items,
+                transportSeparate: separate,
+                transportTotal: 0.025
+            });
+        expect(res.statusCode).toBe(200);
+        if (format === 'pdf') {
+            const ctx = (generateStudniePDFFromContext as jest.Mock).mock.calls[0][0];
+            expect(separate ? ctx.items[0].transportCost : ctx.items[0].price).toBe(
+                separate ? 0.02 : 1.02
+            );
+        } else {
+            const ctx = (generateStudnieDOCXFromContext as jest.Mock).mock.calls[0][0];
+            const projected = projectStudnieExportAmounts(
+                ctx.wells,
+                separate,
+                ctx.offerData.totalNetto
+            );
+            expect(separate ? projected[0].transportCost : projected[0].price).toBe(
+                separate ? 0.02 : 1.02
+            );
+        }
     });
 
     describe('POST /:id/export-offer-pdf', () => {
@@ -496,6 +633,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
                 height: well._mockHeight ?? 2000
             }),
             getCurrentOfferOrder: () => null,
+            MAX_TRANSPORT_WEIGHT: 24000,
             console,
             setTimeout: setTimeout,
             setImmediate: setImmediate
@@ -512,6 +650,117 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         const source = fs.readFileSync(FILE_PATH, 'utf8');
         vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
         expect(typeof context.exportStudnieOrderAsOffer_action).toBe('function');
+    });
+
+    it.each([false, true])('przesyła zamrożony transport i tryb osobny: %s', async (separate) => {
+        const { context } = loadStudniePrintManager();
+        context.wells = [
+            { dn: '1000', _mockPrice: 100, _mockWeight: 5000, frozenTransportCost: 10 },
+            { dn: '1000', _mockPrice: 200, _mockWeight: 5000, frozenTransportCost: 20 }
+        ];
+        context.orderEditMode = true;
+        context.currentTransportMode = 'full';
+        context.MAX_TRANSPORT_WEIGHT = 24000;
+        context.isTransportSeparateRow = () => separate;
+        (context.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            blob: async () => Buffer.from('PDF')
+        });
+        const source = fs.readFileSync(FILE_PATH, 'utf8');
+        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
+
+        await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
+
+        const body = JSON.parse((context.fetch as jest.Mock).mock.calls[0][1].body);
+        expect(body.transportSeparate).toBe(separate);
+        expect(body.items.map((item: any) => item.transportCost)).toEqual([10, 20]);
+        expect(body.items.map((item: any) => item.transportFrozen)).toEqual([true, true]);
+        expect(body.items.map((item: any) => item.price)).toEqual([100, 200]);
+    });
+
+    it.each([
+        [false, 'transport-km'],
+        [true, 'transport-km'],
+        [false, 'transport-rate'],
+        [true, 'transport-rate']
+    ])('zachowuje zamrożony transport przy wartości 0: %s, %s', async (separate, zeroField) => {
+        const { context } = loadStudniePrintManager();
+        context.wells = [
+            { dn: '1000', _mockPrice: 100, _mockWeight: 5000, frozenTransportCost: 10 },
+            { dn: '1000', _mockPrice: 200, _mockWeight: 5000, frozenTransportCost: 20 }
+        ];
+        context.orderEditMode = true;
+        context.isTransportSeparateRow = () => separate;
+        const getElement = context.document.getElementById;
+        context.document.getElementById = (id: string) =>
+            id === zeroField ? { value: '0' } : getElement(id);
+        (context.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            blob: async () => Buffer.from('PDF')
+        });
+        vm.runInContext(fs.readFileSync(FILE_PATH, 'utf8'), context, {
+            filename: 'offerPrintManager.js'
+        });
+        await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
+        const body = JSON.parse((context.fetch as jest.Mock).mock.calls[0][1].body);
+        expect(body.items.map((item: any) => item.transportCost)).toEqual([10, 20]);
+    });
+
+    it('przesyła niezaokrąglony koszt transportu przy niezamarzniętych studniach', async () => {
+        const { context } = loadStudniePrintManager();
+        context.wells = Array.from({ length: 3 }, () => ({
+            dn: '1000',
+            _mockPrice: 1,
+            _mockWeight: 5000
+        }));
+        context.orderEditMode = true;
+        const getElement = context.document.getElementById;
+        context.document.getElementById = (id: string) =>
+            id === 'transport-km'
+                ? { value: '0.5' }
+                : id === 'transport-rate'
+                  ? { value: '0.21' }
+                  : getElement(id);
+        (context.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            blob: async () => Buffer.from('PDF')
+        });
+        vm.runInContext(fs.readFileSync(FILE_PATH, 'utf8'), context, {
+            filename: 'offerPrintManager.js'
+        });
+        await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
+        const body = JSON.parse((context.fetch as jest.Mock).mock.calls[0][1].body);
+        expect(body.transportTotal).toBeCloseTo(0.105, 12);
+    });
+
+    it('przesyła rzeczywistą sumę transportu przy mieszanych zamrożonych udziałach', async () => {
+        const { context } = loadStudniePrintManager();
+        context.wells = [
+            { dn: '1000', _mockPrice: 1, _mockWeight: 2, frozenTransportCost: 0.01 },
+            { dn: '1000', _mockPrice: 1, _mockWeight: 1 },
+            { dn: '1000', _mockPrice: 1, _mockWeight: 2 }
+        ];
+        context.orderEditMode = true;
+        const getElement = context.document.getElementById;
+        context.document.getElementById = (id: string) =>
+            id === 'transport-km'
+                ? { value: '0.5' }
+                : id === 'transport-rate'
+                  ? { value: '0.35' }
+                  : getElement(id);
+        (context.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            blob: async () => Buffer.from('PDF')
+        });
+        vm.runInContext(fs.readFileSync(FILE_PATH, 'utf8'), context, {
+            filename: 'offerPrintManager.js'
+        });
+        await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
+        const body = JSON.parse((context.fetch as jest.Mock).mock.calls[0][1].body);
+        expect(body.transportTotal).toBeCloseTo(0.115, 12);
+        expect(body.items.map((item: any) => item.transportCost)).toEqual([
+            0.01, 0.034999999999999996, 0.06999999999999999
+        ]);
     });
 
     it('rejects empty orderId (toast error)', async () => {

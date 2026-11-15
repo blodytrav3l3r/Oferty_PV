@@ -84,7 +84,7 @@ export async function buildCombinedDocument(
         summaries,
         grandTotal: studnieProductsTotal,
         transportTotal: studnieTransportTotal
-    } = buildWellTables(studnie.wells, separateStudnieTransport);
+    } = buildWellTables(studnie.wells, separateStudnieTransport, studnieData.totalNetto);
     let studnieTotal = studnieProductsTotal;
     if (separateStudnieTransport && studnieTransportTotal > 0) {
         const km = Number(studnieData.transportKm) || 0;

@@ -332,7 +332,7 @@ export async function buildStudnieOfferContextFromOfferId(
         offerData.transportSeparate === true ||
         offerData.transportSeparate === 1 ||
         offerData.transportSeparate === '1';
-    const { items, grandTotal } = mapWellsToItems(wells, separateTransport);
+    const { items, grandTotal } = mapWellsToItems(wells, separateTransport, offerData.totalNetto);
 
     logger.debug('PdfStudnie', `Przygotowano ${items.length} items, grandTotal: ${grandTotal}`);
 
@@ -432,7 +432,11 @@ export async function buildStudnieOrderContextFromOrderId(
         orderData.transportSeparate === true ||
         orderData.transportSeparate === 1 ||
         orderData.transportSeparate === '1';
-    const { items } = mapWellsToItems(wells, separateTransport);
+    const { items } = mapWellsToItems(
+        wells,
+        separateTransport,
+        Array.isArray(orderData.wellsExport) ? orderData.totalNetto : undefined
+    );
     const wellUwagi = (wells as Array<Record<string, unknown>>)
         .filter((w) => w.uwagi && String(w.uwagi).trim())
         .map((w) => ({

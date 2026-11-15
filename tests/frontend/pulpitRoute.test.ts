@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
+declare const document: any;
+
 /**
  * Pulpit jako moduł SPA (#/pulpit → index.html?host=pulpit).
  * Kontrakt: query modułu jest scalane (nie dokleja drugiego `?`), kafel i CSS
@@ -104,6 +106,16 @@ describe('router: scalanie query modułu', () => {
 });
 
 describe('pulpit: rejestracja i nawigacja', () => {
+    it('kontener widoków przyjmuje fokus po nawigacji', () => {
+        document.body.innerHTML = read('public/app.html');
+        const main = document.getElementById('spa-main');
+        expect(main).not.toBeNull();
+
+        main!.focus();
+
+        expect(document.activeElement?.id).toBe('spa-main');
+    });
+
     it('globalny nagłówek istnieje wyłącznie w powłoce SPA', () => {
         const shell = read('public/app.html');
         const entry = read('public/index.html');

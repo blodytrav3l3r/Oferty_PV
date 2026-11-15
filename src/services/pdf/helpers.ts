@@ -1,4 +1,5 @@
 import { roundMoney } from '../../utils/money';
+import { projectStudnieExportAmounts } from '../studnieExportAmounts';
 
 export function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -55,7 +56,8 @@ export function computeUnitPriceNetto(item: UnitPriceNettoInput): number {
 
 export function mapWellsToItems(
     wells: unknown[],
-    separateTransport = false
+    separateTransport = false,
+    savedTotal?: unknown
 ): {
     items: Record<string, unknown>[];
     grandTotal: number;
@@ -64,16 +66,12 @@ export function mapWellsToItems(
     const itemsByDN: Record<string, Record<string, unknown>[]> = {};
     let grandTotal = 0;
     let transportTotal = 0;
+    const amounts = projectStudnieExportAmounts(wells, separateTransport, savedTotal);
 
-    for (const w of wells) {
+    for (const [index, w] of wells.entries()) {
         const well = w as Record<string, unknown>;
         const dn = String(well.dn ?? 'Inne');
-        const share = separateTransport ? Number(well.transportCost ?? 0) : 0;
-        const wellPrice = roundMoney(
-            separateTransport
-                ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
-                : Number(well.totalPrice ?? well.price ?? 0)
-        );
+        const { price: wellPrice, transportCost: share } = amounts[index];
         grandTotal += wellPrice;
         transportTotal += share;
 
@@ -85,7 +83,7 @@ export function mapWellsToItems(
             DN: dn,
             height: Number(well.height ?? 0),
             zwienczenie: String(well.zwienczenie ?? '—'),
-            transportCost: roundMoney(Number(well.transportCost ?? 0))
+            transportCost: separateTransport ? share : roundMoney(Number(well.transportCost ?? 0))
         });
     }
 

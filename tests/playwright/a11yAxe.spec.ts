@@ -67,29 +67,27 @@ test.describe('a11y axe', () => {
                 .withTags(['wcag2a', 'wcag2aa'])
                 .exclude('#toast-container')
                 .analyze();
-            // Artefakt pomiaru (ZWERYFIKOWANY): iframe modulu ma przezroczyste
-            // body (router.js celowo), wiec axe zaklada biale tlo canvas. Wywolanie
-            // .exclude() na selektor w iframe jest w @axe-core/playwright 4.13
-            // nieskuteczne (sonda p22-excl: 1 violation z i bez exclude).
-            // Realny render: rodzic app.html ma body rgb(10,14,26) — label
-            // #a5b4fc na tym tle ma ~7:1 (OK). Filtrujemy DOKLADNIE ten jeden
-            // znany false-positive po (rule + selektor + bg), nie cala regule.
+            // .wizard-indicator ma jawne tło, dzięki czemu axe mierzy kontrast
+            // etykiet również w osadzonym module z przezroczystym body.
             const serious = results.violations.filter(
                 (v) => v.impact === 'critical' || v.impact === 'serious'
             );
-            const withoutArtifact = serious.filter((v) => {
-                if (v.id !== 'color-contrast') return true;
-                const nodes = v.nodes || [];
-                if (nodes.length === 0) return true;
-                return !nodes.every((n: any) => {
-                    const targets = (n.target || []).flat().join(' ');
-                    const html = n.html || '';
-                    return (
-                        targets.includes('wizard-dot-label') && html.includes('wizard-dot-label')
-                    );
+            expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+
+            // Strażnik: faktyczna regresja kontrastu etykiety musi być wykryta.
+            await frame!
+                .locator('.wizard-dot-label')
+                .first()
+                .evaluate((label) => {
+                    label.style.transition = 'none';
+                    label.style.color = 'rgb(200, 200, 200)';
+                    label.style.backgroundColor = 'rgb(255, 255, 255)';
                 });
-            });
-            expect(withoutArtifact, JSON.stringify(withoutArtifact, null, 2)).toEqual([]);
+            const regression = await new AxeBuilder({ page })
+                .withTags(['wcag2a', 'wcag2aa'])
+                .analyze();
+            const contrast = regression.violations.find((v) => v.id === 'color-contrast');
+            expect(contrast?.nodes.some((n) => n.html.includes('wizard-dot-label'))).toBe(true);
         });
 
         test(`${mod} na 390 px pozwala doscrollować ostatnie pole nad dolną nawigację`, async ({

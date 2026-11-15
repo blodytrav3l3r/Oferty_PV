@@ -445,6 +445,7 @@ export const studnieOfferExportItemSchema = z.object({
     height: nullishNumber,
     zwienczenie: nullishString,
     transportCost: nullishNumber,
+    transportFrozen: z.boolean().optional(),
     dodatkowe_info: nullishString
 });
 
@@ -483,6 +484,8 @@ export const studnieOfferExportSchema = z.object({
     date: z.string().optional(),
     transportKm: z.number().nonnegative().optional().default(0),
     transportRate: z.number().nonnegative().optional().default(0),
+    transportSeparate: z.boolean().optional(),
+    transportTotal: z.number().nonnegative().finite().optional(),
     orderNumber: z.string().optional(),
     offerNumber: z.string().optional()
 });

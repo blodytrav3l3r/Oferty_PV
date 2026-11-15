@@ -187,14 +187,16 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         });
         expect(login.status(), 'Login dedykowanego użytkownika failed').toBe(200);
         await page.goto(`${BASE}/`);
-        const panel = page.locator('#followup-panel');
+        const panel = page.frameLocator('#spa-iframe-pulpit').locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
         await selectSevenDayRange(panel);
     }
 
     test('(k) karta pełna: obiekt + tel: + mailto:', async ({ page }) => {
         await openPanel(page);
-        const card = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
+        const card = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
         await expect(card, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
         await expect(card.locator('[data-care-object]'), 'obiektu brak').toBeVisible();
         await expect(card.locator('[data-care-object]')).toContainText('Obiekt E2E');
@@ -210,7 +212,9 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
 
     test('(l) karta goła: brak linii obiektu i kontaktu', async ({ page }) => {
         await openPanel(page);
-        const card = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-bare` });
+        const card = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.care-queue-card', { hasText: `${CLIENT_TAG}-bare` });
         await expect(card, 'karty gołej brak').toHaveCount(1, { timeout: 15000 });
         await expect(card.locator('[data-care-object]'), 'obiekt nie ukryty').toHaveCount(0);
         await expect(card.locator('[data-care-contact]'), 'kontakt nie ukryty').toHaveCount(0);
@@ -218,7 +222,9 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
 
     test('(m) powiadomienie pełnej: obiekt + tel:', async ({ page }) => {
         await openPanel(page);
-        const card = page.locator('.care-notif-card', { hasText: `${CLIENT_TAG}-full` });
+        const card = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.care-notif-card', { hasText: `${CLIENT_TAG}-full` });
         await expect(card, 'powiadomienia pełnej brak').toHaveCount(1, { timeout: 15000 });
         await expect(card.locator('[data-care-object]'), 'obiektu brak').toBeVisible();
         await expect(card.locator('a[href="tel:601000111"]'), 'tel: brak').toHaveCount(1);
@@ -226,13 +232,17 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
 
     test('(o) presety snooze + kalendarz do 28 dni, odrzut pustej daty', async ({ page }) => {
         await openPanel(page);
-        const full = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
+        const full = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
         await expect(full, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
         await full.locator('[aria-label="Odłóż o 6 dni"]').click();
         await expect(full, 'brak pilla Odłożono o 6d').toContainText('Odłożono o 6d', {
             timeout: 15000
         });
-        const bare = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-bare` });
+        const bare = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.care-queue-card', { hasText: `${CLIENT_TAG}-bare` });
         await expect(bare, 'karty gołej brak').toHaveCount(1, { timeout: 15000 });
         const date = bare.locator('.care-snooze-date');
         const maxDate = await date.getAttribute('max');
@@ -240,10 +250,17 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         await expect(date).toHaveAttribute('aria-label', /Data odłożenia kontaktu dla/);
         await expect(date).toHaveAttribute('readonly', 'readonly');
         await date.press('Enter');
-        await expect(page.locator('.sok-datepicker')).toBeVisible();
-        const maxDay = page.locator('.sok-datepicker [data-date="' + maxDate + '"]');
+        await expect(
+            page.frameLocator('#spa-iframe-pulpit').locator('.sok-datepicker')
+        ).toBeVisible();
+        const maxDay = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.sok-datepicker [data-date="' + maxDate + '"]');
         for (let monthStep = 0; monthStep < 2 && (await maxDay.count()) === 0; monthStep++) {
-            await page.locator('.sok-datepicker [data-nav="1"]').click();
+            await page
+                .frameLocator('#spa-iframe-pulpit')
+                .locator('.sok-datepicker [data-nav="1"]')
+                .click();
         }
         await maxDay.click();
         await expect(bare.locator('.care-snooze-ok')).toHaveAttribute(
@@ -261,7 +278,10 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
             'brak powrotu presetów po Cofnij'
         ).toBeVisible({ timeout: 15000 });
         await bare.locator('.care-snooze-date').press('Enter');
-        await page.locator('.sok-datepicker [data-act="clear"]').click();
+        await page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.sok-datepicker [data-act="clear"]')
+            .click();
         await bare.locator('.care-snooze-ok').click();
         await expect(bare, 'pusta data nie może odłożyć').not.toContainText('Odłożono do');
         await expect(bare.locator('.care-snooze-date')).toBeVisible();
@@ -269,16 +289,22 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
 
     test('(n) Kontakt otwiera modal opieki bez nawigacji do kartoteki', async ({ page }) => {
         await openPanel(page);
-        const card = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
+        const card = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
         await expect(card, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
         await card.locator('[data-care-contact-open]').click();
-        await expect(page.locator('#offer-followup-title'), 'modal opieki nie otwarty').toBeVisible(
-            { timeout: 15000 }
-        );
+        await expect(
+            page.frameLocator('#spa-iframe-pulpit').locator('#offer-followup-title'),
+            'modal opieki nie otwarty'
+        ).toBeVisible({ timeout: 15000 });
         expect(page.url(), 'nawigacja do kartoteki zamiast modala').not.toContain('kartoteka');
         // Modal sam stawia focus w dialogu → Escape dociera do overlaya.
         await page.keyboard.press('Escape');
-        await expect(page.locator('#offer-followup-title'), 'modal nie zamknięty').toHaveCount(0, {
+        await expect(
+            page.frameLocator('#spa-iframe-pulpit').locator('#offer-followup-title'),
+            'modal nie zamknięty'
+        ).toHaveCount(0, {
             timeout: 15000
         });
         await expect(card, 'kolejka zniknęła po modalu').toHaveCount(1);
@@ -286,14 +312,22 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
 
     test('(o) modal opieki zamyka się przyciskiem ×', async ({ page }) => {
         await openPanel(page);
-        const card = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
+        const card = page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
         await expect(card, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
         await card.locator('[data-care-contact-open]').click();
-        await expect(page.locator('#fu-close-btn'), 'brak przycisku ×').toBeVisible({
+        await expect(
+            page.frameLocator('#spa-iframe-pulpit').locator('#fu-close-btn'),
+            'brak przycisku ×'
+        ).toBeVisible({
             timeout: 15000
         });
-        await page.locator('#fu-close-btn').click();
-        await expect(page.locator('#offer-followup-title'), 'modal nie zamknięty').toHaveCount(0, {
+        await page.frameLocator('#spa-iframe-pulpit').locator('#fu-close-btn').click();
+        await expect(
+            page.frameLocator('#spa-iframe-pulpit').locator('#offer-followup-title'),
+            'modal nie zamknięty'
+        ).toHaveCount(0, {
             timeout: 15000
         });
         await expect(card, 'kolejka zniknęła po modalu').toHaveCount(1);

@@ -18,7 +18,7 @@ export function requirePostgresDatabaseUrl(raw: string | undefined): string {
         throw new Error('DATABASE_URL must specify a PostgreSQL host and database');
     }
 
-    const localHosts = new Set(['localhost', '127.0.0.1', '::1', 'postgres']);
+    const localHosts = new Set(['localhost', '127.0.0.1', '[::1]', 'postgres']);
     const isLocalHost = localHosts.has(parsed.hostname.toLowerCase());
     const sslMode = parsed.searchParams.get('sslmode');
     if (sslMode && !['disable', 'verify-full'].includes(sslMode)) {

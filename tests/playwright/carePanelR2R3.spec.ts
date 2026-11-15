@@ -234,7 +234,7 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
             await route.continue();
         });
         await page.goto(`${BASE}/`);
-        const panel = page.locator('#followup-panel');
+        const panel = page.frameLocator('#spa-iframe-pulpit').locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
         // Domyślny zakres 7d startuje sam — skeleton leci razem z auto-loadem.
         await expect(panel.locator('[data-care-range="7d"]')).toHaveAttribute(
@@ -263,7 +263,8 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
         // fallback dociągnie liczniki i [data-care-error] się nie pojawi.
         await page.route('**/api/care**', (route) => route.abort());
         await page.goto(`${BASE}/`);
-        const panel = page.locator('#followup-panel');
+        const frame = page.frameLocator('#spa-iframe-pulpit');
+        const panel = frame.locator('#followup-panel');
         await expect(panel, 'panel opieki niewidoczny').toBeVisible({ timeout: 15000 });
         // Auto-load domyślnego zakresu 7d uderza w zablokowane endpointy bez kliknięcia.
         await expect(
@@ -275,7 +276,9 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
         // Retry tą samą ścieżką co polling (sok:user-ready woła loadCarePanel,
         // sukces czyści alert przez clearError) — bez przeładowania strony.
         await page.unroute('**/api/care**');
-        await page.evaluate(() => document.dispatchEvent(new CustomEvent('sok:user-ready')));
+        await frame
+            .locator('body')
+            .evaluate(() => document.dispatchEvent(new CustomEvent('sok:user-ready')));
         await expect(panel.locator('[data-care-error]'), 'błąd wisi po udanym retry').toHaveCount(
             0,
             { timeout: 15000 }
