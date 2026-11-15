@@ -90,16 +90,35 @@ function isTopLevelWindow() {
  * Po zalogowaniu w oknie najwyższym wejście prowadzi do shella — Pulpit jest
  * tam modułem (`#/pulpit`). W iframe nie ruszamy okna nadrzędnego.
  */
-function redirectToShell() {
+function redirectToShell(restoreRequestedRoute) {
     if (!isTopLevelWindow()) return false;
+    let targetHash = '#/pulpit';
+    try {
+        if (restoreRequestedRoute) {
+            const candidate = sessionStorage.getItem('sok.auth.returnHash');
+            const allowedModules = new Set([
+                'pulpit',
+                'studnie',
+                'rury',
+                'kartoteka',
+                'zlecenia',
+                'cennik'
+            ]);
+            const moduleName = candidate?.match(/^#\/([^/?#]+)/)?.[1];
+            if (candidate && candidate.length <= 2048 && allowedModules.has(moduleName)) {
+                targetHash = candidate;
+            }
+        }
+        sessionStorage.removeItem('sok.auth.returnHash');
+    } catch (_e) {}
     try {
         if (typeof window.location.replace === 'function') {
-            window.location.replace('app.html#/pulpit');
+            window.location.replace('app.html' + targetHash);
             return true;
         }
     } catch (_e) {}
     try {
-        window.location.href = 'app.html#/pulpit';
+        window.location.href = 'app.html' + targetHash;
         return true;
     } catch (_e2) {
         return false;
@@ -211,6 +230,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     const embedded = isPulpitEmbedded();
     let authResolved = false;
     bindEmbeddedNavigation();
+    const authProbeError = document.getElementById('auth-probe-error');
+    const showAuthUnavailable = () => {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('user-section').classList.add('hidden');
+        authProbeError?.classList.remove('hidden');
+    };
+    document.getElementById('auth-probe-retry')?.addEventListener('click', () => {
+        window.location.reload();
+    });
     const finish = (fn, user) => {
         if (authResolved) return;
         authResolved = true;
@@ -221,12 +249,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
     const authTimer = setTimeout(() => {
         if (authResolved) return;
-        // Nie zamykaj sprawy: spozniony (ale wazny) wynik /me ma jeszcze
-        // podmienic formularz na panel zamiast zostawiac usera na loginie.
+        // Nie zamykaj sprawy: spóźniony wynik /me może jeszcze rozstrzygnąć,
+        // czy pokazać logowanie, pulpit czy przekierować do shella.
         html.classList.remove('auth-pending');
         // W iframe nie ma czego pokazywać — formularz logowania należy do wejścia,
         // a wolne /me nie może wyrzucić usera z shella.
-        if (!isPulpitEmbedded()) showLogin();
+        if (!isPulpitEmbedded()) showAuthUnavailable();
     }, 1500);
     if (embedded) {
         const probe = await probeEmbeddedSession();
@@ -247,23 +275,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
         return;
     }
-    // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly.
-    // Brak pre-checku localStorage — cookie jest niewidoczne dla JS.
-    // authReady() (shared/auth.js) cache'uje wynik dla modułów startowych,
-    // więc carePanel/versionDisplay nie strzelają 401 przed logowaniem.
-    try {
-        let user = null;
-        if (typeof window.authReady === 'function') {
-            user = await window.authReady();
+    const probe = await probeEmbeddedSession();
+    if (probe.user) {
+        if (isTopLevelWindow()) {
+            finish(function () {});
+            redirectToShell();
         } else {
-            const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
-            const data = await res.json();
-            user = data.user;
+            finish(showLoggedIn, probe.user);
         }
-        if (user) finish(showLoggedIn, user);
-        else finish(showLogin);
-    } catch (_e) {
+    } else if (probe.expired) {
         finish(showLogin);
+    } else {
+        finish(showAuthUnavailable);
     }
 });
 
@@ -476,7 +499,7 @@ document.addEventListener('keydown', (e) => {
 function showLogin() {
     document.getElementById('login-section').classList.remove('hidden');
     document.getElementById('user-section').classList.add('hidden');
-    document.getElementById('dash-header').classList.remove('visible');
+    document.getElementById('auth-probe-error')?.classList.add('hidden');
     document.querySelector('.container').classList.remove('logged-in');
 }
 
@@ -493,12 +516,6 @@ function showLoggedIn(user) {
         .toUpperCase();
     const roleEl = document.getElementById('user-display-role');
     roleEl.textContent = user.role.toUpperCase();
-
-    // Pokaz naglowek nawigacji pulpitu (jedno źródło prawdy: headerUser.js)
-    document.getElementById('dash-header').classList.add('visible');
-    if (window.headerUser) {
-        window.headerUser.render(user);
-    }
 
     // L1: kafelek „Wznów pracę" (szkice lokalne + ostatnia trasa); bez danych wyszarzony.
     if (window.resumeDrafts && typeof window.resumeDrafts.render === 'function') {
@@ -623,9 +640,9 @@ async function doLogin(event) {
         // Cache authReady z fazy "niezalogowany" musi zniknąć, inaczej
         // carePanel/versionDisplay czekają na reload.
         if (typeof window.authReady === 'function') await window.authReady(true);
-        showLoggedIn(data.user);
-        // W oknie najwyższym Pulpit żyje w shellu jako moduł `#/pulpit`.
-        redirectToShell();
+        // Zalogowane okno najwyższe od razu przechodzi do shella; pulpit jest
+        // tam modułem `#/pulpit`, a nie osobną aplikacją z własnym nagłówkiem.
+        if (!redirectToShell(true)) showLoggedIn(data.user);
     } catch (_e) {
         errorEl.textContent = 'Błąd połączenia z serwerem';
     } finally {

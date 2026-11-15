@@ -65,9 +65,6 @@
                 opacity: 0;
                 pointer-events: none;
             }
-            html.auth-pending #dash-header {
-                visibility: hidden;
-            }
         </style>
         <script>
             (function () {
@@ -85,14 +82,9 @@
                 #page-loader {
                     display: none !important;
                 }
-                html.auth-pending #login-section,
-                html.auth-pending #dash-header {
-                    visibility: visible;
-                    opacity: 1;
-                }
             </style></noscript
         >
-        <link href="css/inter.css?v=1.58.0" rel="stylesheet" />
+        <link href="css/inter.css?v=1.58.1" rel="stylesheet" />
         <script>
             // Anti-FOUC motywu: maluj zapisany motyw zanim CSS się załaduje.
             // Najpierw klucz ostatniego użytkownika, potem globalny fallback.
@@ -105,11 +97,11 @@
                 } catch (e) {}
             })();
         </script>
-        <link rel="stylesheet" href="css/style.base.css?v=1.58.0" />
-        <link rel="stylesheet" href="css/style.cards.css?v=1.58.0" />
-        <link rel="stylesheet" href="css/style.responsive.css?v=1.58.0" />
-        <link rel="stylesheet" href="css/style.utilities.css?v=1.58.0" />
-        <link rel="stylesheet" href="css/index.css?v=1.58.0" />
+        <link rel="stylesheet" href="css/style.base.css?v=1.58.1" />
+        <link rel="stylesheet" href="css/style.cards.css?v=1.58.1" />
+        <link rel="stylesheet" href="css/style.responsive.css?v=1.58.1" />
+        <link rel="stylesheet" href="css/style.utilities.css?v=1.58.1" />
+        <link rel="stylesheet" href="css/index.css?v=1.58.1" />
     </head>
 
     <body class="index-page">
@@ -126,83 +118,22 @@
                 >Ładowanie...</span
             >
         </div>
-        <!-- Wspólny nagłówek nawigacji (widoczny po zalogowaniu) -->
-        <header class="header" id="dash-header">
-            <div class="header-inner">
-                <div class="header-left">
-                    <div class="logo logo-app">
-                        <img
-                            src="images/logo-sok.svg?v=1.58.0"
-                            class="logo-sok"
-                            alt="{{APP_NAME}}"
-                            aria-label="{{APP_NAME}} — {{APP_SUBTITLE}}"
-                        />
-                        <span
-                            class="logo-app-module"
-                            aria-hidden="true"
-                            style="visibility: hidden; pointer-events: none"
-                            >Pulpit</span
-                        >
-                    </div>
-
-                    <div class="nav-apps">
-                        <a href="index.html" class="nav-tile active">
-                            <span class="nav-tile-icon"><i data-lucide="home"></i></span>
-                            <span class="nav-tile-text">Pulpit</span>
-                        </a>
-                        <a href="app.html#/studnie" class="nav-tile">
-                            <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
-                            <span class="nav-tile-text">Studnie</span>
-                        </a>
-                        <a href="app.html#/rury" class="nav-tile">
-                            <span class="nav-tile-icon"
-                                ><i data-lucide="cylinder" class="lucide-rotate-n90"></i
-                            ></span>
-                            <span class="nav-tile-text">Rury</span>
-                        </a>
-                        <a href="app.html#/kartoteka" class="nav-tile">
-                            <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
-                            <span class="nav-tile-text">Kartoteka Ofert</span>
-                        </a>
-                        <a href="app.html#/zlecenia" class="nav-tile">
-                            <span class="nav-tile-icon"><i data-lucide="factory"></i></span>
-                            <span class="nav-tile-text">Zlecenia</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="header-right">
-                    <div id="header-user-info" class="header-user-info">
-                        <span id="header-username" class="header-username"></span>
-                        <span id="header-role-badge" class="header-role-badge"></span>
-                        <span id="app-version-toolbar" class="header-version"></span>
-                        <span
-                            class="connection-dot is-checking"
-                            id="connection-dot"
-                            title="Sprawdzanie połączenia..."
-                        ></span>
-                        <button type="button" class="header-logout">Wyloguj</button>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <script type="module" src="js/shared/browserAutofillPolicy.js?v=1.58.0"></script>
-        <script src="js/shared/formatters.js?v=1.58.0"></script>
-        <script src="js/shared/auth.js?v=1.58.0"></script>
-        <script src="js/shared/sokDirty.js?v=1.58.0"></script>
-        <script src="js/shared/cspActions.js?v=1.58.0"></script>
-        <script src="js/shared/logger.js?v=1.58.0"></script>
-        <script src="js/shared/constants.js?v=1.58.0"></script>
-        <script type="module" src="js/shared/escapeHtml.js?v=1.58.0"></script>
-        <script type="module" src="js/shared/modalCore.js?v=1.58.0"></script>
-        <script type="module" src="js/shared/toast.js?v=1.58.0"></script>
-        <script type="module" src="js/shared/fetchJson.js?v=1.58.0"></script>
-        <script type="module" src="js/shared/debounce.js?v=1.58.0"></script>
+        <script type="module" src="js/shared/browserAutofillPolicy.js?v=1.58.1"></script>
+        <script src="js/shared/formatters.js?v=1.58.1"></script>
+        <script src="js/shared/auth.js?v=1.58.1"></script>
+        <script src="js/shared/sokDirty.js?v=1.58.1"></script>
+        <script src="js/shared/cspActions.js?v=1.58.1"></script>
+        <script src="js/shared/logger.js?v=1.58.1"></script>
+        <script src="js/shared/constants.js?v=1.58.1"></script>
+        <script type="module" src="js/shared/escapeHtml.js?v=1.58.1"></script>
+        <script type="module" src="js/shared/modalCore.js?v=1.58.1"></script>
+        <script type="module" src="js/shared/toast.js?v=1.58.1"></script>
+        <script type="module" src="js/shared/fetchJson.js?v=1.58.1"></script>
+        <script type="module" src="js/shared/debounce.js?v=1.58.1"></script>
         <div class="container">
             <div class="index-logo">
                 <img
-                    src="images/logo-sok.svg?v=1.58.0"
+                    src="images/logo-sok.svg?v=1.58.1"
                     class="index-logo-sok"
                     alt="{{APP_NAME}}"
                     aria-label="{{APP_NAME}} — {{APP_SUBTITLE}}"
@@ -259,6 +190,13 @@
                     Zaloguj się
                 </button>
                 <div class="login-error" id="login-error"></div>
+            </div>
+
+            <div id="auth-probe-error" class="login-box hidden" role="alert" aria-live="assertive">
+                <p>Nie można sprawdzić sesji. Sprawdź połączenie i spróbuj ponownie.</p>
+                <button type="button" id="auth-probe-retry" class="btn btn-primary">
+                    Spróbuj ponownie
+                </button>
             </div>
 
             <!-- User Section (Dashboard) -->
@@ -1098,25 +1036,24 @@
         <!-- Toast container -->
         <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-        <script src="js/shared/ui.js?v=1.58.0"></script>
-        <script src="js/shared/theme.js?v=1.58.0"></script>
-        <script src="js/shared/headerUser.js?v=1.58.0"></script>
-        <script src="js/shared/draftIdb.js?v=1.58.0"></script>
-        <script src="js/shared/draftStore.js?v=1.58.0"></script>
-        <script src="js/shared/resumeDrafts.js?v=1.58.0"></script>
-        <script src="js/shared/lastRoute.js?v=1.58.0"></script>
-        <script src="js/shared/datePicker.js?v=1.58.0"></script>
-        <script src="js/shared/dashboard.js?v=1.58.0"></script>
-        <script type="module" src="js/care/carePanel.js?v=1.58.0"></script>
-        <script src="js/shared/iconsSlim.js?v=1.58.0"></script>
-        <script src="js/admin/aiDashboardCore.js?v=1.58.0"></script>
-        <script src="js/admin/mlPanels.js?v=1.58.0"></script>
-        <script src="js/admin/aiDashboardMl.js?v=1.58.0"></script>
-        <script src="js/admin/aiTransfer.js?v=1.58.0"></script>
-        <script src="js/admin/aiDashboard.js?v=1.58.0"></script>
-        <script src="js/admin/mlHealthDashboard.js?v=1.58.0"></script>
-        <script src="js/admin/opsDashboard.js?v=1.58.0"></script>
-        <script src="js/versionDisplay.js?v=1.58.0"></script>
+        <script src="js/shared/ui.js?v=1.58.1"></script>
+        <script src="js/shared/theme.js?v=1.58.1"></script>
+        <script src="js/shared/draftIdb.js?v=1.58.1"></script>
+        <script src="js/shared/draftStore.js?v=1.58.1"></script>
+        <script src="js/shared/resumeDrafts.js?v=1.58.1"></script>
+        <script src="js/shared/lastRoute.js?v=1.58.1"></script>
+        <script src="js/shared/datePicker.js?v=1.58.1"></script>
+        <script src="js/shared/dashboard.js?v=1.58.1"></script>
+        <script type="module" src="js/care/carePanel.js?v=1.58.1"></script>
+        <script src="js/shared/iconsSlim.js?v=1.58.1"></script>
+        <script src="js/admin/aiDashboardCore.js?v=1.58.1"></script>
+        <script src="js/admin/mlPanels.js?v=1.58.1"></script>
+        <script src="js/admin/aiDashboardMl.js?v=1.58.1"></script>
+        <script src="js/admin/aiTransfer.js?v=1.58.1"></script>
+        <script src="js/admin/aiDashboard.js?v=1.58.1"></script>
+        <script src="js/admin/mlHealthDashboard.js?v=1.58.1"></script>
+        <script src="js/admin/opsDashboard.js?v=1.58.1"></script>
+        <script src="js/versionDisplay.js?v=1.58.1"></script>
         <script>
             (function () {
                 var loadPromise =

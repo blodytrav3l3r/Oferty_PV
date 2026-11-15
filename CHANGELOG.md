@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.58.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.58.0...v1.58.1) (2026-11-15)
+
+### Bug Fixes
+
+- **ui:** ujednolic nagłówek zalogowanej aplikacji i zachowaj trasę po logowaniu
+
 ## [1.58.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.57.0...v1.58.0) (2026-11-14)
 
 ### Features

@@ -104,6 +104,16 @@ describe('router: scalanie query modułu', () => {
 });
 
 describe('pulpit: rejestracja i nawigacja', () => {
+    it('globalny nagłówek istnieje wyłącznie w powłoce SPA', () => {
+        const shell = read('public/app.html');
+        const entry = read('public/index.html');
+
+        expect(shell).toContain('id="spa-nav-apps"');
+        expect(shell).toContain('id="header-user-info"');
+        expect(entry).not.toContain('id="dash-header"');
+        expect(entry).not.toContain('id="dashboard-app-cennik"');
+    });
+
     it('router zna moduł pulpit i jego kafel', () => {
         const src = read('public/js/spa/router.js');
         expect(src).toMatch(/pulpit:\s*\{\s*\/\/[^]*?src:\s*'index\.html\?host=pulpit'/);
@@ -116,12 +126,13 @@ describe('pulpit: rejestracja i nawigacja', () => {
         expect(html).not.toMatch(/<a href="index\.html" class="nav-tile"/);
     });
 
-    it('CSS chowa elementy strony wejścia w trybie osadzonym', () => {
+    it('CSS chowa elementy strony wejścia i akcje globalne w trybie osadzonym', () => {
         const css = read('public/css/index.css');
-        expect(css).toContain("html[data-embedded='pulpit'] #dash-header");
         expect(css).toContain("html[data-embedded='pulpit'] #page-loader");
         expect(css).toContain("html[data-embedded='pulpit'] #login-section");
         expect(css).toContain("html[data-embedded='pulpit'] .index-logo");
+        expect(css).toContain("html[data-embedded='pulpit'] .user-profile-card");
+        expect(css).toContain("html[data-embedded='pulpit'] [data-idx='doLogout']");
     });
 
     it('dashboard zna tryb osadzony: login/redirect/nawigacja trasami shella', () => {
@@ -131,7 +142,7 @@ describe('pulpit: rejestracja i nawigacja', () => {
         expect(src).toContain('probeEmbeddedSession');
         expect(src).toContain('__sokNavigateShell');
         expect(src).toContain('window.parent.location.hash = hash');
-        expect(src).toContain("window.location.replace('app.html#/pulpit')");
+        expect(src).toContain("window.location.replace('app.html' + targetHash)");
     });
 
     it('wolne /me i błąd 5xx nie wyrzucają usera z shella', () => {

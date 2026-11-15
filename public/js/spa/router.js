@@ -919,6 +919,15 @@
         if (retryButton) retryButton.addEventListener('click', init);
     }
 
+    function rememberAuthReturnRoute() {
+        try {
+            const hash = window.location.hash;
+            const moduleName = hash.slice(2).split(/[/?#]/, 1)[0];
+            if (!hash.startsWith('#/') || hash.length > 2048 || !MODULES[moduleName]) return;
+            window.sessionStorage.setItem('sok.auth.returnHash', hash);
+        } catch (_e) {}
+    }
+
     async function init() {
         // `meProbe()` współdzieli żądanie /api/auth/me, ale zachowuje status
         // odpowiedzi. Dzięki temu awaria serwera nie wygląda jak wylogowanie.
@@ -941,6 +950,7 @@
         }
 
         if (authProbe.status === 401 || authProbe.status === 403) {
+            rememberAuthReturnRoute();
             if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
             else window.location.href = 'index.html';
             return;
@@ -951,6 +961,7 @@
         }
         const user = authProbe.user || null;
         if (!user) {
+            rememberAuthReturnRoute();
             if (typeof window.navigateToLogin === 'function') window.navigateToLogin();
             else window.location.href = 'index.html';
             return;

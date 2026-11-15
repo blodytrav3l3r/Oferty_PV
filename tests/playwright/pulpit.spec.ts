@@ -58,34 +58,11 @@ test.describe('SPA: pulpit jako moduł', () => {
         for (const sel of ['#page-loader', '.index-logo', '.subtitle']) {
             await expect(frame.locator(sel)).toBeHidden();
         }
-        // `#dash-header` router chowa w KAŻDYM module, więc samo „ukryty" nic nie
-        // dowodzi. Test różnicowy: zdejmij wstrzyknięty styl routera — nagłówek
-        // nadal ukryty przez CSS embedded; zdejmij znacznik — wraca.
-        // Router wstrzykuje styl w handlerze `load` ramki, więc czekamy na `load`,
-        // żeby usunięcie nie zostało nadpisane ponowną iniekcją.
-        await frame.waitForLoadState('load');
-        const injectedHeaderStyles = () =>
-            frame.evaluate(
-                () =>
-                    [...document.querySelectorAll('style')].filter((s) =>
-                        (s.textContent || '').includes('header.header')
-                    ).length
-            );
-        await frame.evaluate(() => {
-            document.querySelectorAll('style').forEach((style) => {
-                if (style.textContent && style.textContent.includes('header.header'))
-                    style.remove();
-            });
-        });
-        expect(await injectedHeaderStyles()).toBe(0);
-        const headerDisplay = () =>
-            frame.evaluate(() => getComputedStyle(document.getElementById('dash-header')).display);
-        expect(await headerDisplay()).toBe('none');
-        await frame.evaluate(() => document.documentElement.removeAttribute('data-embedded'));
-        expect(await headerDisplay()).not.toBe('none');
-        await frame.evaluate(() =>
-            document.documentElement.setAttribute('data-embedded', 'pulpit')
-        );
+        // Globalny nagłówek i logout renderuje wyłącznie shell SPA.
+        await expect(frame.locator('#dash-header')).toHaveCount(0);
+        await expect(frame.locator('.user-profile-card')).toBeHidden();
+        await expect(frame.locator('[data-idx="doLogout"]')).toBeHidden();
+        await expect(page.locator('#header-user-info')).toBeVisible();
 
         // Brak podwójnego logowania: formularz z pulpitu nie jest widoczny.
         await expect(frame.locator('#login-section')).toBeHidden();
@@ -160,6 +137,41 @@ test.describe('SPA: pulpit jako moduł', () => {
         const frame = await waitForPulpitFrame(page);
         expect(frame).not.toBeNull();
         await frame.waitForSelector('#user-section', { timeout: 15000 });
+    });
+
+    test('zalogowane bezpośrednie wejście na index.html przechodzi do jednego shella', async ({
+        page
+    }) => {
+        await page.goto(`${BASE}/index.html`);
+        await page.waitForURL(/app\.html#\/pulpit$/, { timeout: 15000 });
+
+        const frame = await waitForPulpitFrame(page);
+        expect(frame).not.toBeNull();
+        await expect(page.locator('#header-user-info')).toBeVisible();
+        await expect(frame.locator('#dash-header')).toHaveCount(0);
+    });
+
+    test('błąd sprawdzania sesji pokazuje ponowienie zamiast ekranu logowania', async ({
+        page
+    }) => {
+        await page.route('**/api/auth/me', (route) =>
+            route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+        );
+        await page.goto(`${BASE}/index.html`);
+
+        await expect(page.locator('#auth-probe-error')).toBeVisible();
+        await expect(page.locator('#login-section')).toBeHidden();
+        await expect(page.locator('#auth-probe-retry')).toBeVisible();
+    });
+
+    test('po logowaniu przywraca bezpieczną trasę SPA, która wymagała sesji', async ({ page }) => {
+        await page.context().clearCookies();
+        await page.goto(`${BASE}/app.html#/studnie?edit=offer-test`);
+        await page.waitForURL(/index\.html/, { timeout: 15000 });
+        await page.fill('#login-username', 'admin');
+        await page.fill('#login-password', ADMIN_PASSWORD);
+        await page.click('.login-submit');
+        await page.waitForURL(/app\.html#\/studnie\?edit=offer-test$/, { timeout: 15000 });
     });
 
     test('#/pulpit?host=x nie wyłącza trybu osadzonego', async ({ page }) => {
