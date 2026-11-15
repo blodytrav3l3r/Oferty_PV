@@ -5,7 +5,7 @@ Informacje o oprogramowaniu firm trzecich używanym w projekcie
 
 > Plik generowany automatycznie z `package-lock.json` oraz zasobów w `public/` przez `npm run licenses:generate`. Nie edytuj ręcznie — zmień generator `scripts/generate-licenses.mjs`.
 
-Dane na dzień: **2026-11-05**.
+Dane na dzień: **2026-11-15**.
 
 ## 1. Licencja projektu
 
@@ -15,37 +15,37 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 
 ## 2. Model dystrybucji i zakres dokumentu
 
-- Zależności produkcyjne: **325** pakietów — wchodzą do obrazu Docker i artefaktu wdrożenia.
-- Zależności deweloperskie/testowe: **981** pakietów — nie są wymagane w runtime i nie są przedmiotem dystrybucji.
+- Wpisy bez flagi dev w lockfile: **325**; nie jest to inwentaryzacja rzeczywiście zainstalowanych pakietów.
+- Wpisy z flagą dev w lockfile: **981**. Zakres zależy od instalacji, platformy i sposobu dystrybucji.
 - Zasoby spoza npm (vendored): SheetJS, font Inter, subset ikon Lucide — są serwowane z `public/` i wymagają atrybucji.
-- Obraz Docker zachowuje `node_modules` (także devDependencies), więc teksty licencji są obecne w obrazie.
-- Oznaczenia `[prod]` / `[dev]` w sekcji 7 określają zakres: `[prod]` = dystrybuowane, `[dev]` = tylko development/CI.
+- Obecność devDependencies oraz ich obowiązki należy zweryfikować w rzeczywistym obrazie Docker i pozostałych artefaktach.
+- Oznaczenia `[prod]` / `[dev]` w sekcji 7 pochodzą z flagi dev w lockfile i nie dowodzą, czy dany pakiet znalazł się w konkretnym artefakcie.
 
 ## 3. Podsumowanie licencji
 
-| Licencja                | Prod | Dev | Rodzaj                     | Komercyjnie | Atrybucja |
-| ----------------------- | ---: | --: | -------------------------- | :---------: | :-------: |
-| MIT                     |  233 | 826 | Permisywna                 |     tak     |    tak    |
-| ISC                     |   31 |  85 | Permisywna                 |     tak     |    tak    |
-| BSD-3-Clause            |    5 |  20 | Permisywna                 |     tak     |    tak    |
-| BSD-2-Clause            |    2 |  12 | Permisywna                 |     tak     |    tak    |
-| MIT AND Zlib            |    1 |   0 | Permisywna                 |     tak     |    tak    |
-| Python-2.0              |    1 |   0 | Permisywna                 |     tak     |    tak    |
-| BSD                     |    0 |   1 | Permisywna                 |     tak     |    tak    |
-| Apache-2.0              |   39 |  22 | Permisywna (NOTICE)        |     tak     |    tak    |
-| BlueOak-1.0.0           |    8 |   2 | Permisywna (bez atrybucji) |     tak     |    nie    |
-| 0BSD                    |    0 |   1 | Permisywna (bez atrybucji) |     tak     |    nie    |
-| MIT-0                   |    0 |   1 | Permisywna (bez atrybucji) |     tak     |    nie    |
-| MIT OR CC0-1.0          |    0 |   5 | Dualna — wybór licencji    |     tak     |    nie    |
-| MIT OR GPL-3.0-or-later |    1 |   0 | Dualna — wybór licencji    |     tak     |    tak    |
-| MIT OR Apache-2.0       |    0 |   1 | Dualna — wybór licencji    |     tak     |    tak    |
-| MPL-2.0                 |    0 |   2 | Słabe copyleft             |     tak     |    tak    |
-| CC-BY-3.0               |    0 |   1 | Treści / dane              |     tak     |    tak    |
-| CC-BY-4.0               |    0 |   1 | Treści / dane              |     tak     |    tak    |
-| CC0-1.0                 |    0 |   1 | Domena publiczna           |     tak     |    nie    |
-| Unlicense               |    2 |   0 | Wymaga przeglądu           |     tak     |    nie    |
-| EPL-2.0                 |    1 |   0 | Wymaga przeglądu           |     tak     |    nie    |
-| MIT and ISC             |    1 |   0 | Wymaga przeglądu           |     tak     |    nie    |
+| Licencja                | Prod | Dev | Rodzaj                     |  Atrybucja   |
+| ----------------------- | ---: | --: | -------------------------- | :----------: |
+| MIT                     |  233 | 826 | Permisywna                 |     tak      |
+| ISC                     |   31 |  85 | Permisywna                 |     tak      |
+| BSD-3-Clause            |    5 |  20 | Permisywna                 |     tak      |
+| BSD-2-Clause            |    2 |  12 | Permisywna                 |     tak      |
+| MIT AND Zlib            |    1 |   0 | Permisywna                 |     tak      |
+| MIT and ISC             |    1 |   0 | Permisywna                 |     tak      |
+| Python-2.0              |    1 |   0 | Permisywna                 |     tak      |
+| Apache-2.0              |   39 |  22 | Permisywna (NOTICE)        |     tak      |
+| BlueOak-1.0.0           |    8 |   2 | Permisywna (bez atrybucji) |     nie      |
+| 0BSD                    |    0 |   1 | Permisywna (bez atrybucji) |     nie      |
+| MIT-0                   |    0 |   1 | Permisywna (bez atrybucji) |     nie      |
+| MIT OR CC0-1.0          |    0 |   5 | Dualna — wybór licencji    |     nie      |
+| MIT OR GPL-3.0-or-later |    1 |   0 | Dualna — wybór licencji    |     tak      |
+| MIT OR Apache-2.0       |    0 |   1 | Dualna — wybór licencji    |     tak      |
+| EPL-2.0                 |    1 |   0 | Słabe copyleft             |     tak      |
+| MPL-2.0                 |    0 |   2 | Słabe copyleft             |     tak      |
+| CC-BY-3.0               |    0 |   1 | Treści / dane              |     tak      |
+| CC-BY-4.0               |    0 |   1 | Treści / dane              |     tak      |
+| Unlicense               |    2 |   0 | Domena publiczna           |     nie      |
+| CC0-1.0                 |    0 |   1 | Domena publiczna           |     nie      |
+| BSD                     |    0 |   1 | Wymaga przeglądu           | do ustalenia |
 
 ## 4. Obowiązki przy dystrybucji
 
@@ -54,26 +54,26 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 - **BSD-3-Clause** — Zachowaj notę o prawach autorskich i tekst licencji.
 - **BSD-2-Clause** — Zachowaj notę o prawach autorskich i tekst licencji.
 - **MIT AND Zlib** — Spełnij oba warunki: nota MIT oraz nota Zlib.
+- **MIT and ISC** — Deklaracja pakietu obejmuje MIT i ISC; zachowaj odpowiednie teksty licencji oraz informacje o prawach autorskich.
 - **Python-2.0** — Zachowaj notę o prawach autorskich i tekst licencji PSF.
-- **BSD** — Zachowaj notę o prawach autorskich i tekst licencji.
 - **Apache-2.0** — Dołącz tekst licencji oraz plik NOTICE, jeśli pakiet go zawiera.
-- **BlueOak-1.0.0** — Brak obowiązku atrybucji.
+- **BlueOak-1.0.0** — Przekaż odbiorcom tekst licencji lub link https://blueoakcouncil.org/license/1.0.0.
 - **0BSD** — Brak obowiązku atrybucji.
 - **MIT-0** — Brak obowiązku atrybucji.
 - **MIT OR CC0-1.0** — Wybór MIT (atrybucja) albo CC0 (bez atrybucji); wystarczy jedna ścieżka.
 - **MIT OR GPL-3.0-or-later** — Projekt korzysta ze ścieżki MIT — bez obowiązków copyleft.
 - **MIT OR Apache-2.0** — Projekt korzysta ze ścieżki MIT; zachowaj notę i tekst MIT.
-- **MPL-2.0** — Copyleft na poziomie pliku; publikuj źródło zmodyfikowanych plików MPL, reszta produktu bez zmian.
-- **CC-BY-3.0** — Podaj autora i źródło danych.
-- **CC-BY-4.0** — Podaj autora i źródło danych.
+- **EPL-2.0** — Zachowaj informacje licencyjne; przy dystrybucji programu w formie wynikowej zapewnij dostęp do odpowiadającego kodu źródłowego na warunkach EPL. Sprawdź zakres i warunki: https://www.eclipse.org/legal/epl-2.0/.
+- **MPL-2.0** — Zachowaj informacje licencyjne i zapewnij odbiorcom dostęp do kodu źródłowego objętego MPL, także przy dystrybucji formy wykonywalnej. Warunki obejmują również modyfikacje; sprawdź sekcje 3.1–3.3: https://www.mozilla.org/en-US/MPL/2.0/.
+- **CC-BY-3.0** — Zachowaj wymagane noty i copyright, podaj autora i źródło, link do licencji oraz oznacz zmiany, gdy ma to zastosowanie: https://creativecommons.org/licenses/by/3.0/legalcode.
+- **CC-BY-4.0** — Zachowaj wymagane noty i copyright, podaj autora i źródło, link do licencji oraz oznacz zmiany, gdy ma to zastosowanie: https://creativecommons.org/licenses/by/4.0/legalcode.
+- **Unlicense** — Sprawdź tekst i informacje dołączone do konkretnego pakietu: https://unlicense.org/.
 - **CC0-1.0** — Brak obowiązku atrybucji.
-- **Unlicense** — Brak deklaracji licencji — zweryfikuj ręcznie przed dystrybucją.
-- **EPL-2.0** — Brak deklaracji licencji — zweryfikuj ręcznie przed dystrybucją.
-- **MIT and ISC** — Brak deklaracji licencji — zweryfikuj ręcznie przed dystrybucją.
+- **BSD** — Deklaracja BSD nie wskazuje liczby klauzul; ustal wariant i warunki na podstawie plików konkretnego pakietu.
 
-- Pełne teksty licencji pakietów npm znajdują się w `node_modules/<pakiet>/LICENSE` (obraz Docker je zawiera).
+- Pliki licencji i NOTICE pakietów należy sprawdzić w rzeczywistym artefakcie. Brak pliku w lokalnym `node_modules` wymaga ustalenia źródła tekstu i sposobu dołączenia go do dystrybucji.
+- Zweryfikowane dodatkowe teksty dla wybranych wersji pakietów i ich źródła opisuje `public/licenses/npm/README.md`. Ta lista nie potwierdza kompletności licencji wszystkich zależności i artefaktów.
 - Teksty dla zasobów vendored są w `public/licenses/` i są dostępne pod `/licenses/<plik>` w działającej aplikacji.
-- Projekt nie modyfikuje plików objętych MPL-2.0; obowiązek udostępnienia źródła dotyczy tylko przyszłych modyfikacji tych plików.
 
 ## 5. Zasoby spoza npm (vendored)
 
@@ -85,18 +85,19 @@ Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.
 
 ## 6. Składniki platformy i wdrożenia
 
-| Składnik                              | Wersja / źródło                                                                                      | Licencja                              | Uwagi                                                 |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------- |
-| Node.js                               | `>=22.13.0`                                                                                          | MIT                                   | Runtime aplikacji; tekst licencji w dystrybucji Node. |
-| PostgreSQL 18                         | zewnętrzna usługa bazy danych; obraz `postgres:18-alpine`                                            | PostgreSQL License                    | https://www.postgresql.org/about/licence/             |
-| Docker Engine + Docker Compose plugin | hostowa zależność instalatora Linux z oficjalnego repozytorium; nie są dołączane do artefaktu S.O.K. | Apache-2.0                            | https://docs.docker.com/engine/                       | https://github.com/docker/compose/blob/main/LICENSE |
-| Obraz bazowy Docker                   | `node:22-slim`                                                                                       | MIT (Node) + licencje pakietów Debian | Pełne teksty: `/usr/share/doc/*/copyright` w obrazie. |
-| Chromium (Puppeteer)                  | pobierany przy `npm ci`                                                                              | BSD-3-Clause + licencje komponentów   | Używany do PDF; lista licencji w binarce Chromium.    |
-| Caddy (opcjonalny reverse proxy)      | wdrożenie hosta                                                                                      | Apache-2.0                            | Nie jest częścią artefaktu aplikacji.                 |
+| Składnik                              | Wersja / źródło                                                                                      | Licencja                              | Uwagi                                                                                                                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js                               | `>=22.13.0`                                                                                          | MIT                                   | Runtime aplikacji; tekst licencji w dystrybucji Node.                                                                                                                |
+| PostgreSQL 18                         | osobny kontener Compose `postgres:18-alpine`                                                         | PostgreSQL License                    | Pełny tekst i copyright: `public/licenses/PostgreSQL.txt`. Obraz Compose nie przypina digestu; pakiety Alpine wymagają osobnej kontroli.                             |
+| Docker Engine + Docker Compose plugin | hostowa zależność instalatora Linux z oficjalnego repozytorium; nie są dołączane do artefaktu S.O.K. | Apache-2.0                            | https://docs.docker.com/engine/ oraz https://github.com/docker/compose/blob/main/LICENSE                                                                             |
+| Docker Desktop (Windows)              | hostowa zależność instalatora testowego; użytkownik instaluje i akceptuje warunki osobno             | warunki Docker Desktop                | Nie jest dołączany do artefaktu S.O.K.; sprawdź warunki i wymagania subskrypcji dla organizacji. https://www.docker.com/legal/docker-subscription-service-agreement/ |
+| Obraz bazowy Docker                   | `node:22-slim`                                                                                       | MIT (Node) + licencje pakietów Debian | Pełne teksty: `/usr/share/doc/*/copyright` w obrazie.                                                                                                                |
+| Chrome for Testing (Puppeteer)        | instalowany jawnie w Dockerfile przez Puppeteer                                                      | licencje Chromium i komponentów       | Status kompletności informacji licencyjnych w artefakcie: niezweryfikowany. Źródło upstream: https://chromium.googlesource.com/chromium/src/+/main/LICENSE           |
+| Caddy (opcjonalny reverse proxy)      | wdrożenie hosta                                                                                      | Apache-2.0                            | Nie jest częścią artefaktu aplikacji.                                                                                                                                |
 
 ## 7. Pakiety npm według licencji
 
-Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na zakres dystrybucji.
+Lista zawiera wpisy `package-lock.json`; oznaczenia prod/dev nie potwierdzają zawartości artefaktu.
 
 ### MIT (1059; prod: 233, dev: 826)
 
@@ -1062,7 +1063,6 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - stack-utils@2.0.6 [dev]
 - statuses@2.0.2 [prod]
 - std-env@3.10.0 [prod]
-- string_decoder@1.1.1 [prod]
 - string-argv@0.3.2 [dev]
 - string-length@4.0.2 [dev]
 - string-width-cjs@4.2.3 [dev]
@@ -1070,6 +1070,7 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 - string-width@5.1.2 [dev]
 - string-width@7.2.0 [prod]
 - string-width@8.3.0 [prod]
+- string_decoder@1.1.1 [prod]
 - strip-ansi-cjs@6.0.1 [dev]
 - strip-ansi@6.0.1 [dev]
 - strip-ansi@6.0.1 [dev]
@@ -1328,13 +1329,13 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 
 - pako@1.0.11 [prod]
 
+### MIT and ISC (1; prod: 1, dev: 0)
+
+- @visx/vendor@4.0.0-alpha.0 [prod]
+
 ### Python-2.0 (1; prod: 1, dev: 0)
 
 - argparse@2.0.1 [prod]
-
-### BSD (1; prod: 0, dev: 1)
-
-- gitconfiglocal@1.0.0 [dev]
 
 ### Apache-2.0 (61; prod: 39, dev: 22)
 
@@ -1437,6 +1438,10 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 
 - JSONStream@1.3.5 [dev]
 
+### EPL-2.0 (1; prod: 1, dev: 0)
+
+- elkjs@0.11.1 [prod]
+
 ### MPL-2.0 (2; prod: 0, dev: 2)
 
 - @axe-core/playwright@4.14.0 [dev]
@@ -1450,100 +1455,34 @@ Lista zawiera wszystkie pakiety z drzewa `package-lock.json`, z podziałem na za
 
 - caniuse-lite@1.0.30001819 [dev]
 
-### CC0-1.0 (1; prod: 0, dev: 1)
-
-- spdx-license-ids@3.0.24 [dev]
-
 ### Unlicense (2; prod: 2, dev: 0)
 
 - postgres@3.4.7 [prod]
 - robust-predicates@3.0.3 [prod]
 
-### EPL-2.0 (1; prod: 1, dev: 0)
+### CC0-1.0 (1; prod: 0, dev: 1)
 
-- elkjs@0.11.1 [prod]
+- spdx-license-ids@3.0.24 [dev]
 
-### MIT and ISC (1; prod: 1, dev: 0)
+### BSD (1; prod: 0, dev: 1)
 
-- @visx/vendor@4.0.0-alpha.0 [prod]
+- gitconfiglocal@1.0.0 [dev]
 
-## 8. Status Apache-2.0 (NOTICE)
+## 8. Weryfikacja Apache-2.0 (NOTICE)
 
-Dla pakietów Apache-2.0 w dystrybucji sprawdzono obecność plików `LICENSE` i `NOTICE` w zainstalowanym pakiecie.
+Wpisy Apache-2.0 wymagają weryfikacji tekstu licencji i ewentualnych plików NOTICE w dystrybuowanych pakietach oraz źródłach upstream. Sam lockfile nie potwierdza ich obecności.
 
-| Pakiet                              | Wersja                                           | Plik LICENSE | Plik NOTICE |
-| ----------------------------------- | ------------------------------------------------ | :----------: | :---------: |
-| @electric-sql/pglite-socket         | 0.1.3                                            |     tak      |     nie     |
-| @electric-sql/pglite-tools          | 0.3.3                                            |     tak      |     nie     |
-| @electric-sql/pglite                | 0.4.3                                            |     tak      |     nie     |
-| @opentelemetry/api-logs             | 0.220.0                                          |     tak      |     nie     |
-| @opentelemetry/api                  | 1.9.1                                            |     tak      |     nie     |
-| @opentelemetry/core                 | 2.12.0                                           |     tak      |     nie     |
-| @opentelemetry/instrumentation      | 0.220.0                                          |     tak      |     nie     |
-| @opentelemetry/resources            | 2.12.0                                           |     tak      |     nie     |
-| @opentelemetry/sdk-trace-base       | 2.12.0                                           |     tak      |     nie     |
-| @opentelemetry/sdk-trace            | 2.12.0                                           |     tak      |     nie     |
-| @opentelemetry/semantic-conventions | 1.43.0                                           |     tak      |     nie     |
-| @prisma/adapter-pg                  | 7.10.1                                           |     tak      |     nie     |
-| @prisma/client-runtime-utils        | 7.10.1                                           |     tak      |     nie     |
-| @prisma/client                      | 7.10.1                                           |     tak      |     nie     |
-| @prisma/config                      | 7.10.1                                           |     tak      |     nie     |
-| @prisma/debug                       | 7.10.1                                           |     tak      |     nie     |
-| @prisma/debug                       | 7.2.0                                            |     tak      |     nie     |
-| @prisma/driver-adapter-utils        | 7.10.1                                           |     tak      |     nie     |
-| @prisma/engines-version             | 8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8 |     tak      |     nie     |
-| @prisma/engines                     | 7.10.1                                           |     tak      |     nie     |
-| @prisma/fetch-engine                | 7.10.1                                           |     tak      |     nie     |
-| @prisma/get-platform                | 7.10.1                                           |     tak      |     nie     |
-| @prisma/get-platform                | 7.10.1                                           |     tak      |     nie     |
-| @prisma/get-platform                | 7.2.0                                            |     tak      |     nie     |
-| @prisma/query-plan-executor         | 7.2.0                                            |     tak      |     nie     |
-| @prisma/streams-local               | 0.1.11                                           |     tak      |     nie     |
-| @prisma/studio-core                 | 0.33.0                                           |     tak      |     tak     |
-| @puppeteer/browsers                 | 3.2.6                                            |     nie      |     nie     |
-| @scarf/scarf                        | 1.4.0                                            |     tak      |     nie     |
-| chromium-bidi                       | 157.0.8090-0                                     |     tak      |     nie     |
-| doctrine                            | 3.0.0                                            |     tak      |     nie     |
-| import-in-the-middle                | 3.5.2                                            |     tak      |     tak     |
-| long                                | 5.3.2                                            |     tak      |     nie     |
-| prisma                              | 7.10.1                                           |     tak      |     nie     |
-| puppeteer-core                      | 25.16.0                                          |     nie      |     nie     |
-| puppeteer                           | 25.16.0                                          |     nie      |     nie     |
-| swagger-ui-dist                     | 5.34.0                                           |     tak      |     tak     |
-| typescript                          | 6.0.3                                            |     tak      |     nie     |
-| webdriver-bidi-protocol             | 1.0.1                                            |     tak      |     nie     |
+## 9. Sprawdzanie lokalnych katalogów pakietów
 
-Pakiety z plikiem NOTICE (zachowaj go w dystrybucji): `@prisma/studio-core`, `import-in-the-middle`, `swagger-ui-dist`.
-
-Pakiety z „nie” w kolumnie LICENSE są wymienione w sekcji 9.
-
-## 9. Pakiety bez pliku licencji w dystrybucji
-
-Pakiety produkcyjne bez pliku `LICENSE`/`COPYING` w zainstalowanym katalogu. Licencja pochodzi z `package.json`; tekst należy zachować z repozytorium upstream (są to zależności pośrednie).
-
-| Pakiet                            | Wersja  | Deklarowana licencja | Repozytorium                                                             |
-| --------------------------------- | ------- | -------------------- | ------------------------------------------------------------------------ |
-| @prisma/dev                       | 0.24.17 | ISC                  | —                                                                        |
-| @puppeteer/browsers               | 3.2.6   | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/browsers       |
-| @radix-ui/react-compose-refs      | 1.1.2   | MIT                  | git+https://github.com/radix-ui/primitives.git                           |
-| @radix-ui/react-use-layout-effect | 1.1.1   | MIT                  | git+https://github.com/radix-ui/primitives.git                           |
-| @sentry/server-utils              | 10.76.2 | MIT                  | git://github.com/getsentry/sentry-javascript.git                         |
-| cookie-signature                  | 1.0.6   | MIT                  | https://github.com/visionmedia/node-cookie-signature.git                 |
-| hash.js                           | 1.1.7   | MIT                  | git@github.com:indutny/hash.js                                           |
-| isarray                           | 1.0.0   | MIT                  | git://github.com/juliangruber/isarray.git                                |
-| pg-types                          | 2.2.0   | MIT                  | git://github.com/brianc/node-pg-types.git                                |
-| pgpass                            | 1.0.5   | MIT                  | https://github.com/hoegaarden/pgpass.git                                 |
-| postgres                          | 3.4.7   | Unlicense            | porsager/postgres                                                        |
-| puppeteer-core                    | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer-core |
-| puppeteer                         | 25.16.0 | Apache-2.0           | https://github.com/puppeteer/puppeteer/tree/main/packages/puppeteer      |
-| remeda                            | 2.33.4  | MIT                  | git+https://github.com/remeda/remeda.git                                 |
+Uruchom `node scripts/generate-licenses.mjs --installed-report`, aby wypisać diagnostykę lokalnej instalacji bez zapisu do tego dokumentu. Wynik zależy od platformy i zainstalowanych pakietów; nie zastępuje kontroli finalnego artefaktu ani upstream.
 
 ## 10. Weryfikacja i aktualizacja
 
 ```bash
 npm run licenses:generate   # regeneracja tego pliku
 npm run licenses:check      # porównanie z package-lock.json (brama validate)
+node scripts/generate-licenses.mjs --installed-report # raport lokalnej instalacji
 ```
 
 Po dodaniu, usunięciu lub aktualizacji pakietu uruchom `licenses:generate` i zacommituj wynik razem ze zmianą w `package-lock.json`.
-Brama `licenses:check` porównuje cały plik poza datą generowania, więc każda zmiana drzewa zależności lub zasobów vendored wymaga regeneracji.
+Brama `licenses:check` porównuje wygenerowaną treść poza datą; nie potwierdza kompletności ani zgodności dystrybucji z licencjami i nie wykrywa wszystkich zmian zawartości zasobów.

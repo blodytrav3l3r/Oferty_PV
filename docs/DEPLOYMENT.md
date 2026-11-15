@@ -99,12 +99,13 @@ dopasowanego do wymaganego RPO/RTO.
   read-only wyłącznie przez uzgodniony okres przejściowy i zgodnie z polityką
   retencji.
 - Restore wymaga jawnego celu przez zmienną środowiskową `RESTORE_DB_URL` — nigdy
-  nie przekazuj URL ani hasła jako argumentu procesu. Przykład PowerShell dla
-  izolowanej lokalnej bazy testowej:
+  nie przekazuj URL ani hasła jako argumentu procesu. Ustaw zmienną w bieżącym
+  procesie z bezpiecznego źródła sekretów. Przykład PowerShell dla izolowanej
+  lokalnej bazy testowej (zastąp nazwę pliku nazwą swojej kopii):
 
     ```powershell
-    $env:RESTORE_DB_URL = 'postgresql://sok_test:<hasło>@localhost:5432/sok_test?schema=public'
-    node scripts/restore-db.js data/backups/<backup>.dump
+    if (-not $env:RESTORE_DB_URL) { throw 'Brak RESTORE_DB_URL' }
+    node scripts/restore-db.js 'data/backups/backup_YYYY-MM-DD_TIMESTAMP.dump'
     Remove-Item Env:RESTORE_DB_URL
     ```
 

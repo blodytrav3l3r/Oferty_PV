@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.58.1  
+**Wersja:** 1.59.0  
 **Ostatnia aktualizacja:** 2026-11-07
 
 **Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera), surowy JSON: `GET /api/docs.json`. Specyfikacja jest generowana z adnotacji `@openapi` w wybranych plikach; jej pokrycie jest częściowe i nie stanowi kompletnego źródła kontraktów.
@@ -13,7 +13,8 @@
 
 ### `GET /health`
 
-Sprawdzenie statusu serwera. Używany przez Docker HEALTHCHECK i Render health check.
+Sprawdzenie statusu serwera. Docker `HEALTHCHECK` korzysta z `/health/ready`,
+który dodatkowo sprawdza połączenie z bazą.
 
 **Odpowiedź:**
 
@@ -33,7 +34,7 @@ Publiczny numer wersji aplikacji.
 **Odpowiedź:**
 
 ```json
-{ "version": "1.58.1" }
+{ "version": "1.59.0" }
 ```
 
 ### `GET /health/live`
@@ -64,12 +65,12 @@ Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `
 
 ```json
 {
-    "version": "1.58.1",
+    "version": "1.59.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.58.1",
+    "dbVersion": "1.59.0",
     "uptime": 123.45,
     "memory": { ... }
 }
@@ -116,7 +117,7 @@ Logowanie użytkownika. Zwraca wyłącznie dane użytkownika; sesja trafia do co
 }
 ```
 
-**Rate limit:** 10 prób na minutę (LOGIN_LIMITER).
+**Rate limit:** 60 prób na minutę na IP oraz 10 prób na minutę na IP i login; obowiązuje również ogólny limit API.
 
 ### `POST /api/auth/register`
 
@@ -249,7 +250,10 @@ Wymaga autoryzacji. Wyszukiwanie łączne (UNION rury + studnie) z kursorem (`ne
 | GET    | `/api/offers/search?q=&dateFrom=&dateTo=&...`      | Wyszukiwanie ofert (rury+studnie) |
 | GET    | `/api/offers/search/orders?id=&type=rury\|studnie` | Wyszukiwanie zamówień (max 50)    |
 
-`dateFrom`/`dateTo` muszą być w formacie ISO — nieprawidłowe wartości są odrzucane (zapytanie wykonuje się bez filtra dat).
+`dateFrom`/`dateTo` przyjmują datę `YYYY-MM-DD` albo datę z czasem w formacie
+`YYYY-MM-DDTHH:mm:ss[.ffffff][Z]`. Wartość niepasująca do formatu jest pomijana;
+wartość pasująca do formatu, ale niepoprawna kalendarzowo, daje puste wyniki.
+Nie jest zwracany błąd walidacji HTTP.
 
 ---
 
@@ -286,7 +290,9 @@ Wymaga autoryzacji. Alias do `/api/offers-rury/studnie`.
 
 **Limit payloadu:** body JSON do **128 MB** dla ofert (`JSON_BODY_LIMITS.offers`
 w `src/mountRoutes.ts`; dotyczy `/api/offers-rury` i `/api/offers-studnie`).
-Pozostałe trasy: 50 MB (zamówienia, cenniki), 1 MB (reszta). Przekroczenie → `413`:
+Pozostałe trasy: 50 MB (zamówienia, cenniki), 320 KB (parser draftów),
+1 MB (większość pozostałych). Serwis draftów dodatkowo ogranicza sam payload
+do 256 KB. Przekroczenie limitu parsera → `413`:
 
 ```json
 {
@@ -766,12 +772,27 @@ w kodzie, a wcześniej nie miały wpisu w tym dokumencie.
 
 ### Zamówienia — eksport oferty źródłowej
 
-| Metoda | Ścieżka                                     | Auth | Opis                    |
-| ------ | ------------------------------------------- | ---- | ----------------------- |
-| POST   | `/api/orders-rury/:id/export-offer-pdf`     | auth | PDF z oferty źródłowej  |
-| POST   | `/api/orders-rury/:id/export-offer-docx`    | auth | DOCX z oferty źródłowej |
-| POST   | `/api/orders-studnie/:id/export-offer-pdf`  | auth | PDF z oferty źródłowej  |
-| POST   | `/api/orders-studnie/:id/export-offer-docx` | auth | DOCX z oferty źródłowej |
+| Metoda | Ścieżka                                     | Auth | Opis                                        |
+| ------ | ------------------------------------------- | ---- | ------------------------------------------- |
+| POST   | `/api/orders-rury/:id/export-offer-pdf`     | auth | PDF z oferty źródłowej                      |
+| POST   | `/api/orders-rury/:id/export-offer-docx`    | auth | DOCX z oferty źródłowej                     |
+| POST   | `/api/orders-studnie/:id/export-offer-pdf`  | auth | PDF oferty z przekazanego stanu zamówienia  |
+| POST   | `/api/orders-studnie/:id/export-offer-docx` | auth | DOCX oferty z przekazanego stanu zamówienia |
+
+Endpointy studni przyjmują JSON z niepustą tablicą `items`. Każda pozycja
+wymaga `productName`, dodatniego `quantity` oraz nieujemnego `price`. Walidator
+normalizuje `quantity: null` lub `""` do `1`, a `price: null` lub `""` do `0`;
+pominięcie tych pól nie jest tym samym co `null`. Pola transportowe są opcjonalne:
+
+- `items[].transportCost` — udział transportu dla studni;
+- `items[].transportFrozen` — `true` oznacza zachowany udział zamrożony;
+- `transportSeparate` — `true` pokazuje transport osobno, `false` wlicza go w ceny pozycji;
+- `transportTotal` — nieujemna, skończona łączna kwota transportu, uwzględniana przy rozdziale groszy, gdy jest zgodna z pozycjami;
+- `transportKm` i `transportRate` — nieujemne wartości odległości i stawki.
+
+Pominięcie `transportSeparate` zachowuje wcześniejszy sposób obsługi eksportu.
+Oba endpointy wymagają dostępu do zamówienia; błędne dane zwracają `400`,
+a brak zasobu lub dostępu `404`.
 
 ### Telemetria AI — zapis wsadowy
 
@@ -792,6 +813,7 @@ Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.
 
 | Limiter                 | Okno   | Max prób | Endpointy                                                                                                           |
 | ----------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| login per IP            | 1 min  | 60       | `/api/auth/login` (kubełek per IP)                                                                                  |
 | LOGIN_LIMITER           | 1 min  | 10       | `/api/auth/login` (kubełek per IP + login)                                                                          |
 | API_LIMITER             | 15 min | 1200     | Większość endpointów `/api/*` (zapis ofert/zamówień ma własne limitery)                                             |
 | WRITE_LIMITER           | 1 min  | 60       | Zapis danych (POST/PUT/DELETE, w tym zlecenia produkcyjne)                                                          |

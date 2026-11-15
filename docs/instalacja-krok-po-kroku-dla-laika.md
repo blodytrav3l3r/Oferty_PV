@@ -38,9 +38,10 @@ istniejących wolumenów ani danych.
 4. Przy pierwszym uruchomieniu Docker Desktop zaakceptuj jego warunki i poczekaj,
    aż Docker będzie gotowy.
 5. Pozostaw czarne okno otwarte. Instalator tworzy lokalne sekrety, uruchamia
-   PostgreSQL 18, wykonuje migracje i seed, pokazuje dry-run importu cenników,
-   a następnie prosi o jawne potwierdzenie ich importu. Po imporcie sprawdza
-   gotowość aplikacji.
+   PostgreSQL 18, wykonuje migracje i seed, sprawdza dołączony pakiet cenników,
+   a następnie importuje go automatycznie. Po imporcie sprawdza gotowość
+   aplikacji. Przy wznowieniu pracy z istniejącym wolumenem wymaga osobnych
+   potwierdzeń `RESUME` oraz `MIGRATE AND SEED`.
 6. Instalacja zakończy się dopiero po pozytywnym health checku. Otwórz
    `http://localhost:3000`.
 

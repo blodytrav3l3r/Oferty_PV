@@ -4,6 +4,46 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.59.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.57.0...v1.59.0) (2026-11-15)
+
+### Features
+
+- **studnie:** uwzględnij masę kinety w wycenie ([ef8a585](https://github.com/blodytrav3l3r/Oferty_PV/commit/ef8a5855fd5036a12f96516f09b131966fc67468))
+
+### Bug Fixes
+
+- **audit:** poprawa eksportów, logowania i dostępności ([9576be7](https://github.com/blodytrav3l3r/Oferty_PV/commit/9576be7d925e4429ad47c9e93fb2366653ecbb94))
+- **ci:** napraw walidację i testy transportu ([43d96c5](https://github.com/blodytrav3l3r/Oferty_PV/commit/43d96c5d732bc1140d39cbfb4c8b123c176659cc))
+- **offers:** stabilizuj jednostke bazowa nowej oferty ([f94fabf](https://github.com/blodytrav3l3r/Oferty_PV/commit/f94fabfadac32055833b9bff68dcaece1b3414a2))
+- **offers:** zaokrąglaj ceny do groszy ([ce319ad](https://github.com/blodytrav3l3r/Oferty_PV/commit/ce319add54846e008bd46c7d62c389456036e3d6))
+- **orders:** popraw walidację i testy numerów pz ([67a6cd0](https://github.com/blodytrav3l3r/Oferty_PV/commit/67a6cd05351fd31a04d1501445d7a299434d0b3c))
+- **orders:** zabezpiecz zapis pz i wdrozenia ([92e876f](https://github.com/blodytrav3l3r/Oferty_PV/commit/92e876fc36a936238e3ab7eb47c58dc752261882))
+- **rury:** rozdziel grosze transportu bez strat ([15043ff](https://github.com/blodytrav3l3r/Oferty_PV/commit/15043ffdd845741e81edc103552268b346d8112a))
+- **seed:** anonimizuj autorów pakietu cenników ([4debf1a](https://github.com/blodytrav3l3r/Oferty_PV/commit/4debf1a69bbc0c041a8464a692b63be034612ec7))
+- **studnie:** aktywuj kinetę po wyborze wysokości ([c14f81c](https://github.com/blodytrav3l3r/Oferty_PV/commit/c14f81c1b521344c80e42845a2a35c945b92cf4c))
+- **studnie:** wyjaśnij zakres malowania dennicy ([f484c3e](https://github.com/blodytrav3l3r/Oferty_PV/commit/f484c3e4dd22ad4e018ddc40400a40bea487c8a1))
+- **ui:** ujednolic nagłówek zalogowanej aplikacji ([0773f7b](https://github.com/blodytrav3l3r/Oferty_PV/commit/0773f7b8a326dc5aa1122afdd92dd1ed860c38f5))
+
+## [1.59.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.57.0...v1.59.0) (2026-11-15)
+
+### Features
+
+- **studnie:** uwzględnij masę kinety w wycenie ([ef8a585](https://github.com/blodytrav3l3r/Oferty_PV/commit/ef8a5855fd5036a12f96516f09b131966fc67468))
+
+### Bug Fixes
+
+- **audit:** poprawa eksportów, logowania i dostępności ([9576be7](https://github.com/blodytrav3l3r/Oferty_PV/commit/9576be7d925e4429ad47c9e93fb2366653ecbb94))
+- **ci:** napraw walidację i testy transportu ([43d96c5](https://github.com/blodytrav3l3r/Oferty_PV/commit/43d96c5d732bc1140d39cbfb4c8b123c176659cc))
+- **offers:** stabilizuj jednostke bazowa nowej oferty ([f94fabf](https://github.com/blodytrav3l3r/Oferty_PV/commit/f94fabfadac32055833b9bff68dcaece1b3414a2))
+- **offers:** zaokrąglaj ceny do groszy ([ce319ad](https://github.com/blodytrav3l3r/Oferty_PV/commit/ce319add54846e008bd46c7d62c389456036e3d6))
+- **orders:** popraw walidację i testy numerów pz ([67a6cd0](https://github.com/blodytrav3l3r/Oferty_PV/commit/67a6cd05351fd31a04d1501445d7a299434d0b3c))
+- **orders:** zabezpiecz zapis pz i wdrozenia ([92e876f](https://github.com/blodytrav3l3r/Oferty_PV/commit/92e876fc36a936238e3ab7eb47c58dc752261882))
+- **rury:** rozdziel grosze transportu bez strat ([15043ff](https://github.com/blodytrav3l3r/Oferty_PV/commit/15043ffdd845741e81edc103552268b346d8112a))
+- **seed:** anonimizuj autorów pakietu cenników ([4debf1a](https://github.com/blodytrav3l3r/Oferty_PV/commit/4debf1a69bbc0c041a8464a692b63be034612ec7))
+- **studnie:** aktywuj kinetę po wyborze wysokości ([c14f81c](https://github.com/blodytrav3l3r/Oferty_PV/commit/c14f81c1b521344c80e42845a2a35c945b92cf4c))
+- **studnie:** wyjaśnij zakres malowania dennicy ([f484c3e](https://github.com/blodytrav3l3r/Oferty_PV/commit/f484c3e4dd22ad4e018ddc40400a40bea487c8a1))
+- **ui:** ujednolic nagłówek zalogowanej aplikacji ([0773f7b](https://github.com/blodytrav3l3r/Oferty_PV/commit/0773f7b8a326dc5aa1122afdd92dd1ed860c38f5))
+
 ## [1.58.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.58.0...v1.58.1) (2026-11-15)
 
 ### Bug Fixes

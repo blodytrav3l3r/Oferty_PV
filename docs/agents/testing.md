@@ -36,7 +36,7 @@ PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integra
 ## Bramy
 
 - `npm run validate`: version:check, typecheck BE+FE, lint BE+FE, appname, licenses, test:quick, collisions, ratchet, prices:verify.
-- Pre-push sprawdza `POSTGRES_TEST_URL` przed grupami kontroli, potem uruchamia m.in. `prices:verify`, lint, typecheck, `test:quick:lite` i osobno `test:git-safety`. `test:quick:lite` uruchamia ciężki test `pricelistChunk` szeregowo. `prices:verify` korzysta z `DATABASE_URL` i sprawdza aktywne cenniki.
+- Pre-push uruchamia kontrole wersji, kodowania, nazwy, licencji, kolizji, ratchetu i cenników oraz lint i typecheck backendu i frontendu. Testy uruchamiaj zgodnie z bramkami projektu; hook ich nie uruchamia. `test:quick:lite` pomija dedykowane testy migracji, ale stosuje migracje w izolowanych schematach PostgreSQL; `pricelistChunk` wykonuje szeregowo. `prices:verify` korzysta z `DATABASE_URL` i sprawdza aktywne cenniki.
 - DoD paczki: P0 open = 0; CSRF/matrix GREEN; typecheck/lint GREEN; `test:quick` GREEN; `version:check` GREEN; migration drift 0; testy DB na PostgreSQL; NEW globals/inline/security-exceptions = 0.
 
 ## Playwright — baza i konto testowe

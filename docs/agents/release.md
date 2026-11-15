@@ -9,7 +9,7 @@
 - Język: odpowiedzi/plany po polsku; komentarze/commity/CHANGELOG po polsku; identyfikatory w kodzie po angielsku.
 - Przed commitem: `npm run version:check` + `npm run validate` + `npm run format`.
 - Zgodę na commit i push określa `docs/AUTONOMY_CONTRACT.md`: commit kodu wymaga GO na paczkę, a push — osobnego GO z dokładnym celem `remote/branch`.
-- Przed pushem uruchom obowiązkowe hooki bez pomijania ich. Hook `pre-push` wykonuje ceny, lint, typecheck i testy; skonfiguruj wymagane połączenie z testową bazą zamiast omijać kontrolę.
+- Przed pushem uruchom wymagane bramki i hooki bez ich pomijania. Hook `pre-push` sprawdza m.in. ceny, lint i typecheck; nie uruchamia testów.
 - Po pushu sprawdź kod wyjścia oraz `git status -sb`; szczegóły interpretacji na Windows są w `docs/agents/commands.md`.
 
 ## Wersje (SSoT: plik VERSION)

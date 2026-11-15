@@ -4,7 +4,7 @@
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
 </div>
 
-**Wersja:** 1.58.1  
+**Wersja:** 1.59.0  
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline<br>
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** Łukasz Kobyłka
@@ -268,8 +268,8 @@ Aplikacja używa jednej kanonicznej historii migracji PostgreSQL. Aktualizację 
 | `POSTGRES_USER`          | Rola inicjalizacyjna PostgreSQL; nie używaj jej jako roli runtime produkcji                                       | `sok_bootstrap`                                             | Tak dla Compose |
 | `POSTGRES_PASSWORD`      | Hasło roli inicjalizacyjnej PostgreSQL                                                                            | z secret managera                                           | Tak dla Compose |
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)                                                                  | —                                                           | Nie             |
-| `COOKIE_SECURE`          | Wymusza flagę `Secure` na ciastku sesji                                                                           | `true` gdy `NODE_ENV=production`                            | Nie             |
-| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (Caddy/Nginx = 1, Cloudflare→Nginx→App = 2)                                  | `1`                                                         | Nie             |
+| `COOKIE_SECURE`          | Przy `HTTPS_ENABLED` innym niż `false`, wartość `true` wymusza flagę `Secure` na ciastku sesji                    | Flaga zależy od `req.secure`                                | Nie             |
+| `TRUST_PROXY`            | Liczba zaufanych proxy: bezpośredni dostęp = 0, Caddy/Nginx = 1, Cloudflare→Nginx→App = 2                         | `1`                                                         | Nie             |
 | `PUBLIC_BASE_URL`        | Publiczny origin (np. `https://oferty.example.pl`) używany przy przekierowaniu HTTP→HTTPS                         | — (fallback: zwalidowany `Host`)                            | Nie             |
 | `APP_NAME`               | Nazwa aplikacji (tytuły stron, branding)                                                                          | `S.O.K.`                                                    | Nie             |
 | `APP_SUBTITLE`           | Podtytuł aplikacji (aria-label logo, wydruki)                                                                     | `System Ofert i Kalkulacji`                                 | Nie             |
@@ -281,7 +281,7 @@ Aplikacja używa jednej kanonicznej historii migracji PostgreSQL. Aktualizację 
 W środowisku produkcyjnym aplikacja jest serwowana przez **HTTPS** za pośrednictwem reverse proxy (Caddy/Nginx z certyfikatem Let's Encrypt). Node/Express pozostaje wewnętrznym serwerem HTTP nasłuchującym na `127.0.0.1:3000` (w trybie `production` bind do `127.0.0.1` jest domyślny — port nie jest dostępny z sieci).
 
 - Przykładowa konfiguracja Caddy: [`Caddyfile`](Caddyfile) (produkcja) i [`Caddyfile.dev`](Caddyfile.dev) (lokalny HTTPS z mkcert).
-- Przy serwowaniu przez HTTPS ustaw `COOKIE_SECURE=true` w `.env` — wymusi flagę `Secure` na ciastku sesji (w `production` jest to domyślne).
+- Przy serwowaniu przez HTTPS ustaw `COOKIE_SECURE=true` w `.env`, aby wymusić flagę `Secure`. Bez tego ustawienia zależy ona od `req.secure`, dlatego za proxy skonfiguruj odpowiednio `TRUST_PROXY`. W awaryjnym trybie `HTTPS_ENABLED=false` flaga nie jest ustawiana.
 - W trybie `production` aktywne są automatycznie: HSTS, przekierowanie HTTP→HTTPS (na podstawie `X-Forwarded-Proto`), nagłówki bezpieczeństwa Helmet.
 - Przekierowanie HTTP→HTTPS buduje adres z `PUBLIC_BASE_URL` (jeśli ustawione), inaczej z nagłówka `Host` po walidacji — nieprawidłowy `Host` bez `PUBLIC_BASE_URL` skutkuje pominięciem przekierowania (ochrona przed open-redirect).
 - Szczegóły: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) oraz [docs/SECURITY.md](docs/SECURITY.md).
@@ -380,25 +380,25 @@ Kolumna „Warstwa": L1 to plik uruchamiany przez użytkownika (banner, pytania,
 
 ### Podstawowe
 
-| Komenda                          | Opis                                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `npm run dev`                    | Uruchom backend w trybie developerskim (ts-node-dev; Express serwuje też frontend, ADR-005) |
-| `npm run build`                  | Zbuduj backend (TypeScript → JavaScript)                                                    |
-| `npm run minify:css`             | Minifikuj arkusze CSS (też w `prestart`)                                                    |
-| `npm run bundle:scripts`         | Zbundluj skrypty (`esbuild`)                                                                |
-| `npm run commit`                 | Helper commita (Conventional Commits, UTF-8 bez mojibake)                                   |
-| `npm start`                      | Uruchom w trybie produkcyjnym (`node dist/server.js`)                                       |
-| `npm test`                       | Uruchom testy (Jest z pokryciem)                                                            |
-| `npm run test:quick`             | Uruchom szybkie testy (bez pokrycia)                                                        |
-| `npm run test:quick:lite`        | Szybkie testy bez migracji (pre-push)                                                       |
-| `npm run test:git-safety`        | Testy warstwy Git Safety (pre-push)                                                         |
-| `npm run test:frontend`          | Testy frontendowe (Jest)                                                                    |
-| `npm run test:e2e`               | Testy E2E (Playwright)                                                                      |
-| `npm run test:axe`               | Testy dostępności a11y (Axe + Playwright)                                                   |
-| `npm run test:watch`             | Uruchom testy w trybie watch                                                                |
-| `npm run test:alignment`         | Test regresyjny Playwright (wyrównanie kolumn Excel)                                        |
-| `npm run test:e2e-appname`       | E2E: spójność nazwy aplikacji (Playwright)                                                  |
-| `npm run test:e2e-appname:spawn` | E2E: jw. z własnym buildem serwera (`--spawn`)                                              |
+| Komenda                          | Opis                                                                                                                       |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                    | Uruchom backend w trybie developerskim (ts-node-dev; Express serwuje też frontend, ADR-005)                                |
+| `npm run build`                  | Zbuduj backend (TypeScript → JavaScript)                                                                                   |
+| `npm run minify:css`             | Minifikuj arkusze CSS (też w `prestart`)                                                                                   |
+| `npm run bundle:scripts`         | Zbundluj skrypty (`esbuild`)                                                                                               |
+| `npm run commit`                 | Helper commita (Conventional Commits, UTF-8 bez mojibake)                                                                  |
+| `npm start`                      | Uruchom w trybie produkcyjnym (`node dist/server.js`)                                                                      |
+| `npm test`                       | Uruchom testy (Jest z pokryciem)                                                                                           |
+| `npm run test:quick`             | Uruchom szybkie testy (bez pokrycia)                                                                                       |
+| `npm run test:quick:lite`        | Szybkie testy bez dedykowanych testów migracji i Git Safety; migracje są stosowane w izolowanych schematach testowych      |
+| `npm run test:git-safety`        | Osobne testy warstwy Git Safety                                                                                            |
+| `npm run test:frontend`          | Testy pasujące do ścieżki frontend; obejmują też backendowy `frontendDepsAnalyzer.test.ts` i wymagają testowego PostgreSQL |
+| `npm run test:e2e`               | Testy E2E (Playwright)                                                                                                     |
+| `npm run test:axe`               | Testy dostępności a11y (Axe + Playwright)                                                                                  |
+| `npm run test:watch`             | Uruchom testy w trybie watch                                                                                               |
+| `npm run test:alignment`         | Test regresyjny Playwright (wyrównanie kolumn Excel)                                                                       |
+| `npm run test:e2e-appname`       | E2E: spójność nazwy aplikacji (Playwright)                                                                                 |
+| `npm run test:e2e-appname:spawn` | E2E: jw. z własnym buildem serwera (`--spawn`)                                                                             |
 
 ### Backend
 
@@ -537,14 +537,14 @@ Szczegóły procesu aktualizacji produkcyjnej (backup, migracje addytywne, rollb
 
 ### Walidacja i kodowanie
 
-| Komenda                   | Opis                                                                                                                                      |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run validate`        | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + collisions:check + testy dymne |
-| `npm run format`          | Formatuj kod (Prettier)                                                                                                                   |
-| `npm run format:check`    | Sprawdź formatowanie                                                                                                                      |
-| `npm run encoding:check`  | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat)                                                                                  |
-| `npm run encoding:fix`    | Napraw kodowanie plików                                                                                                                   |
-| `npm run encoding:staged` | Sprawdź kodowanie tylko plików staged (git)                                                                                               |
+| Komenda                   | Opis                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `npm run validate`        | Spójność wersji, typecheck i lint BE/FE, nazwa, licencje, `test:quick`, kolizje, ratchet, zależności frontendu i cenniki |
+| `npm run format`          | Formatuj kod (Prettier)                                                                                                  |
+| `npm run format:check`    | Sprawdź formatowanie                                                                                                     |
+| `npm run encoding:check`  | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat)                                                                 |
+| `npm run encoding:fix`    | Napraw kodowanie plików                                                                                                  |
+| `npm run encoding:staged` | Sprawdź kodowanie tylko plików staged (git)                                                                              |
 
 ---
 

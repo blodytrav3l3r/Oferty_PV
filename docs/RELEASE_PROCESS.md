@@ -1,6 +1,6 @@
 # Proces wydawniczy (Release Process)
 
-**Wersja:** 1.58.1  
+**Wersja:** 1.59.0  
 **Ostatnia aktualizacja:** 2026-08-24
 
 Projekt używa **jednej gałęzi `main`** — brak gałęzi `develop`, `release/*`, `hotfix/*`.
@@ -83,9 +83,9 @@ Push taga automatycznie uruchamia workflow `.github/workflows/release.yml`, któ
 - Po zmianie wersji zrestartuj serwer (`npm run dev:backend` lub `npm start` w produkcji)
 - Release dopiero gdy zmiany są gotowe do produkcji
 - **Cache-bust assetów** (`?v=` w HTML, w tym `public/templates/*.html`) jest automatycznie synchronizowany z `VERSION` podczas release (hook `postbump` w `scripts/auto-cache-bust.mjs`). Nie zmieniamy ręcznie parametrów `?v=` w plikach HTML.
-- **Pre-push validation**: hook `.husky/pre-push` sprawdza `npm run version:check` (blokuje push przy niespójnej wersji), `npm run encoding:check`, `npm run appname:check`, `npm run lint`, `npm run lint:frontend`, `npm run typecheck`, `npm run typecheck:frontend`, `npm run test:quick:lite` oraz `npm run test:git-safety`.
+- **Pre-push validation**: hook `.husky/pre-push` sprawdza wersję, kodowanie, nazwę, licencje, kolizje, ratchet, cenniki, lint i typecheck. Hook nie uruchamia testów; wymagane bramki testowe wykonaj osobno.
 - **`--commit-all`**: standard-version domyślnie commituje tylko pliki objęte release; flaga `--commit-all` (np. `npm run release:patch -- --commit-all`) commituje wszystkie zmiany w working tree.
-- **`HUSKY=0`**: jeśli hook blokuje operację (np. pre-push), obejściem jest `HUSKY=0 git push` (lub `git -c core.hooksPath=/dev/null push`).
+- **Hooki**: nie pomijaj ich. W razie błędu ustal przyczynę, popraw ją i ponów kontrolę.
 
 ## Release — podgląd (dry run)
 

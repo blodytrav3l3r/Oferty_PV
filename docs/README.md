@@ -33,6 +33,7 @@
 ## Bezpieczeństwo i utrzymanie
 
 - [Bezpieczeństwo aplikacji](SECURITY.md) i [macierz uprawnień](security/permission-matrix.md)
+- [Licencje zależności i kontrola dystrybucji](LICENCJE_ZALEZNOSCI.md)
 - [Testy, PostgreSQL i CI](testing/postgres-install-ci-matrix.md)
 - [Procedury wdrożenia i aktualizacji](DEPLOYMENT.md), [HTTPS/reverse proxy](DEPLOY_HTTPS_IT.md)
 - [Znane błędy](errors-known.md), [proces wydania](RELEASE_PROCESS.md), [wersjonowanie](VERSIONING.md)

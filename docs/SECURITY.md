@@ -1,6 +1,6 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.58.1  
+**Wersja:** 1.59.0  
 **Ostatnia aktualizacja:** 2026-09-30
 
 > Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
@@ -145,7 +145,8 @@ Kontrakt: burst ponad limit → `429` z `Retry-After` (testy `tests/rateLimiter.
 
 | Limiter                 | Okno   | Max  | Endpointy                                                         |
 | ----------------------- | ------ | ---- | ----------------------------------------------------------------- |
-| API (globalny)          | 15 min | 1200 | Wszystkie `/api/*` (`apiLimiter` w `src/app.ts`)                  |
+| API (globalny)          | 15 min | 1200 | Wybrane trasy `/api/*`; telemetry ma osobne limity                |
+| login per IP            | 1 min  | 60   | `/api/auth/login` (`loginIpLimiter` w `src/routes/auth.ts`)       |
 | LOGIN_LIMITER           | 1 min  | 10   | `/api/auth/login` (bucket per IP + login)                         |
 | CHANGE_PASSWORD_LIMITER | 15 min | 5    | zmiana hasła                                                      |
 | WRITE_LIMITER           | 1 min  | 60   | Zapisy ofert/zamówień/klientów                                    |
@@ -155,6 +156,11 @@ Kontrakt: burst ponad limit → `429` z `Retry-After` (testy `tests/rateLimiter.
 | ADMIN_USERS_LIMITER     | 1 min  | 30   | operacje na użytkownikach                                         |
 | TELEMETRY_WRITE_LIMITER | 1 min  | 1200 | telemetria (paste/bulk: 15 studni × 4 endpointy)                  |
 | READ_LIMITER            | 1 min  | 600  | odczyty telemetry/dashboard (polling)                             |
+
+Limity per IP zależą od poprawnej konfiguracji `TRUST_PROXY`. Dla bezpośredniego
+dostępu bez reverse proxy ustaw `TRUST_PROXY=0`. Za proxy ogranicz bezpośredni
+dostęp do aplikacji i skonfiguruj proxy tak, aby nadpisywał `X-Forwarded-For`;
+liczbę zaufanych hopów dopasuj do rzeczywistej topologii.
 
 Rate limiter dodaje nagłówki odpowiedzi:
 
@@ -217,8 +223,7 @@ Zobacz [ADR-006](adr/ADR-006-https-transport.md).
 - Bazowy origin przekierowania: `PUBLIC_BASE_URL`, fallback do zwalidowanego `Host`;
   brak zaufanego originu → brak redirectu (anti open-redirect, `src/middleware/security.ts`)
 - Nagłówek HSTS (Strict-Transport-Security) ustawiony na 2 lata w produkcji (`max-age=63072000`, `includeSubDomains`, `preload`)
-- Ciastko sesji `authToken` ma flagę `Secure` (wymuszaną przez `COOKIE_SECURE=true`
-  lub `NODE_ENV=production`); `clearCookie` używa tych samych opcji
+- Przy `HTTPS_ENABLED` innym niż `false` ciastko sesji `authToken` ma flagę `Secure`, gdy żądanie jest rozpoznane jako HTTPS (`req.secure`) lub ustawiono `COOKIE_SECURE=true`. Za proxy wymaga to właściwego `TRUST_PROXY`; awaryjne `HTTPS_ENABLED=false` wyłącza flagę. `clearCookie` używa tych samych opcji.
 
 ```typescript
 export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {

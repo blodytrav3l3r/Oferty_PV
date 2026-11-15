@@ -193,6 +193,27 @@ async function startServer() {
             check(`T2 ${file}`, re.test(html) && !/WITROS Oferty/i.test(html), 'title mismatch');
         }
 
+        // T4 — branding wejściowego widoku logowania, zanim sesja przekieruje do SPA.
+        await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page
+            .locator('img.index-logo-sok')
+            .first()
+            .waitFor({ state: 'visible', timeout: 15000 });
+        const loginLogo = page.locator('img.index-logo-sok');
+        const loginLogoCount = await loginLogo.count();
+        const loginLogoAlt = loginLogoCount ? await loginLogo.first().getAttribute('alt') : null;
+        const loginSubtitle = await page.locator('.subtitle').first().textContent();
+        check(
+            'T4 login logo',
+            loginLogoCount === 1 && loginLogoAlt === APP_NAME,
+            `img.index-logo-sok count=${loginLogoCount} alt="${loginLogoAlt}"`
+        );
+        check(
+            'T4 login subtitle',
+            (loginSubtitle || '').includes(APP_SUBTITLE),
+            `subtitle="${loginSubtitle || ''}"`
+        );
+
         // Login
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
@@ -215,33 +236,40 @@ async function startServer() {
 
         // T4 — login + Pulpit
         await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        // przyczyna: DOM — logo Pulpitu renderowane przez JS po load; warunek zamiast snu.
-        await page
-            .locator('img.index-logo-sok')
-            .first()
-            .waitFor({ timeout: 15000 })
-            .catch(() => {});
+        await page.waitForURL(
+            (url) => url.pathname.endsWith('/app.html') && url.hash === '#/pulpit',
+            { timeout: 15000 }
+        );
         const t4title = await page.title();
-        const t4logoCount = await page.locator('img.index-logo-sok').count();
-        const t4logoAlt = t4logoCount
-            ? await page.locator('img.index-logo-sok').first().getAttribute('alt')
-            : null;
-        const t4sub = await page
-            .locator('.subtitle')
-            .first()
-            .textContent()
-            .catch(() => '');
+        const shellLogo = page.locator('.header .logo-sok');
+        await shellLogo.waitFor({ state: 'visible', timeout: 15000 });
+        const shellLogoAlt = await shellLogo.getAttribute('alt');
+        const shellLogoLabel = await shellLogo.getAttribute('aria-label');
+        const pulpitIframe = page.locator('#spa-iframe-pulpit');
+        await pulpitIframe.waitFor({ state: 'attached', timeout: 15000 });
+        await page
+            .frameLocator('#spa-iframe-pulpit')
+            .locator('body')
+            .waitFor({ state: 'visible', timeout: 15000 });
+        const pulpitFrameSrc = await pulpitIframe.getAttribute('src');
+        const pulpitFrameUrl = new URL(pulpitFrameSrc, page.url());
         check(
             'T4 Pulpit title',
             new RegExp(escRe(APP_NAME) + ' — Generator Ofert').test(t4title),
             `title="${t4title}"`
         );
+        check('T4 logo', shellLogoAlt === APP_NAME, `img.logo-sok alt="${shellLogoAlt}"`);
         check(
-            'T4 logo',
-            t4logoCount === 1 && t4logoAlt === APP_NAME,
-            `img.index-logo-sok count=${t4logoCount} alt="${t4logoAlt}"`
+            'T4 subtitle',
+            (shellLogoLabel || '').includes(APP_SUBTITLE),
+            `aria-label="${shellLogoLabel || ''}"`
         );
-        check('T4 subtitle', (t4sub || '').includes(APP_SUBTITLE), `subtitle="${t4sub}"`);
+        check(
+            'T4 Pulpit module',
+            pulpitFrameUrl.pathname.endsWith('/index.html') &&
+                pulpitFrameUrl.searchParams.get('host') === 'pulpit',
+            `iframe src="${pulpitFrameUrl.pathname}${pulpitFrameUrl.search}"`
+        );
 
         // T3 — nagłówek SPA w app.html
         await page.goto(`${BASE}/app.html#/studnie`, {

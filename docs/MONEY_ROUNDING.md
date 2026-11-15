@@ -46,7 +46,12 @@ Frontend:
 Backend:
 
 - `src/routes/offers/studnieCrud.ts` — `deriveStudnieTotalPrice`
+- `src/services/studnieExportAmounts.ts` — projekcja kwot studni dla PDF/DOCX; zachowuje oznaczone zamrożone udziały transportu i rozdziela pozostałe grosze
 - `src/services/pdf/helpers.ts`, `studnieHtml.ts`, `ruryHtml.ts`, `combinedHtml.ts` — sumy dokumentów
+
+Historyczne dane z cenami studni mającymi więcej niż dwa miejsca po przecinku
+mogą mieć zapisaną sumę inną niż suma pozycji zaokrąglonych osobno. Eksport
+nie zmienia zapisanych danych ani nie wyrównuje tej różnicy kosztem ceny pozycji.
 
 ## Fallback w modułach frontendu
 

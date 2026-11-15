@@ -15,9 +15,9 @@
 
 `typecheck`, `typecheck:frontend`, `lint`, `lint:frontend`, `format`, `format:check`, `appname:check`, `collisions:check`, `ratchet:check` (ratchet tras → zapytań DB), `licenses:check`, `validate` (pełna: version:check + typechecki + linty + appname + licenses + testy + collisions + ratchet + prices:verify).
 
-Testy: `npm test` (wszystkie z pokryciem), `test:quick`, `test:quick:lite` (bez migracji i git-safety, pre-push), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:parity`, `test:golden`, `test:excel-visual`, `test:excel-slo`, `test:openperf`, `test:e2e-appname`, `test:spa-guard`, `test:e2e-qe-switch`, `test:e2e-pricelist-preview`, `test:watch`, `perf:baseline` (initial-load SPA, spawn :3178; `PERF_ONLY=a,b` filtruje strony).
+Testy: `npm test` (z pokryciem, bez Git Safety), `test:quick`, `test:quick:lite` (bez dedykowanych testów migracji i Git Safety), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:parity`, `test:golden`, `test:excel-visual`, `test:excel-slo`, `test:openperf`, `test:e2e-appname`, `test:spa-guard`, `test:e2e-qe-switch`, `test:e2e-pricelist-preview`, `test:watch`, `perf:baseline` (initial-load SPA, spawn :3178; `PERF_ONLY=a,b` filtruje strony). Testy backendu stosują migracje w izolowanych schematach PostgreSQL, także w wariancie `lite`.
 
-E2E na izolacji: PostgreSQL testowy przez jawny `PLAYWRIGHT_DATABASE_URL` lub `DATABASE_URL` (izolowany schemat testowy) i `PLAYWRIGHT_BASE_URL=http://localhost:PORT` — nigdy default :3000 (dev-serwer/prod DB).
+E2E na izolacji: jawny `PLAYWRIGHT_DATABASE_URL` wskazuje testowy PostgreSQL; harness tworzy osobny schemat i uruchamia serwer na porcie testowym, domyślnie 3199.
 
 ## AI/ML, benchmark, pomiary
 

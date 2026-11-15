@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildNotices } from './generate-licenses.mjs';
+import { verifySupplementFiles } from './verify-license-supplements.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOCKFILE = path.join(ROOT, 'package-lock.json');
@@ -31,6 +32,12 @@ function main() {
         lock = JSON.parse(fs.readFileSync(LOCKFILE, 'utf-8'));
     } catch (err) {
         console.error(`Nie można odczytać ${LOCKFILE}: ${err.message}`);
+        process.exit(1);
+    }
+    try {
+        verifySupplementFiles(lock);
+    } catch (err) {
+        console.error(`Błąd uzupełnień licencyjnych: ${err.message}`);
         process.exit(1);
     }
     buildNotices(lock)

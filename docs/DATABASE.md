@@ -90,8 +90,10 @@ uruchamiać dedykowana rola backupu, niezależna od runtime. Connection stringi,
 hasła i certyfikaty pobieraj z secret managera; nie umieszczaj ich w repo,
 logach, dokumentacji ani argv widocznym dla innych procesów.
 
-Każdy backup otrzymuje checksum, czas, wersję schematu i status weryfikacji.
-Retencję dobierz do wymagań RPO/RTO i potwierdź testem. Restore wykonuj najpierw
+Backup otrzymuje plik SHA-256; po weryfikacji archiwum skrypt próbuje zapisać marker
+ostatniej poprawnej kopii z czasem, nazwą, rozmiarem, sumą i statusem. Marker
+nie zapisuje wersji schematu; ustal ją osobno z metadanych i migracji przy
+kontroli odtworzenia. Retencję dobierz do wymagań RPO/RTO i potwierdź testem. Restore wykonuj najpierw
 do izolowanej bazy, sprawdź checksum, wersję/migracje, `prices:verify` oraz
 smoke aplikacji. Restore do live wymaga jawnej osobnej zgody.
 
