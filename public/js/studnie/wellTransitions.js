@@ -246,7 +246,7 @@ function renderInlinePrzejsciaApp(containerId) {
         <div class="wt-add-panel">
             <div class="wt-add-details">
                 <span class="wt-add-title">${escapeHtml(selectedProduct.category)}</span>
-                <span class="wt-add-dn">&nbsp;${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}${selectedProduct.weight ? '&nbsp;·&nbsp;' + fmtInt(selectedProduct.weight) + ' kg' : ''}</span>
+                <span class="wt-add-dn">&nbsp;${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
             </div>
             <div class="wt-add-cell">
                 <div class="wt-add-header">Rzędna [m]</div>

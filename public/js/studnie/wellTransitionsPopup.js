@@ -359,6 +359,49 @@ window.confirmChangePrzejscieType = function (index, newType) {
     }
 };
 
+/** Popup wyboru średnicy dla przejścia niestandardowego (typ z wariantami DN). */
+function openCustomPrzejscieDnPopup(index, item) {
+    const type =
+        typeof findCustomPrzejsciaTypeByKey === 'function'
+            ? findCustomPrzejsciaTypeByKey(customPrzejsciaTypeKey(item.customTypeId))
+            : null;
+    if (!type || !Array.isArray(type.variants) || type.variants.length === 0) {
+        showToast('Ten typ przejścia nie ma zapisanych średnic', 'error');
+        return;
+    }
+    const variants =
+        typeof window.sortCustomPrzejsciaVariants === 'function'
+            ? window.sortCustomPrzejsciaVariants(type.variants)
+            : type.variants;
+    const currDn = String(item.dn == null ? '' : item.dn);
+    window.showModal({
+        id: 'change-prz-dn-modal',
+        titleId: 'change-prz-dn-title',
+        html: `
+        <div class="modal modal--prz">
+            <div class="modal-header">
+                <h3 id="change-prz-dn-title">Wybierz średnicę (DN): ${escapeHtml(type.name)}</h3>
+                <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
+            <div class="prz-grid">
+                ${variants
+                    .map((v) => {
+                        const isActive = String(v.dn) === currDn;
+                        return `<button data-action="confirmChangeCustomPrzejscieDn" data-index="${index}" data-dn="${escapeHtmlAttr(String(v.dn))}"
+                             class="prz-grid-btn ${isActive ? 'prz-grid-btn--active' : ''}">
+                             ${escapeHtml('DN ' + v.dn)}
+                        </button>`;
+                    })
+                    .join('')}
+            </div>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[]">Anuluj</button>
+            </div>
+        </div>`
+    });
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+}
+
 window.openChangePrzejscieDnPopup = function (index) {
     if (isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
@@ -370,6 +413,11 @@ window.openChangePrzejscieDnPopup = function (index) {
     }
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
+
+    if (typeof isCustomPrzejscie === 'function' && isCustomPrzejscie(well.przejscia[index])) {
+        openCustomPrzejscieDnPopup(index, well.przejscia[index]);
+        return;
+    }
 
     const currId = well.przejscia[index].productId;
     const currProduct =
@@ -441,6 +489,41 @@ window.confirmChangePrzejscieDn = function (index, newProductId) {
     delete well.przejscia[index].frozenDrillingPrice;
     delete well.przejscia[index].frozenDrillingName;
     delete well.przejscia[index].frozenDrillingDn;
+
+    closeModal();
+    if (typeof refreshActiveWell === 'function') refreshActiveWell();
+    else refreshAll();
+    autoSelectComponents(true);
+    window.refreshZleceniaModalIfActive();
+    showToast('Zmieniono średnicę przejścia', 'success');
+};
+
+window.confirmChangeCustomPrzejscieDn = function (index, dn) {
+    const well = getCurrentWell();
+    if (!well || !well.przejscia || !well.przejscia[index]) return;
+    const item = well.przejscia[index];
+
+    const type =
+        typeof findCustomPrzejsciaTypeByKey === 'function'
+            ? findCustomPrzejsciaTypeByKey(customPrzejsciaTypeKey(item.customTypeId))
+            : null;
+    const variant = type ? (type.variants || []).find((v) => String(v.dn) === String(dn)) : null;
+    if (!variant) {
+        showToast('Wybrany wariant przejścia już nie istnieje', 'error');
+        return;
+    }
+
+    item.dn = variant.dn;
+    item.customName = type.name;
+    item.customPrice = variant.price;
+    item.customWeight = variant.weight;
+    delete item.frozenPrice;
+    delete item.frozenPriceBase;
+    delete item.frozenName;
+    delete item.frozenTransitionPrice;
+    delete item.frozenDrillingPrice;
+    delete item.frozenDrillingName;
+    delete item.frozenDrillingDn;
 
     closeModal();
     if (typeof refreshActiveWell === 'function') refreshActiveWell();

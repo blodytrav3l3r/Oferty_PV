@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.61.1
+REM  Wersja: 1.61.2
 REM ensure-db.bat - Sprawdza i przygotowuje baze danych
 REM Rola: Wewnetrzny helper bazy wywolywany przez start.bat.
 REM Uzycie: call scripts\ensure-db.bat

@@ -4073,6 +4073,23 @@ td.excel-tr-selected .excel-sel-wrap > div {
     white-space: nowrap;
 }
 
+.prz-name-col {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    min-width: 0;
+    line-height: 1.1;
+}
+
+.prz-custom-note {
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-medium);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 .prz-cols {
     display: flex;
     align-items: stretch;

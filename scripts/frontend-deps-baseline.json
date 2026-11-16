@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-16",
-    "totalEdges": 2947,
+    "totalEdges": 2950,
     "edges": [
         {
             "page": "public/app.html",
@@ -10485,6 +10485,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "customPrzejsciaTypeKey",
+            "userFile": "public/js/studnie/wellTransitionsPopup.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "customPrzejsciaTypes",
             "userFile": "public/js/studnie/offerSave.js",
             "defFile": "public/js/studnie/wellTransitionsState.js",
@@ -12501,6 +12509,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "findCustomPrzejsciaTypeByKey",
+            "userFile": "public/js/studnie/wellTransitionsPopup.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "findDrillingProductForDn",
             "userFile": "public/js/studnie/actionsWellPricing.js",
             "defFile": "public/js/studnie/drillingProducts.js",
@@ -12911,14 +12927,6 @@
             "page": "public/studnie.html",
             "name": "fmtInt",
             "userFile": "public/js/studnie/solverAutoSelect.js",
-            "defFile": "public/js/shared/formatters.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "fmtInt",
-            "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -15359,6 +15367,14 @@
             "page": "public/studnie.html",
             "name": "isCustomPrzejscie",
             "userFile": "public/js/studnie/wellTransitionsCrud.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/wellTransitionsPopup.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -20784,6 +20800,14 @@
             "name": "skipWizardToStep3",
             "userFile": "public/js/studnie/orderCrud.js",
             "defFile": "public/js/studnie/uiHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "sortCustomPrzejsciaVariants",
+            "userFile": "public/js/studnie/wellTransitionsPopup.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },

@@ -133,10 +133,6 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
               ? getPrzejscieBasePrice(item, null)
               : Number(item.customPrice) || 0
           : 0;
-    const customBadge = isCustom
-        ? `<span class="badge" style="font-size:var(--fs-2xs); padding:0 0.25rem; background:rgba(var(--accent-rgb),0.15); color:var(--accent-text); border:1px solid rgba(var(--accent-rgb),0.35);">poza cennikiem</span>`
-        : '';
-
     classifyFlowType(item, globalIndex);
 
     // Stabilny identyfikator kafelka wyłącznie do renderu (data-qe-id).
@@ -242,11 +238,13 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
           ${
               isCustom
                   ? `<span class="prz-field-color">${escapeHtml(przName)}</span>
-          <span class="prz-field-dn">${escapeHtml(dnLabel)}</span>`
+          <span class="prz-name-col">
+            <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(dnLabel)} - kliknij, aby zmienić średnicę" class="prz-field-dn">${escapeHtml(dnLabel)}</span>
+            <span class="prz-custom-note">poza cennikiem</span>
+          </span>`
                   : `<span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(przName)} — kliknij, aby zmienić typ" class="prz-field-color">${escapeHtml(przName)}</span>
           <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(dnLabel)} — kliknij, aby zmienić średnicę" class="prz-field-dn">${escapeHtml(dnLabel)}</span>`
           }
-          ${customBadge}
         </div>
 
         <div class="prz-cols">
@@ -574,6 +572,8 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
             window.openChangePrzejscieTypePopup(idx);
         } else if (action === 'openChangePrzejscieDnPopup') {
             window.openChangePrzejscieDnPopup(idx);
+        } else if (action === 'confirmChangeCustomPrzejscieDn') {
+            window.confirmChangeCustomPrzejscieDn(idx, el.getAttribute('data-dn') || '');
         } else if (action === 'activateQuickEdit') {
             window.activateQuickEdit(el, idx, field);
         }

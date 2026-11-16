@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.61.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.1...v1.61.2) (2026-11-16)
+
+### Bug Fixes
+
+- **studnie:** kafelek przejścia niestandardowego — klik w DN otwiera popup wyboru średnic typu (jak PVC-lite), adnotacja „poza cennikiem” jako tekst pod średnicą bez ramki; panel dodawania nie pokazuje wagi
+
 ## [1.61.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.0...v1.61.1) (2026-11-16)
 
 ### Bug Fixes
