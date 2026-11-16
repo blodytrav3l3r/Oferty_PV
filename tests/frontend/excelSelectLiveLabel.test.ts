@@ -61,7 +61,8 @@ function loadWithRow() {
             [
                 ['', '—'],
                 ['PCV', 'PCV'],
-                ['GRP', 'GRP']
+                ['GRP', 'GRP'],
+                ['custom:ct-kaczmarek', 'Kaczmarek']
             ],
             ''
         ) +
@@ -126,6 +127,23 @@ function loadWithRow() {
         studnieProducts: [
             { id: 'prz-pcv-160', category: 'PCV', dn: '160', componentType: 'przejscie', active: 1 }
         ],
+        customPrzejsciaTypes: [
+            {
+                id: 'ct-kaczmarek',
+                name: 'Kaczmarek',
+                variants: [
+                    {
+                        dn: '400',
+                        weight: 45.24,
+                        price: 200,
+                        zapasDol: 300,
+                        zapasGora: 300,
+                        zapasDolMin: 150,
+                        zapasGoraMin: 150
+                    }
+                ]
+            }
+        ],
         currentWellIndex: 0,
         _excelActiveTab: '1000',
         _excelMaxTransitions: { '1000': 1 },
@@ -154,6 +172,17 @@ function loadWithRow() {
         getMaxPipeDn: () => 2000,
         getStudnieProductById: (id: string) =>
             [{ id: 'prz-pcv-160', category: 'PCV', dn: '160' }].find((p) => p.id === id) || null,
+        getCustomPrzejsciaTypesList: () => sandbox.customPrzejsciaTypes,
+        isCustomPrzejsciaTypeKey: (key: string) =>
+            key.startsWith('custom:') && !key.slice(7).includes(':'),
+        customPrzejsciaTypeKey: (id: string) => 'custom:' + id,
+        findCustomPrzejsciaTypeByKey: (key: string) =>
+            sandbox.customPrzejsciaTypes.find((type: any) => 'custom:' + type.id === key) || null,
+        parseCustomPrzejsciaVariantKey: (key: string) => {
+            const match = /^custom:([^:]+):(.+)$/.exec(key);
+            return match ? { typeId: match[1], dn: match[2] } : null;
+        },
+        getCustomPrzejsciaVariantKey: (typeId: string, dn: string) => 'custom:' + typeId + ':' + dn,
         escapeHtml: (s: any) => String(s),
         escapeHtmlAttr: (s: any) => String(s == null ? '' : s).replace(/"/g, '&quot;')
     };
@@ -192,6 +221,49 @@ describe('frontend: selecty przejść live (baza #58)', () => {
         vm.runInContext('excelOnPrzejscieChange(0, 0, "productId", "prz-pcv-160")', sandbox);
         expect(wells[0].przejscia[0].productId).toBe('prz-pcv-160');
         expect(labelOf('excelOnPrzejscieChange')).toBe('DN 160');
+    });
+
+    test('typ niestandardowy i jego DN zapisują właściwy wariant bez produktu cennikowego', () => {
+        const { sandbox, wells } = loadWithRow();
+        vm.runInContext('excelOnPrzejscieTypeChange(0, 0, "custom:ct-kaczmarek")', sandbox);
+        vm.runInContext(
+            'excelOnPrzejscieChange(0, 0, "customVariant", "custom:ct-kaczmarek:400")',
+            sandbox
+        );
+
+        expect(wells[0].przejscia[0]).toMatchObject({
+            isCustom: true,
+            productId: '',
+            customTypeId: 'ct-kaczmarek',
+            customName: 'Kaczmarek',
+            dn: '400',
+            customPrice: 200,
+            customWeight: 45.24,
+            zapasDol: 300,
+            zapasGora: 300,
+            zapasDolMin: 150,
+            zapasGoraMin: 150
+        });
+        expect(wells[0].przejscia[0].tempCategory).toBe('');
+        expect(wells[0].przejscia[0].customVariant).toBeUndefined();
+    });
+
+    test('po wyborze typu niestandardowego lista DN odświeża warianty i wybraną etykietę', () => {
+        const { sandbox, wells } = loadWithRow();
+        vm.runInContext('excelOnPrzejscieTypeChange(0, 0, "custom:ct-kaczmarek")', sandbox);
+        const dnSelect = document.querySelector(
+            'select[data-csp="excelOnPrzejscieChange"]'
+        ) as HTMLSelectElement;
+        expect(Array.from(dnSelect.options).map((option) => option.value)).toContain(
+            'custom:ct-kaczmarek:400'
+        );
+
+        vm.runInContext(
+            'excelOnPrzejscieChange(0, 0, "customVariant", "custom:ct-kaczmarek:400")',
+            sandbox
+        );
+        expect(wells[0].przejscia[0].dn).toBe('400');
+        expect(labelOf('excelOnPrzejscieChange')).toBe('DN 400');
     });
 
     test('Właz i Kineta: labelki sync bez full-rendera', () => {

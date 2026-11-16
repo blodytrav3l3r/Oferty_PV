@@ -219,14 +219,43 @@ function _excelCleanEmptyPrzejscia(well) {
 
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
-    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot(wIdx);
     const well = wells[wIdx];
     if (!well) return;
+    const customVariantKey =
+        field === 'customVariant' && value != null && value !== ''
+            ? typeof parseCustomPrzejsciaVariantKey === 'function'
+                ? parseCustomPrzejsciaVariantKey(String(value))
+                : null
+            : null;
+    const customVariantType =
+        customVariantKey &&
+        typeof customPrzejsciaTypeKey === 'function' &&
+        typeof findCustomPrzejsciaTypeByKey === 'function'
+            ? findCustomPrzejsciaTypeByKey(customPrzejsciaTypeKey(customVariantKey.typeId))
+            : null;
+    const customVariant =
+        customVariantType && Array.isArray(customVariantType.variants)
+            ? customVariantType.variants.find(
+                  (variant) => String(variant.dn) === customVariantKey.dn
+              )
+            : null;
+    if (field === 'customVariant' && value && !customVariant) return;
+    if (field === 'customVariant' && value) {
+        const current = well.przejscia && well.przejscia[trIdx];
+        if (
+            !current ||
+            !current.isCustom ||
+            String(current.customTypeId) !== customVariantKey.typeId
+        )
+            return;
+    }
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot(wIdx);
     // P2: zmiana geometrii unieważnia auto-stos, ale MANUAL nie uruchamia solvera.
     // (Wcześniej _excelMarkAsManual zawsze pierwsze → _excelAutoSelectForWell
     // wycofywał się na guardzie autoSelect===false i stary stos zostawał.)
-    const isGeometryField = field === 'rzednaWlaczenia' || field === 'productId';
+    const isGeometryField =
+        field === 'rzednaWlaczenia' || field === 'productId' || field === 'customVariant';
     const autoEnabled = typeof _excelAutoSelectEnabled === 'undefined' || _excelAutoSelectEnabled;
     const isAuto = autoEnabled && well.autoSelect !== false && !well.autoLocked;
     if (!isGeometryField || !isAuto) _excelMarkAsManual(wIdx);
@@ -240,12 +269,48 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         _excelPrzDirty = true;
     } catch (_eD) {} /* slot PRZ mógł urosnąć */
     const prz = wells[wIdx].przejscia[trIdx];
-    prz[field] =
-        field === 'angle'
-            ? (_excelParseNum(value) ?? 0)
-            : field === 'rzednaWlaczenia'
-              ? _excelParseNum(value)
-              : value || null;
+    if (field === 'customVariant') {
+        if (customVariant) {
+            const nextPassage = {
+                ...prz,
+                isCustom: true,
+                productId: '',
+                tempCategory: '',
+                customTypeId: String(customVariantType.id),
+                customName: customVariantType.name,
+                dn: String(customVariant.dn),
+                customPrice: Number(customVariant.price) || 0,
+                customWeight: Number(customVariant.weight) || 0,
+                zapasDol: customVariant.zapasDol,
+                zapasGora: customVariant.zapasGora,
+                zapasDolMin: customVariant.zapasDolMin,
+                zapasGoraMin: customVariant.zapasGoraMin
+            };
+            [
+                'frozenPrice',
+                'frozenPriceBase',
+                'frozenName',
+                'frozenTransitionPrice',
+                'frozenDrillingPrice',
+                'frozenDrillingName',
+                'frozenDrillingDn'
+            ].forEach((key) => delete nextPassage[key]);
+            wells[wIdx].przejscia[trIdx] = nextPassage;
+        } else if (prz.isCustom) {
+            const nextPassage = { ...prz, dn: '', customPrice: null, customWeight: null };
+            ['zapasDol', 'zapasGora', 'zapasDolMin', 'zapasGoraMin'].forEach(
+                (key) => delete nextPassage[key]
+            );
+            wells[wIdx].przejscia[trIdx] = nextPassage;
+        }
+    } else {
+        prz[field] =
+            field === 'angle'
+                ? (_excelParseNum(value) ?? 0)
+                : field === 'rzednaWlaczenia'
+                  ? _excelParseNum(value)
+                  : value || null;
+    }
     // Clamp rzędnej do zakresu dno–właz (jak quick-edit w konfiguratorze).
     // null przechodzi bez zmian; fill/paste (quiet) clampuje cicho, bez powiadomień.
     if (
@@ -307,7 +372,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         /* Baza #58: labelka selecta Średnicy (dyspozytor CSP odpala tylko slot
            modelu, $selectLabel nigdy nie leci) — inputy rzędna/kąt są natywne. */
         if (
-            field === 'productId' &&
+            (field === 'productId' || field === 'customVariant') &&
             typeof _excelSyncRowSelect === 'function' &&
             wells[wIdx] &&
             wells[wIdx].przejscia &&
@@ -317,7 +382,15 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
                 wIdx,
                 'excelOnPrzejscieChange',
                 [wIdx, trIdx],
-                wells[wIdx].przejscia[trIdx].productId || ''
+                field === 'customVariant'
+                    ? wells[wIdx].przejscia[trIdx].dn &&
+                      typeof getCustomPrzejsciaVariantKey === 'function'
+                        ? getCustomPrzejsciaVariantKey(
+                              wells[wIdx].przejscia[trIdx].customTypeId,
+                              wells[wIdx].przejscia[trIdx].dn
+                          )
+                        : ''
+                    : wells[wIdx].przejscia[trIdx].productId || ''
             );
         if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
     } catch (_ePrzRefresh) {
@@ -453,16 +526,44 @@ function _excelRefreshTransitionDnOptions(wIdx, trIdx) {
                           }
                       );
         } catch (_eProd) {}
+        var customType =
+            prz.isCustom === true &&
+            prz.customTypeId &&
+            typeof customPrzejsciaTypeKey === 'function' &&
+            typeof findCustomPrzejsciaTypeByKey === 'function'
+                ? findCustomPrzejsciaTypeByKey(customPrzejsciaTypeKey(prz.customTypeId))
+                : null;
         var activeCat = prod ? prod.category : prz.tempCategory || '';
         var refDn = null;
         try {
             if (typeof _excelPrzejsciaRefDn === 'function') refDn = _excelPrzejsciaRefDn(tab);
         } catch (_eRef) {}
         var avail = [];
-        try {
-            if (typeof _excelPrzejsciaAvailDn === 'function')
-                avail = _excelPrzejsciaAvailDn(activeCat, refDn) || [];
-        } catch (_eAvail) {}
+        if (customType && Array.isArray(customType.variants)) {
+            avail = customType.variants.map(function (variant) {
+                var dnLabel =
+                    typeof variant.dn === 'string' && variant.dn.indexOf('/') >= 0
+                        ? variant.dn
+                        : 'DN ' + String(variant.dn || '');
+                return {
+                    id:
+                        typeof getCustomPrzejsciaVariantKey === 'function'
+                            ? getCustomPrzejsciaVariantKey(customType.id, variant.dn)
+                            : 'custom:' + String(customType.id) + ':' + String(variant.dn),
+                    dn: variant.dn,
+                    customLabel: dnLabel
+                };
+            });
+        } else {
+            try {
+                if (typeof _excelPrzejsciaAvailDn === 'function')
+                    avail = _excelPrzejsciaAvailDn(activeCat, refDn) || [];
+            } catch (_eAvail) {}
+        }
+        var selectedDnValue =
+            customType && prz.dn != null && typeof getCustomPrzejsciaVariantKey === 'function'
+                ? getCustomPrzejsciaVariantKey(customType.id, prz.dn)
+                : prz.productId || '';
         var esc =
             typeof escapeHtml === 'function'
                 ? escapeHtml
@@ -498,7 +599,7 @@ function _excelRefreshTransitionDnOptions(wIdx, trIdx) {
                 } catch (_eLbl) {
                     _lbl = 'DN ' + avail[i].dn;
                 }
-                return _lbl;
+                return avail[i].customLabel || _lbl;
             }
             return '—';
         };
@@ -518,20 +619,20 @@ function _excelRefreshTransitionDnOptions(wIdx, trIdx) {
                 '<option value="' +
                 escA(_id) +
                 '"' +
-                (_id === prz.productId ? ' selected' : '') +
+                (_id === selectedDnValue ? ' selected' : '') +
                 '>' +
-                esc(_lb) +
+                esc(avail[k].customLabel || _lb) +
                 '</option>';
         }
         sel.innerHTML = html;
-        if (sel.value !== (prz.productId || '')) {
+        if (sel.value !== selectedDnValue) {
             try {
-                sel.value = prz.productId || '';
+                sel.value = selectedDnValue;
             } catch (_eVal) {}
         }
         var labelEl = wrap.querySelector('div');
         if (labelEl) {
-            var _txt = labelFor(prz.productId);
+            var _txt = labelFor(selectedDnValue);
             if (labelEl.textContent !== _txt) labelEl.textContent = _txt;
         }
     } catch (_eDn) {}
@@ -586,6 +687,20 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
             excelOpenCustomPrzejscieModal(wIdx, trIdx);
         return;
     }
+    const customTypeKey =
+        typeof isCustomPrzejsciaTypeKey === 'function' &&
+        isCustomPrzejsciaTypeKey(String(value || '')) &&
+        !(
+            typeof parseCustomPrzejsciaVariantKey === 'function' &&
+            parseCustomPrzejsciaVariantKey(String(value || ''))
+        )
+            ? String(value)
+            : '';
+    const selectedCustomType =
+        customTypeKey && typeof findCustomPrzejsciaTypeByKey === 'function'
+            ? findCustomPrzejsciaTypeByKey(customTypeKey)
+            : null;
+    if (customTypeKey && !selectedCustomType) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
         _excelSaveUndoSnapshot(wIdx);
     const _hasExisting = wells[wIdx].przejscia && trIdx < wells[wIdx].przejscia.length;
@@ -598,30 +713,60 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     try {
         _excelPrzDirty = true;
     } catch (_eD) {} /* slot PRZ mógł urosnąć */
-    wells[wIdx].przejscia[trIdx].tempCategory = value || '';
-    // Wybór katalogowego rodzaju na pozycji custom zdejmuje oznaczenie custom.
-    if (value && wells[wIdx].przejscia[trIdx].isCustom === true) {
-        const prevCustom = wells[wIdx].przejscia[trIdx];
-        prevCustom.isCustom = false;
-        delete prevCustom.customName;
-        delete prevCustom.customPrice;
-        delete prevCustom.customWeight;
-        delete prevCustom.customTypeId;
-        delete prevCustom.zapasDol;
-        delete prevCustom.zapasGora;
-        delete prevCustom.zapasDolMin;
-        delete prevCustom.zapasGoraMin;
-        delete prevCustom.dn;
-    }
-    if (!value) {
-        wells[wIdx].przejscia[trIdx].productId = '';
-    } else {
-        const currProduct = studnieProducts.find(
-            (p) => p.id === wells[wIdx].przejscia[trIdx].productId
+    const currentPassage = wells[wIdx].przejscia[trIdx];
+    const customFields = new Set([
+        'isCustom',
+        'customName',
+        'customPrice',
+        'customWeight',
+        'customTypeId',
+        'zapasDol',
+        'zapasGora',
+        'zapasDolMin',
+        'zapasGoraMin',
+        'dn',
+        'frozenPrice',
+        'frozenPriceBase',
+        'frozenTransitionPrice',
+        'frozenName',
+        'frozenDrillingPrice',
+        'frozenDrillingName',
+        'frozenDrillingDn'
+    ]);
+    if (selectedCustomType) {
+        const basePassage = Object.fromEntries(
+            Object.entries(currentPassage).filter(([key]) => !customFields.has(key))
         );
-        if (!currProduct || currProduct.category !== value) {
-            wells[wIdx].przejscia[trIdx].productId = '';
+        wells[wIdx].przejscia[trIdx] = {
+            ...basePassage,
+            isCustom: true,
+            productId: '',
+            tempCategory: '',
+            customTypeId: String(selectedCustomType.id),
+            customName: String(selectedCustomType.name),
+            dn: '',
+            customPrice: null,
+            customWeight: null
+        };
+    } else {
+        const basePassage = currentPassage.isCustom
+            ? Object.fromEntries(
+                  Object.entries(currentPassage).filter(([key]) => !customFields.has(key))
+              )
+            : currentPassage;
+        let nextPassage = {
+            ...basePassage,
+            tempCategory: value || '',
+            ...(currentPassage.isCustom ? { productId: '' } : {})
+        };
+        if (!value) {
+            nextPassage = { ...nextPassage, productId: '' };
+        } else {
+            const currProduct = studnieProducts.find((p) => p.id === nextPassage.productId);
+            if (!currProduct || currProduct.category !== value)
+                nextPassage = { ...nextPassage, productId: '' };
         }
+        wells[wIdx].przejscia[trIdx] = nextPassage;
     }
     // P2: zmiana rodzaju/DN to zmiana geometrii — w AUTO z kompletnym przejściem
     // pełny re-solve (niekompletne = sam refresh, jak dotąd; ta ścieżka nie markuje MANUAL).

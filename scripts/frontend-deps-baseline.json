@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-16",
-    "totalEdges": 2951,
+    "totalEdges": 2959,
     "edges": [
         {
             "page": "public/app.html",
@@ -10470,6 +10470,22 @@
         {
             "page": "public/studnie.html",
             "name": "customPrzejsciaTypeKey",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "customPrzejsciaTypeKey",
+            "userFile": "public/js/studnie/excelTableBody.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "customPrzejsciaTypeKey",
             "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
@@ -12502,6 +12518,22 @@
         {
             "page": "public/studnie.html",
             "name": "findCustomPrzejsciaTypeByKey",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "findCustomPrzejsciaTypeByKey",
+            "userFile": "public/js/studnie/excelTableBody.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "findCustomPrzejsciaTypeByKey",
             "userFile": "public/js/studnie/wellTransitionsInline.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
@@ -12671,14 +12703,6 @@
             "page": "public/studnie.html",
             "name": "fmt",
             "userFile": "public/js/studnie/excelHelpers.js",
-            "defFile": "public/js/shared/formatters.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "fmt",
-            "userFile": "public/js/studnie/excelTableBody.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -13526,6 +13550,14 @@
         {
             "page": "public/studnie.html",
             "name": "getCustomPrzejsciaTypesList",
+            "userFile": "public/js/studnie/excelTableBody.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getCustomPrzejsciaTypesList",
             "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
@@ -13535,6 +13567,22 @@
             "page": "public/studnie.html",
             "name": "getCustomPrzejsciaTypesList",
             "userFile": "public/js/studnie/wellTransitionsPopup.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getCustomPrzejsciaVariantKey",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getCustomPrzejsciaVariantKey",
+            "userFile": "public/js/studnie/excelTableBody.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -15320,6 +15368,14 @@
             "name": "invalidateFrozenPricesForWell",
             "userFile": "public/js/studnie/wellTransitionsInline.js",
             "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejsciaTypeKey",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -17624,6 +17680,14 @@
             "name": "parseCalcExpression",
             "userFile": "public/js/studnie/wellTransitionsInline.js",
             "defFile": "public/js/shared/calcInput.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "parseCustomPrzejsciaVariantKey",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },

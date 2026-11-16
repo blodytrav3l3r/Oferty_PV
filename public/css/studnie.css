@@ -2879,6 +2879,20 @@ select[id$='-czy'] option {
     min-width: 0 !important;
 }
 
+#excel-table-container .excel-custom-transition-dn {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-2xs);
+    min-width: 0;
+    height: 100%;
+}
+
+#excel-table-container .excel-custom-transition-dn .excel-sel-wrap {
+    flex: 1 1 auto;
+    width: auto !important;
+    min-width: 0;
+}
+
 #excel-table-container .excel-sel-wrap > div {
     padding: 0.3rem 0.45rem !important;
     font-size: var(--fs-sm) !important;

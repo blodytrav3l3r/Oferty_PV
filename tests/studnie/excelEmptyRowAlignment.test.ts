@@ -50,6 +50,16 @@ describe('excel empty row — alignment per DN (header vs data vs empty)', () =>
             filterSealsByWellType: (arr: any) => arr,
             getMaxPipeDn: () => 1000,
             visiblePrzejsciaTypes: new Set(['PVC']),
+            customPrzejsciaTypes: [],
+            getCustomPrzejsciaTypesList: () => context.customPrzejsciaTypes,
+            customPrzejsciaTypeKey: (typeId: string) => 'custom:' + typeId,
+            getCustomPrzejsciaVariantKey: (typeId: string, dn: string) =>
+                'custom:' + typeId + ':' + dn,
+            findCustomPrzejsciaTypeByKey: (key: string) =>
+                context.customPrzejsciaTypes.find(
+                    (type: any) => 'custom:' + String(type.id) === key
+                ) || null,
+            fmt: (price: number) => Number(price).toFixed(2).replace('.', ','),
             // minimal stubs for helpers called inside render
             _excelGetWellProdCode: () => null,
             _excelShortLabel: (n: string) => ({ short: n, detail: '' }),
@@ -278,6 +288,91 @@ describe('excel empty row — alignment per DN (header vs data vs empty)', () =>
         const r = countCols('styczne', { withReduction: true, stycznaNadbudowa1200: true });
         expect(r.hasReduction).toBe(true);
         expect(r.emptyTds).toBe(r.dataTds);
+    });
+
+    test('przejście niestandardowe używa listy typu i wariantu DN jak przejście z cennika', () => {
+        ctx.studnieProducts = [
+            ...PRODUCTS,
+            {
+                id: 'prz-pvc-315',
+                name: 'PVC DN315',
+                category: 'PVC',
+                componentType: 'przejscie',
+                dn: '315',
+                active: 1
+            }
+        ];
+        ctx.customPrzejsciaTypes = [
+            {
+                id: 'ct-kaczmarek',
+                name: 'Kaczmarek',
+                variants: [
+                    {
+                        dn: '400',
+                        weight: 45.24,
+                        price: 200,
+                        zapasDol: 300,
+                        zapasGora: 300,
+                        zapasDolMin: 150,
+                        zapasGoraMin: 150
+                    }
+                ]
+            }
+        ];
+        ctx._excelOverlaySelectHtml = (opts: Array<[string, string]>, cur: string) =>
+            '<select>' +
+            opts
+                .map(
+                    ([value, label]) =>
+                        '<option value="' +
+                        value +
+                        '"' +
+                        (value === cur ? ' selected' : '') +
+                        '>' +
+                        label +
+                        '</option>'
+                )
+                .join('') +
+            '</select>';
+        const well: any = {
+            id: 'well-custom-transition',
+            name: 'ST-CUSTOM',
+            dn: '1000',
+            magazyn: 'Kluczbork',
+            rzednaWlazu: 5,
+            rzednaDna: 1,
+            przejscia: [
+                {
+                    id: 'custom-transition-1',
+                    isCustom: true,
+                    productId: '',
+                    customTypeId: 'ct-kaczmarek',
+                    customName: 'Kaczmarek',
+                    dn: '400',
+                    customPrice: 200,
+                    customWeight: 45.24,
+                    rzednaWlaczenia: 0.5,
+                    angle: 0
+                }
+            ],
+            config: [],
+            kineta: 'brak',
+            psiaBuda: false
+        };
+        ctx.wells = [well];
+        ctx._excelWellIndexById = new Map([[well.id, 0]]);
+        const html = ctx._excelRenderTbody(
+            [well],
+            '1000',
+            ctx._excelGetVisibleComponentColumns('1000', well),
+            1,
+            false
+        );
+
+        expect(html).toContain('<option value="custom:ct-kaczmarek" selected>Kaczmarek</option>');
+        expect(html).toContain('<option value="custom:ct-kaczmarek:400" selected>DN 400</option>');
+        expect(html).not.toContain('excelOpenCustomPrzejscieModal');
+        expect(html).not.toContain('data-lucide="pencil"');
     });
 
     test('A/M column width — empty row używa 70px (nie 54)', () => {

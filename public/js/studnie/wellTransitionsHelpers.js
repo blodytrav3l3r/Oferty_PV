@@ -200,7 +200,7 @@ function isPricedPrzejscie(item, product) {
 
 /**
  * Typy przejść niestandardowych (nazwa + warianty DN) bieżącej oferty.
- * @returns {Array<{id:string,name:string,variants:Array<{dn:string,weight:number,price:number}>}>}
+ * @returns {Array<{id:string,name:string,variants:Array<{dn:string,weight:number,price:number,zapasDol?:number,zapasGora?:number,zapasDolMin?:number,zapasGoraMin?:number}>}>}
  */
 function getCustomPrzejsciaTypesList() {
     return typeof customPrzejsciaTypes !== 'undefined' && Array.isArray(customPrzejsciaTypes)

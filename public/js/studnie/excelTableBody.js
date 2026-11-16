@@ -449,15 +449,20 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             const currProduct = _przById.get(prz.productId);
             const isCustomPrz = !currProduct && prz.isCustom === true;
             const customLabel = isCustomPrz ? String(prz.customName || '') : '';
+            const customTypes =
+                isCustomPrz && typeof getCustomPrzejsciaTypesList === 'function'
+                    ? getCustomPrzejsciaTypesList()
+                    : [];
+            const customType =
+                isCustomPrz &&
+                prz.customTypeId &&
+                typeof findCustomPrzejsciaTypeByKey === 'function'
+                    ? findCustomPrzejsciaTypeByKey(customPrzejsciaTypeKey(prz.customTypeId))
+                    : null;
             const customDnLabel =
                 isCustomPrz && prz.dn != null && String(prz.dn).trim() !== ''
                     ? 'DN ' + String(prz.dn)
                     : '';
-            const customPriceLabel = isCustomPrz
-                ? (typeof fmt === 'function'
-                      ? fmt(Number(prz.customPrice) || 0)
-                      : String(prz.customPrice || 0)) + ' PLN'
-                : '';
             const categories = _przCategories.slice();
             const activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
             if (activeCategory && categories.indexOf(activeCategory) < 0) {
@@ -467,20 +472,33 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             categories.forEach(function (c) {
                 catOpts.push([c, c]);
             });
+            customTypes.forEach(function (type) {
+                if (!type || !type.id || !type.name) return;
+                const key =
+                    typeof customPrzejsciaTypeKey === 'function'
+                        ? customPrzejsciaTypeKey(type.id)
+                        : 'custom:' + String(type.id);
+                catOpts.push([key, type.name]);
+            });
             /* Sentinel: otwiera modal custom przejścia; nie jest wartością modelu. */
             catOpts.push(['__custom_new__', '\u2795 Niestandardowe…']);
-            const typeHtml = isCustomPrz
-                ? '<div class="excel-cell-label" style="display:flex; flex-direction:column; gap:0.1rem; padding:0 0.25rem;" title="' +
-                  escapeHtmlAttr(customLabel) +
-                  '"><span style="font-weight:var(--fw-semibold); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' +
-                  escapeHtml(customLabel) +
-                  '</span><span style="font-size:var(--fs-2xs); color:var(--accent-text);">poza cennikiem</span></div>'
-                : _excelOverlaySelectHtml(
-                      catOpts,
-                      activeCategory,
-                      { name: 'excelOnPrzejscieTypeChange', args: [wIdx, _i, '$value'] },
-                      120
-                  );
+            const customTypeValue =
+                customType && typeof customPrzejsciaTypeKey === 'function'
+                    ? customPrzejsciaTypeKey(customType.id)
+                    : '';
+            const typeHtml =
+                isCustomPrz && !customType
+                    ? '<div class="excel-cell-label" style="display:flex; flex-direction:column; gap:0.1rem; padding:0 0.25rem;" title="' +
+                      escapeHtmlAttr(customLabel) +
+                      '"><span style="font-weight:var(--fw-semibold); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' +
+                      escapeHtml(customLabel) +
+                      '</span><span style="font-size:var(--fs-2xs); color:var(--accent-text);">poza cennikiem</span></div>'
+                    : _excelOverlaySelectHtml(
+                          catOpts,
+                          customTypeValue || activeCategory,
+                          { name: 'excelOnPrzejscieTypeChange', args: [wIdx, _i, '$value'] },
+                          120
+                      );
             const availDns = activeCategory ? _przAvail(activeCategory) : [];
             const dnOpts = [['', '\u2014']];
             availDns.forEach(function (p) {
@@ -488,22 +506,50 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                     typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
                 dnOpts.push([p.id, dnLabel]);
             });
-            const dnHtml = isCustomPrz
-                ? '<div style="display:flex; align-items:center; gap:0.25rem; padding:0 0.25rem;"><span style="font-size:var(--fs-2xs); color:var(--text-muted); white-space:nowrap;">' +
-                  escapeHtml(customDnLabel) +
-                  ' · ' +
-                  escapeHtml(customPriceLabel) +
-                  '</span><button type="button" class="btn-icon" aria-label="Edytuj przejście niestandardowe" title="Edytuj przejście niestandardowe" data-csp="excelOpenCustomPrzejscieModal" data-csp-args="[' +
-                  wIdx +
-                  ',' +
-                  _i +
-                  ']" style="flex:0 0 auto;"><i data-lucide="pencil" aria-hidden="true"></i></button></div>'
-                : _excelOverlaySelectHtml(
-                      dnOpts,
-                      prz.productId,
-                      { name: 'excelOnPrzejscieChange', args: [wIdx, _i, 'productId', '$value'] },
+            const customVariantOpts = customType
+                ? (customType.variants || []).map(function (variant) {
+                      const variantKey =
+                          typeof getCustomPrzejsciaVariantKey === 'function'
+                              ? getCustomPrzejsciaVariantKey(customType.id, variant.dn)
+                              : 'custom:' + String(customType.id) + ':' + String(variant.dn);
+                      const variantDn =
+                          typeof variant.dn === 'string' && variant.dn.indexOf('/') >= 0
+                              ? variant.dn
+                              : 'DN ' + String(variant.dn || '');
+                      return [variantKey, variantDn];
+                  })
+                : [];
+            const customVariantValue =
+                customType && prz.dn != null && typeof getCustomPrzejsciaVariantKey === 'function'
+                    ? getCustomPrzejsciaVariantKey(customType.id, prz.dn)
+                    : '';
+            const customDnSelect = customType
+                ? _excelOverlaySelectHtml(
+                      dnOpts.concat(customVariantOpts),
+                      customVariantValue,
+                      {
+                          name: 'excelOnPrzejscieChange',
+                          args: [wIdx, _i, 'customVariant', '$value']
+                      },
                       110
-                  );
+                  )
+                : '';
+            const dnHtml =
+                isCustomPrz && customType
+                    ? '<div class="excel-custom-transition-dn">' + customDnSelect + '</div>'
+                    : isCustomPrz
+                      ? '<div style="display:flex; align-items:center; gap:0.25rem; padding:0 0.25rem;"><span style="font-size:var(--fs-2xs); color:var(--text-muted); white-space:nowrap;">' +
+                        escapeHtml(customDnLabel) +
+                        '</span></div>'
+                      : _excelOverlaySelectHtml(
+                            dnOpts,
+                            prz.productId,
+                            {
+                                name: 'excelOnPrzejscieChange',
+                                args: [wIdx, _i, 'productId', '$value']
+                            },
+                            110
+                        );
             html +=
                 '<td class="excel-td excel-td-right excel-tr-first' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
