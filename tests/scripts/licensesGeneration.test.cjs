@@ -50,18 +50,21 @@ test('opisuje obowiązki Blue Oak, MPL i EPL przy dystrybucji', async () => {
     assert.doesNotMatch(notices, /Projekt nie modyfikuje plików objętych MPL/);
 });
 
-test('nie potwierdza tekstów Chrome for Testing ani wariantu BSD bez dowodów', async () => {
+test('wskazuje zapis credits Chrome i nie potwierdza wariantu BSD bez dowodów', async () => {
     const { buildNotices } = await import('../../scripts/generate-licenses.mjs');
     const notices = await buildNotices({
         packages: { 'node_modules/example-bsd': { version: '1.0.0', license: 'BSD' } }
     });
     assert.match(notices, /BSD\*\*[^\n]*wariant/i);
-    assert.match(notices, /Chrome for Testing[^\n]*niezweryfikowan/i);
+    assert.match(notices, /Chrome for Testing[^\n]*chrome:\/\/credits/);
+    assert.doesNotMatch(notices, /Chrome for Testing[^\n]*niezweryfikowan/i);
     assert.doesNotMatch(notices, /lista licencji w binarce/i);
     const dockerRow = notices.split('\n').find((line) => line.startsWith('| Docker Engine'));
     assert.equal(dockerRow.split('|').length, 6);
     assert.match(notices, /\| PostgreSQL 18\s+\| osobny kontener Compose/);
     assert.match(notices, /Pełny tekst i copyright: `public\/licenses\/PostgreSQL\.txt`/);
+    assert.match(notices, /public\/licenses\/system\/README\.md/);
+    assert.match(notices, /public\/licenses\/SheetJS-NOTICE\.txt/);
     assert.match(notices, /\| Docker Desktop \(Windows\)\s+\|.*warunki Docker Desktop/);
     assert.match(notices, /nie potwierdza kompletności/i);
 });

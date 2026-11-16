@@ -137,7 +137,7 @@
         },
         {
             "file": "prisma-dev-0.24.17.txt",
-            "sha256": "043fac36e1b10fea6c900bb80409bebee132b880eaacce9a72ea4e2a5b6d97a1",
+            "sha256": "717ed2445a467fd1d7a6cb07ff865d9a74f451dc4f8c1c2745254739da381df0",
             "source": "https://registry.npmjs.org/@prisma%2Fdev/0.24.17",
             "packages": [
                 {

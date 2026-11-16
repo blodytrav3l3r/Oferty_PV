@@ -43,9 +43,11 @@ w `manifest.json`; spójność weryfikuje `npm run licenses:check`.
 Pozycje oznaczone „tekst kanoniczny” dotyczą pakietów, które nie dołączają
 własnego pliku licencji ani nie mają go w repozytorium źródłowym. Zapisano
 kanoniczną treść licencji wskazanej w metadanych pakietu; podmiot praw podano
-za metadanymi npm. Dla `@prisma/dev` metadane pakietu wskazują ISC, a licencja
-repozytorium `prisma/prisma` to Apache-2.0 — rozbieżność wymaga potwierdzenia
-u właściciela pakietu.
+za metadanymi npm. Dla `@prisma/dev` pakiet nie zawiera pliku licencji ani noty
+copyright, a publiczne repozytorium ze źródłami nie zostało zidentyfikowane.
+Deklaracja ISC pochodzi z pola `license` w `package.json`, a tekst w pliku ma
+placeholder na podmiot praw — licencję i właściciela praw trzeba potwierdzić
+u dostawcy (Prisma).
 
 Powyższa lista nie potwierdza kompletności licencji całej dystrybucji. Każdy
 artefakt (w tym obraz Docker i instalacja Windows) wymaga osobnej weryfikacji

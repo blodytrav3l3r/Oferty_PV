@@ -1,0 +1,42 @@
+SheetJS Community Edition — informacja o wersji, pochodzeniu i atrybucji
+==========================================================================
+
+Plik w aplikacji:      public/vendor/xlsx.full.min.js
+Wersja:                0.20.3
+Licencja:              Apache-2.0 (pełny tekst: public/licenses/APACHE-2.0.txt)
+SHA-256 pliku w repo:  c5e7f437d92d7752e965fa5ea560177ac20b15415eaeaf1ab8e1d37b8ab8db08
+Rozmiar:               1 342 239 bajtów
+
+Pochodzenie
+-----------
+Plik jest zbudowaną wersją biblioteki SheetJS Community Edition w wersji 0.20.3,
+pobieranej z oficjalnego kanału dystrybucji SheetJS (https://cdn.sheetjs.com/).
+Wersja jest odczytywana z zawartości pliku (pole `version`).
+
+Plik w repozytorium nie jest identyczny bajtowo z `dist/xlsx.full.min.js`
+z paczki upstream 0.20.3 (suma SHA-256 różni się), co oznacza inny przebieg
+builda lub inną konfigurację pakowania. Zgodność wersji potwierdza banner
+i pole `version`, a nie suma kontrolna pliku upstream.
+
+Atrybucja wymagana przez Apache-2.0
+-----------------------------------
+W pliku `public/vendor/xlsx.full.min.js` zachowano oryginalny banner:
+
+    /*! xlsx.js (C) 2013-present SheetJS -- http://sheetjs.com */
+
+Jest to nota o prawach autorskich i oznaczeniu pochodzenia, której art. 4(c)
+licencji Apache-2.0 nakazuje nie usuwać.
+
+Brak pliku NOTICE w dystrybucji upstream
+----------------------------------------
+Paczka upstream SheetJS 0.20.3 nie zawiera pliku `NOTICE` (sprawdzono zawartość
+archiwum: `LICENSE`, `CHANGELOG.md`, `README.md`, `package.json`, pliki źródłowe
+i `dist/`). Art. 4(d) Apache-2.0 nakazuje dołączać NOTICE tylko wtedy, gdy
+dystrybucja dzieła zawiera taki plik — w tym przypadku nie ma czego przenosić.
+Banner copyright pozostał w pliku, więc wymóg zachowania oznaczeń jest spełniony.
+
+Uwaga dla przyszłych wydań
+--------------------------
+Po aktualizacji SheetJS do nowszej wersji należy sprawdzić, czy nowa paczka
+upstream zawiera plik `NOTICE`. Jeśli tak, trzeba go dołączyć do artefaktu
+i wskazać w tym pliku. Aktualizacja wersji zmienia też sumę SHA-256 powyżej.

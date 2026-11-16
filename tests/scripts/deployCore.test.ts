@@ -457,7 +457,7 @@ describe('deploy-core', () => {
         it('uses PostgreSQL 18, a persistent named volume, and explicit app DATABASE_URL', () => {
             const text = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');
             const doc: any = yaml.load(text);
-            expect(doc.services.postgres.image).toBe('postgres:18-alpine');
+            expect(doc.services.postgres.image).toMatch(/^postgres:18-alpine@sha256:[a-f0-9]{64}$/);
             expect(doc.services.postgres.volumes).toContain('postgres-data:/var/lib/postgresql');
             expect(doc.services.postgres.healthcheck.test.join(' ')).toContain('pg_isready');
             expect(doc.services.app.depends_on.postgres.condition).toBe('service_healthy');

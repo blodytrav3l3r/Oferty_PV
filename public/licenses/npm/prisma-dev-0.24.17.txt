@@ -1,13 +1,15 @@
 @prisma/dev 0.24.17
-Zadeklarowana licencja: ISC (metadane pakietu npm)
-Wskazany podmiot praw: Igal Klebanov (autor w metadanych npm)
-Uwaga: pakiet nie dolacza wlasnego pliku licencji, a licencja repozytorium
-prisma/prisma to Apache-2.0. Tekst ponizej to kanoniczna tresc ISC; rozbieznosc
-wymaga potwierdzenia u wlasciciela pakietu.
+Zadeklarowana licencja: ISC (pole "license" w package.json pakietu)
+Wskazany podmiot praw: nie podano w pakiecie. Autor w metadanych npm: Igal Klebanov;
+pakiet publikowany przez konto npm "prismabot" (Prisma).
+Uwaga: pakiet nie dolacza pliku licencji ani zadnej noty copyright, a publiczne
+repozytorium z jego zrodlami nie zostalo zidentyfikowane. Tekst ponizej to
+kanoniczna tresc ISC z placeholderem na podmiot praw - nie jest to oryginalna
+nota. Potwierdzenie licencji i wlasciciela praw u dostawcy (Prisma) jest wymagane.
 
 ISC License
 
-Copyright (c) Igal Klebanov
+Copyright (c) [właściciel praw niepodany w pakiecie]
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above

@@ -1,6 +1,6 @@
 services:
     postgres-test:
-        image: postgres:18-alpine
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
         environment:
             POSTGRES_USER: sok_test
             POSTGRES_PASSWORD: ${POSTGRES_TEST_PASSWORD:?Set POSTGRES_TEST_PASSWORD in the environment}

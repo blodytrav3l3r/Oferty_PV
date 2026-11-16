@@ -291,7 +291,7 @@ function buildVendored(assets) {
     lines.push('| Zasób | Wersja | Licencja | Plik licencji w repo | Dowód wersji |');
     lines.push('| --- | --- | --- | --- | --- |');
     lines.push(
-        `| SheetJS Community Edition (\`public/vendor/xlsx.full.min.js\`) | ${assets.xlsx.version} | Apache-2.0 | \`public/licenses/APACHE-2.0.txt\` | \`e.version\` + sha256 \`${assets.xlsx.hash}\` |`
+        `| SheetJS Community Edition (\`public/vendor/xlsx.full.min.js\`) | ${assets.xlsx.version} | Apache-2.0 | \`public/licenses/APACHE-2.0.txt\`; nota o wersji, atrybucji i braku NOTICE upstream: \`public/licenses/SheetJS-NOTICE.txt\` | \`e.version\` + sha256 \`${assets.xlsx.hash}\` |`
     );
     lines.push(
         `| Inter — subset woff2 (\`public/css/fonts/\`, ${assets.fonts.count} plików) | subset statyczny (wagi ${assets.fonts.weights}) | SIL OFL 1.1 | \`public/licenses/SIL-OFL-1.1.txt\` | \`public/css/inter.css\` |`
@@ -310,7 +310,7 @@ function buildPlatform(platform) {
         `| Node.js | \`${platform.nodeEngine}\` | MIT | Runtime aplikacji; tekst licencji w dystrybucji Node. |`
     );
     lines.push(
-        '| PostgreSQL 18 | osobny kontener Compose `postgres:18-alpine` | PostgreSQL License | Pełny tekst i copyright: `public/licenses/PostgreSQL.txt`. Obraz Compose nie przypina digestu; pakiety Alpine wymagają osobnej kontroli. |'
+        '| PostgreSQL 18 | osobny kontener Compose `postgres:18-alpine@sha256:b6972e11…f015` | PostgreSQL License | Pełny tekst i copyright: `public/licenses/PostgreSQL.txt`. Serwer jest kompilowany ze źródeł do `/usr/local` w obrazie (18.7) i nie ma tam pliku COPYRIGHT. Pakiety Alpine: inwentarz i obowiązki w `public/licenses/system/README.md`. |'
     );
     lines.push(
         '| Docker Engine + Docker Compose plugin | hostowa zależność instalatora Linux z oficjalnego repozytorium; nie są dołączane do artefaktu S.O.K. | Apache-2.0 | https://docs.docker.com/engine/ oraz https://github.com/docker/compose/blob/main/LICENSE |'
@@ -319,7 +319,7 @@ function buildPlatform(platform) {
         '| Docker Desktop (Windows) | hostowa zależność instalatora testowego; użytkownik instaluje i akceptuje warunki osobno | warunki Docker Desktop | Nie jest dołączany do artefaktu S.O.K.; sprawdź warunki i wymagania subskrypcji dla organizacji. https://www.docker.com/legal/docker-subscription-service-agreement/ |'
     );
     lines.push(
-        `| Obraz bazowy Docker | \`${platform.baseImage}\` | MIT (Node) + licencje pakietów Debian | Pełne teksty: \`/usr/share/doc/*/copyright\` w obrazie. |`
+        `| Obraz bazowy Docker | \`${platform.baseImage}\` | MIT (Node) + licencje pakietów Debian | Pełne teksty: \`/usr/share/doc/*/copyright\` w obrazie (226 plików). Inwentarz 229 pakietów i opis: \`public/licenses/system/README.md\`. |`
     );
     lines.push(
         '| Chrome for Testing (Puppeteer) | instalowany jawnie w Dockerfile przez Puppeteer | licencje Chromium i komponentów | Zapis `chrome://credits` dla wersji instalowanej przez aktualny Puppeteer: `public/licenses/chrome-for-testing/<wersja>/credits.html`. Po zmianie wersji przeglądarki zapis wygenerować ponownie. Źródło upstream: https://chromium.googlesource.com/chromium/src/+/main/LICENSE |'
