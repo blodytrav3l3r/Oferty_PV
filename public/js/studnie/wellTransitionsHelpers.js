@@ -231,6 +231,16 @@ function _customPrzejscieNewTypeId() {
     return 'cpt-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 }
 
+/** Sortuje warianty rosnąco po DN (liczbowo, fallback tekstowy). */
+function _sortCustomPrzejsciaVariants(variants) {
+    return (Array.isArray(variants) ? variants : []).slice().sort((a, b) => {
+        const na = parseFloat(String(a.dn).replace(',', '.'));
+        const nb = parseFloat(String(b.dn).replace(',', '.'));
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+        return String(a.dn).localeCompare(String(b.dn), 'pl', { numeric: true });
+    });
+}
+
 /** Normalizuje warianty: string DN, liczby, dedupe po DN (ostatni wygrywa). */
 function _normalizeCustomPrzejsciaVariants(rawVariants) {
     const byDn = new Map();
@@ -253,7 +263,7 @@ function _normalizeCustomPrzejsciaVariants(rawVariants) {
             price: _customPrzejscieRound(price)
         });
     });
-    return Array.from(byDn.values());
+    return _sortCustomPrzejsciaVariants(Array.from(byDn.values()));
 }
 
 /** Normalizuje listę typów z oferty/zamówienia (defensywnie, dedupe po id). */
@@ -321,7 +331,7 @@ function validateCustomPrzejscieType(input) {
     return {
         ok: Object.keys(errors).length === 0,
         errors,
-        value: { name, variants }
+        value: { name, variants: _sortCustomPrzejsciaVariants(variants) }
     };
 }
 
@@ -388,5 +398,6 @@ window.findCustomPrzejsciaTypeByKey = findCustomPrzejsciaTypeByKey;
 window.getCustomPrzejsciaVariantKey = getCustomPrzejsciaVariantKey;
 window.parseCustomPrzejsciaVariantKey = parseCustomPrzejsciaVariantKey;
 window.normalizeCustomPrzejsciaTypes = normalizeCustomPrzejsciaTypes;
+window.sortCustomPrzejsciaVariants = _sortCustomPrzejsciaVariants;
 window.validateCustomPrzejscieType = validateCustomPrzejscieType;
 window.hydrateCustomPrzejsciaTypes = hydrateCustomPrzejsciaTypes;

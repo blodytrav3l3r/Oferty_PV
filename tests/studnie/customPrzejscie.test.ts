@@ -314,6 +314,53 @@ describe('typy niestandardowych przejść (nazwa + warianty DN)', () => {
         expect(wells[0].przejscia[2].customTypeId).toBeUndefined();
     });
 
+    test('sortowanie średnic rosnąco: walidacja i normalizacja', () => {
+        const { context } = runContext();
+        const result = context.validateCustomPrzejscieType({
+            name: 'T',
+            variants: [
+                { dn: '400', price: 300 },
+                { dn: '160', price: 100 },
+                { dn: '315', price: 200 }
+            ]
+        });
+        expect(result.ok).toBe(true);
+        expect(result.value.variants.map((v: any) => v.dn)).toEqual(['160', '315', '400']);
+        const normalized = context.normalizeCustomPrzejsciaTypes([
+            {
+                id: 'a',
+                name: 'A',
+                variants: [
+                    { dn: '400', price: 300 },
+                    { dn: '160', price: 100 },
+                    { dn: '315', price: 200 }
+                ]
+            }
+        ]);
+        expect(normalized[0].variants.map((v: any) => v.dn)).toEqual(['160', '315', '400']);
+    });
+
+    test('modal typu: wiersze średnic w kolejności rosnącej', () => {
+        const { context, showModalCalls } = runContext();
+        context.customPrzejsciaTypes = [
+            {
+                id: 't1',
+                name: 'Spec',
+                variants: [
+                    { dn: '400', weight: 45.24, price: 300 },
+                    { dn: '160', weight: 7.24, price: 100 },
+                    { dn: '315', weight: 28.06, price: 200 }
+                ]
+            }
+        ];
+        context.openCustomPrzejscieTypeModal({ mode: 'edit', typeId: 't1' });
+        const html = showModalCalls[0].html;
+        const order = Array.from(html.matchAll(/data-cp-field="dn"[^>]*value="([^"]*)"/g)).map(
+            (m: any) => m[1]
+        );
+        expect(order).toEqual(['160', '315', '400']);
+    });
+
     test('modal typu: nazwa escapowana w HTML (XSS)', () => {
         const { context, showModalCalls } = runContext();
         context.customPrzejsciaTypes = [

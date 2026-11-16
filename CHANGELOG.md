@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.61.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.0...v1.61.1) (2026-11-16)
+
+### Bug Fixes
+
+- **studnie:** średnice przejść niestandardowych sortowane rosnąco (modal typu, walidacja, normalizacja) oraz estetyka modala typu na klasach `.cp-*` zgodnych z S.O.K. — bez stylów inline
+
 ## [1.61.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.60.1...v1.61.0) (2026-11-16)
 
 ### Features

@@ -150,7 +150,7 @@ function _customPrzejscieRefreshInline() {
 /* ===== Typ custom przejścia — modal z wieloma średnicami ===== */
 
 function _customTypeErrorHtml(key) {
-    return `<div class="cp-error" data-cp-error="${key}" role="alert" style="color:var(--danger); font-size:var(--fs-xs);"></div>`;
+    return `<div class="cp-error" data-cp-error="${key}" role="alert"></div>`;
 }
 
 function _customTypeVariantRowHtml(variant, index) {
@@ -162,47 +162,54 @@ function _customTypeVariantRowHtml(variant, index) {
         typeof computeCustomPrzejscieWeight === 'function' ? computeCustomPrzejscieWeight(dn) : 0;
     const isManualWeight = weight !== '' && Number(weight) !== Number(autoWeight);
     return `
-    <div data-cp-variant style="display:flex; gap:0.4rem; align-items:flex-end;">
-      <div style="flex:0 0 5.5rem; display:flex; flex-direction:column; gap:0.2rem;">
-        <label class="form-label">DN *</label>
+    <div class="cp-variant" data-cp-variant>
+      <div class="cp-field cp-field-dn">
+        <label class="form-label-sm">DN *</label>
         <input class="form-input" data-cp-field="dn" type="text" maxlength="${CUSTOM_PRZEJSCIE_LIMITS.DN_MAX}" value="${_customPrzejscieEscape(dn)}" placeholder="np. 315" />
         ${_customTypeErrorHtml('v' + index + '-dn')}
       </div>
-      <div style="flex:1; display:flex; flex-direction:column; gap:0.2rem;">
-        <label class="form-label">Waga [kg]</label>
+      <div class="cp-field">
+        <label class="form-label-sm">Waga [kg]</label>
         <input class="form-input" data-cp-field="weight" data-manual="${isManualWeight ? '1' : '0'}" type="number" min="0" step="0.01" value="${_customPrzejscieEscape(weight)}" placeholder="auto z DN" title="Auto: ścianka 15 cm, beton 2400 kg/m³" />
         ${_customTypeErrorHtml('v' + index + '-weight')}
       </div>
-      <div style="flex:1; display:flex; flex-direction:column; gap:0.2rem;">
-        <label class="form-label">Cena netto * [PLN]</label>
+      <div class="cp-field">
+        <label class="form-label-sm">Cena netto * [PLN]</label>
         <input class="form-input" data-cp-field="price" type="number" min="0" step="0.01" value="${_customPrzejscieEscape(price)}" placeholder="0,00" />
         ${_customTypeErrorHtml('v' + index + '-price')}
       </div>
-      <button type="button" class="btn-icon" data-action="removeCustomPrzejscieVariant" aria-label="Usuń średnicę" title="Usuń średnicę"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+      <button type="button" class="btn-icon cp-remove" data-action="removeCustomPrzejscieVariant" aria-label="Usuń średnicę" title="Usuń średnicę"><i data-lucide="trash-2" aria-hidden="true"></i></button>
     </div>`;
 }
 
 function _customTypeModalHtml(isEdit, initial) {
-    const rows = (initial.variants && initial.variants.length ? initial.variants : [null])
-        .map((v, i) => _customTypeVariantRowHtml(v, i))
-        .join('');
+    const raw = initial.variants && initial.variants.length ? initial.variants : [null];
+    const variants =
+        typeof window.sortCustomPrzejsciaVariants === 'function'
+            ? window.sortCustomPrzejsciaVariants(raw)
+            : raw;
+    const rows = variants.map((v, i) => _customTypeVariantRowHtml(v, i)).join('');
     return `
-    <div class="modal modal--prz">
+    <div class="modal modal--prz cp-modal">
       <div class="modal-header">
         <h3 id="custom-przejscie-title">${isEdit ? 'Edytuj typ przejścia niestandardowego' : 'Nowe przejście niestandardowe'}</h3>
         <button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      <div class="modal-body" style="display:flex; flex-direction:column; gap:0.55rem;">
-        <div class="form-hint" style="font-size:var(--fs-xs); color:var(--text-muted);">
+      <div class="modal-body cp-body">
+        <p class="cp-hint">
           Typ poza cennikiem — widoczny w sekcji „Dodaj Przejście Szczelne" w tej ofercie. Cena bazowa netto, rabat studni nalicza się automatycznie. Waga liczona automatycznie dla ścianki 15 cm, można ją zmienić.
+        </p>
+        <div class="cp-field cp-name-field">
+          <label class="form-label" for="cp-name">Nazwa przejścia *</label>
+          <input id="cp-name" class="form-input" type="text" maxlength="${CUSTOM_PRZEJSCIE_LIMITS.NAME_MAX}" value="${_customPrzejscieEscape(initial.name)}" placeholder="np. Przejście specjalne" />
+          ${_customTypeErrorHtml('name')}
         </div>
-        <label class="form-label" for="cp-name">Nazwa przejścia *</label>
-        <input id="cp-name" class="form-input" type="text" maxlength="${CUSTOM_PRZEJSCIE_LIMITS.NAME_MAX}" value="${_customPrzejscieEscape(initial.name)}" placeholder="np. Przejście specjalne" />
-        ${_customTypeErrorHtml('name')}
-        <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9; margin-top:0.2rem;">Średnice (DN)</div>
-        <div id="cp-variants" style="display:flex; flex-direction:column; gap:0.5rem;">${rows}</div>
+        <div class="cp-section-head">
+          <span class="cp-section-title">Średnice (DN) — rosnąco</span>
+        </div>
+        <div id="cp-variants" class="cp-variants">${rows}</div>
         ${_customTypeErrorHtml('variants')}
-        <button type="button" class="btn btn-secondary" id="cp-add-variant" data-action="addCustomPrzejscieVariant" style="align-self:flex-start;">
+        <button type="button" class="btn btn-secondary cp-add" id="cp-add-variant" data-action="addCustomPrzejscieVariant">
           <i data-lucide="plus" aria-hidden="true"></i> Dodaj kolejną średnicę
         </button>
       </div>

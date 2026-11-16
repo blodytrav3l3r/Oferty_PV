@@ -1524,3 +1524,117 @@ html[data-theme='light'] .prz-grid-btn--active {
     background: rgba(var(--accent-rgb), 0.15);
     border-color: rgba(var(--accent-rgb), 0.5);
 }
+
+/* ===== Przejścia niestandardowe — modal typu (customPrzejscie.js) ===== */
+.modal--prz.cp-modal {
+    width: min(720px, 95vw);
+    min-width: 0;
+    max-width: min(720px, 95vw);
+}
+
+.cp-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.15rem;
+    scrollbar-width: thin;
+}
+
+.cp-hint {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.cp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.cp-name-field {
+    gap: 0.3rem;
+}
+
+.cp-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-left: 0.6rem;
+    border-left: 3px solid var(--accent);
+}
+
+.cp-section-title {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+}
+
+.cp-variants {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.cp-variant {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+}
+
+.cp-variant .cp-field {
+    flex: 1 1 0;
+}
+
+.cp-variant .cp-field-dn {
+    flex: 0 0 6rem;
+}
+
+.cp-remove {
+    flex: 0 0 auto;
+    margin-top: 1.5rem;
+}
+
+.cp-error {
+    color: var(--danger);
+    font-size: var(--fs-xs);
+    line-height: 1.3;
+}
+
+.cp-error:empty {
+    display: none;
+}
+
+.cp-add {
+    align-self: flex-start;
+}
+
+@media (max-width: 768px) {
+    .cp-variant {
+        flex-wrap: wrap;
+    }
+
+    .cp-variant .cp-field-dn {
+        flex: 1 1 100%;
+    }
+
+    .cp-variant .cp-field {
+        flex: 1 1 10rem;
+    }
+
+    .cp-remove {
+        margin-top: 0;
+        align-self: center;
+    }
+}
