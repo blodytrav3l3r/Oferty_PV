@@ -6,9 +6,18 @@
             "sha256": "a27ca07269b3518550b2e83aed13eadd7d14d924b5864e14889b40cf227530ca",
             "source": "https://github.com/puppeteer/puppeteer/blob/a207faf527ce4305b33a6c0f9706b090c21c115e/LICENSE",
             "packages": [
-                { "name": "@puppeteer/browsers", "version": "3.2.6" },
-                { "name": "puppeteer", "version": "25.16.0" },
-                { "name": "puppeteer-core", "version": "25.16.0" }
+                {
+                    "name": "@puppeteer/browsers",
+                    "version": "3.2.6"
+                },
+                {
+                    "name": "puppeteer",
+                    "version": "25.16.0"
+                },
+                {
+                    "name": "puppeteer-core",
+                    "version": "25.16.0"
+                }
             ]
         },
         {
@@ -16,58 +25,313 @@
             "sha256": "0e80a2d229d2fd4fc7e8636142ec5d0ff0bc031f14c15b682e2ac01dfd5b5138",
             "source": "https://github.com/radix-ui/primitives/blob/fcef0668a5c827e5a4baac405474d75680f9a4eb/LICENSE",
             "packages": [
-                { "name": "@radix-ui/react-compose-refs", "version": "1.1.2" },
-                { "name": "@radix-ui/react-use-layout-effect", "version": "1.1.1" }
+                {
+                    "name": "@radix-ui/react-compose-refs",
+                    "version": "1.1.2"
+                },
+                {
+                    "name": "@radix-ui/react-use-layout-effect",
+                    "version": "1.1.1"
+                }
             ]
         },
         {
             "file": "remeda-f9e681a-LICENSE.txt",
             "sha256": "acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535",
             "source": "https://github.com/remeda/remeda/blob/f9e681a707fd8cac00c43c10591c44e17f577610/LICENSE",
-            "packages": [{ "name": "remeda", "version": "2.33.4" }]
+            "packages": [
+                {
+                    "name": "remeda",
+                    "version": "2.33.4"
+                }
+            ]
         },
         {
             "file": "postgres-9b92b65-UNLICENSE.txt",
             "sha256": "b5065838cbac452dfc855ba6e6e031481ad2c68406f70d21ead9321374653e6c",
             "source": "https://github.com/porsager/postgres/blob/9b92b65da6a5121545581a6dd5de859c2a70177f/UNLICENSE",
-            "packages": [{ "name": "postgres", "version": "3.4.7" }]
+            "packages": [
+                {
+                    "name": "postgres",
+                    "version": "3.4.7"
+                }
+            ]
         },
         {
             "file": "sentry-10.76.2-LICENSE.txt",
             "sha256": "497d5a7036220d5763088d161612f9f7f2e499fe3ce186826f4369b465769312",
             "source": "https://github.com/getsentry/sentry-javascript/blob/10.76.2/LICENSE",
-            "packages": [{ "name": "@sentry/server-utils", "version": "10.76.2" }]
+            "packages": [
+                {
+                    "name": "@sentry/server-utils",
+                    "version": "10.76.2"
+                }
+            ]
         },
         {
             "file": "esbuild-609683d-LICENSE.txt",
             "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681",
             "source": "https://github.com/evanw/esbuild/blob/609683d892977362a0f99026cb74b96263d728a9/LICENSE.md",
             "packages": [
-                { "name": "@esbuild/linux-x64", "version": "0.28.2" },
-                { "name": "@esbuild/win32-x64", "version": "0.28.2" }
+                {
+                    "name": "@esbuild/linux-x64",
+                    "version": "0.28.2"
+                },
+                {
+                    "name": "@esbuild/win32-x64",
+                    "version": "0.28.2"
+                }
             ]
         },
         {
             "file": "pkgr-6e1c726-LICENSE.txt",
             "sha256": "82a222189ab9764f8ec1c052b9661f2c9f12db52387312acbf73b2be5b8b6c32",
             "source": "https://github.com/un-ts/pkgr/blob/6e1c7260486c7251e61404176a293986229a5869/LICENSE",
-            "packages": [{ "name": "@pkgr/core", "version": "0.3.6" }]
+            "packages": [
+                {
+                    "name": "@pkgr/core",
+                    "version": "0.3.6"
+                }
+            ]
         },
         {
             "file": "unrs-resolver-ccb26d2-LICENSE.txt",
             "sha256": "a9e35996693bd619302922c731fa2f620ad12d5f50b19a37c8a3e0e078c9bd2f",
             "source": "https://github.com/unrs/unrs-resolver/blob/ccb26d205e2938b16069c64a28996b48ee97ff94/LICENSE",
             "packages": [
-                { "name": "unrs-resolver", "version": "1.12.2" },
-                { "name": "@unrs/resolver-binding-linux-x64-gnu", "version": "1.12.2" },
-                { "name": "@unrs/resolver-binding-win32-x64-msvc", "version": "1.12.2" }
+                {
+                    "name": "unrs-resolver",
+                    "version": "1.12.2"
+                },
+                {
+                    "name": "@unrs/resolver-binding-linux-x64-gnu",
+                    "version": "1.12.2"
+                },
+                {
+                    "name": "@unrs/resolver-binding-win32-x64-msvc",
+                    "version": "1.12.2"
+                }
             ]
         },
         {
             "file": "saxes-211fa0e-LICENSE.txt",
             "sha256": "0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e",
             "source": "https://github.com/lddubeau/saxes/blob/211fa0ebec9b628affc09219199639887174bfc3/LICENSE",
-            "packages": [{ "name": "saxes", "version": "6.0.0" }]
+            "packages": [
+                {
+                    "name": "saxes",
+                    "version": "6.0.0"
+                }
+            ]
+        },
+        {
+            "file": "humanfs-types-0.15.0.txt",
+            "sha256": "935e78098a64646259ab599e36335452e4c4119c4b751ddc5131589a173bc4d1",
+            "source": "https://registry.npmjs.org/@humanfs%2Ftypes/0.15.0",
+            "packages": [
+                {
+                    "name": "@humanfs/types",
+                    "version": "0.15.0"
+                }
+            ]
+        },
+        {
+            "file": "prisma-dev-0.24.17.txt",
+            "sha256": "043fac36e1b10fea6c900bb80409bebee132b880eaacce9a72ea4e2a5b6d97a1",
+            "source": "https://registry.npmjs.org/@prisma%2Fdev/0.24.17",
+            "packages": [
+                {
+                    "name": "@prisma/dev",
+                    "version": "0.24.17"
+                }
+            ]
+        },
+        {
+            "file": "types-strip-bom-3.0.0.txt",
+            "sha256": "0a48f63d7d32a49d196dce4b2e0cbc236c2cc8fef42cb20e005e4d5f813cc8f6",
+            "source": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/HEAD/LICENSE",
+            "packages": [
+                {
+                    "name": "@types/strip-bom",
+                    "version": "3.0.0"
+                }
+            ]
+        },
+        {
+            "file": "add-stream-1.0.0.txt",
+            "sha256": "428bc73b946e4ea52eae7fd54ae05f0aed5580433c5087ef0878e86918fa3c48",
+            "source": "https://registry.npmjs.org/add-stream/1.0.0",
+            "packages": [
+                {
+                    "name": "add-stream",
+                    "version": "1.0.0"
+                }
+            ]
+        },
+        {
+            "file": "array-ify-1.0.0.txt",
+            "sha256": "c1b016cf5ed80e76d072b00ef8b02641265319abef5578c911f18792f377b452",
+            "source": "https://raw.githubusercontent.com/stevemao/array-ify/HEAD/LICENSE",
+            "packages": [
+                {
+                    "name": "array-ify",
+                    "version": "1.0.0"
+                }
+            ]
+        },
+        {
+            "file": "conventional-changelog-config-spec-2.1.0.txt",
+            "sha256": "662adb2305142d502ef5821016aac36ff061e551dc507210fdb5af3c653e6d4b",
+            "source": "https://registry.npmjs.org/conventional-changelog-config-spec/2.1.0",
+            "packages": [
+                {
+                    "name": "conventional-changelog-config-spec",
+                    "version": "2.1.0"
+                }
+            ]
+        },
+        {
+            "file": "cookie-signature-1.0.6.txt",
+            "sha256": "0dd4e47333485760cf8c265db5a5e24ae8d7401064c6f2e19793ee81a5bef42f",
+            "source": "https://raw.githubusercontent.com/visionmedia/node-cookie-signature/HEAD/LICENSE",
+            "packages": [
+                {
+                    "name": "cookie-signature",
+                    "version": "1.0.6"
+                }
+            ]
+        },
+        {
+            "file": "eastasianwidth-0.2.0.txt",
+            "sha256": "543f72322f0ec407fc96f9d2ea9c9af98db9b8448fdd99483be94d65a1011b16",
+            "source": "https://raw.githubusercontent.com/komagata/eastasianwidth/HEAD/MIT-LICENSE.txt",
+            "packages": [
+                {
+                    "name": "eastasianwidth",
+                    "version": "0.2.0"
+                }
+            ]
+        },
+        {
+            "file": "esrecurse-4.3.0.txt",
+            "sha256": "cb1764d4708e870cc694de13d499af2e6ee98d2751026e3a3f79de608f4f4ea0",
+            "source": "https://raw.githubusercontent.com/estools/esrecurse/HEAD/LICENSE.md",
+            "packages": [
+                {
+                    "name": "esrecurse",
+                    "version": "4.3.0"
+                }
+            ]
+        },
+        {
+            "file": "gitconfiglocal-1.0.0.txt",
+            "sha256": "1cd326f63e43b42e62296cfdc307a0e36061dd6d9cab1ef516d85bd1977a6640",
+            "source": "https://raw.githubusercontent.com/soldair/node-gitconfiglocal/HEAD/LICENSE",
+            "packages": [
+                {
+                    "name": "gitconfiglocal",
+                    "version": "1.0.0"
+                }
+            ]
+        },
+        {
+            "file": "hash.js-1.1.7.txt",
+            "sha256": "08a8db87e726093dc21c69c6cb0b208e928cfec94e00dbcf7debccb03d1b724f",
+            "source": "https://registry.npmjs.org/hash.js/1.1.7",
+            "packages": [
+                {
+                    "name": "hash.js",
+                    "version": "1.1.7"
+                }
+            ]
+        },
+        {
+            "file": "imurmurhash-0.1.4.txt",
+            "sha256": "fa0943ddcaa857d901a9eb92254d89876297ecdfbc884d294a927df08ebcbbe8",
+            "source": "https://raw.githubusercontent.com/jensyt/imurmurhash-js/HEAD/LICENSE",
+            "packages": [
+                {
+                    "name": "imurmurhash",
+                    "version": "0.1.4"
+                }
+            ]
+        },
+        {
+            "file": "isarray-1.0.0.txt",
+            "sha256": "68f12f6e2c33688699249c01d8f9623c534da20aa71989c57b061b7bc1676d14",
+            "source": "https://raw.githubusercontent.com/juliangruber/isarray/HEAD/LICENSE",
+            "packages": [
+                {
+                    "name": "isarray",
+                    "version": "1.0.0"
+                }
+            ]
+        },
+        {
+            "file": "jest-pnp-resolver-1.2.3.txt",
+            "sha256": "51696c9772ff8853f97f6039f5e15bde0eec5d1807c1e8ca20d3929cf6c37eee",
+            "source": "https://registry.npmjs.org/jest-pnp-resolver/1.2.3",
+            "packages": [
+                {
+                    "name": "jest-pnp-resolver",
+                    "version": "1.2.3"
+                }
+            ]
+        },
+        {
+            "file": "natural-compare-1.4.0.txt",
+            "sha256": "353fe762ba595bf1ffe786acf0f5984bb164205901d74f258af195fc8228c67d",
+            "source": "https://raw.githubusercontent.com/litejs/natural-compare-lite/HEAD/LICENSE",
+            "packages": [
+                {
+                    "name": "natural-compare",
+                    "version": "1.4.0"
+                }
+            ]
+        },
+        {
+            "file": "pg-types-2.2.0.txt",
+            "sha256": "3a2ff0027d5ee0d0172b04d0a9858b48a7b6513a36475c8d1e24ee17cfee6111",
+            "source": "https://registry.npmjs.org/pg-types/2.2.0",
+            "packages": [
+                {
+                    "name": "pg-types",
+                    "version": "2.2.0"
+                }
+            ]
+        },
+        {
+            "file": "pgpass-1.0.5.txt",
+            "sha256": "7a150e3e269a66bc3ae2f2fb98eff7e9c4a35f4b21e84fc99d5394ce2c115441",
+            "source": "https://registry.npmjs.org/pgpass/1.0.5",
+            "packages": [
+                {
+                    "name": "pgpass",
+                    "version": "1.0.5"
+                }
+            ]
+        },
+        {
+            "file": "spdx-exceptions-2.5.0.txt",
+            "sha256": "dcb25cffd6ee773bba4abeea4aa982a40e59c2d6e03305e064652f2d46d15c50",
+            "source": "https://creativecommons.org/licenses/by/3.0/legalcode.txt",
+            "packages": [
+                {
+                    "name": "spdx-exceptions",
+                    "version": "2.5.0"
+                }
+            ]
+        },
+        {
+            "file": "spdx-license-ids-3.0.24.txt",
+            "sha256": "de756c987be8611c88b5d75addd883a4e078a7f4f8bfcc5a4f5c62791d9aaa7c",
+            "source": "https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt",
+            "packages": [
+                {
+                    "name": "spdx-license-ids",
+                    "version": "3.0.24"
+                }
+            ]
         }
     ]
 }

@@ -322,7 +322,7 @@ function buildPlatform(platform) {
         `| Obraz bazowy Docker | \`${platform.baseImage}\` | MIT (Node) + licencje pakietów Debian | Pełne teksty: \`/usr/share/doc/*/copyright\` w obrazie. |`
     );
     lines.push(
-        '| Chrome for Testing (Puppeteer) | instalowany jawnie w Dockerfile przez Puppeteer | licencje Chromium i komponentów | Status kompletności informacji licencyjnych w artefakcie: niezweryfikowany. Źródło upstream: https://chromium.googlesource.com/chromium/src/+/main/LICENSE |'
+        '| Chrome for Testing (Puppeteer) | instalowany jawnie w Dockerfile przez Puppeteer | licencje Chromium i komponentów | Zapis `chrome://credits` dla wersji instalowanej przez aktualny Puppeteer: `public/licenses/chrome-for-testing/<wersja>/credits.html`. Po zmianie wersji przeglądarki zapis wygenerować ponownie. Źródło upstream: https://chromium.googlesource.com/chromium/src/+/main/LICENSE |'
     );
     lines.push(
         '| Caddy (opcjonalny reverse proxy) | wdrożenie hosta | Apache-2.0 | Nie jest częścią artefaktu aplikacji. |'

@@ -8,4 +8,5 @@ package-lock.json
 ECC/
 *.htm
 *.html.bak
+public/licenses/chrome-for-testing/
 *.xlsx
