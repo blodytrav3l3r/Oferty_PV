@@ -18,6 +18,19 @@ let _customPrzejscieRows = [];
 let _offerPrzejscieRows = [];
 let _przejsciaInitialized = false;
 
+function getWellCustomPrzejscia() {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return [];
+    return wells
+        .flatMap((well) => (Array.isArray(well.przejscia) ? well.przejscia : []))
+        .filter((transition) => transition && transition.isCustom === true && transition.customName)
+        .map((transition) => ({
+            ...transition,
+            customName: String(transition.customName).trim(),
+            dn: String(transition.dn ?? '').trim()
+        }))
+        .filter((transition) => transition.customName);
+}
+
 /**
  * Buduje listę typów przejść z cennika (studnieProducts).
  * Zwraca tablicę: [{ rodzaj, dnOd, dnDo, source: 'offer' }]
@@ -99,6 +112,44 @@ function buildOfferPrzejsciaTypes() {
             });
         });
     });
+
+    const customNumericTypes = new Map();
+    const customStringTypes = new Map();
+    getWellCustomPrzejscia().forEach((transition) => {
+        const { customName: name, dn: rawDn } = transition;
+        if (!rawDn) return;
+
+        const typeId = String(transition.customTypeId || '').trim();
+        const typeKey = `${typeId || name}\u0000${name}`;
+        if (rawDn.includes('/')) {
+            const key = `${typeKey}\u0000${rawDn}`;
+            if (!customStringTypes.has(key)) {
+                customStringTypes.set(key, { rodzaj: name, dnOd: rawDn, dnDo: rawDn });
+            }
+            return;
+        }
+
+        const dn = Number(rawDn);
+        if (!Number.isFinite(dn) || dn <= 0) return;
+        const current = customNumericTypes.get(typeKey);
+        customNumericTypes.set(
+            typeKey,
+            current
+                ? { ...current, dnOd: Math.min(current.dnOd, dn), dnDo: Math.max(current.dnDo, dn) }
+                : { rodzaj: name, dnOd: dn, dnDo: dn }
+        );
+    });
+
+    [...customNumericTypes.values(), ...customStringTypes.values()].forEach((type) => {
+        result.push({
+            ...type,
+            ilosc: 1,
+            uwagi: '',
+            czyPrzejscie: 'TAK',
+            source: 'offer'
+        });
+    });
+
     return result.sort((a, b) => a.rodzaj.localeCompare(b.rodzaj));
 }
 
@@ -214,6 +265,22 @@ function updatePrzejscieDnOptions(prefix, category) {
             }
         });
     }
+    getWellCustomPrzejscia()
+        .filter((transition) => transition.customName === category && transition.dn)
+        .forEach((transition) => {
+            if (transition.dn.includes('/')) {
+                hasStringDn = true;
+                dnsStr.add(transition.dn);
+                dns.add(
+                    parseFloat(transition.dn.split('/')[1]) ||
+                        parseFloat(transition.dn.split('/')[0]) ||
+                        0
+                );
+            } else {
+                const dn = Number(transition.dn);
+                if (Number.isFinite(dn) && dn > 0) dns.add(dn);
+            }
+        });
 
     // Kategorie ze stringowym DN (jajowe) — pokaż pełne wymiary w read-only input
     if (hasStringDn && category && category !== 'Inne') {
@@ -303,6 +370,22 @@ function buildPrzejscieRowHTML(row, idx, source) {
             }
         });
     }
+    getWellCustomPrzejscia().forEach((transition) => {
+        cats.add(transition.customName);
+        if (!row.rodzaj || row.rodzaj === 'Inne' || transition.customName === row.rodzaj) {
+            if (transition.dn.includes('/')) {
+                dnsStr.add(transition.dn);
+                dns.add(
+                    parseFloat(transition.dn.split('/')[1]) ||
+                        parseFloat(transition.dn.split('/')[0]) ||
+                        0
+                );
+            } else {
+                const dn = Number(transition.dn);
+                if (Number.isFinite(dn) && dn > 0) dns.add(dn);
+            }
+        }
+    });
 
     const catOptions = Array.from(cats).sort();
     const dnOptions = Array.from(dns)
