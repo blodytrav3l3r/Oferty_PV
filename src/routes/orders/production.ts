@@ -327,6 +327,7 @@ router.get('/index', requireAuth, async (req, res) => {
                 wellId: string | null;
                 elementIndex: number | null;
                 elementKey: string | null;
+                version: number | null;
                 createdAt: string | null;
                 updatedAt: string | null;
                 status: string | null;
@@ -336,7 +337,7 @@ router.get('/index', requireAuth, async (req, res) => {
         >`SELECT production_orders_rel.id, production_orders_rel."userId",
             production_orders_rel."orderId", production_orders_rel."wellId",
             production_orders_rel."elementIndex", production_orders_rel."elementKey",
-            production_orders_rel."createdAt", production_orders_rel."updatedAt",
+            production_orders_rel.version, production_orders_rel."createdAt", production_orders_rel."updatedAt",
             ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status')} as "status",
             ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'productionOrderNumber')} as "productionOrderNumber",
             ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'offerId')} as "offerId"
@@ -352,6 +353,7 @@ router.get('/index', requireAuth, async (req, res) => {
                 wellId: r.wellId,
                 elementIndex: r.elementIndex,
                 elementKey: r.elementKey,
+                version: r.version,
                 createdAt: r.createdAt,
                 updatedAt: r.updatedAt,
                 status: r.status,

@@ -89,6 +89,7 @@ describe('GET /index (lekki indeks PZ)', () => {
                 wellId: 'w-1',
                 elementIndex: 2,
                 elementKey: 'ek-1',
+                version: 4,
                 createdAt: '2026-09-01',
                 updatedAt: '2026-09-02',
                 status: 'draft',
@@ -106,6 +107,7 @@ describe('GET /index (lekki indeks PZ)', () => {
             orderId: 'o-1',
             elementIndex: 2,
             elementKey: 'ek-1',
+            version: 4,
             status: 'draft',
             productionOrderNumber: 'AB/PZ/000001/26',
             offerId: 'of-1'
