@@ -432,9 +432,10 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
 
         const pjs = w.przejscia || [];
         for (const pj of pjs) {
-            let prod = allProducts.get(pj.productId);
-            if (!prod || prod.componentType !== 'przejscie') {
-                prod = _findPrzejscieByIdPrefix(allProducts, pj.productId);
+            const productId = String(pj.productId || '').trim();
+            let prod = productId ? allProducts.get(productId) : undefined;
+            if (productId && (!prod || prod.componentType !== 'przejscie')) {
+                prod = _findPrzejscieByIdPrefix(allProducts, productId);
             }
             let cat: string;
             let dn: number | string;

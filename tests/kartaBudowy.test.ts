@@ -331,6 +331,48 @@ describe('kartaBudowy - Z-71', () => {
         expect(htmlArg).toContain('Razem');
     });
 
+    it('zlicza przejście niestandardowe osobno od katalogowego przy generowaniu PDF', async () => {
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'order-custom-transition',
+            data: JSON.stringify({
+                kartaBudowy: {},
+                wells: [
+                    {
+                        rzednaDna: '0',
+                        config: [],
+                        przejscia: [
+                            { productId: 'PRZ-PCV-LITE-315', rzednaWlaczenia: '0.5' },
+                            {
+                                productId: '',
+                                isCustom: true,
+                                customName: 'Kaczmarek',
+                                dn: '400',
+                                rzednaWlaczenia: '0.5'
+                            }
+                        ]
+                    }
+                ]
+            })
+        });
+        (getCatalogStudnieRows as jest.Mock).mockResolvedValue([
+            {
+                id: 'PRZ-PCV-LITE-315',
+                componentType: 'przejscie',
+                category: 'PVC-lite',
+                dn: '315',
+                height: 0
+            }
+        ]);
+
+        await generateKartaBudowyPDF('order-custom-transition');
+
+        const html = (pdfEngine.generatePDF as jest.Mock).mock.calls[0][0] as string;
+        expect(html).toMatch(
+            /<td style="text-align:left;">Kaczmarek<\/td>\s*<td>DN400<\/td>\s*<td>0<\/td>\s*<td>0<\/td>\s*<td>1<\/td>/
+        );
+        expect(html).toContain('<td style="text-align:left;">PVC-lite</td>');
+    });
+
     it('generuje KartaBudowyRury z tabelą elementów zamówienia', async () => {
         (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
             id: 'rury1',

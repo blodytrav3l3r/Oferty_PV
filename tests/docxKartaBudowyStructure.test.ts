@@ -22,6 +22,7 @@ jest.mock('../src/utils/logger', () => ({
 
 import { generateKartaBudowyDOCX } from '../src/services/docx/studnie/kartaBudowy';
 import { generateKartaBudowyRuryDOCX } from '../src/services/docx/rury/kartaBudowy';
+import { getCatalogStudnieRows } from '../src/services/pricelist/catalog';
 import { logger } from '../src/utils/logger';
 
 const orderData = {
@@ -190,23 +191,39 @@ describe('generateKartaBudowyDOCX (studnie)', () => {
                     rzednaDna: '0',
                     config: [],
                     przejscia: [
+                        { productId: 'PRZ-PCV-LITE-315', rzednaWlaczenia: '0.5' },
                         {
                             productId: '',
                             isCustom: true,
-                            customName: 'Przejście specjalne 315',
+                            customName: 'Kaczmarek',
                             customPrice: 1000,
-                            dn: '315',
+                            dn: '400',
                             rzednaWlaczenia: '0.5'
                         }
                     ]
                 }
             ]
         };
+        (getCatalogStudnieRows as jest.Mock).mockResolvedValue([
+            {
+                id: 'PRZ-PCV-LITE-315',
+                componentType: 'przejscie',
+                category: 'PVC-lite',
+                dn: '315',
+                height: 0
+            }
+        ]);
         findStudnie.mockResolvedValueOnce(orderFixture(withCustom));
 
         const xml = await documentXml(await generateKartaBudowyDOCX('order-1'));
         const text = xml.replace(/<[^>]+>/g, '');
-        expect(text).toContain('Przejście specjalne 315');
+        expect(text).toContain('PVC-lite');
+        const customRow = rowWith(xml, 'Kaczmarek');
+        const customCells = [...customRow.matchAll(/<w:t(?:\s[^>]*)?>(.*?)<\/w:t>/g)].map(
+            ([, cell]) => cell
+        );
+        expect(customCells).toEqual(['1', 'Kaczmarek', '400', '0', '0', '1']);
+        expect(text).toContain('Razem');
     });
 });
 

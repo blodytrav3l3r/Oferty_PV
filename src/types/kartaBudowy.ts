@@ -67,8 +67,17 @@ export interface ConfigItem {
 }
 
 export interface PrzejscieItem {
-    productId: string;
+    productId?: string;
     rzednaWlaczenia?: string;
+    angle?: number;
+    angleExecution?: number;
+    angleGony?: number;
+    flowType?: string;
+    doplata?: number;
+    frozenPrice?: number;
+    frozenPriceBase?: number;
+    frozenName?: string;
+    katWlaczenia?: number;
     /** Przejście niestandardowe (poza cennikiem) — tylko w danej ofercie/zleceniu. */
     isCustom?: boolean;
     customName?: string;
@@ -76,6 +85,10 @@ export interface PrzejscieItem {
     customWeight?: number;
     customTypeId?: string;
     dn?: string | number;
+    zapasDol?: number;
+    zapasGora?: number;
+    zapasDolMin?: number;
+    zapasGoraMin?: number;
 }
 
 export interface WellItem {
