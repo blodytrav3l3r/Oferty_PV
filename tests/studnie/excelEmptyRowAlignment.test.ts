@@ -371,6 +371,8 @@ describe('excel empty row — alignment per DN (header vs data vs empty)', () =>
 
         expect(html).toContain('<option value="custom:ct-kaczmarek" selected>Kaczmarek</option>');
         expect(html).toContain('<option value="custom:ct-kaczmarek:400" selected>DN 400</option>');
+        expect(html).not.toContain('__custom_new__');
+        expect(html).not.toContain('Niestandardowe…');
         expect(html).not.toContain('excelOpenCustomPrzejscieModal');
         expect(html).not.toContain('data-lucide="pencil"');
     });

@@ -480,8 +480,6 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                         : 'custom:' + String(type.id);
                 catOpts.push([key, type.name]);
             });
-            /* Sentinel: otwiera modal custom przejścia; nie jest wartością modelu. */
-            catOpts.push(['__custom_new__', '\u2795 Niestandardowe…']);
             const customTypeValue =
                 customType && typeof customPrzejsciaTypeKey === 'function'
                     ? customPrzejsciaTypeKey(customType.id)
