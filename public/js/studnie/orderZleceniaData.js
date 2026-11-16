@@ -201,25 +201,49 @@ function auditPzElementKeyMismatch() {
 // Współbieżne zapisy (double-click, accept→save+save) współdzielą jeden lot.
 // Bez tego każdy klik to kolejny burst PUT pod limiter.
 let _pzSaveInFlight = null;
+const _pzPendingSave = new WeakMap();
 
 async function saveProductionOrdersData(data, opts) {
-    if (_pzSaveInFlight) return _pzSaveInFlight;
-    _pzSaveInFlight = _saveProductionOrdersBulk(data, opts);
+    const records = Array.isArray(data) ? data : [];
+    const onlyPending = Boolean(opts && opts.onlyPending);
+    const list = onlyPending
+        ? records.filter((po) => po && typeof po === 'object' && _pzPendingSave.has(po))
+        : records;
+    const pendingTokens = new Map();
+    for (const po of list) {
+        if (!po || typeof po !== 'object') continue;
+        const token = onlyPending ? _pzPendingSave.get(po) : Symbol();
+        _pzPendingSave.set(po, token);
+        pendingTokens.set(po, token);
+    }
+    if (list.length === 0) return [];
+    if (_pzSaveInFlight) {
+        await _pzSaveInFlight;
+        const pending = list.filter((po) => po && typeof po === 'object' && _pzPendingSave.has(po));
+        if (pending.length === 0) return [];
+        return saveProductionOrdersData(pending, Object.assign({}, opts, { onlyPending: true }));
+    }
+    const flight = _saveProductionOrdersBulk(list, opts, pendingTokens);
+    _pzSaveInFlight = flight;
     try {
-        return await _pzSaveInFlight;
+        return await flight;
     } finally {
-        _pzSaveInFlight = null;
+        if (_pzSaveInFlight === flight) _pzSaveInFlight = null;
     }
 }
 
-async function _saveProductionOrdersBulk(data, opts) {
+async function _saveProductionOrdersBulk(data, opts, pendingTokens) {
     const list = Array.isArray(data) ? data : [];
     if (list.length === 0) return [];
     const noRetry = Boolean(opts && opts.noRetry);
     const saved = [];
     for (let s = 0; s < list.length; s += 200) {
-        const chunkSaved = await _saveProductionChunk(list.slice(s, s + 200), noRetry);
+        const chunk = list.slice(s, s + 200);
+        const chunkSaved = await _saveProductionChunk(chunk, noRetry);
         saved.push(...chunkSaved);
+        for (const po of chunk) {
+            if (_pzPendingSave.get(po) === pendingTokens.get(po)) _pzPendingSave.delete(po);
+        }
     }
     return saved;
 }
@@ -294,6 +318,10 @@ async function _saveProductionChunk(chunk, noRetry) {
     } catch (_e) {}
     if (!res.ok) {
         const err = new Error((body && body.error) || 'Server error');
+        if (body && typeof body.code === 'string') err.code = body.code;
+        if (body && typeof body.serverVersion === 'number') {
+            err.serverVersion = body.serverVersion;
+        }
         logger.error('orderManager', 'saveProductionOrdersData error:', err);
         throw err;
     }
@@ -420,7 +448,7 @@ async function acceptProductionOrder() {
     po.acceptedBy = currentUser ? currentUser.username : '';
 
     try {
-        await saveProductionOrdersData(productionOrders);
+        await saveProductionOrdersData([po]);
 
         renderZleceniaList();
         renderZleceniaWellConfig();
@@ -472,7 +500,7 @@ async function revokeProductionOrder() {
     po.status = 'draft';
     delete po.acceptedAt;
     delete po.acceptedBy;
-    await saveProductionOrdersData(productionOrders);
+    await saveProductionOrdersData([po]);
     renderZleceniaList();
     refreshAll();
     if (zleceniaSelectedIdx >= 0 && zleceniaElementsList[zleceniaSelectedIdx]) {

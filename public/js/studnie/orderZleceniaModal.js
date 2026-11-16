@@ -122,7 +122,7 @@ async function closeZleceniaModal() {
     let savedNow = false;
     if (zleceniaElementsList.length > 0) {
         const shouldSave = await appConfirm(
-            'Czy zapisać wszystkie zlecenia produkcyjne i zamówienie przed zamknięciem?',
+            'Czy zapisać oczekujące zlecenia produkcyjne i zmiany studni przed zamknięciem?',
             {
                 title: 'Zamknięcie zlecenia',
                 type: 'warning',
@@ -131,12 +131,28 @@ async function closeZleceniaModal() {
             }
         );
         if (shouldSave) {
-            await saveProductionOrdersData(productionOrders);
+            try {
+                await saveProductionOrdersData(productionOrders, { onlyPending: true });
+            } catch (err) {
+                logger.error('orderManager', 'closeZleceniaModal save error:', err);
+                if (err && err.code === 'VERSION_CONFLICT') {
+                    showToast(
+                        'Konflikt wersji: serwer ma nowsze zlecenie. Okno pozostało otwarte; zapis nie został ponowiony. Odśwież dane przed ponowną edycją.',
+                        'error'
+                    );
+                } else {
+                    showToast(
+                        'Nie udało się zapisać zleceń. Okno pozostało otwarte, aby zachować lokalne zmiany.',
+                        'error'
+                    );
+                }
+                return;
+            }
             await syncSourceData({ skipFreeze: true });
             wellsSnapshotBeforeZlecenia = structuredClone(wells);
             savedNow = true;
             showToast(
-                '<i data-lucide="check-circle-2"></i> Zapisano zlecenia produkcyjne i zamówienie',
+                '<i data-lucide="check-circle-2"></i> Zapisano zmiany studni w ofercie lub zamówieniu',
                 'success'
             );
         }
@@ -376,7 +392,7 @@ async function _saveProductionOrderInner() {
     }
 
     try {
-        await saveProductionOrdersData(productionOrders);
+        await saveProductionOrdersData([order]);
 
         if (wellsSnapshotBeforeZlecenia) {
             wellsSnapshotBeforeZlecenia = structuredClone(wells);

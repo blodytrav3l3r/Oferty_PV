@@ -94,7 +94,6 @@ describe('orderZleceniaDoubleSubmit (P1: podwojny numer PZ)', () => {
         expect(stats().fetchCalls).toBe(1);
         expect(stats().saveCalls).toBe(1);
     });
-
     test('mutex zwalniany po sukcesie — kolejny zapis dziala', async () => {
         const { sb, stats } = loadModal();
         await sb.saveProductionOrder();
