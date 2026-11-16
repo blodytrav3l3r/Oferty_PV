@@ -1597,10 +1597,6 @@ html[data-theme='light'] .prz-grid-btn--active {
     flex: 1 1 0;
 }
 
-.cp-variant .cp-field-dn {
-    flex: 0 0 6rem;
-}
-
 .cp-remove {
     flex: 0 0 auto;
     margin-top: 1.5rem;
@@ -1630,7 +1626,8 @@ html[data-theme='light'] .prz-grid-btn--active {
     }
 
     .cp-variant .cp-field {
-        flex: 1 1 10rem;
+        flex: 1 1 0;
+        min-width: 8rem;
     }
 
     .cp-remove {
