@@ -207,6 +207,10 @@ describe('orderDto — allowlist transportowa (P0.1)', () => {
             customName: 'Przejście specjalne 315',
             customPrice: 1000,
             dn: '315',
+            zapasDol: 240,
+            zapasGora: 360,
+            zapasDolMin: 100,
+            zapasGoraMin: 180,
             rzednaWlaczenia: 101.5,
             angle: 0,
             flowType: 'WLOT'
@@ -216,6 +220,10 @@ describe('orderDto — allowlist transportowa (P0.1)', () => {
         expect(custom).toBeDefined();
         expect(custom.customName).toBe('Przejście specjalne 315');
         expect(custom.customPrice).toBe(1000);
+        expect(custom.zapasDol).toBe(240);
+        expect(custom.zapasGora).toBe(360);
+        expect(custom.zapasDolMin).toBe(100);
+        expect(custom.zapasGoraMin).toBe(180);
         expect(custom.productId).toBe('');
         expect(dto.toWellPrzejscieDTO({ dn: '160' })).toBeNull();
     });

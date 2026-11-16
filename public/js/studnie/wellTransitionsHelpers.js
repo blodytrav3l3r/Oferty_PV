@@ -64,6 +64,18 @@ const CUSTOM_PRZEJSCIE_LIMITS = Object.freeze({
     WEIGHT_MAX: 100000
 });
 
+const CUSTOM_PRZEJSCIE_RESERVE_FIELDS = ['zapasDol', 'zapasGora', 'zapasDolMin', 'zapasGoraMin'];
+
+function _customPrzejscieNormalizeReserves(variant) {
+    return CUSTOM_PRZEJSCIE_RESERVE_FIELDS.reduce((reserves, key) => {
+        const raw = variant[key];
+        if (raw === '' || raw == null) return reserves;
+        const value = Number(raw);
+        if (Number.isFinite(value) && value >= 0) reserves[key] = value;
+        return reserves;
+    }, {});
+}
+
 /** Klucz typu custom w panelu: 'custom:<id>'. Wariant: 'custom:<id>:<dn>'. */
 const CUSTOM_PRZEJSCIE_TYPE_PREFIX = 'custom:';
 /** Domyślna grubość ścianki studni do auto-wagi przejścia [m]. */
@@ -260,7 +272,8 @@ function _normalizeCustomPrzejsciaVariants(rawVariants) {
         byDn.set(dn, {
             dn,
             weight: _customPrzejscieRound(weight),
-            price: _customPrzejscieRound(price)
+            price: _customPrzejscieRound(price),
+            ..._customPrzejscieNormalizeReserves(v)
         });
     });
     return _sortCustomPrzejsciaVariants(Array.from(byDn.values()));
@@ -283,7 +296,7 @@ function normalizeCustomPrzejsciaTypes(rawList) {
 
 /**
  * Waliduje typ custom przejścia (nazwa + warianty).
- * Błędy wariantu mają klucze `v<index>-dn|weight|price`.
+ * Błędy wariantu mają klucze `v<index>-<pole>`.
  * @param {{name?:string, variants?:Array}} input
  */
 function validateCustomPrzejscieType(input) {
@@ -321,10 +334,20 @@ function validateCustomPrzejscieType(input) {
         else if (price < 0) errors['v' + index + '-price'] = 'Cena nie może być ujemna.';
         else if (price > CUSTOM_PRZEJSCIE_LIMITS.PRICE_MAX)
             errors['v' + index + '-price'] = 'Cena przekracza dopuszczalny limit.';
+        const reserveValues = {};
+        CUSTOM_PRZEJSCIE_RESERVE_FIELDS.forEach((key) => {
+            const rawReserve = v[key];
+            if (rawReserve === '' || rawReserve == null) return;
+            const reserve = Number(rawReserve);
+            if (!Number.isFinite(reserve) || reserve < 0)
+                errors['v' + index + '-' + key] = 'Zapas musi być nieujemną liczbą.';
+            else reserveValues[key] = reserve;
+        });
         return {
             dn,
             weight: _customPrzejscieRound(Number.isFinite(weightRaw) ? weightRaw : 0),
-            price: _customPrzejscieRound(Number.isFinite(price) ? price : 0)
+            price: _customPrzejscieRound(Number.isFinite(price) ? price : 0),
+            ...reserveValues
         };
     });
 
@@ -369,7 +392,8 @@ function hydrateCustomPrzejsciaTypes(rawTypes, wellList) {
                 type.variants.push({
                     dn,
                     weight: _customPrzejscieRound(Number.isFinite(weight) ? weight : 0),
-                    price: _customPrzejscieRound(price)
+                    price: _customPrzejscieRound(price),
+                    ..._customPrzejscieNormalizeReserves(item)
                 });
             }
             item.customTypeId = type.id;

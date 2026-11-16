@@ -107,6 +107,36 @@ describe('applyDrilledRings', () => {
         ]);
     });
 
+    it('custom przejście zachowuje geometrię DN przy doborze kręgu wierconego', () => {
+        const s = loadSolver();
+        const kregi = KREGI_QTY2();
+        const segs = s.buildConfigSegments(kregi, false);
+        const well = {
+            ...WELL(0.92),
+            przejscia: [
+                {
+                    productId: '',
+                    isCustom: true,
+                    customName: 'Custom DN160',
+                    dn: '160',
+                    rzednaWlaczenia: '0.92',
+                    zapasDol: 240,
+                    zapasGora: 360,
+                    zapasDolMin: 100,
+                    zapasGoraMin: 180
+                }
+            ]
+        };
+
+        const result = s.applyDrilledRings(kregi, segs, well, AVAIL());
+
+        expect(result.items.map((item: any) => [item.productId, item.quantity])).toEqual([
+            ['DDD-1000-600', 1],
+            ['KDB-1000-500-D', 1],
+            ['KDB-1000-500-OT', 1]
+        ]);
+    });
+
     it('qty=1 → podmiana productId w miejscu (bez splitu)', () => {
         const s = loadSolver();
         const kregi = KREGI();

@@ -1527,9 +1527,9 @@ html[data-theme='light'] .prz-grid-btn--active {
 
 /* ===== Przejścia niestandardowe — modal typu (customPrzejscie.js) ===== */
 .modal--prz.cp-modal {
-    width: min(720px, 95vw);
+    width: min(1180px, 95vw);
     min-width: 0;
-    max-width: min(720px, 95vw);
+    max-width: min(1180px, 95vw);
 }
 
 .cp-body {
@@ -1544,7 +1544,7 @@ html[data-theme='light'] .prz-grid-btn--active {
 
 .cp-hint {
     margin: 0;
-    font-size: var(--fs-xs);
+    font-size: var(--fs-md);
     color: var(--text-muted);
     line-height: 1.45;
 }
@@ -1584,8 +1584,14 @@ html[data-theme='light'] .prz-grid-btn--active {
 }
 
 .cp-variant {
-    display: flex;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns:
+        minmax(72px, 0.7fr)
+        minmax(95px, 0.9fr)
+        minmax(115px, 1.15fr)
+        repeat(4, minmax(95px, 0.9fr))
+        32px;
+    align-items: start;
     gap: 0.55rem;
     padding: 0.6rem;
     border: 1px solid var(--border);
@@ -1594,12 +1600,20 @@ html[data-theme='light'] .prz-grid-btn--active {
 }
 
 .cp-variant .cp-field {
-    flex: 1 1 0;
+    min-width: 0;
+}
+
+.cp-variant .form-input {
+    text-align: center;
 }
 
 .cp-remove {
-    flex: 0 0 auto;
-    margin-top: 1.5rem;
+    align-self: start;
+    justify-self: end;
+    width: 2.3rem;
+    height: 2.3rem;
+    padding: 0;
+    margin-top: 1.25rem;
 }
 
 .cp-error {
@@ -1616,22 +1630,22 @@ html[data-theme='light'] .prz-grid-btn--active {
     align-self: flex-start;
 }
 
+@media (max-width: 1100px) {
+    .cp-variant {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
     .cp-variant {
-        flex-wrap: wrap;
-    }
-
-    .cp-variant .cp-field-dn {
-        flex: 1 1 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .cp-variant .cp-field {
-        flex: 1 1 0;
-        min-width: 8rem;
+        min-width: 0;
     }
 
     .cp-remove {
-        margin-top: 0;
-        align-self: center;
+        justify-self: end;
     }
 }

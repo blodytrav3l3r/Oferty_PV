@@ -119,6 +119,61 @@ describe('stripWellRuntimeFields — śmieci runtime nie jadą do backendu', () 
         });
     });
 
+    test('zachowuje custom przejścia i typy custom w payloadzie oferty', () => {
+        const well = {
+            id: 'w1',
+            przejscia: [
+                {
+                    id: 'prz-custom',
+                    productId: '',
+                    isCustom: true,
+                    customTypeId: 'typ-1',
+                    customName: 'Przejście specjalne',
+                    customPrice: 250,
+                    dn: '315',
+                    zapasDol: 240,
+                    zapasGora: 360,
+                    zapasDolMin: 100,
+                    zapasGoraMin: 180
+                }
+            ]
+        };
+        const offer = {
+            wells: [well],
+            customPrzejsciaTypes: [
+                {
+                    id: 'typ-1',
+                    name: 'Przejście specjalne',
+                    variants: [
+                        {
+                            dn: '315',
+                            weight: 28,
+                            price: 250,
+                            zapasDol: 240,
+                            zapasGora: 360,
+                            zapasDolMin: 100,
+                            zapasGoraMin: 180
+                        }
+                    ]
+                }
+            ]
+        };
+
+        read(ctx, 'stripWellRuntimeFields')(offer.wells);
+
+        expect(offer.wells[0].przejscia[0]).toMatchObject({
+            isCustom: true,
+            customTypeId: 'typ-1',
+            customName: 'Przejście specjalne',
+            customPrice: 250,
+            zapasDol: 240,
+            zapasGora: 360,
+            zapasDolMin: 100,
+            zapasGoraMin: 180
+        });
+        expect(offer.customPrzejsciaTypes[0].variants[0].zapasGora).toBe(360);
+    });
+
     test('nie wywala się na wejściu nie-tablicy', () => {
         const strip = read(ctx, 'stripWellRuntimeFields');
         expect(() => strip(null)).not.toThrow();

@@ -59,10 +59,11 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     const usedSegIndices = new Set();
 
     for (const pr of well.przejscia) {
-        const pprod =
+        const resolveCatalogProduct = (id) =>
             typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(pr.productId)
-                : studnieProducts.find((x) => x.id === pr.productId);
+                ? getStudnieProductById(id)
+                : studnieProducts.find((x) => x.id === id);
+        const pprod = resolveCatalogProduct(pr.productId) || (pr.isCustom === true ? pr : null);
         if (!pprod) continue;
 
         // Geometria SSoT (transitionZones.js): OT wymaga całego korpusu w segmencie.

@@ -1,6 +1,31 @@
 // @ts-check
 /* ===== Popupy dla przejść ===== */
 
+const _applyCustomPrzejscieVariant = (item, type, variant) => {
+    const next = {
+        ...item,
+        isCustom: true,
+        productId: '',
+        customTypeId: type.id,
+        customName: type.name,
+        dn: variant.dn,
+        customPrice: variant.price,
+        customWeight: variant.weight,
+        zapasDol: variant.zapasDol,
+        zapasGora: variant.zapasGora,
+        zapasDolMin: variant.zapasDolMin,
+        zapasGoraMin: variant.zapasGoraMin
+    };
+    delete next.frozenPrice;
+    delete next.frozenPriceBase;
+    delete next.frozenName;
+    delete next.frozenTransitionPrice;
+    delete next.frozenDrillingPrice;
+    delete next.frozenDrillingName;
+    delete next.frozenDrillingDn;
+    return next;
+};
+
 function openPrzejsciaVisibilityPopup(containerId) {
     const allTypes =
         typeof getPrzejsciaCategories === 'function'
@@ -368,6 +393,10 @@ window.confirmChangePrzejscieType = function (index, newType) {
         delete item.customPrice;
         delete item.customWeight;
         delete item.customTypeId;
+        delete item.zapasDol;
+        delete item.zapasGora;
+        delete item.zapasDolMin;
+        delete item.zapasGoraMin;
         delete item.dn;
         delete item.frozenPrice;
         delete item.frozenPriceBase;
@@ -405,21 +434,7 @@ window.confirmChangeCustomPrzejscieType = function (index, typeId) {
         return;
     }
 
-    const item = well.przejscia[index];
-    item.isCustom = true;
-    item.productId = '';
-    item.customTypeId = type.id;
-    item.customName = type.name;
-    item.dn = variant.dn;
-    item.customPrice = variant.price;
-    item.customWeight = variant.weight;
-    delete item.frozenPrice;
-    delete item.frozenPriceBase;
-    delete item.frozenName;
-    delete item.frozenTransitionPrice;
-    delete item.frozenDrillingPrice;
-    delete item.frozenDrillingName;
-    delete item.frozenDrillingDn;
+    well.przejscia[index] = _applyCustomPrzejscieVariant(well.przejscia[index], type, variant);
 
     closeModal();
     if (typeof refreshActiveWell === 'function') refreshActiveWell();
@@ -559,6 +574,10 @@ window.confirmChangePrzejscieDn = function (index, newProductId) {
     delete well.przejscia[index].frozenDrillingPrice;
     delete well.przejscia[index].frozenDrillingName;
     delete well.przejscia[index].frozenDrillingDn;
+    delete well.przejscia[index].zapasDol;
+    delete well.przejscia[index].zapasGora;
+    delete well.przejscia[index].zapasDolMin;
+    delete well.przejscia[index].zapasGoraMin;
 
     closeModal();
     if (typeof refreshActiveWell === 'function') refreshActiveWell();
@@ -583,17 +602,7 @@ window.confirmChangeCustomPrzejscieDn = function (index, dn) {
         return;
     }
 
-    item.dn = variant.dn;
-    item.customName = type.name;
-    item.customPrice = variant.price;
-    item.customWeight = variant.weight;
-    delete item.frozenPrice;
-    delete item.frozenPriceBase;
-    delete item.frozenName;
-    delete item.frozenTransitionPrice;
-    delete item.frozenDrillingPrice;
-    delete item.frozenDrillingName;
-    delete item.frozenDrillingDn;
+    well.przejscia[index] = _applyCustomPrzejscieVariant(item, type, variant);
 
     closeModal();
     if (typeof refreshActiveWell === 'function') refreshActiveWell();

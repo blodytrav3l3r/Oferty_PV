@@ -133,7 +133,11 @@ export const ORDER_PRZEJSCIE_DTO_FIELDS = [
     'customName',
     'customPrice',
     'customWeight',
-    'customTypeId'
+    'customTypeId',
+    'zapasDol',
+    'zapasGora',
+    'zapasDolMin',
+    'zapasGoraMin'
 ] as const;
 
 export const ORDER_WELL_DTO_FIELDS = [

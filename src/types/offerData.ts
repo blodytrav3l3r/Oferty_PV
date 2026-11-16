@@ -89,7 +89,15 @@ export interface StudnieOfferDataBlob {
     customPrzejsciaTypes?: Array<{
         id: string;
         name: string;
-        variants: Array<{ dn: string; weight: number; price: number }>;
+        variants: Array<{
+            dn: string;
+            weight: number;
+            price: number;
+            zapasDol?: number;
+            zapasGora?: number;
+            zapasDolMin?: number;
+            zapasGoraMin?: number;
+        }>;
     }>;
     wellDiscounts?: Record<string, unknown>;
     budowa?: string;

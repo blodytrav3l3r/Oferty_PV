@@ -158,6 +158,7 @@ function _customTypeVariantRowHtml(variant, index) {
     const dn = v.dn == null ? '' : v.dn;
     const weight = v.weight == null ? '' : v.weight;
     const price = v.price == null ? '' : v.price;
+    const reserves = v;
     const autoWeight =
         typeof computeCustomPrzejscieWeight === 'function' ? computeCustomPrzejscieWeight(dn) : 0;
     const isManualWeight = weight !== '' && Number(weight) !== Number(autoWeight);
@@ -178,6 +179,26 @@ function _customTypeVariantRowHtml(variant, index) {
         <input class="form-input" data-cp-field="price" type="number" min="0" step="0.01" value="${_customPrzejscieEscape(price)}" placeholder="0,00" />
         ${_customTypeErrorHtml('v' + index + '-price')}
       </div>
+      <div class="cp-field">
+        <label class="form-label-sm" for="cp-v${index}-zapasDol">Zapas dół [mm]</label>
+        <input id="cp-v${index}-zapasDol" class="form-input" data-cp-field="zapasDol" type="number" min="0" step="1" value="${_customPrzejscieEscape(reserves.zapasDol ?? '')}" placeholder="300" />
+        ${_customTypeErrorHtml('v' + index + '-zapasDol')}
+      </div>
+      <div class="cp-field">
+        <label class="form-label-sm" for="cp-v${index}-zapasGora">Zapas góra [mm]</label>
+        <input id="cp-v${index}-zapasGora" class="form-input" data-cp-field="zapasGora" type="number" min="0" step="1" value="${_customPrzejscieEscape(reserves.zapasGora ?? '')}" placeholder="300" />
+        ${_customTypeErrorHtml('v' + index + '-zapasGora')}
+      </div>
+      <div class="cp-field">
+        <label class="form-label-sm" for="cp-v${index}-zapasDolMin">Zapas dół min [mm]</label>
+        <input id="cp-v${index}-zapasDolMin" class="form-input" data-cp-field="zapasDolMin" type="number" min="0" step="1" value="${_customPrzejscieEscape(reserves.zapasDolMin ?? '')}" placeholder="150" />
+        ${_customTypeErrorHtml('v' + index + '-zapasDolMin')}
+      </div>
+      <div class="cp-field">
+        <label class="form-label-sm" for="cp-v${index}-zapasGoraMin">Zapas góra min [mm]</label>
+        <input id="cp-v${index}-zapasGoraMin" class="form-input" data-cp-field="zapasGoraMin" type="number" min="0" step="1" value="${_customPrzejscieEscape(reserves.zapasGoraMin ?? '')}" placeholder="150" />
+        ${_customTypeErrorHtml('v' + index + '-zapasGoraMin')}
+      </div>
       <button type="button" class="btn-icon cp-remove" data-action="removeCustomPrzejscieVariant" aria-label="Usuń średnicę" title="Usuń średnicę"><i data-lucide="trash-2" aria-hidden="true"></i></button>
     </div>`;
 }
@@ -197,7 +218,7 @@ function _customTypeModalHtml(isEdit, initial) {
       </div>
       <div class="modal-body cp-body">
         <p class="cp-hint">
-          Typ poza cennikiem — widoczny w sekcji „Dodaj Przejście Szczelne" w tej ofercie. Cena bazowa netto, rabat studni nalicza się automatycznie. Waga liczona automatycznie dla ścianki 15 cm, można ją zmienić.
+          Typ poza cennikiem — widoczny w sekcji „Dodaj Przejście Szczelne" w tej ofercie. Cena bazowa netto, rabat studni nalicza się automatycznie. Waga liczona automatycznie dla ścianki 15 cm, można ją zmienić. Puste zapasy używają wartości domyślnych cennika (300 mm; minimalne 150 mm).
         </p>
         <div class="cp-field cp-name-field">
           <label class="form-label" for="cp-name">Nazwa przejścia *</label>
@@ -270,13 +291,15 @@ function _customTypeRemoveVariantRow(btn) {
     const rows = _customTypeRows(modal);
     if (!row) return;
     if (rows.length <= 1) {
-        ['dn', 'weight', 'price'].forEach((field) => {
-            const input = _customTypeRowField(row, field);
-            if (input) {
-                input.value = '';
-                if (field === 'weight') input.dataset.manual = '0';
+        ['dn', 'weight', 'price', 'zapasDol', 'zapasGora', 'zapasDolMin', 'zapasGoraMin'].forEach(
+            (field) => {
+                const input = _customTypeRowField(row, field);
+                if (input) {
+                    input.value = '';
+                    if (field === 'weight') input.dataset.manual = '0';
+                }
             }
-        });
+        );
         return;
     }
     row.remove();
@@ -287,7 +310,11 @@ function _customTypeCollectValues(modal) {
     const variants = _customTypeRows(modal).map((row) => ({
         dn: (_customTypeRowField(row, 'dn') || {}).value || '',
         weight: (_customTypeRowField(row, 'weight') || {}).value || '',
-        price: (_customTypeRowField(row, 'price') || {}).value || ''
+        price: (_customTypeRowField(row, 'price') || {}).value || '',
+        zapasDol: (_customTypeRowField(row, 'zapasDol') || {}).value ?? '',
+        zapasGora: (_customTypeRowField(row, 'zapasGora') || {}).value ?? '',
+        zapasDolMin: (_customTypeRowField(row, 'zapasDolMin') || {}).value ?? '',
+        zapasGoraMin: (_customTypeRowField(row, 'zapasGoraMin') || {}).value ?? ''
     }));
     return { name: nameInput ? nameInput.value : '', variants };
 }
@@ -314,7 +341,9 @@ function _customTypeShowErrors(modal, errors) {
             if (nameInput) nameInput.style.borderColor = 'var(--danger)';
             return;
         }
-        const m = /^v(\d+)-(dn|weight|price)$/.exec(key);
+        const m = /^v(\d+)-(dn|weight|price|zapasDol|zapasGora|zapasDolMin|zapasGoraMin)$/.exec(
+            key
+        );
         if (!m) return;
         const input = _customTypeRowField(rows[Number(m[1])], m[2]);
         if (input) input.style.borderColor = 'var(--danger)';
@@ -340,23 +369,33 @@ function _customTypePropagate(type) {
     wells.forEach((well) => {
         if (!well || !Array.isArray(well.przejscia)) return;
         let changed = false;
-        well.przejscia.forEach((item) => {
-            if (!isCustomPrzejscie(item)) return;
-            if (String(item.customTypeId || '') !== String(type.id)) return;
-            item.customName = type.name;
+        well.przejscia = well.przejscia.map((item) => {
+            if (!isCustomPrzejscie(item)) return item;
+            if (String(item.customTypeId || '') !== String(type.id)) return item;
             const variant = variantByDn.get(String(item.dn == null ? '' : item.dn));
-            if (variant) {
-                item.customPrice = variant.price;
-                item.customWeight = variant.weight;
-            }
-            delete item.frozenPrice;
-            delete item.frozenPriceBase;
-            delete item.frozenName;
-            delete item.frozenTransitionPrice;
-            delete item.frozenDrillingPrice;
-            delete item.frozenDrillingName;
-            delete item.frozenDrillingDn;
             changed = true;
+            const next = {
+                ...item,
+                customName: type.name,
+                ...(variant
+                    ? {
+                          customPrice: variant.price,
+                          customWeight: variant.weight,
+                          zapasDol: variant.zapasDol,
+                          zapasGora: variant.zapasGora,
+                          zapasDolMin: variant.zapasDolMin,
+                          zapasGoraMin: variant.zapasGoraMin
+                      }
+                    : {})
+            };
+            delete next.frozenPrice;
+            delete next.frozenPriceBase;
+            delete next.frozenName;
+            delete next.frozenTransitionPrice;
+            delete next.frozenDrillingPrice;
+            delete next.frozenDrillingName;
+            delete next.frozenDrillingDn;
+            return next;
         });
         if (changed && typeof invalidateFrozenPricesForWell === 'function')
             invalidateFrozenPricesForWell(well);

@@ -562,10 +562,11 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     // z avail — DN rury to fizyczna właściwość wybranego przejścia, niezależna
     // od dostępności magazynowej. Dla produktów dostępnych identyczne jak dawniej.
     const holes = (well.przejscia || []).map((p) => {
-        const prod =
+        const findProduct = (productId) =>
             (typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(p.productId)
-                : null) || availProducts.find((x) => x.id === p.productId);
+                ? getStudnieProductById(productId)
+                : null) || availProducts.find((x) => x.id === productId);
+        const prod = findProduct(p.productId) || (p.isCustom === true ? p : null);
         const prDN = getTransitionDn(prod || null);
         const body = getTransitionBody(p.rzednaWlaczenia, well.rzednaDna, prDN);
 
@@ -1153,16 +1154,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     const pel = parseFloat(pr.rzednaWlaczenia);
                     if (!isNaN(pel)) {
                         const holeBottom = (pel - rzDna) * 1000;
-                        const pprod = resolveStudnieProduct(pr.productId);
+                        const pprod =
+                            resolveStudnieProduct(pr.productId) ||
+                            (pr.isCustom === true ? pr : null);
                         if (pprod) {
-                            const prDN =
-                                typeof pprod.dn === 'string' && pprod.dn.includes('/')
-                                    ? parseFloat(pprod.dn.split('/')[1]) || 160
-                                    : parseFloat(pprod.dn) || 160;
-                            const zapasGora =
-                                parseFloat(pprod.zapasGora || 0) ||
-                                parseFloat(pprod.zapasGoraMin || 0) ||
-                                300;
+                            const prDN = getTransitionDn(pprod);
+                            const zapasGora = getTransitionReserves(pprod).goraStd;
                             const holeTop = holeBottom + prDN + zapasGora;
                             if (holeTop > maxHoleTop) maxHoleTop = holeTop;
                         }

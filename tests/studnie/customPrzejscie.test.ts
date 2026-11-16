@@ -64,6 +64,9 @@ function runContext() {
     vm.runInContext(readStudnie('wellTransitionsHelpers.js'), context);
     vm.runInContext(readStudnie('diagramTransitions.js'), context);
     vm.runInContext(readStudnie('customPrzejscie.js'), context);
+    vm.runInContext(readStudnie('wellTransitionsPopup.js'), context);
+    vm.runInContext(readStudnie('transitionZones.js'), context);
+    vm.runInContext(readStudnie('solverValidation.js'), context);
     return { context, well, showModalCalls, toasts };
 }
 
@@ -104,6 +107,28 @@ describe('SSoT walidacji custom przejścia', () => {
         expect(context.getPrzejscieDnLabel(item, null)).toBe('315');
         expect(context.isPricedPrzejscie(item, null)).toBe(true);
         expect(context.isPricedPrzejscie({}, null)).toBe(false);
+    });
+});
+
+describe('zapis custom przejścia w ofercie', () => {
+    test('wybrane przejście custom przechodzi walidację przed zapisem oferty', () => {
+        const { context, well } = runContext();
+        well.name = 'S1';
+        well.przejscia = [
+            {
+                id: 'prz-custom-1',
+                isCustom: true,
+                productId: '',
+                customTypeId: 'custom-1',
+                customName: 'Przejście specjalne',
+                customPrice: 250,
+                dn: '315',
+                rzednaWlaczenia: '1.500',
+                angle: 0
+            }
+        ];
+
+        expect(context.validatePrzejsciaForSave([well])).toEqual({ valid: true, errors: [] });
     });
 });
 
@@ -238,8 +263,167 @@ describe('typy niestandardowych przejść (nazwa + warianty DN)', () => {
         expect(ok.ok).toBe(true);
         expect(ok.value.variants).toEqual([
             { dn: '315', weight: 28.06, price: 100 },
-            { dn: '400', weight: 45.24, price: 123.46 }
+            {
+                dn: '400',
+                weight: 45.24,
+                price: 123.46
+            }
         ]);
+    });
+
+    test('wariant przechowuje zapasy ustawione przez użytkownika; brak pól używa SSoT cennika', () => {
+        const { context } = runContext();
+        const result = context.validateCustomPrzejscieType({
+            name: 'Typ custom',
+            variants: [
+                {
+                    dn: '315',
+                    price: 250,
+                    zapasDol: 240,
+                    zapasGora: 360,
+                    zapasDolMin: 100,
+                    zapasGoraMin: 180
+                },
+                { dn: '400', price: 350 }
+            ]
+        });
+
+        expect(result.ok).toBe(true);
+        expect(result.value.variants).toEqual([
+            {
+                dn: '315',
+                weight: expect.any(Number),
+                price: 250,
+                zapasDol: 240,
+                zapasGora: 360,
+                zapasDolMin: 100,
+                zapasGoraMin: 180
+            },
+            { dn: '400', weight: expect.any(Number), price: 350 }
+        ]);
+        expect(context.getTransitionReserves(result.value.variants[1])).toEqual({
+            dolStd: 300,
+            goraStd: 300,
+            dolMin: 150,
+            goraMin: 150
+        });
+    });
+
+    test('edytor typu udostępnia pola zapasów dla każdej średnicy', () => {
+        const { context, showModalCalls } = runContext();
+        context.customPrzejsciaTypes = [
+            { id: 't1', name: 'Spec', variants: [{ dn: '315', price: 250 }] }
+        ];
+
+        context.openCustomPrzejscieTypeModal({ mode: 'edit', typeId: 't1' });
+
+        expect(showModalCalls[0].html).toContain('Zapas dół [mm]');
+        expect(showModalCalls[0].html).toContain('Zapas góra [mm]');
+        expect(showModalCalls[0].html).toContain('Zapas dół min [mm]');
+        expect(showModalCalls[0].html).toContain('Zapas góra min [mm]');
+    });
+
+    test('wybór wariantu przenosi zapasy do pozycji używanej przez solver', () => {
+        const { context } = runContext();
+        const next = vm.runInContext(
+            `_applyCustomPrzejscieVariant(
+                { id: 'prz-1', angle: 90, frozenPrice: 100 },
+                { id: 't1', name: 'Spec' },
+                {
+                    dn: '315', price: 250, weight: 28,
+                    zapasDol: 240, zapasGora: 360, zapasDolMin: 100, zapasGoraMin: 180
+                }
+            )`,
+            context
+        );
+
+        expect(next).toMatchObject({
+            id: 'prz-1',
+            isCustom: true,
+            customTypeId: 't1',
+            dn: '315',
+            zapasDol: 240,
+            zapasGora: 360,
+            zapasDolMin: 100,
+            zapasGoraMin: 180
+        });
+        expect(next.frozenPrice).toBeUndefined();
+    });
+
+    test('edycja typu propaguje zapasy i usuwa zamrożone dane cenowe', () => {
+        const { context } = runContext();
+        const passage = {
+            isCustom: true,
+            customTypeId: 't1',
+            customName: 'Stara nazwa',
+            dn: '315',
+            customPrice: 100,
+            frozenPrice: 90,
+            frozenName: 'Stara nazwa',
+            zapasDol: 300
+        };
+        context.wells = [{ przejscia: [passage] }];
+        let invalidated = false;
+        context.invalidateFrozenPricesForWell = () => {
+            invalidated = true;
+        };
+
+        vm.runInContext(
+            `_customTypePropagate({
+                id: 't1', name: 'Nowa nazwa', variants: [{
+                    dn: '315', weight: 28, price: 200,
+                    zapasDol: 240, zapasGora: 360, zapasDolMin: 100, zapasGoraMin: 180
+                }]
+            })`,
+            context
+        );
+
+        expect(context.wells[0].przejscia[0]).toMatchObject({
+            customName: 'Nowa nazwa',
+            customPrice: 200,
+            zapasDol: 240,
+            zapasGora: 360,
+            zapasDolMin: 100,
+            zapasGoraMin: 180
+        });
+        expect(context.wells[0].przejscia[0].frozenPrice).toBeUndefined();
+        expect(invalidated).toBe(true);
+    });
+
+    test('usunięcie wariantu DN nadal czyści stare zamrożenie jego pozycji', () => {
+        const { context } = runContext();
+        context.wells = [
+            {
+                przejscia: [
+                    {
+                        isCustom: true,
+                        customTypeId: 't1',
+                        customName: 'Stara nazwa',
+                        dn: '315',
+                        frozenPrice: 90
+                    }
+                ]
+            }
+        ];
+
+        vm.runInContext(
+            `_customTypePropagate({ id: 't1', name: 'Nowa nazwa', variants: [] })`,
+            context
+        );
+
+        expect(context.wells[0].przejscia[0].customName).toBe('Nowa nazwa');
+        expect(context.wells[0].przejscia[0].frozenPrice).toBeUndefined();
+    });
+
+    test('ujemny zapas blokuje zapis typu', () => {
+        const { context } = runContext();
+        const result = context.validateCustomPrzejscieType({
+            name: 'Spec',
+            variants: [{ dn: '315', price: 250, zapasDol: -1 }]
+        });
+
+        expect(result.ok).toBe(false);
+        expect(result.errors['v0-zapasDol']).toContain('nieujemną');
     });
 
     test('buildCustomPrzejscieType: tworzy i zachowuje id przy edycji', () => {
@@ -311,7 +495,11 @@ describe('typy niestandardowych przejść (nazwa + warianty DN)', () => {
         const created = types.find((t) => t.name === 'Nowy');
         expect(created).toBeTruthy();
         expect(wells[0].przejscia[1].customTypeId).toBe(created.id);
-        expect(created.variants[0]).toEqual({ dn: '400', weight: 99, price: 200 });
+        expect(created.variants[0]).toMatchObject({
+            dn: '400',
+            weight: 99,
+            price: 200
+        });
         expect(wells[0].przejscia[2].customTypeId).toBeUndefined();
     });
 

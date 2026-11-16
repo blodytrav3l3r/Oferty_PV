@@ -85,9 +85,9 @@ function validateDrillingPricesLive(well) {
     const out = [];
     for (const pr of well.przejscia) {
         const p =
-            typeof resolveStudnieProduct === 'function'
+            (typeof resolveStudnieProduct === 'function'
                 ? resolveStudnieProduct(pr.productId)
-                : null;
+                : null) || (pr.isCustom === true ? pr : null);
         if (!p) continue;
         let pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
@@ -133,9 +133,9 @@ function validateCollisionsLive(well, segments) {
         const pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
         const pprod =
-            typeof resolveStudnieProduct === 'function'
+            (typeof resolveStudnieProduct === 'function'
                 ? resolveStudnieProduct(pr.productId)
-                : null;
+                : null) || (pr.isCustom === true ? pr : null);
         let dnVal;
         let body;
         if (typeof getTransitionDn === 'function' && typeof getTransitionBody === 'function') {
@@ -357,7 +357,8 @@ function recalculateWellErrors(well) {
                 const pel = parseFloat(pr.rzednaWlaczenia);
                 if (isNaN(pel)) return;
 
-                const pprod = resolveStudnieProduct(pr.productId);
+                const pprod =
+                    resolveStudnieProduct(pr.productId) || (pr.isCustom === true ? pr : null);
                 if (!pprod) return;
 
                 const dn_val =
@@ -642,8 +643,9 @@ function validatePrzejsciaForSave(wellsArr) {
                     : prod && prod.category
                       ? String(prod.category).trim()
                       : '';
-            const hasCategory = effCategory !== '';
-            const hasProduct = !!p.productId;
+            const isCustom = p.isCustom === true && String(p.customName || '').trim() !== '';
+            const hasCategory = effCategory !== '' || isCustom;
+            const hasProduct = !!p.productId || isCustom;
             const _isEmpty =
                 typeof isEmptyPrzejscie === 'function'
                     ? isEmptyPrzejscie(p)

@@ -119,6 +119,24 @@ describe('passageConfigSchema', () => {
         expect(result.success).toBe(true);
     });
 
+    it('zachowuje custom przejście z ceną i standardowymi/minimalnymi zapasami', () => {
+        const result = passageConfigSchema.safeParse({
+            id: 'prz-custom',
+            productId: '',
+            isCustom: true,
+            customName: 'Przejście specjalne',
+            customPrice: 250,
+            dn: '315',
+            zapasDol: 240,
+            zapasGora: 360,
+            zapasDolMin: 100,
+            zapasGoraMin: 180
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.data).toMatchObject({ zapasDol: 240, zapasGora: 360 });
+    });
+
     it('powinien akceptować przepust typu "długa"', () => {
         const passage = { ...validPassage, typPrzejscia: 'długa' };
         const result = passageConfigSchema.safeParse(passage);

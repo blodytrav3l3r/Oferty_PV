@@ -159,6 +159,10 @@ function savePrzejscieEdit(index) {
         nextItem.customPrice = prev.customPrice;
         nextItem.customWeight = prev.customWeight;
         nextItem.customTypeId = prev.customTypeId;
+        nextItem.zapasDol = prev.zapasDol;
+        nextItem.zapasGora = prev.zapasGora;
+        nextItem.zapasDolMin = prev.zapasDolMin;
+        nextItem.zapasGoraMin = prev.zapasGoraMin;
         nextItem.dn = prev.dn;
         nextItem.doplata = prev.doplata;
     }

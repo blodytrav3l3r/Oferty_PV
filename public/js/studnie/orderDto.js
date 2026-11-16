@@ -56,7 +56,11 @@ const ORDER_PRZEJSCIE_FIELDS = [
     'customName',
     'customPrice',
     'customWeight',
-    'customTypeId'
+    'customTypeId',
+    'zapasDol',
+    'zapasGora',
+    'zapasDolMin',
+    'zapasGoraMin'
 ];
 
 /**
@@ -267,7 +271,11 @@ const PRZEJSCIE_PRICING_FIELDS = [
     'customName',
     'customPrice',
     'customWeight',
-    'customTypeId'
+    'customTypeId',
+    'zapasDol',
+    'zapasGora',
+    'zapasDolMin',
+    'zapasGoraMin'
 ];
 
 /**

@@ -607,6 +607,10 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         delete prevCustom.customPrice;
         delete prevCustom.customWeight;
         delete prevCustom.customTypeId;
+        delete prevCustom.zapasDol;
+        delete prevCustom.zapasGora;
+        delete prevCustom.zapasDolMin;
+        delete prevCustom.zapasGoraMin;
         delete prevCustom.dn;
     }
     if (!value) {

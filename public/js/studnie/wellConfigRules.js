@@ -566,10 +566,11 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
     const alreadyNeedsOT = new Set();
 
     for (const pr of well.przejscia) {
-        const pprod =
+        const findProduct = (id) =>
             typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(pr.productId)
-                : studnieProducts.find((x) => x.id === pr.productId);
+                ? getStudnieProductById(id)
+                : studnieProducts.find((x) => x.id === id);
+        const pprod = findProduct(pr.productId) || (pr.isCustom === true ? pr : null);
         if (!pprod) continue;
 
         // Geometria SSoT (transitionZones.js): OT wymaga całego korpusu w segmencie.

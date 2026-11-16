@@ -43,6 +43,26 @@ describe('transitionZones SSoT', () => {
         });
     });
 
+    it('custom przejście używa DN i zapasów pozycji jak produkt cennikowy', () => {
+        const custom = {
+            productId: '',
+            isCustom: true,
+            customName: 'Specjalne',
+            dn: '315',
+            zapasDol: 240,
+            zapasGora: 360,
+            zapasDolMin: 100,
+            zapasGoraMin: 180
+        };
+        expect(ctx.getTransitionDn(custom)).toBe(315);
+        expect(ctx.getTransitionReserves(custom)).toEqual({
+            dolStd: 240,
+            goraStd: 360,
+            dolMin: 100,
+            goraMin: 180
+        });
+    });
+
     describe('getTransitionBody', () => {
         it('liczy dół/górę/środek w mm od dna', () => {
             expect(ctx.getTransitionBody(1.4, 0, 160)).toEqual({
