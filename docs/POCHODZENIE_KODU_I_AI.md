@@ -1,0 +1,236 @@
+# Pochodzenie kodu, autorstwo i wykorzystanie narzędzi AI — audyt S.O.K.
+
+**Identyfikator audytu:** `SOK-PROV-2026-11-16`
+**Weryfikowany commit (HEAD):** `2bc3cc108995f3510496f1cf9361eac4f395d53d` (`main`, „fix(deploy): wydłuż timeout startu postgres”)
+**Gałąź:** `main`, zgodna z `origin/main` (0 commitów lokalnych przed push)
+**Data weryfikacji:** 2026-11-16
+**Wersja aplikacji w chwili audytu:** 1.59.0 (`package.json`, `VERSION`)
+**Zakres:** repozytorium `I:\GitHub\Oferty_PV` (working tree), historia Git, dokumentacja, konfiguracje narzędzi AI, rejestry zależności i licencji.
+
+> Dokument jest **audytem technicznym i dokumentacyjnym**, nie opinią prawną. Kwestie wymagające interpretacji prawa (m.in. prawa pracownicze, prawa do danych cennikowych, dopuszczalność klauzul licencyjnych) są oznaczone jako wymagające oceny prawnej.
+
+---
+
+## 1. Cel i zakres
+
+Cel: przygotować weryfikowalny wykaz (1) narzędzi AI, (2) bibliotek i komponentów zewnętrznych, (3) licencji, (4) elementów o nieustalonym statusie prawnym oraz (5) informacji o pochodzeniu kodu — jako materiał do załącznika do umowy licencyjnej S.O.K.
+
+Zakres wykonany:
+
+- stan Git i historia commitów (2 169 commitów, pierwszy `679424b5`, 2026-07-14),
+- plik `LICENSE` i deklaracje autorskie w dokumentacji,
+- konfiguracje narzędzi AI obecne w repozytorium i w katalogach lokalnych objętych projektem,
+- rejestry zależności: `package.json`, `package-lock.json`, `THIRD-PARTY-NOTICES.md`, `docs/LICENCJE_ZALEZNOSCI.md`, `public/licenses/`,
+- zasoby dołączone do repozytorium (`public/vendor/`, `public/css/fonts/`, `public/images/`, `public/js/shared/iconsSlim.js`),
+- artefakty wdrożenia (`Dockerfile`, `docker-compose.yml`, instalatory),
+- moduł AI/ML działający w aplikacji (`src/services/ml/`).
+
+Zakres wyłączony: katalogi prywatne poza projektem, dane uwierzytelniające, sekrety, pełna historia sesji narzędzi AI, treść umów.
+
+## 2. Legenda statusów
+
+| Status                         | Znaczenie                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------------- |
+| **POTWIERDZONE**               | istnieje bezpośredni dowód w repozytorium, konfiguracji, historii Git lub wyniku komendy |
+| **ZADEKLAROWANE PRZEZ AUTORA** | informacja przekazana przez właściciela projektu, bez niezależnego dowodu                |
+| **WYMAGA POTWIERDZENIA**       | istnieją przesłanki (pliki, konfiguracje), ale brak wystarczającego dowodu               |
+| **NIEUSTALONE**                | brak danych pozwalających ustalić fakt                                                   |
+| **NIE DOTYCZY**                | element nie występuje lub nie ma zastosowania                                            |
+
+## 3. Stan repozytorium w chwili audytu
+
+| Element                    | Wartość                                                                                                                                   | Status                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Gałąź / HEAD               | `main` / `2bc3cc10`                                                                                                                       | POTWIERDZONE               |
+| Working tree               | brak zmian niecommitowanych (`git status` pusty)                                                                                          | POTWIERDZONE               |
+| Liczba commitów            | 2 169                                                                                                                                     | POTWIERDZONE               |
+| Pierwszy commit            | `679424b5` „chore: initial commit v1.5.0”, 2026-07-14                                                                                     | POTWIERDZONE               |
+| Autorzy w historii         | `BlodyTraveler <120113553+blodytrav3l3r@users.noreply.github.com>`, `dependabot[bot]`                                                     | POTWIERDZONE               |
+| Trailer `Co-authored-by`   | wyłącznie `dependabot[bot]`; brak trailerów wskazujących narzędzia AI                                                                     | POTWIERDZONE               |
+| Licencja projektu          | własnościowa (`LICENSE`), Copyright (c) 2026 Łukasz Kobyłka                                                                               | POTWIERDZONE               |
+| Kontrola rejestru licencji | `npm run licenses:check` → „THIRD-PARTY-NOTICES.md jest aktualny” (2026-11-16)                                                            | POTWIERDZONE               |
+| Spójność wersji            | `npm run version:check` → „Spójne” (2026-11-16)                                                                                           | POTWIERDZONE               |
+| Oświadczenia autora        | utwór poza godzinami pracy, poza obowiązkami pracowniczymi, bez umów o prawa autorskie, wyłączny właściciel (P-01–P-03, P-13, 2026-11-16) | ZADEKLAROWANE PRZEZ AUTORA |
+
+**Istotne ograniczenie chronologii:** repozytorium zaczyna się od commitu „initial commit v1.5.0”. Historia rozwoju przed wersją 1.5.0 (jej zakres, narzędzia, ewentualne materiały osób trzecich) **nie jest udokumentowana w Git** — status: NIEUSTALONE (pytanie P-01, P-02).
+
+## 4. Rejestr dowodów (Evidence Ledger)
+
+| ID   | Twierdzenie                                                                                                                  | Dowód                                                                                                                                                                        | Status                          |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| E-01 | Wyłącznym autorem commitów jest jedna osoba (poza botem dependabot)                                                          | `git log --format='%an <%ae>'`                                                                                                                                               | POTWIERDZONE                    |
+| E-02 | Brak commitów/deklaracji przypisujących autorstwo narzędziom AI                                                              | `git log --format='%b'`, brak trailerów AI                                                                                                                                   | POTWIERDZONE                    |
+| E-03 | Projekt ma licencję własnościową z wskazanym właścicielem praw                                                               | `LICENSE:1-3`                                                                                                                                                                | POTWIERDZONE                    |
+| E-04 | OpenCode jest skonfigurowany w repozytorium (wersjonowany config)                                                            | `.opencode/opencode.json` (tracked), `docs/development/OPENCODE.md`, `AGENTS.md` §„Subagenty i konfiguracja OpenCode V2”                                                     | POTWIERDZONE                    |
+| E-05 | OpenCode działa w trybie V2 z modelem `opencode/deepseek-v4.1-flash-free`                                                    | `.opencode/opencode.json` (`model`)                                                                                                                                          | POTWIERDZONE                    |
+| E-06 | W katalogu projektu istnieje konfiguracja OpenAI Codex CLI                                                                   | `.codex/hooks.json` (plik lokalny, poza Git: `.gitignore:164`)                                                                                                               | POTWIERDZONE (istnienie pliku)  |
+| E-07 | W katalogu projektu istnieje konfiguracja Claude Code                                                                        | `.claude/settings.json`, `.claude/CLAUDE.md` (poza Git: `.gitignore:163`)                                                                                                    | POTWIERDZONE (istnienie plików) |
+| E-08 | Brak jakiegokolwiek artefaktu Google Antigravity w repozytorium i katalogach projektu                                        | brak katalogów/plików `antigravity`/`gemini`; `git grep -i antigravity` bez trafień w kodzie                                                                                 | POTWIERDZONE (brak dowodu)      |
+| E-09 | Narzędzia AI nie są zależnościami runtime aplikacji                                                                          | `package.json` — brak SDK dostawców AI; brak wywołań `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com` w `src/`, `public/`, `scripts/`, `server.ts` | POTWIERDZONE                    |
+| E-10 | Moduł „AI/ML” w S.O.K. jest implementacją własną, lokalną                                                                    | `src/services/ml/*` (m.in. `TrainingPipeline.ts`, `FeatureExtractor.ts`, `ModelRegistry.ts`), `src/services/telemetry/`, dokumentacja `README.md` §„AI/ML Pipeline”          | POTWIERDZONE                    |
+| E-11 | Rejestr zależności jest generowany z lockfile i aktualny                                                                     | `THIRD-PARTY-NOTICES.md` (nagłówek: plik generowany), `npm run licenses:check`                                                                                               | POTWIERDZONE                    |
+| E-12 | Zasoby vendored mają dołączone teksty licencji                                                                               | `public/licenses/APACHE-2.0.txt`, `public/licenses/SIL-OFL-1.1.txt`, `public/licenses/ISC-Lucide.txt`                                                                        | POTWIERDZONE                    |
+| E-13 | Wersja SheetJS w pliku vendored to 0.20.3                                                                                    | `public/vendor/xlsx.full.min.js`: `e.version = '0.20.3'`                                                                                                                     | POTWIERDZONE                    |
+| E-14 | Pliki narzędziowe w `.opencode/rules/` i 5 skilli są adaptacją materiału ECC (MIT)                                           | nagłówki „Zrodlo: ECC …” w `.opencode/rules/*.md`, „origin: ECC (zaadaptowano pod S.O.K.)” w `.opencode/skills/*/SKILL.md`                                                   | POTWIERDZONE                    |
+| E-15 | Katalog `ECC/` (MIT, Copyright (c) 2026 Affaan Mustafa) istnieje lokalnie, ale nie jest wersjonowany ani kopiowany do obrazu | `ECC/LICENSE`, `.gitignore:97`, `.dockerignore` (`**` + wyjątki)                                                                                                             | POTWIERDZONE                    |
+| E-16 | Katalogi narzędzi AI są wykluczone z obrazu Docker                                                                           | `.dockerignore`: `**/.claude/`, `**/.codex/`, `**/.agents/`, `**/.opencode/`, `**/graphify-out/`                                                                             | POTWIERDZONE                    |
+| E-17 | Obraz aplikacji zawiera katalog `public/` wraz z vendored SheetJS, fontem Inter, ikonami i tekstami licencji                 | `Dockerfile: !public/`, `!public/**` w `.dockerignore`                                                                                                                       | POTWIERDZONE                    |
+| E-18 | Brak dowodów na kopiowanie kodu z zewnętrznych repozytoriów do `src/`                                                        | brak nagłówków obcych licencji w `src/`; przegląd commitów i autorów; **nie jest to dowód negatywny dla całej historii**                                                     | WYMAGA POTWIERDZENIA            |
+
+## 5. Narzędzia AI wykorzystane do tworzenia S.O.K. (kategoria A)
+
+Deklaracja autora (2026-11-16): wykorzystano **Google Antigravity**, **OpenAI Codex** i **OpenCode**; dodatkowo „mogły zostać wykorzystane w niewielkim stopniu” inne narzędzia AI (P-08). Zakres zadaniowy: pisanie kodu, testy, dokumentacja i analizy (P-06); żadne z narzędzi nie tworzyło całych modułów bez istotnej modyfikacji (P-06); każdy wynik był sprawdzany i testowany przed commitem (P-10). Poniżej rozdzielono deklarację od dowodów.
+
+| Narzędzie          | Dostawca               | Zakres deklarowany                                                            | Generowanie kodu | Refaktoryzacja | Analiza/audyt | Testy         | Dokumentacja  | Weryfikacja przez autora | Dowód konkretnych zmian                                                                                                 | Status                                                               |
+| ------------------ | ---------------------- | ----------------------------------------------------------------------------- | ---------------- | -------------- | ------------- | ------------- | ------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Google Antigravity | Google                 | kod, testy, dokumentacja, analizy                                             | ZADEKLAROWANE    | ZADEKLAROWANE  | ZADEKLAROWANE | ZADEKLAROWANE | ZADEKLAROWANE | TAK (P-10)               | brak artefaktów w repo (E-08)                                                                                           | ZADEKLAROWANE PRZEZ AUTORA; brak dowodu                              |
+| OpenAI Codex       | OpenAI                 | kod, testy, dokumentacja, analizy                                             | ZADEKLAROWANE    | ZADEKLAROWANE  | ZADEKLAROWANE | ZADEKLAROWANE | ZADEKLAROWANE | TAK (P-10)               | konfiguracja `.codex/hooks.json` (E-06); brak logów sesji i mapowania na commity                                        | CZĘŚCIOWO POTWIERDZONE (użycie narzędzia), zakres NIEUSTALONY        |
+| OpenCode           | OpenCode (open source) | kod, testy, dokumentacja, analizy                                             | ZADEKLAROWANE    | ZADEKLAROWANE  | ZADEKLAROWANE | ZADEKLAROWANE | ZADEKLAROWANE | TAK (P-10)               | wersjonowany `.opencode/opencode.json`, `AGENTS.md`, `docs/development/OPENCODE.md`, commity wprowadzające konfigurację | POTWIERDZONE (użycie), zakres per commit NIEUSTALONY                 |
+| Claude Code        | Anthropic              | możliwe użycie w niewielkim zakresie (P-08)                                   | NIEUSTALONE      | NIEUSTALONE    | NIEUSTALONE   | NIEUSTALONE   | NIEUSTALONE   | TAK (P-10)               | `.claude/settings.json`, `.claude/CLAUDE.md` (E-07)                                                                     | ZADEKLAROWANE PRZEZ AUTORA (niewielki zakres), szczegóły NIEUSTALONE |
+| Inne narzędzia AI  | różni dostawcy         | możliwe użycie w niewielkim zakresie (P-08): Cursor, Windsurf, Copilot i inne | NIEUSTALONE      | NIEUSTALONE    | NIEUSTALONE   | NIEUSTALONE   | NIEUSTALONE   | TAK (P-10)               | brak wskazania konkretnych narzędzi i zmian                                                                             | ZADEKLAROWANE PRZEZ AUTORA, wykaz i zakres NIEUSTALONE               |
+
+Ustalenia wspólne dla kategorii A:
+
+- Brak w historii Git trailerów `Co-authored-by` wskazujących narzędzia AI oraz brak commitów autorstwa botów AI (E-01, E-02). Z historii Git nie da się więc **przypisać** fragmentów kodu do konkretnego narzędzia.
+- Repozytorium nie zawiera dzienników sesji AI ani znaczników „generated by”. Nie jest możliwe ustalenie proporcji kodu wspomaganego AI na podstawie samych danych repozytorium — status NIEUSTALONE.
+- Zgodnie z przyjętą zasadą audytu **nie przypisuje się autorstwa fragmentów kodu na podstawie stylu programowania**.
+- Narzędzia AI nie są właścicielami praw autorskich do S.O.K.; prawa majątkowe przypisuje się według `LICENSE` i ustaleń z autorem (wymaga oceny prawnej — patrz §11).
+
+## 6. Mechanizmy AI/ML działające wewnątrz S.O.K. (kategoria B)
+
+Kategoria B jest całkowicie odrębna od kategorii A: to funkcja produktu, nie narzędzie wytwórcze.
+
+| Element                     | Opis                                                                                                                                                                                                            | Status                                   |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Typ mechanizmu              | własny, lokalny pipeline uczenia (rankowanie konfiguracji studni), brak zewnętrznego dostawcy modeli                                                                                                            | POTWIERDZONE (E-10)                      |
+| Lokalizacja                 | `src/services/ml/` (m.in. `TrainingPipeline.ts`, `ModelRegistry.ts`, `FeatureExtractor.ts`, `RewardCalculator.ts`, `driftService.ts`), `src/services/telemetry/`, frontend `public/js/studnie/mlDualRanking.js` | POTWIERDZONE                             |
+| Formuła rankingu            | `Final = 0.6 × Technical + 0.4 × AI × 100`, 5% eksploracji (`README.md` §AI/ML Pipeline)                                                                                                                        | POTWIERDZONE (dokumentacja + kod)        |
+| Dane treningowe             | telemetria konfiguracji zapisywana w bazie PostgreSQL u odbiorcy                                                                                                                                                | POTWIERDZONE                             |
+| Transfer danych na zewnątrz | brak wywołań zewnętrznych API AI (E-09)                                                                                                                                                                         | POTWIERDZONE                             |
+| Prawa do modeli             | modele trenowane lokalnie na danych użytkownika; brak modeli osób trzecich w repozytorium                                                                                                                       | POTWIERDZONE (brak plików modeli w repo) |
+
+Wniosek: S.O.K. **nie zawiera** komponentów AI/ML objętych licencjami dostawców zewnętrznych. Ewentualne prawa do wytrenowanych modeli i danych treningowych zależą od umowy z odbiorcą i wymagają uregulowania w umowie (ocena prawna).
+
+## 7. Pochodzenie kodu i autorstwo
+
+| Zagadnienie                           | Ustalenie                                                                                                                                                                                      | Status                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Autor / osoby uczestniczące           | wskazany w `LICENSE` Łukasz Kobyłka; w Git jedna osoba + bot dependabot; autor zadeklarował, że inne osoby nie uczestniczyły (P-04)                                                            | POTWIERDZONE + ZADEKLAROWANE         |
+| Tryb powstania utworu                 | poza godzinami pracy, poza obowiązkami pracowniczymi, brak umów regulujących prawa autorskie; wyłączny właściciel praw (P-01–P-03, P-13)                                                       | ZADEKLAROWANE PRZEZ AUTORA           |
+| Początek rozwoju                      | pierwszy commit 2026-07-14 (v1.5.0); wcześniejsza historia poza Git                                                                                                                            | POTWIERDZONE / reszta NIEUSTALONE    |
+| Przebieg rozwoju                      | 2 169 commitów, changelog `CHANGELOG.md` od 1.5.0                                                                                                                                              | POTWIERDZONE                         |
+| Logika biznesowa                      | własna implementacja (studnie, rury, oferty, cenniki, Excel, PDF/DOCX); brak zewnętrznych modułów domenowych                                                                                   | POTWIERDZONE (przegląd zależności)   |
+| Biblioteki open source                | rejestr: `THIRD-PARTY-NOTICES.md`; opis: `docs/LICENCJE_ZALEZNOSCI.md`                                                                                                                         | POTWIERDZONE                         |
+| Wykorzystanie AI                      | deklaracja: Antigravity, Codex, OpenCode + możliwe inne narzędzia w niewielkim zakresie; dowody użycia: Codex, OpenCode, Claude Code                                                           | patrz §5                             |
+| Materiały/kod osób trzecich           | autor zadeklarował, że część kodu pochodzi z innych repozytoriów i jest używana zgodnie z ich licencjami (P-05); zidentyfikowane źródła: zależności npm, zasoby vendored, materiał ECC (pkt 8) | ZADEKLAROWANE PRZEZ AUTORA           |
+| Model dystrybucji                     | przekazanie kodu źródłowego bez prawa odsprzedaży (P-11); repozytorium GitHub pozostaje publiczne (P-12)                                                                                       | ZADEKLAROWANE PRZEZ AUTORA           |
+| Prawa do licencjonowania komercyjnego | `LICENSE` wskazuje właściciela i wymaga zgody autora na użytek komercyjny; pełnia praw majątkowych potwierdzona wyłącznie deklaracją autora                                                    | ZADEKLAROWANE + WYMAGA OCENY PRAWNEJ |
+
+**Zastrzeżenie:** zapis „Copyright (c) 2026 Łukasz Kobyłka” w `LICENSE` jest deklaracją autora w repozytorium, a nie dowodem posiadania pełni autorskich praw majątkowych (np. w razie powstania utworu w ramach obowiązków pracowniczych). Rozstrzygnięcie wymaga dokumentów, których audyt nie zawiera.
+
+## 8. Biblioteki i komponenty zewnętrzne — odwołania do rejestrów
+
+Audyt nie powiela pełnych rejestrów (zakaz duplikacji źródeł prawdy):
+
+- pełna lista pakietów npm i obowiązków licencyjnych: [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) (stan 2026-11-15; 325 wpisów bez flagi dev, 981 z flagą dev w lockfile; `licenses:check` — aktualny),
+- analiza dystrybucji, obrazów i otwartych kwestii: [`LICENCJE_ZALEZNOSCI.md`](LICENCJE_ZALEZNOSCI.md),
+- stos technologiczny i licencje głównych technologii: [`TECH_STACK.md`](TECH_STACK.md),
+- teksty licencji dołączone do artefaktu: [`public/licenses/`](../public/licenses/) oraz [`public/licenses/npm/README.md`](../public/licenses/npm/README.md).
+
+Zasoby vendored (dostarczane w `public/`, a więc w obrazie aplikacji):
+
+| Zasób                                                           | Wersja               | Licencja            | Tekst w repo                      | Status       |
+| --------------------------------------------------------------- | -------------------- | ------------------- | --------------------------------- | ------------ |
+| SheetJS Community Edition (`public/vendor/xlsx.full.min.js`)    | 0.20.3 (E-13)        | Apache-2.0          | `public/licenses/APACHE-2.0.txt`  | POTWIERDZONE |
+| Font Inter (`public/css/fonts/*.woff2`, `public/css/inter.css`) | subset, wagi 300–900 | SIL OFL 1.1         | `public/licenses/SIL-OFL-1.1.txt` | POTWIERDZONE |
+| Ikony Lucide (subset `public/js/shared/iconsSlim.js`)           | subset               | ISC + MIT (Feather) | `public/licenses/ISC-Lucide.txt`  | POTWIERDZONE |
+
+Komponenty platformy: Node.js ≥ 22.13 (MIT, `.nvmrc` = 22, `Dockerfile: FROM node:22-slim`), PostgreSQL 18 (`postgres:18-alpine` w Compose; PostgreSQL License), Chrome for Testing pobierany przez Puppeteer (licencja własna przeglądarki; atrybucje niezweryfikowane), Debian/Alpine w obrazach bazowych (licencje systemowe; pełna inwentaryzacja nieprzeprowadzona).
+
+## 9. Elementy o nieustalonym statusie prawnym
+
+| Element                                      | Lokalizacja                                                                                                                          | Problem                                                                                                                                                | Dowód                                                                                                                        | Ryzyko                                                                                       | Zalecane działanie                                                                                                      | Status                                             |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Historia przed v1.5.0                        | poza Git                                                                                                                             | brak możliwości wykazania pochodzenia kodu sprzed pierwszego commitu; autor zadeklarował powstanie poza pracą i bez udziału innych osób                | `git log --reverse` (E-01); deklaracje P-01–P-05                                                                             | ŚREDNIE                                                                                      | objąć oświadczeniem autora w umowie (pochodzenie kodu i narzędzia)                                                      | NIEUSTALONE (technicznie) / ZADEKLAROWANE          |
+| Prawa pracownicze / umowne                   | poza repo                                                                                                                            | autor zadeklarował: utwór poza godzinami pracy, poza obowiązkami pracowniczymi, brak umów o prawa autorskie (P-01–P-03)                                | deklaracja autora 2026-11-16; `LICENSE`                                                                                      | NISKIE                                                                                       | potwierdzić oświadczeniem w umowie; ocena prawna przed podpisaniem umowy                                                | ZADEKLAROWANE PRZEZ AUTORA / WYMAGA OCENY PRAWNEJ  |
+| Claude Code nieujęty w pierwotnej deklaracji | `.claude/settings.json`, `.claude/CLAUDE.md` (lokalne, gitignored)                                                                   | narzędzie AI obecne w projekcie; autor potwierdził możliwe użycie „w niewielkim stopniu” (P-08)                                                        | E-07; deklaracja P-08                                                                                                        | NISKIE                                                                                       | doprecyzować zakres, jeśli będzie wymagany w umowie                                                                     | ZADEKLAROWANE PRZEZ AUTORA (szczegóły NIEUSTALONE) |
+| Zakres użycia Codex/OpenCode per zmiana      | historia Git                                                                                                                         | brak mapowania „zmiana → narzędzie”; autor zadeklarował weryfikację i testowanie każdego wyniku AI (P-10) i brak całych modułów bez modyfikacji (P-06) | E-01, E-02, E-06; deklaracje P-06, P-10                                                                                      | NISKIE                                                                                       | zapis w umowie o procesie weryfikacji wyników AI                                                                        | ZADEKLAROWANE PRZEZ AUTORA                         |
+| Antigravity bez dowodu                       | —                                                                                                                                    | deklaracja bez artefaktu w repo                                                                                                                        | E-08                                                                                                                         | NISKIE                                                                                       | potwierdzenie deklaracji; brak dalszych działań technicznych                                                            | ZADEKLAROWANE PRZEZ AUTORA                         |
+| Materiał ECC (MIT) w plikach narzędziowych   | `.opencode/rules/*.md`, `.opencode/skills/{verification-loop,e2e-testing,prisma-patterns,database-migrations,search-first}/SKILL.md` | adaptacja treści MIT bez zachowania pełnej noty licencyjnej w plikach                                                                                  | E-14, E-15                                                                                                                   | NISKIE (nie trafia do obrazu — E-16; trafia do odbiorcy tylko przy przekazaniu repozytorium) | dodać notę „na podstawie ECC, MIT, Copyright (c) 2026 Affaan Mustafa” + tekst MIT, jeśli przekazywany jest kod źródłowy | WYMAGA POTWIERDZENIA                               |
+| Dane cennikowe producentów                   | `assets/` (lokalne, poza Git i poza obrazem), `data/pricelists/active-pricelists.json` (wersjonowane i dostarczane)                  | autor zadeklarował prawo do wykorzystania i przekazywania danych; cenniki są publicznie dostępne (P-07)                                                | `assets/README.md`, `.dockerignore` (`assets/`), `data/pricelists/active-pricelists.json`; deklaracja P-07                   | NISKIE (zastrzeżenie prawne niżej)                                                           | potwierdzić oświadczeniem w umowie; publiczna dostępność danych nie jest licencją na redystrybucję — ocena prawna       | ZADEKLAROWANE PRZEZ AUTORA                         |
+| Grafiki i papier firmowy                     | `public/images/logo-sok*.svg`, `b-mark.png`, `ce-mark.png`, `letterhead-header/footer.png`, `transport-icon.jpg`                     | grafiki papieru firmowego dodane „na potrzeby testów”, a **wykorzystywane w generowanych ofertach PDF i etykietach**                                   | `public/js/rury/offerExports.js:179-248`, `public/templates/ofertaRury.html:20-96`, `public/js/spa/zleceniaHelpers.js:35-38` | WYSOKIE                                                                                      | potwierdzić prawo do papieru firmowego lub zastąpić zasobami własnymi; ocena prawna użycia oznaczeń CE/B                | WYMAGA POTWIERDZENIA                               |
+| Plik z materiałem Anthropic                  | `assets/claude-sonnet-5.md` (lokalny, poza Git i obrazem)                                                                            | treść opisująca zachowanie modelu; pochodzenie i dopuszczalność wykorzystania nieustalone                                                              | `assets/` poza Git; `.dockerignore`                                                                                          | NISKIE                                                                                       | usunąć z obszaru projektu lub udokumentować pochodzenie; nie dołączać do artefaktów                                     | WYMAGA POTWIERDZENIA                               |
+| Chrome for Testing — atrybucje               | obraz Docker (cache Puppeteer)                                                                                                       | brak potwierdzonej pełnej listy atrybucji komponentów przeglądarki                                                                                     | `LICENCJE_ZALEZNOSCI.md` §Otwarte kwestie                                                                                    | ŚREDNIE                                                                                      | uzyskać `about:credits` dla dostarczanej wersji i dołączyć wymagane informacje                                          | DO UZUPEŁNIENIA PRZED WYDANIEM                     |
+| Pakiety npm bez pliku LICENSE w obrazie      | obraz Docker                                                                                                                         | 32 pakiety bez `LICENSE`/`COPYING` w katalogu głównym; `@prisma/dev` bez pełnego tekstu ISC                                                            | `LICENCJE_ZALEZNOSCI.md` §Otwarte kwestie                                                                                    | ŚREDNIE                                                                                      | uzupełnić teksty/noty dla wersji w obrazie lub usunąć zbędne pakiety z artefaktu                                        | DO UZUPEŁNIENIA PRZED WYDANIEM                     |
+| `elkjs@0.11.1` (EPL-2.0)                     | obraz Docker                                                                                                                         | obowiązki EPL-2.0 (źródła, noty) dla komponentu w artefakcie                                                                                           | `LICENCJE_ZALEZNOSCI.md` §Otwarte kwestie                                                                                    | ŚREDNIE                                                                                      | potwierdzić sposób spełnienia EPL-2.0 dla konkretnej dystrybucji                                                        | DO UZUPEŁNIENIA PRZED WYDANIEM                     |
+| Obrazy bazowe bez pinowania digestów         | `Dockerfile`, `docker-compose.yml`                                                                                                   | `node:22-slim`, `postgres:18-alpine` jako ruchome tagi; zawartość systemowa zmienna między buildami                                                    | pliki wdrożeniowe                                                                                                            | ŚREDNIE                                                                                      | pinować digesty dla wydania i archiwizować raport licencji obrazu                                                       | DO UZUPEŁNIENIA PRZED WYDANIEM                     |
+| Repozytorium publiczne a licencja            | `github.com/blodytrav3l3r/Oferty_PV`                                                                                                 | `LICENSE` zabrania publicznego udostępniania kopii bez zgody; autor zdecydował, że repozytorium pozostaje publiczne (P-12)                             | `LICENSE` §3, adres repo; deklaracja P-12                                                                                    | NISKIE                                                                                       | dopasować brzmienie `LICENSE` do decyzji o publicznym repozytorium (zgoda autora na publikację)                         | ZADEKLAROWANE PRZEZ AUTORA                         |
+| Brak pliku NOTICE dla SheetJS                | `public/vendor/`                                                                                                                     | Apache-2.0 wymaga NOTICE tylko jeśli pakiet go zawiera; nie ustalono, czy dystrybuowany build SheetJS zawiera NOTICE                                   | `public/licenses/APACHE-2.0.txt` (brak pliku NOTICE w repo)                                                                  | NISKIE                                                                                       | sprawdzić archiwum źródłowe wersji 0.20.3 i dołączyć NOTICE, jeśli istnieje                                             | DO UZUPEŁNIENIA PRZED WYDANIEM                     |
+
+Poziom ryzyka „KRYTYCZNE” nie został przypisany żadnemu elementowi na podstawie zebranych dowodów.
+
+## 10. Pytania do autora (P5) — odpowiedzi
+
+Odpowiedzi udzielone przez autora 2026-11-16. Mają status **ZADEKLAROWANE PRZEZ AUTORA**; nie są potwierdzone dokumentami.
+
+| ID   | Pytanie                                                                  | Odpowiedź autora                                                                                       | Wpływ na dokument                                                                                  |
+| ---- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| P-01 | Czy S.O.K. powstawał w czasie zatrudnienia, poza godzinami pracy?        | powstał poza godzinami pracy                                                                           | ryzyko pracownicze obniżone; oświadczenie do umowy                                                 |
+| P-02 | Czy tworzenie S.O.K. należało do obowiązków pracowniczych?               | nie                                                                                                    | j.w.                                                                                               |
+| P-03 | Czy istnieją umowy/dokumenty regulujące prawa autorskie?                 | nie                                                                                                    | brak dokumentów; pozostaje ocena prawna                                                            |
+| P-04 | Czy inne osoby uczestniczyły w tworzeniu?                                | nie                                                                                                    | autorstwo jednoosobowe (deklaracja)                                                                |
+| P-05 | Czy kopiowano kod z innych aplikacji/repozytoriów?                       | część kodu pochodzi z innych repozytoriów i jest używana zgodnie z ich licencjami                      | zidentyfikowane źródła: zależności npm, zasoby vendored, materiał ECC (pkt 8); brak innych wskazań |
+| P-06 | Co robiły Antigravity, Codex, OpenCode? Czy tworzyły całe moduły?        | pisanie kodu, testy, dokumentacja, analizy; żadne nie tworzyło całych modułów bez istotnej modyfikacji | zakres AI potwierdzony deklaracją                                                                  |
+| P-07 | Prawo do danych cennikowych (PRECO, Impuls, active-pricelists)?          | tak, cenniki są dostępne publicznie                                                                    | ryzyko obniżone; publiczna dostępność ≠ licencja — ocena prawna                                    |
+| P-08 | Czy używano innych narzędzi AI (Claude Code, Cursor, Windsurf, Copilot)? | mogły zostać wykorzystane w niewielkim stopniu                                                         | dopisane do wykazu jako zakres NIEUSTALONY                                                         |
+| P-09 | Autor grafik w `public/images/`?                                         | grafiki z papieru firmowego dodane na potrzeby testów                                                  | ryzyko podniesione: zasoby są używane w ofertach PDF i etykietach                                  |
+| P-10 | Czy każdy wynik AI był sprawdzany i testowany przed commitem?            | tak                                                                                                    | procedura weryfikacji: deklaracja                                                                  |
+| P-11 | Model przekazania oprogramowania?                                        | kod źródłowy bez możliwości odsprzedaży                                                                | obowiązki licencyjne: kod źródłowy (pkt 3.3 załącznika)                                            |
+| P-12 | Czy repozytorium GitHub pozostaje publiczne?                             | tak                                                                                                    | dopasować brzmienie `LICENSE`                                                                      |
+| P-13 | Czy właścicielem praw jest wyłącznie Łukasz Kobyłka?                     | tak                                                                                                    | autorstwo jednoosobowe (deklaracja)                                                                |
+
+Uwaga: odpowiedź P-05 nie wskazuje nazw repozytoriów. Audyt nie zidentyfikował w `src/` kodu spoza zależności npm, zasobów vendored i materiału ECC. Jeżeli wykorzystano inne źródła, należy je wskazać przed podpisaniem umowy.
+
+## 11. Wymagane konsultacje prawne
+
+1. Potwierdzenie praw majątkowych autora na podstawie oświadczeń P-01–P-03 i P-13 (utwór poza stosunkiem pracy, brak umów, wyłączny właściciel) — oświadczenia są deklaracją, nie dokumentem.
+2. Ocena skutków prawnych wykorzystania narzędzi AI w procesie wytwórczym (zakres ochrony, ryzyko roszczeń dotyczących danych wejściowych i powtarzalności fragmentów kodu) — bez automatycznego uznawania kodu AI za naruszenie.
+3. Prawa do danych cennikowych i ich redystrybucji (P-07): publiczna dostępność cenników nie jest sama w sobie licencją na ich przekazywanie odbiorcy w `data/pricelists/active-pricelists.json`.
+4. Prawa do papieru firmowego i grafik (P-09) — zasoby są osadzane w generowanych ofertach PDF i etykietach; dodatkowo ocena zgodności użycia oznaczeń CE/B z przepisami o wyrobach.
+5. Model dystrybucji: przekazanie kodu źródłowego bez prawa odsprzedaży (P-11) i wynikające z niego obowiązki licencyjne (MIT/Apache-2.0/ISC/OFL/EPL-2.0).
+6. Dostosowanie `LICENSE` do decyzji o publicznym repozytorium (P-12) i do treści umowy licencyjnej.
+
+## 12. Ograniczenia audytu
+
+- Brak dostępu do historii sesji narzędzi AI, logów dostawców i prywatnej korespondencji — zakres użycia AI ustalono z deklaracji autora (P-06, P-08, P-10) i artefaktów konfiguracyjnych.
+- Odpowiedzi autora (P-01–P-13) nie zostały zweryfikowane dokumentami; mają status deklaracji i takie są oznaczone w dokumentach.
+- Brak mapowania commit → narzędzie AI; żadnemu fragmentowi kodu nie przypisano autorstwa AI.
+- Nie weryfikowano kompletności licencji obrazu Docker poza raportem z 2026-11-15 (`LICENCJE_ZALEZNOSCI.md`); nie budowano nowego obrazu w tym audycie.
+- Nie audytowano czystej instalacji Windows/Linux na systemie docelowym.
+- Nie badano treści umów, danych osobowych ani sekretów.
+- Ustalenia dotyczą wyłącznie commita `2bc3cc10` i stanu plików z 2026-11-16.
+
+## 13. Checkpointy
+
+| Etap | Zakres                               | Wynik                                                                                                                           |
+| ---- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| P0   | stan repo, istniejąca dokumentacja   | wykonany: HEAD `2bc3cc10`, clean, rejestry licencji aktualne; brak wcześniejszego dokumentu o pochodzeniu kodu/AI               |
+| P1   | audyt narzędzi AI                    | wykonany: 3 narzędzia zadeklarowane, 3 z dowodami konfiguracji (OpenCode, Codex, Claude Code), Antigravity bez dowodu           |
+| P2   | audyt bibliotek i komponentów        | wykonany przez odwołanie do rejestrów + weryfikacja `licenses:check`, zasobów vendored i artefaktów wdrożenia                   |
+| P3   | audyt licencji                       | wykonany: teksty dla vendored obecne; otwarte kwestie Chrome credits, `elkjs` (EPL-2.0), 32 pakietów bez LICENSE, `@prisma/dev` |
+| P4   | pochodzenie kodu i prawa nieustalone | wykonany: 16 pozycji w rejestrze elementów nieustalonych                                                                        |
+| P5   | pytania do autora                    | wykonany: odpowiedzi P-01…P-13 z 2026-11-16, oznaczone jako deklaracje autora                                                   |
+| P6   | załącznik licencyjny                 | zaktualizowany o odpowiedzi autora; sekcje deklaratywne oznaczone                                                               |
+| P7   | weryfikacja i raport                 | wykonany: linki, spójność z rejestrami, `licenses:check`, `version:check`, `encoding:check`, `git diff --check`, Prettier       |
+
+## 14. Status końcowy audytu
+
+**GOTOWE Z UWAGAMI** — dokumentacja i załącznik są kompletne w zakresie ustalonym na 2026-11-16; wszystkie pytania P-01…P-13 mają odpowiedzi autora, oznaczone jako deklaracje. Uwagi nieblokujące:
+
+1. Oświadczenia autora o prawach (P-01–P-03, P-13) wymagają potwierdzenia w umowie i oceny prawnej — brak dokumentów źródłowych.
+2. Papier firmowy i oznaczenia CE/B w `public/images/` są używane w generowanych ofertach i etykietach; autor wskazał, że dodano je „na potrzeby testów” — wymaga potwierdzenia prawa do ich wykorzystania lub zastąpienia.
+3. Odpowiedź P-05 nie wskazuje nazw repozytoriów; poza zidentyfikowanymi źródłami (npm, vendored, ECC) nie ustalono innych.
+4. Otwarte kwestie licencyjne artefaktu Docker (Chrome credits, `elkjs` EPL-2.0, pakiety bez tekstu licencji, pinowanie digestów) — do domknięcia przed wydaniem, poza zakresem tego audytu.
+5. `LICENSE` wymaga dopasowania do decyzji o publicznym repozytorium (P-12).
+
+Zmiana któregokolwiek z tych punktów wymaga aktualizacji obu dokumentów.

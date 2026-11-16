@@ -35,3 +35,5 @@ nie jest potwierdzeniem zgodności dowolnego przyszłego artefaktu.
 - Osobno trzeba sprawdzić pełne teksty dla pakietów Alpine w obrazie PostgreSQL, systemowe pakiety obrazu aplikacji po dokładnych wersjach, Chrome credits oraz hostowe zależności Windows/Linux. Aktualny digest obrazu PostgreSQL jest zapisany wyżej jako dowód lokalnego audytu, ale Compose używa ruchomego tagu, więc przyszłe buildy mogą mieć inną zawartość. Pakiety hostowe również nie są przypięte do wersji niezmiennych.
 
 Źródła warunków: [MIT](https://opensource.org/license/mit), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0), [Blue Oak 1.0.0](https://blueoakcouncil.org/license/1.0.0), [EPL-2.0](https://www.eclipse.org/legal/epl-2.0/) i [MPL-2.0](https://www.mozilla.org/en-US/MPL/2.0/). Obowiązują teksty odpowiednich licencji i konkretny sposób korzystania oraz przekazywania składników.
+
+Pochodzenie kodu, wykaz narzędzi AI i elementy o nieustalonym statusie prawnym: [`POCHODZENIE_KODU_I_AI.md`](POCHODZENIE_KODU_I_AI.md).
