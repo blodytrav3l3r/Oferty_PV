@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.61.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.2...v1.61.3) (2026-11-16)
+
+### Features
+
+- **studnie:** klik w nazwę przejścia niestandardowego otwiera popup „Zmień rodzaj przejścia" z katalogiem i typami custom; podmiana typu zachowuje pierwszy wariant średnicy i czyści zamrożenia
+
+### Bug Fixes
+
+- **studnie:** schemat studni pokazuje rzeczywistą średnicę przejścia niestandardowego (dotąd domyślne 160) — `parseTransitionGeometry` czyta `dn` pozycji custom
+
 ## [1.61.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.1...v1.61.2) (2026-11-16)
 
 ### Bug Fixes

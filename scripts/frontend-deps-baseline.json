@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-16",
-    "totalEdges": 2950,
+    "totalEdges": 2951,
     "edges": [
         {
             "page": "public/app.html",
@@ -13533,6 +13533,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "getCustomPrzejsciaTypesList",
+            "userFile": "public/js/studnie/wellTransitionsPopup.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "getCustomPrzejsciaVariantKey",
             "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
@@ -15327,6 +15335,14 @@
             "page": "public/studnie.html",
             "name": "isCustomPrzejscie",
             "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/diagramTransitions.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -20800,14 +20816,6 @@
             "name": "skipWizardToStep3",
             "userFile": "public/js/studnie/orderCrud.js",
             "defFile": "public/js/studnie/uiHelpers.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "sortCustomPrzejsciaVariants",
-            "userFile": "public/js/studnie/wellTransitionsPopup.js",
-            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },

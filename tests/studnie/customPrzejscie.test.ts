@@ -62,6 +62,7 @@ function runContext() {
 
     vm.createContext(context);
     vm.runInContext(readStudnie('wellTransitionsHelpers.js'), context);
+    vm.runInContext(readStudnie('diagramTransitions.js'), context);
     vm.runInContext(readStudnie('customPrzejscie.js'), context);
     return { context, well, showModalCalls, toasts };
 }
@@ -359,6 +360,27 @@ describe('typy niestandardowych przejść (nazwa + warianty DN)', () => {
             (m: any) => m[1]
         );
         expect(order).toEqual(['160', '315', '400']);
+    });
+
+    test('podgląd studni: geometria i etykieta DN przejścia custom', () => {
+        const { context } = runContext();
+        const parsed = context.parseTransitionGeometry(
+            {
+                isCustom: true,
+                productId: '',
+                dn: '400',
+                angle: 0,
+                rzednaWlaczenia: 2
+            },
+            1
+        );
+        expect(parsed).toMatchObject({ prW: 400, prH: 400, mmFromBottom: 1000 });
+        context.studnieProducts = [{ id: 'PVC-lite-315', category: 'PVC-lite', dn: '315' }];
+        const productParsed = context.parseTransitionGeometry(
+            { productId: 'PVC-lite-315', angle: 0, rzednaWlaczenia: 2 },
+            1
+        );
+        expect(productParsed).toMatchObject({ prW: 315, prH: 315 });
     });
 
     test('modal typu: nazwa escapowana w HTML (XSS)', () => {

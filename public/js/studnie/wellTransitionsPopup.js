@@ -193,6 +193,11 @@ if (typeof document !== 'undefined' && !window.__wtpDelegated) {
             window.setPrzejsciaVisibilityAll(val === '1');
         } else if (action === 'confirmChangePrzejscieType') {
             window.confirmChangePrzejscieType(parseInt(index, 10), t);
+        } else if (action === 'confirmChangeCustomPrzejscieType') {
+            window.confirmChangeCustomPrzejscieType(
+                parseInt(index, 10),
+                el.getAttribute('data-type') || ''
+            );
         } else if (action === 'confirmChangePrzejscieDn') {
             window.confirmChangePrzejscieDn(parseInt(index, 10), id);
         }
@@ -269,12 +274,15 @@ window.openChangePrzejscieTypePopup = function (index) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
-    const currTypeId = well.przejscia[index].productId;
-    const currProduct =
-        typeof getStudnieProductById === 'function'
-            ? getStudnieProductById(currTypeId)
-            : studnieProducts.find((p) => p.id === currTypeId);
-    if (!currProduct) return;
+    const item = well.przejscia[index];
+    const isCustomCurr = typeof isCustomPrzejscie === 'function' && isCustomPrzejscie(item);
+    const currTypeId = item.productId;
+    const currProduct = isCustomCurr
+        ? null
+        : typeof getStudnieProductById === 'function'
+          ? getStudnieProductById(currTypeId)
+          : studnieProducts.find((p) => p.id === currTypeId);
+    if (!isCustomCurr && !currProduct) return;
 
     const allTypes =
         typeof getPrzejsciaCategories === 'function'
@@ -286,6 +294,9 @@ window.openChangePrzejscieTypePopup = function (index) {
                           .map((p) => p.category)
                   )
               ].sort();
+    const customTypes =
+        typeof getCustomPrzejsciaTypesList === 'function' ? getCustomPrzejsciaTypesList() : [];
+    const currCustomTypeId = isCustomCurr ? String(item.customTypeId || '') : '';
 
     window.showModal({
         id: 'change-prz-type-modal',
@@ -299,10 +310,19 @@ window.openChangePrzejscieTypePopup = function (index) {
             <div class="prz-grid">
                 ${allTypes
                     .map((t) => {
-                        const isActive = t === currProduct.category;
+                        const isActive = !!currProduct && t === currProduct.category;
                         return `<button data-action="confirmChangePrzejscieType" data-index="${index}" data-t="${escapeJsStr(t)}"
                              class="prz-grid-btn ${isActive ? 'prz-grid-btn--active' : ''}">
                              ${escapeHtml(t)}
+                        </button>`;
+                    })
+                    .join('')}
+                ${customTypes
+                    .map((ct) => {
+                        const isActive = String(ct.id) === currCustomTypeId;
+                        return `<button data-action="confirmChangeCustomPrzejscieType" data-index="${index}" data-type="${escapeHtmlAttr(String(ct.id))}"
+                             class="prz-grid-btn ${isActive ? 'prz-grid-btn--active' : ''}">
+                             ${escapeHtml(ct.name)}
                         </button>`;
                     })
                     .join('')}
@@ -341,14 +361,21 @@ window.confirmChangePrzejscieType = function (index, newType) {
         available = [...allForType].sort((a, b) => a.dn - b.dn);
     }
     if (available.length > 0) {
-        well.przejscia[index].productId = available[0].id;
-        delete well.przejscia[index].frozenPrice;
-        delete well.przejscia[index].frozenPriceBase;
-        delete well.przejscia[index].frozenName;
-        delete well.przejscia[index].frozenTransitionPrice;
-        delete well.przejscia[index].frozenDrillingPrice;
-        delete well.przejscia[index].frozenDrillingName;
-        delete well.przejscia[index].frozenDrillingDn;
+        const item = well.przejscia[index];
+        item.productId = available[0].id;
+        delete item.isCustom;
+        delete item.customName;
+        delete item.customPrice;
+        delete item.customWeight;
+        delete item.customTypeId;
+        delete item.dn;
+        delete item.frozenPrice;
+        delete item.frozenPriceBase;
+        delete item.frozenName;
+        delete item.frozenTransitionPrice;
+        delete item.frozenDrillingPrice;
+        delete item.frozenDrillingName;
+        delete item.frozenDrillingDn;
 
         closeModal();
         if (typeof refreshActiveWell === 'function') refreshActiveWell();
@@ -357,6 +384,49 @@ window.confirmChangePrzejscieType = function (index, newType) {
         window.refreshZleceniaModalIfActive();
         showToast('Zmieniono materiał przejścia', 'success');
     }
+};
+
+window.confirmChangeCustomPrzejscieType = function (index, typeId) {
+    const well = getCurrentWell();
+    if (!well || !well.przejscia || !well.przejscia[index]) return;
+    const type =
+        typeof getCustomPrzejsciaTypesList === 'function'
+            ? getCustomPrzejsciaTypesList().find((t) => t && String(t.id) === String(typeId))
+            : null;
+    const variants =
+        type && typeof window.sortCustomPrzejsciaVariants === 'function'
+            ? window.sortCustomPrzejsciaVariants(type.variants)
+            : type
+              ? type.variants || []
+              : [];
+    const variant = variants[0];
+    if (!type || !variant) {
+        showToast('Ten typ przejścia nie ma zapisanych średnic', 'error');
+        return;
+    }
+
+    const item = well.przejscia[index];
+    item.isCustom = true;
+    item.productId = '';
+    item.customTypeId = type.id;
+    item.customName = type.name;
+    item.dn = variant.dn;
+    item.customPrice = variant.price;
+    item.customWeight = variant.weight;
+    delete item.frozenPrice;
+    delete item.frozenPriceBase;
+    delete item.frozenName;
+    delete item.frozenTransitionPrice;
+    delete item.frozenDrillingPrice;
+    delete item.frozenDrillingName;
+    delete item.frozenDrillingDn;
+
+    closeModal();
+    if (typeof refreshActiveWell === 'function') refreshActiveWell();
+    else refreshAll();
+    autoSelectComponents(true);
+    window.refreshZleceniaModalIfActive();
+    showToast('Zmieniono materiał przejścia', 'success');
 };
 
 /** Popup wyboru średnicy dla przejścia niestandardowego (typ z wariantami DN). */

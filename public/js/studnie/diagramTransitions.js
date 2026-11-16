@@ -229,6 +229,8 @@ function parseTransitionGeometry(pr, bottomElev) {
         typeof getStudnieProductById === 'function'
             ? getStudnieProductById(pr.productId)
             : studnieProducts.find((x) => x.id === pr.productId);
+    const isCustom =
+        typeof isCustomPrzejscie === 'function' ? isCustomPrzejscie(pr) : pr.isCustom === true;
     let prW = 160,
         prH = 160,
         isEgg = false,
@@ -245,6 +247,9 @@ function parseTransitionGeometry(pr, bottomElev) {
         isEgg = true;
     } else if (pprod) {
         prW = parseFloat(pprod.dn) || 160;
+        prH = prW;
+    } else if (isCustom) {
+        prW = parseFloat(pr.dn) || 160;
         prH = prW;
     }
 

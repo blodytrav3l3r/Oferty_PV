@@ -237,7 +237,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
         <div class="prz-name-wrap" title="${escapeHtmlAttr(przName + ' ' + dnLabel)}">
           ${
               isCustom
-                  ? `<span class="prz-field-color">${escapeHtml(przName)}</span>
+                  ? `<span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(przName)} — kliknij, aby zmienić rodzaj" class="prz-field-color">${escapeHtml(przName)}</span>
           <span class="prz-name-col">
             <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(dnLabel)} - kliknij, aby zmienić średnicę" class="prz-field-dn">${escapeHtml(dnLabel)}</span>
             <span class="prz-custom-note">poza cennikiem</span>
