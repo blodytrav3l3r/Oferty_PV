@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.61.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.60.1...v1.61.0) (2026-11-16)
+
+### Features
+
+- **studnie:** typy przejść niestandardowych z wieloma średnicami DN — nazwa i warianty (DN, waga, cena netto) zapisywane na ofercie i zamówieniu, kafelek typu w panelu dodawania z edycją średnic, auto-waga dla ścianki 15 cm, rabat studni bez wiercenia
+
 ## [1.60.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.60.0...v1.60.1) (2026-11-16)
 
 ### Bug Fixes

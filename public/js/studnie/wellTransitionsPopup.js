@@ -187,8 +187,8 @@ if (typeof document !== 'undefined' && !window.__wtpDelegated) {
             window.closePrzejsciaVisibilityPopup(container || '');
         } else if (action === 'openCustomPrzejscieFromPopup') {
             window.closePrzejsciaVisibilityPopup(container || '');
-            if (typeof window.openCustomPrzejscieModal === 'function')
-                window.openCustomPrzejscieModal({ mode: 'create' });
+            if (typeof window.openCustomPrzejscieTypeModal === 'function')
+                window.openCustomPrzejscieTypeModal({ mode: 'create' });
         } else if (action === 'setPrzejsciaVisibilityAll') {
             window.setPrzejsciaVisibilityAll(val === '1');
         } else if (action === 'confirmChangePrzejscieType') {

@@ -53,21 +53,20 @@ function flushQePendingState() {
 
 window.flushQePendingState = flushQePendingState;
 
-/** Kafelek zapamiętanego custom przejścia — klik dodaje od razu (preset oferty). */
-function renderCustomPresetTileHTML(preset, containerId) {
-    const price = Number(preset.price) || 0;
-    const priceLabel = price.toFixed(2).replace('.', ',') + ' PLN';
-    const dnLabel = preset.dn ? 'DN ' + preset.dn + ' · ' : '';
+/** Kafelek typu custom (nazwa + ikona edycji); DN wybierane pod spodem. */
+function renderCustomPrzejsciaTypeTileHTML(type, isActive, containerId) {
+    const key = customPrzejsciaTypeKey(type.id);
+    const accent = isActive ? 'rgba(var(--accent2-rgb), 0.24)' : 'rgba(var(--accent2-rgb), 0.12)';
+    const border = isActive ? 'rgba(var(--accent2-rgb), 0.7)' : 'rgba(var(--accent2-rgb), 0.45)';
     return `
-        <div data-action="addCustomPrzejsciePreset"
-             data-name="${escapeHtmlAttr(preset.name)}"
-             data-dn="${escapeHtmlAttr(preset.dn || '')}"
-             data-price="${escapeHtmlAttr(String(preset.price))}"
-             data-container="${escapeHtmlAttr(containerId || '')}"
-             title="Dodaj zapamiętane przejście: ${escapeHtmlAttr(preset.name)}"
-             style="padding:0.25rem 0.4rem; border-radius: var(--radius-sm); cursor:pointer; min-height:44px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.1rem; background:rgba(var(--accent2-rgb), 0.12); border:1px dashed rgba(var(--accent2-rgb), 0.55);">
-            <span style="font-size: var(--fs-xs); font-weight: var(--fw-bold); color:var(--accent2-hover); text-align:center; line-height:1.2; word-break:break-word; overflow-wrap:anywhere;">${escapeHtml(preset.name)}</span>
-            <span style="font-size: var(--fs-2xs); color:var(--text-muted);">${escapeHtml(dnLabel + priceLabel)}</span>
+        <div data-action="inlineSetType" data-t="${escapeJsStr(key)}" data-container="${escapeHtmlAttr(containerId || '')}"
+             title="${escapeHtmlAttr(type.name)}"
+             style="position:relative; padding:0.2rem 1.3rem 0.2rem 0.4rem; border-radius: var(--radius-sm); cursor:pointer; height:44px; display:flex; align-items:center; justify-content:center; background:${accent}; border:1px dashed ${border};">
+            <div style="font-size: var(--fs-xs); font-weight: var(--fw-bold); text-align:center; line-height:1.25; word-break:break-word; overflow-wrap:anywhere; color:var(--accent2-hover);">${escapeHtml(type.name)}</div>
+            <button type="button" class="btn-icon" data-action="editCustomPrzejscieType" data-type-id="${escapeHtmlAttr(type.id)}" aria-label="Edytuj typ ${escapeHtmlAttr(type.name)}" title="Edytuj średnice, wagę i ceny"
+                    style="position:absolute; top:1px; right:1px; padding:0; width:18px; height:18px; min-width:18px; opacity:0.85;">
+                <i data-lucide="pencil" aria-hidden="true" style="width:12px; height:12px;"></i>
+            </button>
         </div>`;
 }
 
@@ -83,20 +82,32 @@ function renderInlinePrzejsciaApp(containerId) {
                           .map((p) => p.category)
                   )
               ].sort();
-    // Filtruj tylko do widocznych typów
+    // Typy custom są zawsze widoczne (nie podlegają „Pokaż / Ukryj").
+    const customTypes =
+        typeof getCustomPrzejsciaTypesList === 'function' ? getCustomPrzejsciaTypesList() : [];
     const types = allTypes.filter((t) => visiblePrzejsciaTypes.has(t));
+    const typeEntries = types
+        .map((t) => ({ key: t, label: t, isCustom: false, type: null }))
+        .concat(
+            customTypes.map((t) => ({
+                key: customPrzejsciaTypeKey(t.id),
+                label: t.name,
+                isCustom: true,
+                type: t
+            }))
+        );
 
     const container = document.getElementById(containerId || 'inline-przejscia-app');
     if (!container) return;
 
-    // Zresetuj typ, jeśli został ukryty
-    if (inlinePrzejsciaState.type && !types.includes(inlinePrzejsciaState.type)) {
-        inlinePrzejsciaState.type = types[0] || null;
+    // Zresetuj typ, jeśli został ukryty albo usunięty.
+    const currentEntry = typeEntries.find((e) => e.key === inlinePrzejsciaState.type) || null;
+    if (!currentEntry) {
+        inlinePrzejsciaState.type = typeEntries[0] ? typeEntries[0].key : null;
         inlinePrzejsciaState.dnId = null;
     }
-    if (!inlinePrzejsciaState.type) {
-        inlinePrzejsciaState.type = types[0] || null;
-    }
+    const currentCustomType = currentEntry && currentEntry.isCustom ? currentEntry.type : null;
+    const currentTypeLabel = currentEntry ? currentEntry.label : '';
 
     const hiddenCount = allTypes.length - types.length;
     const visibilityBtnLabel =
@@ -104,16 +115,9 @@ function renderInlinePrzejsciaApp(containerId) {
             ? `<i data-lucide="eye"></i>️ Pokaż/Ukryj (${hiddenCount} ukrytych)`
             : '<i data-lucide="eye"></i>️ Pokaż/Ukryj';
 
-    // Zapamiętane custom przejścia oferty — kafelki do szybkiego dodania.
-    const presets =
-        typeof collectCustomPrzejsciaPresets === 'function'
-            ? collectCustomPrzejsciaPresets(typeof wells !== 'undefined' ? wells : [])
-            : [];
-    const presetsHtml = presets.map((p) => renderCustomPresetTileHTML(p, containerId)).join('');
-
     // Jeśli żadne typy nie są widoczne, pokaż stan pusty.
     // Rozróżnij pusty katalog (0/0 — problem z danymi) od ukrytych (0/N).
-    if (types.length === 0) {
+    if (typeEntries.length === 0) {
         const catalogEmpty = allTypes.length === 0;
         container.innerHTML = `
             <div class="empty-state" style="border:1px dashed var(--border); border-radius: var(--radius-sm); background:var(--bg-secondary); margin:0.4rem 0;">
@@ -128,14 +132,6 @@ function renderInlinePrzejsciaApp(containerId) {
                 </button>`
                 }
             </div>
-            ${
-                presets.length > 0
-                    ? `<div style="padding:0.4rem 0;">
-                    <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9; margin-bottom:0.3rem;">Zapamiętane niestandardowe</div>
-                    <div class="grid-auto-120">${presetsHtml}</div>
-                </div>`
-                    : ''
-            }
         `;
         if (window.lucide && window.lucide.createIcons)
             window.lucide.createIcons({ root: container });
@@ -143,30 +139,45 @@ function renderInlinePrzejsciaApp(containerId) {
     }
 
     const maxPipeDn = well ? getMaxPipeDn(well.dn) : 9999;
-    const dnList = inlinePrzejsciaState.type
-        ? (typeof getPrzejsciaForCategory === 'function'
-              ? getPrzejsciaForCategory(inlinePrzejsciaState.type)
-              : studnieProducts.filter(
-                    (p) =>
-                        p.componentType === 'przejscie' &&
-                        p.active !== 0 &&
-                        p.category === inlinePrzejsciaState.type
-                )
-          )
-              .filter((p) => {
-                  if (p.category === 'Otwór KPED') return true;
-                  let pDn = 160;
-                  if (typeof p.dn === 'string' && p.dn.includes('/')) {
-                      pDn = parseFloat(p.dn.split('/')[0]) || 160;
-                  } else {
-                      pDn = parseFloat(p.dn) || 160;
-                  }
-                  return pDn <= maxPipeDn;
-              })
-              .sort((a, b) => a.dn - b.dn)
-        : [];
+    let dnList = [];
+    if (currentCustomType) {
+        dnList = (currentCustomType.variants || [])
+            .map((v) => ({
+                id: getCustomPrzejsciaVariantKey(currentCustomType.id, v.dn),
+                dn: v.dn,
+                price: v.price,
+                weight: v.weight,
+                category: currentCustomType.name,
+                isCustomVariant: true
+            }))
+            .sort((a, b) => (parseFloat(a.dn) || 0) - (parseFloat(b.dn) || 0));
+    } else if (inlinePrzejsciaState.type) {
+        dnList = (
+            typeof getPrzejsciaForCategory === 'function'
+                ? getPrzejsciaForCategory(inlinePrzejsciaState.type)
+                : studnieProducts.filter(
+                      (p) =>
+                          p.componentType === 'przejscie' &&
+                          p.active !== 0 &&
+                          p.category === inlinePrzejsciaState.type
+                  )
+        )
+            .filter((p) => {
+                if (p.category === 'Otwór KPED') return true;
+                let pDn = 160;
+                if (typeof p.dn === 'string' && p.dn.includes('/')) {
+                    pDn = parseFloat(p.dn.split('/')[0]) || 160;
+                } else {
+                    pDn = parseFloat(p.dn) || 160;
+                }
+                return pDn <= maxPipeDn;
+            })
+            .sort((a, b) => a.dn - b.dn);
+    }
     const selectedProduct = inlinePrzejsciaState.dnId
-        ? getStudnieProductById(inlinePrzejsciaState.dnId)
+        ? currentCustomType
+            ? dnList.find((p) => p.id === inlinePrzejsciaState.dnId) || null
+            : getStudnieProductById(inlinePrzejsciaState.dnId)
         : null;
 
     container.innerHTML = `
@@ -178,8 +189,15 @@ function renderInlinePrzejsciaApp(containerId) {
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.5) transparent;">
                 <div class="grid-auto-120">
-                    ${types
-                        .map((t) => {
+                    ${typeEntries
+                        .map((entry) => {
+                            if (entry.isCustom)
+                                return renderCustomPrzejsciaTypeTileHTML(
+                                    entry.type,
+                                    entry.key === inlinePrzejsciaState.type,
+                                    containerId
+                                );
+                            const t = entry.key;
                             const isActive = t === inlinePrzejsciaState.type;
                             return `
                         <div data-action="inlineSetType" data-t="${escapeJsStr(t)}" data-container="${escapeJsStr(containerId || '')}" 
@@ -193,14 +211,13 @@ function renderInlinePrzejsciaApp(containerId) {
                         </div>`;
                         })
                         .join('')}
-                    ${presetsHtml}
                 </div>
             </div>
         </div>
 
         <!-- Wybór DN -->
         <div style="padding:0.3rem 0;">
-            <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9;">Średnica (DN) — ${escapeHtml(inlinePrzejsciaState.type || '')}</div>
+            <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9;">Średnica (DN) — ${escapeHtml(currentTypeLabel)}</div>
             <div class="grid-auto-120">
                 ${dnList
                     .map((p) => {
@@ -229,7 +246,7 @@ function renderInlinePrzejsciaApp(containerId) {
         <div class="wt-add-panel">
             <div class="wt-add-details">
                 <span class="wt-add-title">${escapeHtml(selectedProduct.category)}</span>
-                <span class="wt-add-dn">&nbsp;${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
+                <span class="wt-add-dn">&nbsp;${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}${selectedProduct.weight ? '&nbsp;·&nbsp;' + fmtInt(selectedProduct.weight) + ' kg' : ''}</span>
             </div>
             <div class="wt-add-cell">
                 <div class="wt-add-header">Rzędna [m]</div>

@@ -298,6 +298,10 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         validity: offer.validity,
         wells: orderWellsDTO,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
+        customPrzejsciaTypes:
+            typeof customPrzejsciaTypes !== 'undefined'
+                ? structuredClone(customPrzejsciaTypes)
+                : [],
         originalSnapshot: {
             // P1: slim snapshot — [{id,name,price,weight,configHash}]
             // zamiast pełnej kopii wells (buyty, nie megabajty).
@@ -532,6 +536,8 @@ async function saveOrderStudnieUnsafe() {
         order.wellDiscounts = structuredClone(window.wellDiscounts);
     }
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
+    order.customPrzejsciaTypes =
+        typeof customPrzejsciaTypes !== 'undefined' ? structuredClone(customPrzejsciaTypes) : [];
     order.updatedAt = new Date().toISOString();
     order.paymentTerms =
         document.getElementById('offer-tab-payment-terms')?.value ||
@@ -585,6 +591,7 @@ async function saveOrderStudnieUnsafe() {
             wells: order.wells,
             wellDiscounts: order.wellDiscounts,
             visiblePrzejsciaTypes: order.visiblePrzejsciaTypes,
+            customPrzejsciaTypes: order.customPrzejsciaTypes,
             updatedAt: order.updatedAt,
             paymentTerms: order.paymentTerms,
             validity: order.validity,
@@ -810,6 +817,10 @@ async function enterOrderEditMode(orderId) {
         wells = Array.isArray(order.wells) ? structuredClone(order.wells) : [];
         migrateWellData(wells);
         if (typeof backfillSolverStamps === 'function') backfillSolverStamps(wells);
+        customPrzejsciaTypes =
+            typeof hydrateCustomPrzejsciaTypes === 'function'
+                ? hydrateCustomPrzejsciaTypes(order.customPrzejsciaTypes || [], wells)
+                : [];
 
         if (order.wellDiscounts) {
             window.wellDiscounts = structuredClone(order.wellDiscounts);
@@ -1051,6 +1062,10 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         wells = Array.isArray(order.wells) ? structuredClone(order.wells) : [];
         if (typeof migrateWellData === 'function') migrateWellData(wells);
         if (typeof backfillSolverStamps === 'function') backfillSolverStamps(wells);
+        customPrzejsciaTypes =
+            typeof hydrateCustomPrzejsciaTypes === 'function'
+                ? hydrateCustomPrzejsciaTypes(order.customPrzejsciaTypes || [], wells)
+                : [];
         wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
@@ -1200,6 +1215,8 @@ async function saveCurrentOrderUnsafe(options = {}) {
         order.wellDiscounts = structuredClone(window.wellDiscounts);
     }
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
+    order.customPrzejsciaTypes =
+        typeof customPrzejsciaTypes !== 'undefined' ? structuredClone(customPrzejsciaTypes) : [];
     order.updatedAt = new Date().toISOString();
 
     let totalNetto = 0,
@@ -1320,6 +1337,7 @@ async function saveCurrentOrderUnsafe(options = {}) {
             wells: order.wells,
             wellDiscounts: order.wellDiscounts,
             kartaBudowy: order.kartaBudowy,
+            customPrzejsciaTypes: order.customPrzejsciaTypes,
             updatedAt: order.updatedAt,
             wellsExport: order.wellsExport,
             totalWeight: order.totalWeight,

@@ -73,6 +73,8 @@ export interface PrzejscieItem {
     isCustom?: boolean;
     customName?: string;
     customPrice?: number;
+    customWeight?: number;
+    customTypeId?: string;
     dn?: string | number;
 }
 

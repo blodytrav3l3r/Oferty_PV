@@ -125,6 +125,58 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
         }
     }
 
+    // Wariant typu custom: buduje pozycję poza cennikiem (nazwa typu + DN).
+    const customRef =
+        typeof parseCustomPrzejsciaVariantKey === 'function'
+            ? parseCustomPrzejsciaVariantKey(id)
+            : null;
+    if (customRef) {
+        const type =
+            typeof findCustomPrzejsciaTypeByKey === 'function'
+                ? findCustomPrzejsciaTypeByKey(customPrzejsciaTypeKey(customRef.typeId))
+                : null;
+        const variant = type
+            ? (type.variants || []).find((v) => String(v.dn) === customRef.dn)
+            : null;
+        if (!type || !variant) {
+            showToast('Wybrany wariant przejścia już nie istnieje', 'error');
+            return;
+        }
+        const result = buildCustomPrzejscieItem(
+            {
+                name: type.name,
+                dn: variant.dn,
+                price: variant.price,
+                weight: variant.weight,
+                typeId: type.id,
+                rzedna,
+                angle
+            },
+            well,
+            null
+        );
+        if (!result.ok) {
+            showToast(
+                result.errors.name || result.errors.price || 'Nie można dodać przejścia',
+                'error'
+            );
+            return;
+        }
+        result.item.spadekKineta = spadekKineta ? Math.round(parseFloat(spadekKineta)) : null;
+        result.item.spadekMufa = spadekMufa ? Math.round(parseFloat(spadekMufa)) : null;
+        well.przejscia.push(result.item);
+        if (typeof ensurePrzejsciaIds === 'function') ensurePrzejsciaIds(well.przejscia);
+        if (typeof invalidateFrozenPricesForWell === 'function')
+            invalidateFrozenPricesForWell(well);
+        if (typeof refreshActiveWell === 'function') refreshActiveWell();
+        else refreshAll();
+        autoSelectComponents(true);
+        showToast('Dodano przejście szczelne', 'success');
+        renderInlinePrzejsciaApp(containerId);
+        window.refreshZleceniaModalIfActive();
+        return;
+    }
+
     well.przejscia.push({
         id:
             typeof newPrzejscieId === 'function'

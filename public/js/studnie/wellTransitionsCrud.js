@@ -157,6 +157,8 @@ function savePrzejscieEdit(index) {
         nextItem.productId = '';
         nextItem.customName = prev.customName;
         nextItem.customPrice = prev.customPrice;
+        nextItem.customWeight = prev.customWeight;
+        nextItem.customTypeId = prev.customTypeId;
         nextItem.dn = prev.dn;
         nextItem.doplata = prev.doplata;
     }

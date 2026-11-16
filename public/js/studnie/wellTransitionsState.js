@@ -14,6 +14,8 @@ let editPrzejscieState = {
 
 const inlinePrzejsciaState = { type: null, dnId: null };
 let visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
+// Typy przejść spoza cennika: nazwa + warianty DN (waga i cena przed rabatem).
+let customPrzejsciaTypes = [];
 let draggedPrzIndex = null;
 
 Object.defineProperty(window, 'editPrzejscieIdx', {
@@ -46,6 +48,13 @@ Object.defineProperty(window, 'visiblePrzejsciaTypes', {
     get: () => visiblePrzejsciaTypes,
     set: (v) => {
         visiblePrzejsciaTypes = v;
+    }
+});
+Object.defineProperty(window, 'customPrzejsciaTypes', {
+    configurable: true,
+    get: () => customPrzejsciaTypes,
+    set: (v) => {
+        customPrzejsciaTypes = Array.isArray(v) ? v : [];
     }
 });
 Object.defineProperty(window, 'draggedPrzIndex', {

@@ -39,6 +39,7 @@ function clearOfferForm() {
     // poprzedniej ofercie). Katalog (getPrzejsciaCategories) podaje pełną
     // listę kafli; użytkownik włącza typy w popupie "Pokaż / Ukryj".
     visiblePrzejsciaTypes = new Set();
+    customPrzejsciaTypes = [];
     if (typeof inlinePrzejsciaState !== 'undefined' && inlinePrzejsciaState) {
         inlinePrzejsciaState.type = null;
         inlinePrzejsciaState.dnId = null;
@@ -196,6 +197,11 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     wells = structuredClone(normalized.wells || []);
     migrateWellData(wells);
+    // Typy custom: zapisane na ofercie + back-compat z pozycji isCustom.
+    customPrzejsciaTypes =
+        typeof hydrateCustomPrzejsciaTypes === 'function'
+            ? hydrateCustomPrzejsciaTypes(normalized.customPrzejsciaTypes || [], wells)
+            : [];
     // Backfill pieczatki solvera dla starych danych (notki bez _solverErrorsGen
     // inaczej znikalyby nigdy — preserve). Pierwsza reczna edycja po loadzie
     // uniewaznia nieaktualne notki; nietkniete trzymaja.

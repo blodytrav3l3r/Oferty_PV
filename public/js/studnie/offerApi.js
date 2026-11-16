@@ -39,6 +39,7 @@ function normalizeOfferData(doc) {
             'transportSeparate',
             'wellDiscounts',
             'visiblePrzejsciaTypes',
+            'customPrzejsciaTypes',
             'date',
             'history',
             'wizard',

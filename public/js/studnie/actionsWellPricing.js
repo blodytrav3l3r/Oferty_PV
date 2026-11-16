@@ -730,7 +730,11 @@ function calcWellStats(well) {
                 }
             }
 
-            weight += (p && p.weight) || 0;
+            weight += p
+                ? p.weight || 0
+                : typeof item.customWeight === 'number'
+                  ? item.customWeight
+                  : Number(item.customWeight) || 0;
         });
     }
 

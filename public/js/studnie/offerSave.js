@@ -219,6 +219,7 @@ async function saveOfferStudnie() {
             wells: structuredClone(wells),
             wellsExport: pricing.wellsForExport,
             visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
+            customPrzejsciaTypes: structuredClone(customPrzejsciaTypes),
             transportMode: currentTransportMode,
             transportSeparate: !!currentTransportSeparate,
             wellDiscounts:

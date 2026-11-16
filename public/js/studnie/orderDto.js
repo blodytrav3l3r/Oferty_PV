@@ -54,7 +54,9 @@ const ORDER_PRZEJSCIE_FIELDS = [
     'katWlaczenia',
     'isCustom',
     'customName',
-    'customPrice'
+    'customPrice',
+    'customWeight',
+    'customTypeId'
 ];
 
 /**
@@ -263,7 +265,9 @@ const PRZEJSCIE_PRICING_FIELDS = [
     'doplata',
     'isCustom',
     'customName',
-    'customPrice'
+    'customPrice',
+    'customWeight',
+    'customTypeId'
 ];
 
 /**

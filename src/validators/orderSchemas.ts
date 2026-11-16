@@ -131,7 +131,9 @@ export const ORDER_PRZEJSCIE_DTO_FIELDS = [
     'katWlaczenia',
     'isCustom',
     'customName',
-    'customPrice'
+    'customPrice',
+    'customWeight',
+    'customTypeId'
 ] as const;
 
 export const ORDER_WELL_DTO_FIELDS = [

@@ -29,6 +29,7 @@ function runContext() {
         document: { getElementById: () => null, addEventListener: () => {} },
         console,
         studnieProducts: [],
+        customPrzejsciaTypes: [],
         getCurrentWell: () => well,
         isOfferLocked: () => false,
         isWellLocked: () => false,
@@ -200,63 +201,140 @@ describe('modal custom przejścia', () => {
     });
 });
 
-describe('presety niestandardowych przejść (zapamiętane w ofercie)', () => {
-    test('collectCustomPrzejsciaPresets: dedupe po nazwie+DN, ostatnia cena wygrywa', () => {
+describe('typy niestandardowych przejść (nazwa + warianty DN)', () => {
+    test('auto-waga: walec betonu DN × 15 cm × 2400 kg/m³', () => {
         const { context } = runContext();
-        const presets = context.collectCustomPrzejsciaPresets([
-            {
-                przejscia: [{ isCustom: true, customName: 'A', dn: '315', customPrice: 100 }]
-            },
-            {
-                przejscia: [
-                    { isCustom: true, customName: 'A', dn: '315', customPrice: 200 },
-                    { isCustom: true, customName: 'B', dn: '', customPrice: 50 },
-                    { productId: 'p1' },
-                    null
-                ]
-            },
-            { przejscia: [] },
-            null
-        ]);
-        expect(presets).toEqual([
-            { name: 'A', dn: '315', price: 200 },
-            { name: 'B', dn: '', price: 50 }
+        expect(context.computeCustomPrzejscieWeight('315')).toBeCloseTo(28.06, 2);
+        expect(context.computeCustomPrzejscieWeight('')).toBe(0);
+        expect(context.computeCustomPrzejscieWeight('abc')).toBe(0);
+        const v = context.validateCustomPrzejscie({ name: 'P', dn: '315', price: 10 });
+        expect(v.value.weight).toBeCloseTo(28.06, 2);
+    });
+
+    test('validateCustomPrzejscieType: nazwa, warianty, duplikaty DN, ceny', () => {
+        const { context } = runContext();
+        const validate = context.validateCustomPrzejscieType;
+        expect(validate({ name: '', variants: [{}] }).errors.name).toContain('nazw');
+        expect(validate({ name: 'T', variants: [] }).errors.variants).toContain('średnic');
+        const dup = validate({
+            name: 'T',
+            variants: [
+                { dn: '315', price: 100 },
+                { dn: '315', price: 200 }
+            ]
+        });
+        expect(dup.ok).toBe(false);
+        expect(dup.errors['v1-dn']).toContain('już jest');
+        const noPrice = validate({ name: 'T', variants: [{ dn: '315' }] });
+        expect(noPrice.errors['v0-price']).toContain('cenę');
+        const ok = validate({
+            name: 'T',
+            variants: [
+                { dn: '315', price: 100 },
+                { dn: '400', price: '123.456' }
+            ]
+        });
+        expect(ok.ok).toBe(true);
+        expect(ok.value.variants).toEqual([
+            { dn: '315', weight: 28.06, price: 100 },
+            { dn: '400', weight: 45.24, price: 123.46 }
         ]);
     });
 
-    test('collectCustomPrzejsciaPresets: pomija puste nazwy', () => {
+    test('buildCustomPrzejscieType: tworzy i zachowuje id przy edycji', () => {
         const { context } = runContext();
-        expect(
-            context.collectCustomPrzejsciaPresets([
-                { przejscia: [{ isCustom: true, customName: '  ', customPrice: 10 }] }
-            ])
-        ).toEqual([]);
+        const values = { name: 'Spec', variants: [{ dn: '315', price: 100 }] };
+        const created = context.buildCustomPrzejscieType(values, null);
+        expect(created.ok).toBe(true);
+        expect(typeof created.type.id).toBe('string');
+        const edited = context.buildCustomPrzejscieType(
+            { name: 'Spec 2', variants: [{ dn: '315', price: 200 }] },
+            created.type
+        );
+        expect(edited.type.id).toBe(created.type.id);
+        expect(edited.type.name).toBe('Spec 2');
+        expect(edited.type.variants[0].price).toBe(200);
     });
 
-    test('addCustomPrzejsciePreset dodaje kopię z ceną i nowym id', () => {
-        const { context, well, toasts } = runContext();
-        well.przejscia = [
-            { id: 'orig', isCustom: true, customName: 'Spec 315', dn: '315', customPrice: 100 }
-        ];
-        context.addCustomPrzejsciePreset({ name: 'Spec 315', dn: '315', price: '100' });
-        expect(well.przejscia).toHaveLength(2);
-        expect(well.przejscia[1]).toMatchObject({
-            isCustom: true,
-            productId: '',
-            customName: 'Spec 315',
-            customPrice: 100,
+    test('klucze typu i wariantu: custom:<id> / custom:<id>:<dn>', () => {
+        const { context } = runContext();
+        expect(context.customPrzejsciaTypeKey('t1')).toBe('custom:t1');
+        const variantKey = context.getCustomPrzejsciaVariantKey('t1', '315');
+        expect(variantKey).toBe('custom:t1:315');
+        expect(context.parseCustomPrzejsciaVariantKey(variantKey)).toEqual({
+            typeId: 't1',
             dn: '315'
         });
-        expect(well.przejscia[1].id).toBeTruthy();
-        expect(well.przejscia[1].id).not.toBe('orig');
-        expect(toasts.at(-1)).toEqual({ msg: 'Dodano przejście niestandardowe', type: 'success' });
+        expect(context.parseCustomPrzejsciaVariantKey('custom:t1')).toBeNull();
+        expect(context.isCustomPrzejsciaTypeKey('custom:t1')).toBe(true);
+        expect(context.isCustomPrzejsciaTypeKey('PVC')).toBe(false);
     });
 
-    test('addCustomPrzejsciePreset: blokada oferty nie dodaje pozycji', () => {
-        const { context, well, toasts } = runContext();
+    test('normalizeCustomPrzejsciaTypes: odrzuca puste/invalidne warianty i typy', () => {
+        const { context } = runContext();
+        const types = context.normalizeCustomPrzejsciaTypes([
+            { id: 'a', name: 'A', variants: [{ dn: '315', price: 100 }] },
+            { id: 'b', name: 'B', variants: [] },
+            { id: 'c', name: 'C', variants: [{ dn: '', price: 10 }] },
+            null
+        ]);
+        expect(types).toHaveLength(1);
+        expect(types[0]).toMatchObject({ id: 'a', name: 'A' });
+        expect(types[0].variants[0].weight).toBeCloseTo(28.06, 2);
+    });
+
+    test('hydrateCustomPrzejsciaTypes: scala zapisane typy z pozycjami isCustom', () => {
+        const { context } = runContext();
+        const wells = [
+            {
+                przejscia: [
+                    { isCustom: true, customName: 'Zapisany', dn: '315', customPrice: 100 },
+                    {
+                        isCustom: true,
+                        customName: 'Nowy',
+                        dn: '400',
+                        customPrice: 200,
+                        customWeight: 99
+                    },
+                    { productId: 'p1' }
+                ]
+            }
+        ];
+        const types = context.hydrateCustomPrzejsciaTypes(
+            [{ id: 't1', name: 'Zapisany', variants: [{ dn: '315', weight: 28.06, price: 100 }] }],
+            wells
+        );
+        expect(types).toHaveLength(2);
+        expect(types[0].id).toBe('t1');
+        expect(wells[0].przejscia[0].customTypeId).toBe('t1');
+        const created = types.find((t) => t.name === 'Nowy');
+        expect(created).toBeTruthy();
+        expect(wells[0].przejscia[1].customTypeId).toBe(created.id);
+        expect(created.variants[0]).toEqual({ dn: '400', weight: 99, price: 200 });
+        expect(wells[0].przejscia[2].customTypeId).toBeUndefined();
+    });
+
+    test('modal typu: nazwa escapowana w HTML (XSS)', () => {
+        const { context, showModalCalls } = runContext();
+        context.customPrzejsciaTypes = [
+            {
+                id: 't1',
+                name: '<img src=x onerror=alert(1)>',
+                variants: [{ dn: '315', weight: 28.06, price: 100 }]
+            }
+        ];
+        context.openCustomPrzejscieTypeModal({ mode: 'edit', typeId: 't1' });
+        expect(showModalCalls).toHaveLength(1);
+        const html = showModalCalls[0].html;
+        expect(html).not.toContain('<img src=x');
+        expect(html).toContain('&lt;img src=x');
+    });
+
+    test('modal typu: blokada oferty nie otwiera formularza', () => {
+        const { context, showModalCalls, toasts } = runContext();
         context.isOfferLocked = () => true;
-        context.addCustomPrzejsciePreset({ name: 'Spec', dn: '315', price: 10 });
-        expect(well.przejscia).toHaveLength(0);
+        context.openCustomPrzejscieTypeModal({ mode: 'create' });
+        expect(showModalCalls).toHaveLength(0);
         expect(toasts.at(-1).type).toBe('error');
     });
 });
