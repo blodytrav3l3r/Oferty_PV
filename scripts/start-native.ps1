@@ -9,6 +9,7 @@ $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $cluster = $null
 $pgCtl = $null
 $startedPostgresHere = $false
+$postgresStartupTimeoutSeconds = 300
 $exitCode = 1
 $previousValues = @{
     DATABASE_URL = [Environment]::GetEnvironmentVariable('DATABASE_URL', 'Process')
@@ -67,9 +68,12 @@ function Find-AvailableAppPort {
 }
 
 function Wait-PostgresReady {
-    param([string]$PgIsReady)
+    param(
+        [string]$PgIsReady,
+        [int]$TimeoutSeconds = 60
+    )
 
-    for ($attempt = 0; $attempt -lt 60; $attempt++) {
+    for ($attempt = 0; $attempt -lt ($TimeoutSeconds * 2); $attempt++) {
         & $PgIsReady --host=127.0.0.1 --port=55432 *> $null
         if ($LASTEXITCODE -eq 0) {
             return $true
@@ -190,7 +194,9 @@ try {
     }
 
     if (-not $postgresReady -and $targetClusterRunning) {
-        if (-not (Wait-PostgresReady -PgIsReady $pgIsReady)) {
+        if (-not (
+            Wait-PostgresReady -PgIsReady $pgIsReady -TimeoutSeconds $postgresStartupTimeoutSeconds
+        )) {
             throw 'The native PostgreSQL cluster is running but not accepting connections.'
         }
     }
@@ -211,7 +217,7 @@ try {
             "--log=$(Join-Path $nativeRoot 'postgres-host.log')",
             '--options=-h 127.0.0.1 -p 55432',
             '--wait',
-            '--timeout=30'
+            "--timeout=$postgresStartupTimeoutSeconds"
         )
         & $pgCtl @startArgs
         if ($LASTEXITCODE -ne 0) {
@@ -219,7 +225,9 @@ try {
         }
         $startedPostgresHere = $true
 
-        if (-not (Wait-PostgresReady -PgIsReady $pgIsReady)) {
+        if (-not (
+            Wait-PostgresReady -PgIsReady $pgIsReady -TimeoutSeconds $postgresStartupTimeoutSeconds
+        )) {
             throw 'Native PostgreSQL did not become ready on port 55432.'
         }
     }

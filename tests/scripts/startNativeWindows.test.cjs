@@ -172,6 +172,22 @@ describe('native Windows launcher contract', () => {
         assert.match(readLauncher('start-native.bat'), /start-native\.ps1" %\*/i);
     });
 
+    it('allows enough time for native PostgreSQL crash recovery', () => {
+        const startupScript = fs.readFileSync(startupScriptPath, 'utf8');
+
+        assert.match(startupScript, /\$postgresStartupTimeoutSeconds\s*=\s*300/);
+        assert.match(startupScript, /--timeout=\$postgresStartupTimeoutSeconds/);
+        assert.match(
+            startupScript,
+            /for \(\$attempt = 0; \$attempt -lt \(\$TimeoutSeconds \* 2\); \$attempt\+\+\)/
+        );
+        assert.match(startupScript, /\[int\]\$TimeoutSeconds\s*=\s*60/);
+        const nativeWaits = startupScript.match(
+            /Wait-PostgresReady -PgIsReady \$pgIsReady -TimeoutSeconds \$postgresStartupTimeoutSeconds/g
+        );
+        assert.equal(nativeWaits?.length, 2);
+    });
+
     it('starts and verifies the isolated test database before the development server', () => {
         const startupScript = fs.readFileSync(startupScriptPath, 'utf8');
         const testDatabaseStart = startupScript.indexOf('function Start-TestDatabase');
