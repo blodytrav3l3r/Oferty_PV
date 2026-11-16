@@ -128,7 +128,10 @@ export const ORDER_PRZEJSCIE_DTO_FIELDS = [
     'frozenPrice',
     'frozenPriceBase',
     'frozenName',
-    'katWlaczenia'
+    'katWlaczenia',
+    'isCustom',
+    'customName',
+    'customPrice'
 ] as const;
 
 export const ORDER_WELL_DTO_FIELDS = [

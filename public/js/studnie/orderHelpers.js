@@ -540,15 +540,19 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(item.productId)
                     : studnieProducts.find((pr) => pr.id === item.productId);
-            if (!p) return;
+            const isCustom =
+                typeof isCustomPrzejscie === 'function'
+                    ? isCustomPrzejscie(item)
+                    : item.isCustom === true;
+            if (!p && !isCustom) return;
 
             let drillingBasePrice = 0;
             let drillProdName = '';
             let drillProdDn = '';
             let hostType = null;
-            const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
+            const isInsitu = !!(p && p.name && p.name.toUpperCase().includes('INSITU'));
 
-            if (configMap.length > 0) {
+            if (p && configMap.length > 0) {
                 const rzDna = parseFloat(well.rzednaDna) || 0;
                 let pel = parseFloat(item.rzednaWlaczenia);
                 if (isNaN(pel)) pel = rzDna;
@@ -580,7 +584,11 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
                 }
             }
 
-            const transPriceBase = p.price || 0;
+            const transPriceBase = p
+                ? p.price || 0
+                : typeof getPrzejscieBasePrice === 'function'
+                  ? getPrzejscieBasePrice(item, null)
+                  : Number(item.customPrice) || 0;
             const bP = transPriceBase + drillingBasePrice;
             const mult =
                 typeof getTransitionHostPct === 'function'
@@ -588,7 +596,12 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
                     : 1 - getWellNadbudowaPct(well, disc) / 100;
             item.frozenPrice = bP * mult;
             item.frozenPriceBase = bP;
-            item.frozenName = p.name || p.category;
+            item.frozenName =
+                typeof getPrzejscieName === 'function'
+                    ? getPrzejscieName(item, p)
+                    : p
+                      ? p.name || p.category
+                      : item.customName;
             item.frozenTransitionPrice = transPriceBase * mult;
             item.frozenDrillingPrice = drillingBasePrice * mult;
             item.frozenDrillingName = drillProdName;

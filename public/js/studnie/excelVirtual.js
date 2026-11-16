@@ -932,7 +932,8 @@ function _excelVirtualGetCellValue(wellIdx, colIdx) {
         if (!prz) return '';
         if (sub === 0) return prz.rzednaWlaczenia != null ? String(prz.rzednaWlaczenia) : '';
         if (sub === 1) return prz.angle != null ? String(prz.angle) : '';
-        if (sub === 2) return prz.tempCategory || '';
+        if (sub === 2)
+            return prz.isCustom === true ? String(prz.customName || '') : prz.tempCategory || '';
         if (sub === 3) return prz.productId || '';
     }
     // gap 7+maxTr*4,7+maxTr*4+1 skip

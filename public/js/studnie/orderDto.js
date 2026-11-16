@@ -51,7 +51,10 @@ const ORDER_PRZEJSCIE_FIELDS = [
     'frozenPrice',
     'frozenPriceBase',
     'frozenName',
-    'katWlaczenia'
+    'katWlaczenia',
+    'isCustom',
+    'customName',
+    'customPrice'
 ];
 
 /**
@@ -155,7 +158,10 @@ function toWellConfigItemDTO(item) {
  * @returns {Object|null} DTO przejścia albo null dla pustych wpisów
  */
 function toWellPrzejscieDTO(pr) {
-    if (!pr || typeof pr !== 'object' || !pr.productId) return null;
+    if (!pr || typeof pr !== 'object') return null;
+    const hasProduct = !!pr.productId;
+    const hasCustom = pr.isCustom === true && !!pr.customName;
+    if (!hasProduct && !hasCustom) return null;
     return _pickDtoFields(pr, ORDER_PRZEJSCIE_FIELDS);
 }
 
@@ -249,7 +255,16 @@ const WELL_PRICING_FIELDS = [
  */
 const CONFIG_PRICING_FIELDS = ['productId', 'quantity', 'disablePehd', 'disablePreco'];
 
-const PRZEJSCIE_PRICING_FIELDS = ['productId', 'dn', 'rzednaWlaczenia', 'angle', 'doplata'];
+const PRZEJSCIE_PRICING_FIELDS = [
+    'productId',
+    'dn',
+    'rzednaWlaczenia',
+    'angle',
+    'doplata',
+    'isCustom',
+    'customName',
+    'customPrice'
+];
 
 /**
  * Deterministyczna serializacja: sortuje klucze obiektów rekurencyjnie.
@@ -311,8 +326,10 @@ function wellPricingInput(dtoWell) {
     input.przejscia = (Array.isArray(w.przejscia) ? [...w.przejscia] : [])
         .map((p) => _pickDtoFields(p, PRZEJSCIE_PRICING_FIELDS))
         .sort((a, b) => {
-            const ak = String(a.productId) + '|' + String(a.rzednaWlaczenia);
-            const bk = String(b.productId) + '|' + String(b.rzednaWlaczenia);
+            const aKey = String(a.productId || 'custom:' + String(a.customName || ''));
+            const bKey = String(b.productId || 'custom:' + String(b.customName || ''));
+            const ak = aKey + '|' + String(a.rzednaWlaczenia);
+            const bk = bKey + '|' + String(b.rzednaWlaczenia);
             return ak < bk ? -1 : ak > bk ? 1 : 0;
         });
     return input;

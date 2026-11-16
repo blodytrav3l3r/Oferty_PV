@@ -1946,6 +1946,12 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                     }
                 }
                 prz.tempCategory = catToSet;
+                if (prz.isCustom === true) {
+                    prz.isCustom = false;
+                    delete prz.customName;
+                    delete prz.customPrice;
+                    delete prz.dn;
+                }
                 if (isClosest) {
                     const wellForName2 = wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
                     _excelRecordMismatch({
@@ -1979,6 +1985,12 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                     if (matched) {
                         prz.productId = matched.id;
                         prz.tempCategory = matched.category;
+                        if (prz.isCustom === true) {
+                            prz.isCustom = false;
+                            delete prz.customName;
+                            delete prz.customPrice;
+                            delete prz.dn;
+                        }
                         const isExact =
                             matched.id === valStr ||
                             matched.name === valStr ||

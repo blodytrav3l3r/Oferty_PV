@@ -537,8 +537,55 @@ function _excelRefreshTransitionDnOptions(wIdx, trIdx) {
     } catch (_eDn) {}
 }
 
+/**
+ * Excel: otwiera modal przejścia niestandardowego dla wiersza (istniejącego
+ * customa edytuje, pusty slot wypełnia). Glue siedzi w klastrze Excel, bo
+ * dotyka stanu tabeli i undo; sam modal jest publicznym API.
+ */
+function excelOpenCustomPrzejscieModal(wIdx, trIdx) {
+    if (!wells[wIdx]) return;
+    if (!_excelGuardWellLocked(wIdx)) return;
+    if (typeof _excelPasteQuiet === 'function' && _excelPasteQuiet()) return;
+    if (typeof openCustomPrzejscieModal !== 'function') return;
+    const well = wells[wIdx];
+    const exists = !!(well.przejscia && well.przejscia[trIdx] && well.przejscia[trIdx].isCustom);
+    openCustomPrzejscieModal({
+        mode: exists ? 'edit' : 'create',
+        index: exists ? trIdx : undefined,
+        insertIndex: exists ? undefined : trIdx,
+        wellIndex: wIdx,
+        onSaved: function () {
+            try {
+                _excelSaveUndoSnapshot(wIdx);
+                _excelPrzDirty = true;
+            } catch (_e) {}
+            if (typeof excelRefreshActiveTable === 'function') excelRefreshActiveTable();
+            if (typeof window.refreshZleceniaModalIfActive === 'function')
+                window.refreshZleceniaModalIfActive();
+        }
+    });
+}
+
 function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
+    if (value === '__custom_new__') {
+        // Sentinel: przywróć poprzednią wartość selecta i otwórz modal custom.
+        const wellSel = wells[wIdx];
+        const existing = wellSel && wellSel.przejscia ? wellSel.przejscia[trIdx] : null;
+        let prevVal = '';
+        if (existing && existing.isCustom !== true) {
+            const prevProduct =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(existing.productId)
+                    : null;
+            prevVal = prevProduct ? prevProduct.category : existing.tempCategory || '';
+        }
+        if (typeof _excelSyncRowSelect === 'function')
+            _excelSyncRowSelect(wIdx, 'excelOnPrzejscieTypeChange', [wIdx, trIdx], prevVal);
+        if (typeof excelOpenCustomPrzejscieModal === 'function')
+            excelOpenCustomPrzejscieModal(wIdx, trIdx);
+        return;
+    }
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
         _excelSaveUndoSnapshot(wIdx);
     const _hasExisting = wells[wIdx].przejscia && trIdx < wells[wIdx].przejscia.length;
@@ -552,6 +599,14 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         _excelPrzDirty = true;
     } catch (_eD) {} /* slot PRZ mógł urosnąć */
     wells[wIdx].przejscia[trIdx].tempCategory = value || '';
+    // Wybór katalogowego rodzaju na pozycji custom zdejmuje oznaczenie custom.
+    if (value && wells[wIdx].przejscia[trIdx].isCustom === true) {
+        const prevCustom = wells[wIdx].przejscia[trIdx];
+        prevCustom.isCustom = false;
+        delete prevCustom.customName;
+        delete prevCustom.customPrice;
+        delete prevCustom.dn;
+    }
     if (!value) {
         wells[wIdx].przejscia[trIdx].productId = '';
     } else {
@@ -1193,6 +1248,7 @@ if (typeof window !== 'undefined') {
     window.excelAddTransitionColumn = excelAddTransitionColumn;
     window.excelOnPrzejscieChange = excelOnPrzejscieChange;
     window.excelOnPrzejscieTypeChange = excelOnPrzejscieTypeChange;
+    window.excelOpenCustomPrzejscieModal = excelOpenCustomPrzejscieModal;
     window.excelOnWlazChange = excelOnWlazChange;
     window.excelOnCompChange = excelOnCompChange;
     window.excelOnKinetaChange = excelOnKinetaChange;

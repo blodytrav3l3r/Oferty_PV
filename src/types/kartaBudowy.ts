@@ -69,6 +69,11 @@ export interface ConfigItem {
 export interface PrzejscieItem {
     productId: string;
     rzednaWlaczenia?: string;
+    /** Przejście niestandardowe (poza cennikiem) — tylko w danej ofercie/zleceniu. */
+    isCustom?: boolean;
+    customName?: string;
+    customPrice?: number;
+    dn?: string | number;
 }
 
 export interface WellItem {

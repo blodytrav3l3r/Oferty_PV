@@ -570,7 +570,20 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(pr.productId)
                     : studnieProducts.find((x) => x.id === pr.productId);
-            if (!prProd) return;
+            const prIsCustom =
+                pr.isCustom === true &&
+                (typeof isCustomPrzejscie !== 'function' || isCustomPrzejscie(pr));
+            if (!prProd && !prIsCustom) return;
+            const prName = prProd
+                ? prProd.category
+                : typeof getPrzejscieCategoryLabel === 'function'
+                  ? getPrzejscieCategoryLabel(pr, null)
+                  : String(pr.customName || '');
+            const prDn = prProd
+                ? prProd.dn
+                : typeof getPrzejscieDnLabel === 'function'
+                  ? getPrzejscieDnLabel(pr, null)
+                  : pr.dn || '';
 
             if (pr.frozenTransitionPrice != null) {
                 // Zamrożona cena zawiera ten sam rabat dla przejścia i wiercenia
@@ -585,7 +598,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                             : 0;
                 const frBadge = subDiscountStr(frPct);
                 html += `<tr class="opacity-6-sm-accent">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)${frBadge}</td>
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prName)} ${escapeHtml(prDn || '')} (${pr.angle}°)${frBadge}</td>
                     <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
@@ -612,9 +625,14 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                           : getWellNadbudowaPct(well, disc);
                 const prMult = 1 - prPct / 100;
                 const prBadge = subDiscountStr(prPct);
-                const prPrice = (prProd.price || 0) * prMult;
+                const prPrice =
+                    (prProd
+                        ? prProd.price || 0
+                        : typeof getPrzejscieBasePrice === 'function'
+                          ? getPrzejscieBasePrice(pr, null)
+                          : Number(pr.customPrice) || 0) * prMult;
                 html += `<tr class="opacity-6-sm-accent">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)${prBadge}</td>
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prName)} ${escapeHtml(prDn)} (${pr.angle}°)${prBadge}</td>
                     <td class="text-right">${fmt(prPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {

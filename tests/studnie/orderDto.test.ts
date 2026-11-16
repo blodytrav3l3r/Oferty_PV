@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
+import { ORDER_PRZEJSCIE_DTO_FIELDS } from '../../src/validators/orderSchemas';
 
 function loadOrderDto() {
     const context: any = {
@@ -195,5 +196,61 @@ describe('orderDto — allowlist transportowa (P0.1)', () => {
         expect(out).toHaveLength(2);
         const noQty = dto.toWellConfigItemDTO({ productId: 'k-1' });
         expect(noQty.quantity).toBe(1);
+    });
+
+    test('T6: custom przejście (bez productId) przechodzi do DTO z nazwą i ceną', () => {
+        const well = fullUiWell();
+        well.przejscia.push({
+            id: 'prz-custom',
+            productId: '',
+            isCustom: true,
+            customName: 'Przejście specjalne 315',
+            customPrice: 1000,
+            dn: '315',
+            rzednaWlaczenia: 101.5,
+            angle: 0,
+            flowType: 'WLOT'
+        });
+        const out = dto.toWellOrderDTO(well);
+        const custom = out.przejscia.find((p: any) => p.isCustom === true);
+        expect(custom).toBeDefined();
+        expect(custom.customName).toBe('Przejście specjalne 315');
+        expect(custom.customPrice).toBe(1000);
+        expect(custom.productId).toBe('');
+        expect(dto.toWellPrzejscieDTO({ dn: '160' })).toBeNull();
+    });
+
+    test('T12: allowlista przejść FE = allowlista BE (parity)', () => {
+        expect(dto.ORDER_PRZEJSCIE_FIELDS).toEqual([...ORDER_PRZEJSCIE_DTO_FIELDS]);
+    });
+
+    test('T7: hash widzi cenę/nazwę custom i nie zależy od kolejności przejść', () => {
+        const a = fullUiWell();
+        a.przejscia.push({
+            productId: '',
+            isCustom: true,
+            customName: 'Spec',
+            customPrice: 100,
+            dn: '315',
+            rzednaWlaczenia: 101.5
+        });
+        const b = fullUiWell();
+        b.przejscia.push({
+            productId: '',
+            isCustom: true,
+            customName: 'Spec',
+            customPrice: 150,
+            dn: '315',
+            rzednaWlaczenia: 101.5
+        });
+        const hA = dto.wellConfigHash(dto.toWellOrderDTO(a));
+        const hB = dto.wellConfigHash(dto.toWellOrderDTO(b));
+        expect(hA).not.toBe(hB);
+
+        const reordered = fullUiWell();
+        reordered.przejscia = [...reordered.przejscia].reverse();
+        expect(dto.wellConfigHash(dto.toWellOrderDTO(reordered))).toBe(
+            dto.wellConfigHash(dto.toWellOrderDTO(fullUiWell()))
+        );
     });
 });

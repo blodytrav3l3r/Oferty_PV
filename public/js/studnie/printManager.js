@@ -273,8 +273,21 @@ function buildPrzejsciaRows(data) {
 }
 function formatPrzejscieRow(label, p, findProductFn, rzDna) {
     const product = findProductFn ? findProductFn(p.productId) : null;
-    const rodzaj = product ? product.category : '';
-    const srednica = product ? product.dn : '';
+    const isCustom = p.isCustom === true;
+    const rodzaj = product
+        ? product.category
+        : typeof getPrzejscieCategoryLabel === 'function'
+          ? getPrzejscieCategoryLabel(p, null)
+          : isCustom
+            ? String(p.customName || '')
+            : '';
+    const srednica = product
+        ? product.dn
+        : typeof getPrzejscieDnLabel === 'function'
+          ? getPrzejscieDnLabel(p, null)
+          : isCustom
+            ? p.dn || ''
+            : '';
 
     const spadekKineta = p.spadekKineta || '';
     const spadekMufa = p.spadekMufa || '';
@@ -538,8 +551,14 @@ function generateWellSvg(data) {
                     ? getStudnieProductById(p.productId)
                     : studnieProducts.find((pr) => pr.id === p.productId)
                 : null;
-        const rodzaj = isBlind ? 'ŚLEPA' : product ? product.category : '';
-        const dn = product ? product.dn : '';
+        const rodzaj = isBlind
+            ? 'ŚLEPA'
+            : product
+              ? product.category
+              : p.isCustom === true
+                ? String(p.customName || '')
+                : '';
+        const dn = product ? product.dn : p.isCustom === true ? (p.dn != null ? p.dn : '') : '';
         const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
         const hMm = Math.round((pel - rzDna) * 1000);
         const uwagiText = isBlind ? 'ślepa' : hMm > 0 ? `+${hMm}mm` : '';

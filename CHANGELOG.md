@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.60.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.59.0...v1.60.0) (2026-11-16)
+
+### Features
+
+- **studnie:** przejścia szczelne spoza cennika (custom) w ofercie, zleceniu, karcie budowy i Excelu — cena netto, rabat studni, bez wiercenia i bez zapamiętywania szablonów
+
 ## [1.59.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.57.0...v1.59.0) (2026-11-15)
 
 ### Features

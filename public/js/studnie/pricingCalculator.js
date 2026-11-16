@@ -185,7 +185,11 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                     for (let przIdx = 0; przIdx < myPrzejscia.length; przIdx++) {
                         const prz = myPrzejscia[przIdx];
                         const pp = productMap.get(prz.productId);
-                        if (!pp) continue;
+                        const isCustomPrz =
+                            typeof isCustomPrzejscie === 'function'
+                                ? isCustomPrzejscie(prz)
+                                : prz.isCustom === true;
+                        if (!pp && !isCustomPrz) continue;
                         // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
                         const przMult =
                             typeof getTransitionHostPctSafe === 'function'
@@ -193,8 +197,13 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                                 : typeof getTransitionHostPct === 'function'
                                   ? 1 - getTransitionHostPct(well, disc, prz._hostType) / 100
                                   : nadbudowaMult;
+                        const przBasePrice = pp
+                            ? pp.price || 0
+                            : typeof getPrzejscieBasePrice === 'function'
+                              ? getPrzejscieBasePrice(prz, null)
+                              : Number(prz.customPrice) || 0;
                         basePrice +=
-                            (pp.price || 0) * przMult +
+                            przBasePrice * przMult +
                             (prz._drillingBasePrice || 0) * przMult +
                             (parseFloat(prz.doplata) || 0);
                     }

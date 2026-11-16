@@ -72,6 +72,12 @@ window.StudnieExternalExportTemplate = {
             }
             const pp = map ? map.get(prz.productId) : null;
             if (pp) sum += this._legacyNet(well, pp, null, offerDiscounts);
+            else if (prz.isCustom === true) {
+                const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+                const disc = (offerDiscounts || {})[discountKey] || {};
+                const pct = Number(disc.nadbudowa || 0);
+                sum += (Number(prz.customPrice) || 0) * (1 - pct / 100);
+            }
         }
         return sum;
     },

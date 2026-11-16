@@ -70,7 +70,9 @@ function isEmptyPrzejscie(p) {
     const hasCategory = p.tempCategory && String(p.tempCategory).trim() !== '';
     const hasRzedna = p.rzednaWlaczenia != null && String(p.rzednaWlaczenia).trim() !== '';
     const hasAngle = p.angle != null && Number(p.angle) !== 0;
-    return !hasProduct && !hasCategory && !hasRzedna && !hasAngle;
+    const hasCustom =
+        p.isCustom === true && p.customName != null && String(p.customName).trim() !== '';
+    return !hasProduct && !hasCategory && !hasRzedna && !hasAngle && !hasCustom;
 }
 if (typeof window !== 'undefined') window.isEmptyPrzejscie = isEmptyPrzejscie;
 

@@ -499,3 +499,71 @@ describe('backend static: pieczątka w update tylko za zgodnym stampem', () => {
         expect(src).toContain('F3 freeze: nowy dokument = aktywna wersja');
     });
 });
+
+describe('frontend vm: freeze custom przejścia (poza cennikiem)', () => {
+    function loadSandbox() {
+        const sb = {
+            window: {},
+            console,
+            wellDiscounts: {},
+            getStudnieProductById: () => null,
+            getItemPriceBreakdown: () => ({ base: 0 }),
+            getItemAssessedPrice: () => 0,
+            getTransitionHostPct: () => 10
+        };
+        vm.createContext(sb);
+        vm.runInContext(readPub('js/studnie/orderHelpers.js'), sb, { filename: 'orderHelpers.js' });
+        return sb;
+    }
+
+    test('T4: custom zamraża customPrice z rabatem hosta i nazwą', () => {
+        const sb = loadSandbox();
+        sb.wells = [
+            {
+                dn: '1000',
+                kineta: 'brak',
+                config: [],
+                przejscia: [
+                    {
+                        isCustom: true,
+                        productId: '',
+                        customName: 'Spec 315',
+                        customPrice: 1000,
+                        dn: '315',
+                        rzednaWlaczenia: '1'
+                    }
+                ]
+            }
+        ];
+        vm.runInContext('freezeWellPrices(wells)', sb);
+        const pr = sb.wells[0].przejscia[0];
+        expect(pr.frozenPriceBase).toBe(1000);
+        expect(pr.frozenPrice).toBe(900);
+        expect(pr.frozenName).toBe('Spec 315');
+        expect(pr.frozenDrillingPrice || 0).toBe(0);
+    });
+
+    test('T5: preserveExisting nie nadpisuje zamrożonej ceny custom', () => {
+        const sb = loadSandbox();
+        sb.wells = [
+            {
+                dn: '1000',
+                kineta: 'brak',
+                config: [],
+                przejscia: [
+                    {
+                        isCustom: true,
+                        productId: '',
+                        customName: 'Spec 315',
+                        customPrice: 1000,
+                        frozenPrice: 850,
+                        frozenPriceBase: 1000,
+                        frozenName: 'Spec 315'
+                    }
+                ]
+            }
+        ];
+        vm.runInContext('freezeWellPrices(wells, true)', sb);
+        expect(sb.wells[0].przejscia[0].frozenPrice).toBe(850);
+    });
+});

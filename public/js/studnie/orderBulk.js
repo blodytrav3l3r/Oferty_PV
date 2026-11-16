@@ -173,6 +173,10 @@ function buildAutoOrderData(el, sharedData) {
         if (prod) {
             clone.productCategory = prod.category || '';
             clone.productDn = prod.dn || '';
+        } else if (p.isCustom === true) {
+            clone.productCategory = String(p.customName || '');
+            clone.productDn = p.dn != null ? String(p.dn) : '';
+            clone.isCustom = true;
         }
         return clone;
     });

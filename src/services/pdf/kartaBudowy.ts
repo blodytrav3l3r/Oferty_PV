@@ -2,6 +2,7 @@ import prisma from '../../prismaClient';
 import path from 'path';
 import { logger } from '../../utils/logger';
 import { resolvePublicDir } from '../../utils/paths';
+import { stripForbiddenTextChars } from '../../utils/textSafety';
 import { escapeHtml } from './helpers';
 import { loadPdfTemplate } from './templateCache';
 import { getCatalogStudnieRows } from '../pricelist/catalog';
@@ -270,7 +271,18 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
             let prod = allProducts.get(pj.productId);
             if (!prod || prod.componentType !== 'przejscie') {
                 prod = _findPrzejscieByIdPrefix(allProducts, pj.productId);
-                if (!prod) continue;
+            }
+            let cat: string;
+            let dn: number | string;
+            if (prod) {
+                cat = prod.category || 'Nieznany';
+                dn = prod.dn || 0;
+            } else if (pj.isCustom === true) {
+                // Przejście spoza cennika — dane z pozycji oferty.
+                cat = stripForbiddenTextChars(String(pj.customName || 'Przejście niestandardowe'));
+                dn = pj.dn != null && pj.dn !== '' ? pj.dn : 0;
+            } else {
+                continue;
             }
             const rzdPj = parseFloat(pj.rzednaWlaczenia ?? '');
             if (isNaN(rzdPj)) continue;
@@ -286,8 +298,6 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
                 }
             }
 
-            const cat = prod.category || 'Nieznany';
-            const dn = prod.dn || 0;
             const key = `${cat}_${dn}`;
             let ex = tCounts.get(key);
             if (!ex) {
@@ -320,8 +330,8 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
             .map(
                 (row, idx) => `<tr>
         <td>${idx + 1}</td>
-        <td style="text-align:left;">${row.cat}</td>
-        <td>DN${row.dn}</td>
+        <td style="text-align:left;">${escapeHtml(String(row.cat))}</td>
+        <td>DN${escapeHtml(String(row.dn))}</td>
         <td>${row.cntD}</td>
         <td>${row.cntOT}</td>
         <td>${row.cntTotal}</td>

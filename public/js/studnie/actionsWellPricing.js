@@ -640,7 +640,12 @@ function calcWellStats(well) {
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(item.productId)
                     : studnieProducts.find((pr) => pr.id === item.productId);
-            if (!p) return;
+            const isCustom =
+                typeof isCustomPrzejscie === 'function'
+                    ? isCustomPrzejscie(item)
+                    : item.isCustom === true;
+            /* Guard G1: brak produktu i brak customa = pozycja bez źródła ceny. */
+            if (!p && !isCustom) return;
 
             // Host przejścia (dennica/styczna vs krag/...) wg rzędnej — od niego
             // zależy rabat (dennica) i kubełek cenowy (priceDennica/priceNadbudowa).
@@ -655,9 +660,10 @@ function calcWellStats(well) {
             const mult = 1 - getTransitionHostPct(well, disc, hostType) / 100;
 
             let drillingBasePrice = 0;
-            const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
+            // Custom ma cenę kompletną — wiercenie tylko dla pozycji katalogowych.
+            const isInsitu = !!(p && p.name && p.name.toUpperCase().includes('INSITU'));
 
-            if (!isInsitu && configMap.length > 0) {
+            if (p && !isInsitu && configMap.length > 0) {
                 const rzDna = parseFloat(well.rzednaDna) || 0;
                 let pel = parseFloat(item.rzednaWlaczenia);
                 if (isNaN(pel)) pel = rzDna;
@@ -692,7 +698,12 @@ function calcWellStats(well) {
                 dP = item.frozenPrice;
                 bP = item.frozenPriceBase != null ? item.frozenPriceBase : item.frozenPrice;
             } else {
-                bP = (p.price || 0) + drillingBasePrice;
+                bP =
+                    (p
+                        ? p.price || 0
+                        : typeof getPrzejscieBasePrice === 'function'
+                          ? getPrzejscieBasePrice(item, null)
+                          : Number(item.customPrice) || 0) + drillingBasePrice;
                 dP = bP * mult;
             }
 
@@ -719,7 +730,7 @@ function calcWellStats(well) {
                 }
             }
 
-            weight += p.weight || 0;
+            weight += (p && p.weight) || 0;
         });
     }
 

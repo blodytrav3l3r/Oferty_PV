@@ -179,6 +179,35 @@ describe('generateKartaBudowyDOCX (studnie)', () => {
         expect(xml).toContain('200');
         expect(xml).toContain('izolacja');
     });
+
+    it('T11: przejście niestandardowe trafia do tabeli rzeczywistych przejść', async () => {
+        const withCustom = {
+            ...orderData,
+            wells: [
+                {
+                    name: 'S1',
+                    dn: '1000',
+                    rzednaDna: '0',
+                    config: [],
+                    przejscia: [
+                        {
+                            productId: '',
+                            isCustom: true,
+                            customName: 'Przejście specjalne 315',
+                            customPrice: 1000,
+                            dn: '315',
+                            rzednaWlaczenia: '0.5'
+                        }
+                    ]
+                }
+            ]
+        };
+        findStudnie.mockResolvedValueOnce(orderFixture(withCustom));
+
+        const xml = await documentXml(await generateKartaBudowyDOCX('order-1'));
+        const text = xml.replace(/<[^>]+>/g, '');
+        expect(text).toContain('Przejście specjalne 315');
+    });
 });
 
 describe('generateKartaBudowyRuryDOCX', () => {

@@ -447,6 +447,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                     ? 'auto (' + well.rzednaDna.toFixed(3) + ')'
                     : '';
             const currProduct = _przById.get(prz.productId);
+            const isCustomPrz = !currProduct && prz.isCustom === true;
+            const customLabel = isCustomPrz ? String(prz.customName || '') : '';
+            const customDnLabel =
+                isCustomPrz && prz.dn != null && String(prz.dn).trim() !== ''
+                    ? 'DN ' + String(prz.dn)
+                    : '';
+            const customPriceLabel = isCustomPrz
+                ? (typeof fmt === 'function'
+                      ? fmt(Number(prz.customPrice) || 0)
+                      : String(prz.customPrice || 0)) + ' PLN'
+                : '';
             const categories = _przCategories.slice();
             const activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
             if (activeCategory && categories.indexOf(activeCategory) < 0) {
@@ -456,12 +467,20 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             categories.forEach(function (c) {
                 catOpts.push([c, c]);
             });
-            const typeHtml = _excelOverlaySelectHtml(
-                catOpts,
-                activeCategory,
-                { name: 'excelOnPrzejscieTypeChange', args: [wIdx, _i, '$value'] },
-                120
-            );
+            /* Sentinel: otwiera modal custom przejścia; nie jest wartością modelu. */
+            catOpts.push(['__custom_new__', '\u2795 Niestandardowe…']);
+            const typeHtml = isCustomPrz
+                ? '<div class="excel-cell-label" style="display:flex; flex-direction:column; gap:0.1rem; padding:0 0.25rem;" title="' +
+                  escapeHtmlAttr(customLabel) +
+                  '"><span style="font-weight:var(--fw-semibold); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' +
+                  escapeHtml(customLabel) +
+                  '</span><span style="font-size:var(--fs-2xs); color:var(--accent-text);">poza cennikiem</span></div>'
+                : _excelOverlaySelectHtml(
+                      catOpts,
+                      activeCategory,
+                      { name: 'excelOnPrzejscieTypeChange', args: [wIdx, _i, '$value'] },
+                      120
+                  );
             const availDns = activeCategory ? _przAvail(activeCategory) : [];
             const dnOpts = [['', '\u2014']];
             availDns.forEach(function (p) {
@@ -469,12 +488,22 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                     typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
                 dnOpts.push([p.id, dnLabel]);
             });
-            const dnHtml = _excelOverlaySelectHtml(
-                dnOpts,
-                prz.productId,
-                { name: 'excelOnPrzejscieChange', args: [wIdx, _i, 'productId', '$value'] },
-                110
-            );
+            const dnHtml = isCustomPrz
+                ? '<div style="display:flex; align-items:center; gap:0.25rem; padding:0 0.25rem;"><span style="font-size:var(--fs-2xs); color:var(--text-muted); white-space:nowrap;">' +
+                  escapeHtml(customDnLabel) +
+                  ' · ' +
+                  escapeHtml(customPriceLabel) +
+                  '</span><button type="button" class="btn-icon" aria-label="Edytuj przejście niestandardowe" title="Edytuj przejście niestandardowe" data-csp="excelOpenCustomPrzejscieModal" data-csp-args="[' +
+                  wIdx +
+                  ',' +
+                  _i +
+                  ']" style="flex:0 0 auto;"><i data-lucide="pencil" aria-hidden="true"></i></button></div>'
+                : _excelOverlaySelectHtml(
+                      dnOpts,
+                      prz.productId,
+                      { name: 'excelOnPrzejscieChange', args: [wIdx, _i, 'productId', '$value'] },
+                      110
+                  );
             html +=
                 '<td class="excel-td excel-td-right excel-tr-first' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +

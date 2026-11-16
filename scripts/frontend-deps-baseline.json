@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-13",
-    "totalEdges": 2880,
+    "generatedAt": "2026-11-16",
+    "totalEdges": 2924,
     "edges": [
         {
             "page": "public/app.html",
@@ -207,14 +207,6 @@
             "page": "public/index.html",
             "name": "escapeHtml",
             "userFile": "public/js/shared/dashboard.js",
-            "defFile": "public/js/shared/escapeHtml.js",
-            "defKind": "window-module",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/index.html",
-            "name": "escapeHtml",
-            "userFile": "public/js/shared/headerUser.js",
             "defFile": "public/js/shared/escapeHtml.js",
             "defKind": "window-module",
             "confidence": "CONFIRMED"
@@ -8214,6 +8206,14 @@
         {
             "page": "public/studnie.html",
             "name": "announceRzednaClamp",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/solverValidation.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "announceRzednaClamp",
             "userFile": "public/js/studnie/excelChangeHandlers.js",
             "defFile": "public/js/studnie/solverValidation.js",
             "defKind": "window",
@@ -8687,6 +8687,14 @@
             "page": "public/studnie.html",
             "name": "autoSelectComponents",
             "userFile": "public/js/studnie/actionsWellConfig.js",
+            "defFile": "public/js/studnie/solverAutoSelect.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "autoSelectComponents",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/studnie/solverAutoSelect.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -9558,6 +9566,14 @@
         {
             "page": "public/studnie.html",
             "name": "clampRzednaWlaczenia",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/solverValidation.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "clampRzednaWlaczenia",
             "userFile": "public/js/studnie/excelChangeHandlers.js",
             "defFile": "public/js/studnie/solverValidation.js",
             "defKind": "window",
@@ -9647,6 +9663,14 @@
             "page": "public/studnie.html",
             "name": "closeModal",
             "userFile": "public/js/studnie/actionsWellConfig.js",
+            "defFile": "public/js/shared/modalCore.js",
+            "defKind": "window-module",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "closeModal",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/shared/modalCore.js",
             "defKind": "window-module",
             "confidence": "CONFIRMED"
@@ -10405,6 +10429,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "CUSTOM_PRZEJSCIE_LIMITS",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "deleteProductionOrder",
             "userFile": "public/js/studnie/orderBulk.js",
             "defFile": "public/js/studnie/orderZleceniaData.js",
@@ -11062,6 +11094,14 @@
         {
             "page": "public/studnie.html",
             "name": "ensurePrzejsciaIds",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/wellElemId.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "ensurePrzejsciaIds",
             "userFile": "public/js/studnie/diagramRenderer.js",
             "defFile": "public/js/studnie/wellElemId.js",
             "defKind": "window",
@@ -11662,6 +11702,14 @@
         {
             "page": "public/studnie.html",
             "name": "escapeHtmlAttr",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/shared/escapeHtml.js",
+            "defKind": "window-module",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "escapeHtmlAttr",
             "userFile": "public/js/studnie/diagramTransitions.js",
             "defFile": "public/js/shared/escapeHtml.js",
             "defKind": "window-module",
@@ -11999,6 +12047,14 @@
             "page": "public/studnie.html",
             "name": "excelRefreshActiveTable",
             "userFile": "public/js/studnie/displayUnits.js",
+            "defFile": "public/js/studnie/excelTableRenderer.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "excelRefreshActiveTable",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
             "defFile": "public/js/studnie/excelTableRenderer.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -12414,6 +12470,14 @@
         {
             "page": "public/studnie.html",
             "name": "FLOW_TYPES",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/shared/constants.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "FLOW_TYPES",
             "userFile": "public/js/studnie/popupsTransitionManager.js",
             "defFile": "public/js/shared/constants.js",
             "defKind": "window",
@@ -12503,6 +12567,14 @@
             "page": "public/studnie.html",
             "name": "fmt",
             "userFile": "public/js/studnie/excelHelpers.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "fmt",
+            "userFile": "public/js/studnie/excelTableBody.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -13151,6 +13223,14 @@
             "page": "public/studnie.html",
             "name": "getCurrentWell",
             "userFile": "public/js/studnie/actionsWellSync.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getCurrentWell",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -13949,9 +14029,89 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "getPrzejscieBasePrice",
+            "userFile": "public/js/studnie/actionsWellPricing.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieBasePrice",
+            "userFile": "public/js/studnie/offerWellComponents.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieBasePrice",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieBasePrice",
+            "userFile": "public/js/studnie/pricingCalculator.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieBasePrice",
+            "userFile": "public/js/studnie/transitionRenderer.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "getPrzejscieByCategoryAndDn",
             "userFile": "public/js/studnie/popupsTransitionManager.js",
             "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieCategoryLabel",
+            "userFile": "public/js/studnie/offerWellComponents.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieCategoryLabel",
+            "userFile": "public/js/studnie/printManager.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieDnLabel",
+            "userFile": "public/js/studnie/offerWellComponents.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieDnLabel",
+            "userFile": "public/js/studnie/printManager.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getPrzejscieName",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -14958,6 +15118,14 @@
         {
             "page": "public/studnie.html",
             "name": "invalidateFrozenPricesForWell",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "invalidateFrozenPricesForWell",
             "userFile": "public/js/studnie/excelChangeHandlers.js",
             "defFile": "public/js/studnie/orderHelpers.js",
             "defKind": "window",
@@ -14976,6 +15144,62 @@
             "name": "invalidateFrozenPricesForWell",
             "userFile": "public/js/studnie/wellManager.js",
             "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "invalidateFrozenPricesForWell",
+            "userFile": "public/js/studnie/wellTransitionsCrud.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/actionsWellPricing.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/offerWellComponents.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/pricingCalculator.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/transitionRenderer.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isCustomPrzejscie",
+            "userFile": "public/js/studnie/wellTransitionsCrud.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -15214,6 +15438,14 @@
         {
             "page": "public/studnie.html",
             "name": "isOfferLocked",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isOfferLocked",
             "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
             "defKind": "lexical",
@@ -15431,6 +15663,14 @@
             "page": "public/studnie.html",
             "name": "isWellLocked",
             "userFile": "public/js/studnie/actionsWellConfig.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -16470,6 +16710,14 @@
         {
             "page": "public/studnie.html",
             "name": "newPrzejscieId",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/wellElemId.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "newPrzejscieId",
             "userFile": "public/js/studnie/excelHelpers.js",
             "defFile": "public/js/studnie/wellElemId.js",
             "defKind": "lexical",
@@ -16599,6 +16847,14 @@
             "page": "public/studnie.html",
             "name": "OFFER_LOCKED_MSG",
             "userFile": "public/js/studnie/actionsWellCrud.js",
+            "defFile": "public/js/studnie/uiLockBanners.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "OFFER_LOCKED_MSG",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/studnie/uiLockBanners.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -16777,6 +17033,22 @@
             "userFile": "public/js/studnie/orderZleceniaData.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "openCustomPrzejscieModal",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "defFile": "public/js/studnie/customPrzejscie.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "openCustomPrzejscieModal",
+            "userFile": "public/js/studnie/wellTransitionsCrud.js",
+            "defFile": "public/js/studnie/customPrzejscie.js",
+            "defKind": "window",
             "confidence": "CONFIRMED"
         },
         {
@@ -17127,6 +17399,14 @@
             "page": "public/studnie.html",
             "name": "parseCalcExpression",
             "userFile": "public/js/studnie/actionsElevation.js",
+            "defFile": "public/js/shared/calcInput.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "parseCalcExpression",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/shared/calcInput.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -17598,6 +17878,14 @@
         {
             "page": "public/studnie.html",
             "name": "refreshActiveWell",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/wellManager.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "refreshActiveWell",
             "userFile": "public/js/studnie/wellTransitionsCrud.js",
             "defFile": "public/js/studnie/wellManager.js",
             "defKind": "window",
@@ -17663,6 +17951,14 @@
             "page": "public/studnie.html",
             "name": "refreshAll",
             "userFile": "public/js/studnie/actionsWellCrud.js",
+            "defFile": "public/js/studnie/wellManager.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "refreshAll",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/studnie/wellManager.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -18910,6 +19206,14 @@
         {
             "page": "public/studnie.html",
             "name": "restoreBodyScroll",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/shared/modalCore.js",
+            "defKind": "window-module",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "restoreBodyScroll",
             "userFile": "public/js/studnie/excelWellActions.js",
             "defFile": "public/js/shared/modalCore.js",
             "defKind": "window-module",
@@ -19055,6 +19359,14 @@
             "page": "public/studnie.html",
             "name": "roundMoney",
             "userFile": "public/js/studnie/pricingCalculator.js",
+            "defFile": "public/js/shared/formatters.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "roundMoney",
+            "userFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defFile": "public/js/shared/formatters.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -19550,6 +19862,14 @@
         {
             "page": "public/studnie.html",
             "name": "showModal",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/shared/modalCore.js",
+            "defKind": "window-module",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "showModal",
             "userFile": "public/js/studnie/popupsGlobalRecalc.js",
             "defFile": "public/js/shared/modalCore.js",
             "defKind": "window-module",
@@ -19791,6 +20111,14 @@
             "page": "public/studnie.html",
             "name": "showToast",
             "userFile": "public/js/studnie/actionsWellSync.js",
+            "defFile": "public/js/shared/toast.js",
+            "defKind": "window-module",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "showToast",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/shared/toast.js",
             "defKind": "window-module",
             "confidence": "CONFIRMED"
@@ -21813,6 +22141,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "validateCustomPrzejscie",
+            "userFile": "public/js/studnie/customPrzejscie.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "validatePrzejsciaForSave",
             "userFile": "public/js/studnie/excelWellActions.js",
             "defFile": "public/js/studnie/solverValidation.js",
@@ -21943,6 +22279,14 @@
             "page": "public/studnie.html",
             "name": "WELL_LOCKED_MSG",
             "userFile": "public/js/studnie/actionsWellCrud.js",
+            "defFile": "public/js/studnie/uiLockBanners.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "WELL_LOCKED_MSG",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/studnie/uiLockBanners.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -22231,6 +22575,14 @@
             "page": "public/studnie.html",
             "name": "wells",
             "userFile": "public/js/studnie/calculationPipeline.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "wells",
+            "userFile": "public/js/studnie/customPrzejscie.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"

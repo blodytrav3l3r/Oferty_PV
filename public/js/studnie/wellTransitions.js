@@ -141,6 +141,9 @@ function renderInlinePrzejsciaApp(containerId) {
         <div style="padding:0.4rem 0;">
             <div class="flex-space-between">
                 <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9;">Rodzaj materiału</div>
+                <button type="button" data-action="openCustomPrzejscieModal" title="Dodaj przejście spoza cennika" style="background:rgba(var(--accent-rgb), 0.1); border:1px dashed rgba(var(--accent-rgb), 0.5); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem;">
+                    <i data-lucide="plus" aria-hidden="true"></i> Niestandardowe
+                </button>
                 <button data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; transition:all 0.15s;" data-csp="$stylePair" data-csp-on="mouseover" data-csp-args="[&quot;background&quot;, &quot;rgba(var(--accent-rgb), 0.2)&quot;, &quot;borderColor&quot;, &quot;rgba(var(--accent-rgb), 0.5)&quot;]" data-csp-2="$stylePair" data-csp-2-on="mouseout" data-csp-2-args="[&quot;background&quot;, &quot;rgba(var(--accent-rgb), 0.1)&quot;, &quot;borderColor&quot;, &quot;rgba(var(--accent-rgb), 0.3)&quot;]">${visibilityBtnLabel}</button>
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.5) transparent;">

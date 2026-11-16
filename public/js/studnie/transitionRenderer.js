@@ -122,9 +122,20 @@ function resolvePrzejscieIndex(well, el, fallbackIdx) {
  * @returns {string} Ciąg HTML.
  */
 function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
-    const przName = product ? product.category : '—';
-    const dn = product ? product.dn : '—';
-    const price = product ? product.price : 0;
+    const isCustom =
+        typeof isCustomPrzejscie === 'function' ? isCustomPrzejscie(item) : item.isCustom === true;
+    const przName = product ? product.category : isCustom ? String(item.customName || '—') : '—';
+    const dn = product ? product.dn : isCustom ? (item.dn != null ? item.dn : '—') : '—';
+    const price = product
+        ? product.price
+        : isCustom
+          ? typeof getPrzejscieBasePrice === 'function'
+              ? getPrzejscieBasePrice(item, null)
+              : Number(item.customPrice) || 0
+          : 0;
+    const customBadge = isCustom
+        ? `<span class="badge" style="font-size:var(--fs-2xs); padding:0 0.25rem; background:rgba(var(--accent-rgb),0.15); color:var(--accent-text); border:1px solid rgba(var(--accent-rgb),0.35);">poza cennikiem</span>`
+        : '';
 
     classifyFlowType(item, globalIndex);
 
@@ -228,8 +239,14 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
       <!-- SZCZEGÓŁY -->
       <div class="prz-main">
         <div class="prz-name-wrap" title="${escapeHtmlAttr(przName + ' ' + dnLabel)}">
-          <span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(przName)} — kliknij, aby zmienić typ" class="prz-field-color">${escapeHtml(przName)}</span>
-          <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(dnLabel)} — kliknij, aby zmienić średnicę" class="prz-field-dn">${escapeHtml(dnLabel)}</span>
+          ${
+              isCustom
+                  ? `<span class="prz-field-color">${escapeHtml(przName)}</span>
+          <span class="prz-field-dn">${escapeHtml(dnLabel)}</span>`
+                  : `<span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(przName)} — kliknij, aby zmienić typ" class="prz-field-color">${escapeHtml(przName)}</span>
+          <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(dnLabel)} — kliknij, aby zmienić średnicę" class="prz-field-dn">${escapeHtml(dnLabel)}</span>`
+          }
+          ${customBadge}
         </div>
 
         <div class="prz-cols">

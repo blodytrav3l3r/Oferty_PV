@@ -47,6 +47,18 @@ function editPrzejscie(index) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
     const item = well.przejscia[index];
+
+    // Custom przejście edytujemy tym samym modalem, którym je utworzono —
+    // popup katalogowy wymaga productId i wyzerowałby nazwę/cenę.
+    const isCustom =
+        typeof isCustomPrzejscie === 'function' ? isCustomPrzejscie(item) : item.isCustom === true;
+    if (isCustom) {
+        if (typeof openCustomPrzejscieModal === 'function') {
+            openCustomPrzejscieModal({ mode: 'edit', index: index });
+        }
+        return;
+    }
+
     const p =
         typeof getStudnieProductById === 'function'
             ? getStudnieProductById(item.productId)
@@ -125,19 +137,31 @@ function savePrzejscieEdit(index) {
         }
     }
 
-    well.przejscia[index] = {
-        id: well.przejscia[index].id,
+    const prev = well.przejscia[index];
+    const nextItem = {
+        id: prev.id,
         productId: newProductId,
         rzednaWlaczenia: rzednaVal,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,
-        flowType: well.przejscia[index].flowType,
-        flowTypeManual: well.przejscia[index].flowTypeManual,
+        flowType: prev.flowType,
+        flowTypeManual: prev.flowTypeManual,
 
         spadekKineta: spadekKineta ? Math.round(parseFloat(spadekKineta)) : null,
         spadekMufa: spadekMufa ? Math.round(parseFloat(spadekMufa)) : null
     };
+    // Custom: zachowaj dane spoza cennika (popup katalogowy ich nie zna).
+    if (prev.isCustom === true) {
+        nextItem.isCustom = true;
+        nextItem.productId = '';
+        nextItem.customName = prev.customName;
+        nextItem.customPrice = prev.customPrice;
+        nextItem.dn = prev.dn;
+        nextItem.doplata = prev.doplata;
+    }
+    well.przejscia[index] = nextItem;
+    if (typeof invalidateFrozenPricesForWell === 'function') invalidateFrozenPricesForWell(well);
     if (!well.przejscia[index].id && typeof ensurePrzejsciaIds === 'function') {
         ensurePrzejsciaIds(well.przejscia);
     }

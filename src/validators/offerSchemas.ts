@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { roundMoney } from '../utils/money';
+import { hasForbiddenTextChars } from '../utils/textSafety';
 import { ORGANIZATION_UNIT_VALUES } from '../constants/organizationUnits';
 
 // Limity wejścia (security: DoS przez wielkie tablice). Sufit udokumentowany
@@ -256,6 +257,23 @@ export const passageConfigSchema = z
         dnPrzejscia: z.union([z.string(), z.number()]).optional(),
         typRury: z.string().optional(),
         typPrzejscia: z.string().optional(),
+        isCustom: z.boolean().optional(),
+        customName: z
+            .string()
+            .trim()
+            .min(1)
+            .max(120)
+            .refine((v) => !hasForbiddenTextChars(v), {
+                message: 'Niedozwolone znaki w nazwie przejścia'
+            })
+            .optional(),
+        customPrice: z
+            .number()
+            .finite()
+            .nonnegative()
+            .max(10_000_000)
+            .transform(roundMoney)
+            .optional(),
         heightFromBottom: z.number().finite().nonnegative().optional(),
         zapasDol: z.number().finite().nonnegative().optional(),
         zapasGora: z.number().finite().nonnegative().optional(),
