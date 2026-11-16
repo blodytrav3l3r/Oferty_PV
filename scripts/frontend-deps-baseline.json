@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-16",
-    "totalEdges": 2924,
+    "totalEdges": 2926,
     "edges": [
         {
             "page": "public/app.html",
@@ -9800,6 +9800,14 @@
             "name": "collapseSet",
             "userFile": "public/js/studnie/uiTabSwitcher.js",
             "defFile": "public/js/shared/collapseState.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "collectCustomPrzejsciaPresets",
+            "userFile": "public/js/studnie/wellTransitions.js",
+            "defFile": "public/js/studnie/wellTransitionsHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -22959,6 +22967,14 @@
             "page": "public/studnie.html",
             "name": "wells",
             "userFile": "public/js/studnie/wellNotesModal.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "wells",
+            "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"

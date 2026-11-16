@@ -53,6 +53,24 @@ function flushQePendingState() {
 
 window.flushQePendingState = flushQePendingState;
 
+/** Kafelek zapamiętanego custom przejścia — klik dodaje od razu (preset oferty). */
+function renderCustomPresetTileHTML(preset, containerId) {
+    const price = Number(preset.price) || 0;
+    const priceLabel = price.toFixed(2).replace('.', ',') + ' PLN';
+    const dnLabel = preset.dn ? 'DN ' + preset.dn + ' · ' : '';
+    return `
+        <div data-action="addCustomPrzejsciePreset"
+             data-name="${escapeHtmlAttr(preset.name)}"
+             data-dn="${escapeHtmlAttr(preset.dn || '')}"
+             data-price="${escapeHtmlAttr(String(preset.price))}"
+             data-container="${escapeHtmlAttr(containerId || '')}"
+             title="Dodaj zapamiętane przejście: ${escapeHtmlAttr(preset.name)}"
+             style="padding:0.25rem 0.4rem; border-radius: var(--radius-sm); cursor:pointer; min-height:44px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.1rem; background:rgba(var(--accent2-rgb), 0.12); border:1px dashed rgba(var(--accent2-rgb), 0.55);">
+            <span style="font-size: var(--fs-xs); font-weight: var(--fw-bold); color:var(--accent2-hover); text-align:center; line-height:1.2; word-break:break-word; overflow-wrap:anywhere;">${escapeHtml(preset.name)}</span>
+            <span style="font-size: var(--fs-2xs); color:var(--text-muted);">${escapeHtml(dnLabel + priceLabel)}</span>
+        </div>`;
+}
+
 function renderInlinePrzejsciaApp(containerId) {
     const well = getCurrentWell();
     const allTypes =
@@ -86,6 +104,13 @@ function renderInlinePrzejsciaApp(containerId) {
             ? `<i data-lucide="eye"></i>️ Pokaż/Ukryj (${hiddenCount} ukrytych)`
             : '<i data-lucide="eye"></i>️ Pokaż/Ukryj';
 
+    // Zapamiętane custom przejścia oferty — kafelki do szybkiego dodania.
+    const presets =
+        typeof collectCustomPrzejsciaPresets === 'function'
+            ? collectCustomPrzejsciaPresets(typeof wells !== 'undefined' ? wells : [])
+            : [];
+    const presetsHtml = presets.map((p) => renderCustomPresetTileHTML(p, containerId)).join('');
+
     // Jeśli żadne typy nie są widoczne, pokaż stan pusty.
     // Rozróżnij pusty katalog (0/0 — problem z danymi) od ukrytych (0/N).
     if (types.length === 0) {
@@ -103,6 +128,14 @@ function renderInlinePrzejsciaApp(containerId) {
                 </button>`
                 }
             </div>
+            ${
+                presets.length > 0
+                    ? `<div style="padding:0.4rem 0;">
+                    <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9; margin-bottom:0.3rem;">Zapamiętane niestandardowe</div>
+                    <div class="grid-auto-120">${presetsHtml}</div>
+                </div>`
+                    : ''
+            }
         `;
         if (window.lucide && window.lucide.createIcons)
             window.lucide.createIcons({ root: container });
@@ -141,9 +174,6 @@ function renderInlinePrzejsciaApp(containerId) {
         <div style="padding:0.4rem 0;">
             <div class="flex-space-between">
                 <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9;">Rodzaj materiału</div>
-                <button type="button" data-action="openCustomPrzejscieModal" title="Dodaj przejście spoza cennika" style="background:rgba(var(--accent-rgb), 0.1); border:1px dashed rgba(var(--accent-rgb), 0.5); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem;">
-                    <i data-lucide="plus" aria-hidden="true"></i> Niestandardowe
-                </button>
                 <button data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; transition:all 0.15s;" data-csp="$stylePair" data-csp-on="mouseover" data-csp-args="[&quot;background&quot;, &quot;rgba(var(--accent-rgb), 0.2)&quot;, &quot;borderColor&quot;, &quot;rgba(var(--accent-rgb), 0.5)&quot;]" data-csp-2="$stylePair" data-csp-2-on="mouseout" data-csp-2-args="[&quot;background&quot;, &quot;rgba(var(--accent-rgb), 0.1)&quot;, &quot;borderColor&quot;, &quot;rgba(var(--accent-rgb), 0.3)&quot;]">${visibilityBtnLabel}</button>
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.5) transparent;">
@@ -163,6 +193,7 @@ function renderInlinePrzejsciaApp(containerId) {
                         </div>`;
                         })
                         .join('')}
+                    ${presetsHtml}
                 </div>
             </div>
         </div>

@@ -109,6 +109,48 @@ function _customPrzejscieRefresh(opts, item) {
         window.refreshZleceniaModalIfActive();
 }
 
+/**
+ * Dodaje kopię zapamiętanego custom przejścia (preset z bieżącej oferty).
+ * @param {{name:string, dn?:string, price:string|number}} preset
+ */
+function addCustomPrzejsciePreset(preset) {
+    if (typeof isOfferLocked === 'function' && isOfferLocked()) {
+        showToast(
+            typeof OFFER_LOCKED_MSG === 'string' ? OFFER_LOCKED_MSG : 'Oferta zablokowana',
+            'error'
+        );
+        return;
+    }
+    if (typeof isWellLocked === 'function' && isWellLocked()) {
+        showToast(
+            typeof WELL_LOCKED_MSG === 'string' ? WELL_LOCKED_MSG : 'Studnia zablokowana',
+            'error'
+        );
+        return;
+    }
+    const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
+    const result = buildCustomPrzejscieItem(
+        { name: preset.name, dn: preset.dn, price: preset.price },
+        well,
+        null
+    );
+    if (!result.ok) {
+        const msg = result.errors.name || result.errors.price || 'Nie można dodać przejścia';
+        showToast(msg, 'error');
+        return;
+    }
+    if (!Array.isArray(well.przejscia)) well.przejscia = [];
+    well.przejscia.push(result.item);
+    if (typeof ensurePrzejsciaIds === 'function') ensurePrzejsciaIds(well.przejscia);
+    if (typeof invalidateFrozenPricesForWell === 'function') invalidateFrozenPricesForWell(well);
+    showToast('Dodano przejście niestandardowe', 'success');
+    _customPrzejscieRefresh({}, result.item);
+}
+
 function _customPrzejscieModalHtml(opts, initial) {
     const isEdit = opts.mode === 'edit';
     const err = (field) =>
@@ -306,10 +348,19 @@ function openCustomPrzejscieModal(opts) {
         window.lucide.createIcons({ root: overlay });
 }
 
-/* Delegacja przycisku z panelu przejść (CSP-safe, bez inline handlerów). */
+/* Delegacja przycisków z panelu przejść (CSP-safe, bez inline handlerów). */
 if (typeof document !== 'undefined' && !window.__customPrzejscieDelegated) {
     window.__customPrzejscieDelegated = true;
     document.addEventListener('click', function (e) {
+        const presetEl = e.target.closest('[data-action="addCustomPrzejsciePreset"]');
+        if (presetEl) {
+            addCustomPrzejsciePreset({
+                name: presetEl.getAttribute('data-name') || '',
+                dn: presetEl.getAttribute('data-dn') || '',
+                price: presetEl.getAttribute('data-price') || ''
+            });
+            return;
+        }
         const el = e.target.closest('[data-action="openCustomPrzejscieModal"]');
         if (!el) return;
         openCustomPrzejscieModal({ mode: 'create' });
@@ -317,4 +368,5 @@ if (typeof document !== 'undefined' && !window.__customPrzejscieDelegated) {
 }
 
 window.openCustomPrzejscieModal = openCustomPrzejscieModal;
+window.addCustomPrzejsciePreset = addCustomPrzejsciePreset;
 window.buildCustomPrzejscieItem = buildCustomPrzejscieItem;

@@ -199,3 +199,64 @@ describe('modal custom przejścia', () => {
         expect(toasts.at(-1).msg).toContain('studnię');
     });
 });
+
+describe('presety niestandardowych przejść (zapamiętane w ofercie)', () => {
+    test('collectCustomPrzejsciaPresets: dedupe po nazwie+DN, ostatnia cena wygrywa', () => {
+        const { context } = runContext();
+        const presets = context.collectCustomPrzejsciaPresets([
+            {
+                przejscia: [{ isCustom: true, customName: 'A', dn: '315', customPrice: 100 }]
+            },
+            {
+                przejscia: [
+                    { isCustom: true, customName: 'A', dn: '315', customPrice: 200 },
+                    { isCustom: true, customName: 'B', dn: '', customPrice: 50 },
+                    { productId: 'p1' },
+                    null
+                ]
+            },
+            { przejscia: [] },
+            null
+        ]);
+        expect(presets).toEqual([
+            { name: 'A', dn: '315', price: 200 },
+            { name: 'B', dn: '', price: 50 }
+        ]);
+    });
+
+    test('collectCustomPrzejsciaPresets: pomija puste nazwy', () => {
+        const { context } = runContext();
+        expect(
+            context.collectCustomPrzejsciaPresets([
+                { przejscia: [{ isCustom: true, customName: '  ', customPrice: 10 }] }
+            ])
+        ).toEqual([]);
+    });
+
+    test('addCustomPrzejsciePreset dodaje kopię z ceną i nowym id', () => {
+        const { context, well, toasts } = runContext();
+        well.przejscia = [
+            { id: 'orig', isCustom: true, customName: 'Spec 315', dn: '315', customPrice: 100 }
+        ];
+        context.addCustomPrzejsciePreset({ name: 'Spec 315', dn: '315', price: '100' });
+        expect(well.przejscia).toHaveLength(2);
+        expect(well.przejscia[1]).toMatchObject({
+            isCustom: true,
+            productId: '',
+            customName: 'Spec 315',
+            customPrice: 100,
+            dn: '315'
+        });
+        expect(well.przejscia[1].id).toBeTruthy();
+        expect(well.przejscia[1].id).not.toBe('orig');
+        expect(toasts.at(-1)).toEqual({ msg: 'Dodano przejście niestandardowe', type: 'success' });
+    });
+
+    test('addCustomPrzejsciePreset: blokada oferty nie dodaje pozycji', () => {
+        const { context, well, toasts } = runContext();
+        context.isOfferLocked = () => true;
+        context.addCustomPrzejsciePreset({ name: 'Spec', dn: '315', price: 10 });
+        expect(well.przejscia).toHaveLength(0);
+        expect(toasts.at(-1).type).toBe('error');
+    });
+});

@@ -37,8 +37,18 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
     const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
+    // Zawsze ostatni kafelek: dodanie przejścia spoza cennika.
+    const customTileHtml = `<div class="przejscia-vis-tile przejscia-vis-tile--custom"
+                    data-action="openCustomPrzejscieFromPopup" data-container="${escapeHtmlAttr(containerId || '')}"
+                    title="Dodaj przejście spoza cennika"
+                    style="background:rgba(var(--accent2-rgb), 0.16); border:1px dashed rgba(var(--accent2-rgb), 0.6); color:var(--accent2-hover);">
+                   <div class="przejscia-vis-tile-name" style="display:flex; align-items:center; gap:0.3rem; color:var(--accent2-hover);">
+                       <i data-lucide="plus" aria-hidden="true"></i> Niestandardowe
+                   </div>
+               </div>`;
+
     const tilesHtml =
-        allTypes.length === 0
+        (allTypes.length === 0
             ? `<div class="empty-state" style="padding:0.8rem; text-align:center; color:var(--text-muted); font-size: var(--fs-xs);">Brak przejść w aktywnym katalogu cennika.<br>Odśwież stronę lub sprawdź wersję ACTIVE cennika studni.</div>`
             : allTypes
                   .map((t) => {
@@ -50,7 +60,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
                  <div class="przejscia-vis-tile-name">${escapeHtml(t)}</div>
              </div>`;
                   })
-                  .join('');
+                  .join('')) + customTileHtml;
 
     overlay.innerHTML = `
         <div class="przejscia-vis-popup">
@@ -148,7 +158,7 @@ function refreshPrzejsciaVisibilityTiles() {
     if (counterEl)
         counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong class="color-success">${visibleCount}</strong> / ${allTypes.length}`;
 
-    const tiles = overlay.querySelectorAll('.przejscia-vis-tile');
+    const tiles = overlay.querySelectorAll('.przejscia-vis-tile[data-t]');
     tiles.forEach((tile) => {
         const type = tile.getAttribute('title');
         const isVisible = visiblePrzejsciaTypes.has(type);
@@ -175,6 +185,10 @@ if (typeof document !== 'undefined' && !window.__wtpDelegated) {
             window.togglePrzejsciaTypeVisibility(t);
         } else if (action === 'closePrzejsciaVisibilityPopup') {
             window.closePrzejsciaVisibilityPopup(container || '');
+        } else if (action === 'openCustomPrzejscieFromPopup') {
+            window.closePrzejsciaVisibilityPopup(container || '');
+            if (typeof window.openCustomPrzejscieModal === 'function')
+                window.openCustomPrzejscieModal({ mode: 'create' });
         } else if (action === 'setPrzejsciaVisibilityAll') {
             window.setPrzejsciaVisibilityAll(val === '1');
         } else if (action === 'confirmChangePrzejscieType') {

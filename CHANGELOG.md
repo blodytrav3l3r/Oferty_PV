@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.60.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.60.0...v1.60.1) (2026-11-16)
+
+### Bug Fixes
+
+- **studnie:** przycisk „Niestandardowe" przeniesiony do popupu „Pokaż / Ukryj przejścia" (ostatni kafelek, inny kolor) — był niewidoczny przy domyślnie ukrytych typach
+
+### Features
+
+- **studnie:** zapamiętane niestandardowe przejścia oferty jako kafelki wyboru w panelu „Rodzaj materiału" — klik dodaje kopię z zapamiętaną nazwą, DN i ceną, bez zapisu w bazie
+
 ## [1.60.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.59.0...v1.60.0) (2026-11-16)
 
 ### Features

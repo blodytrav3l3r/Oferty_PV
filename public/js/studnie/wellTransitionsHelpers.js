@@ -152,6 +152,30 @@ function isPricedPrzejscie(item, product) {
     return !!product || (isCustomPrzejscie(item) && !!sanitizeCustomPrzejscieName(item.customName));
 }
 
+/**
+ * Zapamiętane custom przejścia bieżącej oferty (presety do listy wyboru).
+ * Dedupe po nazwie+DN — ostatnia cena wygrywa. Bez osobnego zapisu: źródłem
+ * są przejścia isCustom już obecne w studniach oferty.
+ */
+function collectCustomPrzejsciaPresets(wellList) {
+    const byKey = new Map();
+    (Array.isArray(wellList) ? wellList : []).forEach((well) => {
+        if (!well || !Array.isArray(well.przejscia)) return;
+        well.przejscia.forEach((item) => {
+            if (!isCustomPrzejscie(item)) return;
+            const name = sanitizeCustomPrzejscieName(item.customName);
+            if (!name) return;
+            const dn = item.dn == null ? '' : String(item.dn);
+            byKey.set(name + '|' + dn, {
+                name,
+                dn,
+                price: _customPrzejscieRound(item.customPrice)
+            });
+        });
+    });
+    return Array.from(byKey.values());
+}
+
 /* ===== Rejestracja globali ===== */
 window.getMaxPipeDn = getMaxPipeDn;
 window.syncEditState = syncEditState;
@@ -164,3 +188,4 @@ window.getPrzejscieName = getPrzejscieName;
 window.getPrzejscieCategoryLabel = getPrzejscieCategoryLabel;
 window.getPrzejscieDnLabel = getPrzejscieDnLabel;
 window.isPricedPrzejscie = isPricedPrzejscie;
+window.collectCustomPrzejsciaPresets = collectCustomPrzejsciaPresets;
