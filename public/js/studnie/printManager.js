@@ -30,6 +30,8 @@ async function confirmEditorPrint(title, documentName, orderNumber) {
 /**
  * Dolicza wydruk wykonany bezpośrednio z edytora zlecenia do licznika
  * widocznego w kartotece zleceń (ten sam endpoint co wydruki z listy).
+ * Serwer zwraca świeżą wersję dokumentu — wpisujemy ją do listy PZ w RAM,
+ * bo inaczej najbliższy zapis z edytora dostaje fałszywy 409.
  * @param {string|null|undefined} orderId
  * @param {'zlecenie'|'etykieta'} kind
  */
@@ -55,10 +57,21 @@ async function recordEditorPrint(orderId, kind) {
                     'error'
                 );
             }
+            return;
         }
+        const payload = await res.json().catch(() => ({}));
+        applyPrintCountVersion(orderId, payload.version);
     } catch (err) {
         logger.error('printManager', 'recordEditorPrint error:', err);
     }
+}
+
+/** Wersja dokumentu z serwera (SSoT) → wpis PZ w RAM. Brak liczby = pomiń. */
+function applyPrintCountVersion(orderId, version) {
+    if (typeof version !== 'number') return;
+    const list = Array.isArray(window.productionOrders) ? window.productionOrders : [];
+    const entry = list.find((po) => po && String(po.id) === String(orderId));
+    if (entry) entry.version = version;
 }
 
 /**
@@ -368,7 +381,7 @@ async function printZlecenie() {
     const ok = await confirmEditorPrint('Wydruk zlecenia', 'zlecenie', data.productionOrderNumber);
     if (!ok) return;
     silentPrint(html);
-    recordEditorPrint(orderId, 'zlecenie');
+    await recordEditorPrint(orderId, 'zlecenie');
 }
 
 function getPowlokaString(well) {
@@ -876,7 +889,7 @@ async function printEtykieta() {
     const ok = await confirmEditorPrint('Wydruk etykiety', 'etykietę', data.productionOrderNumber);
     if (!ok) return;
     silentPrint(html);
-    recordEditorPrint(orderId, 'etykieta');
+    await recordEditorPrint(orderId, 'etykieta');
 }
 
 // ===== GLOBAL EXPORTS =====

@@ -15,6 +15,8 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 ### Bug Fixes
 
 - **numeracja:** wyczerpany zakres lub brak zakresu opiekuna zwraca jawne 409 (`PRODUCTION_RANGE_EXHAUSTED` / `PRODUCTION_RANGE_MISSING`) zamiast cichego 500
+- **zlecenia:** wydruk z edytora zlecenia nie blokuje kolejnego zapisu fałszywym 409 — `print-count` zwraca świeżą wersję dokumentu, a edytor i lista PZ scali ją do RAM
+- **pulpit:** kafelek użytkownika pokazuje zakres numerów PZ („Zakres PZ”) bezpośrednio przy telefonie i e-mailu
 
 ### Removed
 

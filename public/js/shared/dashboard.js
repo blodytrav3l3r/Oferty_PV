@@ -810,6 +810,14 @@ function initialsOf(user) {
         .toUpperCase();
 }
 
+/** Zakres numerów PZ opiekuna na kafelku admina; brak zakresu = claim zablokowany. */
+function rangeTextOf(user) {
+    const from = user.productionRangeFrom;
+    const to = user.productionRangeTo;
+    if (from === null || from === undefined || to === null || to === undefined) return 'brak';
+    return `${from}–${to}`;
+}
+
 async function loadUsers() {
     try {
         const res = await fetch('/api/users', { credentials: 'same-origin' });
@@ -904,6 +912,7 @@ async function loadUsers() {
         <div class="admin-user-facts">
             <div class="admin-user-fact"><span class="fact-label">Telefon</span><span class="fact-value">${escapeHtml(u.phone || '—')}</span></div>
             <div class="admin-user-fact"><span class="fact-label">E-mail</span><span class="fact-value" title="${escapeHtmlAttr(u.email || '')}">${escapeHtml(u.email || 'brak email')}</span></div>
+            <div class="admin-user-fact"><span class="fact-label">Zakres PZ</span><span class="fact-value cell-num">${escapeHtml(rangeTextOf(u))}</span></div>
         </div>
         <div class="admin-user-controls">
             <button class="admin-action-btn edit-btn" aria-label="Edytuj: ${escapeHtmlAttr(label)}" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>

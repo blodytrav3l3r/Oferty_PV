@@ -30,7 +30,7 @@ import { isCurrentProductionNumber, parseProductionNumber } from '../../utils/pr
 import {
     incrementPrintCount,
     preservePrintCounts,
-    type PrintCounts
+    type PrintCountResult
 } from '../../services/orders/productionPrintCounts';
 import {
     claimIdempotencyKey,
@@ -1165,7 +1165,7 @@ router.post('/print-count-batch', requireAuth, writeProductionLimiter, async (re
         }
         const { ids: batchIds, kind } = parsed.data;
         const uniqueIds = [...new Set(batchIds)];
-        const counts: Record<string, PrintCounts> = {};
+        const counts: Record<string, PrintCountResult> = {};
         const failed: Array<{ id: string; error: string }> = [];
         for (const id of uniqueIds) {
             try {

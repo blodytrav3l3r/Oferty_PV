@@ -109,6 +109,8 @@ describe('Liczniki wydruków (print-count)', () => {
         expect(res.status).toBe(200);
         expect(res.body.printCountZlecenia).toBe(1);
         expect(res.body.printCountEtykieta).toBe(0);
+        // Świeża wersja po inkrementacji — klient scala ją, żeby nie dostać 409.
+        expect(res.body.version).toBe(2);
         expect(res.body.printLastZleceniaAt).toBeTruthy();
         expect(Number.isNaN(Date.parse(res.body.printLastZleceniaAt))).toBe(false);
         const written = JSON.parse(
@@ -194,6 +196,7 @@ describe('Liczniki wydruków (print-count)', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.printCountZlecenia).toBe(5);
+        expect(res.body.version).toBe(7);
     });
 
     it('batch: inkrementuje wiele, raportuje failures', async () => {

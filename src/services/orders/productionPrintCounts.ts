@@ -17,6 +17,11 @@ export interface PrintCounts {
     printLastEtykietaAt: string | null;
 }
 
+/** Liczniki + świeża wersja dokumentu (klient musi ją przyjąć, inaczej następny PUT = 409). */
+export interface PrintCountResult extends PrintCounts {
+    version: number;
+}
+
 export function readPrintCounts(data: Record<string, unknown>): PrintCounts {
     const z = data.printCountZlecenia;
     const e = data.printCountEtykieta;
@@ -64,7 +69,7 @@ export async function incrementPrintCount(
     docId: string,
     kind: PrintCountKind,
     user: User | undefined
-): Promise<PrintCounts> {
+): Promise<PrintCountResult> {
     const now = new Date().toISOString();
     for (let attempt = 0; attempt < 3; attempt++) {
         const row = await prisma.production_orders_rel.findUnique({
@@ -94,7 +99,7 @@ export async function incrementPrintCount(
             where: { id: docId, version: row.version ?? 1 },
             data: { data: nextData, updatedAt: now, version: { increment: 1 } }
         });
-        if (upd.count === 1) return counts;
+        if (upd.count === 1) return { ...counts, version: (row.version ?? 1) + 1 };
         // version zmieniona równolegle — ponów odczyt
     }
     throw {

@@ -621,6 +621,10 @@ const AppZlecenia = (() => {
                 if (c.printLastEtykietaAt !== undefined) {
                     o.printLastEtykietaAt = c.printLastEtykietaAt;
                 }
+                // Wydruk podbił wersję w DB — bez tego edycja z listy da 409.
+                if (typeof c.version === 'number') {
+                    o.version = c.version;
+                }
             }
         });
     }

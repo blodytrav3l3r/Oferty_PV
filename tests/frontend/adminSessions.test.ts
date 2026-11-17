@@ -106,7 +106,9 @@ const victimUser = {
     role: 'user',
     firstName: 'Wiktor',
     lastName: 'Nowak',
-    email: 'v@e.pl'
+    email: 'v@e.pl',
+    productionRangeFrom: 501,
+    productionRangeTo: 1000
 };
 
 function usersPayload() {
@@ -330,6 +332,9 @@ describe('pulpit admina: sesje', () => {
         expect(html).toContain('@admin');
         expect(html).toContain('@vict');
         expect(html).toContain('v@e.pl');
+        expect(html).toContain('Zakres PZ');
+        expect(html).toContain('501–1000');
+        expect(html).toContain('brak');
         expect(html).not.toContain('Nr zam.');
         expect(html).not.toContain('Nr zlec.');
         // Kafel „Nowy użytkownik" jest pierwszy i otwiera modal (CSP, bez inline onclick).
