@@ -136,7 +136,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
         grid-template-columns: 1fr clamp(200px, 22vw, 280px);
     }
 
-    .well-diagram-panel {
+    /* Podwójna klasa: bazowy `.well-diagram-panel` stoi niżej w pliku i wygrywa
+       kolejnością, więc samo `display:none` było martwe — panel zostawał w wierszu
+       siatki 2-kolumnowej, dzielił wysokość z listą studni i przewijał się
+       (studnia zakotwiczona `yMax` wpadała pod dolną krawędź panelu). */
+    .well-app-layout .well-diagram-panel {
         display: none;
     }
 }

@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.63.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.1...v1.63.2) (2026-11-17)
+
+### Bug Fixes
+
+- **studnie:** podgląd studni nie wchodzi już w siatkę 2-kolumnową przy szerokości ≤1200 px — reguła ukrywająca panel była nadpisana kolejnością CSS, przez co panel dzielił wysokość z listą studni i przewijał się, a schemat (kotwiczony do dołu) wypadał poza widok
+
 ## [1.63.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.0...v1.63.1) (2026-11-17)
 
 ### Bug Fixes

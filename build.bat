@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.63.1
+REM  Wersja: 1.63.2
 REM ===========================================================
 REM  build.bat - Budowanie production bundle (delegacja do npm)
 REM Rola: Budowanie produkcyjnych plikow aplikacji w dist\.
@@ -11,7 +11,7 @@ REM ===========================================================
 setlocal
 cd /d "%~dp0"
 
-set "APP_VERSION=1.63.1"
+set "APP_VERSION=1.63.2"
 
 echo ===========================================================
 echo   S.O.K. - Budowanie produkcyjne v%APP_VERSION%
