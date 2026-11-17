@@ -23,12 +23,7 @@ const adminUsersLimiter = ADMIN_USERS_LIMITER;
 router.get('/', requireAuth, requireAdmin, async (_req, res) => {
     try {
         const users = await prisma.users.findMany();
-        const year = new Date().getFullYear();
 
-        const counters = await prisma.order_counters.findMany({
-            where: { userId: { in: users.map((u) => u.id) }, year }
-        });
-        const counterByUser = new Map(counters.map((c) => [c.userId, c.lastNumber]));
         const organizationUnitPreferences = await prisma.user_preferences.findMany({
             where: {
                 userId: { in: users.map((user) => user.id) },
@@ -51,12 +46,6 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
                 subUsers = [];
             }
 
-            const startNum = user.orderStartNumber || 1;
-            const symbol = user.symbol || '??';
-            const lastNum = counterByUser.get(user.id) || 0;
-            const nextNum = Math.max(lastNum + 1, startNum);
-            const nextOrderNumber = `${symbol}/${String(nextNum).padStart(6, '0')}/${year}`;
-
             return {
                 id: user.id,
                 username: user.username,
@@ -69,8 +58,7 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
                 subUsers: subUsers,
                 orderStartNumber: user.orderStartNumber,
                 defaultOrganizationUnit: defaultOrganizationUnitByUser.get(user.id) || null,
-                createdAt: user.createdAt,
-                nextOrderNumber
+                createdAt: user.createdAt
             };
         });
 

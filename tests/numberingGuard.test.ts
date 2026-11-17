@@ -26,7 +26,7 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         users: { findUnique: jest.fn() },
-        order_counters: { findUnique: jest.fn(), upsert: jest.fn() },
+        order_global_counters: { findUnique: jest.fn(), upsert: jest.fn() },
         settings: { findUnique: jest.fn() },
         recycled_production_numbers: { findMany: jest.fn(), deleteMany: jest.fn() },
         idempotency_keys: {
@@ -82,7 +82,7 @@ describe('P0.2 numbering guard', () => {
     it('403 przy claim cudzego numeru (user-B vs user-A)', async () => {
         const res = await request(app).post('/api/numbering/claim-number/user-A').send({});
         expect(res.statusCode).toBe(403);
-        expect(prisma.order_counters.upsert).not.toHaveBeenCalled();
+        expect(prisma.order_global_counters.upsert).not.toHaveBeenCalled();
     });
 
     it('403 przy podglądzie cudzego next-number', async () => {
@@ -106,17 +106,22 @@ describe('P0.2 numbering guard', () => {
     });
 
     it('200 przy claim własnego numeru (brak drainu self)', async () => {
-        (prisma.users.findUnique as jest.Mock).mockResolvedValue({ symbol: 'BB' });
-        (prisma.order_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
+        (prisma.users.findUnique as jest.Mock).mockResolvedValue({ id: 'user-B' });
+        (prisma.order_global_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
         const res = await request(app).post('/api/numbering/claim-number/user-B').send({});
         expect(res.statusCode).toBe(200);
         expect(res.body.nextSeq).toBe(7);
-        expect(prisma.order_counters.upsert).toHaveBeenCalledTimes(1);
+        // Jedna wspólna pula roczna: klucz licznika bez userId, numer bez symbolu usera.
+        const upsertCall = (prisma.order_global_counters.upsert as jest.Mock).mock.calls[0][0];
+        expect(upsertCall.where.year_kind.kind).toBe('ZS');
+        expect(upsertCall.create).not.toHaveProperty('userId');
+        expect(res.body.number).toMatch(/^ZS\/00007\/\d{4}$/);
+        expect(prisma.order_global_counters.upsert).toHaveBeenCalledTimes(1);
     });
 
     it('retry tym samym Idempotency-Key zwraca ten sam numer, licznik +1', async () => {
         (prisma.users.findUnique as jest.Mock).mockResolvedValue({ symbol: 'BB' });
-        (prisma.order_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
+        (prisma.order_global_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
         const first = await request(app)
             .post('/api/numbering/claim-number/user-B')
             .set('Idempotency-Key', 'k-claim-1')
@@ -129,12 +134,12 @@ describe('P0.2 numbering guard', () => {
         expect(second.statusCode).toBe(200);
         expect(second.body).toEqual(first.body);
         expect(second.body.nextSeq).toBe(7);
-        expect(prisma.order_counters.upsert).toHaveBeenCalledTimes(1);
+        expect(prisma.order_global_counters.upsert).toHaveBeenCalledTimes(1);
     });
 
     it('ten sam klucz + inny payload → 409 IDEMPOTENCY_KEY_REUSE', async () => {
         (prisma.users.findUnique as jest.Mock).mockResolvedValue({ symbol: 'BB' });
-        (prisma.order_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
+        (prisma.order_global_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
         const first = await request(app)
             .post('/api/numbering/claim-number/user-B')
             .set('Idempotency-Key', 'k-claim-2')
@@ -146,12 +151,12 @@ describe('P0.2 numbering guard', () => {
             .send({ other: 'payload' });
         expect(retry.statusCode).toBe(409);
         expect(retry.body.code).toBe('IDEMPOTENCY_KEY_REUSE');
-        expect(prisma.order_counters.upsert).toHaveBeenCalledTimes(1);
+        expect(prisma.order_global_counters.upsert).toHaveBeenCalledTimes(1);
     });
 
     it('drenaż licznika throttlowany: seria claimów w końcu 429 (P1.2)', async () => {
         (prisma.users.findUnique as jest.Mock).mockResolvedValue({ symbol: 'BB' });
-        (prisma.order_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
+        (prisma.order_global_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
         let got429 = false;
         for (let i = 0; i < 70; i++) {
             const res = await request(app).post('/api/numbering/claim-number/user-B').send({});

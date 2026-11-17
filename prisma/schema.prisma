@@ -476,6 +476,16 @@ model order_counters_rury {
   @@id([userId, year])
 }
 
+// Globalna pula numerów zamówień: jedna sekwencja per moduł (ZS/ZK) i rok,
+// wspólna dla wszystkich użytkowników. Tabele order_counters* są legacy.
+model order_global_counters {
+  year       Int
+  kind       String
+  lastNumber Int    @default(0)
+
+  @@id([year, kind])
+}
+
 // Zamówienia na studnie
 model orders_studnie_rel {
   id                 String  @id

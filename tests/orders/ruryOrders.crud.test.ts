@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import ruryOrdersRouter from '../../src/routes/orders/ruryOrders.crud';
 import prisma from '../../src/prismaClient';
+import { getNumberingYear } from '../../src/utils/numberingYear';
 
 const mockUser: any = { id: 'user-id', role: 'user', subUsers: [] };
 
@@ -31,7 +32,7 @@ jest.mock('../../src/prismaClient', () => ({
         users: {
             findUnique: jest.fn()
         },
-        order_counters_rury: {
+        order_global_counters: {
             findUnique: jest.fn(),
             upsert: jest.fn()
         },
@@ -103,14 +104,14 @@ describe('Rury Orders CRUD', () => {
                 id: 'other-user',
                 symbol: 'CD'
             });
-            (prisma.order_counters_rury.upsert as jest.Mock).mockResolvedValue({
+            (prisma.order_global_counters.upsert as jest.Mock).mockResolvedValue({
                 lastNumber: 3
             });
             const res = await request(app)
                 .post('/api/orders-rury/claim-rury-number/other-user')
                 .set('x-user-id', 'user-id');
             expect(res.statusCode).toBe(403);
-            expect(prisma.order_counters_rury.upsert).not.toHaveBeenCalled();
+            expect(prisma.order_global_counters.upsert).not.toHaveBeenCalled();
         });
 
         it('zwraca 404 gdy użytkownik nie istnieje', async () => {
@@ -133,7 +134,7 @@ describe('Rury Orders CRUD', () => {
                 id: 'user-id',
                 symbol: 'AB'
             });
-            (prisma.order_counters_rury.upsert as jest.Mock).mockResolvedValue({
+            (prisma.order_global_counters.upsert as jest.Mock).mockResolvedValue({
                 lastNumber: 5
             });
 
@@ -142,8 +143,8 @@ describe('Rury Orders CRUD', () => {
                 .set('x-user-id', 'admin-id');
 
             expect(res.statusCode).toBe(200);
-            const year = new Date().getFullYear();
-            expect(res.body.number).toBe(`AB/ZR/000005/${year}`);
+            const year = getNumberingYear();
+            expect(res.body.number).toBe(`ZK/00005/${year}`);
             expect(res.body.nextSeq).toBe(5);
         });
 
@@ -155,7 +156,7 @@ describe('Rury Orders CRUD', () => {
                 id: 'user-id',
                 symbol: 'AB'
             });
-            (prisma.order_counters_rury.upsert as jest.Mock).mockResolvedValue({
+            (prisma.order_global_counters.upsert as jest.Mock).mockResolvedValue({
                 lastNumber: 7
             });
 
@@ -163,11 +164,12 @@ describe('Rury Orders CRUD', () => {
                 .post('/api/orders-rury/claim-rury-number/user-id')
                 .set('x-user-id', 'admin-id');
 
-            const upsertCall = (prisma.order_counters_rury.upsert as jest.Mock).mock.calls[0][0];
+            const upsertCall = (prisma.order_global_counters.upsert as jest.Mock).mock.calls[0][0];
+            expect(upsertCall.where.year_kind.kind).toBe('ZK');
             expect(upsertCall.create.lastNumber).toBe(1);
             expect(upsertCall.update.lastNumber).toEqual({ increment: 1 });
             /* A-04: brak osobnym findUnique (read-then-write) przy claim numeru */
-            expect(prisma.order_counters_rury.findUnique).not.toHaveBeenCalled();
+            expect(prisma.order_global_counters.findUnique).not.toHaveBeenCalled();
         });
     });
 

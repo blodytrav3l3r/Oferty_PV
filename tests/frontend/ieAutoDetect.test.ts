@@ -47,9 +47,17 @@ describe('frontend vm: toolbar._detectFromNumber', () => {
         });
     });
 
-    it('/ZR/ → rury/zamówienie, /ZS/ → studnie/zamówienie', () => {
+    it('ZK/ (nowe) i /ZR/ (legacy) → rury/zamówienie, ZS/ i /ZS/ → studnie/zamówienie', () => {
+        expect(tb._detectFromNumber('ZK/000001/2026')).toEqual({
+            module: 'rury',
+            entity: 'order'
+        });
         expect(tb._detectFromNumber('XX/ZR/000001/2026')).toEqual({
             module: 'rury',
+            entity: 'order'
+        });
+        expect(tb._detectFromNumber('ZS/000001/2026')).toEqual({
+            module: 'studnie',
             entity: 'order'
         });
         expect(tb._detectFromNumber('YY/ZS/000003/2026')).toEqual({

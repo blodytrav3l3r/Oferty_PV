@@ -55,7 +55,8 @@ window.importExportToolbar = /** @type {any} */ ({
 
     // Wykrywanie modułu i typu dokumentu z formatu numeru:
     // oferta rur OF/… (offerItemHelpers.js), oferta studni OS/… (globals.js),
-    // zamówienie rur …/ZR/… (ruryOrders.crud.ts), zamówienie studni …/ZS/… (numbering.ts).
+    // zamówienie rur ZK/… (ruryOrders.crud.ts; legacy …/ZR/…),
+    // zamówienie studni ZS/… (numbering.ts; legacy …/ZS/…).
     // Custom numery po ręcznej edycji dają null — wtedy search-all poniżej.
     _detectFromNumber(number) {
         const nr = String(number || '')
@@ -64,8 +65,10 @@ window.importExportToolbar = /** @type {any} */ ({
         if (!nr) return null;
         if (nr.indexOf('OF/') === 0) return { module: 'rury', entity: 'offer' };
         if (nr.indexOf('OS/') === 0) return { module: 'studnie', entity: 'offer' };
-        if (nr.indexOf('/ZR/') !== -1) return { module: 'rury', entity: 'order' };
-        if (nr.indexOf('/ZS/') !== -1) return { module: 'studnie', entity: 'order' };
+        if (nr.indexOf('ZK/') === 0 || nr.indexOf('/ZK/') !== -1 || nr.indexOf('/ZR/') !== -1)
+            return { module: 'rury', entity: 'order' };
+        if (nr.indexOf('ZS/') === 0 || nr.indexOf('/ZS/') !== -1)
+            return { module: 'studnie', entity: 'order' };
         return null;
     },
 

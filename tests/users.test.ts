@@ -124,12 +124,8 @@ describe('Users Routes', () => {
     });
 
     describe('GET /api/users', () => {
-        it('powinien zwrócić listę użytkowników dla admina oraz wyliczyć nextOrderNumber', async () => {
+        it('powinien zwrócić listę użytkowników dla admina bez per-user numeru zamówienia', async () => {
             (prisma.users.findMany as jest.Mock).mockResolvedValue(mockUsers);
-            (prisma.order_counters.findMany as jest.Mock).mockResolvedValue([
-                { userId: 'admin-id', lastNumber: 2 },
-                { userId: 'user-id', lastNumber: 4 }
-            ]);
 
             const res = await request(app)
                 .get('/api/users')
@@ -138,8 +134,9 @@ describe('Users Routes', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.data).toHaveLength(2);
-            expect(res.body.data[0].nextOrderNumber).toContain('A/000003');
-            expect(res.body.data[1].nextOrderNumber).toContain('U1/000005');
+            // Numeracja zamówień jest globalna (per rok), więc per-user podgląd znika.
+            expect(res.body.data[0].nextOrderNumber).toBeUndefined();
+            expect(res.body.data[1].nextOrderNumber).toBeUndefined();
         });
 
         it('powinien odrzucić dostęp dla zwykłego usera', async () => {

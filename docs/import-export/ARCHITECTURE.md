@@ -125,7 +125,7 @@ Przy imporcie oferty o numerze który już istnieje w systemie:
 
 - **Eksport XLSX / JSON**: jedno pole numeru (`toolbar.js:_confirmExportByNumber`).
   Moduł i typ z formatu (`_detectFromNumber`: `OF/` → rury/oferta, `OS/` → studnie/oferta,
-  `/ZR/` → rury/zamówienie, `/ZS/` → studnie/zamówienie); custom numery po ręcznej edycji
+  `ZK/` i legacy `/ZR/` → rury/zamówienie, `ZS/` i legacy `/ZS/` → studnie/zamówienie); custom numery po ręcznej edycji
   dają search-all po ofertach i zamówieniach. Kolizja (ten sam numer w kilku miejscach)
   → lista przycisków do wyboru. Import JSON 1:1 nie wymaga zmian — moduł czytany
   z `preview.module` / `preview.kind` pliku.

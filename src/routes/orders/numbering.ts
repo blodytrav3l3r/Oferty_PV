@@ -12,12 +12,20 @@ import {
 import { logger } from '../../utils/logger';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import { formatProductionNumber } from '../../utils/productionNumber';
+import { getNumberingYear } from '../../utils/numberingYear';
 
 const router = express.Router();
 
 /** Maks. liczb w jednym claim-zakresu — jak limit batch-delete (production.ts). */
 const CLAIM_RANGE_MAX = 200;
 const PRODUCTION_START_SETTING = 'production_order_start_number';
+/** Moduł numeracji zamówień studni w globalnej puli rocznej. */
+const STUDNIE_ORDER_KIND = 'ZS';
+const ORDER_NUMBER_DIGITS = 5;
+
+function formatStudnieOrderNumber(seq: number, year: number): string {
+    return `${STUDNIE_ORDER_KIND}/${String(seq).padStart(ORDER_NUMBER_DIGITS, '0')}/${year}`;
+}
 
 async function getProductionOrderStartNumber(): Promise<number> {
     const setting = await prisma.settings.findUnique({ where: { key: PRODUCTION_START_SETTING } });
@@ -119,7 +127,7 @@ async function claimProductionSeqs(
 
 router.get('/recycled', requireAuth, async (_req, res) => {
     try {
-        const year = new Date().getFullYear();
+        const year = getNumberingYear();
         const yearShort = String(year).slice(-2);
         const letterKey = 'year_letter_' + year;
         const letterRow = await prisma.settings.findUnique({ where: { key: letterKey } });
@@ -144,6 +152,7 @@ router.get('/recycled', requireAuth, async (_req, res) => {
 
 // Podgląd następnego numeru — NIE rezerwuje (bez incrementu). Frontend
 // nie może go traktować jako przyznanego; przydział tylko przez claim-*.
+// Pula jest wspólna dla wszystkich użytkowników, więc numer nie zależy od userId.
 router.get('/next-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -152,22 +161,24 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
         if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
-        const year = new Date().getFullYear();
+        const year = getNumberingYear();
 
         const user = await prisma.users.findUnique({
             where: { id: userId },
-            select: { symbol: true }
+            select: { id: true }
         });
         if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
-        const symbol = user.symbol || '??';
 
-        const counter = await prisma.order_counters.findUnique({
-            where: { userId_year: { userId, year } }
+        const counter = await prisma.order_global_counters.findUnique({
+            where: { year_kind: { year, kind: STUDNIE_ORDER_KIND } }
         });
         const nextNumber = (counter?.lastNumber || 0) + 1;
-        const formatted = `${symbol}/ZS/${String(nextNumber).padStart(6, '0')}/${year}`;
 
-        res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
+        res.json({
+            number: formatStudnieOrderNumber(nextNumber, year),
+            nextSeq: nextNumber,
+            year
+        });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Numbering', 'Błąd serwera', message);
@@ -205,11 +216,11 @@ router.post('/claim-number/:userId', requireAuth, WRITE_LIMITER, async (req, res
                     code: 'IDEMPOTENCY_IN_PROGRESS'
                 });
         }
-        const year = new Date().getFullYear();
+        const year = getNumberingYear();
 
         const user = await prisma.users.findUnique({
             where: { id: userId },
-            select: { symbol: true }
+            select: { id: true }
         });
         // P2: domknij klucz wynikiem — retry replayuje 404 zamiast wisieć PENDING.
         if (!user) {
@@ -219,17 +230,18 @@ router.post('/claim-number/:userId', requireAuth, WRITE_LIMITER, async (req, res
             return res.status(404).json(notFound);
         }
 
-        const symbol = user.symbol || '??';
-
-        const counter = await prisma.order_counters.upsert({
-            where: { userId_year: { userId, year } },
-            create: { userId, year, lastNumber: 1 },
+        const counter = await prisma.order_global_counters.upsert({
+            where: { year_kind: { year, kind: STUDNIE_ORDER_KIND } },
+            create: { year, kind: STUDNIE_ORDER_KIND, lastNumber: 1 },
             update: { lastNumber: { increment: 1 } }
         });
         const nextNumber = counter.lastNumber;
 
-        const formatted = `${symbol}/ZS/${String(nextNumber).padStart(6, '0')}/${year}`;
-        const payload = { number: formatted, nextSeq: nextNumber, symbol, year };
+        const payload = {
+            number: formatStudnieOrderNumber(nextNumber, year),
+            nextSeq: nextNumber,
+            year
+        };
         if (idemKey) await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 200, payload);
         res.json(payload);
     } catch (e: unknown) {
@@ -272,7 +284,7 @@ router.post('/claim-production-number/:userId', requireAuth, WRITE_LIMITER, asyn
                     code: 'IDEMPOTENCY_IN_PROGRESS'
                 });
         }
-        const year = new Date().getFullYear();
+        const year = getNumberingYear();
         const user = await prisma.users.findUnique({ where: { id: userId }, select: { id: true } });
         if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
 
@@ -361,7 +373,7 @@ router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, asy
             return res.status(400).json(invalid);
         }
         const count = parsed.data.count;
-        const year = new Date().getFullYear();
+        const year = getNumberingYear();
         const user = await prisma.users.findUnique({ where: { id: userId }, select: { id: true } });
         if (!user) {
             const notFound = { error: 'Użytkownik nie znaleziony' };

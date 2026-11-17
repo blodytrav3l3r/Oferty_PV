@@ -27,11 +27,19 @@ import {
 } from '../../utils/idempotency';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import { loadOrderStamps, stampForOrder } from '../../utils/orderStamp';
+import { getNumberingYear } from '../../utils/numberingYear';
 import crypto from 'crypto';
 
 const router = express.Router();
 
 const writeOrdersLimiter = WRITE_LIMITER;
+/** Moduł numeracji zamówień rur w globalnej puli rocznej. */
+const RURY_ORDER_KIND = 'ZK';
+const ORDER_NUMBER_DIGITS = 5;
+
+function formatRuryOrderNumber(seq: number, year: number): string {
+    return `${RURY_ORDER_KIND}/${String(seq).padStart(ORDER_NUMBER_DIGITS, '0')}/${year}`;
+}
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -135,11 +143,11 @@ router.post('/claim-rury-number/:userId', requireAuth, writeOrdersLimiter, async
                 });
         }
 
-        const year = new Date().getFullYear();
+        const year = getNumberingYear();
 
         const user = await prisma.users.findUnique({
             where: { id: userId },
-            select: { symbol: true }
+            select: { id: true }
         });
         // P2: domknij klucz wynikiem — retry replayuje 404 zamiast wisieć PENDING.
         if (!user) {
@@ -149,16 +157,18 @@ router.post('/claim-rury-number/:userId', requireAuth, writeOrdersLimiter, async
             return res.status(404).json(notFound);
         }
 
-        const symbol = user.symbol || '??';
-        const counter = await prisma.order_counters_rury.upsert({
-            where: { userId_year: { userId, year } },
-            create: { userId, year, lastNumber: 1 },
+        const counter = await prisma.order_global_counters.upsert({
+            where: { year_kind: { year, kind: RURY_ORDER_KIND } },
+            create: { year, kind: RURY_ORDER_KIND, lastNumber: 1 },
             update: { lastNumber: { increment: 1 } }
         });
         const nextNumber = counter.lastNumber;
 
-        const formatted = `${symbol}/ZR/${String(nextNumber).padStart(6, '0')}/${year}`;
-        const payload = { number: formatted, nextSeq: nextNumber, symbol, year };
+        const payload = {
+            number: formatRuryOrderNumber(nextNumber, year),
+            nextSeq: nextNumber,
+            year
+        };
         if (idemKey) await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 200, payload);
         res.json(payload);
     } catch (e: unknown) {

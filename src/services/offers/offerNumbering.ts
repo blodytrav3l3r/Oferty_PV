@@ -1,11 +1,10 @@
 import { Prisma } from '../../prismaClient';
+import { getNumberingYear } from '../../utils/numberingYear';
 
 type OfferModule = 'rury' | 'studnie';
 
 export function getCurrentOfferNumberYear(date = new Date()): number {
-    return Number(
-        new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Europe/Warsaw' }).format(date)
-    );
+    return getNumberingYear(date);
 }
 
 interface OfferNumberTable {

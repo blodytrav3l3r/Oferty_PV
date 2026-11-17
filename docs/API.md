@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.61.3  
+**Wersja:** 1.62.0  
 **Ostatnia aktualizacja:** 2026-11-07
 
 **Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera), surowy JSON: `GET /api/docs.json`. Specyfikacja jest generowana z adnotacji `@openapi` w wybranych plikach; jej pokrycie jest częściowe i nie stanowi kompletnego źródła kontraktów.
@@ -34,7 +34,7 @@ Publiczny numer wersji aplikacji.
 **Odpowiedź:**
 
 ```json
-{ "version": "1.61.3" }
+{ "version": "1.62.0" }
 ```
 
 ### `GET /health/live`
@@ -65,12 +65,12 @@ Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `
 
 ```json
 {
-    "version": "1.61.3",
+    "version": "1.62.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.61.3",
+    "dbVersion": "1.62.0",
     "uptime": 123.45,
     "memory": { ... }
 }
@@ -382,8 +382,8 @@ Wymaga autoryzacji. Montowana przed trasami `/:id` (barrel `orders/index.ts`).
 
 | Metoda | Ścieżka                                                | Opis                                                                                  |
 | ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| GET    | `/api/orders-studnie/next-number/:userId`              | Następny numer zamówienia                                                             |
-| POST   | `/api/orders-studnie/claim-number/:userId`             | Rezerwacja numeru zamówienia                                                          |
+| GET    | `/api/orders-studnie/next-number/:userId`              | Podgląd następnego numeru zamówienia `ZS/00001/RRRR` (bez rezerwacji, pula globalna)  |
+| POST   | `/api/orders-studnie/claim-number/:userId`             | Rezerwacja numeru zamówienia `ZS/00001/RRRR` (pula globalna per rok)                  |
 | POST   | `/api/orders-studnie/claim-production-number/:userId`  | Rezerwacja numeru PZ                                                                  |
 | POST   | `/api/orders-studnie/claim-production-numbers/:userId` | Hurtowa rezerwacja numerów PZ (`{count: 1..200}`, max 200, format `SYM/LIT/NNNNN/RR`) |
 | GET    | `/api/orders-studnie/recycled`                         | Recykling numerów                                                                     |

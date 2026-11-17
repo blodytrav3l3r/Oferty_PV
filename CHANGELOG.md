@@ -4,6 +4,18 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.62.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.3...v1.62.0) (2026-11-17)
+
+### Features
+
+- **zamówienia:** jedna wspólna pula numerów na rok dla wszystkich użytkowników (`order_global_counters`, per moduł) — studnie `ZS/00001/2026`, rury `ZK/00001/2026`, reset automatyczny z rokiem kalendarzowym (Europe/Warsaw); podgląd numeru z serwera, bez rezerwacji
+- **zamówienia:** prefiks zamówień rur `ZR` → `ZK` (stare numery `…/ZR/…` nadal rozpoznawane w imporcie/eksporcie)
+
+### Bug Fixes
+
+- **numeracja:** rok numeracji liczony w strefie Europe/Warsaw także dla zamówień i zleceń produkcyjnych (wcześniej strefa serwera — numer zmieniał się o innej godzinie niż kalendarz)
+- **users:** `GET /api/users` nie zwraca już per-user `nextOrderNumber` (numeracja nie jest już per użytkownik)
+
 ## [1.61.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.2...v1.61.3) (2026-11-16)
 
 ### Features
