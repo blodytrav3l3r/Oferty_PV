@@ -394,7 +394,15 @@ router.put(
         // batcha PRZED transakcją; ownership sprawdzany W transakcji (TOCTOU).
         // P0-V: saved niesie wersje faktycznie zapisane (po inkrementacji) —
         // API jest źródłem prawdy dla version, frontend merguje do RAM.
-        const saved: Array<{ id: string; version: number }> = [];
+        const saved: Array<{
+            id: string;
+            version: number;
+            productionOrderPrintNumber?: string;
+        }> = [];
+        // Wydruk zlecenia: numer z symbolem opiekuna liczy serwer (SSoT). Front
+        // przebudowuje wpis PZ z formularza po zapisie i gubi pole pochodne,
+        // więc zwracamy je w `saved` do mergu w RAM (jak `version`).
+        const savedPrintMeta = new Map<string, { number: string | null; userId: string | null }>();
         try {
             const incoming: ProductionOrdersBatchInput['data'] = req.body.data || [];
             // P0.3: docId przypisane Z GÓRY (1:1 z dotychczasową semantyką —
@@ -566,6 +574,10 @@ router.put(
                             }
                         });
                         saved.push({ id: docId, version: 1 });
+                        savedPrintMeta.set(docId, {
+                            number: prodNum ?? null,
+                            userId: targetUserId
+                        });
                         oldById.set(docId, {
                             id: docId,
                             data: dataStr,
@@ -610,6 +622,10 @@ router.put(
                             };
                         }
                         saved.push({ id: docId, version: clientVersion + 1 });
+                        savedPrintMeta.set(docId, {
+                            number: prodNum ?? oldNumber ?? null,
+                            userId: targetUserId
+                        });
                         oldById.set(docId, {
                             id: docId,
                             data: dataStr,
@@ -627,6 +643,34 @@ router.put(
                             },
                             tx
                         );
+                    }
+                }
+
+                // Symbol opiekuna dla numeru wydrukowego — jeden SELECT na batch.
+                const ownerIds = [
+                    ...new Set(
+                        [...savedPrintMeta.values()]
+                            .map((m) => m.userId)
+                            .filter((v): v is string => typeof v === 'string' && v !== '')
+                    )
+                ];
+                if (ownerIds.length > 0) {
+                    const owners =
+                        (await tx.users.findMany({
+                            where: { id: { in: ownerIds } },
+                            select: { id: true, symbol: true }
+                        })) ?? [];
+                    const symbolById = new Map(owners.map((u) => [u.id, u.symbol]));
+                    for (const row of saved) {
+                        const meta = savedPrintMeta.get(row.id);
+                        if (!meta) continue;
+                        const printNumber = formatProductionPrintNumber(
+                            meta.number,
+                            meta.userId ? symbolById.get(meta.userId) : null
+                        );
+                        // Puste pole nie zaśmieca kontraktu `saved` — front i tak
+                        // spada na numer bazowy.
+                        if (printNumber) row.productionOrderPrintNumber = printNumber;
                     }
                 }
             }, HOT_TX_OPTS);

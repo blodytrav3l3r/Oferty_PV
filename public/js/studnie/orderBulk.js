@@ -1054,6 +1054,7 @@ async function executeBulkGeneration(elements) {
     // ten sam klucz chunka); końcowy 429/5xx = putErrors + recycle.
     const savedIds = new Set();
     const savedVersions = new Map();
+    const savedPrintNumbers = new Map();
     let putErrors = 0;
     if (!stopped && !isAborted()) {
         for (let start = 0; start < built.length; start += _BULK_CHUNK) {
@@ -1083,6 +1084,9 @@ async function executeBulkGeneration(elements) {
                 savedIds.add(id);
                 const ver = entry && typeof entry.version === 'number' ? entry.version : undefined;
                 if (ver !== undefined) savedVersions.set(id, ver);
+                if (entry && typeof entry.productionOrderPrintNumber === 'string') {
+                    savedPrintNumbers.set(id, entry.productionOrderPrintNumber);
+                }
             }
             showBulkProgress(Math.min(start + _BULK_CHUNK, built.length));
         }
@@ -1099,6 +1103,11 @@ async function executeBulkGeneration(elements) {
             // P0-V: wersja z serwera (create → 1), żeby późniejszy zapis nie 409.
             if (savedVersions.has(built[i].order.id)) {
                 built[i].order.version = savedVersions.get(built[i].order.id);
+            }
+            if (savedPrintNumbers.has(built[i].order.id)) {
+                built[i].order.productionOrderPrintNumber = savedPrintNumbers.get(
+                    built[i].order.id
+                );
             }
             productionOrders.push(built[i].order);
             newOrders.push(built[i].order);

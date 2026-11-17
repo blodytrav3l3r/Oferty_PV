@@ -70,7 +70,9 @@ jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
         users: {
-            findUnique: jest.fn(async ({ where }: any) => store.users[where.id] || null)
+            findUnique: jest.fn(async ({ where }: any) => store.users[where.id] || null),
+            // Numer wydrukowy PZ: PUT dociąga symbol opiekuna.
+            findMany: jest.fn(async () => [])
         },
         settings: {
             findUnique: jest.fn(async ({ where }: any) =>
@@ -153,8 +155,10 @@ jest.mock('../../src/prismaClient', () => ({
             };
             const recycledLockRelease: { release?: () => void } = {};
             const tx = {
+                // Numer wydrukowy PZ: PUT dociąga symbol opiekuna.
                 users: {
-                    findUnique: jest.fn(async ({ where }: any) => store.users[where.id] || null)
+                    findUnique: jest.fn(async ({ where }: any) => store.users[where.id] || null),
+                    findMany: jest.fn(async () => [])
                 },
                 // P0-C/D: PUT batch działa na tx.production_orders_rel.
                 production_orders_rel: {
@@ -666,8 +670,8 @@ describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
         const res = await request(app).put('/api/orders-studnie/production').send({ data });
         expect(res.status).toBe(200);
         expect(res.body.saved).toEqual([
-            { id: 'a', version: 1 },
-            { id: 'b', version: 1 }
+            { id: 'a', version: 1, productionOrderPrintNumber: numbers[0] },
+            { id: 'b', version: 1, productionOrderPrintNumber: numbers[1] }
         ]);
     });
 

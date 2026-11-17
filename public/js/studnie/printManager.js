@@ -381,7 +381,11 @@ async function printZlecenie() {
     if (!template) return;
 
     const html = buildZlecenieHtml(template, data);
-    const ok = await confirmEditorPrint('Wydruk zlecenia', 'zlecenie', data.productionOrderNumber);
+    const ok = await confirmEditorPrint(
+        'Wydruk zlecenia',
+        'zlecenie',
+        data.productionOrderPrintNumber || data.productionOrderNumber
+    );
     if (!ok) return;
     silentPrint(html);
     await recordEditorPrint(orderId, 'zlecenie');

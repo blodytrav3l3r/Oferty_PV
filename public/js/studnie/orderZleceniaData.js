@@ -332,10 +332,16 @@ async function _saveProductionChunk(chunk, noRetry) {
     if (typeof productionOrders !== 'undefined' && Array.isArray(productionOrders)) {
         for (const entry of rawSaved) {
             const id = typeof entry === 'string' ? entry : entry && entry.id;
-            const ver = entry && typeof entry.version === 'number' ? entry.version : undefined;
-            if (!id || ver === undefined) continue;
+            if (!id) continue;
             const po = productionOrders.find((p) => p && p.id === id);
-            if (po) po.version = ver;
+            if (!po) continue;
+            const ver = entry && typeof entry.version === 'number' ? entry.version : undefined;
+            if (ver !== undefined) po.version = ver;
+            // Numer wydrukowy liczy serwer (symbol opiekuna) — przebudowany
+            // obiekt z formularza go nie ma, a wydruk idzie zaraz po zapisie.
+            if (entry && typeof entry.productionOrderPrintNumber === 'string') {
+                po.productionOrderPrintNumber = entry.productionOrderPrintNumber;
+            }
         }
     }
     return rawSaved;

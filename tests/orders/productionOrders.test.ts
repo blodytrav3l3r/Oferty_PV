@@ -93,6 +93,8 @@ beforeEach(() => {
     mockUser.role = 'user';
     mockUser.subUsers = [];
     (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
+    // Numer wydrukowy PZ: PUT dociąga symbol opiekuna — brak wiersza = fallback.
+    (prisma as any).users = { findMany: jest.fn().mockResolvedValue([]) };
 });
 
 describe('Production Orders (PZ) routes', () => {
@@ -422,6 +424,34 @@ describe('Production Orders (PZ) routes', () => {
             expect(
                 (prisma.production_orders_rel.updateMany as jest.Mock).mock.calls[0][0].where
             ).toEqual({ id: 'pz-1', version: 6 });
+        });
+
+        it('numer wydrukowy: saved niesie numer z symbolem opiekuna (front merguje po zapisie)', async () => {
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: 6,
+                    data: JSON.stringify({ productionOrderNumber: TEST_PRODUCTION_NUMBER })
+                }
+            ]);
+            (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+            (prisma as any).users.findMany.mockResolvedValue([{ id: 'user-id', symbol: 'SA' }]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ userId: 'user-id' }]);
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'pz-1', wellId: 'w-1', version: 6, status: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.saved).toEqual([
+                {
+                    id: 'pz-1',
+                    version: 7,
+                    productionOrderPrintNumber: TEST_PRODUCTION_NUMBER.replace(/^[A-Z]\//, 'SA/')
+                }
+            ]);
         });
 
         it('P0-V: łańcuch save→save bez fałszywego 409 (scenariusz zgłoszenia)', async () => {

@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.64.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.0...v1.64.1) (2026-11-17)
+
+### Fixes
+
+- **zlecenia:** wydruk z modułu Studnie (`Zlecenie`) pokazywał numer z literą roku — `saveProductionOrder()` przebudowuje wpis PZ z formularza i gubił `productionOrderPrintNumber`; PUT zwraca teraz numer wydrukowy w `saved` (symbol opiekuna liczy serwer), a front merguje go do RAM jak `version` (także po tworzeniu wsadowym); modal potwierdzenia wydruku pokazuje ten sam numer co wydruk
+
 ## [1.64.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.3...v1.64.0) (2026-11-17)
 
 ### Features
