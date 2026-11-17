@@ -40,10 +40,14 @@
 
 - **Invariant:** claim numeru atomowy (bez read-then-write); retry z tym samym
   `Idempotency-Key` trafia w ten sam rekord (deterministyczne id).
+  Numery zleceń produkcyjnych pochodzą wyłącznie ze stałego zakresu opiekuna
+  (`users.productionRangeFrom/To`); zakresy użytkowników nie mogą się nakładać.
 - **Owner:** backend (numbering, idempotency).
 - **Enforcement:** `claimIdempotencyKey` + `IDEMPOTENCY_KEY_REUSE` (409),
-  `src/middleware/writeLock.ts` dla cenników.
-- **Tests:** `tests/numberingGuard.test.ts`, `tests/idempotency.test.ts`.
+  `src/middleware/writeLock.ts` dla cenników, claim PZ z `NumberingError`
+  (`PRODUCTION_RANGE_MISSING`/`PRODUCTION_RANGE_EXHAUSTED`, 409).
+- **Tests:** `tests/numberingGuard.test.ts`, `tests/idempotency.test.ts`,
+  `tests/orders/productionBulkClaim.test.ts`, `tests/users.test.ts`.
 
 ## I-005 — Baza produkcyjna odtwarzalna z migracji
 

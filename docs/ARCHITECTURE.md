@@ -1,6 +1,6 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.62.0  
+**Wersja:** 1.63.0  
 **Ostatnia aktualizacja:** 2026-11-06<br>
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline
 
@@ -382,6 +382,8 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **settings** — ustawienia (klucz-wartość)
 - **order_global_counters** — globalna pula numerów zamówień (per moduł `ZS`/`ZK` i rok)
 - **order_counters** / **order_counters_rury** — legacy liczniki per użytkownik (nieużywane w numeracji)
+- **users.productionRangeFrom / productionRangeTo** — stały zakres numerów zleceń produkcyjnych opiekuna
+- **production_global_number_claims** — zajęte numery PZ per rok (PK `year`+`seqNumber`, globalna unikalność)
 - **production_orders_rel** / **production_order_counters** / **recycled_production_numbers** — produkcja
 - **PricelistVersion** — wersje cenników (draft/approved/published, backdate; jedyne źródło cen)
 - **PricelistItemRury** / **PricelistItemStudnie** — pozycje wersji cennika (rury/studnie)

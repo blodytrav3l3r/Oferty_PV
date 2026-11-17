@@ -53,8 +53,9 @@ describe('getUserObject', () => {
         symbol: 'JD',
         subUsers: null,
         createdAt: '2024-01-01',
-        orderStartNumber: 1,
-        productionOrderStartNumber: 1
+        productionOrderStartNumber: 1,
+        productionRangeFrom: 1,
+        productionRangeTo: 500
     };
 
     it('powinien mapować UserDoc na User bez hasła', () => {

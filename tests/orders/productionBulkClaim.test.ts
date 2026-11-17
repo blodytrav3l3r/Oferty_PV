@@ -6,6 +6,7 @@ import request from 'supertest';
 import express from 'express';
 import numberingRouter from '../../src/routes/orders/numbering';
 import productionRouter from '../../src/routes/orders/production';
+import { getNumberingYear } from '../../src/utils/numberingYear';
 
 const mockUser: any = { id: 'admin-1', role: 'admin', subUsers: [] };
 
@@ -41,7 +42,10 @@ jest.mock('../../src/utils/productionSearchUtils', () => ({
 
 /* In-memory baza: users / settings / recycled / counters / production_orders_rel */
 const store: {
-    users: Record<string, { id?: string; symbol: string; productionOrderStartNumber: number }>;
+    users: Record<
+        string,
+        { id?: string; productionRangeFrom: number | null; productionRangeTo: number | null }
+    >;
     settings: Record<string, string>;
     recycled: Array<{ userId: string; year: number; seqNumber: number }>;
     claims: Array<{ userId: string; year: number; seqNumber: number }>;
@@ -62,7 +66,6 @@ const store: {
     upsertCalls: 0
 };
 const recycledClaimLocks = new Map<string, Promise<void>>();
-
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
@@ -150,6 +153,9 @@ jest.mock('../../src/prismaClient', () => ({
             };
             const recycledLockRelease: { release?: () => void } = {};
             const tx = {
+                users: {
+                    findUnique: jest.fn(async ({ where }: any) => store.users[where.id] || null)
+                },
                 // P0-C/D: PUT batch działa na tx.production_orders_rel.
                 production_orders_rel: {
                     findUnique: jest.fn(async ({ where }: any) => store.orders[where.id] || null),
@@ -276,20 +282,6 @@ jest.mock('../../src/prismaClient', () => ({
                                     claim.seqNumber === where.year_seqNumber.seqNumber
                             ) || null
                     ),
-                    createMany: jest.fn(async ({ data }: any) => {
-                        for (const claim of data) {
-                            if (
-                                store.claims.some(
-                                    (row) =>
-                                        row.year === claim.year && row.seqNumber === claim.seqNumber
-                                )
-                            )
-                                throw new Error('duplicate global number claim');
-                            store.claims.push({ ...claim });
-                            undo.claims.push({ added: true, row: { ...claim } });
-                        }
-                        return { count: data.length };
-                    }),
                     update: jest.fn(async ({ where, data }: any) => {
                         const claim = store.claims.find(
                             (row) =>
@@ -342,6 +334,25 @@ jest.mock('../../src/prismaClient', () => ({
                 }),
                 $queryRaw: jest.fn(async (strings: any, ...values: any[]) => {
                     const sql: string = strings[0] || '';
+                    if (sql.includes('INSERT INTO "production_global_number_claims"')) {
+                        // userId, year, from, to, year (NOT EXISTS), count
+                        const [userId, year, from, to, , count] = values;
+                        const taken = new Set(
+                            store.claims
+                                .filter((row) => row.year === year)
+                                .map((row) => row.seqNumber)
+                        );
+                        const picked: number[] = [];
+                        for (let seq = from; seq <= to && picked.length < count; seq++) {
+                            if (!taken.has(seq)) picked.push(seq);
+                        }
+                        for (const seqNumber of picked) {
+                            const row = { userId, year, seqNumber };
+                            store.claims.push(row);
+                            undo.claims.push({ added: true, row: { ...row } });
+                        }
+                        return picked.map((seqNumber) => ({ seqNumber }));
+                    }
                     if (sql.includes('WITH candidate')) return [];
                     if (
                         sql.includes('SELECT "userId"') &&
@@ -442,7 +453,7 @@ function createApp() {
     return app;
 }
 
-const YEAR = new Date().getFullYear();
+const YEAR = getNumberingYear();
 
 function reserveProductionNumber(seqNumber: number): string {
     store.claims.push({ userId: 'admin-1', year: YEAR, seqNumber });
@@ -451,8 +462,8 @@ function reserveProductionNumber(seqNumber: number): string {
 
 beforeEach(() => {
     store.users = {
-        u1: { id: 'u1', symbol: 'T', productionOrderStartNumber: 1 },
-        u2: { id: 'u2', symbol: 'KK', productionOrderStartNumber: 50 }
+        u1: { id: 'u1', productionRangeFrom: 1, productionRangeTo: 1000 },
+        u2: { id: 'u2', productionRangeFrom: 1001, productionRangeTo: 2000 }
     };
     store.settings = { ['year_letter_' + YEAR]: 'A' };
     store.recycled = [];
@@ -465,7 +476,7 @@ beforeEach(() => {
 });
 
 describe('POST /claim-production-numbers/:userId', () => {
-    test('claim 5 → sekwencyjne numery bez dziur', async () => {
+    test('claim 5 → sekwencyjne numery z zakresu bez dziur', async () => {
         const app = createApp();
         const res = await request(app)
             .post('/api/orders-studnie/claim-production-numbers/u1')
@@ -481,22 +492,26 @@ describe('POST /claim-production-numbers/:userId', () => {
         expect(res.body.seqs).toEqual([1, 2, 3, 4, 5]);
     });
 
-    test('recycled brane pierwsze, potem licznik (seqs sortowane)', async () => {
+    test('recycled numery w zakresie wracają do obiegu', async () => {
+        store.claims = [1, 2, 3, 4, 5].map((seqNumber) => ({
+            userId: 'u1',
+            year: YEAR,
+            seqNumber
+        }));
+        store.claims = store.claims.filter(
+            (claim) => claim.seqNumber !== 2 && claim.seqNumber !== 4
+        );
         store.recycled = [
-            { userId: 'u1', year: YEAR, seqNumber: 7 },
-            { userId: 'u1', year: YEAR, seqNumber: 3 }
+            { userId: 'u1', year: YEAR, seqNumber: 4 },
+            { userId: 'u1', year: YEAR, seqNumber: 2 }
         ];
         const app = createApp();
         const res = await request(app)
             .post('/api/orders-studnie/claim-production-numbers/u1')
-            .send({ count: 3 });
+            .send({ count: 2 });
         expect(res.status).toBe(200);
-        expect(res.body.seqs).toEqual([3, 7, 8]);
+        expect(res.body.seqs).toEqual([2, 4]);
         expect(store.recycled).toEqual([]);
-        const next = await request(app)
-            .post('/api/orders-studnie/claim-production-number/u2')
-            .send({});
-        expect(next.body.nextSeq).toBe(9);
     });
 
     test('walidacja count: 0 / 201 / brak → 400', async () => {
@@ -509,11 +524,7 @@ describe('POST /claim-production-numbers/:userId', () => {
         }
     });
 
-    test('3 równoległe claimy × 200: zero dubli, zakresy rozłączne, recycled raz', async () => {
-        store.recycled = [
-            { userId: 'u1', year: YEAR, seqNumber: 9 },
-            { userId: 'u1', year: YEAR, seqNumber: 4 }
-        ];
+    test('3 równoległe claimy × 200: zero dubli, ciągły blok z zakresu', async () => {
         const app = createApp();
         const [a, b, c] = await Promise.all([
             request(app)
@@ -531,38 +542,39 @@ describe('POST /claim-production-numbers/:userId', () => {
         expect(c.status).toBe(200);
         const all = [...a.body.seqs, ...b.body.seqs, ...c.body.seqs];
         expect(all.length).toBe(600);
-        // Zero duplikatów (DoD: 0 duplicate production numbers).
         expect(new Set(all).size).toBe(600);
-        // Recycled {4,9} zużyte dokładnie raz; licznik przesuwa high-water mark
-        // co najmniej do 9, więc nowe numery zaczynają się od 10.
-        expect(all).toEqual(expect.arrayContaining([4, 9]));
-        const fromCounter = all
-            .filter((s: number) => s !== 4 && s !== 9)
-            .sort((x: number, y: number) => x - y);
-        expect(fromCounter).toEqual(Array.from({ length: 598 }, (_, i) => i + 10));
-        // Każdy claim posortowany rosnąco.
+        expect([...all].sort((x: number, y: number) => x - y)).toEqual(
+            Array.from({ length: 600 }, (_, i) => i + 1)
+        );
         for (const r of [a, b, c]) {
             const seqs = r.body.seqs as number[];
             expect(seqs).toEqual([...seqs].sort((x, y) => x - y));
         }
-        expect(store.recycled).toEqual([]);
     });
 
-    test('2 równoległe single-claimy na 1 recycled: rozłączne seqi, retry działa', async () => {
-        store.recycled = [{ userId: 'u1', year: YEAR, seqNumber: 5 }];
+    test('użytkownik bez zakresu → 409 PRODUCTION_RANGE_MISSING', async () => {
+        store.users.u3 = { id: 'u3', productionRangeFrom: null, productionRangeTo: null };
         const app = createApp();
-        const [a, b] = await Promise.all([
-            request(app).post('/api/orders-studnie/claim-production-number/u1').send({}),
-            request(app).post('/api/orders-studnie/claim-production-number/u1').send({})
-        ]);
-        expect(a.status).toBe(200);
-        expect(b.status).toBe(200);
-        expect(new Set([a.body.nextSeq, b.body.nextSeq]).size).toBe(2);
-        expect([a.body.nextSeq, b.body.nextSeq].sort()).toEqual([5, 6]);
-        expect(store.recycled).toEqual([]);
+        const res = await request(app)
+            .post('/api/orders-studnie/claim-production-number/u3')
+            .send({});
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('PRODUCTION_RANGE_MISSING');
+        expect(store.claims).toEqual([]);
     });
 
-    test('różni użytkownicy korzystają z jednego globalnego licznika', async () => {
+    test('wyczerpany zakres → 409 PRODUCTION_RANGE_EXHAUSTED', async () => {
+        store.users.u4 = { id: 'u4', productionRangeFrom: 5001, productionRangeTo: 5002 };
+        const app = createApp();
+        const res = await request(app)
+            .post('/api/orders-studnie/claim-production-numbers/u4')
+            .send({ count: 3 });
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('PRODUCTION_RANGE_EXHAUSTED');
+        expect(store.claims).toEqual([]);
+    });
+
+    test('zakresy rozłączne: każdy użytkownik dostaje swoje numery', async () => {
         const app = createApp();
         const [a, b] = await Promise.all([
             request(app).post('/api/orders-studnie/claim-production-number/u1').send({}),
@@ -570,25 +582,8 @@ describe('POST /claim-production-numbers/:userId', () => {
         ]);
         expect(a.status).toBe(200);
         expect(b.status).toBe(200);
-        expect([a.body.number, b.body.number].sort()).toEqual([
-            `A/00001/${String(YEAR).slice(-2)}`,
-            `A/00002/${String(YEAR).slice(-2)}`
-        ]);
-        expect(a.body.number).not.toContain('T/');
-        expect(b.body.number).not.toContain('KK/');
-    });
-
-    test('globalny numer startowy działa tylko przy pierwszej inicjalizacji licznika', async () => {
-        store.settings.production_order_start_number = '7';
-        const app = createApp();
-        const first = await request(app)
-            .post('/api/orders-studnie/claim-production-number/u1')
-            .send({});
-        const second = await request(app)
-            .post('/api/orders-studnie/claim-production-number/u2')
-            .send({});
-        expect(first.body.nextSeq).toBe(7);
-        expect(second.body.nextSeq).toBe(8);
+        expect(a.body.nextSeq).toBe(1);
+        expect(b.body.nextSeq).toBe(1001);
     });
 
     test('panel odzysku pokazuje wspólną pulę bez symboli użytkowników', async () => {

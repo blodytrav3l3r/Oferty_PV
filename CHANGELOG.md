@@ -4,6 +4,22 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.63.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.62.0...v1.63.0) (2026-11-17)
+
+### Features
+
+- **numeracja:** każdy opiekun ma stały zakres numerów zleceń produkcyjnych (`users.productionRangeFrom`/`productionRangeTo`) — numery PZ generowane z zakresu opiekuna zamówienia/oferty, ten sam zakres co roku, zmienia się tylko litera roku; najniższe wolne numery z zakresu, zwrócone numery wracają do obiegu
+- **numeracja:** blokada nakładających się zakresów między użytkownikami przy zapisie (400 `RANGE_OVERLAP`), walidacja niepełnego/odwróconego zakresu (400 `RANGE_INCOMPLETE`/`RANGE_INVALID`)
+- **users:** formularz użytkownika w Pulpicie ma pola „Zakres numerów zleceń produkcyjnych — od/do” w miejsce „Nr Zamówień (start)”
+
+### Bug Fixes
+
+- **numeracja:** wyczerpany zakres lub brak zakresu opiekuna zwraca jawne 409 (`PRODUCTION_RANGE_EXHAUSTED` / `PRODUCTION_RANGE_MISSING`) zamiast cichego 500
+
+### Removed
+
+- **pulpit:** karta „Globalny start numeracji zleceń” i endpointy `GET/PUT /api/settings/production-start-number` — numeracja PZ nie jest już globalna
+
 ## [1.62.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.61.3...v1.62.0) (2026-11-17)
 
 ### Features

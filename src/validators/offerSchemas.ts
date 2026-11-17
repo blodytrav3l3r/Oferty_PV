@@ -400,12 +400,6 @@ export const yearLetterSchema = z.object({
 
 export type YearLetterInput = z.infer<typeof yearLetterSchema>;
 
-export const productionStartNumberSchema = z.object({
-    startNumber: z.number().int().min(1).max(2_147_483_647)
-});
-
-export type ProductionStartNumberInput = z.infer<typeof productionStartNumberSchema>;
-
 const magazynCodeField = z
     .string()
     .transform((s) => s.trim().toUpperCase())
@@ -484,7 +478,8 @@ export const userUpdateSchema = z.object({
     email: z.string().email().optional().or(z.literal('')),
     symbol: z.string().optional(),
     subUsers: z.array(z.string()).optional(),
-    orderStartNumber: z.number().int().min(1).optional(),
+    productionRangeFrom: z.number().int().min(1).max(99999).nullable().optional(),
+    productionRangeTo: z.number().int().min(1).max(99999).nullable().optional(),
     defaultOrganizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).nullable().optional()
 });
 

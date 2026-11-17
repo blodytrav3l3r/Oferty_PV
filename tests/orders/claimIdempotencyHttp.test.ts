@@ -40,14 +40,14 @@ function app() {
 beforeAll(async () => {
     await prisma.users.upsert({
         where: { id: 'admin-1' },
-        update: { symbol: 'TT', productionOrderStartNumber: 1 },
+        update: { productionRangeFrom: 900000, productionRangeTo: 999999 },
         create: {
             id: 'admin-1',
             username: 'idem-admin',
             password: 'x',
             role: 'admin',
-            symbol: 'TT',
-            productionOrderStartNumber: 1
+            productionRangeFrom: 900000,
+            productionRangeTo: 999999
         }
     });
 });

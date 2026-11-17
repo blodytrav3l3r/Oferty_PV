@@ -824,6 +824,8 @@ model users {
   createdAt                  String?
   orderStartNumber           Int?    @default(1)
   productionOrderStartNumber Int?    @default(1)
+  productionRangeFrom        Int?
+  productionRangeTo          Int?
   totalReward                Float?  @default(0)
 
   @@index([role], map: "idx_users_role")

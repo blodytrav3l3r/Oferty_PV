@@ -13,9 +13,10 @@ export interface UserDoc {
     symbol?: string | null;
     subUsers?: string | null;
     createdAt?: Date | string | null;
-    orderStartNumber?: number | null;
-    /** Legacy DB column retained for backwards compatibility; numbering is global. */
+    /** Legacy DB column retained for backwards compatibility; numbering is per-user range. */
     productionOrderStartNumber?: number | null;
+    productionRangeFrom?: number | null;
+    productionRangeTo?: number | null;
 }
 
 export interface User {

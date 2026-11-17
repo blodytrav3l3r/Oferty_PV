@@ -28,7 +28,8 @@ export const registerSchema = z.object({
     email: z.string().email('Niepoprawny format email').optional().or(z.literal('')),
     symbol: z.string().optional(),
     subUsers: z.array(z.string()).optional(),
-    orderStartNumber: z.union([z.string(), z.number()]).optional(),
+    productionRangeFrom: z.number().int().min(1).max(99999).nullable().optional(),
+    productionRangeTo: z.number().int().min(1).max(99999).nullable().optional(),
     defaultOrganizationUnit: z.enum(ORGANIZATION_UNIT_VALUES).nullable().optional()
 });
 

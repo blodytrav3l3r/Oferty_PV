@@ -79,7 +79,9 @@ describe('POST /production/recycle-numbers on PostgreSQL', () => {
                 password: 'test-only',
                 role: 'user',
                 symbol: 'T',
-                productionOrderStartNumber: 1
+                productionOrderStartNumber: 1,
+                productionRangeFrom: firstSeq,
+                productionRangeTo: firstSeq + 23
             }
         });
         const recycledRange = Array.from({ length: 24 }, (_, index) => ({

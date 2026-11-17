@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.62.0  
+**Wersja:** 1.63.0  
 **Ostatnia aktualizacja:** 2026-11-07
 
 **Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera), surowy JSON: `GET /api/docs.json`. Specyfikacja jest generowana z adnotacji `@openapi` w wybranych plikach; jej pokrycie jest częściowe i nie stanowi kompletnego źródła kontraktów.
@@ -34,7 +34,7 @@ Publiczny numer wersji aplikacji.
 **Odpowiedź:**
 
 ```json
-{ "version": "1.62.0" }
+{ "version": "1.63.0" }
 ```
 
 ### `GET /health/live`
@@ -65,12 +65,12 @@ Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `
 
 ```json
 {
-    "version": "1.62.0",
+    "version": "1.63.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.62.0",
+    "dbVersion": "1.63.0",
     "uptime": 123.45,
     "memory": { ... }
 }
@@ -139,15 +139,15 @@ Zmiana hasła przez zalogowanego użytkownika.
 
 ## Użytkownicy (`/api/users`)
 
-| Metoda | Ścieżka                     | Auth  | Opis                                                                                              |
-| ------ | --------------------------- | ----- | ------------------------------------------------------------------------------------------------- |
-| GET    | `/api/users`                | admin | Lista użytkowników                                                                                |
-| PUT    | `/api/users/:id`            | admin | Aktualizacja użytkownika (zmiana roli/hasła unieważnia jego sesje)                                |
-| DELETE | `/api/users/:id`            | admin | Usunięcie użytkownika (blokada 403 gdy ma dokumenty)                                              |
-| GET    | `/api/users/shareable`      | auth  | Użytkownicy do udostępniania (bez siebie)                                                         |
-| GET    | `/api/users/for-assignment` | auth  | Użytkownicy do przypisania                                                                        |
-| GET    | `/api/users/me/preferences` | auth  | Własne preferencje (`{preferences}`)                                                              |
-| PUT    | `/api/users/me/preferences` | auth  | Zapis własnej preferencji (`{key: "theme", value: "light"\|"dark"}` — Zod enum, inny klucz → 400) |
+| Metoda | Ścieżka                     | Auth  | Opis                                                                                                   |
+| ------ | --------------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
+| GET    | `/api/users`                | admin | Lista użytkowników                                                                                     |
+| PUT    | `/api/users/:id`            | admin | Aktualizacja użytkownika (zmiana roli/hasła unieważnia jego sesje; zakres PZ `productionRangeFrom/To`) |
+| DELETE | `/api/users/:id`            | admin | Usunięcie użytkownika (blokada 403 gdy ma dokumenty)                                                   |
+| GET    | `/api/users/shareable`      | auth  | Użytkownicy do udostępniania (bez siebie)                                                              |
+| GET    | `/api/users/for-assignment` | auth  | Użytkownicy do przypisania                                                                             |
+| GET    | `/api/users/me/preferences` | auth  | Własne preferencje (`{preferences}`)                                                                   |
+| PUT    | `/api/users/me/preferences` | auth  | Zapis własnej preferencji (`{key: "theme", value: "light"\|"dark"}` — Zod enum, inny klucz → 400)      |
 
 ### `GET /api/users-for-assignment`
 
@@ -384,9 +384,20 @@ Wymaga autoryzacji. Montowana przed trasami `/:id` (barrel `orders/index.ts`).
 | ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | GET    | `/api/orders-studnie/next-number/:userId`              | Podgląd następnego numeru zamówienia `ZS/00001/RRRR` (bez rezerwacji, pula globalna)  |
 | POST   | `/api/orders-studnie/claim-number/:userId`             | Rezerwacja numeru zamówienia `ZS/00001/RRRR` (pula globalna per rok)                  |
-| POST   | `/api/orders-studnie/claim-production-number/:userId`  | Rezerwacja numeru PZ                                                                  |
+| POST   | `/api/orders-studnie/claim-production-number/:userId`  | Rezerwacja numeru PZ z zakresu opiekuna (`SYM/LIT/NNNNN/RR`)                          |
 | POST   | `/api/orders-studnie/claim-production-numbers/:userId` | Hurtowa rezerwacja numerów PZ (`{count: 1..200}`, max 200, format `SYM/LIT/NNNNN/RR`) |
 | GET    | `/api/orders-studnie/recycled`                         | Recykling numerów                                                                     |
+
+Numery zleceń produkcyjnych (PZ) pochodzą z **stałego zakresu `productionRangeFrom`–`productionRangeTo`
+przypisanego do opiekuna** zamówienia/oferty (`users`); zmienia się tylko litera roku. Claim bierze
+najniższe wolne numery z zakresu w danym roku, a zwrócone numery wracają do obiegu automatycznie.
+Zakresy różnych użytkowników nie mogą się nakładać (`PUT /api/users/:id` → 400 `RANGE_OVERLAP`).
+
+| Kod                                                    | Status | Znaczenie                                                          |
+| ------------------------------------------------------ | ------ | ------------------------------------------------------------------ |
+| `PRODUCTION_RANGE_MISSING`                             | 409    | Opiekun nie ma ustawionego zakresu — claim zablokowany             |
+| `PRODUCTION_RANGE_EXHAUSTED`                           | 409    | Wszystkie numery z zakresu wykorzystane w danym roku               |
+| `RANGE_INCOMPLETE` / `RANGE_INVALID` / `RANGE_OVERLAP` | 400    | Niepełny, odwrócony lub kolidujący zakres przy zapisie użytkownika |
 
 ## Klienci (`/api/clients`)
 

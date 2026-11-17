@@ -528,7 +528,6 @@ function showLoggedIn(user) {
         document.getElementById('admin-panel').classList.remove('hidden');
         refreshAdminSessions();
         loadYearLetter();
-        loadProductionStartNumber();
         loadMagazynCodes();
         initAiMlToggle();
         if (typeof window.mlHealthRender === 'function') {
@@ -905,7 +904,6 @@ async function loadUsers() {
         <div class="admin-user-facts">
             <div class="admin-user-fact"><span class="fact-label">Telefon</span><span class="fact-value">${escapeHtml(u.phone || '—')}</span></div>
             <div class="admin-user-fact"><span class="fact-label">E-mail</span><span class="fact-value" title="${escapeHtmlAttr(u.email || '')}">${escapeHtml(u.email || 'brak email')}</span></div>
-            <div class="admin-user-fact"><span class="fact-label">Nr zam.</span><span class="fact-value cell-num">${escapeHtml(String(u.orderStartNumber || 1))}</span></div>
         </div>
         <div class="admin-user-controls">
             <button class="admin-action-btn edit-btn" aria-label="Edytuj: ${escapeHtmlAttr(label)}" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>
@@ -1056,11 +1054,15 @@ function buildUserModalHtml(user) {
             </div>
 
             <div class="uf-section">
-                <div class="uf-section-title"><i data-lucide="hash"></i> Numeracja</div>
+                <div class="uf-section-title"><i data-lucide="hash"></i> Zakres numerów zleceń produkcyjnych</div>
                 <div class="uf-grid cols-2">
                     <div class="uf-field">
-                        <label for="new-user-order-start">Nr Zamówień (start)</label>
-                        <input type="number" id="new-user-order-start" class="form-input" min="1" title="Start Zamówień" value="${val(u.orderStartNumber, 1)}" />
+                        <label for="new-user-production-range-from">Od</label>
+                        <input type="number" id="new-user-production-range-from" class="form-input" min="1" max="99999" placeholder="np. 1" value="${val(u.productionRangeFrom)}" />
+                    </div>
+                    <div class="uf-field">
+                        <label for="new-user-production-range-to">Do</label>
+                        <input type="number" id="new-user-production-range-to" class="form-input" min="1" max="99999" placeholder="np. 500" value="${val(u.productionRangeTo)}" />
                     </div>
                 </div>
             </div>
@@ -1148,10 +1150,23 @@ function validateUserForm(values) {
     if (!['admin', 'user', 'pro'].includes(values.role)) {
         return { message: 'Niepoprawna rola', fieldId: 'new-user-role' };
     }
-    if (values.orderStart < 1) {
+    if (values.rangeFrom !== null && values.rangeTo !== null) {
+        if (values.rangeFrom < 1 || values.rangeTo > 99999) {
+            return {
+                message: 'Zakres numerów musi mieścić się w przedziale 1–99999',
+                fieldId: 'new-user-production-range-from'
+            };
+        }
+        if (values.rangeFrom > values.rangeTo) {
+            return {
+                message: 'Początek zakresu nie może być większy od końca',
+                fieldId: 'new-user-production-range-from'
+            };
+        }
+    } else if (values.rangeFrom !== null || values.rangeTo !== null) {
         return {
-            message: 'Numery startowe muszą być większe od 0',
-            fieldId: 'new-user-order-start'
+            message: 'Podaj oba pola zakresu numerów zleceń produkcyjnych (od i do)',
+            fieldId: 'new-user-production-range-from'
         };
     }
     return null;
@@ -1195,13 +1210,18 @@ async function createUser() {
         const el = document.getElementById(id);
         return el ? String(el.value || '').trim() : '';
     };
+    const rangeValue = (id) => {
+        const raw = g(id);
+        return raw === '' ? null : parseInt(raw, 10);
+    };
     const values = {
         login: g('new-user-login'),
         password: g('new-user-password'),
         email: g('new-user-email'),
         role: g('new-user-role') || 'user',
         isEditing: !!editingUserId,
-        orderStart: parseInt(g('new-user-order-start'), 10) || 1
+        rangeFrom: rangeValue('new-user-production-range-from'),
+        rangeTo: rangeValue('new-user-production-range-to')
     };
     const errorEl = document.getElementById('user-form-error');
     if (errorEl) errorEl.textContent = '';
@@ -1233,7 +1253,8 @@ async function createUser() {
             phone: g('new-user-phone'),
             email: values.email,
             subUsers: selectedSubUsers,
-            orderStartNumber: values.orderStart,
+            productionRangeFrom: values.rangeFrom,
+            productionRangeTo: values.rangeTo,
             defaultOrganizationUnit: g('new-user-default-organization-unit') || null
         };
         if (values.password) payload.password = values.password;
@@ -1444,50 +1465,6 @@ async function saveYearLetter() {
     }
 }
 
-async function loadProductionStartNumber() {
-    try {
-        const response = await fetch('/api/settings/production-start-number', {
-            credentials: 'same-origin'
-        });
-        const data = await response.json();
-        const input = document.getElementById('production-start-number-input');
-        const preview = document.getElementById('production-start-number-preview');
-        if (input) input.value = String(data.startNumber || 1);
-        if (preview) preview.textContent = String(data.startNumber || 1);
-    } catch (error) {
-        logger.error('dashboard', 'loadProductionStartNumber:', error);
-    }
-}
-
-async function saveProductionStartNumber() {
-    const input = document.getElementById('production-start-number-input');
-    const startNumber = Number(input?.value);
-    if (!Number.isSafeInteger(startNumber) || startNumber < 1) {
-        await appAlert('Numer startowy musi być liczbą całkowitą większą od 0', {
-            type: 'warning'
-        });
-        return;
-    }
-    try {
-        const response = await fetch('/api/settings/production-start-number', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ startNumber })
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            await appAlert(data.error || 'Błąd zapisu', { type: 'warning' });
-            return;
-        }
-        const preview = document.getElementById('production-start-number-preview');
-        if (preview) preview.textContent = String(data.startNumber);
-        await appAlert('Globalny numer startowy zapisany', { type: 'info' });
-    } catch (_error) {
-        await appAlert('Błąd połączenia', { type: 'warning' });
-    }
-}
-
 /* ===== KODY MAGAZYNÓW (słownik MAGAZYN dennica/nadbudowa) ===== */
 const MAGAZYN_CODE_IDS = ['mag-den-wl', 'mag-den-klb', 'mag-nad-wl', 'mag-nad-klb'];
 
@@ -1582,10 +1559,6 @@ async function saveMagazynCodes() {
             'year-letter-input',
             () => window.saveYearLetter && window.saveYearLetter()
         );
-        window.bindEnter(
-            'production-start-number-input',
-            () => window.saveProductionStartNumber && window.saveProductionStartNumber()
-        );
         MAGAZYN_CODE_IDS.forEach((id) =>
             window.bindEnter(id, () => window.saveMagazynCodes && window.saveMagazynCodes())
         );
@@ -1597,7 +1570,8 @@ async function saveMagazynCodes() {
             'new-user-password',
             'new-user-email',
             'new-user-phone',
-            'new-user-order-start'
+            'new-user-production-range-from',
+            'new-user-production-range-to'
         ].forEach((id) => window.bindEnter(id, () => window.createUser && window.createUser()));
         return true;
     }
@@ -1623,8 +1597,6 @@ async function saveMagazynCodes() {
         else if (a === 'showChangePassword')
             window.showChangePassword && window.showChangePassword();
         else if (a === 'saveYearLetter') window.saveYearLetter && window.saveYearLetter();
-        else if (a === 'saveProductionStartNumber')
-            window.saveProductionStartNumber && window.saveProductionStartNumber();
         else if (a === 'saveMagazynCodes') window.saveMagazynCodes && window.saveMagazynCodes();
     });
 })();
@@ -1643,5 +1615,4 @@ window.deleteUser = deleteUser;
 window.revokeUserSessions = revokeUserSessions;
 window.showChangePassword = showChangePassword;
 window.saveYearLetter = saveYearLetter;
-window.saveProductionStartNumber = saveProductionStartNumber;
 window.saveMagazynCodes = saveMagazynCodes;

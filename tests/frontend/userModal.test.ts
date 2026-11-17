@@ -35,7 +35,8 @@ const victim = {
     email: 'v@e.pl',
     phone: '600100200',
     symbol: 'WN',
-    orderStartNumber: 5,
+    productionRangeFrom: 501,
+    productionRangeTo: 1000,
     subUsers: []
 };
 
@@ -157,9 +158,12 @@ describe('frontend jsdom: modal użytkownika', () => {
         ]) {
             expect((document.getElementById(id) as HTMLInputElement).value).toBe('');
         }
-        expect((document.getElementById('new-user-order-start') as HTMLInputElement).value).toBe(
-            '1'
-        );
+        expect(
+            (document.getElementById('new-user-production-range-from') as HTMLInputElement).value
+        ).toBe('');
+        expect(
+            (document.getElementById('new-user-production-range-to') as HTMLInputElement).value
+        ).toBe('');
         expect(document.activeElement?.id).toBe('new-user-firstname');
     });
 
@@ -178,9 +182,12 @@ describe('frontend jsdom: modal użytkownika', () => {
             'v@e.pl'
         );
         expect((document.getElementById('new-user-symbol') as HTMLInputElement).value).toBe('WN');
-        expect((document.getElementById('new-user-order-start') as HTMLInputElement).value).toBe(
-            '5'
-        );
+        expect(
+            (document.getElementById('new-user-production-range-from') as HTMLInputElement).value
+        ).toBe('501');
+        expect(
+            (document.getElementById('new-user-production-range-to') as HTMLInputElement).value
+        ).toBe('1000');
 
         const pwd = document.getElementById('new-user-password') as HTMLInputElement;
         expect(pwd.value).toBe('');
@@ -243,7 +250,8 @@ describe('frontend jsdom: modal użytkownika', () => {
         setValue('new-user-password', 'haslo1234');
         setValue('new-user-email', 'jan@e.pl');
         setValue('new-user-phone', '600700800');
-        setValue('new-user-order-start', '3');
+        setValue('new-user-production-range-from', '3');
+        setValue('new-user-production-range-to', '30');
         submit(overlay);
         await flush();
 
@@ -263,8 +271,10 @@ describe('frontend jsdom: modal użytkownika', () => {
             email: 'jan@e.pl',
             phone: '600700800',
             subUsers: [],
-            orderStartNumber: 3
+            productionRangeFrom: 3,
+            productionRangeTo: 30
         });
+        expect('orderStartNumber' in body).toBe(false);
         expect('productionOrderStartNumber' in body).toBe(false);
         expect(document.getElementById('user-modal')).toBeNull();
         expect(document.body.style.overflow).toBe('');

@@ -18,7 +18,6 @@ const router = express.Router();
 
 /** Maks. liczb w jednym claim-zakresu — jak limit batch-delete (production.ts). */
 const CLAIM_RANGE_MAX = 200;
-const PRODUCTION_START_SETTING = 'production_order_start_number';
 /** Moduł numeracji zamówień studni w globalnej puli rocznej. */
 const STUDNIE_ORDER_KIND = 'ZS';
 const ORDER_NUMBER_DIGITS = 5;
@@ -27,10 +26,16 @@ function formatStudnieOrderNumber(seq: number, year: number): string {
     return `${STUDNIE_ORDER_KIND}/${String(seq).padStart(ORDER_NUMBER_DIGITS, '0')}/${year}`;
 }
 
-async function getProductionOrderStartNumber(): Promise<number> {
-    const setting = await prisma.settings.findUnique({ where: { key: PRODUCTION_START_SETTING } });
-    const value = Number(setting?.value);
-    return Number.isSafeInteger(value) && value >= 1 ? value : 1;
+/** Błąd numeracji mapowany na konkretny status HTTP i kod dla frontu. */
+class NumberingError extends Error {
+    status: number;
+    code: string;
+
+    constructor(status: number, code: string, message: string) {
+        super(message);
+        this.status = status;
+        this.code = code;
+    }
 }
 
 // E3b: zod zamiast ręcznego typeof — unknown keys ignorowane (strip, default z.object),
@@ -40,87 +45,60 @@ const claimProductionNumbersSchema = z.object({
 });
 
 /**
- * P0-B: atomowa rezerwacja numerów produkcyjnych.
- * Jedna transakcja: recycled (delete warunkowy, rywal dostaje count=0 i retry)
- * + rezerwacja zakresu licznika atomowym UPDATE lastNumber+N (bez pętli cand++).
- * Bez RAM-locka — gwarancję daje DB. Zwraca posortowane seqi.
+ * P0-B: atomowa rezerwacja numerów produkcyjnych z zakresu opiekuna.
+ * Jedna transakcja: advisory lock per (rok, user) + INSERT ... SELECT najniższych
+ * wolnych numerów z generate_series(od..do). PK (year, seqNumber) w claims dalej
+ * gwarantuje globalną unikalność, a numery z recyklingu (brak wiersza w claims)
+ * wracają do obiegu automatycznie.
  */
-async function claimProductionSeqs(
-    userId: string,
-    year: number,
-    startNum: number,
-    count: number
-): Promise<number[]> {
-    let lastErr: unknown = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-            return await prisma.$transaction(async (tx) => {
-                const recycled = await tx.$queryRaw<Array<{ seqNumber: number }>>`
-                    SELECT "seqNumber"
-                    FROM "recycled_production_numbers_global"
-                    WHERE "year" = ${year}
-                    ORDER BY "seqNumber" ASC
-                    LIMIT ${count}
-                    FOR UPDATE
-                `;
-                const wanted = recycled.map((r) => r.seqNumber);
-                if (wanted.length > 0) {
-                    const del = await tx.recycled_production_numbers_global.deleteMany({
-                        where: { year, seqNumber: { in: wanted } }
-                    });
-                    // Ktoś sprzątnął część puli spod nas — retry z nowym odczytem.
-                    if (del.count !== wanted.length) throw new Error('RECYCLED_RACE_RETRY');
-
-                    await tx.$executeRaw`INSERT INTO production_global_order_counters (year, "lastNumber")
-                        VALUES (${year}, ${startNum - 1})
-                        ON CONFLICT(year) DO NOTHING`;
-                    await tx.$executeRaw`UPDATE production_global_order_counters
-                        SET "lastNumber" = GREATEST("lastNumber", ${Math.max(...wanted)})
-                        WHERE year = ${year}`;
-                }
-                const out: number[] = [...wanted];
-                // Rezerwacja zakresu: dokładamy atomowymi inkrementami, pomijając
-                // numery wzięte z recycled (stan patologiczny: recycled powyżej
-                // głowy licznika). Zwykle jedna iteracja.
-                let need = count - out.length;
-                let guard = 0;
-                while (need > 0) {
-                    if (++guard > 5) throw new Error('RANGE_RESERVE_FAIL');
-                    // Baza wiersza licznika (pierwszy claim) albo nic.
-                    await tx.$executeRaw`INSERT INTO production_global_order_counters (year, "lastNumber")
-                        VALUES (${year}, ${startNum - 1})
-                        ON CONFLICT(year) DO NOTHING`;
-                    // Atomowa rezerwacja: jeden UPDATE, głowa po inkrementacji.
-                    await tx.$executeRaw`UPDATE production_global_order_counters
-                        SET "lastNumber" = "lastNumber" + ${need}
-                        WHERE year = ${year}`;
-                    const head = (
-                        await tx.$queryRaw<
-                            Array<{ lastNumber: number }>
-                        >`SELECT "lastNumber" AS "lastNumber"
-                        FROM production_global_order_counters WHERE year = ${year}`
-                    )[0]?.lastNumber;
-                    if (typeof head !== 'number') throw new Error('COUNTER_READ_FAIL');
-                    for (let s = head - need + 1; s <= head && out.length < count; s++) {
-                        if (!out.includes(s)) out.push(s);
-                    }
-                    need = count - out.length;
-                }
-                const allocated = out.sort((a, b) => a - b);
-                await tx.production_global_number_claims.createMany({
-                    data: allocated.map((seqNumber) => ({ userId, year, seqNumber }))
-                });
-                return allocated;
-            }, HOT_TX_OPTS);
-        } catch (e) {
-            // Retry tylko przy wyścigu o recycled, reszta od razu w górę.
-            const msg = e instanceof Error ? e.message : '';
-            if (msg !== 'RECYCLED_RACE_RETRY') throw e;
-            lastErr = e;
-            continue;
+async function claimProductionSeqs(userId: string, year: number, count: number): Promise<number[]> {
+    return prisma.$transaction(async (tx) => {
+        const user = await tx.users.findUnique({
+            where: { id: userId },
+            select: { productionRangeFrom: true, productionRangeTo: true }
+        });
+        const from = user?.productionRangeFrom ?? null;
+        const to = user?.productionRangeTo ?? null;
+        if (from === null || to === null) {
+            throw new NumberingError(
+                409,
+                'PRODUCTION_RANGE_MISSING',
+                'Użytkownik nie ma ustawionego zakresu numerów zleceń produkcyjnych — ustaw go w panelu administracyjnym'
+            );
         }
-    }
-    throw lastErr instanceof Error ? lastErr : new Error('CLAIM_RETRY_EXHAUSTED');
+
+        // Serializuje claimy tego samego użytkownika w roku; zakresy różnych osób są rozłączne.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`prod-range:${year}:${userId}`}))`;
+
+        const rows = await tx.$queryRaw<Array<{ seqNumber: number }>>`
+            INSERT INTO "production_global_number_claims" ("userId", "year", "seqNumber")
+            SELECT ${userId}, ${year}, free.seq
+            FROM (
+                SELECT s AS seq
+                FROM generate_series(${from}::int, ${to}::int) AS s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "production_global_number_claims" AS claim
+                    WHERE claim."year" = ${year} AND claim."seqNumber" = s
+                )
+                ORDER BY s
+                LIMIT ${count}
+            ) AS free
+            RETURNING "seqNumber"
+        `;
+        const allocated = rows.map((row) => row.seqNumber).sort((a, b) => a - b);
+        if (allocated.length < count) {
+            throw new NumberingError(
+                409,
+                'PRODUCTION_RANGE_EXHAUSTED',
+                `Zakres numerów ${from}–${to} jest wyczerpany na rok ${year}`
+            );
+        }
+
+        await tx.recycled_production_numbers_global.deleteMany({
+            where: { year, seqNumber: { in: allocated } }
+        });
+        return allocated;
+    }, HOT_TX_OPTS);
 }
 
 /* ===== RECYKLING NUMERÓW ===== */
@@ -295,11 +273,8 @@ router.post('/claim-production-number/:userId', requireAuth, WRITE_LIMITER, asyn
         });
         const yearLetter = letterRow?.value || '?';
 
-        // Sprawdź czy są numery z recyklingu (recycled)
-
-        // P0-B: atomowy claim (recycled albo licznik) w jednej transakcji.
-        const startNum = await getProductionOrderStartNumber();
-        const [nextNumber] = await claimProductionSeqs(userId, year, startNum, 1);
+        // P0-B: atomowy claim najniższych wolnych numerów z zakresu opiekuna.
+        const [nextNumber] = await claimProductionSeqs(userId, year, 1);
 
         const formatted = formatProductionNumber(yearLetter, nextNumber, year);
         const prodPayload = { number: formatted, nextSeq: nextNumber, yearLetter, year };
@@ -313,6 +288,23 @@ router.post('/claim-production-number/:userId', requireAuth, WRITE_LIMITER, asyn
             );
         res.json(prodPayload);
     } catch (e: unknown) {
+        if (e instanceof NumberingError) {
+            // Domknij klucz błędem, żeby retry nie wisiał w PENDING.
+            try {
+                const idemKey = idempotencyKeyFrom(req);
+                if (idemKey)
+                    await completeIdempotencyKey(
+                        (req as AuthenticatedRequest).user?.id || '',
+                        'POST /api/orders-studnie/claim-production-number',
+                        idemKey,
+                        e.status,
+                        { error: e.message, code: e.code }
+                    );
+            } catch (idemError) {
+                logger.error('Numbering', 'Błąd domykania klucza idempotencji', idemError);
+            }
+            return res.status(e.status).json({ error: e.message, code: e.code });
+        }
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Numbering', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -394,8 +386,7 @@ router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, asy
         });
         const yearLetter = letterRow?.value || '?';
 
-        const startNum = await getProductionOrderStartNumber();
-        const seqs = await claimProductionSeqs(userId, year, startNum, count);
+        const seqs = await claimProductionSeqs(userId, year, count);
         const numbers = seqs.map((seq) => formatProductionNumber(yearLetter, seq, year));
         const bulkPayload = { numbers, seqs, yearLetter, year };
         if (idemBulkKey)
@@ -408,6 +399,22 @@ router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, asy
             );
         res.json(bulkPayload);
     } catch (e: unknown) {
+        if (e instanceof NumberingError) {
+            try {
+                const idemKey = idempotencyKeyFrom(req);
+                if (idemKey)
+                    await completeIdempotencyKey(
+                        (req as AuthenticatedRequest).user?.id || '',
+                        'POST /api/orders-studnie/claim-production-numbers',
+                        idemKey,
+                        e.status,
+                        { error: e.message, code: e.code }
+                    );
+            } catch (idemError) {
+                logger.error('Numbering', 'Błąd domykania klucza idempotencji', idemError);
+            }
+            return res.status(e.status).json({ error: e.message, code: e.code });
+        }
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Numbering', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

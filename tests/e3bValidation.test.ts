@@ -68,7 +68,8 @@ jest.mock('../src/prismaClient', () => ({
         users: {
             findUnique: jest.fn(async () => ({
                 symbol: 'T',
-                productionOrderStartNumber: 1
+                productionRangeFrom: 1,
+                productionRangeTo: 1000
             }))
         },
         settings: {
@@ -78,6 +79,12 @@ jest.mock('../src/prismaClient', () => ({
         recycled_production_numbers_global: { findMany: jest.fn(async () => []) },
         $transaction: jest.fn(async (cb: any) =>
             cb({
+                users: {
+                    findUnique: async () => ({
+                        productionRangeFrom: 1,
+                        productionRangeTo: 1000
+                    })
+                },
                 recycled_production_numbers_global: {
                     findMany: async () => [],
                     deleteMany: async () => ({ count: 0 })
@@ -87,7 +94,12 @@ jest.mock('../src/prismaClient', () => ({
                     deleteMany: async () => ({ count: 0 })
                 },
                 $executeRaw: async () => 1,
-                $queryRaw: async (strings: TemplateStringsArray) => {
+                $queryRaw: async (strings: TemplateStringsArray, ...values: any[]) => {
+                    if (strings[0]?.includes('INSERT INTO "production_global_number_claims"')) {
+                        // Ostatni placeholder to LIMIT (count) — zwróć tyle wierszy, ile żądano.
+                        const count = values[values.length - 1];
+                        return [{ seqNumber: 4 }, { seqNumber: 5 }].slice(0, count);
+                    }
                     if (strings[0]?.includes('WITH candidate')) return [];
                     return strings[0]?.includes('FROM "recycled_production_numbers_global"')
                         ? []

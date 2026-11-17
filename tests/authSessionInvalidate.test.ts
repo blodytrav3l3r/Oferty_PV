@@ -59,6 +59,7 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         users: {
+            findMany: jest.fn(async () => []),
             findUnique: jest.fn(async ({ where }: any) => {
                 if (where.id) return users.get(where.id) ?? null;
                 if (where.username) {

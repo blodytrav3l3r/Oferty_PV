@@ -82,7 +82,8 @@ const mockUsers = [
         email: 'admin@e.com',
         symbol: 'A',
         subUsers: '["user-id"]',
-        orderStartNumber: 1,
+        productionRangeFrom: 1,
+        productionRangeTo: 500,
         createdAt: new Date().toISOString()
     },
     {
@@ -95,7 +96,8 @@ const mockUsers = [
         email: 'user@e.com',
         symbol: 'U1',
         subUsers: '[]',
-        orderStartNumber: 5,
+        productionRangeFrom: 501,
+        productionRangeTo: 1000,
         createdAt: new Date().toISOString()
     }
 ];
@@ -105,6 +107,8 @@ describe('Users Routes', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        // Domyślnie brak konfliktów zakresów; testy GET nadpisują własną listą.
+        (prisma.users.findMany as jest.Mock).mockResolvedValue([]);
         app = express();
         app.use(express.json());
         // For tests that need specific users
@@ -238,6 +242,73 @@ describe('Users Routes', () => {
                 .send({ email: 'invalid-email-format' });
 
             expect(res.statusCode).toBe(400);
+        });
+
+        it('zapisuje zakres numerów zleceń produkcyjnych', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValueOnce(mockUsers[1]);
+            (prisma.users.findMany as jest.Mock).mockResolvedValueOnce([]);
+            (prisma.users.update as jest.Mock).mockResolvedValueOnce({});
+
+            const res = await request(app)
+                .put('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin')
+                .send({ productionRangeFrom: 601, productionRangeTo: 700 });
+
+            expect(res.statusCode).toBe(200);
+            expect(prisma.users.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        productionRangeFrom: 601,
+                        productionRangeTo: 700
+                    })
+                })
+            );
+        });
+
+        it('odrzuca niepełny zakres (tylko od) → 400 RANGE_INCOMPLETE', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValueOnce({
+                ...mockUsers[1],
+                productionRangeFrom: null,
+                productionRangeTo: null
+            });
+
+            const res = await request(app)
+                .put('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin')
+                .send({ productionRangeFrom: 601 });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('RANGE_INCOMPLETE');
+        });
+
+        it('odrzuca odwrócony zakres (od > do) → 400 RANGE_INVALID', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValueOnce(mockUsers[1]);
+
+            const res = await request(app)
+                .put('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin')
+                .send({ productionRangeFrom: 900, productionRangeTo: 800 });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('RANGE_INVALID');
+        });
+
+        it('odrzuca zakres nachodzący na innego użytkownika → 400 RANGE_OVERLAP', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValueOnce(mockUsers[1]);
+            (prisma.users.findMany as jest.Mock).mockResolvedValueOnce([{ username: 'admin' }]);
+
+            const res = await request(app)
+                .put('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin')
+                .send({ productionRangeFrom: 100, productionRangeTo: 200 });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('RANGE_OVERLAP');
+            expect(res.body.error).toContain('admin');
         });
     });
 

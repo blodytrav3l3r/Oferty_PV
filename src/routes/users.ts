@@ -14,6 +14,7 @@ import { ADMIN_USERS_LIMITER } from '../middleware/rateLimiters';
 import { userUpdateSchema } from '../validators/offerSchemas';
 import { logger } from '../utils/logger';
 import { DEFAULT_ORGANIZATION_UNIT_KEY, isOrganizationUnit } from '../constants/organizationUnits';
+import { findProductionRangeConflicts, rangeOverlapResponse } from '../utils/productionRange';
 
 const router = express.Router();
 
@@ -56,7 +57,8 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
                 email: user.email,
                 symbol: user.symbol,
                 subUsers: subUsers,
-                orderStartNumber: user.orderStartNumber,
+                productionRangeFrom: user.productionRangeFrom,
+                productionRangeTo: user.productionRangeTo,
                 defaultOrganizationUnit: defaultOrganizationUnitByUser.get(user.id) || null,
                 createdAt: user.createdAt
             };
@@ -88,7 +90,8 @@ router.put(
             email,
             symbol,
             subUsers,
-            orderStartNumber,
+            productionRangeFrom,
+            productionRangeTo,
             defaultOrganizationUnit
         } = req.body;
         const userId = req.params.id;
@@ -119,10 +122,32 @@ router.put(
             const newPhone = phone !== undefined ? phone : user.phone;
             const newEmail = email !== undefined ? email : user.email;
             const newSymbol = symbol !== undefined ? symbol : user.symbol;
-            const newOrderStartNumber =
-                orderStartNumber !== undefined
-                    ? parseInt(orderStartNumber, 10) || 1
-                    : user.orderStartNumber;
+            const newRangeFrom =
+                productionRangeFrom === undefined ? user.productionRangeFrom : productionRangeFrom;
+            const newRangeTo =
+                productionRangeTo === undefined ? user.productionRangeTo : productionRangeTo;
+            if ((newRangeFrom === null) !== (newRangeTo === null)) {
+                return res.status(400).json({
+                    error: 'Podaj oba pola zakresu numerów zleceń produkcyjnych (od i do)',
+                    code: 'RANGE_INCOMPLETE'
+                });
+            }
+            if (newRangeFrom !== null && newRangeTo !== null) {
+                if (newRangeFrom > newRangeTo) {
+                    return res.status(400).json({
+                        error: 'Początek zakresu nie może być większy od końca',
+                        code: 'RANGE_INVALID'
+                    });
+                }
+                const conflicts = await findProductionRangeConflicts(
+                    userId,
+                    newRangeFrom,
+                    newRangeTo
+                );
+                if (conflicts.length > 0) {
+                    return res.status(400).json(rangeOverlapResponse(conflicts));
+                }
+            }
             const newSubUsersString =
                 subUsers !== undefined
                     ? Array.isArray(subUsers)
@@ -140,7 +165,8 @@ router.put(
                 email: newEmail,
                 symbol: newSymbol,
                 subUsers: newSubUsersString,
-                orderStartNumber: newOrderStartNumber
+                productionRangeFrom: newRangeFrom,
+                productionRangeTo: newRangeTo
             };
 
             if (defaultOrganizationUnit === undefined) {
@@ -303,7 +329,8 @@ router.get('/for-assignment', requireAuth, async (_req, res) => {
             phone?: string | null;
             email?: string | null;
             symbol?: string | null;
-            orderStartNumber?: number | null;
+            productionRangeFrom?: number | null;
+            productionRangeTo?: number | null;
         }) => ({
             id: u.id,
             username: u.username,

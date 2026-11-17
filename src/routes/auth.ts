@@ -21,6 +21,7 @@ import {
 import { logger } from '../utils/logger';
 import { isHttpsEnabled } from '../middleware/security';
 import { DEFAULT_ORGANIZATION_UNIT_KEY, isOrganizationUnit } from '../constants/organizationUnits';
+import { findProductionRangeConflicts, rangeOverlapResponse } from '../utils/productionRange';
 
 const router = express.Router();
 
@@ -120,7 +121,8 @@ router.post(
             email,
             symbol,
             subUsers,
-            orderStartNumber,
+            productionRangeFrom,
+            productionRangeTo,
             defaultOrganizationUnit
         } = req.body;
 
@@ -137,6 +139,27 @@ router.post(
             const userId = 'user_' + Date.now();
             const subUsersString = Array.isArray(subUsers) ? JSON.stringify(subUsers) : '[]';
 
+            const rangeFrom = productionRangeFrom ?? null;
+            const rangeTo = productionRangeTo ?? null;
+            if ((rangeFrom === null) !== (rangeTo === null)) {
+                return res.status(400).json({
+                    error: 'Podaj oba pola zakresu numerów zleceń produkcyjnych (od i do)',
+                    code: 'RANGE_INCOMPLETE'
+                });
+            }
+            if (rangeFrom !== null && rangeTo !== null) {
+                if (rangeFrom > rangeTo) {
+                    return res.status(400).json({
+                        error: 'Początek zakresu nie może być większy od końca',
+                        code: 'RANGE_INVALID'
+                    });
+                }
+                const conflicts = await findProductionRangeConflicts(userId, rangeFrom, rangeTo);
+                if (conflicts.length > 0) {
+                    return res.status(400).json(rangeOverlapResponse(conflicts));
+                }
+            }
+
             await prisma.$transaction(async (tx) => {
                 await tx.users.create({
                     data: {
@@ -150,7 +173,8 @@ router.post(
                         email: email || '',
                         symbol: symbol || '',
                         subUsers: subUsersString,
-                        orderStartNumber: parseInt(orderStartNumber, 10) || 1,
+                        productionRangeFrom: rangeFrom,
+                        productionRangeTo: rangeTo,
                         createdAt: new Date().toISOString()
                     }
                 });

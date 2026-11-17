@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.62.0
+REM  Wersja: 1.63.0
 REM Rola: Pierwsza instalacja S.O.K. na Windows przez Docker Desktop.
 REM Uzycie: install-new-pc.bat [argumenty przekazywane do instalatora PowerShell]
 REM Uruchamia: scripts/setup-new-pc.ps1.

@@ -148,22 +148,41 @@ describe('registerSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('powinien akceptować liczbowy orderStartNumber', () => {
+    it('powinien akceptować zakres numerów zleceń produkcyjnych', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123',
-            orderStartNumber: 100
+            productionRangeFrom: 100,
+            productionRangeTo: 200
         });
         expect(result.success).toBe(true);
     });
 
-    it('powinien akceptować ciąg znaków jako orderStartNumber', () => {
-        const result = registerSchema.safeParse({
-            username: 'newuser',
-            password: 'secret123',
-            orderStartNumber: '100'
-        });
-        expect(result.success).toBe(true);
+    it('powinien akceptować brak zakresu (null) i odrzucać wartość poza 1..99999', () => {
+        expect(
+            registerSchema.safeParse({
+                username: 'newuser',
+                password: 'secret123',
+                productionRangeFrom: null,
+                productionRangeTo: null
+            }).success
+        ).toBe(true);
+        expect(
+            registerSchema.safeParse({
+                username: 'newuser',
+                password: 'secret123',
+                productionRangeFrom: 0,
+                productionRangeTo: 200
+            }).success
+        ).toBe(false);
+        expect(
+            registerSchema.safeParse({
+                username: 'newuser',
+                password: 'secret123',
+                productionRangeFrom: 1,
+                productionRangeTo: 100000
+            }).success
+        ).toBe(false);
     });
 });
 

@@ -23,6 +23,7 @@ jest.mock('../../src/prismaClient', () => {
         default: {
             users: {
                 findUnique: (...args: unknown[]) => findUser(...args),
+                findMany: jest.fn(async () => []),
                 update: (...args: unknown[]) => updateUser(...args)
             },
             user_preferences: { findUnique: (...args: unknown[]) => findPreference(...args) },
@@ -249,7 +250,8 @@ describe('POST /api/auth/register', () => {
                 firstName: '',
                 lastName: '',
                 subUsers: '[]',
-                orderStartNumber: 1
+                productionRangeFrom: null,
+                productionRangeTo: null
             })
         });
         const hash = (createUser.mock.calls[0][0] as { data: { password: string } }).data.password;
@@ -273,8 +275,8 @@ describe('POST /api/auth/register', () => {
                 ...body,
                 subUsers: ['u2'],
                 defaultOrganizationUnit: 'ASM_KLUCZBORK',
-                orderStartNumber: '77',
-                productionOrderStartNumber: '88'
+                productionRangeFrom: 77,
+                productionRangeTo: 88
             });
 
         expect(res.status).toBe(200);
@@ -288,7 +290,8 @@ describe('POST /api/auth/register', () => {
         expect(createUser).toHaveBeenCalledWith({
             data: expect.objectContaining({
                 subUsers: '["u2"]',
-                orderStartNumber: 77
+                productionRangeFrom: 77,
+                productionRangeTo: 88
             })
         });
         expect(createUser.mock.calls[0][0].data.productionOrderStartNumber).toBeUndefined();
