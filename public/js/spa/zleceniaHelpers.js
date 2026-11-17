@@ -399,7 +399,8 @@ function buildZleceniePayload(po) {
     const przejsciaRows = buildPrzejsciaRowsFromPO(po);
 
     const payload = {
-        NR_ZLECENIA: po.productionOrderNumber || '',
+        // Wydruk zlecenia: prefiks roku → symbol opiekuna; etykieta niżej bez zmian.
+        NR_ZLECENIA: po.productionOrderPrintNumber || po.productionOrderNumber || '',
         OBIEKT: po.obiekt || '',
         ADRES: po.adres || '',
         WYKONAWCA: po.wykonawca || '',

@@ -115,6 +115,9 @@ function collectPrintData() {
     return {
         productionOrderNumber:
             existing?.productionOrderNumber || getValue('zl-nr-zlecenia', '— brak —'),
+        // Wydruk zlecenia: numer z symbolem opiekuna (lista i etykieta bez zmian).
+        productionOrderPrintNumber:
+            existing?.productionOrderPrintNumber || existing?.productionOrderNumber || '',
         obiekt: getValue('zl-obiekt'),
         adres: getValue('zl-adres'),
         wykonawca: getValue('zl-wykonawca'),
@@ -785,7 +788,7 @@ function buildZlecenieHtml(template, data) {
 
     // Zbudowanie dużego płaskiego obiektu z wartościami dla {{ZMIENNYCH}}
     const payload = {
-        NR_ZLECENIA: data.productionOrderNumber || '',
+        NR_ZLECENIA: data.productionOrderPrintNumber || data.productionOrderNumber || '',
         OBIEKT: data.obiekt || '',
         ADRES: data.adres || '',
         WYKONAWCA: data.wykonawca || '',

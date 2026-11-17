@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.63.3
+REM  Wersja: 1.64.0
 REM ===========================================================
 REM  start.bat - Reczny lokalny start z konfiguracja bazy w .env
 REM  Uruchamia:
@@ -16,7 +16,7 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set "APP_VERSION=1.63.3"
+set "APP_VERSION=1.64.0"
 
 set "MODE=dev"
 if /i "%1"=="--prod" set "MODE=prod"

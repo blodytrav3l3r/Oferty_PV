@@ -57,6 +57,7 @@ router.get('/', requireAuth, async (req, res) => {
                    u1."firstName" as "handlerFirstName",
                    u1."lastName" as "handlerLastName",
                    u1.username as "handlerUsername",
+                   u1.symbol as "handlerSymbol",
                    u2."firstName" as "creatorFirstName",
                    u2."lastName" as "creatorLastName",
                    u2.username as "creatorUsername",

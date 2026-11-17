@@ -1,4 +1,5 @@
 import { parseJsonField } from '../helpers';
+import { formatProductionPrintNumber } from './productionNumber';
 import { Prisma } from '../../generated/prisma-postgres/client';
 
 export interface SearchParams {
@@ -231,6 +232,7 @@ export function mapProductionOrderRow(row: Record<string, unknown>) {
               ? parseJsonField<Record<string, unknown>>(row.orderData as string, {})
               : {};
     const dbSalesOrderNumber = (orderParsed.orderNumber || '') as string;
+    const handlerSymbol = typeof row.handlerSymbol === 'string' ? row.handlerSymbol : '';
 
     return {
         id: row.id,
@@ -244,6 +246,14 @@ export function mapProductionOrderRow(row: Record<string, unknown>) {
         updatedAt: row.updatedAt,
         handlerName: handlerName || undefined,
         creatorName: creatorName || undefined,
+        handlerSymbol: handlerSymbol || undefined,
+        // Wydruk zlecenia: prefiks roku → symbol opiekuna (listy i etykiety bez zmian).
+        productionOrderPrintNumber: formatProductionPrintNumber(
+            typeof parsedData.productionOrderNumber === 'string'
+                ? parsedData.productionOrderNumber
+                : '',
+            handlerSymbol
+        ),
         ...parsedData,
         // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
         version: typeof row.version === 'number' ? row.version : 1,

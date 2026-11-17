@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.64.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.3...v1.64.0) (2026-11-17)
+
+### Features
+
+- **zlecenia:** wydruk zlecenia produkcyjnego pokazuje numer z symbolem opiekuna zamiast litery roku (`N/00002/26` → `SA/00002/26`); symbol pochodzi z `users.symbol` właściciela PZ, brak symbolu lub numer bez separatorów → numer bez zmian; numer w bazie, na liście zleceń i na etykiecie pozostaje w formacie roku
+
 ## [1.63.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.2...v1.63.3) (2026-11-17)
 
 ### Bug Fixes

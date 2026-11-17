@@ -13,6 +13,29 @@ export function formatProductionNumber(
     return `${yearLetter}/${String(seqNumber).padStart(5, '0')}/${String(year).slice(-2)}`;
 }
 
+/** Symbol opiekuna dopuszczony do wydruku: litery/cyfry, max 6 znaków (bez HTML). */
+const PRINT_SYMBOL_PATTERN = /^[A-Za-z0-9]{1,6}$/;
+
+/**
+ * Numer zlecenia do wydruku: człon roku zamieniony na symbol opiekuna
+ * (`N/00002/26` + `SA` → `SA/00002/26`). Brak/niepoprawny symbol lub numer bez
+ * separatorów → numer bez zmian. Wyłącznie prezentacja: numer w bazie i listach
+ * pozostaje w formacie roku.
+ * @param value numer PZ (np. `N/00002/26`)
+ * @param symbol symbol użytkownika-opiekuna (np. `SA`)
+ */
+export function formatProductionPrintNumber(
+    value: string | null | undefined,
+    symbol: string | null | undefined
+): string {
+    const number = typeof value === 'string' ? value.trim() : '';
+    const owner = typeof symbol === 'string' ? symbol.trim() : '';
+    if (!number || !PRINT_SYMBOL_PATTERN.test(owner)) return number;
+    const parts = number.split('/');
+    if (parts.length < 2) return number;
+    return [owner].concat(parts.slice(1)).join('/');
+}
+
 export function isCurrentProductionNumber(value: string): boolean {
     const parts = value.split('/');
     return (

@@ -26,7 +26,11 @@ import {
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { assertDocLockForWrite } from '../../utils/docLocks';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
-import { isCurrentProductionNumber, parseProductionNumber } from '../../utils/productionNumber';
+import {
+    formatProductionPrintNumber,
+    isCurrentProductionNumber,
+    parseProductionNumber
+} from '../../utils/productionNumber';
 import {
     incrementPrintCount,
     preservePrintCounts,
@@ -279,13 +283,14 @@ router.get('/', requireAuth, async (req, res) => {
                 creatorFirstName: string | null;
                 creatorLastName: string | null;
                 creatorUsername: string | null;
+                handlerSymbol: string | null;
                 dbSalesOrderNumber: string | null;
                 dbSalesOrderId: string | null;
             }>
         >`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel."elementKey", production_orders_rel.data, production_orders_rel.version,
             ${normalizedDateTimeSql(Prisma.sql`production_orders_rel."createdAt"`)} as "createdAt",
             ${normalizedDateTimeSql(Prisma.sql`production_orders_rel."updatedAt"`)} as "updatedAt",
-            u1."firstName" as handlerFirstName, u1."lastName" as handlerLastName, u1.username as handlerUsername,
+            u1."firstName" as handlerFirstName, u1."lastName" as handlerLastName, u1.username as handlerUsername, u1.symbol as "handlerSymbol",
             u2."firstName" as creatorFirstName, u2."lastName" as creatorLastName, u2.username as creatorUsername,
             ${jsonTextSql(Prisma.sql`o.data`, 'orderNumber')} as "dbSalesOrderNumber",
             o.id as "dbSalesOrderId"
@@ -333,6 +338,7 @@ router.get('/index', requireAuth, async (req, res) => {
                 status: string | null;
                 productionOrderNumber: string | null;
                 offerId: string | null;
+                handlerSymbol: string | null;
             }>
         >`SELECT production_orders_rel.id, production_orders_rel."userId",
             production_orders_rel."orderId", production_orders_rel."wellId",
@@ -340,8 +346,10 @@ router.get('/index', requireAuth, async (req, res) => {
             production_orders_rel.version, production_orders_rel."createdAt", production_orders_rel."updatedAt",
             ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'status')} as "status",
             ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'productionOrderNumber')} as "productionOrderNumber",
-            ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'offerId')} as "offerId"
+            ${jsonTextSql(Prisma.sql`production_orders_rel.data`, 'offerId')} as "offerId",
+            u1.symbol as "handlerSymbol"
          FROM production_orders_rel
+         LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
          ${whereCondition}`;
 
         const result = {
@@ -358,6 +366,11 @@ router.get('/index', requireAuth, async (req, res) => {
                 updatedAt: r.updatedAt,
                 status: r.status,
                 productionOrderNumber: r.productionOrderNumber,
+                // Wydruk zlecenia: prefiks roku → symbol opiekuna (listy i etykiety bez zmian).
+                productionOrderPrintNumber: formatProductionPrintNumber(
+                    r.productionOrderNumber,
+                    r.handlerSymbol
+                ),
                 offerId: r.offerId
             }))
         };
