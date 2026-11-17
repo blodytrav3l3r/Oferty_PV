@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.63.2
+REM  Wersja: 1.63.3
 REM Rola: Ograniczenie uprawnien lokalnych plikow konfiguracyjnych i danych.
 REM Uzycie: scripts\harden-local-perms.bat [--restore-dir KATALOG]
 REM Uruchamia: icacls; przywracanie odtwarza ACL ze snapshotu.

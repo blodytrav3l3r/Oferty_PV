@@ -176,6 +176,71 @@ describe('draft describeDiff — kontrakt SSoT', () => {
         ).toBe(true);
         expect(da.describeDiff('offer_rury', { items: [] }, { items: [] }, true)).toEqual([]);
     });
+
+    it('pola pochodne oferty nie są brudem: frozen*, _solverErrorsGen, wizardStep', () => {
+        const s = loadCtx();
+        const da = s.window.draftAutosave;
+        const live = {
+            wizardStep: 5,
+            wells: [
+                {
+                    id: 'a',
+                    name: 'W1',
+                    _solverErrorsGen: 'WLAZ-150x1',
+                    config: [
+                        {
+                            productId: 'p',
+                            quantity: 2,
+                            frozenPrice: 130,
+                            frozenPriceBase: 130,
+                            frozenStandalonePrice: 130,
+                            frozenName: 'Pierścień AVR 100mm'
+                        }
+                    ],
+                    przejscia: [
+                        {
+                            productId: 't',
+                            quantity: 1,
+                            frozenPrice: 330,
+                            frozenTransitionPrice: 330,
+                            frozenDrillingPrice: 0,
+                            frozenDrillingName: '',
+                            frozenDrillingDn: ''
+                        }
+                    ]
+                }
+            ]
+        };
+        const saved = {
+            wizardStep: 3,
+            wells: [
+                {
+                    id: 'a',
+                    name: 'W1',
+                    config: [{ productId: 'p', quantity: 2 }],
+                    przejscia: [{ productId: 't', quantity: 1 }]
+                }
+            ]
+        };
+        expect(da.areEquivalent('offer_studnie', live, saved, false)).toBe(true);
+        expect(da.describeDiff('offer_studnie', live, saved, false)).toEqual([]);
+
+        const changed = JSON.parse(JSON.stringify(live));
+        changed.wells[0].config[0].quantity = 3;
+        expect(da.areEquivalent('offer_studnie', changed, saved, false)).toBe(false);
+    });
+
+    it('zamówienie studni: frozen* nadal częścią porównania (DTO je niesie)', () => {
+        const s = loadCtx();
+        const da = s.window.draftAutosave;
+        const live = {
+            wells: [{ id: 'a', name: 'W1', config: [{ productId: 'p', frozenPrice: 130 }] }]
+        };
+        const saved = {
+            wells: [{ id: 'a', name: 'W1', config: [{ productId: 'p', frozenPrice: 540 }] }]
+        };
+        expect(da.areEquivalent('order_studnie', live, saved, false)).toBe(false);
+    });
 });
 
 describe('hasUnsavedChanges stashuje __sokLastDirtyDetail (diagnostyka)', () => {

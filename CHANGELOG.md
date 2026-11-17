@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.63.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.2...v1.63.3) (2026-11-17)
+
+### Bug Fixes
+
+- **drafty:** modal odzysku nie wyskakuje już bez realnej zmiany — komparator pomija pola pochodne, które nigdy nie trafiają do zapisanej oferty: zamrożone ceny pozycji (`frozenPrice*`, `frozenName`, `frozenTransitionPrice`, `frozenDrilling*`), pieczątka solvera (`_solverErrorsGen`) i krok kreatora (`wizardStep`); wcześniej draft był zapisywany po każdym wejściu w ofertę, a przy następnym otwarciu zgłaszany jako „różni się od zapisanej wersji”
+- **drafty:** `clearContext` po udanym zapisie anuluje też zaplanowany push kopii serwerowej (L2), więc nie odtwarza ghost-draftu po SAVED
+
 ## [1.63.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.1...v1.63.2) (2026-11-17)
 
 ### Bug Fixes

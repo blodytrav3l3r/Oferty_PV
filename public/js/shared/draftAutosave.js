@@ -597,6 +597,7 @@ var _DRAFT_WELL_EPHEMERAL = [
     '_lastAutoTelemetryId',
     '_aiRankInfo',
     '_lastSolveInputHash',
+    '_solverErrorsGen',
     '__resCache',
     '_psiaBudaBackup',
     'configErrors',
@@ -609,6 +610,37 @@ var _DRAFT_WELL_EPHEMERAL = [
  * reszta to cache/solver). Czyszczone tylko w porownaniu, nie w payladzie.
  */
 var _DRAFT_ITEM_EPHEMERAL = ['_elemId', '__resCache', '_addedAt', '_xp', 'isPlaceholder'];
+
+/**
+ * Ceny zamrożone przy odczycie oferty (freeze z cennika wersji oferty) — live po
+ * wejściu je dostaje, a zapisana oferta ich nie niesie (zapis ich nie persystuje:
+ * `offers_studnie_rel.data` jest bez `frozen*`). Tylko ścieżka OFERT: DTO zamówień
+ * celowo niesie frozen* (orderDto.js), więc nie wolno ich wycinać z porównania zamówień.
+ */
+var _DRAFT_OFFER_ITEM_DERIVED = [
+    'frozenPrice',
+    'frozenPriceBase',
+    'frozenStandalonePrice',
+    'frozenName',
+    'frozenTransitionPrice',
+    'frozenDrillingPrice',
+    'frozenDrillingName',
+    'frozenDrillingDn'
+];
+
+/**
+ * Pozycja oferty bez pól efemerycznych i bez cen zamrożonych (kopia, wejście nietknięte).
+ * @param {*} item
+ * @returns {*}
+ */
+function _draftStripOfferItem(item) {
+    var copy = _draftStripEphemeralItem(item);
+    if (!copy || typeof copy !== 'object' || Array.isArray(copy)) return copy;
+    _DRAFT_OFFER_ITEM_DERIVED.forEach(function (k) {
+        delete copy[k];
+    });
+    return copy;
+}
 
 /**
  * Czyści kopię pozycji config/przejscia z pól efemerycznych (nie mutuje wejścia).
@@ -637,9 +669,9 @@ function _draftStripEphemeralWell(well) {
     Object.keys(well).forEach(function (k) {
         if (_DRAFT_WELL_EPHEMERAL.indexOf(k) !== -1) return;
         if (k === 'config' && Array.isArray(well.config))
-            copy.config = well.config.map(_draftStripEphemeralItem);
+            copy.config = well.config.map(_draftStripOfferItem);
         else if (k === 'przejscia' && Array.isArray(well.przejscia))
-            copy.przejscia = well.przejscia.map(_draftStripEphemeralItem);
+            copy.przejscia = well.przejscia.map(_draftStripOfferItem);
         else copy[k] = well[k];
     });
     return copy;
@@ -861,7 +893,11 @@ function _draftStripPiiComparable(p) {
 function _draftEquivalent(kind, draftPayload, savedPayload, isNewDoc, extra) {
     if (!draftPayload) return true;
     if (!savedPayload) return false;
-    var opts = isNewDoc ? { ignoreVolatile: true, ignoreWizard: true } : undefined;
+    // Krok kreatora to nawigacja, nie treść: ten sam dokument na innym stepie nie
+    // jest „niezapisaną zmianą" (inaczej każde przejście kroku pisze draft i wraca
+    // jako modal). Payload draftu krok nadal niesie — restore go odtwarza.
+    var opts = { ignoreWizard: true };
+    if (isNewDoc) opts.ignoreVolatile = true;
     var a = _draftComparablePayload(kind, draftPayload);
     var b = _draftComparablePayload(kind, savedPayload);
     if (extra && extra.ignorePii) {
@@ -1246,6 +1282,8 @@ function _draftClearContext(kind, oldDocId, newDocId) {
             _draftLoadedOffer = null;
         var key = window.draftStore.buildDraftKey(userId, kind, d);
         if (key) {
+            // Pending push (debounce L2) nie może wskrzesić kopii po SAVED/Odrzuć.
+            _draftSyncForget(key);
             window.draftStore.removeDraft(window.localStorage, key);
             delete _draftLastWritten[key];
             delete _draftOversizeNoted[key];
