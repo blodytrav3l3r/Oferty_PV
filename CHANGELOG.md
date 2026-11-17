@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.63.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.63.0...v1.63.1) (2026-11-17)
+
+### Bug Fixes
+
+- **zlecenia:** nowy cache-bust po poprawce wersji przy wydruku — przeglądarka pobiera świeży `printManager.js` zamiast kopii z `?v=1.63.0`
+
 ## [1.63.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.62.0...v1.63.0) (2026-11-17)
 
 ### Features
