@@ -2625,6 +2625,16 @@ select[id$='-czy'] option {
     font-size: var(--fs-lg);
 }
 
+/* Zaznaczanie studni do zamówienia: natywny checkbox (~13px) był za mały do trafienia. */
+.well-order-checkbox {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    vertical-align: middle;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
 /* Padding */
 .p-6-8 {
     padding: 0.6rem 0.8rem;
