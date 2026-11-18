@@ -301,6 +301,33 @@ describe('zamykanie modalu zleceń produkcyjnych przy konflikcie wersji', () => 
         expect(getSavedIds(requests[2])).toEqual(['pz-201']);
     });
 
+    test('zamknięcie zapisuje zmiany oznaczone jako oczekujące (bez wcześniejszego „Zapisz”)', async () => {
+        const edited = { id: 'pz-1', version: 2, katStopni: '90' };
+        const { context, requests } = loadDataLayer([
+            { ok: true, body: { saved: [{ id: 'pz-1', version: 3 }] } }
+        ]);
+        context.productionOrders = [edited, { id: 'pz-stale', version: 5 }];
+        const { toasts } = loadModal(context);
+
+        context.markProductionOrderPending(edited);
+        await context.closeZleceniaModal();
+
+        expect(requests.map(getSavedIds)).toEqual([['pz-1']]);
+        expect(getSavedOrders(requests[0])[0].katStopni).toBe('90');
+        expect(toasts[0].message).toMatch(/Zapisano zmiany studni/);
+    });
+
+    test('zaakceptowane PZ nie trafiają do oczekujących zapisu', async () => {
+        const { context, requests } = loadDataLayer([]);
+        const accepted = { id: 'pz-acc', version: 2, status: 'accepted' };
+        context.productionOrders = [accepted];
+
+        context.markProductionOrderPending(accepted);
+        await context.saveProductionOrdersData(context.productionOrders, { onlyPending: true });
+
+        expect(requests).toHaveLength(0);
+    });
+
     test('nie zapisuje całej listy PZ przy zamknięciu bez oczekujących zmian', async () => {
         const { context, requests } = loadDataLayer([]);
         context.productionOrders = [

@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-18",
-    "totalEdges": 2960,
+    "totalEdges": 2963,
     "edges": [
         {
             "page": "public/app.html",
@@ -16837,6 +16837,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "markProductionOrderPending",
+            "userFile": "public/js/studnie/orderZleceniaForm.js",
+            "defFile": "public/js/studnie/orderZleceniaData.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "MAX_TRANSPORT_WEIGHT",
             "userFile": "public/js/studnie/offerDiscountsPopup.js",
             "defFile": "public/js/shared/constants.js",
@@ -21752,6 +21760,22 @@
             "name": "syncSourceData",
             "userFile": "public/js/studnie/orderZleceniaModal.js",
             "defFile": "public/js/studnie/orderCrud.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "syncZleceniaFormToPz",
+            "userFile": "public/js/studnie/orderZleceniaModal.js",
+            "defFile": "public/js/studnie/orderZleceniaForm.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "syncZleceniaFormToPz",
+            "userFile": "public/js/studnie/orderZleceniaRender.js",
+            "defFile": "public/js/studnie/orderZleceniaForm.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },

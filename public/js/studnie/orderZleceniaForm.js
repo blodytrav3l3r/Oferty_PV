@@ -741,6 +741,66 @@ function applyZleceniaKinetaChange(well, val, existing) {
     if (typeof syncKineta === 'function') syncKineta(well);
 }
 
+/* Pola formularza PZ utrwalane z DOM (mapa pole modelu → id inputu). */
+const ZLECENIA_FORM_INPUTS = {
+    obiekt: 'zl-obiekt',
+    data: 'zl-data',
+    adres: 'zl-adres',
+    nazwisko: 'zl-nazwisko',
+    wykonawca: 'zl-wykonawca',
+    dataProdukcji: 'zl-data-produkcji',
+    fakturowane: 'zl-fakturowane',
+    srednica: 'zl-srednica',
+    wysokosc: 'zl-wysokosc',
+    glebokosc: 'zl-glebokosc',
+    dnoKineta: 'zl-dno-kineta',
+    rodzajStudni: 'zl-rodzaj-studni',
+    uwagi: 'zl-uwagi',
+    redukcjaKinety: 'zl-red-kinety',
+    spocznikH: 'zl-spocznik-h',
+    din: 'zl-din',
+    rodzajStopni: 'zl-rodzaj-stopni',
+    stopnieInne: 'zl-stopnie-inne',
+    katStopni: 'zl-kat-stopni',
+    wykonanie: 'zl-wykonanie',
+    usytuowanie: 'zl-usytuowanie',
+    kineta: 'zl-kineta',
+    spocznik: 'zl-spocznik',
+    klasaBetonu: 'zl-klasa-betonu'
+};
+
+/* Przenosi wartości formularza do wpisu PZ w RAM i oznacza go do zapisu,
+   żeby „Zapisz i zamknij” nie gubił edycji sprzed przełączenia elementu. */
+function syncZleceniaFormToPz() {
+    if (typeof zleceniaSelectedIdx !== 'number' || zleceniaSelectedIdx < 0) return;
+    const el =
+        typeof zleceniaElementsList !== 'undefined' && zleceniaElementsList
+            ? zleceniaElementsList[zleceniaSelectedIdx]
+            : null;
+    if (!el || !el.well || typeof pzGuard === 'undefined') return;
+
+    const existing = pzGuard.findPzForElement(
+        typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : [],
+        el.well.id,
+        (el.configItem && el.configItem._elemId) || '',
+        el.elementIndex
+    );
+    if (!existing || existing.status === 'accepted') return;
+
+    let changed = false;
+    Object.keys(ZLECENIA_FORM_INPUTS).forEach((field) => {
+        const input = document.getElementById(ZLECENIA_FORM_INPUTS[field]);
+        if (!input) return;
+        if (existing[field] !== input.value) {
+            existing[field] = input.value;
+            changed = true;
+        }
+    });
+    if (changed && typeof markProductionOrderPending === 'function') {
+        markProductionOrderPending(existing);
+    }
+}
+
 /* Ustawia hidden input + klase active w grupie kafli PZ (selektory data-field,
    nie onclick — kafelki PZ nie mają atrybutu onclick). */
 function setZlTile(fieldId, val) {
@@ -798,6 +858,12 @@ async function selectZleceniaTile(btn, targetId, val) {
                     (el.configItem && el.configItem._elemId) || '',
                     el.elementIndex
                 );
+
+                // Kafle zmieniają model PZ tylko w RAM — oznacz do utrwalenia
+                // przy „Zapisz i zamknij” (inaczej edycja ginęła bez „Zapisz”).
+                if (existing && typeof markProductionOrderPending === 'function') {
+                    markProductionOrderPending(existing);
+                }
 
                 if (targetId === 'zl-rodzaj-studni') {
                     if (el.product.componentType === 'dennica') {
@@ -1009,6 +1075,7 @@ window.initZleceniaHideAccepted = initZleceniaHideAccepted;
 window.syncZleceniaHideAcceptedCheckbox = syncZleceniaHideAcceptedCheckbox;
 window.renderZleceniaSvgPreview = renderZleceniaSvgPreview;
 window.selectZleceniaTile = selectZleceniaTile;
+window.syncZleceniaFormToPz = syncZleceniaFormToPz;
 window.onZleceniaStopnieChange = onZleceniaStopnieChange;
 window.onZleceniaKatChange = onZleceniaKatChange;
 

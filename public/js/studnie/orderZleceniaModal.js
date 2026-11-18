@@ -132,6 +132,9 @@ async function closeZleceniaModal() {
         );
         if (shouldSave) {
             try {
+                // Edycje z formularza (kąt, uwagi, kafle) → RAM → zapis;
+                // wcześniej ginęły, gdy nikt nie kliknął „Zapisz”.
+                if (typeof syncZleceniaFormToPz === 'function') syncZleceniaFormToPz();
                 await saveProductionOrdersData(productionOrders, { onlyPending: true });
             } catch (err) {
                 logger.error('orderManager', 'closeZleceniaModal save error:', err);

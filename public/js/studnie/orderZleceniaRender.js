@@ -299,6 +299,11 @@ function filterZleceniaList() {
 }
 
 async function selectZleceniaElement(idx) {
+    // Edycje bieżącego elementu (DOM) → wpis PZ w RAM; bez tego „Zapisz
+    // i zamknij” nie miałby czego utrwalić po przełączeniu elementu.
+    if (typeof syncZleceniaFormToPz === 'function' && zleceniaSelectedIdx !== idx) {
+        syncZleceniaFormToPz();
+    }
     zleceniaSelectedIdx = idx;
     renderZleceniaList();
     const el = zleceniaElementsList[idx];

@@ -203,6 +203,13 @@ function auditPzElementKeyMismatch() {
 let _pzSaveInFlight = null;
 const _pzPendingSave = new WeakMap();
 
+/* Oznacza wpis PZ jako oczekujący zapisu — „Zapisz i zamknij” utrwali go
+   nawet gdy użytkownik nie kliknął wcześniej „Zapisz”. */
+function markProductionOrderPending(po) {
+    if (!po || typeof po !== 'object' || po.status === 'accepted') return;
+    _pzPendingSave.set(po, Symbol());
+}
+
 async function saveProductionOrdersData(data, opts) {
     const records = Array.isArray(data) ? data : [];
     const onlyPending = Boolean(opts && opts.onlyPending);
@@ -518,6 +525,7 @@ async function revokeProductionOrder() {
 /* ===== Rejestracja globali ===== */
 window.loadProductionOrders = loadProductionOrders;
 window.loadProductionOrderDetail = loadProductionOrderDetail;
+window.markProductionOrderPending = markProductionOrderPending;
 window.ensurePzDetailForElement = ensurePzDetailForElement;
 window.auditPzElementKeyMismatch = auditPzElementKeyMismatch;
 window.deleteProductionOrder = deleteProductionOrder;
