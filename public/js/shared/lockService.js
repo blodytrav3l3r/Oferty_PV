@@ -261,7 +261,7 @@ function showDocLockedModal(opts) {
                 '<h3 id="doc-locked-title"><span class="modal-title-icon modal-title-icon--warn" aria-hidden="true"><i data-lucide="lock" class="icon-sm" aria-hidden="true"></i></span> ' +
                 _esc(title) +
                 '</h3>' +
-                '<button type="button" class="btn-icon" aria-label="Zamknij" data-act="back"><i data-lucide="x" class="icon-14" aria-hidden="true"></i></button>' +
+                '<button type="button" class="btn-icon" aria-label="Zamknij" data-act="back"><i data-lucide="x" aria-hidden="true"></i></button>' +
                 '</div><div class="modal-body">' +
                 bodyHtml +
                 '</div><div class="modal-footer">' +

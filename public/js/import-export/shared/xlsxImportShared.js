@@ -272,7 +272,7 @@ window.XlsxImportShared = {
             '<div class="modal modal--ie" role="document">' +
             '<div class="modal-header"><h3 id="ie-rowerrors-title"><span class="modal-title-icon modal-title-icon--warn"><i data-lucide="alert-triangle" class="icon-sm"></i></span>Odrzucone wiersze importu (' +
             self.escapeHtml(String(list.length)) +
-            ')</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-re-close><i data-lucide="x" class="icon-14"></i></button></div>' +
+            ')</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-re-close><i data-lucide="x"></i></button></div>' +
             '<div class="modal-body">' +
             '<p class="ie-modal-lead">Te wiersze NIE trafily do ofert (bledne liczby). ' +
             self.escapeHtml(stats || '') +

@@ -567,7 +567,7 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     popup.innerHTML = `
       <div class="tm-edit-head">
         <div><div class="tm-edit-title">Zmień przejście</div><div class="fs-xs-muted">Aktualnie: ${currentLabel}</div></div>
-        <button class="btn-icon" aria-label="Zamknij" data-action="tmCloseEditPopup"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-action="tmCloseEditPopup"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div class="tm-edit-cols">
         <div class="tm-edit-col">

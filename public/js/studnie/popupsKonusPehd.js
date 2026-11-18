@@ -92,7 +92,7 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
             <h3 id="pehd-konus-title" style="color:var(--danger-hover);display:flex;align-items:center;gap:0.6rem;margin:0;">
                 <i data-lucide="alert-circle" class="icon-lg" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
             </h3>
-            <button type="button" data-csp="konusResolverCancel" data-csp-args="[]" class="btn-icon btn-icon-danger btn-icon-sm" aria-label="Zamknij"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+            <button type="button" data-csp="konusResolverCancel" data-csp-args="[]" class="btn-icon btn-icon-danger" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <p style="color:var(--text-secondary);font-size:var(--fs-md);line-height:1.6;margin:0 0 1.2rem;">
             <b>Konus</b> nie może być zakończeniem studni, jeśli zastosowano w nim wkładkę <b>PEHD</b>.<br>

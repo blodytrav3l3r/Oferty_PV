@@ -1625,6 +1625,14 @@ button.btn-order-save:hover {
     line-height: 1;
 }
 
+/* Jedna geometria ikony dla wszystkich przycisków-ikonek (X, kosz, edycja).
+   Bez tego Lucide renderuje domyślne 24px i każdy przycisk wygląda inaczej. */
+.btn-icon svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
 .btn-icon:hover {
     color: var(--text-primary);
     background: var(--bg-hover);

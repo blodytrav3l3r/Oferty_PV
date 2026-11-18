@@ -984,7 +984,7 @@ function buildUserModalHtml(user) {
         <span id="form-mode-label" class="admin-edit-badge${isEdit ? '' : ' hidden'}">
             <i data-lucide="pencil"></i> TRYB EDYCJI
         </span>
-        <button type="button" class="admin-action-btn user-modal-close" aria-label="Zamknij okno" data-csp="closeUserModal">
+        <button type="button" class="btn-icon user-modal-close" aria-label="Zamknij okno" data-csp="closeUserModal">
             <i data-lucide="x"></i>
         </button>
     </div>

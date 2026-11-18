@@ -191,7 +191,7 @@ async function showOfferHistoryStudnie(id) {
                     <h3 style="font-weight: var(--fw-extrabold); color:var(--white); margin:0; display:flex; align-items:center; gap:0.5rem;">
                         <span class="fs-5xl"><i data-lucide="history" aria-hidden="true"></i></span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
-                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.1); color:var(--white); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div id="audit-logs-container" style="padding:1.5rem; overflow-y:auto; flex:1; scrollbar-width:thin;">
                     ${historyHtml}

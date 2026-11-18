@@ -645,7 +645,7 @@
             '<div class="modal-header">' +
             '<h3 id="resume-modal-title">Wznów pracę</h3>' +
             '<button type="button" class="btn-icon" aria-label="Zamknij" ' +
-            'data-resume-action="close"><i data-lucide="x" class="icon-14" ' +
+            'data-resume-action="close"><i data-lucide="x" ' +
             'aria-hidden="true"></i></button>' +
             '</div>' +
             '<p class="resume-modal-hint">Kopie zapisane lokalnie w tej przeglądarce. ' +

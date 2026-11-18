@@ -9,7 +9,7 @@ window.ConflictModal = {
             };
             const html =
                 '<div class="modal modal--ie" role="document">' +
-                '<div class="modal-header"><h3 id="ie-conflict-title"><span class="modal-title-icon modal-title-icon--warn"><i data-lucide="alert-triangle" class="icon-sm"></i></span>Konflikt numeru oferty</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-cm-close><i data-lucide="x" class="icon-14"></i></button></div>' +
+                '<div class="modal-header"><h3 id="ie-conflict-title"><span class="modal-title-icon modal-title-icon--warn"><i data-lucide="alert-triangle" class="icon-sm"></i></span>Konflikt numeru oferty</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-cm-close><i data-lucide="x"></i></button></div>' +
                 '<div class="modal-body">' +
                 '<p class="ie-modal-lead">Oferta o numerze <strong class="ie-modal-strong">' +
                 window.escapeHtml(offerNumber) +

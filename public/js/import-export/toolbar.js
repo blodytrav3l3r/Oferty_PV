@@ -313,7 +313,7 @@ window.importExportToolbar = /** @type {any} */ ({
             icon +
             '" class="icon-sm"></i></span>' +
             window.escapeHtml(title) +
-            '</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-ie-close><i data-lucide="x" class="icon-14"></i></button></div>' +
+            '</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-ie-close><i data-lucide="x"></i></button></div>' +
             '<div class="modal-body">' +
             bodyHtml +
             '</div>' +
