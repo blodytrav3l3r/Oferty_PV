@@ -703,6 +703,44 @@ async function populateZleceniaForm(el) {
     }
 }
 
+/* Model kinety jak w konfiguratorze (wellManager.js:updateWellParam):
+   wartość + domyślny spocznikH (bez tego syncKineta cofa kinetę na 'brak'),
+   inwalidacja zamrożonych cen i przebudowa pozycji kinety w configu. */
+function applyZleceniaKinetaChange(well, val, existing) {
+    well.kineta = val;
+    if (existing) existing.kineta = val;
+
+    const syncValues = [
+        'beton',
+        'beton_gfk',
+        'klinkier',
+        'preco',
+        'precotop',
+        'unolith',
+        'predl',
+        'kamionka',
+        'brak'
+    ];
+    if (syncValues.includes(val)) {
+        well.spocznik = val;
+        if (existing) existing.spocznik = val;
+    }
+
+    // Kineta != brak wymaga wysokości spocznika; PRECO/UnoLith zawsze 1/1.
+    if (val === 'brak') {
+        well.spocznikH = 'brak';
+    } else if (!well.spocznikH || well.spocznikH === 'brak') {
+        well.spocznikH = '1/2';
+    }
+    if (val === 'preco' || val === 'precotop' || val === 'unolith') {
+        well.spocznikH = '1/1';
+    }
+    if (existing) existing.spocznikH = well.spocznikH;
+
+    if (typeof invalidateFrozenPricesForWell === 'function') invalidateFrozenPricesForWell(well);
+    if (typeof syncKineta === 'function') syncKineta(well);
+}
+
 /* Ustawia hidden input + klase active w grupie kafli PZ (selektory data-field,
    nie onclick — kafelki PZ nie mają atrybutu onclick). */
 function setZlTile(fieldId, val) {
@@ -790,6 +828,22 @@ async function selectZleceniaTile(btn, targetId, val) {
                     }
                     el.well.spocznikH = val;
                     if (existing) existing.spocznikH = val;
+
+                    // Jak w konfiguratorze: wysokość spocznika wymaga kinety i spocznika.
+                    if (
+                        val !== 'brak' &&
+                        (el.well.kineta === 'brak' || el.well.spocznik === 'brak')
+                    ) {
+                        el.well.kineta = 'beton';
+                        el.well.spocznik = 'beton';
+                        if (existing) {
+                            existing.kineta = 'beton';
+                            existing.spocznik = 'beton';
+                        }
+                        setZlTile('zl-kineta', 'beton');
+                        setZlTile('zl-spocznik', 'beton');
+                    }
+                    if (typeof syncKineta === 'function') syncKineta(el.well);
                 } else if (targetId === 'zl-usytuowanie') {
                     el.well.usytuowanie = val;
                     if (existing) existing.usytuowanie = val;
@@ -798,40 +852,7 @@ async function selectZleceniaTile(btn, targetId, val) {
                     if (el.well.psiaBuda) {
                         val = 'brak';
                     }
-                    el.well.kineta = val;
-                    if (existing) existing.kineta = val;
-
-                    const syncValues = [
-                        'beton',
-                        'beton_gfk',
-                        'klinkier',
-                        'preco',
-                        'precotop',
-                        'unolith',
-                        'predl',
-                        'kamionka',
-                        'brak'
-                    ];
-                    if (syncValues.includes(val)) {
-                        el.well.spocznik = val;
-                        if (existing) existing.spocznik = val;
-                        setZlTile('zl-spocznik', val);
-                    }
-
-                    // PRECO / PrecoTop / UnoLith → wymuszenie spocznikH = '1/1'
-                    if (val === 'preco' || val === 'precotop' || val === 'unolith') {
-                        el.well.spocznikH = '1/1';
-                        if (existing) existing.spocznikH = '1/1';
-                        setZlTile('zl-spocznik-h', '1/1');
-                    }
-
-                    // Przebudowa pozycji kinety w config (jak refreshAll w konfiguratorze —
-                    // tam syncKineta idzie po current well, tu trzeba jawnie po el.well).
-                    if (typeof syncKineta === 'function') syncKineta(el.well);
-                    if (existing) {
-                        existing.spocznik = el.well.spocznik;
-                        existing.spocznikH = el.well.spocznikH;
-                    }
+                    applyZleceniaKinetaChange(el.well, val, existing || null);
                     setZlTile('zl-spocznik', el.well.spocznik);
                     setZlTile('zl-spocznik-h', el.well.spocznikH);
                 } else if (targetId === 'zl-spocznik') {
