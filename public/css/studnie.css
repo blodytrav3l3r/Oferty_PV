@@ -2625,12 +2625,29 @@ select[id$='-czy'] option {
     font-size: var(--fs-lg);
 }
 
-/* Zaznaczanie studni do zamówienia: natywny checkbox (~13px) był za mały do trafienia. */
-.well-order-checkbox {
-    width: 18px;
-    height: 18px;
+/* Zaznaczanie studni do zamówienia: klikalne jest całe pole komórki,
+   checkbox wypełnia je maksymalnie (natywny miał ~13px). */
+.well-select-cell {
+    padding: 0;
+}
+
+.well-select-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 32px;
     margin: 0;
-    vertical-align: middle;
+    padding: 0.2rem 0.4rem;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.well-order-checkbox {
+    width: 22px;
+    height: 22px;
+    margin: 0;
     cursor: pointer;
     accent-color: var(--accent);
 }

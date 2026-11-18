@@ -87,7 +87,7 @@ function renderWellHeaderRow(
     if (showOrderSelection) {
         checkbox = isOrdered
             ? '<td class="text-center"><i data-lucide="package-check" class="icon-sm" style="color:var(--accent-text);"></i></td>'
-            : `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" data-csp="updateOrderSelectionCount" data-csp-args="[]" data-csp-on="change" ></td>`;
+            : `<td class="text-center well-select-cell" data-csp-stop="1"><label class="well-select-label"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" data-csp="updateOrderSelectionCount" data-csp-args="[]" data-csp-on="change" ></label></td>`;
     }
 
     let offerPriceCell = '';
