@@ -4,6 +4,17 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.64.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.1...v1.64.2) (2026-11-18)
+
+### Fixes
+
+- **studnie:** parametry studni są jednym źródłem prawdy dla kalkulatora, Excela i zleceń — zmiana kinety, spocznika, jego wysokości, klasy betonu, usytuowania, redukcji, stopni lub materiału propaguje się do roboczych PZ (zaakceptowane pozostają zamrożone), a wybór w zleceniu wraca do studni; puste pola legacy nie nadpisują zapisanych wartości PZ
+- **studnie:** `RODZAJ STUDNI` w zleceniu ustawia jednocześnie dennicę i nadbudowę studni (wcześniej tylko jedno z pól, więc w „Parametry tej studni” zostawał Beton); klasa nośności E600/F900 wymusza żelbet, a zmiana unieważnia zamrożone ceny
+- **studnie:** wybór kinety w zleceniu aktualizuje parametry i cenę studni tak jak w konfiguratorze — brak domyślnego `spocznikH` cofał kinetę na „brak”; wybór wysokości spocznika przy „Brak” włącza kinetę Beton
+- **studnie:** szkic PZ nie blokuje już edycji elementów studni, a przejście dodane ręcznie trafia do kręgu wierconego; zamknięcie modala uwag nie zamyka Excela
+- **zlecenia:** „Zapisz i zamknij” utrwala także edycje, których nikt nie zapisał wcześniej — kafle i pola formularza modyfikowały tylko wpis PZ w RAM, więc zmiany ginęły przy zamknięciu
+- **zlecenia:** wydruk z kartoteki (`#/zlecenia`) pobiera świeży rekord z serwera przed drukiem — lista odświeżana co 60 s drukowała stan sprzed zmiany zapisanej w edytorze (np. kąt stopni)
+
 ## [1.64.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.0...v1.64.1) (2026-11-17)
 
 ### Fixes
