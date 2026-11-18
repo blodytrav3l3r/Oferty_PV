@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.64.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.3...v1.64.4) (2026-11-18)
+
+### Fixes
+
+- **ui:** przyciski zamykania w popupach wydruku, przejść w Excelu, „Kolejności generowania” i transportu rur korzystają z jednej geometrii `btn-icon` (31,5×31,5, ikona 16px); ciemny modal wydruku zachowuje tylko własną paletę, a przyciski z samą ikoną X mają `aria-label`
+
 ## [1.64.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.2...v1.64.3) (2026-11-18)
 
 ### Fixes

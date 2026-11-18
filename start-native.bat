@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.64.3
+REM  Wersja: 1.64.4
 REM  Start S.O.K. with local PostgreSQL. Optional -Watch enables backend reload.
 REM Rola: Start lokalnej aplikacji z przygotowana natywna baza PostgreSQL.
 REM Uzycie: start-native.bat [-Watch] [-StartTestDatabase]
