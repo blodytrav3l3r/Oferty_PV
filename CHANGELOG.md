@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.64.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.4...v1.64.5) (2026-11-18)
+
+### Fixes
+
+- **ui:** pasek profilu na pulpicie pokazuje obok nazwy i roli login, e-mail i telefon użytkownika (wcześniej tylko awatar, nazwa i przyciski „Hasło”/„Wyloguj”)
+
 ## [1.64.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.3...v1.64.4) (2026-11-18)
 
 ### Fixes
