@@ -866,12 +866,26 @@ async function selectZleceniaTile(btn, targetId, val) {
                 }
 
                 if (targetId === 'zl-rodzaj-studni') {
-                    if (el.product.componentType === 'dennica') {
-                        el.well.dennicaMaterial = val === 'zelbet' ? 'zelbetowa' : 'betonowa';
-                    } else {
-                        el.well.nadbudowa = val === 'zelbet' ? 'zelbetowa' : 'betonowa';
+                    // Jeden wybór = cała studnia: dolna część (dennica) i nadbudowa.
+                    // Klasa nośności E600/F900 wymusza żelbet (jak w kalkulatorze).
+                    const forcedZelbet =
+                        el.well.klasaNosnosci_korpus === 'E600' ||
+                        el.well.klasaNosnosci_korpus === 'F900';
+                    const material = forcedZelbet || val === 'zelbet' ? 'zelbetowa' : 'betonowa';
+                    if (forcedZelbet && val !== 'zelbet' && typeof showToast === 'function') {
+                        showToast(
+                            `Klasa ${el.well.klasaNosnosci_korpus}: Dennica i Nadbudowa muszą być Żelbet`,
+                            'error'
+                        );
+                        setZlTile('zl-rodzaj-studni', 'zelbet');
                     }
-                    if (existing) existing.rodzajStudni = val;
+                    el.well.dennicaMaterial = material;
+                    el.well.nadbudowa = material;
+                    if (typeof invalidateFrozenPricesForWell === 'function') {
+                        invalidateFrozenPricesForWell(el.well);
+                    }
+                    if (existing)
+                        existing.rodzajStudni = material === 'zelbetowa' ? 'zelbet' : 'beton';
                 } else if (targetId === 'zl-red-kinety') {
                     el.well.redukcjaKinety = val;
                     if (existing) existing.redukcjaKinety = val;

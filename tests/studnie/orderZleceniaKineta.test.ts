@@ -162,4 +162,60 @@ describe('orderZleceniaForm — kineta aktualizuje parametry i cenę studni', ()
         expect(well.spocznikH).toBe('brak');
         expect(well.config.some((item: any) => item.productId === 'kineta-1000-12')).toBe(false);
     });
+
+    describe('RODZAJ STUDNI zmienia dolną część i nadbudowę studni', () => {
+        function selectRodzajStudni(val: string, wellOverrides: Record<string, any> = {}) {
+            const { context, calls } = loadCtx();
+            const well = Object.assign(makeWell(), wellOverrides);
+            const existing = { rodzajStudni: 'beton' };
+            context.__existing = existing;
+            context.zleceniaSelectedIdx = 0;
+            context.zleceniaElementsList = [
+                {
+                    well,
+                    product: {
+                        id: 'dennica-1000-1000',
+                        componentType: 'dennica',
+                        category: 'DENNICA'
+                    },
+                    elementIndex: 0,
+                    wellIndex: 0,
+                    configItem: { _elemId: 'elem-1' }
+                }
+            ];
+            const btn = {
+                closest: () => ({ querySelectorAll: () => [] }),
+                classList: { add: () => {}, remove: () => {} }
+            };
+            return context
+                .selectZleceniaTile(btn, 'zl-rodzaj-studni', val)
+                .then(() => ({ well, existing, calls }));
+        }
+
+        test('Żelbet ustawia dennicę i nadbudowę (element dennicy)', async () => {
+            const { well, existing, calls } = await selectRodzajStudni('zelbet');
+            expect(well.dennicaMaterial).toBe('zelbetowa');
+            expect(well.nadbudowa).toBe('zelbetowa');
+            expect(existing.rodzajStudni).toBe('zelbet');
+            expect(calls.invalidated).toBe(1);
+        });
+
+        test('Beton ustawia dennicę i nadbudowę', async () => {
+            const { well } = await selectRodzajStudni('beton', {
+                dennicaMaterial: 'zelbetowa',
+                nadbudowa: 'zelbetowa'
+            });
+            expect(well.dennicaMaterial).toBe('betonowa');
+            expect(well.nadbudowa).toBe('betonowa');
+        });
+
+        test('klasa E600 wymusza żelbet także przy wyborze Beton', async () => {
+            const { well, existing } = await selectRodzajStudni('beton', {
+                klasaNosnosci_korpus: 'E600'
+            });
+            expect(well.dennicaMaterial).toBe('zelbetowa');
+            expect(well.nadbudowa).toBe('zelbetowa');
+            expect(existing.rodzajStudni).toBe('zelbet');
+        });
+    });
 });
