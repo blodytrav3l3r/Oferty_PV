@@ -324,6 +324,38 @@ async function startServer() {
         // Przejdź do modułu rur
         // Wymuś nowy dokument: przejście `#/studnie` → `#/rury` w tej samej
         // karcie uruchamia guard niezapisanych zmian i miesza test nazwy z G12.
+        // Mock zamówienia przez przechwycenie GET /api/orders-rury: wcześniejszy
+        // zapis do `ordersRury` w RAM przegrywał wyścig z własnym loadOrdersRury()
+        // iframe'a (odpowiedź wracała już po mocku i go nadpisywała → T5 flaky).
+        const mockRuryOrder = {
+            id: 'e2e-order-1',
+            clientName: 'E2E Klient',
+            clientNip: '',
+            clientNumber: 'E2E/1',
+            clientAddress: '',
+            clientContact: '',
+            investName: 'E2E',
+            investAddress: '',
+            investContractor: '',
+            offerNumber: 'OF/2026/001',
+            notes: '',
+            transportKm: 0,
+            transportRate: 0,
+            transportMode: 'fractional',
+            date: '2026-08-09',
+            validity: '30',
+            paymentTerms: '',
+            items: [],
+            orderNumber: 'ZAM/2026/001'
+        };
+        await page.route('**/api/orders-rury*', async (route) => {
+            if (route.request().method() !== 'GET') return route.continue();
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ data: [mockRuryOrder] })
+            });
+        });
         await page.goto(`${BASE}/app.html?e2e=appname-rury#/rury`, {
             waitUntil: 'domcontentloaded',
             timeout: 30000
@@ -343,33 +375,7 @@ async function startServer() {
             })
             .catch(() => {});
 
-        // Mock zamówienia (ordersRury to let globalny)
-        await ruryFrame.evaluate(() => {
-            // eslint-disable-next-line no-global-assign
-            ordersRury = [
-                {
-                    id: 'e2e-order-1',
-                    clientName: 'E2E Klient',
-                    clientNip: '',
-                    clientNumber: 'E2E/1',
-                    clientAddress: '',
-                    clientContact: '',
-                    investName: 'E2E',
-                    investAddress: '',
-                    investContractor: '',
-                    offerNumber: 'OF/2026/001',
-                    notes: '',
-                    transportKm: 0,
-                    transportRate: 0,
-                    transportMode: 'fractional',
-                    date: '2026-08-09',
-                    validity: '30',
-                    paymentTerms: '',
-                    items: [],
-                    orderNumber: 'ZAM/2026/001'
-                }
-            ];
-        });
+        // Mock danych: patrz page.route('/api/orders-rury') przed nawigacją.
 
         let enterTitle = '';
         let exitTitle = '';
@@ -435,6 +441,7 @@ async function startServer() {
         // Weryfikujemy tylko, że moduł rur nie ma w DOM żadnej nazwy WITROS Oferty.
         const t6 = await ruryFrame.evaluate(() => document.body.innerText.slice(0, 5000));
         check('T6 no WITROS w module', !/WITROS\s*[O\-–—]/i.test(t6), 'found WITROS in body text');
+        await page.unroute('**/api/orders-rury*').catch(() => {});
     } catch (e) {
         failed = true;
         errors.push('FATAL: ' + e.message);
