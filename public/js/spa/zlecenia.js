@@ -585,6 +585,33 @@ const AppZlecenia = (() => {
         return searchResults.items.find((o) => o.id === orderId) || null;
     }
 
+    /* Wydruk czyta stan zapisany na serwerze, nie kopię w RAM: lista zleceń
+       odświeża się co 60 s, więc po zapisie w edytorze studni bywa starsza
+       (wydruk pokazywał parametry sprzed zmiany). GET /:id nie jest cache'owany. */
+    async function fetchOrderFresh(orderId) {
+        try {
+            const res = await fetch(
+                '/api/orders-studnie/production/' + encodeURIComponent(orderId),
+                {
+                    headers: authHeaders()
+                }
+            );
+            if (!res.ok) return findOrderById(orderId);
+            const json = await res.json();
+            const fresh = json && json.data;
+            if (!fresh) return findOrderById(orderId);
+            const cached = findOrderById(orderId);
+            if (cached) {
+                Object.assign(cached, fresh);
+                return cached;
+            }
+            return fresh;
+        } catch (e) {
+            logger.warn('zlecenia', 'fetchOrderFresh error:', e);
+            return findOrderById(orderId);
+        }
+    }
+
     /* ===== LICZNIKI WYDRUKÓW (liczba uruchomień wydruku) ===== */
 
     function snapshotPrintCounts(o) {
@@ -737,7 +764,7 @@ const AppZlecenia = (() => {
     }
 
     async function printSingleZlecenie(orderId) {
-        const po = findOrderById(orderId);
+        const po = await fetchOrderFresh(orderId);
         if (!po) {
             showToast('Nie znaleziono zlecenia', 'error');
             return;
@@ -762,7 +789,7 @@ const AppZlecenia = (() => {
     }
 
     async function printSingleEtykieta(orderId) {
-        const po = findOrderById(orderId);
+        const po = await fetchOrderFresh(orderId);
         if (!po) {
             showToast('Nie znaleziono zlecenia', 'error');
             return;
@@ -809,8 +836,13 @@ const AppZlecenia = (() => {
     }
 
     async function printBatchZlecenia() {
-        const orders = getSelectedOrders();
-        if (!orders) return;
+        const picked = getSelectedOrders();
+        if (!picked) return;
+        const orders = await Promise.all(picked.map((po) => fetchOrderFresh(po.id)));
+        if (orders.some((po) => !po)) {
+            showToast('Nie udało się odświeżyć zaznaczonych zleceń', 'error');
+            return;
+        }
 
         showToast('Generowanie ' + orders.length + ' zlece\u0144...', 'info');
 
@@ -856,8 +888,13 @@ const AppZlecenia = (() => {
         );
     }
     async function printBatchEtykiety() {
-        const orders = getSelectedOrders();
-        if (!orders) return;
+        const picked = getSelectedOrders();
+        if (!picked) return;
+        const orders = await Promise.all(picked.map((po) => fetchOrderFresh(po.id)));
+        if (orders.some((po) => !po)) {
+            showToast('Nie udało się odświeżyć zaznaczonych zleceń', 'error');
+            return;
+        }
 
         showToast('Generowanie ' + orders.length + ' etykiet...', 'info');
 
