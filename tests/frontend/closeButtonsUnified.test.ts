@@ -5,16 +5,11 @@ import path from 'path';
 /**
  * Regresja: przyciski X w oknach miały różne rozmiary i tła (btn-icon 24px,
  * fu-modal-close 30px, admin-action-btn 15px, unit-popup-close 22px, inline 14px).
- * Jedna geometria: `btn-icon` + ikona 16px. Wyjątki to motywy o własnej skali
- * (wydruk, toolbar Excela, popup w Excelu).
+ * Jedna geometria: `btn-icon` + ikona 16px. Wyjątek to gęsty toolbar Excela.
  */
 const PUBLIC_DIR = path.join(process.cwd(), 'public');
 
-const THEMED_EXCEPTIONS = new Set([
-    'public/js/shared/printModal.js',
-    'public/js/studnie/excelModal.js',
-    'public/js/studnie/wellTransitionsPopup.js'
-]);
+const THEMED_EXCEPTIONS = new Set(['public/js/studnie/excelModal.js']);
 
 const LEGACY_CLASSES = /class="[^"]*\b(om-close|unit-popup-close|fu-modal-close)\b/;
 
@@ -75,6 +70,21 @@ describe('frontend: jednolite przyciski X w oknach', () => {
                 }
                 if (/style="[^"]*(width|height)\s*:/.test(icon)) {
                     offenders.push(`${name}: inline rozmiar ikony → ${icon}`);
+                }
+            }
+        }
+        expect(offenders).toEqual([]);
+    });
+
+    it('każdy przycisk z samą ikoną X ma etykietę dostępu', () => {
+        const offenders: string[] = [];
+        const xOnly = /<button\b([^>]*)>\s*<i\b[^>]*data-lucide="x"[^>]*>\s*<\/i>\s*<\/button>/g;
+        for (const file of files) {
+            const text = fs.readFileSync(file, 'utf8');
+            let match: RegExpExecArray | null;
+            while ((match = xOnly.exec(text))) {
+                if (!/(?:aria-label|title)="[^"]+"/.test(match[1])) {
+                    offenders.push(`${rel(file)}: ${match[0].replace(/\s+/g, ' ').slice(0, 120)}`);
                 }
             }
         }

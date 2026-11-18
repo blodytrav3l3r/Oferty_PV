@@ -548,7 +548,7 @@
                         </h3>
                         ${config.subtitle ? `<p class="upm-modal-subtitle">${window.escapeHtml(config.subtitle)}</p>` : ''}
                     </div>
-                    <button class="upm-close" data-action="__upm_close" type="button" aria-label="Zamknij">
+                    <button class="btn-icon upm-close" data-action="__upm_close" type="button" aria-label="Zamknij">
                         <i data-lucide="x"></i>
                     </button>
                 </div>

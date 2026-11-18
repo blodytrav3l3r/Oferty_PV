@@ -91,31 +91,16 @@
 }
 
 .upm-close {
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--upm-text-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.4rem;
-    border-radius: var(--radius-sm);
-    transition:
-        background-color 0.15s,
-        border-color 0.15s,
-        color 0.15s;
     flex-shrink: 0;
+    background: transparent;
+    border-color: transparent;
+    color: var(--upm-text-muted);
 }
 
 .upm-close:hover {
     background: rgba(var(--danger-rgb), 0.15);
     border-color: rgba(var(--danger-rgb), 0.5);
     color: var(--danger-hover);
-}
-
-.upm-close svg {
-    width: 16px;
-    height: 16px;
 }
 
 .upm-close:focus-visible {

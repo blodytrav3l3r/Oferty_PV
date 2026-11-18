@@ -94,7 +94,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
                     <h3 style="margin:0; font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--text-primary);">Pokaż / Ukryj przejścia</h3>
                     <div class="przejscia-vis-counter" style="font-size: var(--fs-2xs); color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong class="color-success">${visibleCount}</strong> / ${allTypes.length}</div>
                 </div>
-                <button type="button" data-action="closePrzejsciaVisibilityPopup" data-container="${containerId || ''}" class="excel-icon-btn is-danger" style="font-size: var(--fs-2xl);" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button type="button" data-action="closePrzejsciaVisibilityPopup" data-container="${containerId || ''}" class="btn-icon btn-icon--danger" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div class="przejscia-vis-actions">
                 <button class="przejscia-vis-action-btn" data-action="setPrzejsciaVisibilityAll" data-val="1">Pokaż wszystkie</button>

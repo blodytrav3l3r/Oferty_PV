@@ -477,7 +477,7 @@ function openBulkOrderSequencePopup() {
                     <div style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
                     <div class="fs-sm-muted">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
                 </div>
-                <button data-csp="closeBulkOrderPopup" data-csp-args="[]" class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
+                <button data-csp="closeBulkOrderPopup" data-csp-args="[]" class="btn-icon btn-icon--danger" aria-label="Zamknij">
                     <i data-lucide="x"></i>
                 </button>
             </div>
