@@ -44,6 +44,11 @@ function refreshAll(skipSummary = false) {
     if (well) {
         recalcGaskets(well);
         syncKineta(well);
+        // Parametry studni → robocze PZ: kalkulator, Excel i zlecenia mają
+        // zawsze te same wartości (studnia jest źródłem prawdy).
+        if (typeof syncWellParamsToProductionOrders === 'function') {
+            syncWellParamsToProductionOrders(well);
+        }
     }
 
     renderWellsList();

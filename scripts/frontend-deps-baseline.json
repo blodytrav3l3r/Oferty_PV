@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-18",
-    "totalEdges": 2963,
+    "totalEdges": 2970,
     "edges": [
         {
             "page": "public/app.html",
@@ -16125,6 +16125,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "klasaBetonuPzToWell",
+            "userFile": "public/js/studnie/orderZleceniaForm.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "LAYERS",
             "userFile": "public/js/studnie/excelBulkJob.js",
             "defFile": "public/js/studnie/layers.js",
@@ -16832,6 +16840,14 @@
             "name": "markOrderSaved",
             "userFile": "public/js/studnie/orderCrud.js",
             "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "markProductionOrderPending",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/studnie/orderZleceniaData.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -21645,6 +21661,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "syncAllWellParamsToProductionOrders",
+            "userFile": "public/js/studnie/orderZleceniaModal.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "syncEditState",
             "userFile": "public/js/studnie/wellTransitionsCrud.js",
             "defFile": "public/js/studnie/wellTransitionsHelpers.js",
@@ -21760,6 +21784,30 @@
             "name": "syncSourceData",
             "userFile": "public/js/studnie/orderZleceniaModal.js",
             "defFile": "public/js/studnie/orderCrud.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "syncWellParamsToProductionOrders",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "syncWellParamsToProductionOrders",
+            "userFile": "public/js/studnie/excelWellActions.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "syncWellParamsToProductionOrders",
+            "userFile": "public/js/studnie/wellManager.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -23175,6 +23223,14 @@
             "page": "public/studnie.html",
             "name": "wells",
             "userFile": "public/js/studnie/orderCrudHelpers.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "wells",
+            "userFile": "public/js/studnie/orderHelpers.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"

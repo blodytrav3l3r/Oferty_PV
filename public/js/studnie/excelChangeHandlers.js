@@ -1299,6 +1299,10 @@ function _excelKinetaModelUpdate(wIdx, value) {
         invalidateFrozenPricesForWell(well);
     }
     if (typeof syncKineta === 'function') syncKineta(well);
+    // Ten sam parametr w kalkulatorze i zleceniach — utrzymaj zgodność PZ.
+    if (typeof syncWellParamsToProductionOrders === 'function') {
+        syncWellParamsToProductionOrders(well);
+    }
 }
 
 function excelOnKinetaChange(wIdx, value) {
@@ -1336,6 +1340,9 @@ function _excelPsiaBudaModelUpdate(wIdx, checked) {
         }
     }
     well.psiaBuda = checked;
+    if (typeof syncWellParamsToProductionOrders === 'function') {
+        syncWellParamsToProductionOrders(well);
+    }
 }
 
 function excelOnPsiaBudaChange(wIdx, checked) {

@@ -929,7 +929,9 @@ async function selectZleceniaTile(btn, targetId, val) {
                     el.well.spocznik = val;
                     if (existing) existing.spocznik = val;
                 } else if (targetId === 'zl-klasa-betonu') {
-                    el.well.klasaBetonu = val;
+                    // Warianty PZ mają sufiks (HSR!!!!) — do studni zapisz wariant kalkulatora.
+                    el.well.klasaBetonu =
+                        typeof klasaBetonuPzToWell === 'function' ? klasaBetonuPzToWell(val) : val;
                     if (existing) existing.klasaBetonu = val;
                 } else if (targetId === 'zl-rodzaj-stopni') {
                     let newStopnie = null;

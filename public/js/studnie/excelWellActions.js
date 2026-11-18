@@ -135,6 +135,10 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     if (paramKey === 'kineta' || paramKey === 'spocznik' || paramKey === 'spocznikH') {
         if (typeof syncKineta === 'function') syncKineta(well);
     }
+    // Excel jest drugim edytorem tych samych parametrów — utrzymaj PZ w zgodzie.
+    if (typeof syncWellParamsToProductionOrders === 'function') {
+        syncWellParamsToProductionOrders(well);
+    }
     // Konus + wkładka PEHD na zwieńczeniu technologicznie wykluczone —
     // jak w konfiguratorze (updateWellParam): modal z wyborem zakończenia.
     // Anuluj cofa wkładkę na 'brak' (closeKonusResolver, popupsKonusPehd.js).

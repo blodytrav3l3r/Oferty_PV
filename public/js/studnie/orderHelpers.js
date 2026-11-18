@@ -1074,6 +1074,187 @@ function isFrozenPriceCtx() {
     return !!window.isPreviewMode || !!window.isOfferEditFrozen;
 }
 
+/* ===== SPÓJNOŚĆ PARAMETRÓW: studnia ↔ zlecenia produkcyjne =====
+ * Studnia (well) jest źródłem prawdy dla parametrów widocznych w kalkulatorze,
+ * Excelu i zleceniach. Każda zmiana w studni propaguje się do roboczych
+ * (niezaakceptowanych) PZ, a wybór w zleceniu aktualizuje studnię
+ * (orderZleceniaForm.js). Wartości per-element (krag_ot, dennica ze zwężeniem)
+ * zachowują wymuszone „brak" jak w formularzu zlecenia. */
+const KLASA_BETONU_WELL_TO_PZ = {
+    'C40/50(HSR)': 'C40/50(HSR!!!!)',
+    'C45/55(HSR)': 'C45/55(HSR!!!!)',
+    'C70/80(HSR)': 'C70/80(HSR!!!!)'
+};
+const KLASA_BETONU_PZ_TO_WELL = {
+    'C40/50(HSR!!!!)': 'C40/50(HSR)',
+    'C45/55(HSR!!!!)': 'C45/55(HSR)',
+    'C70/80(HSR!!!!)': 'C70/80(HSR)'
+};
+
+function klasaBetonuWellToPz(value) {
+    return KLASA_BETONU_WELL_TO_PZ[value] || value || '';
+}
+
+function klasaBetonuPzToWell(value) {
+    return KLASA_BETONU_PZ_TO_WELL[value] || value || '';
+}
+
+function wellStopnieFamily(value) {
+    const v = String(value == null ? '' : value);
+    if (!v || v === 'brak') return 'brak';
+    if (v.indexOf('szlachetna') >= 0 || v === 'nierdzewna') return 'nierdzewna';
+    if (v.indexOf('stalowa') >= 0 || v === 'drabinka') return 'drabinka';
+    return 'inne';
+}
+
+const STOPNIE_DEFAULT_BY_FAMILY = {
+    drabinka: 'drabinka_a_stalowa',
+    nierdzewna: 'drabinka_a_szlachetna',
+    brak: '',
+    inne: 'inne'
+};
+
+function pzFindProduct(productId) {
+    if (typeof getStudnieProductById === 'function') return getStudnieProductById(productId);
+    if (typeof studnieProducts === 'undefined' || !Array.isArray(studnieProducts)) return null;
+    return studnieProducts.find((pr) => pr.id === productId) || null;
+}
+
+/* Produkt PZ: z zapisanego productId, inaczej z configu studni po indeksie/kluczu. */
+function pzElementProduct(well, po) {
+    if (po && po.productId) {
+        const byId = pzFindProduct(po.productId);
+        if (byId) return byId;
+    }
+    const config = well && Array.isArray(well.config) ? well.config : [];
+    const idx = Number(po && po.elementIndex);
+    let item = Number.isInteger(idx) ? config[idx] : null;
+    if (!item && po && po.elementKey) {
+        item = config.find((c) => c && c._elemId && c._elemId === po.elementKey) || null;
+    }
+    return item ? pzFindProduct(item.productId) : null;
+}
+
+function pzNextElementProduct(well, po) {
+    const config = well && Array.isArray(well.config) ? well.config : [];
+    const idx = Number(po && po.elementIndex);
+    const start = Number.isInteger(idx) ? idx : -1;
+    for (let i = start + 1; i < config.length; i++) {
+        const product = pzFindProduct(config[i].productId);
+        if (product && product.componentType !== 'uszczelka') return product;
+    }
+    return null;
+}
+
+/**
+ * Parametry, które PZ musi dzielić ze studnią. `forceBrak` = element nie ma
+ * dna kinety (krag_ot albo dennica ze zwężeniem/psia buda) — jak w formularzu.
+ * Puste pole studni (legacy) nie nadpisuje wartości już zapisanej w PZ.
+ */
+function buildPzParamsFromWell(well, po) {
+    if (!well) return null;
+    const product = pzElementProduct(well, po);
+    const type = product ? product.componentType : '';
+    const next = type === 'dennica' ? pzNextElementProduct(well, po) : null;
+    const nextIsDennicaLike =
+        next && (next.componentType === 'dennica' || next.componentType === 'styczna');
+    const forceBrak =
+        type === 'krag_ot' ||
+        (type === 'dennica' && (nextIsDennicaLike || (well.psiaBuda && !next)));
+
+    const pick = (wellValue, poValue, fallback) => wellValue || poValue || fallback || '';
+
+    const kineta = forceBrak ? 'brak' : pick(well.kineta, po.kineta, 'brak');
+    let spocznikH = forceBrak ? 'brak' : pick(well.spocznikH, po.spocznikH, 'brak');
+    if (kineta === 'preco' || kineta === 'precotop' || kineta === 'unolith') spocznikH = '1/1';
+
+    return {
+        kineta,
+        spocznik: forceBrak ? 'brak' : pick(well.spocznik, po.spocznik, 'brak'),
+        spocznikH,
+        redukcjaKinety: forceBrak ? 'nie' : pick(well.redukcjaKinety, po.redukcjaKinety, ''),
+        usytuowanie: pick(well.usytuowanie, po.usytuowanie, ''),
+        klasaBetonu: klasaBetonuWellToPz(pick(well.klasaBetonu, po.klasaBetonu, ''))
+    };
+}
+
+/**
+ * Propaguje parametry studni do roboczych PZ tej studni. Zwraca liczbę
+ * zmienionych rekordów; każdy zmieniony jest oznaczany jako oczekujący zapisu
+ * („Zapisz i zamknij” utrwali go). Zaakceptowane PZ są zamrożone — pomijane.
+ */
+function syncWellParamsToProductionOrders(well) {
+    if (!well || !well.id) return 0;
+    if (typeof productionOrders === 'undefined' || !Array.isArray(productionOrders)) return 0;
+
+    const stopniePref = well._selectedRodzajStopni || '';
+    const wellFamily = wellStopnieFamily(stopniePref || well.stopnie);
+    let changedCount = 0;
+
+    productionOrders.forEach((po) => {
+        if (!po || String(po.wellId) !== String(well.id) || po.status === 'accepted') return;
+
+        const params = buildPzParamsFromWell(well, po);
+        if (!params) return;
+        let dirty = false;
+        Object.keys(params).forEach((key) => {
+            if (po[key] !== params[key]) {
+                po[key] = params[key];
+                dirty = true;
+            }
+        });
+
+        // Stopnie: pełny wybór z konfiguratora wygrywa; inaczej dopasuj rodzinę
+        // (drabinka/nierdzewna), nie nadpisując wariantu A/B wybranego w zleceniu.
+        // Studnia bez ustawionych stopni (legacy) nie nadpisuje PZ.
+        const wellHasStopnie = Boolean(stopniePref || well.stopnie);
+        if (stopniePref) {
+            if (po.rodzajStopni !== stopniePref) {
+                po.rodzajStopni = stopniePref;
+                dirty = true;
+            }
+        } else if (wellHasStopnie && wellStopnieFamily(po.rodzajStopni) !== wellFamily) {
+            po.rodzajStopni = STOPNIE_DEFAULT_BY_FAMILY[wellFamily] || '';
+            dirty = true;
+        }
+
+        // Beton/Żelbet zależy od elementu: dennica vs nadbudowa.
+        const product = pzElementProduct(well, po);
+        if (product && product.componentType) {
+            const material =
+                product.componentType === 'dennica' ? well.dennicaMaterial : well.nadbudowa;
+            if (material === 'zelbetowa' || material === 'betonowa') {
+                const expected = material === 'zelbetowa' ? 'zelbet' : 'beton';
+                if (po.rodzajStudni !== expected) {
+                    po.rodzajStudni = expected;
+                    dirty = true;
+                }
+            }
+        }
+
+        if (!dirty) return;
+        changedCount += 1;
+        if (typeof markProductionOrderPending === 'function') markProductionOrderPending(po);
+    });
+
+    return changedCount;
+}
+
+function syncAllWellParamsToProductionOrders() {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return 0;
+    let total = 0;
+    wells.forEach((well) => {
+        total += syncWellParamsToProductionOrders(well);
+    });
+    return total;
+}
+
+window.syncWellParamsToProductionOrders = syncWellParamsToProductionOrders;
+window.syncAllWellParamsToProductionOrders = syncAllWellParamsToProductionOrders;
+window.buildPzParamsFromWell = buildPzParamsFromWell;
+window.klasaBetonuPzToWell = klasaBetonuPzToWell;
+window.klasaBetonuWellToPz = klasaBetonuWellToPz;
+
 window.freezeWellPrices = freezeWellPrices;
 window.invalidateFrozenPricesForWell = invalidateFrozenPricesForWell;
 window.isFrozenPriceCtx = isFrozenPriceCtx;

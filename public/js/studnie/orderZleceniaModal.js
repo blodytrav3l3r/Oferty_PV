@@ -80,6 +80,11 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
         dz.style.padding = '0.8rem 1.2rem';
     }
 
+    // Wyrównaj robocze PZ z bieżącymi parametrami studni przed pokazaniem listy.
+    if (typeof syncAllWellParamsToProductionOrders === 'function') {
+        syncAllWellParamsToProductionOrders();
+    }
+
     buildZleceniaWellList();
 
     if (typeof initZleceniaHideAccepted === 'function') {
