@@ -43,7 +43,7 @@ async function initPzStableIdFlag() {
  * Zwraca listę zleceń produkcyjnych z globalnego stanu.
  * Obsługuje zarówno globalną zmienną `productionOrders` (studnie.html),
  * jak i ewentualną wersję na `window.productionOrders`.
- * @returns {Array<{ orderId?: string; offerId?: string; wellId?: string; elementIndex?: number }>}
+ * @returns {Array<{ orderId?: string; offerId?: string; wellId?: string; elementIndex?: number; status?: string }>}
  */
 function getProductionOrdersList() {
     return typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : [];
@@ -99,10 +99,15 @@ function findPzForElement(list, wellId, elemKey, elementIndex) {
     return undefined;
 }
 
-// Ochrona reindeksacji: blokada usunięcia elementu, gdy w studni jest PZ o elementIndex >= usuwany indeks
+/*
+ * Ochrona reindeksacji: blokada usunięcia elementu tylko przy ZAAKCEPTOWANYM PZ
+ * o elementIndex >= usuwany indeks. Szkic (draft) nie blokuje edycji studni —
+ * elementy można dodawać i usuwać do momentu akceptacji zlecenia.
+ */
 function hasPzForElementAtOrAfter(wellId, elementIndex) {
     return getProductionOrdersList().some(
         (po) =>
+            po.status === 'accepted' &&
             String(po.wellId) === String(wellId) &&
             typeof po.elementIndex === 'number' &&
             po.elementIndex >= elementIndex

@@ -111,7 +111,8 @@ function checkSegmentHasHole(seg, well, rzDna) {
     if (!well.przejscia || well.przejscia.length === 0) return false;
 
     for (const pr of well.przejscia) {
-        const pprod = resolveStudnieProduct(pr.productId);
+        // Custom przejście nie ma productId — sam niesie `dn` (wzorzec z solverCore.js).
+        const pprod = resolveStudnieProduct(pr.productId) || (pr.isCustom === true ? pr : null);
         if (!pprod) continue;
 
         // OT wymaga całego korpusu w segmencie (transitionZones.js), nie samego środka.

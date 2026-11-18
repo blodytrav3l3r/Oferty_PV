@@ -142,6 +142,47 @@ describe('uxSafety: wellNotesModal double-submit guard', () => {
         expect(context.wells[0].uwagi).toBe('hello');
         expect(saveBtn.disabled).toBe(false);
     });
+
+    test('zamknięcie uwag nie propaguje do globalnego closeModal (Excel zostaje)', () => {
+        let overlayClick: ((ev: any) => void) | null = null;
+        const closed: string[] = [];
+        const modalEl = { remove: () => closed.push('notes') };
+        const overlay: any = {
+            style: {},
+            addEventListener: (type: string, fn: (...a: any[]) => any) => {
+                if (type === 'click') overlayClick = fn;
+            }
+        };
+        const context: any = {
+            wells: [{ name: 'S1', dn: '1000', uwagi: '' }],
+            document: {
+                getElementById: (id: string) => (id === 'well-uwagi-modal' ? modalEl : null),
+                createElement: () => ({ textContent: '', innerHTML: '' }),
+                querySelector: () => null,
+                body: { style: {}, appendChild: () => {} }
+            },
+            showModal: () => overlay,
+            closeModal: () => closed.push('global'),
+            restoreBodyScroll: () => {},
+            console
+        };
+        context.window = context;
+        vm.createContext(context);
+        loadFiles(context, ['wellNotesModal.js']);
+        vm.runInContext('openWellNotesModal(0)', context);
+
+        expect(typeof overlayClick).toBe('function');
+        let stopped = false;
+        overlayClick!({
+            target: { closest: () => ({}) },
+            stopPropagation: () => {
+                stopped = true;
+            }
+        });
+
+        expect(stopped).toBe(true);
+        expect(closed).toEqual(['notes']);
+    });
 });
 
 describe('uxSafety: offerDiscountsPopup przez kontrakt E2', () => {

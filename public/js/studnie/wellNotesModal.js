@@ -104,6 +104,9 @@ function openWellNotesModal(idx) {
         overlay.addEventListener('click', function (ev) {
             const btn = ev.target.closest('[data-action="closeModal"]');
             if (btn) {
+                // Stop propagacji: globalny delegate data-action="closeModal" (wellPopups.js)
+                // zamknąłby wtedy wierzchni overlay, czyli Excel pod spodem.
+                ev.stopPropagation();
                 const m = document.getElementById('well-uwagi-modal');
                 if (m) {
                     m.remove();

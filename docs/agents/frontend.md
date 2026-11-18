@@ -57,7 +57,7 @@ Jedyne źródło prawdy: `docs/UI_GUIDELINES.md`. Kluczowe reguły:
 - Błędy konfiguracji (`well.configStatus` ERROR/WARNING): tła `.well-row-error`/`.well-row-warning` + ikona z tooltipem w kolumnie "Błąd" (`getWellErrorCell()` w `offerHelpers.js`). Przeliczane przez `refreshAllWellErrors()` na każdym renderze (też `wellUI.js`). Treść `configErrors` zawsze przez `escapeHtml`.
 - Layout: trójkolumnowy grid (diagram | konfigurator | lista) z `clamp()` + `minmax(0, 1fr)`.
 - Fokus po dodaniu przejścia: pole RZĘDNEJ (`inl-rzedna-*`), nie kąt — nie zmieniaj (feature `14907d3`/`7589ca5`).
-- Blokada PZ: usuwanie oferty/zamówienia/elementu z PZ (`production_orders_rel`, `draft`/`accepted`) blokuje backend 403 (`src/utils/productionOrderGuard.ts`) + pre-checki `public/js/studnie/pzGuard.js` (`hasPzForOffer`, `hasPzForOrder`, `hasPzForWell`, `hasPzForElementAtOrAfter`). Popup po polsku, `showToast` z `<i data-lucide="x-circle"></i>`. Rury nie mają PZ.
+- Blokada PZ: usuwanie oferty/zamówienia z PZ (`production_orders_rel`, `draft`/`accepted`) blokuje backend 403 (`src/utils/productionOrderGuard.ts`) + pre-checki `public/js/studnie/pzGuard.js` (`hasPzForOffer`, `hasPzForOrder`, `hasPzForWell`). Usuwanie elementu studni blokuje wyłącznie PZ `accepted` (`hasPzForElementAtOrAfter`) — szkic nie zamyka edycji konfiguracji. Popup po polsku, `showToast` z `<i data-lucide="x-circle"></i>`. Rury nie mają PZ.
 
 ### Excel studni (reguły nienaruszalne)
 

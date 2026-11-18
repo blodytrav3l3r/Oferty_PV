@@ -74,11 +74,15 @@ describe('pzGuard.js — findPzForElement', () => {
         expect(found).toBeUndefined();
     });
 
-    test('hasPzForElementAtOrAfter niezmienione (ochrona reindeksacji)', () => {
-        const guard = loadPzGuard([{ wellId, elementIndex: 4, status: 'draft' }]);
-        expect(guard.hasPzForElementAtOrAfter(wellId, 3)).toBe(true);
-        expect(guard.hasPzForElementAtOrAfter(wellId, 5)).toBe(false);
-        expect(guard.hasPzForElementAtOrAfter('other', 0)).toBe(false);
+    test('hasPzForElementAtOrAfter blokuje tylko zaakceptowane PZ', () => {
+        const draft = loadPzGuard([{ wellId, elementIndex: 4, status: 'draft' }]);
+        // Szkic nie blokuje usuwania elementu — dopiero akceptacja zamyka edycję.
+        expect(draft.hasPzForElementAtOrAfter(wellId, 3)).toBe(false);
+
+        const accepted = loadPzGuard([{ wellId, elementIndex: 4, status: 'accepted' }]);
+        expect(accepted.hasPzForElementAtOrAfter(wellId, 3)).toBe(true);
+        expect(accepted.hasPzForElementAtOrAfter(wellId, 5)).toBe(false);
+        expect(accepted.hasPzForElementAtOrAfter('other', 0)).toBe(false);
     });
 
     test('flaga wyłączona przywraca dopasowanie po elementIndex (stary kod)', () => {

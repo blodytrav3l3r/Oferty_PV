@@ -95,6 +95,29 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
         expect(regItem.quantity).toBe(2);
     });
 
+    test('custom przejście w kręgu też wymusza krąg wiercony', () => {
+        const well = {
+            dn: '1000',
+            rzednaWlazu: 2.5,
+            rzednaDna: 0.0,
+            przejscia: [
+                {
+                    id: 'cp-1',
+                    isCustom: true,
+                    productId: '',
+                    customName: 'Przejście niestandardowe',
+                    dn: '160',
+                    rzednaWlaczenia: 0.3
+                }
+            ],
+            config: [{ productId: 'krag-1000-500', quantity: 3 }]
+        };
+
+        const ctx = runScriptInContext(well);
+        expect(ctx.enforceOtRings()).toBe(true);
+        expect(well.config.some((x: any) => x.productId === 'krag_ot-1000-500')).toBe(true);
+    });
+
     function runChangeContext(well: any) {
         const wells = [well];
         const context: any = {
