@@ -168,6 +168,25 @@ describe('pulpit admina: sesje', () => {
         expect(els['session-tile-last'].textContent).toBe('1 min temu');
     });
 
+    it('hero użytkownika pokazuje dane kontaktowe, nie tylko akcje', async () => {
+        const { context, els } = loadDashboard(async () => okJson({}));
+
+        await context.showLoggedIn({
+            id: 'u',
+            username: 'jkowalski',
+            role: 'user',
+            firstName: 'Jan',
+            lastName: 'Kowalski',
+            email: 'jan@firma.pl',
+            phone: '+48111222333'
+        });
+
+        expect(els['user-display-name'].textContent).toBe('Jan Kowalski');
+        expect(els['user-display-contact'].textContent).toBe(
+            'jkowalski · jan@firma.pl · +48111222333'
+        );
+    });
+
     it('fail-soft: błąd /sessions → placeholdery + warn, bez toastu i bez badge', async () => {
         const { context, els } = loadDashboard(async (url: string) => {
             const u = String(url);

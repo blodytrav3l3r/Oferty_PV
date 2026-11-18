@@ -509,13 +509,24 @@ function showLoggedIn(user) {
     document.getElementById('login-section').classList.add('hidden');
     document.getElementById('user-section').classList.remove('hidden');
     document.querySelector('.container').classList.add('logged-in');
-    document.getElementById('user-display-name').textContent =
+    const displayName =
         user.firstName && user.lastName ? user.firstName + ' ' + user.lastName : user.username;
+    document.getElementById('user-display-name').textContent = displayName;
     document.getElementById('user-avatar-initial').textContent = user.username
         .charAt(0)
         .toUpperCase();
     const roleEl = document.getElementById('user-display-role');
     roleEl.textContent = user.role.toUpperCase();
+    // Podstawowe dane kontaktowe obok nazwy — bez nich hero pokazywał tylko akcje.
+    const contactEl = document.getElementById('user-display-contact');
+    if (contactEl) {
+        const parts = [];
+        if (user.username && user.username !== displayName) parts.push(user.username);
+        if (user.email) parts.push(user.email);
+        if (user.phone) parts.push(user.phone);
+        contactEl.textContent = parts.join(' · ');
+        contactEl.classList.toggle('hidden', parts.length === 0);
+    }
 
     // L1: kafelek „Wznów pracę" (szkice lokalne + ostatnia trasa); bez danych wyszarzony.
     if (window.resumeDrafts && typeof window.resumeDrafts.render === 'function') {
