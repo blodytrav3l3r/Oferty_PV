@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.64.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.2...v1.64.3) (2026-11-18)
+
+### Fixes
+
+- **ui:** przyciski X we wszystkich oknach mają jedną geometrię — bazowy `.btn-icon` wymusza ikonę 16px, a warianty `fu-modal-close`, `unit-popup-close`, `om-close` i `admin-action-btn` wraz z nadpisaniami 14/18px zostały usunięte
+- **studnie:** checkboxy zaznaczania studni do zamówienia w „Zestawieniu ofertowym” mają 18px (natywne miały ~13px), w tym „zaznacz wszystkie”
+- **test:** harness E2E nazwy aplikacji mockuje `GET /api/orders-rury` przez `page.route`; zapis do globalnej tablicy przegrywał wyścig z `loadOrdersRury()` i dawał fałszywy `T5 enter title`
+
 ## [1.64.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.1...v1.64.2) (2026-11-18)
 
 ### Fixes
