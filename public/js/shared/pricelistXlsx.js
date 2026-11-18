@@ -26,6 +26,12 @@
     }
 
     /**
+     * Pełna liczba (bez śmieci po niej). `parseFloat` ucinał '1000/1500' do 1000
+     * i '12abc' do 12 — cicha utrata danych przy importcie.
+     */
+    var NUMERIC_PATTERN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+    /**
      * Solidne parsowanie pól liczbowych: spacje precz, przecinek na kropkę,
      * puste komórki i myślniki na default (emptyDefaults) lub null.
      * Brak kolumny daje null.
@@ -54,7 +60,7 @@
                     product[f] = lowered === 'true' ? 1 : 0;
                     return;
                 }
-                var num = parseFloat(val);
+                var num = NUMERIC_PATTERN.test(val) ? parseFloat(val) : NaN;
                 if (isNaN(num) && typeof onInvalid === 'function') onInvalid(f, product[f]);
                 product[f] = isNaN(num) ? null : num;
             } else {

@@ -1,56 +1,8 @@
 [
     {
         "1000": {
-            "skrzynkaWlazowa": 400,
-            "cenaPelnaWysMB": 1500,
-            "cenaDnoOsadnika": 920,
-            "kinety": [
-                {
-                    "dn": 150,
-                    "prosta": 920,
-                    "dodWlot": 300,
-                    "order": 1
-                },
-                {
-                    "dn": 200,
-                    "prosta": 990,
-                    "dodWlot": 300,
-                    "order": 2
-                },
-                {
-                    "dn": 250,
-                    "prosta": 1200,
-                    "dodWlot": 300,
-                    "order": 3
-                },
-                {
-                    "dn": 300,
-                    "prosta": 1300,
-                    "dodWlot": 300,
-                    "order": 4
-                },
-                {
-                    "dn": 400,
-                    "prosta": 1520,
-                    "dodWlot": 550,
-                    "order": 5
-                },
-                {
-                    "dn": 500,
-                    "prosta": 1680,
-                    "dodWlot": 750,
-                    "order": 6
-                },
-                {
-                    "dn": 600,
-                    "prosta": 1700,
-                    "dodWlot": 850,
-                    "order": 7
-                }
-            ],
             "spadekKineta": [
                 {
-                    "order": 1,
                     "min": 2,
                     "max": 5,
                     "grupy": {
@@ -59,7 +11,6 @@
                     }
                 },
                 {
-                    "order": 2,
                     "min": 6,
                     "max": 10,
                     "grupy": {
@@ -68,7 +19,6 @@
                     }
                 },
                 {
-                    "order": 3,
                     "min": 11,
                     "max": 15,
                     "grupy": {
@@ -77,7 +27,6 @@
                     }
                 },
                 {
-                    "order": 4,
                     "min": 16,
                     "max": 20,
                     "grupy": {
@@ -86,7 +35,6 @@
                     }
                 },
                 {
-                    "order": 5,
                     "min": 20,
                     "max": 360,
                     "grupy": {
@@ -97,7 +45,6 @@
             ],
             "spadekMufa": [
                 {
-                    "order": 6,
                     "min": 0,
                     "max": 6,
                     "grupy": {
@@ -106,7 +53,6 @@
                     }
                 },
                 {
-                    "order": 7,
                     "min": 7,
                     "max": 12,
                     "grupy": {
@@ -115,7 +61,6 @@
                     }
                 },
                 {
-                    "order": 8,
                     "min": 13,
                     "max": 18,
                     "grupy": {
@@ -124,7 +69,6 @@
                     }
                 },
                 {
-                    "order": 9,
                     "min": 19,
                     "max": 23,
                     "grupy": {
@@ -133,7 +77,6 @@
                     }
                 },
                 {
-                    "order": 10,
                     "min": 24,
                     "max": 360,
                     "grupy": {
@@ -144,7 +87,6 @@
             ],
             "uniesienie": [
                 {
-                    "order": 11,
                     "min": 0,
                     "max": 100,
                     "grupy": {
@@ -153,7 +95,6 @@
                     }
                 },
                 {
-                    "order": 12,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -162,7 +103,6 @@
                     }
                 },
                 {
-                    "order": 13,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -171,7 +111,6 @@
                     }
                 },
                 {
-                    "order": 14,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -180,7 +119,6 @@
                     }
                 },
                 {
-                    "order": 15,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -189,7 +127,6 @@
                     }
                 },
                 {
-                    "order": 16,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -200,7 +137,6 @@
             ],
             "redukcja": [
                 {
-                    "order": 17,
                     "min": 50,
                     "max": 100,
                     "grupy": {
@@ -209,7 +145,6 @@
                     }
                 },
                 {
-                    "order": 18,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -218,7 +153,6 @@
                     }
                 },
                 {
-                    "order": 19,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -227,7 +161,6 @@
                     }
                 },
                 {
-                    "order": 20,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -236,7 +169,6 @@
                     }
                 },
                 {
-                    "order": 21,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -245,7 +177,6 @@
                     }
                 },
                 {
-                    "order": 22,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -253,65 +184,51 @@
                         "400-800": 720
                     }
                 }
-            ]
-        },
-        "1200": {
+            ],
             "skrzynkaWlazowa": 400,
-            "cenaPelnaWysMB": 1900,
-            "cenaDnoOsadnika": 1050,
+            "cenaPelnaWysMB": 1500,
+            "cenaDnoOsadnika": 920,
             "kinety": [
                 {
                     "dn": 150,
-                    "prosta": 1050,
-                    "dodWlot": 350,
-                    "order": 8
+                    "prosta": 920,
+                    "dodWlot": 300
                 },
                 {
                     "dn": 200,
-                    "prosta": 1200,
-                    "dodWlot": 350,
-                    "order": 9
+                    "prosta": 990,
+                    "dodWlot": 300
                 },
                 {
                     "dn": 250,
-                    "prosta": 1350,
-                    "dodWlot": 400,
-                    "order": 10
+                    "prosta": 1200,
+                    "dodWlot": 300
                 },
                 {
                     "dn": 300,
-                    "prosta": 1400,
-                    "dodWlot": 450,
-                    "order": 11
+                    "prosta": 1300,
+                    "dodWlot": 300
                 },
                 {
                     "dn": 400,
-                    "prosta": 1550,
-                    "dodWlot": 600,
-                    "order": 12
+                    "prosta": 1520,
+                    "dodWlot": 550
                 },
                 {
                     "dn": 500,
-                    "prosta": 1800,
-                    "dodWlot": 750,
-                    "order": 13
+                    "prosta": 1680,
+                    "dodWlot": 750
                 },
                 {
                     "dn": 600,
-                    "prosta": 1920,
-                    "dodWlot": 900,
-                    "order": 14
-                },
-                {
-                    "dn": 800,
-                    "prosta": 2600,
-                    "dodWlot": 1450,
-                    "order": 15
+                    "prosta": 1700,
+                    "dodWlot": 850
                 }
-            ],
+            ]
+        },
+        "1200": {
             "spadekKineta": [
                 {
-                    "order": 23,
                     "min": 2,
                     "max": 5,
                     "grupy": {
@@ -320,7 +237,6 @@
                     }
                 },
                 {
-                    "order": 24,
                     "min": 6,
                     "max": 10,
                     "grupy": {
@@ -329,7 +245,6 @@
                     }
                 },
                 {
-                    "order": 25,
                     "min": 11,
                     "max": 15,
                     "grupy": {
@@ -338,7 +253,6 @@
                     }
                 },
                 {
-                    "order": 26,
                     "min": 16,
                     "max": 20,
                     "grupy": {
@@ -347,7 +261,6 @@
                     }
                 },
                 {
-                    "order": 27,
                     "min": 20,
                     "max": 360,
                     "grupy": {
@@ -358,7 +271,6 @@
             ],
             "spadekMufa": [
                 {
-                    "order": 28,
                     "min": 0,
                     "max": 6,
                     "grupy": {
@@ -367,7 +279,6 @@
                     }
                 },
                 {
-                    "order": 29,
                     "min": 7,
                     "max": 12,
                     "grupy": {
@@ -376,7 +287,6 @@
                     }
                 },
                 {
-                    "order": 30,
                     "min": 13,
                     "max": 18,
                     "grupy": {
@@ -385,7 +295,6 @@
                     }
                 },
                 {
-                    "order": 31,
                     "min": 19,
                     "max": 23,
                     "grupy": {
@@ -394,7 +303,6 @@
                     }
                 },
                 {
-                    "order": 32,
                     "min": 24,
                     "max": 360,
                     "grupy": {
@@ -405,7 +313,6 @@
             ],
             "uniesienie": [
                 {
-                    "order": 33,
                     "min": 0,
                     "max": 100,
                     "grupy": {
@@ -414,7 +321,6 @@
                     }
                 },
                 {
-                    "order": 34,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -423,7 +329,6 @@
                     }
                 },
                 {
-                    "order": 35,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -432,7 +337,6 @@
                     }
                 },
                 {
-                    "order": 36,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -441,7 +345,6 @@
                     }
                 },
                 {
-                    "order": 37,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -450,7 +353,6 @@
                     }
                 },
                 {
-                    "order": 38,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -459,7 +361,6 @@
                     }
                 },
                 {
-                    "order": 39,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -468,7 +369,6 @@
                     }
                 },
                 {
-                    "order": 40,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -479,7 +379,6 @@
             ],
             "redukcja": [
                 {
-                    "order": 41,
                     "min": 50,
                     "max": 100,
                     "grupy": {
@@ -488,7 +387,6 @@
                     }
                 },
                 {
-                    "order": 42,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -497,7 +395,6 @@
                     }
                 },
                 {
-                    "order": 43,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -506,7 +403,6 @@
                     }
                 },
                 {
-                    "order": 44,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -515,7 +411,6 @@
                     }
                 },
                 {
-                    "order": 45,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -524,7 +419,6 @@
                     }
                 },
                 {
-                    "order": 46,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -533,7 +427,6 @@
                     }
                 },
                 {
-                    "order": 47,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -542,7 +435,6 @@
                     }
                 },
                 {
-                    "order": 48,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -551,7 +443,6 @@
                     }
                 },
                 {
-                    "order": 49,
                     "min": 801,
                     "max": 900,
                     "grupy": {
@@ -559,77 +450,56 @@
                         "400-800": 1545
                     }
                 }
-            ]
-        },
-        "1500": {
-            "skrzynkaWlazowa": 500,
-            "cenaPelnaWysMB": 2500,
-            "cenaDnoOsadnika": 2130,
+            ],
+            "skrzynkaWlazowa": 400,
+            "cenaPelnaWysMB": 1900,
+            "cenaDnoOsadnika": 1050,
             "kinety": [
                 {
                     "dn": 150,
-                    "prosta": 2130,
-                    "dodWlot": 350,
-                    "order": 16
+                    "prosta": 1050,
+                    "dodWlot": 350
                 },
                 {
                     "dn": 200,
-                    "prosta": 2300,
-                    "dodWlot": 350,
-                    "order": 17
+                    "prosta": 1200,
+                    "dodWlot": 350
                 },
                 {
                     "dn": 250,
-                    "prosta": 2400,
-                    "dodWlot": 400,
-                    "order": 18
+                    "prosta": 1350,
+                    "dodWlot": 400
                 },
                 {
                     "dn": 300,
-                    "prosta": 2800,
-                    "dodWlot": 400,
-                    "order": 19
+                    "prosta": 1400,
+                    "dodWlot": 450
                 },
                 {
                     "dn": 400,
-                    "prosta": 3600,
-                    "dodWlot": 450,
-                    "order": 20
+                    "prosta": 1550,
+                    "dodWlot": 600
                 },
                 {
                     "dn": 500,
-                    "prosta": 4000,
-                    "dodWlot": 550,
-                    "order": 21
+                    "prosta": 1800,
+                    "dodWlot": 750
                 },
                 {
                     "dn": 600,
-                    "prosta": 4500,
-                    "dodWlot": 600,
-                    "order": 22
+                    "prosta": 1920,
+                    "dodWlot": 900
                 },
                 {
                     "dn": 800,
-                    "prosta": 5300,
-                    "dodWlot": 750,
-                    "order": 23
-                },
-                {
-                    "dn": 1000,
-                    "prosta": 6700,
-                    "dodWlot": 850,
-                    "order": 24
-                },
-                {
-                    "dn": 1200,
-                    "prosta": 8000,
-                    "dodWlot": 880,
-                    "order": 25
+                    "prosta": 2600,
+                    "dodWlot": 1450
                 }
-            ],
+            ]
+        },
+        "1500": {
             "spadekKineta": [
                 {
-                    "order": 50,
                     "min": 2,
                     "max": 5,
                     "grupy": {
@@ -639,7 +509,6 @@
                     }
                 },
                 {
-                    "order": 51,
                     "min": 6,
                     "max": 10,
                     "grupy": {
@@ -649,7 +518,6 @@
                     }
                 },
                 {
-                    "order": 52,
                     "min": 11,
                     "max": 15,
                     "grupy": {
@@ -659,7 +527,6 @@
                     }
                 },
                 {
-                    "order": 53,
                     "min": 16,
                     "max": 20,
                     "grupy": {
@@ -669,7 +536,6 @@
                     }
                 },
                 {
-                    "order": 54,
                     "min": 21,
                     "max": 360,
                     "grupy": {
@@ -681,7 +547,6 @@
             ],
             "spadekMufa": [
                 {
-                    "order": 55,
                     "min": 0,
                     "max": 6,
                     "grupy": {
@@ -691,7 +556,6 @@
                     }
                 },
                 {
-                    "order": 56,
                     "min": 7,
                     "max": 12,
                     "grupy": {
@@ -701,7 +565,6 @@
                     }
                 },
                 {
-                    "order": 57,
                     "min": 13,
                     "max": 18,
                     "grupy": {
@@ -711,7 +574,6 @@
                     }
                 },
                 {
-                    "order": 58,
                     "min": 19,
                     "max": 23,
                     "grupy": {
@@ -721,7 +583,6 @@
                     }
                 },
                 {
-                    "order": 59,
                     "min": 24,
                     "max": 360,
                     "grupy": {
@@ -733,7 +594,6 @@
             ],
             "uniesienie": [
                 {
-                    "order": 60,
                     "min": 0,
                     "max": 100,
                     "grupy": {
@@ -743,7 +603,6 @@
                     }
                 },
                 {
-                    "order": 61,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -753,7 +612,6 @@
                     }
                 },
                 {
-                    "order": 62,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -763,7 +621,6 @@
                     }
                 },
                 {
-                    "order": 63,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -773,7 +630,6 @@
                     }
                 },
                 {
-                    "order": 64,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -783,7 +639,6 @@
                     }
                 },
                 {
-                    "order": 65,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -793,7 +648,6 @@
                     }
                 },
                 {
-                    "order": 66,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -803,7 +657,6 @@
                     }
                 },
                 {
-                    "order": 67,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -813,7 +666,6 @@
                     }
                 },
                 {
-                    "order": 68,
                     "min": 801,
                     "max": 900,
                     "grupy": {
@@ -823,7 +675,6 @@
                     }
                 },
                 {
-                    "order": 69,
                     "min": 901,
                     "max": 1000,
                     "grupy": {
@@ -833,7 +684,6 @@
                     }
                 },
                 {
-                    "order": 70,
                     "min": 1001,
                     "max": 1100,
                     "grupy": {
@@ -843,7 +693,6 @@
                     }
                 },
                 {
-                    "order": 71,
                     "min": 1101,
                     "max": 1200,
                     "grupy": {
@@ -855,7 +704,6 @@
             ],
             "redukcja": [
                 {
-                    "order": 72,
                     "min": 50,
                     "max": 100,
                     "grupy": {
@@ -865,7 +713,6 @@
                     }
                 },
                 {
-                    "order": 73,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -875,7 +722,6 @@
                     }
                 },
                 {
-                    "order": 74,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -885,7 +731,6 @@
                     }
                 },
                 {
-                    "order": 75,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -895,7 +740,6 @@
                     }
                 },
                 {
-                    "order": 76,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -905,7 +749,6 @@
                     }
                 },
                 {
-                    "order": 77,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -915,7 +758,6 @@
                     }
                 },
                 {
-                    "order": 78,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -925,7 +767,6 @@
                     }
                 },
                 {
-                    "order": 79,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -935,7 +776,6 @@
                     }
                 },
                 {
-                    "order": 80,
                     "min": 801,
                     "max": 900,
                     "grupy": {
@@ -945,7 +785,6 @@
                     }
                 },
                 {
-                    "order": 81,
                     "min": 901,
                     "max": 1000,
                     "grupy": {
@@ -955,7 +794,6 @@
                     }
                 },
                 {
-                    "order": 82,
                     "min": 1001,
                     "max": 1100,
                     "grupy": {
@@ -965,7 +803,6 @@
                     }
                 },
                 {
-                    "order": 83,
                     "min": 1101,
                     "max": 1200,
                     "grupy": {
@@ -974,95 +811,66 @@
                         "1000-1500": 2120
                     }
                 }
-            ]
-        },
-        "2000": {
+            ],
             "skrzynkaWlazowa": 500,
             "cenaPelnaWysMB": 2500,
             "cenaDnoOsadnika": 2130,
             "kinety": [
                 {
                     "dn": 150,
-                    "prosta": 11000,
-                    "dodWlot": 1400,
-                    "order": 26
+                    "prosta": 2130,
+                    "dodWlot": 350
                 },
                 {
                     "dn": 200,
-                    "prosta": 11000,
-                    "dodWlot": 1400,
-                    "order": 27
+                    "prosta": 2300,
+                    "dodWlot": 350
                 },
                 {
                     "dn": 250,
-                    "prosta": 11000,
-                    "dodWlot": 1400,
-                    "order": 28
+                    "prosta": 2400,
+                    "dodWlot": 400
                 },
                 {
                     "dn": 300,
-                    "prosta": 12000,
-                    "dodWlot": 1500,
-                    "order": 29
+                    "prosta": 2800,
+                    "dodWlot": 400
                 },
                 {
                     "dn": 400,
-                    "prosta": 13000,
-                    "dodWlot": 1500,
-                    "order": 30
+                    "prosta": 3600,
+                    "dodWlot": 450
                 },
                 {
                     "dn": 500,
-                    "prosta": 13000,
-                    "dodWlot": 1500,
-                    "order": 31
+                    "prosta": 4000,
+                    "dodWlot": 550
                 },
                 {
                     "dn": 600,
-                    "prosta": 14500,
-                    "dodWlot": 2000,
-                    "order": 32
+                    "prosta": 4500,
+                    "dodWlot": 600
                 },
                 {
                     "dn": 800,
-                    "prosta": 14500,
-                    "dodWlot": 2000,
-                    "order": 33
+                    "prosta": 5300,
+                    "dodWlot": 750
                 },
                 {
                     "dn": 1000,
-                    "prosta": 18000,
-                    "dodWlot": 2000,
-                    "order": 34
+                    "prosta": 6700,
+                    "dodWlot": 850
                 },
                 {
                     "dn": 1200,
-                    "prosta": 19000,
-                    "dodWlot": 2000,
-                    "order": 35
-                },
-                {
-                    "dn": 1400,
-                    "prosta": 20900,
-                    "dodWlot": 2200,
-                    "order": 36
-                },
-                {
-                    "dn": 1500,
-                    "prosta": 22500,
-                    "dodWlot": 2450,
-                    "order": 37
-                },
-                {
-                    "dn": 1600,
-                    "prosta": 24750,
-                    "dodWlot": 2700,
-                    "order": 38
+                    "prosta": 8000,
+                    "dodWlot": 880
                 }
-            ],
+            ]
+        },
+        "2000": {
             "spadekKineta": [
                 {
-                    "order": 84,
                     "min": 2,
                     "max": 5,
                     "grupy": {
@@ -1072,7 +880,6 @@
                     }
                 },
                 {
-                    "order": 85,
                     "min": 6,
                     "max": 10,
                     "grupy": {
@@ -1082,7 +889,6 @@
                     }
                 },
                 {
-                    "order": 86,
                     "min": 11,
                     "max": 15,
                     "grupy": {
@@ -1092,7 +898,6 @@
                     }
                 },
                 {
-                    "order": 87,
                     "min": 16,
                     "max": 20,
                     "grupy": {
@@ -1102,7 +907,6 @@
                     }
                 },
                 {
-                    "order": 88,
                     "min": 20,
                     "max": 360,
                     "grupy": {
@@ -1114,7 +918,6 @@
             ],
             "spadekMufa": [
                 {
-                    "order": 89,
                     "min": 0,
                     "max": 6,
                     "grupy": {
@@ -1124,7 +927,6 @@
                     }
                 },
                 {
-                    "order": 90,
                     "min": 7,
                     "max": 12,
                     "grupy": {
@@ -1134,7 +936,6 @@
                     }
                 },
                 {
-                    "order": 91,
                     "min": 13,
                     "max": 18,
                     "grupy": {
@@ -1144,7 +945,6 @@
                     }
                 },
                 {
-                    "order": 92,
                     "min": 19,
                     "max": 23,
                     "grupy": {
@@ -1154,7 +954,6 @@
                     }
                 },
                 {
-                    "order": 93,
                     "min": 24,
                     "max": 360,
                     "grupy": {
@@ -1166,7 +965,6 @@
             ],
             "uniesienie": [
                 {
-                    "order": 94,
                     "min": 0,
                     "max": 100,
                     "grupy": {
@@ -1176,7 +974,6 @@
                     }
                 },
                 {
-                    "order": 95,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -1186,7 +983,6 @@
                     }
                 },
                 {
-                    "order": 96,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -1196,7 +992,6 @@
                     }
                 },
                 {
-                    "order": 97,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -1206,7 +1001,6 @@
                     }
                 },
                 {
-                    "order": 98,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -1216,7 +1010,6 @@
                     }
                 },
                 {
-                    "order": 99,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -1226,7 +1019,6 @@
                     }
                 },
                 {
-                    "order": 100,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -1236,7 +1028,6 @@
                     }
                 },
                 {
-                    "order": 101,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -1246,7 +1037,6 @@
                     }
                 },
                 {
-                    "order": 102,
                     "min": 801,
                     "max": 900,
                     "grupy": {
@@ -1256,7 +1046,6 @@
                     }
                 },
                 {
-                    "order": 103,
                     "min": 901,
                     "max": 1000,
                     "grupy": {
@@ -1266,7 +1055,6 @@
                     }
                 },
                 {
-                    "order": 104,
                     "min": 1001,
                     "max": 1100,
                     "grupy": {
@@ -1276,7 +1064,6 @@
                     }
                 },
                 {
-                    "order": 105,
                     "min": 1101,
                     "max": 1200,
                     "grupy": {
@@ -1286,7 +1073,6 @@
                     }
                 },
                 {
-                    "order": 106,
                     "min": 1201,
                     "max": 1300,
                     "grupy": {
@@ -1296,7 +1082,6 @@
                     }
                 },
                 {
-                    "order": 107,
                     "min": 1301,
                     "max": 1400,
                     "grupy": {
@@ -1306,7 +1091,6 @@
                     }
                 },
                 {
-                    "order": 108,
                     "min": 1401,
                     "max": 1500,
                     "grupy": {
@@ -1316,7 +1100,6 @@
                     }
                 },
                 {
-                    "order": 109,
                     "min": 1501,
                     "max": 1600,
                     "grupy": {
@@ -1328,7 +1111,6 @@
             ],
             "redukcja": [
                 {
-                    "order": 110,
                     "min": 50,
                     "max": 100,
                     "grupy": {
@@ -1338,7 +1120,6 @@
                     }
                 },
                 {
-                    "order": 111,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -1348,7 +1129,6 @@
                     }
                 },
                 {
-                    "order": 112,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -1358,7 +1138,6 @@
                     }
                 },
                 {
-                    "order": 113,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -1368,7 +1147,6 @@
                     }
                 },
                 {
-                    "order": 114,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -1378,7 +1156,6 @@
                     }
                 },
                 {
-                    "order": 115,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -1388,7 +1165,6 @@
                     }
                 },
                 {
-                    "order": 116,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -1398,7 +1174,6 @@
                     }
                 },
                 {
-                    "order": 117,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -1408,7 +1183,6 @@
                     }
                 },
                 {
-                    "order": 118,
                     "min": 801,
                     "max": 900,
                     "grupy": {
@@ -1418,7 +1192,6 @@
                     }
                 },
                 {
-                    "order": 119,
                     "min": 901,
                     "max": 1000,
                     "grupy": {
@@ -1428,7 +1201,6 @@
                     }
                 },
                 {
-                    "order": 120,
                     "min": 1001,
                     "max": 1100,
                     "grupy": {
@@ -1438,7 +1210,6 @@
                     }
                 },
                 {
-                    "order": 121,
                     "min": 1101,
                     "max": 1200,
                     "grupy": {
@@ -1448,7 +1219,6 @@
                     }
                 },
                 {
-                    "order": 122,
                     "min": 1201,
                     "max": 1300,
                     "grupy": {
@@ -1458,7 +1228,6 @@
                     }
                 },
                 {
-                    "order": 123,
                     "min": 1301,
                     "max": 1400,
                     "grupy": {
@@ -1468,7 +1237,6 @@
                     }
                 },
                 {
-                    "order": 124,
                     "min": 1401,
                     "max": 1500,
                     "grupy": {
@@ -1478,7 +1246,6 @@
                     }
                 },
                 {
-                    "order": 125,
                     "min": 1501,
                     "max": 1600,
                     "grupy": {
@@ -1487,113 +1254,81 @@
                         "1000-1500": 3765
                     }
                 }
-            ]
-        },
-        "2500": {
+            ],
             "skrzynkaWlazowa": 500,
-            "cenaPelnaWysMB": 3500,
-            "cenaDnoOsadnika": 1050,
+            "cenaPelnaWysMB": 2500,
+            "cenaDnoOsadnika": 2130,
             "kinety": [
                 {
                     "dn": 150,
-                    "prosta": 15400,
-                    "dodWlot": 2100,
-                    "order": 39
+                    "prosta": 11000,
+                    "dodWlot": 1400
                 },
                 {
                     "dn": 200,
-                    "prosta": 15400,
-                    "dodWlot": 2100,
-                    "order": 40
+                    "prosta": 11000,
+                    "dodWlot": 1400
                 },
                 {
                     "dn": 250,
-                    "prosta": 15400,
-                    "dodWlot": 2100,
-                    "order": 41
+                    "prosta": 11000,
+                    "dodWlot": 1400
                 },
                 {
                     "dn": 300,
-                    "prosta": 16800,
-                    "dodWlot": 2250,
-                    "order": 42
+                    "prosta": 12000,
+                    "dodWlot": 1500
                 },
                 {
                     "dn": 400,
-                    "prosta": 18200,
-                    "dodWlot": 2250,
-                    "order": 43
+                    "prosta": 13000,
+                    "dodWlot": 1500
                 },
                 {
                     "dn": 500,
-                    "prosta": 18200,
-                    "dodWlot": 2250,
-                    "order": 44
+                    "prosta": 13000,
+                    "dodWlot": 1500
                 },
                 {
                     "dn": 600,
-                    "prosta": 20300,
-                    "dodWlot": 2250,
-                    "order": 45
+                    "prosta": 14500,
+                    "dodWlot": 2000
                 },
                 {
                     "dn": 800,
-                    "prosta": 20300,
-                    "dodWlot": 3000,
-                    "order": 46
+                    "prosta": 14500,
+                    "dodWlot": 2000
                 },
                 {
                     "dn": 1000,
-                    "prosta": 25200,
-                    "dodWlot": 3000,
-                    "order": 47
+                    "prosta": 18000,
+                    "dodWlot": 2000
                 },
                 {
                     "dn": 1200,
-                    "prosta": 26600,
-                    "dodWlot": 3000,
-                    "order": 48
+                    "prosta": 19000,
+                    "dodWlot": 2000
                 },
                 {
                     "dn": 1400,
-                    "prosta": 27950,
-                    "dodWlot": 3150,
-                    "order": 49
+                    "prosta": 20900,
+                    "dodWlot": 2200
                 },
                 {
                     "dn": 1500,
-                    "prosta": 29400,
-                    "dodWlot": 3300,
-                    "order": 50
+                    "prosta": 22500,
+                    "dodWlot": 2450
                 },
                 {
                     "dn": 1600,
-                    "prosta": 30800,
-                    "dodWlot": 3450,
-                    "order": 51
-                },
-                {
-                    "dn": 1800,
-                    "prosta": 32300,
-                    "dodWlot": 3600,
-                    "order": 52
-                },
-                {
-                    "dn": 2000,
-                    "prosta": 34000,
-                    "dodWlot": 3750,
-                    "order": 53
-                },
-                {
-                    "dn": 2200,
-                    "prosta": 35500,
-                    "dodWlot": 3950,
-                    "order": 54
+                    "prosta": 24750,
+                    "dodWlot": 2700
                 }
-            ],
+            ]
+        },
+        "2500": {
             "spadekKineta": [
                 {
-                    "order": 126,
                     "min": 2,
                     "max": 5,
                     "grupy": {
@@ -1604,7 +1339,6 @@
                     }
                 },
                 {
-                    "order": 127,
                     "min": 6,
                     "max": 10,
                     "grupy": {
@@ -1615,7 +1349,6 @@
                     }
                 },
                 {
-                    "order": 128,
                     "min": 11,
                     "max": 15,
                     "grupy": {
@@ -1626,7 +1359,6 @@
                     }
                 },
                 {
-                    "order": 129,
                     "min": 16,
                     "max": 20,
                     "grupy": {
@@ -1637,7 +1369,6 @@
                     }
                 },
                 {
-                    "order": 130,
                     "min": 21,
                     "max": 360,
                     "grupy": {
@@ -1650,7 +1381,6 @@
             ],
             "spadekMufa": [
                 {
-                    "order": 131,
                     "min": 0,
                     "max": 6,
                     "grupy": {
@@ -1661,7 +1391,6 @@
                     }
                 },
                 {
-                    "order": 132,
                     "min": 7,
                     "max": 12,
                     "grupy": {
@@ -1672,7 +1401,6 @@
                     }
                 },
                 {
-                    "order": 133,
                     "min": 13,
                     "max": 18,
                     "grupy": {
@@ -1683,7 +1411,6 @@
                     }
                 },
                 {
-                    "order": 134,
                     "min": 19,
                     "max": 23,
                     "grupy": {
@@ -1694,7 +1421,6 @@
                     }
                 },
                 {
-                    "order": 135,
                     "min": 24,
                     "max": 360,
                     "grupy": {
@@ -1707,7 +1433,6 @@
             ],
             "uniesienie": [
                 {
-                    "order": 136,
                     "min": 0,
                     "max": 100,
                     "grupy": {
@@ -1718,7 +1443,6 @@
                     }
                 },
                 {
-                    "order": 137,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -1729,7 +1453,6 @@
                     }
                 },
                 {
-                    "order": 138,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -1740,7 +1463,6 @@
                     }
                 },
                 {
-                    "order": 139,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -1751,7 +1473,6 @@
                     }
                 },
                 {
-                    "order": 140,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -1762,7 +1483,6 @@
                     }
                 },
                 {
-                    "order": 141,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -1773,7 +1493,6 @@
                     }
                 },
                 {
-                    "order": 142,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -1784,7 +1503,6 @@
                     }
                 },
                 {
-                    "order": 143,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -1795,7 +1513,6 @@
                     }
                 },
                 {
-                    "order": 144,
                     "min": 801,
                     "max": 900,
                     "grupy": {
@@ -1806,7 +1523,6 @@
                     }
                 },
                 {
-                    "order": 145,
                     "min": 901,
                     "max": 1000,
                     "grupy": {
@@ -1817,7 +1533,6 @@
                     }
                 },
                 {
-                    "order": 146,
                     "min": 1001,
                     "max": 1100,
                     "grupy": {
@@ -1828,7 +1543,6 @@
                     }
                 },
                 {
-                    "order": 147,
                     "min": 1101,
                     "max": 1200,
                     "grupy": {
@@ -1839,7 +1553,6 @@
                     }
                 },
                 {
-                    "order": 148,
                     "min": 1201,
                     "max": 1300,
                     "grupy": {
@@ -1850,7 +1563,6 @@
                     }
                 },
                 {
-                    "order": 149,
                     "min": 1301,
                     "max": 1400,
                     "grupy": {
@@ -1861,7 +1573,6 @@
                     }
                 },
                 {
-                    "order": 150,
                     "min": 1401,
                     "max": 1500,
                     "grupy": {
@@ -1872,7 +1583,6 @@
                     }
                 },
                 {
-                    "order": 151,
                     "min": 1501,
                     "max": 1600,
                     "grupy": {
@@ -1883,7 +1593,6 @@
                     }
                 },
                 {
-                    "order": 152,
                     "min": 1601,
                     "max": 1700,
                     "grupy": {
@@ -1894,7 +1603,6 @@
                     }
                 },
                 {
-                    "order": 153,
                     "min": 1701,
                     "max": 1800,
                     "grupy": {
@@ -1905,7 +1613,6 @@
                     }
                 },
                 {
-                    "order": 154,
                     "min": 1801,
                     "max": 1900,
                     "grupy": {
@@ -1916,7 +1623,6 @@
                     }
                 },
                 {
-                    "order": 155,
                     "min": 1901,
                     "max": 2000,
                     "grupy": {
@@ -1927,7 +1633,6 @@
                     }
                 },
                 {
-                    "order": 156,
                     "min": 2001,
                     "max": 2100,
                     "grupy": {
@@ -1938,7 +1643,6 @@
                     }
                 },
                 {
-                    "order": 157,
                     "min": 2101,
                     "max": 2200,
                     "grupy": {
@@ -1951,7 +1655,6 @@
             ],
             "redukcja": [
                 {
-                    "order": 158,
                     "min": 50,
                     "max": 100,
                     "grupy": {
@@ -1962,7 +1665,6 @@
                     }
                 },
                 {
-                    "order": 159,
                     "min": 101,
                     "max": 200,
                     "grupy": {
@@ -1973,7 +1675,6 @@
                     }
                 },
                 {
-                    "order": 160,
                     "min": 201,
                     "max": 300,
                     "grupy": {
@@ -1984,7 +1685,6 @@
                     }
                 },
                 {
-                    "order": 161,
                     "min": 301,
                     "max": 400,
                     "grupy": {
@@ -1995,7 +1695,6 @@
                     }
                 },
                 {
-                    "order": 162,
                     "min": 401,
                     "max": 500,
                     "grupy": {
@@ -2006,7 +1705,6 @@
                     }
                 },
                 {
-                    "order": 163,
                     "min": 501,
                     "max": 600,
                     "grupy": {
@@ -2017,7 +1715,6 @@
                     }
                 },
                 {
-                    "order": 164,
                     "min": 601,
                     "max": 700,
                     "grupy": {
@@ -2028,7 +1725,6 @@
                     }
                 },
                 {
-                    "order": 165,
                     "min": 701,
                     "max": 800,
                     "grupy": {
@@ -2039,7 +1735,6 @@
                     }
                 },
                 {
-                    "order": 166,
                     "min": 801,
                     "max": 900,
                     "grupy": {
@@ -2050,7 +1745,6 @@
                     }
                 },
                 {
-                    "order": 167,
                     "min": 901,
                     "max": 1000,
                     "grupy": {
@@ -2061,7 +1755,6 @@
                     }
                 },
                 {
-                    "order": 168,
                     "min": 1001,
                     "max": 1100,
                     "grupy": {
@@ -2072,7 +1765,6 @@
                     }
                 },
                 {
-                    "order": 169,
                     "min": 1101,
                     "max": 1200,
                     "grupy": {
@@ -2083,7 +1775,6 @@
                     }
                 },
                 {
-                    "order": 170,
                     "min": 1201,
                     "max": 1300,
                     "grupy": {
@@ -2094,7 +1785,6 @@
                     }
                 },
                 {
-                    "order": 171,
                     "min": 1301,
                     "max": 1400,
                     "grupy": {
@@ -2105,7 +1795,6 @@
                     }
                 },
                 {
-                    "order": 172,
                     "min": 1401,
                     "max": 1500,
                     "grupy": {
@@ -2116,7 +1805,6 @@
                     }
                 },
                 {
-                    "order": 173,
                     "min": 1501,
                     "max": 1600,
                     "grupy": {
@@ -2127,7 +1815,6 @@
                     }
                 },
                 {
-                    "order": 174,
                     "min": 1601,
                     "max": 1700,
                     "grupy": {
@@ -2138,7 +1825,6 @@
                     }
                 },
                 {
-                    "order": 175,
                     "min": 1701,
                     "max": 1800,
                     "grupy": {
@@ -2149,7 +1835,6 @@
                     }
                 },
                 {
-                    "order": 176,
                     "min": 1801,
                     "max": 1900,
                     "grupy": {
@@ -2160,7 +1845,6 @@
                     }
                 },
                 {
-                    "order": 177,
                     "min": 1901,
                     "max": 2000,
                     "grupy": {
@@ -2171,7 +1855,6 @@
                     }
                 },
                 {
-                    "order": 178,
                     "min": 2001,
                     "max": 2100,
                     "grupy": {
@@ -2182,7 +1865,6 @@
                     }
                 },
                 {
-                    "order": 179,
                     "min": 2101,
                     "max": 2200,
                     "grupy": {
@@ -2191,6 +1873,91 @@
                         "1000-1500": 8670,
                         "1600-2200": 9910
                     }
+                }
+            ],
+            "skrzynkaWlazowa": 500,
+            "cenaPelnaWysMB": 3500,
+            "cenaDnoOsadnika": 1050,
+            "kinety": [
+                {
+                    "dn": 150,
+                    "prosta": 15400,
+                    "dodWlot": 2100
+                },
+                {
+                    "dn": 200,
+                    "prosta": 15400,
+                    "dodWlot": 2100
+                },
+                {
+                    "dn": 250,
+                    "prosta": 15400,
+                    "dodWlot": 2100
+                },
+                {
+                    "dn": 300,
+                    "prosta": 16800,
+                    "dodWlot": 2250
+                },
+                {
+                    "dn": 400,
+                    "prosta": 18200,
+                    "dodWlot": 2250
+                },
+                {
+                    "dn": 500,
+                    "prosta": 18200,
+                    "dodWlot": 2250
+                },
+                {
+                    "dn": 600,
+                    "prosta": 20300,
+                    "dodWlot": 2250
+                },
+                {
+                    "dn": 800,
+                    "prosta": 20300,
+                    "dodWlot": 3000
+                },
+                {
+                    "dn": 1000,
+                    "prosta": 25200,
+                    "dodWlot": 3000
+                },
+                {
+                    "dn": 1200,
+                    "prosta": 26600,
+                    "dodWlot": 3000
+                },
+                {
+                    "dn": 1400,
+                    "prosta": 27950,
+                    "dodWlot": 3150
+                },
+                {
+                    "dn": 1500,
+                    "prosta": 29400,
+                    "dodWlot": 3300
+                },
+                {
+                    "dn": 1600,
+                    "prosta": 30800,
+                    "dodWlot": 3450
+                },
+                {
+                    "dn": 1800,
+                    "prosta": 32300,
+                    "dodWlot": 3600
+                },
+                {
+                    "dn": 2000,
+                    "prosta": 34000,
+                    "dodWlot": 3750
+                },
+                {
+                    "dn": 2200,
+                    "prosta": 35500,
+                    "dodWlot": 3950
                 }
             ]
         }

@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.64.6](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.5...v1.64.6) (2026-11-18)
+
+### Fixes
+
+- **ui:** import cennika studni nie ucina już DN `"x/y"` do pierwszej liczby — `dn` nie przechodzi przez `coerceNumerics`, a ta funkcja waliduje pełny tekst liczby zamiast `parseFloat` (nie-liczba → `invalid-number` zamiast cichego obcięcia, także dla cen)
+- **pricelist:** pakiet instalacyjny i `data/seed_*.json` odtwarzają aktywne cenniki z bazy aplikacji (`Rv4-20261030`, `Sv7-20261109`, `Pv2-20261027`); `prices:verify` porównuje seed ↔ pakiet ↔ ACTIVE, loguje bazę i kończy `exit 1` przy dryfie (`--strict`)
+- **api:** `stableJson` pomija `undefined` jak `JSON.stringify`, więc hash pakietu policzony w pamięci zgadza się z hashem pliku; pakiet nie ujawnia loginów (`createdBy`/`approvedBy` = `null`)
+- **studnie:** `scripts/fix-studnie-dn-slashes.ts` przywraca `dn` `"x/y"` z najnowszej wcześniejszej wersji (dry-run domyślnie, `--apply` przez `replaceVersionRows`); naprawiono 5 przejść `Jajowa-*` w `Sv7-20261109`
+
 ## [1.64.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.4...v1.64.5) (2026-11-18)
 
 ### Fixes

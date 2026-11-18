@@ -449,3 +449,11 @@ Wzorcowo: `scripts/harden-local-perms.bat` (grant per-typ + snapshot + `--restor
 **Status**: otwarte — wymaga reprodukcji i analizy przyczyny.
 **Dalsze kroki**: zebrać logi z przebiegów czerwonego i zielonego, ustalić warunki reprodukcji (obciążenie, kolejność, współdzielone zasoby), sprawdzić synchronizację i izolację testów; dopiero potem diagnoza przyczyny.
 **Ograniczenie**: nie osłabiać testów ani nie zwiększać arbitralnie timeoutów tylko po to, by ukryć problem.
+
+## 64. `parseFloat` w imporcie XLSX cicho ucinał DN ze średnicą `"x/y"`
+
+**Problem**: `coerceNumerics` (`public/js/shared/pricelistXlsx.js`) używał `parseFloat`, więc tekst `"1000/1500"` stawał się liczbą `1000` (także `"12abc"` → `12`, `"1.234,56"` → `1.234`). W cenniku studni `dn` było na liście `numericFields`, a ratował to tylko `postCoerce` przywracający `raw.dn`; każda ścieżka bez `raw` (np. ponowny zapis już znormalizowanych wierszy) utrwalała pierwszą liczbę.
+**Objaw**: wersja `Sv7-20261109` miała `dn=1000` dla przejść o nazwie „Jajowa 1000/1500" (`Sv6` miała poprawne `1000/1500`); eksport z takiej wersji psuł cennik w pakiecie i seedzie.
+**Fix**: `dn` usunięty z `numericFields` i normalizowany jawnie (czysta liczba → `number` dla zgodności z legacy, `"x/y"` i tekst → bez zmian, `''`/`-`/`—` → `null`); `coerceNumerics` waliduje pełny tekst liczby regexem zamiast `parseFloat` — nie-liczba → `null` + `invalid-number` (także dla cen). Pięć uszkodzonych wierszy `Sv7` przywrócono `scripts/fix-studnie-dn-slashes.ts` (dry-run domyślnie, `--apply` przez `replaceVersionRows`).
+**Testy**: `tests/frontend/pricelistStudnieDn.test.ts`, `tests/pricelist/activePackageMatchesSeed.test.ts`.
+**Brama**: `npm run prices:verify --strict` porównuje seed ↔ pakiet ↔ ACTIVE; dryf = `exit 1`.

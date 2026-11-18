@@ -52,7 +52,6 @@ function studnieImportOptions(importIssues) {
             'zapasGora',
             'zapasDolMin',
             'zapasGoraMin',
-            'dn',
             'hMin1',
             'hMax1',
             'cena1',
@@ -115,10 +114,14 @@ function studnieImportOptions(importIssues) {
                 product.componentType = 'kineta';
             }
 
+            // DN jest tekstem ('1000/1500', 'styczna'), więc nie przechodzi przez
+            // coerceNumerics — inaczej parseFloat ucinał średnicę do pierwszej liczby.
+            // Kształt legacy zachowany: czysta liczba → number, reszta → tekst.
             const rawDn = raw.DN ?? raw.dn;
-            if (product.dn !== null && typeof rawDn === 'string' && rawDn.includes('/')) {
-                product.dn = rawDn;
-            }
+            let dn = typeof rawDn === 'string' ? rawDn.trim() : (rawDn ?? null);
+            if (dn === '' || dn === '-' || dn === '—') dn = null;
+            else if (typeof dn === 'string' && /^[+-]?\d+(\.\d+)?$/.test(dn)) dn = Number(dn);
+            product.dn = dn;
 
             // Brak kolumny w pliku = pozycja niedostepna (0) dla WSZYSTKICH flag.
             // Dawniej magazyn dostawal 0, a forma 1 - ten sam plik roznie
