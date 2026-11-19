@@ -121,6 +121,7 @@ jest.mock('../../src/prismaClient', () => ({
             findUnique: jest.fn<any>(),
             create: jest.fn<any>()
         },
+        aiTrainingRun: { findFirst: jest.fn<any>().mockResolvedValue(null) },
         ai_telemetry_logs: {
             findMany: (...args: any[]) => mockTelemetryLogsFindMany(...args),
             count: (...args: any[]) => mockTelemetryLogsCount(...args),
@@ -332,10 +333,27 @@ describe('GET /api/telemetry/ai/health', () => {
         expect(res.body.driftPct).toBeNull();
     });
 
+    it('model startowy bez próbek nie ma daty treningu ani pomiaru driftu', async () => {
+        mockGetActiveModel.mockResolvedValue({
+            version: 'v0.1.0-starter',
+            trainingRows: 0,
+            featureMins: [0],
+            featureMaxs: [0]
+        });
+        const res = await request(app).get('/api/telemetry/ai/health').expect(200);
+        expect(res.body).toMatchObject({
+            mlOnline: true,
+            modelTrained: false,
+            lastTrainingAt: null,
+            driftPct: null
+        });
+    });
+
     it('zwraca driftPct=0 gdy wszystkie cechy w zakresie', async () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0',
+            trainingRows: 100,
             metrics: {
                 accuracy: 0.85,
                 precision: 0.8,
@@ -367,6 +385,7 @@ describe('GET /api/telemetry/ai/health', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0',
+            trainingRows: 100,
             metrics: {
                 accuracy: 0.85,
                 precision: 0.8,

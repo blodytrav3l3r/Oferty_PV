@@ -57,6 +57,24 @@ describe('M metrics', () => {
         expect(snap.rssMB).toBeGreaterThan(0);
     });
 
+    test('błędy ostatnich 512 próbek wygasają niezależnie od licznika procesu', () => {
+        recordRequest('GET', '/api/a', 500, 1);
+        for (let i = 0; i < 511; i++) recordRequest('GET', '/api/a', 200, 1);
+        expect(getMetricsSnapshot().endpoints['GET /api/a']).toMatchObject({
+            n: 512,
+            errors: 1,
+            recent: { n: 512, errors: 1 }
+        });
+        recordRequest('GET', '/api/a', 200, 1);
+        expect(getMetricsSnapshot().endpoints['GET /api/a']).toMatchObject({
+            n: 513,
+            errors: 1,
+            recent: { n: 512, errors: 0 }
+        });
+        resetMetrics();
+        expect(getMetricsSnapshot().endpoints).toEqual({});
+    });
+
     test('MAX_KEYS ogranicza kardynalność', () => {
         for (let i = 0; i < 400; i++) recordRequest('GET', `/api/ep${i}`, 200, 1);
         const snap = getMetricsSnapshot();

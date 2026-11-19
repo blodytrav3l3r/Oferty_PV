@@ -9,26 +9,26 @@
  */
 import { test, expect } from '@playwright/test';
 
-const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
-const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
-
 test.describe('e2e: AI dashboard smoke (read-only)', () => {
     test.beforeEach(async ({ request }) => {
-        const login = await request.post(`${BASE}/api/auth/login`, {
-            data: { username: 'admin', password: ADMIN_PASSWORD }
+        const password = process.env.TEST_ADMIN_PASSWORD;
+        if (!password)
+            throw new Error('Ustaw TEST_ADMIN_PASSWORD dla izolowanego serwera Playwright.');
+        const login = await request.post('/api/auth/login', {
+            data: { username: 'admin', password }
         });
         expect(login.status(), 'Login failed').toBe(200);
     });
 
     test('historia transferów 200 z polem data (nie 500)', async ({ request }) => {
-        const resp = await request.get(`${BASE}/api/telemetry/ai/transfer/history`);
+        const resp = await request.get('/api/telemetry/ai/transfer/history');
         expect(resp.status(), 'transfer/history nie odpowiada 200').toBe(200);
         const body = await resp.json();
         expect(Array.isArray(body.data), 'brak pola data[]').toBe(true);
     });
 
     test('ml-status niesie PRAWDZIWY CSP enforce (script-src + nonce)', async ({ request }) => {
-        const resp = await request.get(`${BASE}/api/telemetry/ai/ml-status`);
+        const resp = await request.get('/api/telemetry/ai/ml-status');
         expect(resp.status(), 'ml-status nie odpowiada 200').toBe(200);
         const csp = resp.headers()['content-security-policy'] || '';
         expect(csp, 'brak nagłówka CSP enforce').toContain('script-src');
@@ -39,11 +39,9 @@ test.describe('e2e: AI dashboard smoke (read-only)', () => {
     });
 
     test('well-selections dostępne bez guarda (read-only exception)', async ({ request }) => {
-        const resp = await request.get(`${BASE}/api/telemetry/ai/well-selections`);
-        expect([200, 503], 'nieoczekiwany status well-selections').toContain(resp.status());
-        if (resp.status() === 200) {
-            const body = await resp.json();
-            expect(Array.isArray(body.items), 'brak pola items[]').toBe(true);
-        }
+        const resp = await request.get('/api/telemetry/ai/well-selections');
+        expect(resp.status(), 'well-selections powinno działać niezależnie od flagi').toBe(200);
+        const body = await resp.json();
+        expect(Array.isArray(body.items), 'brak pola items[]').toBe(true);
     });
 });

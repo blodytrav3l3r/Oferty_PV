@@ -77,7 +77,7 @@ describe('AI/ML fetch — nagłówki autoryzacji (H1)', () => {
         const targets: Array<{ file: string; url: string }> = [
             { file: 'studnie/telemetryBridge.js', url: 'TELEMETRY_URL' },
             { file: 'studnie/telemetryBridge.js', url: 'EVENT_URL' },
-            { file: 'studnie/mlDualRanking.js', url: 'ML_STATUS_URL' },
+            { file: 'studnie/mlDualRanking.js', url: 'FEATURE_SCHEMA_URL' },
             { file: 'studnie/mlDualRanking.js', url: 'SETTINGS_URL' },
             { file: 'studnie/mlDualRanking.js', url: 'BATCH_PREDICT_URL' },
             { file: 'studnie/mlRewardHooks.js', url: 'REWARD_URL' },

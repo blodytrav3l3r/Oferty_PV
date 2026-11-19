@@ -32,6 +32,12 @@ function evalFile() {
     (0, eval)(fs.readFileSync(FILE, 'utf8'));
 }
 
+function opsRow(label: string): Element | undefined {
+    return Array.from(document.querySelectorAll('.ops-row')).find(
+        (el) => el.querySelector('.ops-name')?.textContent === label
+    );
+}
+
 const CSP_STRONG = "default-src 'self'; script-src 'self' 'nonce-abc123=='";
 
 const healthy: Record<string, any> = {
@@ -46,6 +52,7 @@ const healthy: Record<string, any> = {
     }),
     '/health': resp({ status: 'ok' }),
     '/health/ready': resp({ status: 'ready', db: 'ok' }),
+    '/health/backup': resp({ status: 'ok', ageHours: 2, maxAgeHours: 26 }),
     '/metrics': resp({
         endpoints: { 'GET /api/a': { n: 10, errors: 0 } },
         db: { queries: 5, busy: 0 },
@@ -61,6 +68,8 @@ const healthy: Record<string, any> = {
     '/api/telemetry/ai/ml-status': resp(
         {
             mlOnline: true,
+            aiMlEnabled: true,
+            modelTrained: true,
             modelVersion: 'v1',
             aiInfluencePct: 50,
             activeModelAuc: 0.8,
@@ -78,6 +87,103 @@ describe('P6 ops dashboard', () => {
         jest.resetModules();
         (window as any).currentUser = { id: 'a1', role: 'admin' };
         (window as any).lucide = undefined;
+    });
+
+    test('przeterminowana kopia pozostaje ostrzeżeniem mimo obecnego pliku', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/health/backup'
+                ? {
+                      ...resp({ status: 'stale', ageHours: 312, maxAgeHours: 26 }),
+                      ok: false,
+                      status: 503
+                  }
+                : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const backup = Array.from(document.querySelectorAll('.ops-row')).find((el) =>
+            el.textContent.includes('Świeżość backupu')
+        );
+        expect(backup?.textContent).toContain('312 h');
+        expect(backup?.querySelector('.ops-warn')).not.toBeNull();
+    });
+
+    test.each([
+        [resp({ status: 'ok', ageHours: 2, maxAgeHours: 26 }), '2 h / limit 26 h', 'ok'],
+        [
+            {
+                ...resp({ status: 'stale', ageHours: null, maxAgeHours: 26 }),
+                ok: false,
+                status: 503
+            },
+            'brak zweryfikowanej kopii',
+            'warn'
+        ],
+        [resp({ status: 'ok' }), 'brak zweryfikowanej kopii', 'unknown'],
+        [null, 'brak danych', 'unknown']
+    ])('pokazuje status świeżości zgodny z odpowiedzią (%#)', async (answer, value, badge) => {
+        global.fetch = jest.fn(async (url: string) => {
+            if (url !== '/health/backup') return healthy[url];
+            if (answer === null) throw new Error('brak odpowiedzi');
+            return answer;
+        });
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const backup = opsRow('Świeżość backupu');
+        expect(backup?.textContent).toContain(value);
+        expect(backup?.querySelector(`.ops-${badge}`)).not.toBeNull();
+    });
+
+    test('aktywny model bez treningu nie dostaje statusu OK', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/api/telemetry/ai/ml-status'
+                ? resp({
+                      mlOnline: true,
+                      aiMlEnabled: true,
+                      modelTrained: false,
+                      modelVersion: 'v0.1.0-starter',
+                      trainingRows: 0,
+                      activeModelAuc: 0.5
+                  })
+                : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const model = Array.from(document.querySelectorAll('.ops-row')).find((el) =>
+            el.textContent.includes('v0.1.0-starter')
+        );
+        expect(model?.textContent).toContain('bez treningu');
+        expect(model?.querySelector('.ops-warn')).not.toBeNull();
+    });
+
+    test('przy niedostępnym pomiarze bazy zachowuje metryki i pokazuje trasę błędów', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/metrics'
+                ? resp({
+                      endpoints: {
+                          'GET /api/offers/:id': {
+                              n: 20,
+                              errors: 6,
+                              p95: 120,
+                              recent: { n: 10, errors: 3 }
+                          }
+                      },
+                      storage: { dbBytes: null, dbSizeStatus: 'unavailable' }
+                  })
+                : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const rows = Array.from(document.querySelectorAll('.ops-row'));
+        const size = rows.find((el) => el.textContent.includes('Rozmiar bazy PostgreSQL'));
+        expect(size?.querySelector('.ops-unknown')).not.toBeNull();
+        expect(
+            rows.find((el) => el.textContent.includes('/api/offers/:id'))?.textContent
+        ).toContain('6/20 od startu · 3/10 (30.0%) · p95 120 ms');
     });
 
     test('zdrowy backend -> 4 sekcje z OK', async () => {
@@ -116,7 +222,7 @@ describe('P6 ops dashboard', () => {
         const html = document.getElementById('ops-container')!.innerHTML;
         expect(html).toContain('słabe / report-only');
         expect(html).toContain('ops-warn');
-        expect(html).not.toContain('aktywne');
+        expect(opsRow('CSP enforce')?.textContent).not.toContain('aktywne');
     });
 
     test('CSP: nagłówek bez nonce -> WARNING (sam script-src nie dowodzi enforce)', async () => {
@@ -133,7 +239,7 @@ describe('P6 ops dashboard', () => {
         await new Promise((r) => setTimeout(r, 50));
         const html = document.getElementById('ops-container')!.innerHTML;
         expect(html).toContain('słabe / report-only');
-        expect(html).not.toContain('aktywne');
+        expect(opsRow('CSP enforce')?.textContent).not.toContain('aktywne');
     });
 
     test('CSP: ml-status pada -> UNKNOWN (niezweryfikowane), nie fałszywy WARNING', async () => {
@@ -147,6 +253,23 @@ describe('P6 ops dashboard', () => {
         const html = document.getElementById('ops-container')!.innerHTML;
         expect(html).toContain('niezweryfikowane');
         expect(html).toContain('ops-unknown');
+    });
+
+    test('CSP: nonce w innej dyrektywie nie potwierdza script-src', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/api/telemetry/ai/ml-status'
+                ? resp(
+                      {},
+                      { 'content-security-policy': "style-src 'nonce-abc'; script-src 'self'" }
+                  )
+                : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        expect(document.getElementById('ops-container')?.textContent).toContain(
+            'słabe / report-only'
+        );
     });
 
     test('metrics niedostępne -> UNKNOWN (nie ERROR)', async () => {

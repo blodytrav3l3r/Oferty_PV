@@ -108,11 +108,11 @@ describe('mlDualRanking.rankCandidates (min-max normalizacja aiCost)', () => {
 
     function mockBatchScores(scoresById: Record<number, number>) {
         sandbox.fetch = (url: string, opts: any) => {
-            if (url.includes('/ml-status')) {
+            if (url.includes('/feature-schema')) {
                 return Promise.resolve({
                     ok: true,
                     status: 200,
-                    json: () => Promise.resolve({ featureVersion: FEATURE_VERSION })
+                    json: () => Promise.resolve({ version: FEATURE_VERSION })
                 });
             }
             const body = JSON.parse(opts.body);

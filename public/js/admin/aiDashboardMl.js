@@ -99,13 +99,16 @@
                     return;
                 }
                 const online = status.mlOnline;
+                const untrained = online && status.modelTrained === false;
                 const inf = status.aiInfluencePct || 0;
                 const activeVer = status.modelVersion || '—';
                 const activeAuc =
-                    status.activeModelAuc != null && Number.isFinite(Number(status.activeModelAuc))
+                    !untrained &&
+                    status.activeModelAuc != null &&
+                    Number.isFinite(Number(status.activeModelAuc))
                         ? ' AUC ' + Number(status.activeModelAuc).toFixed(4)
                         : '';
-                const m = status.activeModelMetrics || {};
+                const m = untrained ? {} : status.activeModelMetrics || {};
                 const fmt = function (v, d) {
                     return v != null && Number.isFinite(Number(v))
                         ? Number(v).toFixed(d == null ? 4 : d)
@@ -137,25 +140,22 @@
                     mlGroup('Status i model', 'ai-ml-col-5', [
                         window.aiStatCard(
                             'Status',
-                            window.aiStatusBadge(online),
-                            online ? 'var(--success)' : 'var(--danger)',
-                            "Status pipeline'a ML — online (działa) lub offline (wyłączony)"
+                            untrained ? 'Model bez treningu' : window.aiStatusBadge(online),
+                            untrained ? 'var(--warn)' : online ? 'var(--success)' : 'var(--danger)',
+                            'Dostępność modelu i informacja, czy użyto próbek treningowych.'
                         ),
                         window.aiStatCard(
                             'Wersja modelu',
                             window.escapeHtml(activeVer) + activeAuc,
                             'var(--accent2)',
                             'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)',
-                            activeVer +
-                                (status.activeModelAuc != null
-                                    ? ' AUC ' + status.activeModelAuc
-                                    : '')
+                            activeVer + activeAuc
                         ),
                         window.aiStatCard(
-                            'Data wdrożenia',
+                            'Utworzono model',
                             (status.activeModelCreatedAt || '—').slice(0, 10),
                             'var(--accent-hover)',
-                            'Kiedy aktywny model został wdrożony'
+                            'Data utworzenia aktywnego modelu'
                         ),
                         window.aiStatCard(
                             'Liczba modeli',
@@ -182,12 +182,10 @@
                     mlGroup('Jakość predykcji', 'ai-ml-col-5', [
                         window.aiStatCard(
                             'ROC-AUC modelu',
-                            fmt(status.activeModelAuc),
-                            status.activeModelAuc != null ? 'var(--accent2)' : 'var(--text-muted)',
+                            untrained ? '—' : fmt(status.activeModelAuc),
+                            activeAuc ? 'var(--accent2)' : 'var(--text-muted)',
                             'Pole pod krzywą ROC aktywnego modelu (0.5 = losowo, 1.0 = idealnie). Osobna metryka — nieporównywalna 1:1 z accuracy.',
-                            status.activeModelAuc != null
-                                ? 'ROC-AUC: ' + Number(status.activeModelAuc).toFixed(4)
-                                : 'Brak modelu z metryką ROC-AUC'
+                            activeAuc ? 'ROC-' + activeAuc.trim() : 'Brak modelu z metryką ROC-AUC'
                         ),
                         window.aiStatCard(
                             'Baseline accuracy',
@@ -294,7 +292,8 @@
                                   window.aiEscapeHtmlAttr(mm.id || '') +
                                   '" title="Usuń ten model" aria-label="Usuń ten model"><i data-lucide="trash-2"></i></button>' +
                                   '</div>';
-                            const metrics = window.aiSafeJson(mm.metrics);
+                            const metrics =
+                                mm.trainingRows > 0 ? window.aiSafeJson(mm.metrics) : null;
                             const rocAuc =
                                 metrics &&
                                 metrics.rocAuc != null &&

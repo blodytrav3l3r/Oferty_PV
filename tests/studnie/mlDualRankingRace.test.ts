@@ -122,11 +122,11 @@ function mockFetch(
                 json: () => Promise.resolve({ value: '80' })
             }));
         }
-        if (url.includes('/ml-status')) {
+        if (url.includes('/feature-schema')) {
             return delayed(delays.mlStatus ?? 0, () => ({
                 ok: true,
                 status: 200,
-                json: () => Promise.resolve({ featureVersion: 'v7' })
+                json: () => Promise.resolve({ version: 'v7' })
             }));
         }
         return delayed(delays.predict ?? 0, () => {
@@ -215,11 +215,11 @@ describe('mlDualRanking P0 race', () => {
                     json: () => Promise.resolve({ value: '80' })
                 }));
             }
-            if (url.includes('/ml-status')) {
+            if (url.includes('/feature-schema')) {
                 return origDelayed(0, () => ({
                     ok: true,
                     status: 200,
-                    json: () => Promise.resolve({ featureVersion: 'v7' })
+                    json: () => Promise.resolve({ version: 'v7' })
                 }));
             }
             const body = JSON.parse(fOpts.body);

@@ -9,6 +9,7 @@ import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { requireAiMlEnabled } from '../middleware/aiMlGuard';
 import { READ_LIMITER } from '../middleware/rateLimiters';
+import { createRateLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 import { learningEngine } from '../services/telemetry/learning';
 import { KnowledgeBase } from '../services/telemetry/learning/KnowledgeBase';
@@ -16,6 +17,13 @@ import prisma from '../prismaClient';
 
 const router = express.Router();
 const kb = new KnowledgeBase();
+const manualLearningLimiter = createRateLimiter({
+    windowMs: 60_000,
+    maxHits: 1,
+    name: 'learning_run',
+    message: 'Cykl uczenia można uruchomić raz na minutę. Spróbuj ponownie później.',
+    keyGenerator: () => 'manual-learning'
+});
 
 /* ===== LEARNING ENGINE ===== */
 
@@ -27,8 +35,8 @@ router.post(
     '/ai/learning/run',
     requireAuth,
     requireAdmin,
-    READ_LIMITER,
     requireAiMlEnabled,
+    manualLearningLimiter,
     async (_req, res) => {
         try {
             const summary = await learningEngine.runFullCycle();

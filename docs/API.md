@@ -59,6 +59,10 @@ Z `?smoke=1` (wyłącznie sesja admina: 401 anon, 403 non-admin) renderuje jedn�
 
 Metryki in-process (tylko admin: 401 anon / 403 non-admin) — P50/P95 per endpoint, DB, loop-lag, PDF.
 
+- `endpoints.*.n` i `errors` to liczby żądań i odpowiedzi 5xx od startu procesu. `recent.n`, `recent.errors` oraz P50/P95 opisują do 512 ostatnich odpowiedzi danej trasy. Próbka ma stały limit liczby odpowiedzi i nie reprezentuje przedziału czasowego. Nierozpoznane trasy trafiają do wspólnego klucza danej metody HTTP.
+- `storage.dbBytes` oznacza miejsce zajęte przez bieżącą bazę PostgreSQL w bajtach. Pomiar z [`pg_database_size`](https://www.postgresql.org/docs/18/functions-admin.html#FUNCTIONS-ADMIN-DBSIZE) jest współdzielony i odświeżany najwyżej raz na minutę. Brak pomiaru daje `dbBytes: null` i `dbSizeStatus: "unavailable"`. `walBytes` pozostaje `null`.
+- `storage.backups` i `storage.lastBackupAt` opisują lokalne pliki. Świeżość ostatniej zweryfikowanej kopii pochodzi z `/health/backup` (`200` świeża, `503` brak kopii lub przekroczenie `maxAgeHours`).
+
 ### `GET /api/admin/system-info`
 
 Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `buildDate`, `environment`, `dbVersion`, `uptime`, `memory`.
@@ -646,7 +650,8 @@ Wymaga autoryzacji.
 | POST   | `/api/telemetry/ai/reward-batch`        | auth  | Hurtowy zapis nagród                                 |
 | GET    | `/api/telemetry/ai/settings`            | auth  | Poziom wpływu AI (`wells_ai_influence`)              |
 | POST   | `/api/telemetry/ai/settings`            | admin | Ustawienie wpływu AI 0–100                           |
-| GET    | `/api/telemetry/ai/ml-status`           | auth  | Status pipeline ML (model, trening, cache, retencja) |
+| GET    | `/api/telemetry/ai/ml-summary`          | auth  | Stan wykonywania ML, model i skonfigurowany wpływ AI |
+| GET    | `/api/telemetry/ai/ml-status`           | admin | Diagnostyka modelu, treningu, cache i retencji       |
 | GET    | `/api/telemetry/ai/health`              | admin | Health ML + metryki jakości danych                   |
 | GET    | `/api/telemetry/ai/well-selections`     | admin | Wybory studni AI                                     |
 | GET    | `/api/telemetry/ai/models`              | admin | Lista modeli                                         |
@@ -665,6 +670,10 @@ Wymaga autoryzacji.
 | GET    | `/api/telemetry/ai/training/runs/:id`   | admin | Szczegóły uruchomienia treningu                      |
 | GET    | `/api/telemetry/ai/predictions/stats`   | admin | Statystyki predykcji                                 |
 | POST   | `/api/telemetry/ai/rollback`            | admin | Rollback do poprzedniego modelu                      |
+
+`mlOnline` oznacza obecność aktywnego modelu. `modelTrained` informuje, czy zapisano dla niego dodatnią liczbę próbek treningowych. `aiMlEnabled` określa stan przełącznika wykonywania AI. W `/ml-status` `baselineAccuracy`, `lastTrainingRun` i `lastDatasetFingerprint` dotyczą udanego lokalnego treningu aktywnego modelu. Mogą być `null`, np. dla modelu startowego lub importowanego.
+
+Ręczny `POST /api/telemetry/ai/learning/run` wymaga administratora i włączonego AI. Limit to jedno żądanie na minutę na proces. Odpowiedź `429` zawiera `Retry-After`.
 
 ## Transfer Center P7 (`/api/telemetry/ai/transfer`)
 

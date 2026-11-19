@@ -24,10 +24,6 @@ jest.mock('../../src/middleware/auth', () => ({
     requireAdmin: (_req: any, _res: any, next: any) => next()
 }));
 
-jest.mock('../../src/middleware/rateLimiters', () => ({
-    READ_LIMITER: (_req: any, _res: any, next: any) => next()
-}));
-
 // P0.5 fail-closed: guard czyta flage z DB; bez mocka test zalezy od tego,
 // czy deweloperska baza ma flage ON (lokalnie tak, na CI pusta baza = 503).
 // Mock jak w telemetryAiMl.test.ts — determinystycznie ON, puste dane.
@@ -119,7 +115,7 @@ describe('GET /api/telemetry/ai/knowledge/patterns', () => {
 });
 
 describe('POST /api/telemetry/ai/learning/run', () => {
-    it('zwraca 200 z podsumowaniem cyklu uczenia', async () => {
+    it('zwraca podsumowanie, ogranicza kolejne uruchomienie i nie blokuje odczytów', async () => {
         const res = await request(app).post('/api/telemetry/ai/learning/run');
 
         expect(res.status).toBe(200);
@@ -127,5 +123,8 @@ describe('POST /api/telemetry/ai/learning/run', () => {
         expect(res.body).toHaveProperty('patternsDetected');
         expect(res.body).toHaveProperty('persistedToKb');
         expect(res.body).toHaveProperty('durationMs');
+        const repeated = await request(app).post('/api/telemetry/ai/learning/run').expect(429);
+        expect(Number(repeated.headers['retry-after'])).toBeGreaterThan(0);
+        await request(app).get('/api/telemetry/ai/knowledge/stats').expect(200);
     });
 });

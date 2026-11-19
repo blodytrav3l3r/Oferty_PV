@@ -12,7 +12,7 @@ const RING = 512;
 const MAX_KEYS = 300;
 
 interface EndpointStats {
-    samples: number[];
+    samples: Array<{ ms: number; serverError: boolean }>;
     count: number;
     errors: number;
     lastMs: number;
@@ -78,17 +78,23 @@ function startSampler() {
     timer.unref?.();
 }
 
-export function recordRequest(method: string, path: string, status: number, ms: number): void {
+export function recordRequest(
+    method: string,
+    path: string,
+    status: number,
+    ms: number,
+    routeTemplate: string | null = path
+): void {
     startSampler();
     if (shouldSkip(path)) return;
-    const key = `${method} ${normalizePath(path)}`;
+    const key = `${method} ${routeTemplate ? normalizePath(routeTemplate) : '(nierozpoznana trasa)'}`;
     let st = endpoints.get(key);
     if (!st) {
         if (endpoints.size >= MAX_KEYS) return;
         st = { samples: [], count: 0, errors: 0, lastMs: 0 };
         endpoints.set(key, st);
     }
-    st.samples.push(ms);
+    st.samples.push({ ms, serverError: status >= 500 });
     if (st.samples.length > RING) st.samples.shift();
     st.count++;
     if (status >= 500) st.errors++;
@@ -140,7 +146,14 @@ export interface MetricsSnapshot {
     drafts: { failures: number; byReason: Record<string, number> };
     endpoints: Record<
         string,
-        { n: number; p50: number; p95: number; errors: number; lastMs: number }
+        {
+            n: number;
+            p50: number;
+            p95: number;
+            errors: number;
+            lastMs: number;
+            recent: { n: number; errors: number };
+        }
     >;
     pdf: Record<string, unknown>;
     fts: Record<string, unknown>;
@@ -152,13 +165,17 @@ export function getMetricsSnapshot(
 ): MetricsSnapshot {
     const eps: MetricsSnapshot['endpoints'] = {};
     for (const [key, st] of endpoints) {
-        const sorted = [...st.samples].sort((a, b) => a - b);
+        const sorted = st.samples.map((sample) => sample.ms).sort((a, b) => a - b);
         eps[key] = {
             n: st.count,
             p50: +pct(sorted, 50).toFixed(1),
             p95: +pct(sorted, 95).toFixed(1),
             errors: st.errors,
-            lastMs: +st.lastMs.toFixed(1)
+            lastMs: +st.lastMs.toFixed(1),
+            recent: {
+                n: st.samples.length,
+                errors: st.samples.filter((sample) => sample.serverError).length
+            }
         };
     }
     return {
@@ -191,8 +208,8 @@ export function getMetricsSnapshot(
 /**
  * P3: storage do dashboardu operacyjnego — synchroniczny odczyt fs
  * (/metrics jest admin-only i wołany rzadko; brak I/O na gorącej ścieżce).
- * Zwraca liczbę lokalnych dumpów; rozmiar bazy i WAL nie są dostępne lokalnie
- * dla PostgreSQL i pozostają null. Przy błędzie zwraca wartości puste.
+ * Zwraca lokalne pliki kopii. /metrics uzupełnia rozmiar bazy pomiarem PostgreSQL.
+ * Przy błędzie odczytu katalogu zwraca wartości puste.
  */
 export function getStorageSnapshot(): StorageSnapshot {
     const empty: StorageSnapshot = {

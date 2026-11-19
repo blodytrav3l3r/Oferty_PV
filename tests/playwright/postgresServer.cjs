@@ -38,6 +38,9 @@ function executePgScript(script, ...args) {
 
 async function main() {
     const baseUrl = getTestDatabaseUrl();
+    if (!process.env.TEST_ADMIN_PASSWORD) {
+        throw new Error('Ustaw TEST_ADMIN_PASSWORD dla izolowanego serwera Playwright.');
+    }
     const schema = `sok_playwright_${process.pid}_${randomUUID().replaceAll('-', '').slice(0, 10)}`;
     const databaseUrl = new URL(baseUrl);
     databaseUrl.searchParams.set('schema', schema);

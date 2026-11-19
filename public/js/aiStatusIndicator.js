@@ -1,6 +1,6 @@
 /**
  * aiStatusIndicator.js — wskaźnik AI w górnym pasku (app.html).
- * Pobiera status pipeline'u ML z /api/telemetry/ai/ml-status i aktualizuje badge
+ * Pobiera status pipeline'u ML z /api/telemetry/ai/ml-summary i aktualizuje badge
  * obok nazwy użytkownika. Działa niezależnie od iframe modułów — badge jest
  * widoczny i świeży od pierwszego załadowania aplikacji.
  */
@@ -8,7 +8,7 @@
 (function () {
     'use strict';
 
-    const STATUS_URL = '/api/telemetry/ai/ml-status';
+    const STATUS_URL = '/api/telemetry/ai/ml-summary';
     const KNOWLEDGE_URL = '/api/telemetry/ai/knowledge/stats';
     const POLL_INTERVAL_MS = 30000;
     const KNOWLEDGE_THROTTLE_MS = 60000;
@@ -52,7 +52,13 @@
                 ? status.activeModelCreatedAt.slice(0, 10)
                 : '?';
 
-            if (status.mlOnline) {
+            if (status.mlOnline && status.modelTrained === false) {
+                dot.style.background = 'var(--warn)';
+                dot.style.boxShadow = 'none';
+                text.textContent = 'AI · model bez treningu';
+                short.textContent = 'Start';
+                text.title = 'Aktywny model bez próbek treningowych: ' + model;
+            } else if (status.mlOnline) {
                 dot.style.background = pct > 0 ? 'var(--success)' : 'var(--slate-500)';
                 text.textContent = 'AI ' + pct + '% · ' + model + ' · ' + date;
                 short.textContent = pct + '%';
@@ -62,22 +68,12 @@
                         : 'AI online, tryb shadow (0%) — tylko obserwacja') +
                     ' | model: ' +
                     model +
-                    (status.activeModelAuc != null
-                        ? ' (AUC ' + Number(status.activeModelAuc).toFixed(4) + ')'
-                        : '') +
                     ' | utworzony: ' +
                     date +
                     ' | ranking: ' +
                     (status.rankingVersion || '?') +
                     ' | feat: ' +
-                    (status.featureVersion || '?') +
-                    (status.trainingRows != null ? ' | wiersze: ' + status.trainingRows : '') +
-                    (status.lastTrainingRun && status.lastTrainingRun.id
-                        ? ' | run: ' + String(status.lastTrainingRun.id).slice(0, 8)
-                        : '') +
-                    (status.lastDatasetFingerprint
-                        ? ' | dataset: ' + String(status.lastDatasetFingerprint).slice(0, 12)
-                        : '');
+                    (status.featureVersion || '?');
             } else {
                 dot.style.background = 'var(--slate-400)';
                 dot.style.boxShadow = 'none';

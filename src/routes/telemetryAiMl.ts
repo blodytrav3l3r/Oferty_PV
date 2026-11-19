@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { modelRegistry } from '../services/ml/ModelRegistry';
+import { modelRegistry, type StoredModel } from '../services/ml/ModelRegistry';
 import { trainingPipeline } from '../services/ml/TrainingPipeline';
 import { selfEvaluation } from '../services/ml/SelfEvaluation';
 import { rewardCalculator } from '../services/ml/RewardCalculator';
@@ -711,7 +711,32 @@ router.put(
     }
 );
 
-router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {
+async function getMlSummary(activeModel: StoredModel | null) {
+    const [aiMlEnabled, influence] = await Promise.all([
+        isAiMlEnabled(),
+        prisma.settings.findUnique({ where: { key: 'wells_ai_influence' } })
+    ]);
+    return {
+        mlOnline: !!activeModel,
+        modelTrained: (activeModel?.trainingRows ?? 0) > 0,
+        modelVersion: activeModel?.version ?? null,
+        activeModelCreatedAt: activeModel?.createdAt ?? null,
+        featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+        rankingVersion: ML_CONSTANTS.RANKING_VERSION,
+        aiMlEnabled,
+        aiInfluencePct: parseInt(influence?.value || '0', 10)
+    };
+}
+
+router.get('/ai/ml-summary', requireAuth, READ_LIMITER, async (_req, res) => {
+    try {
+        res.json(await getMlSummary(await modelRegistry.getActiveModel()));
+    } catch (e) {
+        sendInternalError(res, 'AiMlRoute', e);
+    }
+});
+
+router.get('/ai/ml-status', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {
         const activeModel = await modelRegistry.getActiveModel();
         const modelCount = await modelRegistry.getModelCount();
@@ -727,31 +752,21 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
         const labeledCount = featureCount - (labelCounts['NO_FEEDBACK'] ?? 0);
         const pipelineStatus = trainingPipeline.getStatus();
         const rewardLogs = await prisma.aiRewardLog.count();
-        const aiInfluence = await prisma.settings.findUnique({
-            where: { key: 'wells_ai_influence' }
-        });
+        const summary = await getMlSummary(activeModel);
 
-        const activeMetrics = (activeModel?.metrics || {}) as {
-            rocAuc?: number | null;
-            prAuc?: number | null;
-            f1?: number | null;
-            logLoss?: number | null;
-            ece?: number | null;
-        };
+        const activeMetrics = summary.modelTrained ? activeModel?.metrics : null;
 
-        // Baseline accuracy (plan 2.2): max(positiveRate, 1-positiveRate) z
-        // ostatniego udanego treningu (AiTrainingRun.baselineAccuracy) — porównanie
-        // model vs baseline majority-class, nie AUC vs 0.5.
-        const lastSuccessRun = await prisma.aiTrainingRun.findFirst({
-            where: { status: 'SUCCESS', baselineAccuracy: { not: null } },
-            orderBy: { startedAt: 'desc' }
-        });
+        const lastSuccessRun = activeModel
+            ? await prisma.aiTrainingRun.findFirst({
+                  where: { status: 'SUCCESS', candidateModelVersion: activeModel.version },
+                  orderBy: { startedAt: 'desc' }
+              })
+            : null;
         const baselineAccuracy = lastSuccessRun?.baselineAccuracy ?? null;
 
         res.json({
-            mlOnline: !!activeModel,
-            modelVersion: activeModel?.version || null,
-            activeModelAuc: activeModel?.metrics?.rocAuc ?? null,
+            ...summary,
+            activeModelAuc: activeMetrics?.rocAuc ?? null,
             baselineAccuracy,
             // P3.3: lineage minimum — wiersze treningowe, seed i ostatni run
             // (bez zmiany schematu; dataset fingerprint dopiero z migracją).
@@ -765,17 +780,14 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             lastDatasetFingerprint: lastSuccessRun?.datasetFingerprint ?? null,
             lastCandidateVersion: lastSuccessRun?.candidateModelVersion ?? null,
             activeModelMetrics: {
-                rocAuc: activeMetrics.rocAuc ?? null,
-                prAuc: activeMetrics.prAuc ?? null,
-                f1: activeMetrics.f1 ?? null,
-                logLoss: activeMetrics.logLoss ?? null,
-                ece: activeMetrics.ece ?? null
+                rocAuc: activeMetrics?.rocAuc ?? null,
+                prAuc: activeMetrics?.prAuc ?? null,
+                f1: activeMetrics?.f1 ?? null,
+                logLoss: activeMetrics?.logLoss ?? null,
+                ece: activeMetrics?.ece ?? null
             },
             activeModelState: activeModel?.state || null,
-            activeModelCreatedAt: activeModel?.createdAt || null,
             modelFeatureCount: activeModel?.featureMins?.length || ML_CONSTANTS.FEATURE_COUNT,
-            featureVersion: ML_CONSTANTS.FEATURE_VERSION,
-            rankingVersion: ML_CONSTANTS.RANKING_VERSION,
             modelCount,
             featureCount,
             labeledCount,
@@ -793,8 +805,6 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             trainingGate: await trainingPipeline.gateStatus(),
             totalRewards: rewardLogs,
             cacheSize: predictionCacheSize(),
-            aiMlEnabled: await isAiMlEnabled(),
-            aiInfluencePct: parseInt(aiInfluence?.value || '0', 10),
             retention: {
                 keepLast: ML_CONFIG.retention.keepLast,
                 keepBest: ML_CONFIG.retention.keepBest
@@ -815,12 +825,15 @@ router.get(
             const telemetryCount = await prisma.ai_telemetry_logs.count();
             const featureCount = await featureExtractor.getFeatureCount();
             const activeModel = await modelRegistry.getActiveModel();
+            const modelTrained = (activeModel?.trainingRows ?? 0) > 0;
             const modelCount = await modelRegistry.getModelCount();
             const pipelineStatus = trainingPipeline.getStatus();
             const rewardLogs = await prisma.aiRewardLog.count();
 
-            const lastModel = await prisma.aiModel.findFirst({
-                orderBy: { createdAt: 'desc' }
+            const lastRun = await prisma.aiTrainingRun.findFirst({
+                where: { status: 'SUCCESS', finishedAt: { not: null } },
+                orderBy: { finishedAt: 'desc' },
+                select: { finishedAt: true }
             });
 
             const withSnapshot = await prisma.ai_telemetry_logs.count({
@@ -837,7 +850,11 @@ router.get(
             });
 
             let driftPct = null;
-            if (activeModel?.featureMins?.length && activeModel?.featureMaxs?.length) {
+            if (
+                modelTrained &&
+                activeModel?.featureMins?.length &&
+                activeModel?.featureMaxs?.length
+            ) {
                 try {
                     const recentLogs = await prisma.ai_telemetry_logs.findMany({
                         where: { NOT: { featureSnapshot: '{}' } },
@@ -859,12 +876,13 @@ router.get(
                         // P4: indeksy cech z DRIFT_FEATURES (wyznaczane z FEATURE_NAMES na starcie modułu)
                         for (const { key, idx } of DRIFT_FEATURES) {
                             const val = Number(snap[key]);
-                            if (isNaN(val)) continue;
+                            if (snap[key] == null || !Number.isFinite(val)) continue;
                             totalChecks++;
                             if (val < mins[idx] || val > maxs[idx]) outOfRange++;
                         }
                     }
-                    driftPct = totalChecks > 0 ? Math.round((outOfRange / totalChecks) * 100) : 0;
+                    driftPct =
+                        totalChecks > 0 ? Math.round((outOfRange / totalChecks) * 100) : null;
                 } catch (driftErr) {
                     const driftMsg =
                         driftErr instanceof Error ? driftErr.message : String(driftErr);
@@ -875,13 +893,17 @@ router.get(
 
             res.json({
                 mlOnline: !!activeModel,
+                modelTrained,
                 aiMlEnabled: await isAiMlEnabled(),
                 telemetryCount,
                 featureCount,
                 modelCount,
                 modelVersion: activeModel?.version || null,
-                modelAccuracy: activeModel?.metrics?.accuracy ?? null,
-                lastTrainingAt: lastModel?.createdAt || null,
+                modelAccuracy:
+                    modelTrained && Number.isFinite(activeModel?.metrics?.accuracy)
+                        ? (activeModel?.metrics?.accuracy ?? null)
+                        : null,
+                lastTrainingAt: lastRun?.finishedAt ?? null,
                 trainingRunning: pipelineStatus.running,
                 totalRewards: rewardLogs,
                 driftPct,

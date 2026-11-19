@@ -1,6 +1,6 @@
 /**
  * opsDashboard.js — read-only dashboard operacyjny w panelu admina (index.html).
- * Tylko prezentacja istniejących endpointów: /health, /health/ready,
+ * Tylko prezentacja istniejących endpointów: /health, /health/ready, /health/backup,
  * /api/version, /api/admin/system-info, /metrics, /api/telemetry/ai/ml-status.
  * Brak mutacji, brak nowego frameworka, brak nowych globali (IIFE).
  * Stany: OK / WARNING / ERROR / UNKNOWN (brak wymyślonych sygnałów).
@@ -12,7 +12,7 @@
     var _timer = null;
 
     function esc(s) {
-        return typeof escapeHtml === 'function' ? escapeHtml(String(s)) : String(s);
+        return typeof escapeHtml === 'function' ? escapeHtml(String(s)) : escAttr(s);
     }
 
     function escAttr(s) {
@@ -68,8 +68,21 @@
     // null/pusty/słaby = WARNING.
     function cspStatus(h) {
         if (h === undefined) return { label: 'niezweryfikowane', state: 'UNKNOWN' };
-        var v = String(h || '');
-        var strong = v.indexOf('script-src') !== -1 && /nonce-[A-Za-z0-9+/=]+/.test(v);
+        var scriptSrc = String(h || '')
+            .split(';')
+            .map(function (directive) {
+                return directive.trim().split(/\s+/);
+            })
+            .find(function (parts) {
+                return parts[0] === 'script-src';
+            });
+        var strong =
+            scriptSrc &&
+            scriptSrc.includes("'self'") &&
+            !scriptSrc.includes("'unsafe-inline'") &&
+            scriptSrc.some(function (source) {
+                return /^'nonce-[A-Za-z0-9+/_=-]+'$/.test(source);
+            });
         return strong
             ? { label: 'aktywne', state: 'OK' }
             : { label: 'słabe / report-only', state: 'WARNING' };
@@ -112,9 +125,9 @@
               : Math.floor(sec / 60) + 'm';
     }
 
-    function getJson(url) {
+    function getJson(url, acceptedStatus) {
         return fetch(url, { credentials: 'same-origin' }).then(function (res) {
-            if (!res.ok) {
+            if (!res.ok && (acceptedStatus === undefined || res.status !== acceptedStatus)) {
                 var e = new Error('HTTP ' + res.status);
                 e.status = res.status;
                 e.headers = res.headers;
@@ -150,10 +163,12 @@
                     'OK',
                     'Tryb serwera (development / production). W development ścieżki i logi mogą się różnić.'
                 );
+                var commit = sysinfo.commitHash;
+                var hasCommit = typeof commit === 'string' && /^[0-9a-f]{7,64}$/i.test(commit);
                 html += row(
                     'Commit',
-                    esc(String(sysinfo.commitHash || '?').slice(0, 12)),
-                    'OK',
+                    hasCommit ? esc(commit.slice(0, 12)) : 'brak identyfikatora',
+                    hasCommit ? 'OK' : 'UNKNOWN',
                     'Skrót commita git działającego kodu. Pozwala powiązać zachowanie z konkretną rewizją.'
                 );
                 html += row(
@@ -194,7 +209,7 @@
             live ? 'OK' : 'ERROR',
             'Czy proces odpowiada na /health. ERROR = serwer padł lub wiesza się.'
         );
-        if (!ready) {
+        if (!ready || !['ready', 'not_ready'].includes(ready.status)) {
             html += row('Readiness (DB)', 'brak danych', 'UNKNOWN');
         } else if (ready.status === 'ready') {
             html += row(
@@ -215,7 +230,23 @@
         container.innerHTML += html;
     }
 
-    function renderApi(container, metrics, csp) {
+    function backupRow(backup) {
+        if (!backup || !['ok', 'stale'].includes(backup.status)) {
+            return row('Świeżość backupu', 'brak danych', 'UNKNOWN');
+        }
+        var hasAge = Number.isFinite(backup.ageHours) && backup.ageHours >= 0;
+        var hasLimit = Number.isFinite(backup.maxAgeHours) && backup.maxAgeHours > 0;
+        var age = hasAge ? backup.ageHours + ' h' : 'brak zweryfikowanej kopii';
+        var limit = hasLimit ? ' / limit ' + backup.maxAgeHours + ' h' : '';
+        return row(
+            'Świeżość backupu',
+            esc(age + limit),
+            backup.status === 'stale' ? 'WARNING' : hasAge && hasLimit ? 'OK' : 'UNKNOWN',
+            'Wiek zapisu ostatniej udanej weryfikacji kopii wg /health/backup.'
+        );
+    }
+
+    function renderApi(container, metrics, csp, backup) {
         var html =
             '<div class="ops-card"><h4 title="' +
             escAttr(
@@ -223,12 +254,7 @@
             ) +
             '"><i data-lucide="server"></i>API</h4>';
         if (!metrics) {
-            html += row(
-                'Metryki',
-                'wymagają admina',
-                'UNKNOWN',
-                'Liczniki /metrics tylko dla admina.'
-            );
+            html += row('Metryki', 'brak danych', 'UNKNOWN', 'Liczniki /metrics tylko dla admina.');
         } else {
             var eps = metrics.endpoints || {};
             var names = Object.keys(eps);
@@ -245,11 +271,12 @@
                 'Licznik żądań od startu procesu. Zeruje się przy restarcie — spadek razem z Uptime = restart.'
             );
             html += row(
-                'Błędy 5xx',
+                'Błędy 5xx od startu',
                 esc(String(errors)),
-                errors > 0 ? 'WARNING' : 'OK',
-                'Liczba błędów serwera 5xx. WARNING przy >0 — sprawdź logi serwera (logger), ostatnie deploye i bazę.'
+                total === 0 ? 'UNKNOWN' : errors > 0 ? 'WARNING' : 'OK',
+                'Licznik procesu. Szczegóły odpowiedzi znajdziesz w logach serwera.'
             );
+            html += endpointErrorRows(eps);
             html += row(
                 'DB: zapytania / busy',
                 esc(String((metrics.db && metrics.db.queries) || 0)) +
@@ -265,23 +292,27 @@
                 'Nieudane zapisy audytu (tabela audit). >0 = dziura w historii zmian — sprawdź bazę i miejsce na dysku.'
             );
             if (metrics.storage) {
+                var dbBytes = metrics.storage.dbBytes;
                 html += row(
                     'Rozmiar bazy PostgreSQL',
-                    esc(fmtBytes(metrics.storage.dbBytes)),
-                    'UNKNOWN',
-                    'Rozmiar PostgreSQL nie jest zbierany przez endpoint metryk. Użyj pg_database_size w monitoringu bazy.'
+                    Number.isSafeInteger(dbBytes) && dbBytes > 0 ? esc(fmtBytes(dbBytes)) : '—',
+                    Number.isSafeInteger(dbBytes) && dbBytes > 0 ? 'OK' : 'UNKNOWN',
+                    metrics.storage.dbSizeStatus === 'unavailable'
+                        ? 'Pomiar PostgreSQL niedostępny. Sprawdź logi aplikacji.'
+                        : 'Miejsce zajęte przez bieżącą bazę PostgreSQL.'
                 );
                 html += row(
-                    'Backupy',
+                    'Lokalne pliki kopii',
                     esc(String(metrics.storage.backups || 0)) +
                         (metrics.storage.lastBackupAt
                             ? ' (ostatni: ' + esc(metrics.storage.lastBackupAt.slice(0, 10)) + ')'
                             : ' (brak)'),
                     (metrics.storage.backups || 0) > 0 ? 'OK' : 'WARNING',
-                    'Liczba backupów i data ostatniego. WARNING przy braku — wykonaj npm run backup przed migracją.'
+                    'Liczba plików i data modyfikacji najnowszego pliku.'
                 );
             }
         }
+        html += backupRow(backup);
         html += row(
             'CSP enforce',
             csp.label,
@@ -290,6 +321,61 @@
         );
         html += '</div>';
         container.innerHTML += html;
+    }
+
+    function endpointErrorRows(endpoints) {
+        var entries = Object.entries(endpoints);
+        var sampled = entries.filter(function (entry) {
+            return entry[1].recent && entry[1].recent.n > 0;
+        });
+        var hasRecentErrors = sampled.some(function (entry) {
+            return entry[1].recent.errors > 0;
+        });
+        var html = row(
+            '5xx w ostatnich próbkach',
+            sampled.length ? (hasRecentErrors ? 'wykryto' : 'brak') : 'brak próbek',
+            sampled.length ? (hasRecentErrors ? 'WARNING' : 'OK') : 'UNKNOWN',
+            'Maksymalnie 512 ostatnich odpowiedzi na endpoint.'
+        );
+        var top = entries
+            .filter(function (entry) {
+                return entry[1].errors > 0;
+            })
+            .sort(function (a, b) {
+                return (
+                    ((b[1].recent && b[1].recent.errors) || 0) -
+                        ((a[1].recent && a[1].recent.errors) || 0) || b[1].errors - a[1].errors
+                );
+            })
+            .slice(0, 3);
+        return (
+            html +
+            top
+                .map(function (entry) {
+                    var stats = entry[1];
+                    var recent = stats.recent;
+                    var details = stats.errors + '/' + stats.n + ' od startu';
+                    if (recent && recent.n > 0) {
+                        details +=
+                            ' · ' +
+                            recent.errors +
+                            '/' +
+                            recent.n +
+                            ' (' +
+                            ((recent.errors / recent.n) * 100).toFixed(1) +
+                            '%) · p95 ' +
+                            stats.p95 +
+                            ' ms';
+                    }
+                    return row(
+                        entry[0],
+                        esc(details),
+                        recent ? (recent.errors ? 'WARNING' : 'OK') : 'UNKNOWN',
+                        'Błędy / żądania od startu oraz w ostatnich próbkach i ich czas p95.'
+                    );
+                })
+                .join('')
+        );
     }
 
     function renderMl(container, ml) {
@@ -301,35 +387,46 @@
             '"><i data-lucide="brain"></i>ML</h4>';
         if (!ml) {
             html += row('Status', 'brak danych', 'UNKNOWN');
-        } else if (!ml.mlOnline) {
+        } else if (ml.aiMlEnabled === false || !ml.mlOnline) {
             html += row(
                 'Status',
-                'offline (ranking techniczny)',
+                ml.aiMlEnabled === false ? 'wyłączony' : 'brak aktywnego modelu',
                 'WARNING',
                 'ML wyłączony (kill-switch feature_ai_ml_enabled lub brak modelu). Oferty liczone regułami — sprawdź flagę i trening.'
             );
         } else {
+            var trained = ml.modelTrained === true;
+            var hasAuc = trained && Number.isFinite(ml.activeModelAuc);
+            var hasRun = trained && !!ml.lastTrainingRun;
+            var model =
+                esc(ml.modelVersion || '?') + ' @ ' + esc(String(ml.aiInfluencePct || 0)) + '%';
             html += row(
                 'Model',
-                esc(ml.modelVersion || '?') + ' @ ' + esc(String(ml.aiInfluencePct || 0)) + '%',
-                'OK',
-                'Aktywna wersja modelu i % decyzji AI w rankingu. Niski % = AI mało wpływa — sprawdź progi i rewardy.'
+                model + (ml.modelTrained === false ? ' · bez treningu' : ''),
+                ml.modelTrained === false ? 'WARNING' : hasAuc && hasRun ? 'OK' : 'UNKNOWN',
+                'Aktywny model i jego wpływ na ranking. OK wymaga metryki ROC-AUC i udanego lokalnego treningu.'
             );
             html += row(
-                'AUC / baseline',
-                esc(ml.activeModelAuc != null ? Number(ml.activeModelAuc).toFixed(4) : '—') +
-                    ' / ' +
-                    esc(ml.baselineAccuracy != null ? Number(ml.baselineAccuracy).toFixed(4) : '—'),
-                'OK',
-                'Jakość modelu (AUC) vs dokładność reguł (baseline). AUC blisko baseline = model niewiele lepszy od reguł.'
+                'ROC-AUC modelu',
+                hasAuc ? esc(ml.activeModelAuc.toFixed(4)) : '—',
+                hasAuc ? 'OK' : 'UNKNOWN',
+                'Metryka rozróżniania klas. OK oznacza dostępny pomiar.'
+            );
+            html += row(
+                'Baseline accuracy',
+                trained && Number.isFinite(ml.baselineAccuracy)
+                    ? esc(ml.baselineAccuracy.toFixed(4))
+                    : '—',
+                trained && Number.isFinite(ml.baselineAccuracy) ? 'OK' : 'UNKNOWN',
+                'Dokładność przewidywania klasy większościowej w zbiorze treningowym.'
             );
             html += row(
                 'Wiersze / run',
                 esc(ml.trainingRows != null ? String(ml.trainingRows) : '—') +
                     ' / ' +
                     esc(ml.lastTrainingRun ? String(ml.lastTrainingRun.id).slice(0, 8) : '—'),
-                'OK',
-                'Wiersze treningowe i ID ostatniego treningu. Mało wierszy = słaby model — zbierz więcej decyzji (rewardy).'
+                hasRun ? 'OK' : 'UNKNOWN',
+                'Liczba wierszy i identyfikator udanego lokalnego treningu aktywnego modelu.'
             );
             html += row(
                 'Dataset',
@@ -339,7 +436,7 @@
                         : '—'
                 ),
                 ml.lastDatasetFingerprint ? 'OK' : 'UNKNOWN',
-                'Fingerprint datasetu treningowego. UNKNOWN = brak treningu na tych danych — model może być nieaktualny.'
+                'Skrót zbioru z udanego lokalnego treningu aktywnego modelu.'
             );
         }
         html += '</div>';
@@ -376,7 +473,7 @@
                 .catch(function () {
                     return null;
                 }),
-            getJson('/health/ready')
+            getJson('/health/ready', 503)
                 .then(function (r) {
                     return r.body;
                 })
@@ -387,6 +484,9 @@
                 return null;
             }),
             getJson('/api/telemetry/ai/ml-status').catch(function () {
+                return null;
+            }),
+            getJson('/health/backup', 503).catch(function () {
                 return null;
             })
         ]).then(function (results) {
@@ -416,7 +516,12 @@
             }
             renderApp(grid, bodyOf(results[0]), bodyOf(results[1]));
             renderHealth(grid, bodyOf(results[2]), bodyOf(results[3]));
-            renderApi(grid, bodyOf(results[4]), cspStatus(headerOf(results[5])));
+            renderApi(
+                grid,
+                bodyOf(results[4]),
+                cspStatus(headerOf(results[5])),
+                bodyOf(results[6])
+            );
             renderMl(grid, bodyOf(results[5]));
             if (typeof lucide !== 'undefined' && lucide.createIcons) {
                 try {

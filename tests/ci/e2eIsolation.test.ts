@@ -66,9 +66,11 @@ describe('D-017 E2E isolation: specy nie walą w dev :3000', () => {
         expect(SMOKE).not.toMatch(/localhost:3000/);
     });
 
-    it('aiDashboardSmoke.spec.ts default NIE jest :3000', () => {
-        expect(AI_SMOKE).toMatch(/PLAYWRIGHT_BASE_URL/);
-        expect(AI_SMOKE).not.toMatch(/localhost:3000/);
+    it('aiDashboardSmoke.spec.ts używa wyłącznie adresu bazowego z konfiguracji Playwright', () => {
+        const calls = AI_SMOKE.match(/\brequest\.(?:get|post)\(/g) ?? [];
+        const relativeCalls = AI_SMOKE.match(/\brequest\.(?:get|post)\('\/api\//g) ?? [];
+        expect(calls.length).toBeGreaterThan(0);
+        expect(relativeCalls).toHaveLength(calls.length);
     });
 });
 

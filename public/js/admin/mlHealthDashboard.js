@@ -96,15 +96,13 @@
                     return;
                 }
 
-                const modelStr = d.modelVersion
-                    ? window.escapeHtml(d.modelVersion) +
-                      (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
-                    : 'Brak';
-                const modelOk = !!d.mlOnline;
+                const modelOk = d.mlOnline && d.modelTrained === true;
+                const accuracy =
+                    modelOk && Number.isFinite(d.modelAccuracy) ? d.modelAccuracy : null;
                 // Kotwica SEC-03: modelTooltip jest SUROWY celowo — escape atrybutu następuje w callerze
                 // healthCard('Model', ..., window.escapeHtmlAttr(modelTooltip)) poniżej. Nie escapować tutaj.
                 const modelTooltip = d.modelVersion
-                    ? d.modelVersion + (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
+                    ? d.modelVersion + (accuracy !== null ? ' (acc: ' + accuracy + ')' : '')
                     : 'Brak';
 
                 const html =
@@ -132,16 +130,16 @@
                     ) +
                     healthCard(
                         'Model',
-                        modelStr,
+                        window.escapeHtml(modelTooltip),
                         modelOk,
-                        null,
+                        d.mlOnline && !modelOk ? 'Bez treningu' : null,
                         window.escapeHtmlAttr(modelTooltip)
                     ) +
                     healthCard(
                         'Predict',
-                        d.mlOnline ? 'Online' : 'Offline',
-                        d.mlOnline,
-                        d.mlOnline ? 'model v' + window.escapeHtml(d.modelVersion) : 'brak modelu'
+                        modelOk ? 'Online' : d.mlOnline ? 'Model bez treningu' : 'Offline',
+                        modelOk,
+                        d.mlOnline ? 'model ' + window.escapeHtml(d.modelVersion) : 'brak modelu'
                     ) +
                     healthCard('Nagrody', d.totalRewards, true) +
                     /* Drift danych: % ostatnich telemetrii poza zakresem modelu (niski = OK) */

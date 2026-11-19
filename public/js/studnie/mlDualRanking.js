@@ -21,7 +21,7 @@
 
     const BATCH_PREDICT_URL = '/api/telemetry/ai/predict/batch';
     const SETTINGS_URL = '/api/telemetry/ai/settings';
-    const ML_STATUS_URL = '/api/telemetry/ai/ml-status';
+    const FEATURE_SCHEMA_URL = '/api/telemetry/ai/feature-schema';
     const FETCH_TIMEOUT = 3000;
 
     const MAX_AI_CANDIDATES = 10;
@@ -111,7 +111,7 @@
             const timeoutId = setTimeout(function () {
                 controller.abort();
             }, 2000);
-            const res = await fetch(ML_STATUS_URL, {
+            const res = await fetch(FEATURE_SCHEMA_URL, {
                 headers: authHeaders(),
                 credentials: 'same-origin',
                 signal: controller.signal
@@ -119,7 +119,7 @@
             clearTimeout(timeoutId);
             if (!res.ok) return null;
             const data = await res.json();
-            return typeof data.featureVersion === 'string' ? data.featureVersion : null;
+            return typeof data.version === 'string' ? data.version : null;
         } catch (_e) {
             return null;
         }

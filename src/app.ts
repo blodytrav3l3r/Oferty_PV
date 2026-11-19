@@ -18,6 +18,7 @@ import swaggerSpec from './swagger';
 import { ensureAdminExists } from './middleware/auth';
 import { requireAuth, requireAdmin } from './middleware/auth';
 import { getMetricsSnapshot } from './utils/metrics';
+import { getDatabaseSize } from './services/databaseSize';
 import { getPdfMetrics } from './services/pdf/pdfEngine';
 import healthPdfRouter from './routes/healthPdf';
 import { isBackupStale, readBackupMarker, MAX_BACKUP_AGE_MS } from '../scripts/backup';
@@ -228,8 +229,10 @@ app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
  *       403:
  *         description: Wymagana rola admin
  */
-app.get('/metrics', requireAuth, requireAdmin, (_req, res) => {
-    res.json(getMetricsSnapshot(getPdfMetrics()));
+app.get('/metrics', requireAuth, requireAdmin, async (_req, res) => {
+    const databaseSize = await getDatabaseSize();
+    const metrics = getMetricsSnapshot(getPdfMetrics());
+    res.json({ ...metrics, storage: { ...metrics.storage, ...databaseSize } });
 });
 
 /* ===== DOKUMENTACJA API (Swagger) ===== */

@@ -14,12 +14,9 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
         const start = Date.now();
         res.on('finish', () => {
             const ms = Date.now() - start;
-            // M: metryki per endpoint (route template gdy znany, inaczej ścieżka).
-            const routePath =
-                ((req as unknown as { route?: { path?: unknown } }).route?.path as
-                    string | undefined) || req.path;
-            const fullPath = req.baseUrl && routePath ? req.baseUrl + routePath : req.path;
-            recordRequest(req.method, fullPath, res.statusCode, ms);
+            const routePath: unknown = req.route?.path;
+            const routeTemplate = typeof routePath === 'string' ? req.baseUrl + routePath : null;
+            recordRequest(req.method, req.path, res.statusCode, ms, routeTemplate);
             const dbQueries = getDbCount();
             const dbPart = dbQueries >= 0 ? `, db=${dbQueries}` : '';
             const requestPath = req.originalUrl.split('?', 1)[0];
