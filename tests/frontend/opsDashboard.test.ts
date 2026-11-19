@@ -159,6 +159,114 @@ describe('P6 ops dashboard', () => {
         expect(model?.querySelector('.ops-warn')).not.toBeNull();
     });
 
+    test('liveness odrzuca nieoczekiwany status nawet przy HTTP 200', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/health' ? resp({ status: 'degraded' }) : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const liveness = opsRow('Liveness');
+        expect(liveness?.textContent).toContain('nieoczekiwana odpowiedź');
+        expect(liveness?.querySelector('.ops-err')).not.toBeNull();
+    });
+
+    test('opis próbek ML zaznacza, że liczba dotyczy tylko splitu treningowego', async () => {
+        global.fetch = jest.fn(async (url: string) => healthy[url]);
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const samples = opsRow('Próbki treningowe / przebieg');
+        expect(samples?.textContent).toContain('100 / run12345');
+        expect(samples?.querySelector('.ops-name')?.getAttribute('title')).toContain(
+            'części treningowej'
+        );
+        expect(samples?.querySelector('.ops-name')?.getAttribute('title')).toContain(
+            'nie obejmuje walidacji ani testu'
+        );
+    });
+
+    test('pokazuje kwalifikujące cechy i próg startu treningu oddzielnie od telemetrii', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/api/telemetry/ai/ml-status'
+                ? resp({
+                      mlOnline: true,
+                      aiMlEnabled: true,
+                      modelTrained: false,
+                      modelVersion: 'v0.1.0-starter',
+                      aiInfluencePct: 0,
+                      trainingRows: 0,
+                      trainingGate: {
+                          eligible: false,
+                          reason: 'insufficient_new_data:0',
+                          newSinceLastTrain: 0,
+                          minNewData: 50
+                      }
+                  })
+                : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const gate = opsRow('Nowe cechy / próg');
+        expect(gate?.textContent).toContain('0 / 50');
+        expect(gate?.querySelector('.ops-warn')).not.toBeNull();
+        expect(gate?.querySelector('.ops-name')?.getAttribute('title')).toContain(
+            'Nie jest liczbą wszystkich zdarzeń telemetrycznych'
+        );
+        expect(gate?.querySelector('.ops-name')?.getAttribute('title')).toContain(
+            'Cron rozpoczyna trening po osiągnięciu progu'
+        );
+    });
+
+    test('RSS ostrzega przy 80% wykrytego limitu pamięci', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/api/admin/system-info'
+                ? resp({
+                      version: '1.31.0',
+                      environment: 'test',
+                      commitHash: 'abc123def456',
+                      uptime: 9000,
+                      memory: { rss: 220 * 1024 * 1024 },
+                      memoryLimitBytes: 256 * 1024 * 1024
+                  })
+                : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const rss = opsRow('Pamięć RSS');
+        expect(rss?.textContent).toContain('85.9%');
+        expect(rss?.querySelector('.ops-warn')).not.toBeNull();
+    });
+
+    test('brak pomiaru RSS jest UNKNOWN, a brak limitu pokazuje fallback 1 GiB', async () => {
+        global.fetch = jest.fn(async (url: string) =>
+            url === '/api/admin/system-info'
+                ? resp({
+                      version: '1.31.0',
+                      environment: 'test',
+                      commitHash: 'abc123def456',
+                      uptime: 9000,
+                      memory: {}
+                  })
+                : healthy[url]
+        );
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const rss = opsRow('Pamięć RSS');
+        expect(rss?.textContent).toContain('—');
+        expect(rss?.querySelector('.ops-unknown')).not.toBeNull();
+
+        global.fetch = jest.fn(async (url: string) => healthy[url]);
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const fallback = opsRow('Pamięć RSS');
+        expect(fallback?.textContent).toContain('limit nieznany');
+    });
+
     test('przy niedostępnym pomiarze bazy zachowuje metryki i pokazuje trasę błędów', async () => {
         global.fetch = jest.fn(async (url: string) =>
             url === '/metrics'

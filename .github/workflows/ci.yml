@@ -257,7 +257,11 @@ jobs:
             - uses: actions/checkout@v7
 
             - name: Build Docker image
-              run: docker build -t sok-oferty:${{ github.sha }} .
+              run: >-
+                  docker build
+                  --build-arg APP_COMMIT_SHA="${GITHUB_SHA}"
+                  --build-arg APP_GIT_BRANCH="${GITHUB_REF_NAME}"
+                  -t sok-oferty:${{ github.sha }} .
 
             - name: Provision least-privilege PostgreSQL roles
               run: |

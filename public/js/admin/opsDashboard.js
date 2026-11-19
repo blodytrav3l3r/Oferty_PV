@@ -104,7 +104,7 @@
 
     function fmtBytes(b) {
         if (b === null || b === undefined) return '—';
-        var units = ['B', 'KB', 'MB', 'GB'];
+        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
         var i = 0;
         var v = b;
         while (v >= 1024 && i < units.length - 1) {
@@ -177,12 +177,40 @@
                     'OK',
                     'Czas od startu procesu. Nagły spadek = restart (crash, deploy, reboot).'
                 );
-                html += row(
-                    'Pamięć RSS',
-                    esc(fmtBytes(sysinfo.memory && sysinfo.memory.rss)),
-                    (sysinfo.memory && sysinfo.memory.rss) > 1024 * 1024 * 1024 ? 'WARNING' : 'OK',
-                    'Zużycie RAM procesu Node. WARNING powyżej 1 GB — możliwy wyciek, sprawdź logi i zrestartuj.'
-                );
+                var rss = sysinfo.memory && sysinfo.memory.rss;
+                var hasRss = Number.isSafeInteger(rss) && rss >= 0;
+                var memoryLimit = sysinfo.memoryLimitBytes;
+                var hasMemoryLimit = Number.isSafeInteger(memoryLimit) && memoryLimit > 0;
+                if (!hasRss) {
+                    html += row(
+                        'Pamięć RSS',
+                        '—',
+                        'UNKNOWN',
+                        'Brak poprawnego pomiaru RSS procesu Node.'
+                    );
+                } else if (hasMemoryLimit) {
+                    var rssRatio = rss / memoryLimit;
+                    html += row(
+                        'Pamięć RSS',
+                        esc(
+                            fmtBytes(rss) +
+                                ' / ' +
+                                fmtBytes(memoryLimit) +
+                                ' (' +
+                                (rssRatio * 100).toFixed(1) +
+                                '%)'
+                        ),
+                        rssRatio >= 0.8 ? 'WARNING' : 'OK',
+                        'RSS procesu Node jako udział limitu pamięci procesu. WARNING od 80%; nie obejmuje pełnego użycia kontenera ani Chromium.'
+                    );
+                } else {
+                    html += row(
+                        'Pamięć RSS',
+                        esc(fmtBytes(rss) + ' · limit nieznany'),
+                        rss > 1024 * 1024 * 1024 ? 'WARNING' : 'OK',
+                        'System nie zgłosił limitu pamięci. Używany jest awaryjny próg 1 GiB dla RSS procesu Node; nie obejmuje pełnego użycia kontenera ani Chromium.'
+                    );
+                }
             } else {
                 html += row(
                     'Diagnostyka',
@@ -203,10 +231,11 @@
                 'Sondy Kubernetes-style: liveness = czy proces żyje, readiness = czy baza gotowa. ERROR tutaj = najpierw sprawdź serwer i bazę.'
             ) +
             '"><i data-lucide="activity"></i>Zdrowie</h4>';
+        var livenessOk = !!(live && live.status === 'ok');
         html += row(
             'Liveness',
-            live ? 'odpowiada' : 'brak odpowiedzi',
-            live ? 'OK' : 'ERROR',
+            livenessOk ? 'odpowiada' : live ? 'nieoczekiwana odpowiedź' : 'brak odpowiedzi',
+            livenessOk ? 'OK' : 'ERROR',
             'Czy proces odpowiada na /health. ERROR = serwer padł lub wiesza się.'
         );
         if (!ready || !['ready', 'not_ready'].includes(ready.status)) {
@@ -421,12 +450,24 @@
                 'Dokładność przewidywania klasy większościowej w zbiorze treningowym.'
             );
             html += row(
-                'Wiersze / run',
+                'Próbki treningowe / przebieg',
                 esc(ml.trainingRows != null ? String(ml.trainingRows) : '—') +
                     ' / ' +
                     esc(ml.lastTrainingRun ? String(ml.lastTrainingRun.id).slice(0, 8) : '—'),
                 hasRun ? 'OK' : 'UNKNOWN',
-                'Liczba wierszy i identyfikator udanego lokalnego treningu aktywnego modelu.'
+                'Liczba dotyczy wyłącznie części treningowej; nie obejmuje walidacji ani testu. Id to ostatni udany lokalny przebieg aktywnego modelu.'
+            );
+            var gate = ml.trainingGate;
+            var hasGateProgress =
+                gate &&
+                Number.isSafeInteger(gate.newSinceLastTrain) &&
+                Number.isSafeInteger(gate.minNewData) &&
+                gate.minNewData > 0;
+            html += row(
+                'Nowe cechy / próg',
+                hasGateProgress ? esc(gate.newSinceLastTrain + ' / ' + gate.minNewData) : '—',
+                hasGateProgress ? (gate.eligible === true ? 'OK' : 'WARNING') : 'UNKNOWN',
+                'Liczba nowych rekordów AiFeature kwalifikujących się do treningu. Nie jest liczbą wszystkich zdarzeń telemetrycznych. Cron rozpoczyna trening po osiągnięciu progu; admin może ręcznie wymusić ekstrakcję przy 0 cech.'
             );
             html += row(
                 'Dataset',

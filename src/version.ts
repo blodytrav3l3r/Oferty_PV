@@ -26,7 +26,26 @@ const version = (() => {
     }
 })();
 
+const COMMIT_SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
+
+function getBuildGitInfo(): { commitHash: string; branch: string } | null {
+    const sources = [
+        { commitHash: process.env.APP_COMMIT_SHA, branch: process.env.APP_GIT_BRANCH },
+        { commitHash: process.env.RENDER_GIT_COMMIT, branch: process.env.RENDER_GIT_BRANCH }
+    ];
+    for (const source of sources) {
+        const commitHash = typeof source.commitHash === 'string' ? source.commitHash.trim() : '';
+        if (!COMMIT_SHA_PATTERN.test(commitHash)) continue;
+        const branch = typeof source.branch === 'string' ? source.branch.trim() : '';
+        return { commitHash: commitHash.toLowerCase(), branch: branch || 'unknown' };
+    }
+    return null;
+}
+
 function getGitInfo(): { commitHash: string; branch: string } {
+    const buildInfo = getBuildGitInfo();
+    if (buildInfo) return buildInfo;
+
     try {
         const commitHash = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
         const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();

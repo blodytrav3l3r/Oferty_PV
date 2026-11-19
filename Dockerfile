@@ -60,6 +60,11 @@ RUN sed -i 's/\r$//' ./scripts/docker-entrypoint.sh ./scripts/docker-db-bootstra
 ENV NODE_ENV=production
 ENV PORT=10000
 ENV HOST=0.0.0.0
+ARG APP_COMMIT_SHA=
+ARG APP_GIT_BRANCH=
+ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}
+ENV APP_GIT_BRANCH=${APP_GIT_BRANCH}
+LABEL org.opencontainers.image.revision=${APP_COMMIT_SHA}
 # Secure cookie wymagane za reverse proxy (HTTPS zakończony poza kontenerem)
 ENV COOKIE_SECURE=true
 

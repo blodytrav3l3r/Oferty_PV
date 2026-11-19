@@ -39,6 +39,15 @@ describe('P0.2 information disclosure', () => {
         const detail = await request(app).get(diagnostics).set('Cookie', admin).expect(200);
         expect(detail.body).toHaveProperty('trainingGate');
         expect(detail.headers['content-security-policy']).toMatch(/script-src[^;]*nonce-/);
+        const systemInfo = await request(app)
+            .get('/api/admin/system-info')
+            .set('Cookie', admin)
+            .expect(200);
+        expect(systemInfo.body).toHaveProperty('memoryLimitBytes');
+        expect(
+            systemInfo.body.memoryLimitBytes === null ||
+                Number.isSafeInteger(systemInfo.body.memoryLimitBytes)
+        ).toBe(true);
 
         await request(app).get('/metrics').set('Cookie', user).expect(403);
         const metrics = await request(app).get('/metrics').set('Cookie', admin).expect(200);
@@ -54,6 +63,7 @@ describe('P0.2 information disclosure', () => {
         expect(res.body).not.toHaveProperty('memory');
         expect(res.body).not.toHaveProperty('uptime');
         expect(res.body).not.toHaveProperty('version');
+        expect(res.body).not.toHaveProperty('memoryLimitBytes');
     });
 
     it('/api/version zwraca tylko numer wersji', async () => {

@@ -106,6 +106,13 @@ describe('deploy-core', () => {
             expect(bootstrap).toBeLessThan(start);
         });
 
+        it('docker image build passes metadata from the checked out release tag', () => {
+            const buildStep = core
+                .resolveSteps('docker', 'v1.16.0')
+                .find((step: any) => step.name === 'Budowa obrazu aplikacji');
+            expect(buildStep?.captureGitMetadata).toBe(true);
+        });
+
         it('docker waliduje konfigurację PostgreSQL Compose przed startem', () => {
             const steps = core.resolveSteps('docker', 'v1.16.0');
             const names = steps.map((s: any) => s.name);
@@ -457,10 +464,17 @@ describe('deploy-core', () => {
         it('uses PostgreSQL 18, a persistent named volume, and explicit app DATABASE_URL', () => {
             const text = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');
             const doc: any = yaml.load(text);
+            const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
             expect(doc.services.postgres.image).toMatch(/^postgres:18-alpine@sha256:[a-f0-9]{64}$/);
             expect(doc.services.postgres.volumes).toContain('postgres-data:/var/lib/postgresql');
             expect(doc.services.postgres.healthcheck.test.join(' ')).toContain('pg_isready');
             expect(doc.services.app.depends_on.postgres.condition).toBe('service_healthy');
+            expect(doc.services.app.build.args).toEqual({
+                APP_COMMIT_SHA: '${APP_COMMIT_SHA:-}',
+                APP_GIT_BRANCH: '${APP_GIT_BRANCH:-}'
+            });
+            expect(dockerfile).toContain('ARG APP_COMMIT_SHA=');
+            expect(dockerfile).toContain('ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}');
             expect(doc.services.app.environment.DATABASE_URL).toBe(
                 '${DATABASE_URL:?Set DATABASE_URL in .env}'
             );

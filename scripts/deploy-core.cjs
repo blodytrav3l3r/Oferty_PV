@@ -81,7 +81,11 @@ function resolveSteps(target, tag) {
             name: 'Walidacja konfiguracji Docker PostgreSQL',
             cmd: 'bash scripts/docker-preflight.sh'
         });
-        steps.push({ name: 'Budowa obrazu aplikacji', cmd: 'docker compose build app' });
+        steps.push({
+            name: 'Budowa obrazu aplikacji',
+            cmd: 'docker compose build app',
+            captureGitMetadata: true
+        });
         steps.push({
             name: 'Bootstrap PostgreSQL (jednorazowy)',
             cmd: 'docker compose run --rm db-bootstrap'

@@ -208,10 +208,13 @@ app.get('/health/backup', (_req, res) => {
  */
 // P0.2: szczegóły diagnostyczne (commit/branch/env/memory) tylko dla admina.
 app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
+    const memoryLimitBytes = process.constrainedMemory?.();
     res.json({
         ...getVersion(),
         uptime: process.uptime(),
-        memory: process.memoryUsage()
+        memory: process.memoryUsage(),
+        memoryLimitBytes:
+            Number.isSafeInteger(memoryLimitBytes) && memoryLimitBytes > 0 ? memoryLimitBytes : null
     });
 });
 

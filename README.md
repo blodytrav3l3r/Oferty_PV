@@ -4,7 +4,7 @@
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
 </div>
 
-**Wersja:** 1.64.7  
+**Wersja:** 1.64.8  
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline<br>
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** Łukasz Kobyłka
@@ -231,10 +231,13 @@ Aplikacja: **http://TWOJ_ADRES_IP:3000**
 ### Instalacja przez Docker
 
 ```bash
+export APP_COMMIT_SHA="$(git rev-parse HEAD)"
+export APP_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 docker compose build app
 docker compose up -d postgres
 docker compose run --rm db-bootstrap
 docker compose up -d app
+unset APP_COMMIT_SHA APP_GIT_BRANCH
 ```
 
 Aplikacja: **http://localhost:3000** (port zgodny z konfiguracją w `.env`)

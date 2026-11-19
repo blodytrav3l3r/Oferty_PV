@@ -27,7 +27,22 @@ function usage() {
 
 function runStep(step) {
     log(`>> ${step.name}`);
-    execSync(step.cmd, { cwd: ROOT, stdio: 'inherit', shell: true });
+    const env = { ...process.env };
+    if (step.captureGitMetadata) {
+        const commitSha = execSync('git rev-parse HEAD', {
+            cwd: ROOT,
+            encoding: 'utf8'
+        }).trim();
+        if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(commitSha)) {
+            throw new Error('Nie można ustalić poprawnego SHA commita dla obrazu Docker.');
+        }
+        env.APP_COMMIT_SHA = commitSha;
+        env.APP_GIT_BRANCH = execSync('git rev-parse --abbrev-ref HEAD', {
+            cwd: ROOT,
+            encoding: 'utf8'
+        }).trim();
+    }
+    execSync(step.cmd, { cwd: ROOT, stdio: 'inherit', shell: true, env });
 }
 
 function checkCleanTree() {

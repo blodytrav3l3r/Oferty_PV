@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.8](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.7...v1.64.8) (2026-11-19)
+
+### Bug Fixes
+
+- **telemetry:** popraw wiarygodność panelu operacji i ml ([57a097a](https://github.com/blodytrav3l3r/Oferty_PV/commit/57a097a556b647535fb70835f7abec3be8161a8d))
+
 ### [1.64.7](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.59.0...v1.64.7) (2026-11-19)
 
 ### Features
