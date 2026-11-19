@@ -755,7 +755,9 @@ router.get('/:id/rows', requireAuth, READ_LIMITER, async (req, res) => {
                 version: version.version,
                 seq: version.seq,
                 effectiveFrom: version.effectiveFrom,
-                status: version.status
+                status: version.status,
+                pehdPricePerM2:
+                    version.pehdPricePerM2 === null ? null : Number(version.pehdPricePerM2)
             },
             sheets,
             precoIncluded,
@@ -791,6 +793,9 @@ router.get('/:id/export', requireAuth, requireAdmin, READ_LIMITER, async (req, r
         // pominięcie zamienione na toast po stronie FE).
         res.setHeader('X-Preco-Included', precoIncluded ? '1' : '0');
         res.setHeader('X-Preco-Source', precoSource);
+        if (version.type === 'studnie' && version.pehdPricePerM2 !== null) {
+            res.setHeader('X-Pricelist-Pehd-Price-M2', String(version.pehdPricePerM2));
+        }
         const sheets: XlsxSheet[] = Object.entries(live).map(([name, rows]) => {
             const headers = rows.length > 0 ? Object.keys(rows[0]) : ['id'];
             return {

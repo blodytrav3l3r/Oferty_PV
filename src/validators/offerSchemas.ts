@@ -27,7 +27,8 @@ export {
     productStudniePatchSchema,
     precoPricingUpdateSchema,
     precoPricingPatchSchema,
-    pricelistDataSchema
+    pricelistDataSchema,
+    pricelistStudnieDataSchema
 } from './productSchemas';
 export type { PricelistDataInput } from './productSchemas';
 

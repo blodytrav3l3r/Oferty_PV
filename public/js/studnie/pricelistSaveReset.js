@@ -59,7 +59,10 @@ async function saveStudniePriceList() {
     const rows = studnieProducts;
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
-        const saved = await saveStudnieProducts(rows);
+        const savedRate = _pehdRateWasManuallyEdited
+            ? _studniePehdPricePerM2
+            : (_studniePehdPricePerM2 ?? _pehdRateInputValue);
+        const saved = await saveStudnieProducts(rows, savedRate);
         if (!saved || saved.error) {
             showToast(
                 'Nie potwierdzono zapisu cennika studni: ' + (saved?.error || 'brak odpowiedzi'),

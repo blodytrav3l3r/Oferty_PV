@@ -99,7 +99,8 @@ export async function createDraft(
             effectiveFrom,
             note: normalizeNote(opts.note) ?? undefined,
             createdBy: opts.createdBy,
-            sha256
+            sha256,
+            pehdPricePerM2: opts.pehdPricePerM2
         })
     );
     if (!res.acquired) {
@@ -144,7 +145,13 @@ const DRAFT_EXISTS_MESSAGE = (type: string, version: string) =>
 async function createDraftTx(
     type: PricelistType,
     rows: VersionRows,
-    meta: { effectiveFrom: string; note?: string; createdBy?: string; sha256: string }
+    meta: {
+        effectiveFrom: string;
+        note?: string;
+        createdBy?: string;
+        sha256: string;
+        pehdPricePerM2?: number;
+    }
 ): Promise<PricelistVersion> {
     let lastErr: unknown = null;
     for (let attempt = 1; attempt <= SEQ_RETRY_LIMIT; attempt++) {
@@ -179,6 +186,7 @@ async function createDraftTx(
                         createdBy: meta.createdBy,
                         note: meta.note,
                         sha256: meta.sha256,
+                        pehdPricePerM2: meta.pehdPricePerM2,
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString()
                     }
@@ -231,7 +239,7 @@ export async function updateDraft(
     id: string,
     rowsInput?: unknown,
     noteInput?: unknown,
-    opts: { userId?: string; expectedSha?: string } = {}
+    opts: { userId?: string; expectedSha?: string; pehdPricePerM2?: number } = {}
 ): Promise<PricelistVersion> {
     const current = await prisma.pricelistVersion.findUnique({ where: { id } });
     if (!current) {
@@ -270,13 +278,21 @@ export async function updateDraft(
                 );
             }
             assertEditable(fresh.status, id);
-            const data: { sha256?: string; note?: string | null; updatedAt?: string } = {};
+            const data: {
+                sha256?: string;
+                note?: string | null;
+                updatedAt?: string;
+                pehdPricePerM2?: number;
+            } = {};
             if (rows !== null && sha256 !== null) {
                 await deleteVersionItems(tx, type, id);
                 await insertVersionItems(tx, type, id, rows);
                 data.sha256 = sha256;
             }
             if (note !== undefined) data.note = note;
+            if (opts.pehdPricePerM2 !== undefined) {
+                data.pehdPricePerM2 = opts.pehdPricePerM2;
+            }
             data.updatedAt = new Date().toISOString();
             const updated = await tx.pricelistVersion.update({ where: { id }, data });
             await writeAudit(tx, {
@@ -286,7 +302,10 @@ export async function updateDraft(
                 oldData: { status: fresh.status },
                 newData: {
                     ...(rows !== null ? { wiersze: 'podmienione', sha256 } : {}),
-                    ...(note !== undefined ? { note } : {})
+                    ...(note !== undefined ? { note } : {}),
+                    ...(opts.pehdPricePerM2 !== undefined
+                        ? { pehdPricePerM2: data.pehdPricePerM2 }
+                        : {})
                 }
             });
             return updated;
@@ -312,7 +331,7 @@ export async function updateDraft(
 export async function replaceVersionRows(
     id: string,
     rowsInput: unknown,
-    opts: { userId?: string; expectedSha?: string } = {}
+    opts: { userId?: string; expectedSha?: string; pehdPricePerM2?: number } = {}
 ): Promise<PricelistVersion> {
     const current = await prisma.pricelistVersion.findUnique({ where: { id } });
     if (!current) {
@@ -358,7 +377,13 @@ export async function replaceVersionRows(
             await insertVersionItems(tx, type, id, rows);
             const updated = await tx.pricelistVersion.update({
                 where: { id },
-                data: { sha256, updatedAt: nowIso }
+                data: {
+                    sha256,
+                    updatedAt: nowIso,
+                    ...(opts.pehdPricePerM2 !== undefined
+                        ? { pehdPricePerM2: opts.pehdPricePerM2 }
+                        : {})
+                }
             });
             if (fresh.effectiveFrom <= nowIso) await touchActiveTimestamp(tx, nowIso);
             await writeAudit(tx, {
@@ -366,7 +391,13 @@ export async function replaceVersionRows(
                 userId: opts.userId,
                 action: 'EDIT_APPROVED',
                 oldData: { wersja: fresh.version, status: fresh.status, sha256: fresh.sha256 },
-                newData: { sha256, wiersze: 'podmienione' }
+                newData: {
+                    sha256,
+                    wiersze: 'podmienione',
+                    ...(opts.pehdPricePerM2 !== undefined
+                        ? { pehdPricePerM2: opts.pehdPricePerM2 }
+                        : {})
+                }
             });
             return updated;
         })
@@ -1071,6 +1102,7 @@ export async function cloneAsDraft(
                     createdBy: opts.userId,
                     note: opts.note ?? `Klon wersji ${source.version}`,
                     sha256,
+                    pehdPricePerM2: source.pehdPricePerM2,
                     createdAt: nowIso,
                     updatedAt: nowIso
                 }

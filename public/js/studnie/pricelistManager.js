@@ -1,4 +1,37 @@
 /* ===== LISTA CENOWA ===== */
+let _pehdRateProductsRef = null;
+let _pehdRateInputValue = null;
+let _pehdRateWasManuallyEdited = false;
+
+function inferPehdPricePerSquareMeter(products) {
+    const impliedPrices = products
+        .filter(
+            (product) =>
+                product.componentType !== 'przejscie' &&
+                product.componentType !== 'kineta' &&
+                product.componentType !== 'konus' &&
+                product.area > 0 &&
+                Number.isFinite(Number(product.doplataPEHD)) &&
+                Number(product.doplataPEHD) > 0
+        )
+        .map((product) => {
+            const effectiveArea = getPehdEffectiveArea(product);
+            return effectiveArea > 0 ? Number(product.doplataPEHD) / effectiveArea : null;
+        })
+        .filter((price) => Number.isFinite(price));
+
+    if (impliedPrices.length === 0) return 270;
+
+    const sortedPrices = [...impliedPrices].sort((left, right) => left - right);
+    const middleIndex = Math.floor(sortedPrices.length / 2);
+    const median =
+        sortedPrices.length % 2 === 0
+            ? (sortedPrices[middleIndex - 1] + sortedPrices[middleIndex]) / 2
+            : sortedPrices[middleIndex];
+
+    return roundMoney(median);
+}
+
 function renderStudniePriceList() {
     // Zakładka PRECO ma własny renderer
     if (currentCennikTab === 'preco') {
@@ -107,8 +140,30 @@ function renderStudniePriceList() {
         });
     }
 
+    const productsChanged = _pehdRateProductsRef !== studnieProducts;
+    if (productsChanged) {
+        _pehdRateProductsRef = studnieProducts;
+        if (!_pehdRateWasManuallyEdited) {
+            const savedRate =
+                typeof _studniePehdPricePerM2 === 'number' &&
+                Number.isFinite(_studniePehdPricePerM2)
+                    ? _studniePehdPricePerM2
+                    : inferPehdPricePerSquareMeter(studnieProducts);
+            _pehdRateInputValue = savedRate;
+        }
+    }
+
     const pehdInput = document.getElementById('pehd-price-input');
-    const currentPehdPrice = pehdInput ? parseFloat(pehdInput.value) || 270 : 270;
+    const typedPehdPrice = pehdInput ? parseFloat(pehdInput.value) : Number.NaN;
+    if (
+        pehdInput &&
+        (!productsChanged || _pehdRateWasManuallyEdited) &&
+        Number.isFinite(typedPehdPrice) &&
+        typedPehdPrice > 0
+    ) {
+        _pehdRateInputValue = typedPehdPrice;
+    }
+    const currentPehdPrice = _pehdRateInputValue ?? inferPehdPricePerSquareMeter(studnieProducts);
 
     let html = `<div class="table-wrap">
     <div class="pricelist-tools">
@@ -262,7 +317,7 @@ function renderStudniePriceList() {
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="area" data-id="${escapeHtmlAttr(p.id)}" >${p.area != null ? fmt(p.area) : '—'}</td>
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="areaExt" data-id="${escapeHtmlAttr(p.id)}" >${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="transport" data-id="${escapeHtmlAttr(p.id)}" >${p.transport != null ? fmtInt(p.transport) : '—'}</td>
-        <td class="text-right" style="color:var(--success); cursor:help;" title="${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? getPehdTooltip(p, currentPehdPrice) : ''}">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? '+' + fmt(roundMoney(getPehdEffectiveArea(p) * currentPehdPrice)) : '—'}</td>
+        <td class="text-right" style="color:var(--success); cursor:help;" title="${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? getPehdTooltip(p) : ''}">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? '+' + fmt(p.doplataPEHD != null ? roundMoney(p.doplataPEHD) : roundMoney(getPehdEffectiveArea(p) * currentPehdPrice)) : '—'}</td>
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="malowanieWewnetrzne" data-id="${escapeHtmlAttr(p.id)}" >${p.malowanieWewnetrzne != null ? '+' + fmt(p.malowanieWewnetrzne) : '—'}</td>
         <td class="text-right cursor-pointer" data-action="editStudnieCell" data-field="malowanieZewnetrzne" data-id="${escapeHtmlAttr(p.id)}" >${p.malowanieZewnetrzne != null ? '+' + fmt(p.malowanieZewnetrzne) : '—'}</td>
         <td class="text-right${p.componentType === 'dennica' ? ' cursor-pointer' : ' ui-text-mute'}" ${p.componentType === 'dennica' ? `data-action="editStudnieCell" data-field="doplataZelbet" data-id="${escapeHtmlAttr(p.id)}"` : ''}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmt(p.doplataZelbet) : '—') : '—'}</td>
@@ -295,6 +350,12 @@ function renderStudniePriceList() {
     }
 
     container.innerHTML = html;
+    container.querySelector('#pehd-price-input')?.addEventListener('input', (event) => {
+        const price = parseFloat(event.target.value);
+        if (!Number.isFinite(price) || price <= 0) return;
+        _pehdRateInputValue = price;
+        _pehdRateWasManuallyEdited = true;
+    });
     container.querySelectorAll('input[data-mixed="true"]').forEach((input) => {
         input.indeterminate = true;
     });

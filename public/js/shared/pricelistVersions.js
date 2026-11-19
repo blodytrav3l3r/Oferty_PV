@@ -1085,6 +1085,12 @@
             cache: 'no-store'
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (type === 'studnie') {
+            var pehdRateHeader = res.headers?.get('X-Pricelist-Pehd-Price-M2');
+            var pehdRate = pehdRateHeader === null ? null : Number(pehdRateHeader);
+            _studniePehdPricePerM2 = Number.isFinite(pehdRate) ? pehdRate : null;
+            _pehdRateWasManuallyEdited = false;
+        }
         var buffer = await res.arrayBuffer();
         if (typeof window.ensureXlsx === 'function') await window.ensureXlsx();
         var workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
@@ -1104,7 +1110,7 @@
      * Wersja cennika → dane osi (kształt LIVE z /rows, bez XLSX i bez modala).
      * @param {string} type
      * @param {string} id
-     * @returns {Promise<{rows?: any[], precoMap?: Record<string, any>, label?: string|null}>}
+     * @returns {Promise<{rows?: any[], precoMap?: Record<string, any>, label?: string|null, pehdPricePerM2?: number|null}>}
      */
     async function fetchOfferVersionData(type, id) {
         var res = await fetch(API + '/' + encodeURIComponent(id) + '/rows', {
@@ -1119,6 +1125,10 @@
         var payload = await res.json();
         var sheets = payload.sheets || {};
         var label = (payload.version && payload.version.version) || null;
+        var pehdPricePerM2 =
+            type === 'studnie' && typeof payload.version?.pehdPricePerM2 === 'number'
+                ? payload.version.pehdPricePerM2
+                : null;
         var precoMap = {};
         if (type !== 'rury' && window.pricelistXlsx && window.pricelistXlsx.precoSheetsToMap) {
             precoMap = window.pricelistXlsx.precoSheetsToMap(sheets);
@@ -1133,7 +1143,8 @@
         return {
             rows: window.pricelistXlsx.normalizeRows(raw, opts),
             precoMap: precoMap,
-            label: label
+            label: label,
+            pehdPricePerM2: pehdPricePerM2
         };
     }
 
@@ -1180,6 +1191,8 @@
             GRID_STATE.preco.write(data.precoMap || {});
         } else {
             GRID_STATE.studnie.write(data.rows || []);
+            _studniePehdPricePerM2 = data.pehdPricePerM2;
+            _pehdRateWasManuallyEdited = false;
             if (data.precoMap && Object.keys(data.precoMap).length > 0) {
                 GRID_STATE.preco.write(data.precoMap);
             }

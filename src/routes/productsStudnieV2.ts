@@ -3,7 +3,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
-import { pricelistDataSchema } from '../validators/offerSchemas';
+import { pricelistStudnieDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { roundMoney } from '../utils/money';
 import { pricelistLock } from '../middleware/writeLock';
@@ -221,10 +221,12 @@ router.get('/', requireAuth, async (req, res) => {
         const source = requirePricingSource(req.query.source);
         if (!source) {
             // Brak wersji: edytor startuje z cennika fabrycznego (seed).
+            const editor = await getEditorPricing('studnie');
             res.json({
-                data: pickEditorData(await getEditorPricing('studnie'), () =>
+                data: pickEditorData(editor, () =>
                     (getSeedStudnie() as unknown as StudnieProductRaw[]).map(toLegacy)
-                )
+                ),
+                pehdPricePerM2: editor.pehdPricePerM2 ?? null
             });
             return;
         }
@@ -238,7 +240,7 @@ router.get('/', requireAuth, async (req, res) => {
                 });
                 return;
             }
-            res.json({ data: active.data });
+            res.json({ data: active.data, pehdPricePerM2: active.pehdPricePerM2 ?? null });
         }
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {
@@ -259,42 +261,69 @@ router.put(
     requireAuth,
     requireAdmin,
     writeLimiter,
-    validateData(pricelistDataSchema),
+    validateData(pricelistStudnieDataSchema),
     async (req, res) => {
         try {
             const result = await runWithLock(async () => {
                 const arr: Record<string, unknown>[] = req.body.data;
                 const mapped = arr.map(fromLegacy);
+                const pehdPricePerM2 =
+                    typeof req.body.pehdPricePerM2 === 'number'
+                        ? roundMoney(req.body.pehdPricePerM2)
+                        : undefined;
 
                 const editVersionId = parseVersionIdHeader(req.get('X-Pricelist-Version-Id'));
                 if (editVersionId) {
-                    const v = await saveRowsToDraft(
-                        'studnie',
-                        mapped,
-                        req.user?.id,
-                        parseIfMatch(req.get('If-Match')),
-                        editVersionId
-                    );
+                    const expectedSha = parseIfMatch(req.get('If-Match'));
+                    const v =
+                        pehdPricePerM2 === undefined
+                            ? await saveRowsToDraft(
+                                  'studnie',
+                                  mapped,
+                                  req.user?.id,
+                                  expectedSha,
+                                  editVersionId
+                              )
+                            : await saveRowsToDraft(
+                                  'studnie',
+                                  mapped,
+                                  req.user?.id,
+                                  expectedSha,
+                                  editVersionId,
+                                  pehdPricePerM2
+                              );
                     return {
                         ok: true,
                         count: arr.length,
                         target: 'version',
                         versionId: v.id,
-                        sha256: v.sha256
+                        sha256: v.sha256,
+                        ...(v.pehdPricePerM2 !== null && v.pehdPricePerM2 !== undefined
+                            ? { pehdPricePerM2: Number(v.pehdPricePerM2) }
+                            : {})
                     };
                 }
 
-                const draft = await saveRowsToDraft(
-                    'studnie',
-                    mapped,
-                    req.user?.id,
-                    parseIfMatch(req.get('If-Match'))
-                );
+                const expectedSha = parseIfMatch(req.get('If-Match'));
+                const draft =
+                    pehdPricePerM2 === undefined
+                        ? await saveRowsToDraft('studnie', mapped, req.user?.id, expectedSha)
+                        : await saveRowsToDraft(
+                              'studnie',
+                              mapped,
+                              req.user?.id,
+                              expectedSha,
+                              undefined,
+                              pehdPricePerM2
+                          );
                 return {
                     ok: true,
                     count: arr.length,
                     target: 'draft',
-                    versionId: draft.id
+                    versionId: draft.id,
+                    ...(draft.pehdPricePerM2 !== null && draft.pehdPricePerM2 !== undefined
+                        ? { pehdPricePerM2: Number(draft.pehdPricePerM2) }
+                        : {})
                 };
             });
             if (!result.acquired) {

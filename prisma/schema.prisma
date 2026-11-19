@@ -849,7 +849,7 @@ model user_preferences {
 // z effectiveFrom (partial unique poniżej: tylko APPROVED zajmuje oś czasu).
 // approvedBy/approvedAt zapisuje approve; approvalStatus jest deprecated (DROP poza v1).
 model PricelistVersion {
-  id             String  @id
+  id             String   @id
   type           String
   seq            Int
   version        String
@@ -862,6 +862,7 @@ model PricelistVersion {
   /// seq, effectiveFrom, cen ani pieczątek ofert (te trzymają id).
   labelOverride  String?
   sha256         String
+  pehdPricePerM2 Decimal? @db.Decimal(18, 2)
   createdAt      String?
   /// Ostatnia zmiana wersji (szkic: zapis wierszy/noty, publikacja: approve). ISO UTC.
   updatedAt      String?

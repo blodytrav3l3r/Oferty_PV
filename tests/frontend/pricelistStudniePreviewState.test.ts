@@ -33,6 +33,8 @@ it('podgląd zapisanej wersji zachowuje roboczą flagę i cel zapisu po powrocie
         clearTimeout,
         MutationObserver,
         studnieProducts: saved,
+        _studniePehdPricePerM2: null,
+        _pehdRateWasManuallyEdited: false,
         _studniePricelistDirty: false,
         fetch: async (url: string) => {
             if (url.endsWith('/rows')) {

@@ -103,6 +103,7 @@ export interface CreateDraftOptions {
     effectiveFrom?: string;
     note?: string;
     createdBy?: string;
+    pehdPricePerM2?: number;
 }
 
 /** Błąd domenowy z kodem HTTP (walidacja 422, immutability 403, konflikt 409). */

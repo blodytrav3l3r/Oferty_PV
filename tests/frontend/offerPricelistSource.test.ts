@@ -153,7 +153,13 @@ describe('pricelistVersions: applyOfferPricelist w jsdom', () => {
         };
         window.ruryImportOptions = () => ({});
         window.studnieImportOptions = () => ({});
-        new Function('window', 'document', panel)(window, document);
+        new Function(
+            'window',
+            'document',
+            '_studniePehdPricePerM2',
+            '_pehdRateWasManuallyEdited',
+            panel
+        )(window, document, null, false);
         return window.pricelistVersions;
     }
 

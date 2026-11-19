@@ -7,6 +7,10 @@ window.recalculatePEHD = async function () {
         return;
     }
 
+    _pehdRateInputValue = price;
+    _pehdRateWasManuallyEdited = false;
+    _studniePehdPricePerM2 = price;
+
     let count = 0;
     studnieProducts.forEach((p) => {
         if (

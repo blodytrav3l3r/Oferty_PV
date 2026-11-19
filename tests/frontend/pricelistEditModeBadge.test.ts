@@ -44,7 +44,13 @@ function mount() {
     window.escapeHtmlAttr = (s) => String(s ?? '');
     window.escapeJsStr = (s) => String(s ?? '');
     window.lucide = { createIcons: jest.fn() };
-    new Function('window', 'document', CODE)(window, document);
+    new Function(
+        'window',
+        'document',
+        '_studniePehdPricePerM2',
+        '_pehdRateWasManuallyEdited',
+        CODE
+    )(window, document, null, false);
     return window.pricelistVersions;
 }
 

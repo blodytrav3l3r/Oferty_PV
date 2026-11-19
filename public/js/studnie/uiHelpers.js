@@ -554,6 +554,12 @@ async function loadStudnieProducts(options) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {
                     saved = json.data;
+                    _studniePehdPricePerM2 =
+                        typeof json.pehdPricePerM2 === 'number' &&
+                        Number.isFinite(json.pehdPricePerM2)
+                            ? json.pehdPricePerM2
+                            : null;
+                    _pehdRateWasManuallyEdited = false;
                     break;
                 }
             }
@@ -630,7 +636,10 @@ function renamePłyty(_p) {
 
 // Global used by pricelistSaveReset.js and pricelistImportExport.js.
 // eslint-disable-next-line no-unused-vars
-async function saveStudnieProducts(data) {
+async function saveStudnieProducts(
+    data,
+    pehdPricePerM2 = typeof _studniePehdPricePerM2 === 'number' ? _studniePehdPricePerM2 : undefined
+) {
     try {
         const submittedRows = data.map((row) => ({ ...row }));
         const pv = window.pricelistVersions;
@@ -638,7 +647,10 @@ async function saveStudnieProducts(data) {
         const res = await fetch('/api/products-studnie', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', ...authHeaders(), ...extra },
-            body: JSON.stringify({ data: submittedRows })
+            body: JSON.stringify({
+                data: submittedRows,
+                ...(typeof pehdPricePerM2 === 'number' ? { pehdPricePerM2 } : {})
+            })
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
 
@@ -646,6 +658,10 @@ async function saveStudnieProducts(data) {
         if (!json?.ok || !json.versionId || !['draft', 'version'].includes(json.target)) {
             throw new Error('Brak potwierdzenia celu zapisu');
         }
+        _studniePehdPricePerM2 =
+            typeof json.pehdPricePerM2 === 'number' && Number.isFinite(json.pehdPricePerM2)
+                ? json.pehdPricePerM2
+                : pehdPricePerM2;
         // Nowy SHA obowiązuje również wtedy, gdy kontrolny odczyt się nie powiedzie.
         if (json.target === 'version') await pv?.noteVersionSaved?.('studnie', json, null);
         const savedRows =
@@ -673,6 +689,11 @@ async function readSavedStudnieDraft() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     if (!Array.isArray(json?.data)) throw new Error('Brak wierszy zapisanego szkicu');
+    _studniePehdPricePerM2 =
+        typeof json.pehdPricePerM2 === 'number' && Number.isFinite(json.pehdPricePerM2)
+            ? json.pehdPricePerM2
+            : null;
+    _pehdRateWasManuallyEdited = false;
     return json.data;
 }
 

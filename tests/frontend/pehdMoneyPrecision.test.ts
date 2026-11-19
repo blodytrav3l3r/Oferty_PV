@@ -7,6 +7,7 @@ test('przeliczenie dopłaty PEHD zachowuje grosze', async () => {
         window: {},
         document: { getElementById: () => ({ value: '10.10' }) },
         studnieProducts: [product],
+        _studniePehdPricePerM2: null,
         getPehdEffectiveArea: (p: typeof product) => p.area,
         roundMoney: (n: number) => Math.round(n * 100) / 100,
         showToast: jest.fn(),
@@ -19,17 +20,21 @@ test('przeliczenie dopłaty PEHD zachowuje grosze', async () => {
     await context.window.recalculatePEHD();
 
     expect(product.doplataPEHD).toBe(12.63);
+    expect(context._studniePehdPricePerM2).toBe(10.1);
 });
 
-test('tooltip dopłaty pokazuje cenę i wynik z groszami', () => {
+test('tooltip dopłaty pokazuje zapisaną kwotę z groszami', () => {
     const context = vm.createContext({ window: {} });
     vm.runInContext(fs.readFileSync('public/js/shared/formatters.js', 'utf8'), context);
     vm.runInContext(fs.readFileSync('public/js/studnie/actionsWellPainting.js', 'utf8'), context);
 
-    const tooltip = context.getPehdTooltip({ componentType: 'krag', area: 1.25 }, 10.1);
+    const tooltip = context.getPehdTooltip({
+        componentType: 'krag',
+        area: 1.25,
+        doplataPEHD: 12.63
+    });
 
-    expect(tooltip).toContain('Cena: 10,10 PLN/m²');
-    expect(tooltip).toContain('Dopłata: 12,63 PLN');
+    expect(tooltip).toContain('Dopłata zapisana: 12,63 PLN');
 });
 
 test('nagłówek tabeli Excel pokazuje cenę elementu z groszami', () => {

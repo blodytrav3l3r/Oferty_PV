@@ -2,6 +2,7 @@
 /* ===== ZMIENNE GLOBALNE ===== */
 /** @type {any[]} */
 let studnieProducts = [];
+let _studniePehdPricePerM2 = null; // eslint-disable-line prefer-const -- cross-file state
 let currentUser = null;
 let currentCennikTab = 'dn1000';
 

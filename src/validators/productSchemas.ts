@@ -74,4 +74,8 @@ export const pricelistDataSchema = z.object({
     data: z.array(z.record(z.string(), z.unknown()))
 });
 
+export const pricelistStudnieDataSchema = pricelistDataSchema.extend({
+    pehdPricePerM2: z.number().finite().nonnegative().optional()
+});
+
 export type PricelistDataInput = z.infer<typeof pricelistDataSchema>;

@@ -9,7 +9,8 @@ function createGrid(
     products: Array<Record<string, unknown>>,
     tab: string,
     editing = true,
-    search = ''
+    search = '',
+    pehdPricePerM2: number | null = null
 ) {
     document.body.innerHTML =
         '<div id="studnie-pricelist-body"></div><input id="studnie-pricelist-search">';
@@ -22,10 +23,14 @@ function createGrid(
             dn1000: () => true
         },
         studnieProducts: products,
+        _studniePehdPricePerM2: pehdPricePerM2,
         _studniePricelistDirty: false,
         fmtInt: (n: number) => Math.round(n).toString(),
         fmt: (n: number) =>
             n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        roundMoney: (n: number) => Math.round(n * 100) / 100,
+        getPehdEffectiveArea: (product: { area: number }) => product.area,
+        getPehdTooltip: () => 'PEHD',
         escapeHtml: (s: string) => s,
         escapeHtmlAttr: (s: string) =>
             s
@@ -51,6 +56,115 @@ describe('dostępność w siatce cennika Studni', () => {
     it('pokazuje cenę produktu z groszami', () => {
         createGrid([{ id: 'A', name: 'A', componentType: 'przejscie', price: 10.49 }], 'przejscia');
         expect(document.querySelector('[data-field="price"]')?.textContent).toBe('10,49');
+    });
+
+    it('odtwarza stawkę PEHD z zapisanej dopłaty i powierzchni elementu', () => {
+        createGrid(
+            [
+                {
+                    id: 'K-1000',
+                    name: 'Krąg',
+                    componentType: 'krag',
+                    category: 'Studnie DN1000',
+                    price: 100,
+                    area: 1.25,
+                    doplataPEHD: 510
+                }
+            ],
+            'dn1000'
+        );
+
+        expect(document.getElementById('pehd-price-input')?.getAttribute('value')).toBe('408');
+        expect(document.querySelector('td[title*="PEHD"]')?.textContent).toBe('+510,00');
+    });
+
+    it('preferuje dokładną stawkę zapisaną z wersją nad stawką odtworzoną z dopłat', () => {
+        createGrid(
+            [
+                {
+                    id: 'K-1000',
+                    name: 'Krąg',
+                    componentType: 'krag',
+                    category: 'Studnie DN1000',
+                    price: 100,
+                    area: 1.25,
+                    doplataPEHD: 510
+                }
+            ],
+            'dn1000',
+            true,
+            '',
+            300
+        );
+
+        expect((document.getElementById('pehd-price-input') as HTMLInputElement).value).toBe('300');
+    });
+
+    it('zachowuje wpisaną stawkę przy ponownym renderowaniu siatki', () => {
+        const sandbox = createGrid(
+            [
+                {
+                    id: 'A',
+                    name: 'A',
+                    componentType: 'krag',
+                    area: 1,
+                    price: 100,
+                    doplataPEHD: 400
+                },
+                {
+                    id: 'B',
+                    name: 'B',
+                    componentType: 'krag',
+                    area: 1,
+                    price: 100,
+                    doplataPEHD: 408
+                },
+                { id: 'C', name: 'C', componentType: 'krag', area: 1, price: 100, doplataPEHD: 900 }
+            ],
+            'dn1000'
+        );
+        const input = document.getElementById('pehd-price-input') as HTMLInputElement;
+
+        expect(input.value).toBe('408');
+        input.value = '500';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        sandbox.currentCennikTab = 'przejscia';
+        sandbox.renderStudniePriceList();
+        expect(document.getElementById('pehd-price-input')).toBeNull();
+        sandbox.currentCennikTab = 'dn1000';
+        sandbox.renderStudniePriceList();
+
+        expect((document.getElementById('pehd-price-input') as HTMLInputElement).value).toBe('500');
+    });
+
+    it('odtwarza stawkę nowego cennika po podmianie zapisanych wierszy', () => {
+        const sandbox = createGrid(
+            [
+                {
+                    id: 'A',
+                    name: 'A',
+                    componentType: 'krag',
+                    area: 1.25,
+                    price: 100,
+                    doplataPEHD: 510
+                }
+            ],
+            'dn1000'
+        );
+        sandbox.studnieProducts = [
+            {
+                id: 'B',
+                name: 'B',
+                componentType: 'krag',
+                area: 2,
+                price: 100,
+                doplataPEHD: 300
+            }
+        ];
+
+        sandbox.renderStudniePriceList();
+
+        expect((document.getElementById('pehd-price-input') as HTMLInputElement).value).toBe('150');
     });
 
     it('zmienia Dost. pełnym polem wyboru i zapisuje liczbę 0/1', () => {

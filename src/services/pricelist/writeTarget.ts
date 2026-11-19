@@ -66,13 +66,16 @@ export async function saveRowsToDraft(
     rows: unknown,
     userId?: string,
     expectedSha?: string,
-    versionId?: string
+    versionId?: string,
+    pehdPricePerM2?: number
 ) {
     const type = requireType(typeInput);
-    if (versionId) return replaceVersionRows(versionId, rows, { userId, expectedSha });
+    if (versionId)
+        return replaceVersionRows(versionId, rows, { userId, expectedSha, pehdPricePerM2 });
     const draft = await findLatestDraft(type);
-    if (draft) return updateDraft(draft.id, rows, undefined, { userId, expectedSha });
-    return createDraft(type, rows, { createdBy: userId });
+    if (draft)
+        return updateDraft(draft.id, rows, undefined, { userId, expectedSha, pehdPricePerM2 });
+    return createDraft(type, rows, { createdBy: userId, pehdPricePerM2 });
 }
 
 /** Cennik edytora: DRAFT -> ACTIVE -> seed fabryczny (brak jakiejkolwiek wersji). */

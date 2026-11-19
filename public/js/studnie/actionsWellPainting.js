@@ -27,7 +27,7 @@ function getPehdEffectiveArea(p) {
     return p.area;
 }
 
-function getPehdTooltip(p, pricePerM2) {
+function getPehdTooltip(p) {
     if (
         p.area <= 0 ||
         p.componentType === 'przejscie' ||
@@ -35,6 +35,8 @@ function getPehdTooltip(p, pricePerM2) {
         p.componentType === 'konus'
     )
         return '';
+    const effectiveArea = getPehdEffectiveArea(p).toFixed(2);
+    const savedSurcharge = p.doplataPEHD == null ? '—' : fmt(roundMoney(p.doplataPEHD)) + ' PLN';
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) {
         const sqArea = (p.area * 4) / Math.PI;
         return (
@@ -46,12 +48,11 @@ function getPehdTooltip(p, pricePerM2) {
             ' m²' +
             ' | Wsp. odpadu: ×' +
             (4 / Math.PI).toFixed(3) +
-            ' | Cena: ' +
-            fmt(roundMoney(pricePerM2)) +
-            ' PLN/m²' +
-            ' | Dopłata: ' +
-            fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
-            ' PLN'
+            ' | Pow. rozliczeniowa: ' +
+            effectiveArea +
+            ' m²' +
+            ' | Dopłata zapisana: ' +
+            savedSurcharge
         );
     }
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -60,11 +61,8 @@ function getPehdTooltip(p, pricePerM2) {
             return (
                 'Ściany (bez dna): ' +
                 p.area.toFixed(2) +
-                ' m² | Cena: ' +
-                fmt(roundMoney(pricePerM2)) +
-                ' PLN/m² | Dopłata: ' +
-                fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
-                ' PLN'
+                ' m² | Dopłata zapisana: ' +
+                savedSurcharge
             );
         }
         if (d2 > 0) {
@@ -82,33 +80,22 @@ function getPehdTooltip(p, pricePerM2) {
                 sqDno.toFixed(2) +
                 ' m² (×' +
                 (4 / Math.PI).toFixed(3) +
-                ')' +
-                ' | ' +
-                dnoLabel +
-                ': ' +
-                fmt(roundMoney(sqDno * pricePerM2)) +
-                ' PLN' +
-                ' | Ściany: ' +
+                ') | Ściany: ' +
                 (p.area - bArea).toFixed(2) +
-                ' m² × ' +
-                fmt(roundMoney(pricePerM2)) +
-                ' = ' +
-                fmt(roundMoney((p.area - bArea) * pricePerM2)) +
-                ' PLN' +
-                ' | Razem: ' +
-                fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
-                ' PLN'
+                ' m² | Pow. rozliczeniowa: ' +
+                effectiveArea +
+                ' m² | Dopłata zapisana: ' +
+                savedSurcharge
             );
         }
     }
     return (
         'Pow. koła: ' +
         p.area.toFixed(2) +
-        ' m² | Cena: ' +
-        fmt(roundMoney(pricePerM2)) +
-        ' PLN/m² | Dopłata: ' +
-        fmt(roundMoney(getPehdEffectiveArea(p) * pricePerM2)) +
-        ' PLN'
+        ' m² | Pow. rozliczeniowa: ' +
+        effectiveArea +
+        ' m² | Dopłata zapisana: ' +
+        savedSurcharge
     );
 }
 

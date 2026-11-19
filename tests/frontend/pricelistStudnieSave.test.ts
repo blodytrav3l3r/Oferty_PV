@@ -15,6 +15,9 @@ describe('zapis cennika studni', () => {
         const sandbox = vm.createContext({
             document,
             studnieProducts: [changedRow],
+            _studniePehdPricePerM2: null,
+            _pehdRateInputValue: 270,
+            _pehdRateWasManuallyEdited: false,
             _studniePricelistDirty: true,
             authHeaders: () => ({}),
             fetch: async () => ({
@@ -117,6 +120,9 @@ describe('zapis cennika studni', () => {
             document,
             location: { search: '?host=cennik' },
             studnieProducts: [originalRow],
+            _studniePehdPricePerM2: 300,
+            _pehdRateInputValue: 300,
+            _pehdRateWasManuallyEdited: false,
             _studniePricelistDirty: false,
             authHeaders: () => ({}),
             fetch: async (url: string, options: RequestInit) => {
@@ -190,7 +196,8 @@ describe('zapis cennika studni', () => {
         if (editDraft) expect(requests[1].headers).not.toHaveProperty('X-Pricelist-Version-Id');
         else expect(requests[1].headers).toHaveProperty('X-Pricelist-Version-Id', 'active');
         expect(JSON.parse(String(requests[1].body))).toEqual({
-            data: [{ ...savedRow, magazynWL: 1 }]
+            data: [{ ...savedRow, magazynWL: 1 }],
+            pehdPricePerM2: 300
         });
         document.getElementById('pv-version-bar-back')?.click();
         expect(sandbox.studnieProducts).toEqual([

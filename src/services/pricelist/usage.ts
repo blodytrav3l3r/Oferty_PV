@@ -445,6 +445,7 @@ export interface ActivePricing {
     /** true = brak ACTIVE: `?source=active` → 409, edytor startuje z seeda. */
     fallback: boolean;
     versionId: string | null;
+    pehdPricePerM2?: number | null;
 }
 
 /**
@@ -454,7 +455,7 @@ export interface ActivePricing {
 export async function resolveActivePricing(typeInput: unknown): Promise<ActivePricing> {
     const type: PricelistType = requireType(typeInput);
     const active = await resolveActive(type);
-    if (!active) return { data: null, fallback: true, versionId: null };
+    if (!active) return { data: null, fallback: true, versionId: null, pehdPricePerM2: null };
     return pricingFromVersion(type, active);
 }
 
@@ -464,7 +465,7 @@ export async function pricingFromVersion(
     version: Pick<PricelistVersion, 'id'>
 ): Promise<ActivePricing> {
     const type: PricelistType = requireType(typeInput);
-    const { sections } = await getVersionExport(version.id);
+    const { version: versionRecord, sections } = await getVersionExport(version.id);
     if (type === 'rury') {
         const rows = [...(sections.rury ?? [])].sort(
             (a, b) => cmpText(a.category, b.category) || cmpText(a.id, b.id)
@@ -480,7 +481,13 @@ export async function pricingFromVersion(
                     cmpText(a.id, b.id)
             )
             .map(studnieVersionRowToLegacy);
-        return { data: rows, fallback: false, versionId: version.id };
+        return {
+            data: rows,
+            fallback: false,
+            versionId: version.id,
+            pehdPricePerM2:
+                versionRecord.pehdPricePerM2 === null ? null : Number(versionRecord.pehdPricePerM2)
+        };
     }
     const entry = buildPrecoEntryFromSections(sections);
     return {
