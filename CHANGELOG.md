@@ -4,6 +4,51 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.7](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.59.0...v1.64.7) (2026-11-19)
+
+### Features
+
+- **orders:** numer zlecenia na wydruku z symbolem opiekuna ([a35a1af](https://github.com/blodytrav3l3r/Oferty_PV/commit/a35a1af20b1b1a98b1cfd09ff3e64d93f345a52f))
+- **orders:** per-user production number ranges ([108d7b3](https://github.com/blodytrav3l3r/Oferty_PV/commit/108d7b391caaf949ad418975b7b87c378c328b17))
+- **orders:** shared yearly order number pool per module ([3e8d3e2](https://github.com/blodytrav3l3r/Oferty_PV/commit/3e8d3e2f3844a9824de23fb955281b2cf504c9d4))
+- **studnie:** niestandardowe przejścia szczelne w ofercie ([4a9afc5](https://github.com/blodytrav3l3r/Oferty_PV/commit/4a9afc56a7f576a75abcf6834b3df889d9d7a604))
+- **studnie:** popup średnic typu custom i adnotacja pod średnicą ([485f7c9](https://github.com/blodytrav3l3r/Oferty_PV/commit/485f7c9c7201227356fdd67be97b06067254f77c))
+- **studnie:** typy przejść niestandardowych z wariantami średnic ([0510d0e](https://github.com/blodytrav3l3r/Oferty_PV/commit/0510d0eed8c69a224716b1a9ffdb5f18624b9b64))
+
+### Bug Fixes
+
+- **deploy:** przypiecie digestow obrazow i licencje systemowe ([c2324aa](https://github.com/blodytrav3l3r/Oferty_PV/commit/c2324aa85d2db8c195474cf6e7de6f7de7bc80c3))
+- **deploy:** wydłuż timeout startu postgres ([2bc3cc1](https://github.com/blodytrav3l3r/Oferty_PV/commit/2bc3cc108995f3510496f1cf9361eac4f395d53d))
+- **orders:** keep print version in sync with editor state ([fdbcb5a](https://github.com/blodytrav3l3r/Oferty_PV/commit/fdbcb5a33537907e51cc1316e3d0dd7b366a374f))
+- **orders:** numer z symbolem opiekuna na wydruku z panelu studnie ([35064e7](https://github.com/blodytrav3l3r/Oferty_PV/commit/35064e77310dccd739adfa597c270123e4b99a12))
+- **orders:** reload print version fix for cached clients ([805c6cd](https://github.com/blodytrav3l3r/Oferty_PV/commit/805c6cdb3890cf435ed96f7ef7e3fca68f60aa4a))
+- **orders:** wydruk z kartoteki używa świeżych danych z serwera ([9f6df71](https://github.com/blodytrav3l3r/Oferty_PV/commit/9f6df71b2813649dfdd14d0f529b74749100ef09))
+- **orders:** zapisuj tylko zmienione zlecenia produkcyjne ([d89ec69](https://github.com/blodytrav3l3r/Oferty_PV/commit/d89ec69b0fede7028d9dd169906e497715cfb000))
+- **orders:** zapisz i zamknij utrwala niezapisane zmiany zlecen ([af7a1f1](https://github.com/blodytrav3l3r/Oferty_PV/commit/af7a1f166cd9c9df73e2281f2f41428a148f246f))
+- **orders:** zwracaj wersję w indeksie zleceń ([b9b9999](https://github.com/blodytrav3l3r/Oferty_PV/commit/b9b9999e4b6ad6b6f56d2c1ddf6767d7059bc68c))
+- **seed:** zsynchronizować cenniki z bazą i nie ucinać dn ([f2ff035](https://github.com/blodytrav3l3r/Oferty_PV/commit/f2ff035a0fe21bff9531ead53c0c39d1212e81fa))
+- **studnie:** dopasuj custom przejścia w excelu ([8529863](https://github.com/blodytrav3l3r/Oferty_PV/commit/85298637d246de016a6ca640257a0b4a73294e34))
+- **studnie:** edycja elementow przy szkicu pz i ot dla custom ([6e1592f](https://github.com/blodytrav3l3r/Oferty_PV/commit/6e1592f0378a187246baa7df2a90d527e0b7039f))
+- **studnie:** kineta w zleceniu aktualizuje parametry i cenę ([480a26d](https://github.com/blodytrav3l3r/Oferty_PV/commit/480a26d8b2a425285363f5d52dea94933c48d4cb))
+- **studnie:** parametry studni propaguja sie do zlecen i excela ([7e246fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/7e246fa9a6e074472fb1f80eb38414abc80ef834))
+- **studnie:** pokazuj custom w szczegółach karty ([eba482d](https://github.com/blodytrav3l3r/Oferty_PV/commit/eba482dcebec4b000cadf4dbb34301849a244caf))
+- **studnie:** pomijaj pola pochodne w komparatorze draftu ([dd80fe6](https://github.com/blodytrav3l3r/Oferty_PV/commit/dd80fe6a72a92fb0fbb12eb77206ada7343a256f))
+- **studnie:** popup rodzaju custom i średnica na schemacie ([5ad3245](https://github.com/blodytrav3l3r/Oferty_PV/commit/5ad3245e91e629c824f8ce72f201565d49e441de))
+- **studnie:** powieksz checkboxy zaznaczania studni do zamowienia ([27b0d0b](https://github.com/blodytrav3l3r/Oferty_PV/commit/27b0d0b442e3670bc01cd7345aaa4ca942b8f0f8))
+- **studnie:** powieksz pole klikniecia checkboxa studni ([083bdc0](https://github.com/blodytrav3l3r/Oferty_PV/commit/083bdc02443a97775b504d57f0e517e6af864b2e))
+- **studnie:** przejścia niestandardowe jak katalogowe ([66c6dfe](https://github.com/blodytrav3l3r/Oferty_PV/commit/66c6dfec1be4c321b44299515463dd959aa229fb))
+- **studnie:** rodzaj studni w zleceniu zmienia denn i nadbudowe ([66ecb65](https://github.com/blodytrav3l3r/Oferty_PV/commit/66ecb6543e94f21b4de2b302c00ebe1970e9a256))
+- **studnie:** rozdziel custom od katalogowych na karcie ([4d4bedc](https://github.com/blodytrav3l3r/Oferty_PV/commit/4d4bedcf0cc922bde0d67647018c3989bb3e225b))
+- **studnie:** równe szerokości pól średnic w modalu typu ([fc8bb34](https://github.com/blodytrav3l3r/Oferty_PV/commit/fc8bb34fbc28bc79faa7046aebb9fa0af546013b))
+- **studnie:** sortowanie średnic i wygląd modala typu przejścia ([4e0cc78](https://github.com/blodytrav3l3r/Oferty_PV/commit/4e0cc78cb706c36f4913298fae55ab5872116640))
+- **studnie:** ukryj panel podgladu przy szerokosci do 1200 px ([3e91d13](https://github.com/blodytrav3l3r/Oferty_PV/commit/3e91d13c4336143a66e576c08382d555d17e4370))
+- **studnie:** usuń akcję nowego typu z dropdownu ([15ae3c1](https://github.com/blodytrav3l3r/Oferty_PV/commit/15ae3c1f09cef8dbcddd62ad742d136bcd4c2581))
+- **studnie:** zapamiętane niestandardowe przejścia jako kafelki wyboru ([6f208af](https://github.com/blodytrav3l3r/Oferty_PV/commit/6f208af698b0497818450d368955d6478a344bd0))
+- **studnie:** zapisuj stawkę pehd przy wersji cennika ([469c4da](https://github.com/blodytrav3l3r/Oferty_PV/commit/469c4da02843c421d347eda1e7d15829653a447b))
+- **ui:** pokaz dane kontaktowe uzytkownika w pasku profilu ([e3ee7c7](https://github.com/blodytrav3l3r/Oferty_PV/commit/e3ee7c7e6773ef1045798716f882a2063c528bfa))
+- **ui:** ujednolic przyciski zamykania okien ([842eae8](https://github.com/blodytrav3l3r/Oferty_PV/commit/842eae8e08fd60abc79f7254000f79db905886fe))
+- **ui:** ujednolic przyciski zamykania w popupach ([916bde1](https://github.com/blodytrav3l3r/Oferty_PV/commit/916bde1ed8f8c4a7336d94cc152e85e1d3c93404))
+
 ## [1.64.6](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.5...v1.64.6) (2026-11-18)
 
 ### Fixes
