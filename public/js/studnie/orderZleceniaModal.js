@@ -319,6 +319,7 @@ async function _saveProductionOrderInner() {
 
         snr: well.numer || '',
         srednica: document.getElementById('zl-srednica')?.value || well.dn,
+        rzednaDna: well.rzednaDna,
         wysokosc: document.getElementById('zl-wysokosc')?.value || '',
         glebokosc: document.getElementById('zl-glebokosc')?.value || '',
         dnoKineta: document.getElementById('zl-dno-kineta')?.value || '',
@@ -351,6 +352,13 @@ async function _saveProductionOrderInner() {
 
             return assigned.map((p) => {
                 const clone = structuredClone(p);
+                let pel = parseFloat(p.rzednaWlaczenia);
+                if (isNaN(pel)) pel = rzDna;
+                const mmFromBottom = (pel - rzDna) * 1000;
+                if (configMap.length > 0 && typeof findAssignedElement === 'function') {
+                    const { entry } = findAssignedElement(mmFromBottom, configMap);
+                    if (entry) clone.heightFromElementMm = Math.round(mmFromBottom - entry.start);
+                }
                 const prod = findProductFn(p.productId);
                 if (prod) {
                     clone.productCategory = prod.category || '';

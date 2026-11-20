@@ -23,9 +23,7 @@ const AppZlecenia = (() => {
         silentPrint,
         applyPrintTokens,
         buildZlecenieFromPO,
-        buildEtykietaFromPO,
-        buildZlecenieFromPageBlock,
-        buildEtykietaPageBlock
+        buildEtykietaFromPO
     } = window;
 
     /* ===== RENDER STATE ===== */
@@ -585,9 +583,8 @@ const AppZlecenia = (() => {
         return searchResults.items.find((o) => o.id === orderId) || null;
     }
 
-    /* Wydruk czyta stan zapisany na serwerze, nie kopię w RAM: lista zleceń
-       odświeża się co 60 s, więc po zapisie w edytorze studni bywa starsza
-       (wydruk pokazywał parametry sprzed zmiany). GET /:id nie jest cache'owany. */
+    /* Wydruk czyta wyłącznie stan zapisany na serwerze. Lista może być starsza,
+       dlatego błąd GET nie może po cichu przełączyć druku na kopię z RAM. */
     async function fetchOrderFresh(orderId) {
         try {
             const res = await fetch(
@@ -596,20 +593,49 @@ const AppZlecenia = (() => {
                     headers: authHeaders()
                 }
             );
-            if (!res.ok) return findOrderById(orderId);
+            if (!res.ok) return null;
             const json = await res.json();
             const fresh = json && json.data;
-            if (!fresh) return findOrderById(orderId);
-            const cached = findOrderById(orderId);
-            if (cached) {
-                Object.assign(cached, fresh);
-                return cached;
+            if (
+                !fresh ||
+                typeof fresh !== 'object' ||
+                Array.isArray(fresh) ||
+                String(fresh.id || '') !== String(orderId)
+            ) {
+                return null;
+            }
+            if (searchResults) {
+                searchResults = {
+                    ...searchResults,
+                    items: searchResults.items.map((item) =>
+                        item.id === fresh.id ? { ...item, ...fresh } : item
+                    )
+                };
             }
             return fresh;
         } catch (e) {
             logger.warn('zlecenia', 'fetchOrderFresh error:', e);
-            return findOrderById(orderId);
+            return null;
         }
+    }
+
+    function showFreshOrderError(order) {
+        showToast(
+            'Nie udało się pobrać aktualnych danych zlecenia: ' + describeOrder(order),
+            'error'
+        );
+    }
+
+    function buildBatchHead(template, title) {
+        const headEnd = template.toLowerCase().indexOf('</head>');
+        if (headEnd < 0) return null;
+
+        const head = applyPrintTokens(template.substring(0, headEnd));
+        const titleTag = '<title>' + title + '</title>';
+        if (/<title\b[^>]*>[\s\S]*?<\/title>/i.test(head)) {
+            return head.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, titleTag);
+        }
+        return head + titleTag;
     }
 
     /* ===== LICZNIKI WYDRUKÓW (liczba uruchomień wydruku) ===== */
@@ -766,7 +792,7 @@ const AppZlecenia = (() => {
     async function printSingleZlecenie(orderId) {
         const po = await fetchOrderFresh(orderId);
         if (!po) {
-            showToast('Nie znaleziono zlecenia', 'error');
+            showFreshOrderError(findOrderById(orderId) || { id: orderId });
             return;
         }
 
@@ -791,7 +817,7 @@ const AppZlecenia = (() => {
     async function printSingleEtykieta(orderId) {
         const po = await fetchOrderFresh(orderId);
         if (!po) {
-            showToast('Nie znaleziono zlecenia', 'error');
+            showFreshOrderError(findOrderById(orderId) || { id: orderId });
             return;
         }
 
@@ -839,8 +865,13 @@ const AppZlecenia = (() => {
         const picked = getSelectedOrders();
         if (!picked) return;
         const orders = await Promise.all(picked.map((po) => fetchOrderFresh(po.id)));
-        if (orders.some((po) => !po)) {
-            showToast('Nie udało się odświeżyć zaznaczonych zleceń', 'error');
+        const failedOrders = picked.filter((_po, index) => !orders[index]);
+        if (failedOrders.length > 0) {
+            showToast(
+                'Wydruk przerwany — brak aktualnych danych dla: ' +
+                    failedOrders.map(describeOrder).join('; '),
+                'error'
+            );
             return;
         }
 
@@ -857,7 +888,14 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const headSection = applyPrintTokens(template.substring(0, template.indexOf('</head>')));
+        const headSection = buildBatchHead(
+            template,
+            'Zlecenia produkcyjne — ' + orders.length + ' szt.'
+        );
+        if (!headSection) {
+            showToast('Błąd szablonu zlecenia — brak sekcji <head>', 'error');
+            return;
+        }
         const pageTemplate = template.substring(pageStartIdx, bodyEndIdx).trim();
         const batchPageStyle =
             '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
@@ -865,7 +903,7 @@ const AppZlecenia = (() => {
         // Wypełnij szablon strony dla każdego zamówienia
         let allPages = '';
         orders.forEach((po) => {
-            allPages += buildZlecenieFromPageBlock(pageTemplate, po) + '\n';
+            allPages += buildZlecenieFromPO(pageTemplate, po) + '\n';
         });
 
         const finalHTML =
@@ -891,8 +929,13 @@ const AppZlecenia = (() => {
         const picked = getSelectedOrders();
         if (!picked) return;
         const orders = await Promise.all(picked.map((po) => fetchOrderFresh(po.id)));
-        if (orders.some((po) => !po)) {
-            showToast('Nie udało się odświeżyć zaznaczonych zleceń', 'error');
+        const failedOrders = picked.filter((_po, index) => !orders[index]);
+        if (failedOrders.length > 0) {
+            showToast(
+                'Wydruk przerwany — brak aktualnych danych dla: ' +
+                    failedOrders.map(describeOrder).join('; '),
+                'error'
+            );
             return;
         }
 
@@ -909,7 +952,14 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const headSection = applyPrintTokens(template.substring(0, template.indexOf('</head>')));
+        const headSection = buildBatchHead(
+            template,
+            'Etykiety zleceń — ' + orders.length + ' szt.'
+        );
+        if (!headSection) {
+            showToast('Błąd szablonu etykiety — brak sekcji <head>', 'error');
+            return;
+        }
         const pageTemplate = template
             .substring(pageStartIdx, pageEndComment + '<!-- KONIEC BLOKU "page" -->'.length)
             .trim();
@@ -920,7 +970,7 @@ const AppZlecenia = (() => {
         let allPages = '';
 
         orders.forEach((po, i) => {
-            allPages += buildEtykietaPageBlock(pageTemplate, po, i) + '\n';
+            allPages += buildEtykietaFromPO(pageTemplate, po, i) + '\n';
         });
 
         const finalHTML =

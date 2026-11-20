@@ -73,7 +73,6 @@ async function fetchTemplate(path) {
  */
 function buildPrzejsciaRowsFromPO(po) {
     const przejscia = po.przejscia || [];
-    const rzDna = parseFloat(po.rzednaDna) || 0;
 
     ensureDisplayIndices(przejscia);
 
@@ -82,9 +81,9 @@ function buildPrzejsciaRowsFromPO(po) {
         const spadekM = p.spadekMufa || '';
         const angle = parseFloat(p.angle) || 0;
 
-        let pel = parseFloat(p.rzednaWlaczenia);
-        if (isNaN(pel)) pel = rzDna || 0;
-        const wysokoscMm = Math.round((pel - (rzDna || 0)) * 1000);
+        const hasHeightFromElement =
+            typeof p.heightFromElementMm === 'number' && Number.isFinite(p.heightFromElementMm);
+        const wysokoscMm = hasHeightFromElement ? Math.round(p.heightFromElementMm) : null;
 
         const katGon = p.angleGony || ((angle * 400) / 360).toFixed(2);
         const katWyk = p.angleExecution !== undefined ? p.angleExecution : 360 - angle;
@@ -96,7 +95,7 @@ function buildPrzejsciaRowsFromPO(po) {
             spadekKineta: spadekK ? Math.round(parseFloat(spadekK)) + ' %' : '',
             spadekMufa: spadekM ? Math.round(parseFloat(spadekM)) + ' %' : '',
             katStopien: angle + '°',
-            uwagi: '+ ' + wysokoscMm + ' mm',
+            uwagi: hasHeightFromElement ? '+ ' + wysokoscMm + ' mm' : '—',
             katGon,
             katWykonania: katWyk + '°'
         };
@@ -143,7 +142,9 @@ function buildPrzejsciaRowsFromPO(po) {
 function generateSvgFromPO(po) {
     const przejscia = po.przejscia || [];
     if (przejscia.length === 0) return '';
-    const rzDna = parseFloat(po.rzednaDna) || 0;
+    const parsedRzDna = parseFloat(po.rzednaDna);
+    const hasRzDna = Number.isFinite(parsedRzDna);
+    const rzDna = hasRzDna ? parsedRzDna : 0;
 
     const size = 400;
     const center = size / 2;
@@ -234,8 +235,8 @@ function generateSvgFromPO(po) {
             offsetX = 4;
         }
 
-        const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
-        const hMm = Math.round((pel - rzDna) * 1000);
+        const pel = parseFloat(p.rzednaWlaczenia);
+        const hMm = hasRzDna && Number.isFinite(pel) ? Math.round((pel - rzDna) * 1000) : 0;
         const hText = hMm > 0 ? ' (+' + hMm + 'mm)' : '';
 
         const rodzaj = (p.productCategory || '').toUpperCase();

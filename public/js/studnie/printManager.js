@@ -228,13 +228,17 @@ function buildPrzejsciaRows(data) {
     // Najpierw nadaj displayIndex WSZYSTKIM przejściom (spójność z Lista przejść)
     ensureDisplayIndices(przejscia);
 
-    const assignedPrzejscia = przejscia.filter((item) => {
-        let pel = parseFloat(item.rzednaWlaczenia);
-        if (isNaN(pel)) pel = rzDna;
-        const mmFromBottom = (pel - rzDna) * 1000;
-        const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
-        return assignedIndex === data.elementIndex;
-    });
+    const assignedPrzejscia = przejscia
+        .map((item) => {
+            let pel = parseFloat(item.rzednaWlaczenia);
+            if (isNaN(pel)) pel = rzDna;
+            const mmFromBottom = (pel - rzDna) * 1000;
+            const { assignedIndex, entry } = findAssignedElement(mmFromBottom, configMap);
+            if (assignedIndex !== data.elementIndex) return null;
+            const heightFromElementMm = entry ? Math.round(mmFromBottom - entry.start) : null;
+            return { item, heightFromElementMm };
+        })
+        .filter(Boolean);
 
     // Ślepe kinety — tylko gdy element to dennica
     let blindEntries = [];
@@ -247,9 +251,9 @@ function buildPrzejsciaRows(data) {
     const totalSlots = Math.max(assignedPrzejscia.length + blindEntries.length, 4);
 
     // Mapuj unikalne kąty do numerów etykiet (0=0, 90=1, 180=2, ...) dla grupowania wizualnego
-    const uniqueAngles = [...new Set(assignedPrzejscia.map((p) => parseFloat(p.angle) || 0))].sort(
-        (a, b) => a - b
-    );
+    const uniqueAngles = [
+        ...new Set(assignedPrzejscia.map(({ item }) => parseFloat(item.angle) || 0))
+    ].sort((a, b) => a - b);
     const angleToLabelNum = {};
     uniqueAngles.forEach((a, idx) => {
         angleToLabelNum[a] = idx;
@@ -257,11 +261,14 @@ function buildPrzejsciaRows(data) {
 
     const rows = [];
     for (let i = 0; i < totalSlots; i++) {
-        const p = assignedPrzejscia[i];
-        if (p) {
+        const assigned = assignedPrzejscia[i];
+        if (assigned) {
+            const { item: p, heightFromElementMm } = assigned;
             const prefix = p.flowType === FLOW_TYPES.WYLOT ? 'Wylot' : 'Wlot';
             const angleNum = angleToLabelNum[parseFloat(p.angle) || 0];
-            rows.push(formatPrzejscieRow(prefix + ' ' + angleNum, p, findProductFn, rzDna));
+            rows.push(
+                formatPrzejscieRow(prefix + ' ' + angleNum, p, findProductFn, heightFromElementMm)
+            );
             continue;
         }
 
@@ -287,7 +294,7 @@ function buildPrzejsciaRows(data) {
     }
     return rows;
 }
-function formatPrzejscieRow(label, p, findProductFn, rzDna) {
+function formatPrzejscieRow(label, p, findProductFn, heightFromElementMm) {
     const product = findProductFn ? findProductFn(p.productId) : null;
     const isCustom = p.isCustom === true;
     const rodzaj = product
@@ -309,11 +316,9 @@ function formatPrzejscieRow(label, p, findProductFn, rzDna) {
     const spadekMufa = p.spadekMufa || '';
     const angle = parseFloat(p.angle) || 0;
 
-    // Oblicz wysokość włączenia w mm od dna
-    let pel = parseFloat(p.rzednaWlaczenia);
-    if (isNaN(pel)) pel = rzDna || 0;
-    const wysokoscMm = Math.round((pel - (rzDna || 0)) * 1000);
-    const uwagi = '+ ' + wysokoscMm + ' mm';
+    const uwagi = Number.isFinite(heightFromElementMm)
+        ? '+ ' + Math.round(heightFromElementMm) + ' mm'
+        : '—';
 
     const katGon = p.angleGony || ((angle * 400) / 360).toFixed(2);
     const katWyk = p.angleExecution !== undefined ? p.angleExecution : 360 - angle;

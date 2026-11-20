@@ -409,14 +409,8 @@ function findAssignedElement(mmFromBottom, configMap) {
  * @returns {number} Wysokość w mm od dolnej krawędzi elementu.
  */
 function computeHeightFromElement(mmFromBottom, configMap) {
-    let elementStartMm = 0;
-    for (const cm of configMap) {
-        if (mmFromBottom >= cm.start && mmFromBottom < cm.end) {
-            elementStartMm = cm.start;
-            break;
-        }
-    }
-    return Math.round(mmFromBottom - elementStartMm);
+    const { entry } = findAssignedElement(mmFromBottom, configMap);
+    return Math.round(mmFromBottom - (entry ? entry.start : 0));
 }
 
 // ──────────────────────────────────────

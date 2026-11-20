@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.11](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.10...v1.64.11) (2026-11-20)
+
+### Bug Fixes
+
+- **orders:** drukuj wysokość przejścia względem przypisanego elementu
+
 ### [1.64.10](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.9...v1.64.10) (2026-11-20)
 
 ### Bug Fixes
