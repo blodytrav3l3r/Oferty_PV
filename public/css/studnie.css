@@ -3282,11 +3282,13 @@ td.excel-tint--plyta_redukcyjna input {
     padding: 0.3rem 0.5rem;
     margin-top: 0.4rem;
     margin-bottom: 0.4rem;
-    background: linear-gradient(
-        90deg,
-        var(--well-transition-target-color) 0%,
-        rgba(var(--slate-800-rgb), 0.8) 100%
-    );
+    background:
+        linear-gradient(rgba(var(--black-rgb), 0.4), rgba(var(--black-rgb), 0.4)),
+        linear-gradient(
+            90deg,
+            var(--well-transition-target-color) 0%,
+            rgba(var(--slate-800-rgb), 0.8) 100%
+        );
     border-radius: var(--radius-sm);
     color: var(--white);
     font-size: var(--fs-xs);
@@ -3299,12 +3301,7 @@ td.excel-tint--plyta_redukcyjna input {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.55rem;
-    height: 1.55rem;
     flex-shrink: 0;
-    border: 1px solid rgba(var(--white-rgb), 0.55);
-    border-radius: 50%;
-    background: rgba(var(--black-rgb), 0.55);
     color: inherit;
     font-size: var(--fs-xl);
 }
@@ -3314,22 +3311,13 @@ td.excel-tint--plyta_redukcyjna input {
     stroke-width: 2.5;
 }
 .well-transition-target-heading__label {
-    padding: 0.1rem 0.35rem;
-    border: 1px solid rgba(var(--white-rgb), 0.55);
-    border-radius: var(--radius-2xs);
-    background: rgba(var(--black-rgb), 0.55);
     color: inherit;
     line-height: 1.2;
-    text-shadow: 0 1px 1px rgba(var(--black-rgb), 0.6);
+    opacity: 0.9;
 }
 .well-transition-target-heading__name {
-    padding: 0.1rem 0.35rem;
-    border: 1px solid rgba(var(--white-rgb), 0.55);
-    border-radius: var(--radius-2xs);
-    background: rgba(var(--black-rgb), 0.55);
     color: inherit;
     font-size: var(--fs-base);
-    text-shadow: 0 1px 1px rgba(var(--black-rgb), 0.6);
 }
 
 .prz-field {
