@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.10](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.9...v1.64.10) (2026-11-20)
+
+### Bug Fixes
+
+- **config:** pokazuj wersje aplikacji przy starcie ([71d7451](https://github.com/blodytrav3l3r/Oferty_PV/commit/71d745197a1e5db1aaa7f63b645ceff4fc0a46dd))
+
 ### [1.64.9](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.8...v1.64.9) (2026-11-20)
 
 ### Bug Fixes
