@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- wzorzec vm (excelWellLock)
 // @ts-nocheck
 /* =============================================================
    Testy migracji modalów przejść na modalCore (Faza 1 planu
@@ -235,9 +234,14 @@ describe('Modale przejść → modalCore (Faza 1)', () => {
     });
 
     test('TEST 5: confirmChangePrzejscieType wybiera produkt wg DN, czyści frozen, zamyka', () => {
-        const { context, well, closeCalls, refreshAll, autoSelectComponents } = runContext();
+        const { context, well, closeCalls, refreshAll, autoSelectComponents, showToast } =
+            runContext();
         context.window.confirmChangePrzejscieType(0, 'Przejścia 200');
         expect(well.przejscia[0].productId).toBe('przejscie-300-0.5');
+        expect(showToast).toHaveBeenCalledWith(
+            'Średnica DN 160 nie jest dostępna w wybranym rodzaju przejścia. Zmieniono na DN 300.',
+            'warning'
+        );
         expect(well.przejscia[0].frozenPrice).toBeUndefined();
         expect(well.przejscia[0].frozenPriceBase).toBeUndefined();
         expect(well.przejscia[0].frozenName).toBeUndefined();
@@ -248,6 +252,35 @@ describe('Modale przejść → modalCore (Faza 1)', () => {
         expect(closeCalls()).toBe(1);
         expect(refreshAll).toHaveBeenCalled();
         expect(autoSelectComponents).toHaveBeenCalledWith(true);
+    });
+
+    test('confirmChangePrzejscieType zachowuje średnicę, gdy nowy rodzaj ją oferuje', () => {
+        const { context, well, showToast } = runContext();
+        context.studnieProducts.push(
+            {
+                id: 'pcv-lite-100',
+                name: 'PVC lite DN100',
+                componentType: 'przejscie',
+                dn: 100,
+                height: 0,
+                active: 1,
+                category: 'PVC lite'
+            },
+            {
+                id: 'pcv-lite-160',
+                name: 'PVC lite DN160',
+                componentType: 'przejscie',
+                dn: 160,
+                height: 0,
+                active: 1,
+                category: 'PVC lite'
+            }
+        );
+
+        context.window.confirmChangePrzejscieType(0, 'PVC lite');
+
+        expect(well.przejscia[0].productId).toBe('pcv-lite-160');
+        expect(showToast).toHaveBeenCalledWith('Zmieniono materiał przejścia', 'success');
     });
 
     test('TEST 6: openChangePrzejscieDnPopup + confirmChangePrzejscieDn', () => {

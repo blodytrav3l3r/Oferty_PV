@@ -924,10 +924,10 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
         if (filterElementIndex == null && assignedIndex !== prevAssignedIndex) {
             if (globalIndex > 0) html += '<div style="height:0.5rem;"></div>';
-            html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border-left:3px solid ${assignedBg}; border-radius: var(--radius-sm); color:var(--text-muted); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(var(--black-rgb), 0.3);">
-                <span style="font-size: var(--fs-xl); filter:grayscale(0.4);"><i data-lucide="map-pin"></i></span> 
-                <span>Dotyczy:</span> 
-                <span style="color:var(--slate-200); font-size: var(--fs-base); padding-left:0.2rem;">${assignedName}</span>
+            html += `<div class="well-transition-target-heading" style="--well-transition-target-color:${assignedBg}; border-left:3px solid ${assignedBg};">
+                <span class="well-transition-target-heading__icon"><i data-lucide="map-pin" aria-hidden="true"></i></span>
+                <span class="well-transition-target-heading__label">Dotyczy:</span>
+                <span class="well-transition-target-heading__name">${assignedName}</span>
             </div>`;
             prevAssignedIndex = assignedIndex;
         }

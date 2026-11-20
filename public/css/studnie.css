@@ -214,7 +214,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     width: 100%;
     flex: 1;
     height: auto;
-    min-height: 200px;
+    min-height: 0;
     margin-top: 0.4rem;
     border-radius: var(--radius-sm);
     background: var(--bg-deep);
@@ -3275,6 +3275,63 @@ td.excel-tint--plyta_redukcyjna input {
 }
 
 /* ── Transition Renderer hover classes ── */
+.well-transition-target-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.5rem;
+    margin-top: 0.4rem;
+    margin-bottom: 0.4rem;
+    background: linear-gradient(
+        90deg,
+        var(--well-transition-target-color) 0%,
+        rgba(var(--slate-800-rgb), 0.8) 100%
+    );
+    border-radius: var(--radius-sm);
+    color: var(--white);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(var(--black-rgb), 0.3);
+}
+.well-transition-target-heading__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(var(--white-rgb), 0.55);
+    border-radius: 50%;
+    background: rgba(var(--black-rgb), 0.55);
+    color: inherit;
+    font-size: var(--fs-xl);
+}
+.well-transition-target-heading__icon svg {
+    width: 1em;
+    height: 1em;
+    stroke-width: 2.5;
+}
+.well-transition-target-heading__label {
+    padding: 0.1rem 0.35rem;
+    border: 1px solid rgba(var(--white-rgb), 0.55);
+    border-radius: var(--radius-2xs);
+    background: rgba(var(--black-rgb), 0.55);
+    color: inherit;
+    line-height: 1.2;
+    text-shadow: 0 1px 1px rgba(var(--black-rgb), 0.6);
+}
+.well-transition-target-heading__name {
+    padding: 0.1rem 0.35rem;
+    border: 1px solid rgba(var(--white-rgb), 0.55);
+    border-radius: var(--radius-2xs);
+    background: rgba(var(--black-rgb), 0.55);
+    color: inherit;
+    font-size: var(--fs-base);
+    text-shadow: 0 1px 1px rgba(var(--black-rgb), 0.6);
+}
+
 .prz-field {
     background: rgba(var(--white-rgb), 0.05);
     border-radius: var(--radius-2xs);

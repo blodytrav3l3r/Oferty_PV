@@ -387,7 +387,15 @@ window.confirmChangePrzejscieType = function (index, newType) {
     }
     if (available.length > 0) {
         const item = well.przejscia[index];
-        item.productId = available[0].id;
+        const currentProduct = studnieProducts.find((product) => product.id === item.productId);
+        const parseDn = (value) => parseFloat(String(value ?? '').split('/')[0]);
+        const previousDn = parseDn(currentProduct?.dn ?? item.dn);
+        const matchingDnProduct = Number.isFinite(previousDn)
+            ? available.find((product) => parseDn(product.dn) === previousDn)
+            : null;
+        const selectedProduct = matchingDnProduct || available[0];
+        const selectedDn = parseDn(selectedProduct.dn);
+        item.productId = selectedProduct.id;
         delete item.isCustom;
         delete item.customName;
         delete item.customPrice;
@@ -411,7 +419,18 @@ window.confirmChangePrzejscieType = function (index, newType) {
         else refreshAll();
         autoSelectComponents(true);
         window.refreshZleceniaModalIfActive();
-        showToast('Zmieniono materiał przejścia', 'success');
+        if (
+            Number.isFinite(previousDn) &&
+            Number.isFinite(selectedDn) &&
+            previousDn !== selectedDn
+        ) {
+            showToast(
+                `Średnica DN ${previousDn} nie jest dostępna w wybranym rodzaju przejścia. Zmieniono na DN ${selectedDn}.`,
+                'warning'
+            );
+        } else {
+            showToast('Zmieniono materiał przejścia', 'success');
+        }
     }
 };
 
