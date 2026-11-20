@@ -249,7 +249,16 @@ describe('Render przy corrupt rabat stored: fallback 0% + sygnał błędu', () =
         try {
             let htmlK: string = '';
             expect(() => {
-                htmlK = ctx.renderComponentSubItems(wellK, p, wellK.config[0], null, disc, 0, 0);
+                htmlK = ctx.renderComponentSubItems(
+                    wellK,
+                    p,
+                    wellK.config[0],
+                    null,
+                    disc,
+                    0,
+                    0,
+                    true
+                );
             }).not.toThrow();
             expect(htmlK).toContain('warn-glyph');
         } finally {

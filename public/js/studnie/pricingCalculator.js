@@ -121,6 +121,17 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                 ? computePrecoWellContext(well)
                 : undefined;
         const _wPricingErr = _isPricingErr(well, stats);
+        const wellConfig = well.config || [];
+        let kinetaCarrierIndex = -1;
+        for (let index = wellConfig.length - 1; index >= 0; index--) {
+            const item = wellConfig[index];
+            if (item.isPsiaBuda) continue;
+            const product = productMap.get(item.productId);
+            if (product && ['dennica', 'styczna'].includes(product.componentType)) {
+                kinetaCarrierIndex = index;
+                break;
+            }
+        }
         return {
             name: well.name,
             dn: well.dn,
@@ -134,15 +145,15 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
             rzednaWlazu: well.rzednaWlazu,
             rzednaDna: well.rzednaDna,
             magazyn: well.magazyn,
-            config: (well.config || []).map(function (item, index) {
+            config: wellConfig.map(function (item, index) {
                 const p = productMap.get(item.productId);
                 if (!p) return _exportConfigItem(item, {});
                 if (p.componentType === 'kineta') {
                     return _exportConfigItem(item, { _xskip: true, _xp: 0 });
                 }
                 const hasKineta =
-                    p.componentType === 'dennica' &&
-                    well.config.some(function (c) {
+                    index === kinetaCarrierIndex &&
+                    wellConfig.some(function (c) {
                         const kp = productMap.get(c.productId);
                         return kp && kp.componentType === 'kineta';
                     });
@@ -170,8 +181,8 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                         typeof _assessed === 'function'
                             ? _assessed(well, p, true, item)
                             : p.price || 0;
-                    if (p.componentType === 'dennica') {
-                        const ki = well.config.find(function (c) {
+                    if (hasKineta) {
+                        const ki = wellConfig.find(function (c) {
                             const kp = productMap.get(c.productId);
                             return kp && kp.componentType === 'kineta';
                         });

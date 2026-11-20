@@ -196,7 +196,21 @@ function calculateLinePricing(
     let totalLineWeight = (p.weight || 0) * item.quantity;
 
     if ((p.componentType === 'dennica' || p.componentType === 'styczna') && !item.isPsiaBuda) {
-        totalLinePrice += wellTransportCost;
+        let transportCarrierIndex = -1;
+        const config = well.config || [];
+        for (let index = config.length - 1; index >= 0; index--) {
+            const configItem = config[index];
+            if (configItem.isPsiaBuda) continue;
+            const product =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(configItem.productId)
+                    : studnieProducts.find((entry) => entry.id === configItem.productId);
+            if (product?.componentType === 'dennica' || product?.componentType === 'styczna') {
+                transportCarrierIndex = index;
+                break;
+            }
+        }
+        if (itemIndex === transportCarrierIndex) totalLinePrice += wellTransportCost;
         if (well.doplata) totalLinePrice += well.doplata;
     }
 

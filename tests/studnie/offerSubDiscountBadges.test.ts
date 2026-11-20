@@ -94,7 +94,16 @@ describe('Badge rabatów podpozycji oferty (offerWellComponents)', () => {
 
     function renderSub(well: any, disc: Record<string, unknown>, itemPrzejscia: any[]) {
         const p = studnieProducts.find((x) => x.id === 'DDD-1000-300');
-        return ctx.renderComponentSubItems(well, p, well.config[0], itemPrzejscia, disc, 0, 0);
+        return ctx.renderComponentSubItems(
+            well,
+            p,
+            well.config[0],
+            itemPrzejscia,
+            disc,
+            0,
+            0,
+            true
+        );
     }
 
     function product(id: string) {

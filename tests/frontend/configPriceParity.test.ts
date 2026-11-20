@@ -13,7 +13,22 @@ function readJs(rel: string): string {
 }
 
 const PRODUCTS: Record<string, any> = {
-    DEN: { id: 'DEN', name: 'Dennica DN1000', componentType: 'dennica', dn: 1000, weight: 100 },
+    DEN: {
+        id: 'DEN',
+        name: 'Dennica DN1000 H=1500/1350',
+        componentType: 'dennica',
+        dn: 1000,
+        height: 1350,
+        weight: 100
+    },
+    DEN_BOTTOM: {
+        id: 'DEN_BOTTOM',
+        name: 'Dennica DN1000 H=1250/1100',
+        componentType: 'dennica',
+        dn: 1000,
+        height: 1100,
+        weight: 80
+    },
     KRG: { id: 'KRG', name: 'Krąg DN1000', componentType: 'krag', dn: 1000, weight: 50 },
     KIN: { id: 'KIN', name: 'Kineta DN1000', componentType: 'kineta', dn: 1000, weight: 10 }
 };
@@ -119,6 +134,30 @@ describe('konfiguracja betonowa: ceny jak w ofercie', () => {
         expect(html()).toContain('w cenie: malowanie kinety');
         // Podwiersz to pełny kafelek SOK (config-tile), nie goły tekst.
         expect(html()).toContain('config-tile config-tile--static');
+    });
+
+    it('pokazuje kinetę wyłącznie pod ostatnią dennica, niezależnie od wysokości', () => {
+        const well = {
+            dn: 1000,
+            kineta: 'beton',
+            spocznik: 'beton',
+            config: [
+                { productId: 'DEN', quantity: 1 },
+                { productId: 'DEN_BOTTOM', quantity: 1 },
+                { productId: 'KIN', quantity: 1 }
+            ]
+        };
+        const { sandbox, html } = loadRender(well);
+
+        sandbox.renderWellConfig();
+
+        const rendered = html();
+        const bottomIndex = rendered.indexOf('Dennica DN1000 H=1250/1100');
+        const topIndex = rendered.indexOf('Dennica DN1000 H=1500/1350');
+        const kinetaIndex = rendered.indexOf('↳ + Kineta DN1000');
+        expect(rendered.match(/↳ \+ Kineta DN1000/g)).toHaveLength(1);
+        expect(topIndex).toBeLessThan(bottomIndex);
+        expect(bottomIndex).toBeLessThan(kinetaIndex);
     });
 
     it('szacowana waga kinety nie wyświetla komunikatu o orientacyjności', () => {

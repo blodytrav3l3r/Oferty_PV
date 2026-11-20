@@ -139,13 +139,18 @@ function renderWellConfig() {
     const kinetaProduct = kinetaItem ? findProductById(kinetaItem.productId) : null;
     const kinetaWeight = Number(_wellStats && _wellStats.kinetaWeight) || 0;
     const kinetaWeightIsEstimated = !!(_wellStats && _wellStats.kinetaWeightIsEstimated);
-    const kinetaCarrierIndex = kinetaItem
-        ? well.config.findIndex((configItem) => {
-              if (configItem.isPsiaBuda) return false;
-              const product = findProductById(configItem.productId);
-              return product && ['dennica', 'styczna'].includes(product.componentType);
-          })
-        : -1;
+    let kinetaCarrierIndex = -1;
+    if (kinetaItem) {
+        for (let index = well.config.length - 1; index >= 0; index--) {
+            const configItem = well.config[index];
+            if (configItem.isPsiaBuda) continue;
+            const product = findProductById(configItem.productId);
+            if (product && ['dennica', 'styczna'].includes(product.componentType)) {
+                kinetaCarrierIndex = index;
+                break;
+            }
+        }
+    }
     well.config.forEach((item, index) => {
         const p =
             typeof resolveEffectiveProduct === 'function'

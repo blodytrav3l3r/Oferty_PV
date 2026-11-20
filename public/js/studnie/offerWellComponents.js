@@ -206,14 +206,20 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
 function renderWellComponentsList(well, wellTransportCost, disc, _change) {
     let html = '';
     const assignedPrzejscia = calculateAssignedPrzejscia(well);
-    const hasTransportBase = well.config.some((item) => {
-        if (item.isPsiaBuda) return false;
+    let kinetaCarrierIndex = -1;
+    for (let index = well.config.length - 1; index >= 0; index--) {
+        const item = well.config[index];
+        if (item.isPsiaBuda) continue;
         const product =
             typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(item.productId)
                 : studnieProducts.find((pr) => pr.id === item.productId);
-        return product?.componentType === 'dennica' || product?.componentType === 'styczna';
-    });
+        if (product?.componentType === 'dennica' || product?.componentType === 'styczna') {
+            kinetaCarrierIndex = index;
+            break;
+        }
+    }
+    const hasTransportBase = kinetaCarrierIndex >= 0;
     // P4-P0: kontekst Preco raz per studnia (nie per pozycja).
     const precoCtx =
         typeof computePrecoWellContext === 'function' ? computePrecoWellContext(well) : undefined;
@@ -244,7 +250,8 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
         const standalonePrice = hasStandalonePrice
             ? calculateStandaloneComponentPrice(well, p, item, frozenCtx)
             : totalLinePrice;
-        const kinetaItem = isTransportHost ? findWellKineta(well) : null;
+        const isKinetaCarrier = index === kinetaCarrierIndex;
+        const kinetaItem = isKinetaCarrier ? findWellKineta(well) : null;
         const kinetaProduct = kinetaItem
             ? typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(kinetaItem.productId)
@@ -330,7 +337,8 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
             assignedPrzejscia[index],
             disc,
             wellTransportCost,
-            index
+            index,
+            isKinetaCarrier
         );
     });
 
@@ -409,7 +417,16 @@ function subDiscountStr(pct) {
     return ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${label}%)</span>`;
 }
 
-function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTransportCost, itemIndex) {
+function renderComponentSubItems(
+    well,
+    p,
+    item,
+    itemPrzejscia,
+    disc,
+    wellTransportCost,
+    itemIndex,
+    isKinetaCarrier
+) {
     let html = '';
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
 
@@ -492,7 +509,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
         </tr>`;
     }
 
-    if (isBase && !item.isPsiaBuda) {
+    if (isBase && !item.isPsiaBuda && isKinetaCarrier) {
         const kineta = findWellKineta(well);
         if (kineta) {
             const kp =
@@ -829,7 +846,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
         }
     }
 
-    if (isBase && !item.isPsiaBuda) {
+    if (isBase && !item.isPsiaBuda && isKinetaCarrier) {
         if (wellTransportCost > 0) {
             html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent2-hover);">
                 <td colspan="3" class="pl-lg">↳ <i data-lucide="truck" aria-hidden="true"></i> Udział w transporcie</td>

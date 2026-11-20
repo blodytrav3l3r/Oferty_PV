@@ -12,6 +12,12 @@ describe('Transport w podglądzie oferty studni', () => {
             doplataPEHD: 50
         },
         {
+            id: 'dennica-1000-bottom',
+            componentType: 'dennica',
+            name: 'Dennica DN1000 H=1250/1100',
+            price: 300
+        },
+        {
             id: 'kineta-1000',
             componentType: 'kineta',
             name: 'Kineta DN1000',
@@ -47,6 +53,8 @@ describe('Transport w podglądzie oferty studni', () => {
                 nierdzewna: 0
             }),
             getItemAssessedPriceSafe: (_well: unknown, product: any) => product.price,
+            getWellDiscountPctSafe: () => 0,
+            getWellDiscountPct: () => 0,
             isFrozenPriceCtx: () => false,
             getDiscountStr: () => ' (-45%)',
             getDiscountStrForWell: () => '',
@@ -112,6 +120,79 @@ describe('Transport w podglądzie oferty studni', () => {
         expect(html).not.toContain('bez elementów');
         expect(html).toContain('250 PLN');
         expect(html).not.toContain('Cena dennicy z elementami');
+    });
+
+    test('dolicza kinetę i jej podwiersz wyłącznie do ostatniej dennicy', () => {
+        const context = loadRenderer();
+        delete context.renderComponentSubItems;
+        const well = {
+            config: [
+                { productId: 'dennica-1000', quantity: 1 },
+                { productId: 'dennica-1000-bottom', quantity: 1 },
+                { productId: 'kineta-1000', quantity: 1 }
+            ]
+        };
+
+        const html = context.renderWellComponentsList(well, 450.69, {}, null);
+        const rows = html.match(/<tr style="opacity:0\.8;">[\s\S]*?<\/tr>/g) || [];
+        const topRow = rows.find((row: string) => row.includes('Dennica DN1000 H=500')) || '';
+        const bottomRow =
+            rows.find((row: string) => row.includes('Dennica DN1000 H=1250/1100')) || '';
+
+        expect(topRow).toContain('400 PLN');
+        expect(bottomRow).toContain('532 PLN');
+        expect((html.match(/Kineta DN1000/g) || []).length).toBe(1);
+        expect((html.match(/Udział w transporcie/g) || []).length).toBe(1);
+        expect(html.indexOf('Dennica DN1000 H=1250/1100')).toBeLessThan(
+            html.indexOf('Udział w transporcie')
+        );
+    });
+
+    test('wlicza koszt transportu tylko do ceny ostatniego elementu dennego', () => {
+        const context: any = {
+            window: {},
+            isFrozenPriceCtx: () => false,
+            getWellNadbudowaPctSafe: () => 0,
+            getItemAssessedPriceSafe: (_well: unknown, product: any) => product.price,
+            calculatePrecoAllocationForItem: () => ({ hasPreco: false }),
+            getStudnieProductById: (id: string) => products.find((product) => product.id === id),
+            studnieProducts: products
+        };
+        vm.createContext(context);
+        vm.runInContext(
+            fs.readFileSync(
+                path.join(__dirname, '../../public/js/studnie/offerPricingCalc.js'),
+                'utf8'
+            ),
+            context
+        );
+        const well = {
+            config: [
+                { productId: 'dennica-1000', quantity: 1 },
+                { productId: 'dennica-1000-bottom', quantity: 1 }
+            ]
+        };
+        const topPrice = context.calculateLinePricing(
+            well,
+            products[0],
+            well.config[0],
+            450.69,
+            {},
+            null,
+            0
+        ).totalLinePrice;
+        const bottomPrice = context.calculateLinePricing(
+            well,
+            products[1],
+            well.config[1],
+            450.69,
+            {},
+            null,
+            1
+        ).totalLinePrice;
+
+        expect(topPrice).toBe(250);
+        expect(bottomPrice).toBe(750.69);
     });
 
     test('pokazuje sumę kręgu z dodatkami i osobną cenę samego kręgu', () => {
