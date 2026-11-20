@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.9](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.8...v1.64.9) (2026-11-20)
+
+### Bug Fixes
+
+- **studnie:** popraw podgląd przejść ([84d59e0](https://github.com/blodytrav3l3r/Oferty_PV/commit/84d59e0fd3ad78c58d85f2d5d5062fee4050ab9d))
+- **studnie:** przypisz kinetę i transport do dolnego elementu ([eab8651](https://github.com/blodytrav3l3r/Oferty_PV/commit/eab8651fed29fcba79be4c0321a69ffaab165341))
+
 ### [1.64.8](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.7...v1.64.8) (2026-11-19)
 
 ### Bug Fixes
