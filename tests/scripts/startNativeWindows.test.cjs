@@ -58,6 +58,24 @@ describe('native Windows launcher contract', () => {
         }
     });
 
+    it('shows the S.O.K. name and version in native and Docker launch banners', () => {
+        const appVersion = fs.readFileSync(path.join(projectRoot, 'VERSION'), 'utf8').trim();
+        for (const launcherName of ['start-native.bat', 'start-postgres.bat']) {
+            const launcher = fs.readFileSync(path.join(projectRoot, launcherName), 'utf8');
+
+            assert.match(
+                launcher,
+                new RegExp(`set "APP_VERSION=${appVersion}"`, 'i'),
+                `${launcherName} APP_VERSION`
+            );
+            assert.match(
+                launcher,
+                /echo\s+S\.O\.K\..*v%APP_VERSION%/i,
+                `${launcherName} visible S.O.K. version banner`
+            );
+        }
+    });
+
     it('keeps documented shortcut names forwarding to their canonical launchers', () => {
         const readLauncher = (name) => fs.readFileSync(path.join(projectRoot, name), 'utf8');
 

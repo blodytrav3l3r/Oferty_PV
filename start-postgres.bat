@@ -6,10 +6,11 @@ REM Uruchamia: docker compose up --detach --build dla postgres i app.
 REM Wplyw: Przebudowuje obraz aplikacji i zachowuje istniejacy wolumen PostgreSQL.
 setlocal
 cd /d "%~dp0"
+set "APP_VERSION=1.64.9"
 set "HTTPS_ENABLED=false"
 
 echo ===========================================================
-echo   S.O.K. - Start with PostgreSQL 18
+echo   S.O.K. - Docker PostgreSQL 18 v%APP_VERSION%
 echo ===========================================================
 echo.
 

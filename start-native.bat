@@ -8,6 +8,15 @@ REM Wplyw: Sprawdza gotowa baze aplikacji; nie uruchamia migracji ani seedu.
 setlocal
 cd /d "%~dp0"
 
+set "APP_VERSION=1.64.9"
+set "START_MODE=Local PostgreSQL"
+if /i "%1"=="-Watch" set "START_MODE=Development"
+
+echo ===========================================================
+echo   S.O.K. - %START_MODE% v%APP_VERSION%
+echo ===========================================================
+echo.
+
 where powershell.exe >nul 2>nul
 if errorlevel 1 (
     echo [ERROR] Windows PowerShell was not found.
