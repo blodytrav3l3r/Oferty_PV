@@ -78,4 +78,15 @@ describe('auditPzElementKeyMismatch — klasyfikacja i dedupe', () => {
         expect(warnings.length).toBe(before);
         expect(toasts).toHaveLength(1);
     });
+
+    test('wymagane świeże dane odrzucają błąd serwera zamiast zwrócić indeks z pamięci', async () => {
+        const { sandbox } = loadAudit();
+        sandbox.productionOrders = [{ id: 'stale' }];
+        sandbox.fetchWithTimeout = async () => ({ ok: false, status: 503 });
+        sandbox.authHeaders = () => ({});
+
+        await expect(vm.runInContext('loadProductionOrders(false, true)', sandbox)).rejects.toThrow(
+            'Nie udało się pobrać aktualnych zleceń produkcyjnych'
+        );
+    });
 });

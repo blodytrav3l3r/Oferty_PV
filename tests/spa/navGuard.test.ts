@@ -13,6 +13,7 @@ const readSpa = (f) => fs.readFileSync(path.join(__dirname, '../../public/js/spa
 function runContext() {
     const docListeners = {};
     const confirmCalls = [];
+    const createdIframes = [];
     const state = {
         hash: '',
         dirty: false
@@ -34,7 +35,18 @@ function runContext() {
 
     const docStub = {
         getElementById: () => elStub(),
-        createElement: () => ({ ...elStub(), contentDocument: null, src: '' }),
+        createElement: () => {
+            const iframe = {
+                ...elStub(),
+                contentDocument: { readyState: 'complete' },
+                contentWindow: { location: { href: 'about:blank' } },
+                dataset: {},
+                src: '',
+                classList: { add() {}, remove() {}, toggle() {} }
+            };
+            createdIframes.push(iframe);
+            return iframe;
+        },
         querySelector: () => null,
         querySelectorAll: () => [],
         addEventListener: (t, h) => {
@@ -90,6 +102,7 @@ function runContext() {
         context,
         state,
         confirmCalls,
+        createdIframes,
         resolveConfirm: (val) => {
             const r = confirmResolve;
             confirmResolve = null;
@@ -107,6 +120,34 @@ async function bootOnRury(context, state) {
 }
 
 describe('Guard nawigacji SPA — appConfirm przy niezapisanych zmianach', () => {
+    test('odświeżenie PZ pobiera aktualny indeks i odświeża widoki istniejącej Studni', async () => {
+        const { context, state, createdIframes } = runContext();
+        await bootOnRury(context, state);
+        state.hash = '#/studnie';
+        await context.window.SpaRouter.navigate();
+
+        const studnieWindow = createdIframes[1].contentWindow;
+        const events = [];
+        studnieWindow.loadProductionOrders = async (...args) => {
+            events.push(['load', ...args]);
+            return [];
+        };
+        studnieWindow.auditPzElementKeyMismatch = () => events.push(['audit']);
+        studnieWindow.renderZleceniaList = () => events.push(['list']);
+        studnieWindow.renderZleceniaWellConfig = () => events.push(['config']);
+        studnieWindow.refreshAll = () => events.push(['refresh']);
+
+        await context.window.SpaRouter.refreshProductionOrders();
+
+        expect(events).toEqual([
+            ['load', false, true],
+            ['audit'],
+            ['list'],
+            ['config'],
+            ['refresh']
+        ]);
+    });
+
     test('TEST 1: czysty stan — zmiana modułu bez popupu', async () => {
         const { context, state, confirmCalls } = runContext();
         await bootOnRury(context, state);

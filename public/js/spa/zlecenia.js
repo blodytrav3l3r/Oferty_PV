@@ -1037,6 +1037,7 @@ const AppZlecenia = (() => {
             window.zleceniaRender.renderStats(buildRenderState());
             selectState = window.zleceniaRender.renderTable(buildRenderState());
             showToast('Zlecenie usuni\u0119te', 'info');
+            await refreshStudnieProductionOrders();
 
             if (
                 window.parent &&
@@ -1055,6 +1056,7 @@ const AppZlecenia = (() => {
         if (selectedIds.size === 0) return;
 
         const selected = [...selectedIds];
+        let deletedTotal = 0;
         const itemsById = new Map((searchResults ? searchResults.items : []).map((o) => [o.id, o]));
         // Spójnie z pojedynczym deleteOrder: zatwierdzone (accepted) są chronione PZ
         const acceptedSelected = selected.filter((id) => {
@@ -1083,7 +1085,6 @@ const AppZlecenia = (() => {
         try {
             // Podział na paczki ≤200 — serwer limituje 200 ids/request, rate limiter 60/min
             const CHUNK_SIZE = 200;
-            let deletedTotal = 0;
             let skippedTotal = 0;
             for (let i = 0; i < selected.length; i += CHUNK_SIZE) {
                 const chunk = selected.slice(i, i + CHUNK_SIZE);
@@ -1123,10 +1124,26 @@ const AppZlecenia = (() => {
                 toastMsg += ' \u00B7 pomini\u0119to ' + skippedTotal + ' zatwierdzone (ochrona PZ)';
             }
             showToast(toastMsg, 'info');
+            if (deletedTotal > 0) await refreshStudnieProductionOrders();
         } catch (e) {
+            if (deletedTotal > 0) await refreshStudnieProductionOrders();
             logger.error('zlecenia', 'deleteSelectedOrders error:', e);
             showToast(e.message, 'error');
         }
+    }
+
+    async function refreshStudnieProductionOrders() {
+        try {
+            const router = window.parent && window.parent.SpaRouter;
+            if (!router || typeof router.refreshProductionOrders !== 'function') return;
+            if (await router.refreshProductionOrders()) return;
+        } catch (e) {
+            logger.error('zlecenia', 'refreshStudnieProductionOrders error:', e);
+        }
+        showToast(
+            'Usunięcie zapisano, ale nie udało się odświeżyć danych Studni. Odśwież moduł Studnie.',
+            'error'
+        );
     }
 
     /* ===== NAWIGACJA ===== */

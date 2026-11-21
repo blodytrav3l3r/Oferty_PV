@@ -5,19 +5,26 @@
  * zamiast pełnych wierszy z ciężkim `data` — KB zamiast MB. Jeden retry po
  * aborcie; przy drugim failu zostają stare dane z RAM.
  */
-async function loadProductionOrders(retried) {
+async function loadProductionOrders(retried, requireFresh = false) {
     try {
         const resp = await fetchWithTimeout('/api/orders-studnie/production/index', {
             headers: authHeaders()
         });
         if (resp.ok) {
             const json = await resp.json();
-            productionOrders = json.data || [];
+            if (requireFresh && !Array.isArray(json.data)) {
+                throw new Error('Serwer zwrócił nieprawidłowy indeks zleceń produkcyjnych');
+            }
+            productionOrders = Array.isArray(json.data) ? json.data : [];
             // Audyt uruchamia appStudnie.js po załadowaniu wszystkich danych w tle (orders, offers, products)
+        } else if (requireFresh) {
+            throw new Error('Nie udało się pobrać aktualnych zleceń produkcyjnych');
         }
     } catch (e) {
-        if (!retried && e && e.name === 'AbortError') return loadProductionOrders(true);
+        if (!retried && e && e.name === 'AbortError')
+            return loadProductionOrders(true, requireFresh);
         logger.error('orderManager', 'loadProductionOrders error:', e);
+        if (requireFresh) throw e;
     }
     return productionOrders;
 }

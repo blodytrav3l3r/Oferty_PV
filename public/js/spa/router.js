@@ -1041,13 +1041,36 @@
         }
     }
 
+    /** Odświeża indeks PZ w zachowanym iframe Studni po zmianie z kartoteki. */
+    async function refreshProductionOrders() {
+        const win = iframes.studnie && iframes.studnie.contentWindow;
+        if (!win) return true;
+        if (typeof win.loadProductionOrders !== 'function') return false;
+
+        try {
+            const orders = await win.loadProductionOrders(false, true);
+            if (!Array.isArray(orders))
+                throw new Error('Nieprawidłowy indeks zleceń produkcyjnych');
+            if (typeof win.auditPzElementKeyMismatch === 'function')
+                win.auditPzElementKeyMismatch();
+            if (typeof win.renderZleceniaList === 'function') win.renderZleceniaList();
+            if (typeof win.renderZleceniaWellConfig === 'function') win.renderZleceniaWellConfig();
+            if (typeof win.refreshAll === 'function') win.refreshAll();
+            return true;
+        } catch (e) {
+            logger.error('router', '[SpaRouter] Nie udało się odświeżyć zleceń produkcyjnych:', e);
+            return false;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', init);
 
     const api = {
         showSection,
         navigate,
         openOfferInModule,
-        refreshModule
+        refreshModule,
+        refreshProductionOrders
     };
     window.SpaRouter = api;
     return api;
