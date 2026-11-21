@@ -4,6 +4,23 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.16](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.14...v1.64.16) (2026-11-21)
+
+### Features
+
+- **ui:** pokazuj commit pod wersją ([44006a9](https://github.com/blodytrav3l3r/Oferty_PV/commit/44006a94ed3af34a8d2f32de3d359899a4eeb657))
+
+### Bug Fixes
+
+- **docker:** weryfikuj lokalny commit kontenera ([6e788aa](https://github.com/blodytrav3l3r/Oferty_PV/commit/6e788aa3f82a3eeb44de3088b18332e4a7e50068))
+- **orders:** nadaj nazwy plikom wydruków zleceń ([b782abc](https://github.com/blodytrav3l3r/Oferty_PV/commit/b782abcc7d89a528d61d1501f77f5454975ef15a))
+- **orders:** odświeżaj studnię po usunięciu zleceń ([5f28b64](https://github.com/blodytrav3l3r/Oferty_PV/commit/5f28b641c44a8e156a5b31514d7c1208910ed1e4))
+- **orders:** usuń stare numery wydrukowe ([b5817e6](https://github.com/blodytrav3l3r/Oferty_PV/commit/b5817e6c1835b45dd81195195a0c6631aab82385))
+- **studnie:** popraw wydruk ślepej kinety i zakres powłoki ([1243596](https://github.com/blodytrav3l3r/Oferty_PV/commit/12435969abe2f00a75d8594ac60a75da0198f6c7))
+- **studnie:** zabezpiecz wybór dolnej dennicy ([1fe0544](https://github.com/blodytrav3l3r/Oferty_PV/commit/1fe0544e4d932f738321877610bd8e26f862d327))
+- **ui:** czekaj na gotowość iframe modułów ([d6a1dc9](https://github.com/blodytrav3l3r/Oferty_PV/commit/d6a1dc9a7113bc2e80d9738943876f7748a4a65b))
+- **ui:** uporządkuj cykl życia ramek spa ([18c20c6](https://github.com/blodytrav3l3r/Oferty_PV/commit/18c20c6dc7fe45aee91bd74a340c4d57532eb9d8))
+
 ### [1.64.15](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.14...v1.64.15) (2026-11-21)
 
 ### Bug Fixes

@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.64.15
+REM  Wersja: 1.64.16
 REM Rola: Start aplikacji developerskiej z osobna testowa baza PostgreSQL w Dockerze.
 REM Uzycie: start-dev.bat
 REM Uruchamia: start-native.bat -Watch -StartTestDatabase.

@@ -465,7 +465,7 @@
             if (frameLocation.origin !== window.location.origin)
                 return { ok: false, reason: 'origin' };
             if (frameLocation.pathname !== expectedLocation.pathname)
-                return { ok: false, reason: 'document' };
+                return { ok: false, reason: 'path' };
             const actualParams = new URLSearchParams(frameLocation.search);
             const expectedParams = new URLSearchParams(expectedLocation.search);
             actualParams.delete('_ts');
@@ -473,8 +473,8 @@
             actualParams.sort();
             expectedParams.sort();
             if (actualParams.toString() !== expectedParams.toString())
-                return { ok: false, reason: 'document' };
-            if (!frameDocument.documentElement) return { ok: false, reason: 'document' };
+                return { ok: false, reason: 'query' };
+            if (!frameDocument.documentElement) return { ok: false, reason: 'missing-document' };
             if (frameDocument.readyState !== 'complete' || !frameDocument.body)
                 return { ok: false, reason: 'pending' };
             const module = iframe.id.replace('spa-iframe-', '');
@@ -485,7 +485,7 @@
             if (!hasReadyMarker) return { ok: false, reason: 'pending' };
             return { ok: true, reason: '' };
         } catch (_e) {
-            return { ok: false, reason: 'document' };
+            return { ok: false, reason: 'inaccessible-document' };
         }
     }
 
@@ -510,6 +510,10 @@
                     return;
                 }
                 if (result.reason === 'pending') {
+                    timers.readiness = window.setTimeout(checkReadiness, 50);
+                    return;
+                }
+                if (waitForNextLoad && ['origin', 'path', 'query'].includes(result.reason)) {
                     timers.readiness = window.setTimeout(checkReadiness, 50);
                     return;
                 }
@@ -576,10 +580,16 @@
         const layer = getTransitionLayer();
         if (!layer) return;
         document.body.classList.remove('spa-view-loading');
-        const message =
-            reason === 'timeout'
-                ? 'Widok nie odpowiedział na czas.'
-                : 'Dokument widoku jest niedostępny lub nieprawidłowy.';
+        const messages = {
+            timeout: 'Widok nie odpowiedział na czas.',
+            load: 'Nie udało się pobrać dokumentu widoku.',
+            origin: 'Widok został otwarty z nieprawidłowego adresu.',
+            path: 'Załadowano inną stronę niż oczekiwany widok.',
+            query: 'Załadowano widok z innymi parametrami.',
+            'missing-document': 'Dokument widoku jest niekompletny.',
+            'inaccessible-document': 'Nie można odczytać dokumentu widoku.'
+        };
+        const message = messages[reason] || 'Dokument widoku jest nieprawidłowy.';
         layer.classList.add('is-error');
         layer.setAttribute('aria-hidden', 'false');
         layer.innerHTML = `
@@ -837,6 +847,7 @@
         }
 
         // Docelowy iframe — lifecycle: keep old visible under overlay → wait ready → atomically swap
+        const isNewIframe = !iframes[module];
         const iframe = getOrCreateIframe(module);
         // Tytuł iframe dla a11y (SR) — aktualizuj przy każdym navigate (reuse iframe)
         if (MODULES[module]?.logo) {
@@ -871,6 +882,20 @@
         // Sprawdź czy navigate nie została wyprzedzona przez kolejny hashchange
         if (transition !== transitionToken) return;
         if (!readiness.ok) {
+            const failureDetails = {
+                module,
+                reason: readiness.reason,
+                expectedSrc: needsReload ? _buildModuleSrc(module, params) : iframe.src
+            };
+            try {
+                failureDetails.actualSrc = iframe.contentWindow.location.href;
+                failureDetails.readyState = iframe.contentDocument?.readyState;
+                failureDetails.hasReadyMarker =
+                    iframe.contentDocument?.documentElement?.classList?.contains('is-loaded');
+            } catch (_e) {
+                // Zablokowany odczyt cross-origin nie może przerwać obsługi błędu nawigacji.
+            }
+            logger.error('router', '[SpaRouter] Iframe navigation failed', failureDetails);
             showNavigationFailure(
                 transition,
                 targetHash,
@@ -904,7 +929,9 @@
 
         // Auto-odświeżanie danych, jeśli moduł ma funkcję odświeżania
         try {
-            refreshModule(module);
+            const kartotekaReady =
+                module !== 'kartoteka' || iframe.contentWindow.kartotekaUI?.initialized === true;
+            if (!isNewIframe && kartotekaReady) refreshModule(module);
         } catch (_e) {
             // Problemy z kontekstem - ignoruj
         }

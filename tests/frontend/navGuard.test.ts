@@ -95,6 +95,7 @@ function runContext() {
         Object.defineProperty(iframe, 'src', {
             get: () => src,
             set(value) {
+                const previousHref = this.contentWindow.location.href;
                 src = value;
                 const absoluteUrl = new URL(value, 'http://localhost/app.html').href;
                 this.contentWindow.location.href = absoluteUrl;
@@ -114,6 +115,10 @@ function runContext() {
                 } else if (this.behavior === 'delayed-ready') {
                     this.contentDocument.readyState = 'complete';
                     dispatch(this, 'load');
+                } else if (this.behavior === 'stale-load') {
+                    this.contentWindow.location.href = previousHref;
+                    this.contentDocument.readyState = 'complete';
+                    dispatch(this, 'load');
                 } else {
                     this.contentDocument.readyState = 'loading';
                 }
@@ -123,6 +128,14 @@ function runContext() {
         iframe.classList = makeClassList();
         iframe.setMode = (nextMode) => {
             iframe.behavior = nextMode;
+        };
+        iframe.completeLoad = () => {
+            const absoluteUrl = new URL(src, 'http://localhost/app.html').href;
+            iframe.contentWindow.location.href = absoluteUrl;
+            iframe.contentWindow.location.origin = new URL(absoluteUrl).origin;
+            iframe.contentDocument.readyState = 'complete';
+            iframe.contentDocument.documentElement.classList.add('is-loaded');
+            dispatch(iframe, 'load');
         };
         createdIframes.push(iframe);
         return iframe;
@@ -383,6 +396,26 @@ describe('Cykl życia iframe w routerze SPA', () => {
         expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(true);
     });
 
+    test('pierwsze wejście nie dubluje inicjalizacji Kartoteki, ponowne wejście odświeża dane', async () => {
+        const { context, state, createdIframes } = runContext();
+        await bootOnRury(context, state);
+        state.hash = '#/kartoteka';
+        const firstLoad = context.window.SpaRouter.navigate();
+        const kartotekaWindow = createdIframes[1].contentWindow;
+        const loadLocalOffers = jest.fn();
+        kartotekaWindow.kartotekaUI = { initialized: true, loadLocalOffers };
+        await firstLoad;
+
+        expect(loadLocalOffers).not.toHaveBeenCalled();
+
+        state.hash = '#/rury';
+        await context.window.SpaRouter.navigate();
+        state.hash = '#/kartoteka';
+        await context.window.SpaRouter.navigate();
+
+        expect(loadLocalOffers).toHaveBeenCalledTimes(1);
+    });
+
     test.each(['rury', 'studnie', 'kartoteka', 'zlecenia', 'cennik', 'pulpit'])(
         'czeka na gotowość modułu %s po zdarzeniu load',
         async (module) => {
@@ -463,7 +496,7 @@ describe('Cykl życia iframe w routerze SPA', () => {
     });
 
     test('szybka zmiana edit/order kończy na najnowszym dokumencie', async () => {
-        const { context, state, createdIframes } = runContext();
+        const { context, state, createdIframes, runPendingTimers } = runContext();
         await bootOnRury(context, state);
         const iframe = createdIframes[0];
         iframe.setMode('timeout');
@@ -473,11 +506,30 @@ describe('Cykl życia iframe w routerze SPA', () => {
         iframe.setMode('ready');
         state.hash = '#/rury?order=order-b';
         await context.window.SpaRouter.navigate();
+        runPendingTimers();
         await staleNavigation;
 
         expect(new URL(iframe.contentWindow.location.href).searchParams.get('order')).toBe(
             'order-b'
         );
+    });
+
+    test('ignoruje pośredni load starego dokumentu podczas reloadu edit/order', async () => {
+        const { context, state, createdIframes, elements } = runContext();
+        await bootOnRury(context, state);
+        const iframe = createdIframes[0];
+        iframe.setMode('stale-load');
+        state.hash = '#/rury?order=order-next';
+
+        const pendingNavigation = context.window.SpaRouter.navigate();
+        await flush();
+
+        expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(false);
+        iframe.completeLoad();
+        await pendingNavigation;
+
+        expect(elements.get('spa-app-rury').classList.contains('active')).toBe(true);
+        expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(false);
     });
 });
 
