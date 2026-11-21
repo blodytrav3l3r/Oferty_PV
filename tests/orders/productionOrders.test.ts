@@ -552,11 +552,53 @@ describe('Production Orders (PZ) routes', () => {
                 elementIndex: 0,
                 data: JSON.stringify({ status: 'draft', productionOrderNumber: 'AB/PZ/1/26' })
             });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([]);
 
             const res = await request(app).get('/api/orders/production/pz-1');
             expect(res.statusCode).toBe(200);
             expect(res.body.data.id).toBe('pz-1');
             expect(res.body.data.productionOrderNumber).toBe('AB/PZ/1/26');
+        });
+
+        it('zwraca numery powiązanych PZ tylko dla rekordów czytelnych przez użytkownika', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-dennica',
+                userId: 'user-id',
+                wellId: 'well-1',
+                elementIndex: 5,
+                data: JSON.stringify({
+                    status: 'draft',
+                    componentType: 'dennica',
+                    productionOrderNumber: 'D/00001/26'
+                })
+            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-ring',
+                    userId: 'user-id',
+                    elementIndex: 2,
+                    productionNumber: null,
+                    data: JSON.stringify({
+                        componentType: 'krag_ot',
+                        productionOrderNumber: 'K/00003/26'
+                    })
+                },
+                {
+                    id: 'pz-private-ring',
+                    userId: 'other-user',
+                    elementIndex: 1,
+                    productionNumber: null,
+                    data: JSON.stringify({
+                        componentType: 'krag',
+                        productionOrderNumber: 'K/00002/26'
+                    })
+                }
+            ]);
+
+            const res = await request(app).get('/api/orders/production/pz-dennica');
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.data.siblingCrossReferences).toBe('Kręgi: K/00003/26');
         });
 
         it('zwraca kanoniczny numer wydruku z symbolem opiekuna', async () => {

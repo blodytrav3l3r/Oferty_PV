@@ -45,6 +45,26 @@ function renderZleceniaSvgPreview(well) {
     if (!svg) return;
 
     renderWellDiagram(svg, well);
+    const selectedElement =
+        typeof zleceniaSelectedIdx === 'number' &&
+        zleceniaSelectedIdx >= 0 &&
+        Array.isArray(zleceniaElementsList)
+            ? zleceniaElementsList[zleceniaSelectedIdx]
+            : null;
+    const components = Array.from(svg.querySelectorAll('.diag-comp-grp'));
+    components.forEach((component) => component.classList.remove('zlecenia-active-component'));
+    if (
+        selectedElement &&
+        selectedElement.well &&
+        String(selectedElement.well.id) === String(well.id) &&
+        Number.isInteger(selectedElement.elementIndex)
+    ) {
+        const activeComponent = components.find(
+            (component) =>
+                Number(component.getAttribute('data-cfg-idx')) === selectedElement.elementIndex
+        );
+        if (activeComponent) activeComponent.classList.add('zlecenia-active-component');
+    }
     renderZleceniaWellConfig();
 
     if (info) {

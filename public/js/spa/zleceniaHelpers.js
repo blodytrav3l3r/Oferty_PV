@@ -419,7 +419,12 @@ function buildZleceniePayload(po) {
         WYSOKOSC: po.wysokosc || '',
         GLEBOKOSC: po.glebokosc || '',
         DNO_KINETA: po.dnoKineta || '',
-        UWAGI: po.uwagi || '',
+        UWAGI: po.siblingCrossReferences
+            ? (po.uwagi ? po.uwagi + '<br>' : '') +
+              '<b>' +
+              window.escapeHtml(po.siblingCrossReferences) +
+              '</b>'
+            : po.uwagi || '',
         DATA: po.data || '',
         NAZWISKO: po.nazwisko || '',
         RED_KINETY: paramLabel(po.redukcjaKinety) || 'Brak',

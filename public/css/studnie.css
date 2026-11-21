@@ -2329,6 +2329,16 @@ html[data-theme='light'] #btn-auto-select:disabled {
     background: var(--bg-secondary);
 }
 
+#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component {
+    filter: drop-shadow(var(--shadow-md));
+}
+
+#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component > rect,
+#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component > path,
+#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component > polygon {
+    stroke: var(--warn) !important;
+}
+
 .zlecenia-right-header {
     padding: 0.8rem 1.2rem;
     border-bottom: 1px solid var(--border-glass);

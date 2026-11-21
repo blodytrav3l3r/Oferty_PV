@@ -714,58 +714,6 @@ function generateWellSvg(data) {
     return svg;
 }
 
-/**
- * Buduje tekst z odwołaniami do powiązanych elementów produkcyjnych
- * (dennica ↔ kręgi) w tej samej studni.
- * Dla dennicy: lista numerów zleceń kręgów w studni.
- * Dla kręgu: numer studni + numery zleceń dennicy i pozostałych kręgów.
- */
-function buildSiblingCrossReferences(data) {
-    const well = data.well;
-    const currentElementIndex = data.elementIndex;
-    const currentProduct = data.product;
-
-    if (!well || !well.id) return '';
-    if (typeof zleceniaElementsList === 'undefined' || zleceniaElementsList.length === 0) return '';
-
-    // Elementy produkcyjne w tej samej studni (bez bieżącego)
-    const siblings = zleceniaElementsList.filter(
-        (el) => el.well.id === well.id && el.elementIndex !== currentElementIndex
-    );
-
-    if (siblings.length === 0) return '';
-
-    const getPoNumber = (el) => {
-        const po = pzGuard.findPzForElement(
-            productionOrders || [],
-            el.well.id,
-            (el.configItem && el.configItem._elemId) || '',
-            el.elementIndex
-        );
-        return po?.productionOrderNumber || '—';
-    };
-
-    const isDennica = currentProduct && currentProduct.componentType === 'dennica';
-
-    if (isDennica) {
-        // Dennica → pokaż tylko numery zleceń kręgów
-        const kregiNumbers = siblings.map((el) => getPoNumber(el));
-        return 'Kręgi: ' + kregiNumbers.join(', ');
-    }
-
-    // Krąg → pokaż numer zlecenia dennicy jako "Studnia" + numery pozostałych kręgów
-    const parts = [];
-    const dennice = siblings.filter((el) => el.product && el.product.componentType === 'dennica');
-    const otherKregi = siblings.filter(
-        (el) => el.product && el.product.componentType !== 'dennica'
-    );
-
-    dennice.forEach((el) => parts.push('Studnia: ' + getPoNumber(el)));
-    otherKregi.forEach((el) => parts.push('Krąg: ' + getPoNumber(el)));
-
-    return parts.join(', ');
-}
-
 function buildZlecenieHtml(template, data) {
     const przejsciaRows = buildPrzejsciaRows(data);
 
@@ -835,9 +783,10 @@ function buildZlecenieHtml(template, data) {
     };
 
     // Dodaj odwołania do powiązanych elementów (dennica ↔ kręgi) w sekcji Uwagi
-    const crossRefs = data.isSavedProductionOrder ? '' : buildSiblingCrossReferences(data);
+    const crossRefs = data.siblingCrossReferences;
     if (crossRefs) {
-        payload.UWAGI = (payload.UWAGI ? payload.UWAGI + '<br>' : '') + '<b>' + crossRefs + '</b>';
+        payload.UWAGI =
+            (payload.UWAGI ? payload.UWAGI + '<br>' : '') + '<b>' + escapeHtml(crossRefs) + '</b>';
     }
 
     // Pre-kalkulacja specjalnych wierszy przejść [0..3] — 9 komórek: etykieta + 8 danych

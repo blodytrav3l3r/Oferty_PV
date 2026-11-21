@@ -31,6 +31,7 @@ import {
     isCurrentProductionNumber,
     parseProductionNumber
 } from '../../utils/productionNumber';
+import { buildProductionOrderCrossReferences } from '../../utils/productionOrderCrossReferences';
 import {
     incrementPrintCount,
     preservePrintCounts,
@@ -1288,6 +1289,48 @@ router.get('/:id', requireAuth, async (req, res) => {
         }
 
         const parsedData = parseJsonField<Record<string, unknown>>(order.data, {});
+        const siblingRows = order.wellId
+            ? await prisma.production_orders_rel.findMany({
+                  where: { wellId: order.wellId, id: { not: order.id } },
+                  select: {
+                      id: true,
+                      userId: true,
+                      elementIndex: true,
+                      productionNumber: true,
+                      data: true
+                  },
+                  orderBy: [{ elementIndex: 'asc' }, { id: 'asc' }]
+              })
+            : [];
+        const siblingCrossReferences = buildProductionOrderCrossReferences(
+            {
+                id: order.id,
+                wellId: order.wellId,
+                elementIndex: order.elementIndex,
+                componentType:
+                    typeof parsedData.componentType === 'string' ? parsedData.componentType : null,
+                productName:
+                    typeof parsedData.productName === 'string' ? parsedData.productName : null,
+                productionOrderNumber: getProductionNumber(order.data, order.productionNumber)
+            },
+            siblingRows
+                .filter((sibling) => canReadDoc(authReq.user, sibling.userId))
+                .map((sibling) => {
+                    const data = parseJsonField<Record<string, unknown>>(sibling.data, {});
+                    return {
+                        id: sibling.id,
+                        wellId: order.wellId,
+                        elementIndex: sibling.elementIndex,
+                        componentType:
+                            typeof data.componentType === 'string' ? data.componentType : null,
+                        productName: typeof data.productName === 'string' ? data.productName : null,
+                        productionOrderNumber: getProductionNumber(
+                            sibling.data,
+                            sibling.productionNumber
+                        )
+                    };
+                })
+        );
         const owners = order.userId
             ? await prisma.users.findMany({
                   where: { id: order.userId },
@@ -1308,6 +1351,7 @@ router.get('/:id', requireAuth, async (req, res) => {
                 createdAt: order.createdAt,
                 updatedAt: order.updatedAt,
                 ...parsedData,
+                siblingCrossReferences,
                 productionOrderPrintNumber: formatProductionPrintNumber(
                     getProductionNumber(order.data, order.productionNumber),
                     owners[0]?.symbol
