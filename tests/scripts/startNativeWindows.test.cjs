@@ -1,13 +1,121 @@
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { describe, it } = require('node:test');
 
 const projectRoot = path.resolve(__dirname, '..', '..');
 const launcherPath = path.join(projectRoot, 'start-native.bat');
 const startupScriptPath = path.join(projectRoot, 'scripts', 'start-native.ps1');
+const commitInfoPath = path.join(projectRoot, 'scripts', 'commit-info.mjs');
 
 describe('native Windows launcher contract', () => {
+    it('shows the local build commit beside origin/main and marks dirty files', () => {
+        const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-commit-info-'));
+        const localRepo = path.join(tempRoot, 'checkout');
+        const remoteRepo = path.join(tempRoot, 'origin.git');
+        fs.mkdirSync(localRepo);
+
+        try {
+            execFileSync('git', ['init', '--bare', '--initial-branch=main', remoteRepo]);
+            execFileSync('git', ['init', '--initial-branch=main'], { cwd: localRepo });
+            execFileSync('git', ['config', 'user.name', 'SOK test'], { cwd: localRepo });
+            execFileSync('git', ['config', 'user.email', 'sok-test@example.invalid'], {
+                cwd: localRepo
+            });
+            fs.writeFileSync(path.join(localRepo, 'tracked.txt'), 'initial');
+            execFileSync('git', ['add', 'tracked.txt'], { cwd: localRepo });
+            execFileSync('git', ['commit', '-m', 'initial'], { cwd: localRepo });
+            execFileSync('git', ['remote', 'add', 'origin', remoteRepo], { cwd: localRepo });
+            execFileSync('git', ['push', '-u', 'origin', 'main'], { cwd: localRepo });
+
+            const localSha = execFileSync('git', ['rev-parse', 'HEAD'], {
+                cwd: localRepo,
+                encoding: 'utf8'
+            }).trim();
+            const initialOutput = execFileSync(process.execPath, [commitInfoPath, '--batch'], {
+                cwd: localRepo,
+                encoding: 'utf8'
+            });
+
+            assert.match(initialOutput, new RegExp(`^APP_COMMIT_SHA=${localSha}$`, 'm'));
+            assert.match(
+                initialOutput,
+                new RegExp(`^INFO_REMOTE=Latest origin/main: ${localSha.slice(0, 12)}$`, 'm')
+            );
+            assert.match(initialOutput, /^INFO_STATE=Local code matches origin\/main\.$/m);
+            assert.match(initialOutput, /^INFO_DIRTY=Working tree is clean\.$/m);
+
+            const updaterRepo = path.join(tempRoot, 'updater');
+            execFileSync('git', ['clone', remoteRepo, updaterRepo]);
+            execFileSync('git', ['config', 'user.name', 'SOK updater'], { cwd: updaterRepo });
+            execFileSync('git', ['config', 'user.email', 'sok-updater@example.invalid'], {
+                cwd: updaterRepo
+            });
+            fs.writeFileSync(path.join(updaterRepo, 'tracked.txt'), 'remote update');
+            execFileSync('git', ['commit', '-am', 'remote update'], { cwd: updaterRepo });
+            execFileSync('git', ['push', 'origin', 'main'], { cwd: updaterRepo });
+
+            const remoteAheadOutput = execFileSync(process.execPath, [commitInfoPath, '--batch'], {
+                cwd: localRepo,
+                encoding: 'utf8'
+            });
+            assert.match(
+                remoteAheadOutput,
+                /^INFO_STATE=Local code differs from origin\/main; launcher will use local files\.$/m
+            );
+
+            fs.writeFileSync(path.join(localRepo, 'uncommitted.txt'), 'local-only');
+            fs.writeFileSync(path.join(localRepo, 'tracked.txt'), 'locally modified');
+            const dirtyOutput = execFileSync(process.execPath, [commitInfoPath, '--batch'], {
+                cwd: localRepo,
+                encoding: 'utf8'
+            });
+
+            assert.match(
+                dirtyOutput,
+                /^INFO_DIRTY=WARNING: working tree has uncommitted changes; SHA identifies HEAD only\.$/m
+            );
+            const statusOutput = execFileSync(process.execPath, [commitInfoPath], {
+                cwd: localRepo,
+                encoding: 'utf8'
+            });
+            assert.match(statusOutput, /  tracked\.txt\n/);
+            assert.match(statusOutput, /  uncommitted\.txt\n/);
+        } finally {
+            fs.rmSync(tempRoot, { recursive: true, force: true });
+        }
+    });
+
+    it('keeps the local commit usable when origin/main cannot be checked', () => {
+        const localRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-no-origin-'));
+        try {
+            execFileSync('git', ['init', '--initial-branch=main'], { cwd: localRepo });
+            execFileSync('git', ['config', 'user.name', 'SOK test'], { cwd: localRepo });
+            execFileSync('git', ['config', 'user.email', 'sok-test@example.invalid'], {
+                cwd: localRepo
+            });
+            fs.writeFileSync(path.join(localRepo, 'tracked.txt'), 'initial');
+            execFileSync('git', ['add', 'tracked.txt'], { cwd: localRepo });
+            execFileSync('git', ['commit', '-m', 'initial'], { cwd: localRepo });
+
+            const output = execFileSync(process.execPath, [commitInfoPath, '--batch'], {
+                cwd: localRepo,
+                encoding: 'utf8'
+            });
+
+            assert.match(output, /^APP_COMMIT_SHA=[0-9a-f]{40}$/m);
+            assert.match(output, /^INFO_REMOTE=Latest origin\/main: not checked$/m);
+            assert.match(
+                output,
+                /^INFO_STATE=origin\/main could not be checked; launcher will use local files\.$/m
+            );
+        } finally {
+            fs.rmSync(localRepo, { recursive: true, force: true });
+        }
+    });
+
     it('documents the role and impact of every Windows BAT entry point', () => {
         const batFiles = [
             ...fs
@@ -20,7 +128,7 @@ describe('native Windows launcher contract', () => {
                 .map((entry) => path.join(projectRoot, 'scripts', entry.name))
         ];
 
-        assert.equal(batFiles.length, 14);
+        assert.equal(batFiles.length, 15);
         const appVersion = fs.readFileSync(path.join(projectRoot, 'VERSION'), 'utf8').trim();
         for (const batFile of batFiles) {
             const launcher = fs.readFileSync(batFile, 'utf8');
@@ -76,6 +184,25 @@ describe('native Windows launcher contract', () => {
         }
     });
 
+    it('injects the local commit into Docker and native runtime metadata', () => {
+        const dockerLauncher = fs.readFileSync(
+            path.join(projectRoot, 'start-postgres.bat'),
+            'utf8'
+        );
+        const appLauncher = fs.readFileSync(path.join(projectRoot, 'start.bat'), 'utf8');
+        const nativeScript = fs.readFileSync(startupScriptPath, 'utf8');
+
+        assert.match(dockerLauncher, /commit-info\.mjs --batch/i);
+        assert.match(dockerLauncher, /set "APP_COMMIT_SHA=%%B"/i);
+        assert.match(dockerLauncher, /lokalny folder tego pliku BAT/i);
+        assert.match(dockerLauncher, /GitHub nie jest zrodlem kodu/i);
+        assert.match(appLauncher, /commit-info\.mjs --batch/i);
+        assert.match(appLauncher, /set "APP_COMMIT_SHA=%%B"/i);
+        assert.match(nativeScript, /commit-info\.mjs/);
+        assert.match(nativeScript, /\$env:APP_COMMIT_SHA = \$commitInfo\['APP_COMMIT_SHA'\]/);
+        assert.match(dockerLauncher, /docker compose .* up --detach --build/);
+    });
+
     it('keeps documented shortcut names forwarding to their canonical launchers', () => {
         const readLauncher = (name) => fs.readFileSync(path.join(projectRoot, name), 'utf8');
 
@@ -108,6 +235,19 @@ describe('native Windows launcher contract', () => {
         for (const batFile of batFiles) {
             assert.ok(readme.includes(path.basename(batFile)), `${batFile} missing in README`);
         }
+    });
+
+    it('provides a read-only Windows status entry point', () => {
+        const launcher = fs.readFileSync(path.join(projectRoot, 'status.bat'), 'utf8');
+        const helper = fs.readFileSync(commitInfoPath, 'utf8');
+        const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+
+        assert.match(launcher, /node scripts\\commit-info\.mjs/i);
+        assert.match(launcher, /nie uruchamia aplikacji/i);
+        assert.doesNotMatch(launcher, /git\s+(?:pull|fetch|checkout|reset)/i);
+        assert.match(helper, /S\.O\.K\. local version/);
+        assert.match(helper, /Changed files in this folder/);
+        assert.match(readme, /Szybki przegl[aą]d wersji i zmian.*`status\.bat`/);
     });
 
     it('documents the separate local database startup flows', () => {

@@ -300,15 +300,6 @@ function drawComponentShape(comp, x, y, w, h, cx, pxMm, c) {
                 ? 2
                 : 2;
         svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-
-        // Otwory wierconego kręgu
-        if (ct === 'krag_ot') {
-            const hr = Math.min(h * 0.15, 7);
-            if (hr > 2) {
-                svg += `<circle cx="${x + 10}" cy="${y + h / 2}" r="${hr}" style="fill:${SVG_COLORS.transitionCircle};stroke:${c.stroke}" stroke-width="0.8"/>`;
-                svg += `<circle cx="${x + w - 10}" cy="${y + h / 2}" r="${hr}" style="fill:${SVG_COLORS.transitionCircle};stroke:${c.stroke}" stroke-width="0.8"/>`;
-            }
-        }
     }
 
     return svg;

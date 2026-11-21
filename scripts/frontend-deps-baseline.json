@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-19",
-    "totalEdges": 2975,
+    "generatedAt": "2026-11-21",
+    "totalEdges": 2973,
     "edges": [
         {
             "page": "public/app.html",
@@ -17966,14 +17966,6 @@
         {
             "page": "public/studnie.html",
             "name": "productionOrders",
-            "userFile": "public/js/studnie/printManager.js",
-            "defFile": "public/js/studnie/orderZlecenia.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "productionOrders",
             "userFile": "public/js/studnie/pzGuard.js",
             "defFile": "public/js/studnie/orderZlecenia.js",
             "defKind": "lexical",
@@ -18047,14 +18039,6 @@
             "page": "public/studnie.html",
             "name": "pzGuard",
             "userFile": "public/js/studnie/orderZleceniaRender.js",
-            "defFile": "public/js/studnie/pzGuard.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "pzGuard",
-            "userFile": "public/js/studnie/printManager.js",
             "defFile": "public/js/studnie/pzGuard.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -23486,14 +23470,6 @@
         {
             "page": "public/studnie.html",
             "name": "zleceniaElementsList",
-            "userFile": "public/js/studnie/printManager.js",
-            "defFile": "public/js/studnie/orderZlecenia.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "zleceniaElementsList",
             "userFile": "public/js/studnie/wellActions.js",
             "defFile": "public/js/studnie/orderZlecenia.js",
             "defKind": "lexical",
@@ -23559,14 +23535,6 @@
             "page": "public/studnie.html",
             "name": "zleceniaSelectedIdx",
             "userFile": "public/js/studnie/orderZleceniaRender.js",
-            "defFile": "public/js/studnie/orderZlecenia.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "zleceniaSelectedIdx",
-            "userFile": "public/js/studnie/printManager.js",
             "defFile": "public/js/studnie/orderZlecenia.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -23800,6 +23768,22 @@
             "name": "_studniePehdPricePerM2",
             "userFile": "public/js/studnie/uiHelpers.js",
             "defFile": "public/js/studnie/globals.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "zleceniaElementsList",
+            "userFile": "public/js/studnie/diagramRenderer.js",
+            "defFile": "public/js/studnie/orderZlecenia.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "zleceniaSelectedIdx",
+            "userFile": "public/js/studnie/diagramRenderer.js",
+            "defFile": "public/js/studnie/orderZlecenia.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
         }

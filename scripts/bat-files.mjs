@@ -12,5 +12,6 @@ export const VERSIONED_BAT_FILES = [
     'start-docker.bat',
     'start-native.bat',
     'start-postgres.bat',
-    'start.bat'
+    'start.bat',
+    'status.bat'
 ];

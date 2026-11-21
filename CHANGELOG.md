@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.13](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.10...v1.64.13) (2026-11-21)
+
+### Bug Fixes
+
+- **orders:** restore related well references in prints ([cd67f5e](https://github.com/blodytrav3l3r/Oferty_PV/commit/cd67f5ecfefa2f3f9ddbe7d25eb0468fee1bc4f4))
+- **orders:** ujednolicenie wydruków pz ([71e4e54](https://github.com/blodytrav3l3r/Oferty_PV/commit/71e4e543812b8c95475fd252ce8a0e4e93c25ebb))
+- **orders:** ujednolicić dane wydruków ([1712843](https://github.com/blodytrav3l3r/Oferty_PV/commit/171284362228eea8d71f1491cd0367ba133a4987))
+- **studnie:** napraw kinety, wydruki i limit kąta ([133f37d](https://github.com/blodytrav3l3r/Oferty_PV/commit/133f37d2e8e92e1fdd8895ae50061d1b44d75965))
+
 ### [1.64.12](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.11...v1.64.12) (2026-11-21)
 
 ### Bug Fixes

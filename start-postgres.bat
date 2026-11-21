@@ -1,17 +1,34 @@
 @echo off
-REM  Wersja: 1.64.12
+REM  Wersja: 1.64.13
 REM Rola: Pomocnicza implementacja startu Docker Compose dla start-docker.bat.
 REM Uzycie: start-postgres.bat
 REM Uruchamia: docker compose up --detach --build dla postgres i app.
-REM Wplyw: Przebudowuje obraz aplikacji i zachowuje istniejacy wolumen PostgreSQL.
+REM Wplyw: Buduje aplikacje z lokalnego folderu, bez pobierania kodu z GitHub; zachowuje wolumen PostgreSQL.
 setlocal
 cd /d "%~dp0"
-set "APP_VERSION=1.64.12"
+set "APP_VERSION=1.64.13"
 set "HTTPS_ENABLED=false"
+set "APP_COMMIT_SHA=unknown"
+set "APP_GIT_BRANCH=unknown"
 
 echo ===========================================================
 echo   S.O.K. - Docker PostgreSQL 18 v%APP_VERSION%
 echo ===========================================================
+echo.
+
+where node.exe >nul 2>nul
+if not errorlevel 1 (
+    for /f "tokens=1,* delims==" %%A in ('node scripts\commit-info.mjs --batch') do (
+        if "%%A"=="APP_COMMIT_SHA" set "APP_COMMIT_SHA=%%B"
+        if "%%A"=="APP_GIT_BRANCH" set "APP_GIT_BRANCH=%%B"
+        if "%%A"=="INFO_LOCAL" echo [INFO] %%B
+        if "%%A"=="INFO_REMOTE" echo [INFO] %%B
+        if "%%A"=="INFO_STATE" echo [INFO] %%B
+        if "%%A"=="INFO_DIRTY" echo [INFO] %%B
+    )
+) else (
+    echo [UWAGA] Node.js niedostepny - nie mozna odczytac SHA; buduje lokalne pliki.
+)
 echo.
 
 if not exist "docker-compose.yml" (
@@ -70,6 +87,8 @@ if errorlevel 1 (
 )
 
 echo [INFO] Uruchamiam PostgreSQL 18 i S.O.K. z zachowaniem istniejacych danych.
+echo [INFO] Zrodlem obrazu jest lokalny folder tego pliku BAT.
+echo [INFO] GitHub nie jest zrodlem kodu dla tego uruchomienia.
 docker compose --project-name sok --file docker-compose.yml up --detach --build --wait --wait-timeout 300 postgres app
 if errorlevel 1 (
     echo [BLAD] S.O.K. nie uzyskal stanu gotowosci. Wolumen nie zostal usuniety ani zresetowany.

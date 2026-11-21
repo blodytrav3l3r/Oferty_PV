@@ -4,7 +4,7 @@
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
 </div>
 
-**Wersja:** 1.64.12  
+**Wersja:** 1.64.13  
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline<br>
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** Łukasz Kobyłka
@@ -356,6 +356,7 @@ npm run deploy:check                                               # smoke check
 
 | Kiedy użyć                           | Plik                             | Warstwa | Co robi                                                                                                                | Zmienia stan                                                                             |
 | ------------------------------------ | -------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Szybki przegląd wersji i zmian       | `status.bat`                     | L1      | Pokazuje lokalną wersję, commit, `origin/main` i listę zmienionych plików.                                             | Tylko odczyt; nie pobiera kodu ani nie uruchamia aplikacji.                              |
 | Pierwsza instalacja na PC            | `install-new-pc.bat`             | L1      | Przygotowuje Docker Desktop, PostgreSQL 18 i S.O.K. na Windows 10/11.                                                  | Konfiguruje Docker; nie usuwa wolumenów.                                                 |
 | Instalacja dev bez Dockera           | `install.bat`                    | L1      | Tworzy `.env`, instaluje zależności, generuje klienta Prisma, migruje i seeduje bazę. Opcja `--skip-seed` pomija seed. | Zapisuje `.env`; migruje i seeduje bazę z `DATABASE_URL`.                                |
 | Kolejny start z Dockerem             | `start-docker.bat`               | L2      | Zalecany start istniejącej instalacji Docker Compose; zachowuje dane wolumenu.                                         | Przebudowuje obraz aplikacji.                                                            |
@@ -370,6 +371,10 @@ npm run deploy:check                                               # smoke check
 | Wdrożenie wersji                     | `deploy.bat`                     | L1      | Wywołuje `scripts/deploy.mjs`; `--dry-run` pokazuje plan.                                                              | Zmienia wskazane wdrożenie.                                                              |
 | Powrót do poprzedniej wersji         | `rollback.bat`                   | L1      | Wywołuje `scripts/rollback.mjs`.                                                                                       | Przywraca wersję; może odtworzyć bazę z kopii.                                           |
 | Utwardzenie lokalnych uprawnień      | `scripts/harden-local-perms.bat` | L3      | Ogranicza ACL `.env` i `data\` do właściciela, SYSTEM i Administratorów; `--restore-dir` przywraca snapshot.           | Zmienia ACL plików.                                                                      |
+
+Launchery `start-docker.bat`, `start-native.bat` i `start.bat` pokazują lokalny commit oraz aktualny `origin/main`; przy braku sieci informują, że zdalnego SHA nie udało się sprawdzić. Docker buduje kod z lokalnego folderu i zapisuje jego SHA w metadanych obrazu. Launchery nie pobierają ani nie przełączają kodu automatycznie; jeśli lokalny folder różni się od `origin/main`, komunikat wyjaśnia, że uruchomiony zostanie kod lokalny.
+
+Przed startem użyj `status.bat`, aby szybko sprawdzić wersję, commity i niezacommitowane zmiany. Do pobrania nowych commitów użyj Git/GitHub ręcznie, a potem ponownie sprawdź status; sam launcher niczego nie aktualizuje.
 
 Oba tryby wymagają Node.js z npm, zależności zainstalowanych przez `npm ci` i wcześniej przygotowanego lokalnego zestawu PostgreSQL 18 w `data/perf/sok-native-pg18-*` z bazą `sok_dev`. Korzystają z tej samej lokalnej bazy, sprawdzają jej gotowość i pomijają migracje oraz seed. `start-dev.bat` dodatkowo uruchamia izolowaną bazę testową Compose na porcie `55440`; Docker Desktop musi działać, a `.env` musi zawierać `POSTGRES_TEST_*`. Baza testowa pozostaje dostępna po zamknięciu S.O.K.; zatrzymasz ją poleceniem `docker compose -f docker-compose.postgres-test.yml stop postgres-test`. Port aplikacji domyślnie wynosi `3000`; gdy jest zajęty, launcher wybiera pierwszy wolny port do `3100` i wypisuje adres. Przy zmianie trybu zatrzymaj najpierw poprzednią instancję.
 

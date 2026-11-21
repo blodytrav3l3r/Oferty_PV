@@ -2329,13 +2329,17 @@ html[data-theme='light'] #btn-auto-select:disabled {
     background: var(--bg-secondary);
 }
 
-#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component {
+#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component,
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component {
     filter: drop-shadow(var(--shadow-md));
 }
 
 #zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component > rect,
 #zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component > path,
-#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component > polygon {
+#zlecenia-svg-preview .diag-comp-grp.zlecenia-active-component > polygon,
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component > rect,
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component > path,
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component > polygon {
     stroke: var(--warn) !important;
 }
 

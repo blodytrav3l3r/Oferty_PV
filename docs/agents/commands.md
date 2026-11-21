@@ -64,7 +64,7 @@ Zasady: w `.bat` brak znaków spoza ASCII (zamienniki: `-` za `—`, `l` za `ł`
 
 ## Skrypty BAT (kontrakt)
 
-Lista plików podlegających wersjonowaniu: `scripts/bat-files.mjs` (14 plików). Kontrakt wymusza `tests/scripts/startNativeWindows.test.cjs`.
+Lista plików podlegających wersjonowaniu: `scripts/bat-files.mjs` (15 plików). Kontrakt wymusza `tests/scripts/startNativeWindows.test.cjs`.
 
 | Warstwa | Znaczenie                                | Zasady                                                             |
 | ------- | ---------------------------------------- | ------------------------------------------------------------------ |
@@ -82,4 +82,5 @@ Zasady wykonania:
 - prefiksy komunikatów: `[INFO]`, `[OK]`, `[UWAGA]`, `[BLAD]`;
 - build wyłącznie przez `npm run build` (`build.bat` tylko deleguje, nie powiela `tsc`/kopiowania klienta Prisma);
 - nowy `.bat` wymaga wpisu w `scripts/bat-files.mjs`, wiersza w tabeli „Skrypty startowe (.bat)" w `README.md` i aktualizacji licznika w teście kontraktu;
+- `status.bat` to tylko do odczytu punkt kontroli wersji, commitów i lokalnych zmian przed uruchomieniem;
 - `docs/DELETION_LOG.md` pilnuje `npm run test:docs`: każde wpis ma poprawną datę i treść, a tabele usunięć nie mogą wskazywać plików, które nadal istnieją.

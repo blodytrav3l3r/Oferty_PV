@@ -16,6 +16,8 @@ $previousValues = @{
     HOST = [Environment]::GetEnvironmentVariable('HOST', 'Process')
     PORT = [Environment]::GetEnvironmentVariable('PORT', 'Process')
     NODE_ENV = [Environment]::GetEnvironmentVariable('NODE_ENV', 'Process')
+    APP_COMMIT_SHA = [Environment]::GetEnvironmentVariable('APP_COMMIT_SHA', 'Process')
+    APP_GIT_BRANCH = [Environment]::GetEnvironmentVariable('APP_GIT_BRANCH', 'Process')
     POSTGRES_TEST_PORT = [Environment]::GetEnvironmentVariable('POSTGRES_TEST_PORT', 'Process')
     POSTGRES_TEST_URL = [Environment]::GetEnvironmentVariable('POSTGRES_TEST_URL', 'Process')
 }
@@ -242,6 +244,29 @@ try {
     $env:HOST = '127.0.0.1'
     $env:PORT = [string]$appPort
     $env:NODE_ENV = 'development'
+
+    $commitInfoScript = Join-Path $repoRoot 'scripts\commit-info.mjs'
+    $commitInfoLines = & node.exe $commitInfoScript --batch
+    if ($LASTEXITCODE -eq 0) {
+        $commitInfo = @{}
+        foreach ($line in $commitInfoLines) {
+            $parts = $line -split '=', 2
+            if ($parts.Count -eq 2) {
+                $commitInfo[$parts[0]] = $parts[1]
+            }
+        }
+        $env:APP_COMMIT_SHA = $commitInfo['APP_COMMIT_SHA']
+        $env:APP_GIT_BRANCH = $commitInfo['APP_GIT_BRANCH']
+        foreach ($key in @('INFO_LOCAL', 'INFO_REMOTE', 'INFO_STATE', 'INFO_DIRTY')) {
+            if ($commitInfo.ContainsKey($key)) {
+                Write-Host "[INFO] $($commitInfo[$key])"
+            }
+        }
+    } else {
+        $env:APP_COMMIT_SHA = 'unknown'
+        $env:APP_GIT_BRANCH = 'unknown'
+        Write-Host '[WARN] Could not read Git commit metadata; starting local files.'
+    }
 
     if (-not (Test-Path (Join-Path $repoRoot 'generated\prisma-postgres\client.d.ts'))) {
         Write-Host 'Generating Prisma Client...'

@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.64.12
+REM  Wersja: 1.64.13
 REM ===========================================================
 REM  start.bat - Reczny lokalny start z konfiguracja bazy w .env
 REM  Uruchamia:
@@ -16,7 +16,7 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set "APP_VERSION=1.64.12"
+set "APP_VERSION=1.64.13"
 
 set "MODE=dev"
 if /i "%1"=="--prod" set "MODE=prod"
@@ -35,6 +35,18 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+set "APP_COMMIT_SHA=unknown"
+set "APP_GIT_BRANCH=unknown"
+for /f "tokens=1,* delims==" %%A in ('node scripts\commit-info.mjs --batch') do (
+    if "%%A"=="APP_COMMIT_SHA" set "APP_COMMIT_SHA=%%B"
+    if "%%A"=="APP_GIT_BRANCH" set "APP_GIT_BRANCH=%%B"
+    if "%%A"=="INFO_LOCAL" echo [INFO] %%B
+    if "%%A"=="INFO_REMOTE" echo [INFO] %%B
+    if "%%A"=="INFO_STATE" echo [INFO] %%B
+    if "%%A"=="INFO_DIRTY" echo [INFO] %%B
+)
+echo.
 
 REM ---------- 2. package.json ----------
 if not exist "package.json" (

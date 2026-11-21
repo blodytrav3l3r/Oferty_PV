@@ -413,6 +413,32 @@ function renderWellDiagram(targetSvg, targetWell) {
     svg.innerHTML =
         componentsSvg + transitionsSvg + precoLineSvg + segmentDimSvg + totalHeightSvg + dnLabelSvg;
 
+    const zleceniaModal = document.getElementById('zlecenia-modal');
+    const selectedZleceniaElement =
+        zleceniaModal &&
+        zleceniaModal.classList.contains('active') &&
+        typeof zleceniaSelectedIdx === 'number' &&
+        zleceniaSelectedIdx >= 0 &&
+        typeof zleceniaElementsList !== 'undefined' &&
+        Array.isArray(zleceniaElementsList)
+            ? zleceniaElementsList[zleceniaSelectedIdx]
+            : null;
+    if (
+        selectedZleceniaElement &&
+        selectedZleceniaElement.well &&
+        String(selectedZleceniaElement.well.id) === String(well.id) &&
+        Number.isInteger(selectedZleceniaElement.elementIndex)
+    ) {
+        svg.querySelectorAll('.diag-comp-grp').forEach((component) => {
+            if (
+                Number(component.getAttribute('data-cfg-idx')) ===
+                selectedZleceniaElement.elementIndex
+            ) {
+                component.classList.add('zlecenia-active-component');
+            }
+        });
+    }
+
     /* Re-render czyści style inline kształtów — odtwórz trwałą selekcję
        (klasy kafelków/TD też mogły zniknąć przy ich własnych renderach).
        Nieistniejące już id (usunięte przejście) czyści selekcję. */
