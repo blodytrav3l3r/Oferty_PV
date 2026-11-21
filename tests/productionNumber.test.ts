@@ -1,8 +1,4 @@
-import {
-    formatProductionNumber,
-    formatProductionPrintNumber,
-    parseProductionNumber
-} from '../src/utils/productionNumber';
+import { formatProductionNumber, parseProductionNumber } from '../src/utils/productionNumber';
 
 describe('production number format', () => {
     test('formats new global numbers without user symbol', () => {
@@ -31,34 +27,6 @@ describe('production number format', () => {
     });
 });
 
-describe('produkcja — numer na wydruku zlecenia', () => {
-    test('prefiks roku zastąpiony symbolem opiekuna', () => {
-        expect(formatProductionPrintNumber('N/00002/26', 'SA')).toBe('SA/00002/26');
-        expect(formatProductionPrintNumber('A/00042/26', 'LK')).toBe('LK/00042/26');
-    });
-
-    test('brak symbolu → numer bez zmian (fallback jak na liście/etykiecie)', () => {
-        expect(formatProductionPrintNumber('N/00002/26', null)).toBe('N/00002/26');
-        expect(formatProductionPrintNumber('N/00002/26', '   ')).toBe('N/00002/26');
-    });
-
-    test('symbol spoza [A-Za-z0-9]{1,6} → numer bez zmian (brak HTML w wydruku)', () => {
-        expect(formatProductionPrintNumber('N/00002/26', '<b>SA')).toBe('N/00002/26');
-        expect(formatProductionPrintNumber('N/00002/26', 'SA/')).toBe('N/00002/26');
-        expect(formatProductionPrintNumber('N/00002/26', 'SYSTEMADMIN')).toBe('N/00002/26');
-    });
-
-    test('pusty numer → pusty string', () => {
-        expect(formatProductionPrintNumber('', 'SA')).toBe('');
-        expect(formatProductionPrintNumber(null, 'SA')).toBe('');
-    });
-
-    test('numer bez separatorów → bez zmian', () => {
-        expect(formatProductionPrintNumber('N00000226', 'SA')).toBe('N00000226');
-    });
-
-    test('numer nie jest modyfikowany w bazie — parse nadal widzi format roku', () => {
-        expect(parseProductionNumber('N/00002/26')).toEqual({ year: 2026, seqNumber: 2 });
-        expect(parseProductionNumber(formatProductionPrintNumber('N/00002/26', 'SA'))).toBeNull();
-    });
+test('numer kanoniczny pozostaje identyczny podczas parsowania', () => {
+    expect(parseProductionNumber('N/00002/26')).toEqual({ year: 2026, seqNumber: 2 });
 });

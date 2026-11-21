@@ -95,7 +95,6 @@ beforeEach(() => {
     mockUser.role = 'user';
     mockUser.subUsers = [];
     (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
-    // Numer wydrukowy PZ: PUT dociąga symbol opiekuna — brak wiersza = fallback.
     (prisma as any).users = { findMany: jest.fn().mockResolvedValue([]) };
 });
 

@@ -84,11 +84,11 @@ describe('druk z edytora zapisuje zlecenie przed odczytem danych do wydruku', ()
             expect(calls).toEqual(['save', 'fetch', 'template', 'print', 'count']);
             expect(printedData[0]).toMatchObject({
                 productionOrderNumber: savedOrder.productionOrderNumber,
-                productionOrderPrintNumber: savedOrder.productionOrderPrintNumber,
                 productName: savedOrder.productName,
                 etykietaElementy: savedOrder.etykietaElementy,
                 isSavedProductionOrder: true
             });
+            expect(printedData[0]).not.toHaveProperty('productionOrderPrintNumber');
             const rows = context.buildPrzejsciaRows(printedData[0]);
             expect(rows[0]).toMatchObject({
                 rodzaj: 'PVC SN8',

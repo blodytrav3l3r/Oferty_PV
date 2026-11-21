@@ -143,7 +143,7 @@ describe('kartoteka zleceń — wydruk używa świeżych danych z serwera', () =
                     id: 'po1',
                     katStopni: '45',
                     productionOrderNumber: 'N/0003/26',
-                    productionOrderPrintNumber: 'N/0003/26',
+                    productionOrderPrintNumber: 'LK/0003/26',
                     wellName: 's2'
                 }
             ]
@@ -170,7 +170,7 @@ describe('kartoteka zleceń — wydruk używa świeżych danych z serwera', () =
                     id: 'po1',
                     katStopni: '45',
                     productionOrderNumber: 'N/0003/26',
-                    productionOrderPrintNumber: 'N/0003/26',
+                    productionOrderPrintNumber: 'LK/0003/26',
                     wellName: 's2'
                 }
             ]

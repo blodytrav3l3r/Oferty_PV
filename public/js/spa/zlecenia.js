@@ -659,9 +659,7 @@ const AppZlecenia = (() => {
     }
 
     function buildSinglePrintFileName(po) {
-        const number = String(
-            po.productionOrderPrintNumber || po.productionOrderNumber || ''
-        ).replace(/[^a-zA-Z0-9]/g, '');
+        const number = String(po.productionOrderNumber || '').replace(/[^a-zA-Z0-9]/g, '');
         const wellName = cleanPrintNamePart(po.wellName || po.snr);
         return [number, wellName].filter(Boolean).join(' ') || 'zlecenie';
     }
@@ -874,7 +872,7 @@ const AppZlecenia = (() => {
             'Drukuj'
         );
         if (!ok) return;
-        silentPrint(html);
+        silentPrint(html, buildSinglePrintFileName(po));
         recordPrint([orderId], 'zlecenie');
     }
 
@@ -902,7 +900,7 @@ const AppZlecenia = (() => {
             'Drukuj'
         );
         if (!ok) return;
-        silentPrint(html);
+        silentPrint(html, buildSinglePrintFileName(po));
         recordPrint([orderId], 'etykieta');
     }
 
@@ -955,10 +953,8 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const headSection = buildBatchHead(
-            template,
-            buildBatchPrintFileName(orders, 'zlecenie', picked)
-        );
+        const printTitle = buildBatchPrintFileName(orders, 'zlecenie', picked);
+        const headSection = buildBatchHead(template, printTitle);
         if (!headSection) {
             showToast('Błąd szablonu zlecenia — brak sekcji <head>', 'error');
             return;
@@ -986,7 +982,7 @@ const AppZlecenia = (() => {
             'Drukuj wszystkie (' + orders.length + ')'
         );
         if (!ok) return;
-        silentPrint(finalHTML);
+        silentPrint(finalHTML, printTitle);
         recordPrint(
             orders.map((po) => po.id),
             'zlecenie'
@@ -1019,10 +1015,8 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const headSection = buildBatchHead(
-            template,
-            buildBatchPrintFileName(orders, 'etykieta', picked)
-        );
+        const printTitle = buildBatchPrintFileName(orders, 'etykieta', picked);
+        const headSection = buildBatchHead(template, printTitle);
         if (!headSection) {
             showToast('Błąd szablonu etykiety — brak sekcji <head>', 'error');
             return;
@@ -1053,7 +1047,7 @@ const AppZlecenia = (() => {
             'Drukuj wszystkie (' + orders.length + ')'
         );
         if (!ok) return;
-        silentPrint(finalHTML);
+        silentPrint(finalHTML, printTitle);
         recordPrint(
             orders.map((po) => po.id),
             'etykieta'

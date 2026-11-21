@@ -27,9 +27,9 @@ import { mapPrismaError } from '../../utils/prismaErrors';
 import { assertDocLockForWrite } from '../../utils/docLocks';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import {
-    formatProductionPrintNumber,
     isCurrentProductionNumber,
-    parseProductionNumber
+    parseProductionNumber,
+    withoutProductionPrintNumber
 } from '../../utils/productionNumber';
 import { buildProductionOrderCrossReferences } from '../../utils/productionOrderCrossReferences';
 import {
@@ -367,11 +367,6 @@ router.get('/index', requireAuth, async (req, res) => {
                 updatedAt: r.updatedAt,
                 status: r.status,
                 productionOrderNumber: r.productionOrderNumber,
-                // Wydruk zlecenia: prefiks roku → symbol opiekuna (listy i etykiety bez zmian).
-                productionOrderPrintNumber: formatProductionPrintNumber(
-                    r.productionOrderNumber,
-                    r.handlerSymbol
-                ),
                 offerId: r.offerId
             }))
         };
@@ -395,15 +390,7 @@ router.put(
         // batcha PRZED transakcją; ownership sprawdzany W transakcji (TOCTOU).
         // P0-V: saved niesie wersje faktycznie zapisane (po inkrementacji) —
         // API jest źródłem prawdy dla version, frontend merguje do RAM.
-        const saved: Array<{
-            id: string;
-            version: number;
-            productionOrderPrintNumber?: string;
-        }> = [];
-        // Wydruk zlecenia: numer z symbolem opiekuna liczy serwer (SSoT). Front
-        // przebudowuje wpis PZ z formularza po zapisie i gubi pole pochodne,
-        // więc zwracamy je w `saved` do mergu w RAM (jak `version`).
-        const savedPrintMeta = new Map<string, { number: string | null; userId: string | null }>();
+        const saved: Array<{ id: string; version: number }> = [];
         try {
             const incoming: ProductionOrdersBatchInput['data'] = req.body.data || [];
             // P0.3: docId przypisane Z GÓRY (1:1 z dotychczasową semantyką —
@@ -460,8 +447,9 @@ router.put(
                         updatedAt,
                         // P0-D: baza optimistic lockingu — nie trafia do bloba JSON.
                         version: clientVersionRaw,
-                        ...rest
+                        ...rawRest
                     } = o;
+                    const rest = withoutProductionPrintNumber(rawRest as Record<string, unknown>);
                     const clientVersion =
                         typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
                     // Passthrough Zod = pola spoza schematu są unknown; zawężenie
@@ -550,7 +538,9 @@ router.put(
                     // (tabela Zlecenia: "—" + "Element #N"). Dlatego merge:
                     // jawne pola z requestu wygrywają, reszta zostaje ze starego.
                     const oldData = old
-                        ? parseJsonField<Record<string, unknown>>(old.data, {})
+                        ? withoutProductionPrintNumber(
+                              parseJsonField<Record<string, unknown>>(old.data, {})
+                          )
                         : null;
                     const mergedRest = oldData
                         ? preservePrintCounts({ ...oldData, ...rest }, oldData)
@@ -575,10 +565,6 @@ router.put(
                             }
                         });
                         saved.push({ id: docId, version: 1 });
-                        savedPrintMeta.set(docId, {
-                            number: prodNum ?? null,
-                            userId: targetUserId
-                        });
                         oldById.set(docId, {
                             id: docId,
                             data: dataStr,
@@ -623,10 +609,6 @@ router.put(
                             };
                         }
                         saved.push({ id: docId, version: clientVersion + 1 });
-                        savedPrintMeta.set(docId, {
-                            number: prodNum ?? oldNumber ?? null,
-                            userId: targetUserId
-                        });
                         oldById.set(docId, {
                             id: docId,
                             data: dataStr,
@@ -644,34 +626,6 @@ router.put(
                             },
                             tx
                         );
-                    }
-                }
-
-                // Symbol opiekuna dla numeru wydrukowego — jeden SELECT na batch.
-                const ownerIds = [
-                    ...new Set(
-                        [...savedPrintMeta.values()]
-                            .map((m) => m.userId)
-                            .filter((v): v is string => typeof v === 'string' && v !== '')
-                    )
-                ];
-                if (ownerIds.length > 0) {
-                    const owners =
-                        (await tx.users.findMany({
-                            where: { id: { in: ownerIds } },
-                            select: { id: true, symbol: true }
-                        })) ?? [];
-                    const symbolById = new Map(owners.map((u) => [u.id, u.symbol]));
-                    for (const row of saved) {
-                        const meta = savedPrintMeta.get(row.id);
-                        if (!meta) continue;
-                        const printNumber = formatProductionPrintNumber(
-                            meta.number,
-                            meta.userId ? symbolById.get(meta.userId) : null
-                        );
-                        // Puste pole nie zaśmieca kontraktu `saved` — front i tak
-                        // spada na numer bazowy.
-                        if (printNumber) row.productionOrderPrintNumber = printNumber;
                     }
                 }
             }, HOT_TX_OPTS);
@@ -775,8 +729,9 @@ router.post(
                 updatedAt: updatedAtRaw,
                 // P0-D: baza optimistic lockingu — nie trafia do bloba JSON.
                 version: clientVersionRaw,
-                ...rest
+                ...rawRest
             } = o;
+            const rest = withoutProductionPrintNumber(rawRest as Record<string, unknown>);
             const clientVersion = typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
             // Błąd #48: update chudym obiektem nadpisywał pełny blob (jak w PUT
             // wyżej) — dataStr dopiero po odczycie starego, z merge.
@@ -857,7 +812,9 @@ router.post(
                 }
 
                 const oldPostData = old
-                    ? parseJsonField<Record<string, unknown>>(old.data, {})
+                    ? withoutProductionPrintNumber(
+                          parseJsonField<Record<string, unknown>>(old.data, {})
+                      )
                     : null;
                 const dataStr = JSON.stringify(
                     oldPostData
@@ -1288,7 +1245,9 @@ router.get('/:id', requireAuth, async (req, res) => {
             return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         }
 
-        const parsedData = parseJsonField<Record<string, unknown>>(order.data, {});
+        const parsedData = withoutProductionPrintNumber(
+            parseJsonField<Record<string, unknown>>(order.data, {})
+        );
         const siblingRows = order.wellId
             ? await prisma.production_orders_rel.findMany({
                   where: { wellId: order.wellId, id: { not: order.id } },
@@ -1331,14 +1290,6 @@ router.get('/:id', requireAuth, async (req, res) => {
                     };
                 })
         );
-        const owners = order.userId
-            ? await prisma.users.findMany({
-                  where: { id: order.userId },
-                  select: { symbol: true },
-                  take: 1
-              })
-            : [];
-
         res.json({
             data: {
                 id: order.id,
@@ -1352,10 +1303,6 @@ router.get('/:id', requireAuth, async (req, res) => {
                 updatedAt: order.updatedAt,
                 ...parsedData,
                 siblingCrossReferences,
-                productionOrderPrintNumber: formatProductionPrintNumber(
-                    getProductionNumber(order.data, order.productionNumber),
-                    owners[0]?.symbol
-                ),
                 // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
                 version: order.version ?? 1,
                 // Liczniki wydruków: jawny kontrakt, brak pola = 0.

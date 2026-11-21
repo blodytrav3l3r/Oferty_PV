@@ -13,6 +13,8 @@ function escapeHtml(value: string) {
 describe('powiązane numery PZ na wydrukach', () => {
     const savedPz = {
         id: 'pz-dennica',
+        productionOrderNumber: 'N/00001/26',
+        productionOrderPrintNumber: 'LK/00001/26',
         wellId: 'well-1',
         elementIndex: 5,
         componentType: 'dennica',
@@ -64,5 +66,22 @@ describe('powiązane numery PZ na wydrukach', () => {
 
         expect(singlePrint).toBe('Uwagi ręczne<br><b>Kręgi: K/00002/26 &lt;script&gt;</b>');
         expect(batchPrint).toBe(singlePrint);
+    });
+
+    it('wydruk PZ używa kanonicznego numeru zamiast numeru z symbolem opiekuna', () => {
+        const context: any = {
+            window: { escapeHtml },
+            buildPrzejsciaRowsFromPO: () => [],
+            ensureDisplayIndices: () => {},
+            getPowloka: () => 'Brak',
+            paramLabel: (value: string) => value || '',
+            generateSvgFromPO: () => '',
+            renderTemplate: (_template: string, payload: any) => payload.NR_ZLECENIA
+        };
+        vm.createContext(context);
+        vm.runInContext(read('public/js/spa/zleceniaHelpers.js'), context);
+
+        expect(context.buildZlecenieFromPO('{{NR_ZLECENIA}}', savedPz)).toBe('N/00001/26');
+        expect(context.buildZlecenieFromPageBlock('{{NR_ZLECENIA}}', savedPz)).toBe('N/00001/26');
     });
 });

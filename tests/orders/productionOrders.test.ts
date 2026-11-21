@@ -93,7 +93,6 @@ beforeEach(() => {
     mockUser.role = 'user';
     mockUser.subUsers = [];
     (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
-    // Numer wydrukowy PZ: PUT dociąga symbol opiekuna — brak wiersza = fallback.
     (prisma as any).users = { findMany: jest.fn().mockResolvedValue([]) };
 });
 
@@ -417,22 +416,39 @@ describe('Production Orders (PZ) routes', () => {
             const res = await request(app)
                 .put('/api/orders/production')
                 .set('x-user-id', 'user-id')
-                .send({ data: [{ id: 'pz-1', wellId: 'w-1', version: 6, status: 'draft' }] });
+                .send({
+                    data: [
+                        {
+                            id: 'pz-1',
+                            wellId: 'w-1',
+                            version: 6,
+                            status: 'draft',
+                            productionOrderPrintNumber: 'SA/00001/26'
+                        }
+                    ]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(res.body.saved).toEqual([{ id: 'pz-1', version: 7 }]);
+            const savedData = JSON.parse(
+                (prisma.production_orders_rel.updateMany as jest.Mock).mock.calls[0][0].data.data
+            );
+            expect(savedData).not.toHaveProperty('productionOrderPrintNumber');
             expect(
                 (prisma.production_orders_rel.updateMany as jest.Mock).mock.calls[0][0].where
             ).toEqual({ id: 'pz-1', version: 6 });
         });
 
-        it('numer wydrukowy: saved niesie numer z symbolem opiekuna (front merguje po zapisie)', async () => {
+        it('zapis nie zwraca starego numeru wydrukowego opiekuna', async () => {
             (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
                 {
                     id: 'pz-1',
                     userId: 'user-id',
                     version: 6,
-                    data: JSON.stringify({ productionOrderNumber: TEST_PRODUCTION_NUMBER })
+                    data: JSON.stringify({
+                        productionOrderNumber: TEST_PRODUCTION_NUMBER,
+                        productionOrderPrintNumber: 'LK/00001/26'
+                    })
                 }
             ]);
             (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
@@ -445,13 +461,12 @@ describe('Production Orders (PZ) routes', () => {
                 .send({ data: [{ id: 'pz-1', wellId: 'w-1', version: 6, status: 'draft' }] });
 
             expect(res.statusCode).toBe(200);
-            expect(res.body.saved).toEqual([
-                {
-                    id: 'pz-1',
-                    version: 7,
-                    productionOrderPrintNumber: TEST_PRODUCTION_NUMBER.replace(/^[A-Z]\//, 'SA/')
-                }
-            ]);
+            expect(res.body.saved).toEqual([{ id: 'pz-1', version: 7 }]);
+            const savedData = JSON.parse(
+                (prisma.production_orders_rel.updateMany as jest.Mock).mock.calls[0][0].data.data
+            );
+            expect(savedData.productionOrderNumber).toBe(TEST_PRODUCTION_NUMBER);
+            expect(savedData).not.toHaveProperty('productionOrderPrintNumber');
         });
 
         it('P0-V: łańcuch save→save bez fałszywego 409 (scenariusz zgłoszenia)', async () => {
@@ -601,21 +616,21 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.body.data.siblingCrossReferences).toBe('Kręgi: K/00003/26');
         });
 
-        it('zwraca kanoniczny numer wydruku z symbolem opiekuna', async () => {
+        it('nie zwraca historycznego numeru wydrukowego z symbolem opiekuna', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'pz-1',
                 userId: 'user-id',
                 productionNumber: TEST_PRODUCTION_NUMBER,
-                data: JSON.stringify({ productionOrderNumber: TEST_PRODUCTION_NUMBER })
+                data: JSON.stringify({
+                    productionOrderNumber: TEST_PRODUCTION_NUMBER,
+                    productionOrderPrintNumber: 'LK/00001/26'
+                })
             });
-            (prisma as any).users.findMany.mockResolvedValue([{ symbol: 'SA' }]);
-
             const res = await request(app).get('/api/orders/production/pz-1');
 
             expect(res.statusCode).toBe(200);
-            expect(res.body.data.productionOrderPrintNumber).toBe(
-                TEST_PRODUCTION_NUMBER.replace(/^[A-Z]\//, 'SA/')
-            );
+            expect(res.body.data.productionOrderNumber).toBe(TEST_PRODUCTION_NUMBER);
+            expect(res.body.data).not.toHaveProperty('productionOrderPrintNumber');
         });
 
         it('zwraca 404 dla cudzego PZ', async () => {

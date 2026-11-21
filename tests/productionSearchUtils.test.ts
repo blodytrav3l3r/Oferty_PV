@@ -133,22 +133,25 @@ describe('mapProductionOrderRow', () => {
         expect(r.printCountZlecenia).toBe(0);
     });
 
-    it('numer do wydruku: symbol opiekuna zamiast prefiksu roku, numer bazowy bez zmian', () => {
+    it('ignoruje pole starego numeru wydruku i zachowuje numer kanoniczny', () => {
         const r = mapProductionOrderRow({
             id: 'x',
             handlerSymbol: 'SA',
-            data: JSON.stringify({ productionOrderNumber: 'N/000002/26' })
+            data: JSON.stringify({
+                productionOrderNumber: 'N/000002/26',
+                productionOrderPrintNumber: 'LK/000002/26'
+            })
         }) as Record<string, unknown>;
         expect(r.productionOrderNumber).toBe('N/000002/26');
         expect(r.handlerSymbol).toBe('SA');
-        expect(r.productionOrderPrintNumber).toBe('SA/000002/26');
+        expect(r).not.toHaveProperty('productionOrderPrintNumber');
     });
 
-    it('brak symbolu opiekuna → wydruk zachowuje numer z prefiksem roku', () => {
+    it('nie dodaje starego numeru wydruku gdy pole go nie zawiera', () => {
         const r = mapProductionOrderRow({
             id: 'x',
             data: JSON.stringify({ productionOrderNumber: 'N/000002/26' })
         }) as Record<string, unknown>;
-        expect(r.productionOrderPrintNumber).toBe('N/000002/26');
+        expect(r).not.toHaveProperty('productionOrderPrintNumber');
     });
 });

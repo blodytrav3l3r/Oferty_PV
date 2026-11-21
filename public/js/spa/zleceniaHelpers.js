@@ -415,8 +415,7 @@ function buildZleceniePayload(po) {
             : 'Kąt stopień';
 
     const payload = {
-        // Wydruk zlecenia: prefiks roku → symbol opiekuna; etykieta niżej bez zmian.
-        NR_ZLECENIA: po.productionOrderPrintNumber || po.productionOrderNumber || '',
+        NR_ZLECENIA: po.productionOrderNumber || '',
         OBIEKT: po.obiekt || '',
         ADRES: po.adres || '',
         WYKONAWCA: po.wykonawca || '',

@@ -157,13 +157,20 @@ function fitPrintedText(doc) {
 }
 
 /** Print HTML silently using a hidden iframe */
-function silentPrint(htmlString) {
+function silentPrint(htmlString, printTitle) {
     const iframe = document.createElement('iframe');
     iframe.style.cssText =
         'position:fixed;right:0;bottom:0;width:1200px;height:1200px;border:0;opacity:0;z-index:-9999;';
     document.body.appendChild(iframe);
 
     const doc = iframe.contentWindow.document;
+    const originalTitle = document.title;
+    let titleRestored = false;
+    const restoreTitle = () => {
+        if (titleRestored || !printTitle) return;
+        document.title = originalTitle;
+        titleRestored = true;
+    };
     doc.open();
     doc.write(htmlString);
     doc.close();
@@ -177,8 +184,18 @@ function silentPrint(htmlString) {
                     logger.error('formatters', 'fitPrintedText:', err);
             }
             iframe.contentWindow.focus();
-            iframe.contentWindow.print();
+            if (printTitle) {
+                doc.title = printTitle;
+                iframe.contentWindow.addEventListener('afterprint', restoreTitle, { once: true });
+                document.title = printTitle;
+            }
+            try {
+                iframe.contentWindow.print();
+            } finally {
+                restoreTitle();
+            }
             setTimeout(() => {
+                restoreTitle();
                 if (document.body.contains(iframe)) document.body.removeChild(iframe);
             }, 60000);
         }, 500);

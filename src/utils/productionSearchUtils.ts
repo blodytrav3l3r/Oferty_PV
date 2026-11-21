@@ -1,5 +1,5 @@
 import { parseJsonField } from '../helpers';
-import { formatProductionPrintNumber } from './productionNumber';
+import { withoutProductionPrintNumber } from './productionNumber';
 import { Prisma } from '../../generated/prisma-postgres/client';
 
 export interface SearchParams {
@@ -213,7 +213,9 @@ export function buildProductionSearchWhere(
 }
 
 export function mapProductionOrderRow(row: Record<string, unknown>) {
-    const parsedData = parseJsonField<Record<string, unknown>>(row.data as string, {});
+    const parsedData = withoutProductionPrintNumber(
+        parseJsonField<Record<string, unknown>>(row.data as string, {})
+    );
 
     const handlerName =
         row.handlerFirstName || row.handlerLastName
@@ -247,13 +249,6 @@ export function mapProductionOrderRow(row: Record<string, unknown>) {
         handlerName: handlerName || undefined,
         creatorName: creatorName || undefined,
         handlerSymbol: handlerSymbol || undefined,
-        // Wydruk zlecenia: prefiks roku → symbol opiekuna (listy i etykiety bez zmian).
-        productionOrderPrintNumber: formatProductionPrintNumber(
-            typeof parsedData.productionOrderNumber === 'string'
-                ? parsedData.productionOrderNumber
-                : '',
-            handlerSymbol
-        ),
         ...parsedData,
         // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
         version: typeof row.version === 'number' ? row.version : 1,

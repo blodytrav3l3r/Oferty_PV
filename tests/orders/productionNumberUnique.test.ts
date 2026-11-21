@@ -115,7 +115,6 @@ jest.mock('../../src/prismaClient', () => {
             }),
             deleteMany: jest.fn(async () => ({ count: 0 }))
         },
-        // Numer wydrukowy PZ: PUT dociąga symbol opiekuna — brak wiersza = fallback.
         users: { findMany: jest.fn(async () => []) },
         $queryRaw: jest.fn(async (_strings: any, ...values: any[]) => {
             const [year, seqNumber] = values;

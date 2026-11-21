@@ -27,6 +27,16 @@ async function confirmEditorPrint(title, documentName, orderNumber) {
     );
 }
 
+function buildProductionPrintFileName(data) {
+    const number = String(data.productionOrderNumber || '').replace(/[^a-zA-Z0-9]/g, '');
+    const well = String(data.snr || data.wellName || '')
+        .replace(/[<>:"/\\|?*]/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/^[. ]+|[. ]+$/g, '')
+        .trim();
+    return [number, well].filter(Boolean).join(' ') || 'zlecenie';
+}
+
 /**
  * Dolicza wydruk wykonany bezpośrednio z edytora zlecenia do licznika
  * widocznego w kartotece zleceń (ten sam endpoint co wydruki z listy).
@@ -122,9 +132,12 @@ async function loadSavedProductionOrder(orderId) {
             precoFullHeight: po.precoFullHeight
         };
 
+        /** @type {typeof po} */
+        const canonicalPo = Object.fromEntries(
+            Object.entries(po).filter(([key]) => key !== 'productionOrderPrintNumber')
+        );
         return {
-            ...po,
-            productionOrderPrintNumber: po.productionOrderPrintNumber || po.productionOrderNumber,
+            ...canonicalPo,
             snr: po.snr || po.wellName || '',
             srednica: po.srednica || po.dn || '',
             productName: po.productName || product?.name || '',
@@ -422,13 +435,9 @@ async function printZlecenie() {
     if (!template) return;
 
     const html = buildZlecenieHtml(template, data);
-    const ok = await confirmEditorPrint(
-        'Wydruk zlecenia',
-        'zlecenie',
-        data.productionOrderPrintNumber || data.productionOrderNumber
-    );
+    const ok = await confirmEditorPrint('Wydruk zlecenia', 'zlecenie', data.productionOrderNumber);
     if (!ok) return;
-    silentPrint(html);
+    silentPrint(html, buildProductionPrintFileName(data));
     await recordEditorPrint(orderId, 'zlecenie');
 }
 
@@ -788,7 +797,7 @@ function buildZlecenieHtml(template, data) {
 
     // Zbudowanie dużego płaskiego obiektu z wartościami dla {{ZMIENNYCH}}
     const payload = {
-        NR_ZLECENIA: data.productionOrderPrintNumber || data.productionOrderNumber || '',
+        NR_ZLECENIA: data.productionOrderNumber || '',
         OBIEKT: data.obiekt || '',
         ADRES: data.adres || '',
         WYKONAWCA: data.wykonawca || '',
@@ -892,7 +901,7 @@ async function printEtykieta() {
     const html = buildEtykietaHtml(template, data);
     const ok = await confirmEditorPrint('Wydruk etykiety', 'etykietę', data.productionOrderNumber);
     if (!ok) return;
-    silentPrint(html);
+    silentPrint(html, buildProductionPrintFileName(data));
     await recordEditorPrint(orderId, 'etykieta');
 }
 

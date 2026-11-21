@@ -351,11 +351,6 @@ async function _saveProductionChunk(chunk, noRetry) {
             if (!po) continue;
             const ver = entry && typeof entry.version === 'number' ? entry.version : undefined;
             if (ver !== undefined) po.version = ver;
-            // Numer wydrukowy liczy serwer (symbol opiekuna) — przebudowany
-            // obiekt z formularza go nie ma, a wydruk idzie zaraz po zapisie.
-            if (entry && typeof entry.productionOrderPrintNumber === 'string') {
-                po.productionOrderPrintNumber = entry.productionOrderPrintNumber;
-            }
         }
     }
     return rawSaved;
