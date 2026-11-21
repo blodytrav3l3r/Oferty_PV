@@ -30,14 +30,17 @@ PostgreSQL 18 jest jedynym providerem runtime i aktywnych testów. Testy integra
 - Zmiana logiki (route/service backendu, kalkulacja lub stan frontendu, migracja SQL) → test w tym samym commicie.
 - Zmiana czysto wizualna (CSS, markup bez zmiany zachowania) → test niewymagany; dowodem są `lint`, `typecheck` i pomiar w DOM.
 - Bug fix istotny → test regresyjny odtwarzający błąd (czerwony przed poprawką, zielony po).
+- Przed commitem uruchom testy regresyjne/warstwowe odpowiadające zmienionemu zachowaniu i minimalne kontrole dotkniętej warstwy. Przykład: `npx jest tests/studnie/nazwa.test.ts --no-coverage --runInBand`.
+- Pełny zestaw nie jest wymogiem każdego commita: CI uruchamia pełne testy na PR i pushu `main`; release uruchamia `test:quick`. Zmiany przekrojowe, wysokiego ryzyka lub nieobjęte CI wymagają dodatkowo pełnej lokalnej walidacji.
 - Brak testu przy zmianie logiki = commit do poprawy w review, nie „test później”.
 - Twardy guard: `scripts/check-migration-tests.mjs` blokuje commit z `migration.sql` bez pliku `tests/**` (pre-commit); pozostałe przypadki ocenia review.
 
 ## Bramy
 
-- `npm run validate`: version:check, typecheck BE+FE, lint BE+FE, appname, licenses, test:quick, collisions, ratchet, prices:verify.
-- Pre-push uruchamia kontrole wersji, kodowania, nazwy, licencji, kolizji, ratchetu i cenników oraz lint i typecheck backendu i frontendu. Testy uruchamiaj zgodnie z bramkami projektu; hook ich nie uruchamia. `test:quick:lite` pomija dedykowane testy migracji, ale stosuje migracje w izolowanych schematach PostgreSQL; `pricelistChunk` wykonuje szeregowo. `prices:verify` korzysta z `DATABASE_URL` i sprawdza aktywne cenniki.
-- DoD paczki: P0 open = 0; CSRF/matrix GREEN; typecheck/lint GREEN; `test:quick` GREEN; `version:check` GREEN; migration drift 0; testy DB na PostgreSQL; NEW globals/inline/security-exceptions = 0.
+- `npm run validate` łączy `version:check`, typecheck BE+FE, lint BE+FE, appname, licenses, `test:quick`, collisions, ratchet i `prices:verify`; to pełna lokalna walidacja, nie rutynowy wymóg każdego commita.
+- Pre-commit uruchamia walidator Excel, guard testów migracji i `lint-staged`. Pre-push uruchamia kontrole wersji, kodowania, nazwy, licencji, kolizji, ratchetu i cenników oraz lint i typecheck BE+FE, ale nie testy.
+- CI uruchamia pełne testy na PR i pushu `main`; release dodatkowo uruchamia `test:quick`. `test:quick:lite` pomija dedykowane testy migracji, ale stosuje migracje w izolowanych schematach; `pricelistChunk` wykonuje szeregowo. `prices:verify` korzysta z `POSTGRES_TEST_URL`/bazy testowej.
+- DoD commita: właściwy test regresyjny, szybkie kontrole hooka i brak błędów lint/typecheck dla dotkniętej warstwy. DoD wydania: pełna macierz CI, `version:check`, migration drift 0, testy DB na PostgreSQL, P0 open = 0, CSRF/matrix GREEN oraz NEW globals/inline/security-exceptions = 0.
 
 ## Playwright — baza i konto testowe
 

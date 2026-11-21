@@ -3,12 +3,13 @@
 Uniwersalny zestaw reguł dla każdego modelu AI (OpenCode, DeepSeek, Claude, Cursor itp.).
 Szczegóły domenowe w `docs/agents/` (routing poniżej) — ten plik to mapa i twarde bramy.
 
-## Obowiązkowe bramy (przed każdym commitem/pushem)
+## Bramy jakości według etapu
 
-- `npm run version:check` (spójność wersji we WSZYSTKICH źródłach; rozjazd = blokada, bez wyjątków — także przy samych docsach).
-- `npm run validate` (typecheck BE+FE + lint BE+FE + appname + licenses + collisions + test:quick + prices:verify).
-- Zmiana logiki → test w tym samym commicie (kontrakt: `docs/agents/testing.md`).
-- `npm run format` (Prettier; respektuj `.prettierrc`, nie nadpisuj ustawień).
+- Przed commitem: `npm run version:check`, testy dotyczące zmienionego zachowania oraz kontrole z hooka `pre-commit`. Pełne `npm run validate` nie jest rutynowym wymogiem każdego commita.
+- Zmiana logiki → test regresyjny w tym samym commicie (dobór testów: `docs/agents/testing.md`).
+- Formatowanie: `lint-staged` formatuje zmienione pliki. Nie uruchamiaj `npm run format` na całym repozytorium dla małej zmiany.
+- Przed pushem: hook `pre-push` uruchamia szybkie kontrole, lint i typecheck. Pełne testy wykonuje CI dla PR i pushu na `main`; standardowo scalaj PR dopiero po zielonym CI.
+- `npm run validate` uruchamiaj dla zmian przekrojowych/wysokiego ryzyka, diagnostyki przed wydaniem oraz gdy wymaga tego plan lub release. Szczegóły: `docs/agents/testing.md` i `docs/agents/release.md`.
 - Commity wyłącznie przez `node scripts/commit.mjs "typ(scope): opis"` (polskie znaki, reguły commitlint).
 - Kodowanie UTF-8 bez BOM (`.bat` ASCII-only); przy ERROR: `npm run encoding:fix`.
 - Inwarianty: `docs/SYSTEM_INVARIANTS.md` (I-001–I-014) — przeczytaj przed zmianą logiki biznesowej; zmiana inwariantu tylko za jawną decyzją.

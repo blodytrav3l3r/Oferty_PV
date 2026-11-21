@@ -17,6 +17,12 @@
 
 Testy: `npm test` (z pokryciem, bez Git Safety), `test:quick`, `test:quick:lite` (bez dedykowanych testów migracji i Git Safety), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:parity`, `test:golden`, `test:excel-visual`, `test:excel-slo`, `test:openperf`, `test:e2e-appname`, `test:spa-guard`, `test:e2e-qe-switch`, `test:e2e-pricelist-preview`, `test:watch`, `perf:baseline` (initial-load SPA, spawn :3178; `PERF_ONLY=a,b` filtruje strony). Testy backendu stosują migracje w izolowanych schematach PostgreSQL, także w wariancie `lite`.
 
+### Dobór walidacji
+
+- Zwykły commit: uruchom konkretne testy regresyjne/warstwowe, np. `npx jest tests/studnie/nazwa.test.ts --no-coverage --runInBand`; hook `pre-commit` dodatkowo waliduje Excel/migracje oraz formatuje i lintuje pliki staged.
+- Przed pushem: hook `pre-push` sprawdza wersję, kodowanie, integralność, ceny, lint i typecheck. Pełne testy uruchamia CI dla PR i `main`.
+- `npm run validate` / `npm run test:quick`: wybierz dla zmian przekrojowych lub wysokiego ryzyka, diagnostyki CI, wydania albo gdy pełny przepływ nie jest pokryty CI. Przed bezpośrednim pushem na `main` uruchom `npm run validate`.
+
 E2E na izolacji: jawny `PLAYWRIGHT_DATABASE_URL` wskazuje testowy PostgreSQL; harness tworzy osobny schemat i uruchamia serwer na porcie testowym, domyślnie 3199.
 
 ## AI/ML, benchmark, pomiary

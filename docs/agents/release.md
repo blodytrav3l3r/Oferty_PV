@@ -7,9 +7,10 @@
 - Format `typ(scope): opis`: typ ∈ `feat, fix, refactor, chore, docs, perf, test, style`; scope z listy (`rury, studnie, offers, orders, prisma, auth, ui, api, seed, deploy, clients, audit, settings, preco, telemetry, deps, docs, ci, config, test, docker, security, chore, release`); nagłówek ≤ 72 znaki; małe litery; bez kropki na końcu. Hook `commit-msg` blokuje naruszenia.
 - Zawsze `node scripts/commit.mjs "..."` (lub `npm run commit`) — chroni polskie znaki (UTF-8 przez plik) i waliduje przed hookiem.
 - Język: odpowiedzi/plany po polsku; komentarze/commity/CHANGELOG po polsku; identyfikatory w kodzie po angielsku.
-- Przed commitem: `npm run version:check` + `npm run validate` + `npm run format`.
+- Przed commitem: `npm run version:check`, testy dobrane do zmiany oraz hook `pre-commit` (Excel, migracja i `lint-staged`). Nie uruchamiaj pełnego `validate` ani formattera repozytorium dla każdego małego commita; `lint-staged` formatuje pliki staged.
 - Zgodę na commit i push określa `docs/AUTONOMY_CONTRACT.md`: commit kodu wymaga GO na paczkę, a push — osobnego GO z dokładnym celem `remote/branch`.
-- Przed pushem uruchom wymagane bramki i hooki bez ich pomijania. Hook `pre-push` sprawdza m.in. ceny, lint i typecheck; nie uruchamia testów.
+- Przed pushem hook `pre-push` sprawdza wersję, kodowanie, integralność, ceny, lint i typecheck; nie uruchamia testów. Standardowo wypychaj branch przez PR i scalaj po zielonym CI, które uruchamia pełną macierz. Przed bezpośrednim pushem na `main` uruchom `npm run validate`.
+- `npm run validate` i `npm run test:quick` stosuj dla zmian przekrojowych/wysokiego ryzyka, ręcznej walidacji wydania i sytuacji, gdy CI nie obejmuje danego przepływu. Nie zastępują testu regresyjnego dobranego do zmiany.
 - Po pushu sprawdź kod wyjścia oraz `git status -sb`; szczegóły interpretacji na Windows są w `docs/agents/commands.md`.
 
 ## Wersje (SSoT: plik VERSION)
