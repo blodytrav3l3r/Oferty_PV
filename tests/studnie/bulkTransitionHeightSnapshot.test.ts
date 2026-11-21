@@ -65,4 +65,33 @@ describe('snapshot przejść przy hurtowym tworzeniu PZ', () => {
         expect(order.przejscia).toHaveLength(1);
         expect(order.przejscia[0].heightFromElementMm).toBe(1000);
     });
+
+    test('buduje PZ dolnej dennicy z kinetą bez błędu wyboru najniższego elementu', () => {
+        const context = loadBulkContext();
+        const kineta = { id: 'kineta', componentType: 'kineta', name: 'Kineta DN1000' };
+        context.studnieProducts.push(kineta);
+        context.buildConfigMap = () => [
+            { index: 0, start: 0, end: 1000, componentType: 'dennica' },
+            { index: 1, start: 1000, end: 1100, componentType: 'kineta' }
+        ];
+        const element = {
+            well: {
+                id: 'w1',
+                name: 'S1',
+                dn: 1000,
+                rzednaDna: 10,
+                kineta: 'beton',
+                config: [{ productId: 'base' }, { productId: 'kineta' }],
+                przejscia: []
+            },
+            product: context.getStudnieProductById('base'),
+            elementIndex: 0,
+            wellIndex: 0
+        };
+
+        const order = context.buildAutoOrderData(element, { userId: 'u1' });
+
+        expect(order.componentType).toBe('dennica');
+        expect(order.blindKinetaPrzejscia).toEqual([]);
+    });
 });

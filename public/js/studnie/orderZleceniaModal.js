@@ -421,7 +421,7 @@ async function _saveProductionOrderInner() {
     ) {
         const dennice = orderConfigMap.filter((entry) => entry.componentType === 'dennica');
         const bottomDennica = dennice.reduce(
-            (lowest, entry) => (entry.start < lowest.start ? entry : lowest),
+            (lowest, entry) => (!lowest || entry.start < lowest.start ? entry : lowest),
             null
         );
         if (bottomDennica && bottomDennica.index === elementIndex) {
