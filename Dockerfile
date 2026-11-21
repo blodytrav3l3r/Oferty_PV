@@ -62,9 +62,13 @@ ENV PORT=10000
 ENV HOST=0.0.0.0
 ARG APP_COMMIT_SHA=
 ARG APP_GIT_BRANCH=
+ARG APP_VERSION=unknown
+ARG APP_WORKTREE_DIRTY=unknown
 ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}
 ENV APP_GIT_BRANCH=${APP_GIT_BRANCH}
-LABEL org.opencontainers.image.revision=${APP_COMMIT_SHA}
+LABEL org.opencontainers.image.version=${APP_VERSION} \
+    org.opencontainers.image.revision=${APP_COMMIT_SHA} \
+    com.sok.build.worktree-dirty=${APP_WORKTREE_DIRTY}
 # Secure cookie wymagane za reverse proxy (HTTPS zakończony poza kontenerem)
 ENV COOKIE_SECURE=true
 

@@ -27,8 +27,10 @@ services:
             context: .
             dockerfile: Dockerfile
             args:
+                APP_VERSION: ${APP_VERSION:-unknown}
                 APP_COMMIT_SHA: ${APP_COMMIT_SHA:-}
                 APP_GIT_BRANCH: ${APP_GIT_BRANCH:-}
+                APP_WORKTREE_DIRTY: ${APP_WORKTREE_DIRTY:-unknown}
         container_name: sok-oferty
         restart: unless-stopped
         depends_on:

@@ -5,6 +5,7 @@ const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
 const OUTPUT_KEYS = [
     'APP_COMMIT_SHA',
     'APP_GIT_BRANCH',
+    'APP_WORKTREE_DIRTY',
     'INFO_LOCAL',
     'INFO_REMOTE',
     'INFO_STATE',
@@ -77,6 +78,8 @@ function collectCommitInfo() {
     return {
         APP_COMMIT_SHA: localSha || 'unknown',
         APP_GIT_BRANCH: branch,
+        APP_WORKTREE_DIRTY:
+            !localSha || statusResult?.error ? 'unknown' : isDirty ? 'true' : 'false',
         APP_VERSION: appVersion,
         changedFiles,
         INFO_LOCAL: `Local code commit: ${localSha ? localSha.slice(0, 12) : 'unavailable'}`,

@@ -10,6 +10,7 @@ set "APP_VERSION=1.64.14"
 set "HTTPS_ENABLED=false"
 set "APP_COMMIT_SHA=unknown"
 set "APP_GIT_BRANCH=unknown"
+set "APP_WORKTREE_DIRTY=unknown"
 
 echo ===========================================================
 echo   S.O.K. - Docker PostgreSQL 18 v%APP_VERSION%
@@ -21,6 +22,7 @@ if not errorlevel 1 (
     for /f "tokens=1,* delims==" %%A in ('node scripts\commit-info.mjs --batch') do (
         if "%%A"=="APP_COMMIT_SHA" set "APP_COMMIT_SHA=%%B"
         if "%%A"=="APP_GIT_BRANCH" set "APP_GIT_BRANCH=%%B"
+        if "%%A"=="APP_WORKTREE_DIRTY" set "APP_WORKTREE_DIRTY=%%B"
         if "%%A"=="INFO_LOCAL" echo [INFO] %%B
         if "%%A"=="INFO_REMOTE" echo [INFO] %%B
         if "%%A"=="INFO_STATE" echo [INFO] %%B
@@ -95,6 +97,17 @@ if errorlevel 1 (
     echo        Sprawdz Docker Desktop. Dla bledow migracji uzyj procedury wznowienia instalatora.
     pause
     exit /b 1
+)
+
+where node.exe >nul 2>nul
+if errorlevel 1 (
+    echo [UWAGA] Node.js niedostepny - nie mozna porownac commita kontenera.
+) else (
+    node scripts\docker-build-info.mjs
+    if errorlevel 1 (
+        pause
+        exit /b 1
+    )
 )
 
 docker compose --project-name sok --file docker-compose.yml ps

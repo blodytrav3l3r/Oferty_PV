@@ -470,8 +470,10 @@ describe('deploy-core', () => {
             expect(doc.services.postgres.healthcheck.test.join(' ')).toContain('pg_isready');
             expect(doc.services.app.depends_on.postgres.condition).toBe('service_healthy');
             expect(doc.services.app.build.args).toEqual({
+                APP_VERSION: '${APP_VERSION:-unknown}',
                 APP_COMMIT_SHA: '${APP_COMMIT_SHA:-}',
-                APP_GIT_BRANCH: '${APP_GIT_BRANCH:-}'
+                APP_GIT_BRANCH: '${APP_GIT_BRANCH:-}',
+                APP_WORKTREE_DIRTY: '${APP_WORKTREE_DIRTY:-unknown}'
             });
             expect(dockerfile).toContain('ARG APP_COMMIT_SHA=');
             expect(dockerfile).toContain('ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}');

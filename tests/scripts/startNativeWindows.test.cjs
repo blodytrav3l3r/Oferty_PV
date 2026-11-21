@@ -3,12 +3,18 @@ const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const { describe, it } = require('node:test');
 
 const projectRoot = path.resolve(__dirname, '..', '..');
 const launcherPath = path.join(projectRoot, 'start-native.bat');
 const startupScriptPath = path.join(projectRoot, 'scripts', 'start-native.ps1');
 const commitInfoPath = path.join(projectRoot, 'scripts', 'commit-info.mjs');
+const dockerBuildInfoPath = path.join(projectRoot, 'scripts', 'docker-build-info.mjs');
+
+async function loadDockerBuildInfo() {
+    return import(pathToFileURL(dockerBuildInfoPath).href);
+}
 
 describe('native Windows launcher contract', () => {
     it('shows the local build commit beside origin/main and marks dirty files', () => {
@@ -46,6 +52,7 @@ describe('native Windows launcher contract', () => {
             );
             assert.match(initialOutput, /^INFO_STATE=Local code matches origin\/main\.$/m);
             assert.match(initialOutput, /^INFO_DIRTY=Working tree is clean\.$/m);
+            assert.match(initialOutput, /^APP_WORKTREE_DIRTY=false$/m);
 
             const updaterRepo = path.join(tempRoot, 'updater');
             execFileSync('git', ['clone', remoteRepo, updaterRepo]);
@@ -77,6 +84,7 @@ describe('native Windows launcher contract', () => {
                 dirtyOutput,
                 /^INFO_DIRTY=WARNING: working tree has uncommitted changes; SHA identifies HEAD only\.$/m
             );
+            assert.match(dirtyOutput, /^APP_WORKTREE_DIRTY=true$/m);
             const statusOutput = execFileSync(process.execPath, [commitInfoPath], {
                 cwd: localRepo,
                 encoding: 'utf8'
@@ -113,6 +121,20 @@ describe('native Windows launcher contract', () => {
             );
         } finally {
             fs.rmSync(localRepo, { recursive: true, force: true });
+        }
+    });
+
+    it('marks dirty state as unknown when the directory has no Git commit', () => {
+        const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-no-commit-'));
+        try {
+            const output = execFileSync(process.execPath, [commitInfoPath, '--batch'], {
+                cwd: tempRoot,
+                encoding: 'utf8'
+            });
+            assert.match(output, /^APP_COMMIT_SHA=unknown$/m);
+            assert.match(output, /^APP_WORKTREE_DIRTY=unknown$/m);
+        } finally {
+            fs.rmSync(tempRoot, { recursive: true, force: true });
         }
     });
 
@@ -194,13 +216,86 @@ describe('native Windows launcher contract', () => {
 
         assert.match(dockerLauncher, /commit-info\.mjs --batch/i);
         assert.match(dockerLauncher, /set "APP_COMMIT_SHA=%%B"/i);
+        assert.match(dockerLauncher, /set "APP_WORKTREE_DIRTY=%%B"/i);
+        assert.match(dockerLauncher, /docker-build-info\.mjs/i);
+        assert.match(dockerLauncher, /docker compose .* up --detach --build/i);
         assert.match(dockerLauncher, /lokalny folder tego pliku BAT/i);
         assert.match(dockerLauncher, /GitHub nie jest zrodlem kodu/i);
+        const dockerCompose = fs.readFileSync(path.join(projectRoot, 'docker-compose.yml'), 'utf8');
+        const dockerfile = fs.readFileSync(path.join(projectRoot, 'Dockerfile'), 'utf8');
+        assert.match(dockerCompose, /APP_VERSION: \$\{APP_VERSION:-unknown\}/);
+        assert.match(dockerCompose, /APP_WORKTREE_DIRTY: \$\{APP_WORKTREE_DIRTY:-unknown\}/);
+        assert.match(dockerfile, /org\.opencontainers\.image\.version=\$\{APP_VERSION\}/);
+        assert.match(dockerfile, /org\.opencontainers\.image\.revision=\$\{APP_COMMIT_SHA\}/);
+        assert.match(dockerfile, /com\.sok\.build\.worktree-dirty=\$\{APP_WORKTREE_DIRTY\}/);
         assert.match(appLauncher, /commit-info\.mjs --batch/i);
         assert.match(appLauncher, /set "APP_COMMIT_SHA=%%B"/i);
         assert.match(nativeScript, /commit-info\.mjs/);
         assert.match(nativeScript, /\$env:APP_COMMIT_SHA = \$commitInfo\['APP_COMMIT_SHA'\]/);
-        assert.match(dockerLauncher, /docker compose .* up --detach --build/);
+    });
+
+    it('verifies the running Docker build against local version, commit and dirty state', async () => {
+        const { compareBuildMetadata, readDockerBuildMetadata } = await loadDockerBuildInfo();
+        const expected = {
+            version: '1.64.14',
+            commit: 'a'.repeat(40),
+            dirty: 'false'
+        };
+        const actual = {
+            version: '1.64.14',
+            commit: 'a'.repeat(40),
+            dirty: 'false'
+        };
+
+        assert.deepEqual(compareBuildMetadata(expected, actual), {
+            status: 'match',
+            version: '1.64.14',
+            commit: 'a'.repeat(40),
+            dirty: false,
+            dirtyVerified: true
+        });
+        assert.equal(
+            compareBuildMetadata(expected, { ...actual, commit: 'b'.repeat(40) }).status,
+            'mismatch'
+        );
+        assert.equal(
+            compareBuildMetadata(expected, { ...actual, dirty: 'true' }).status,
+            'mismatch'
+        );
+        assert.equal(
+            compareBuildMetadata(expected, { ...actual, version: '1.64.13' }).status,
+            'mismatch'
+        );
+        assert.equal(
+            compareBuildMetadata({ ...expected, dirty: 'true' }, { ...actual, dirty: 'true' })
+                .dirty,
+            true
+        );
+        assert.equal(
+            compareBuildMetadata({ ...expected, dirty: 'true' }, { ...actual, dirty: undefined })
+                .status,
+            'mismatch'
+        );
+        assert.equal(
+            compareBuildMetadata(expected, { ...actual, dirty: undefined }).status,
+            'mismatch'
+        );
+
+        let inspectCommand;
+        const inspected = readDockerBuildMetadata((command, args) => {
+            inspectCommand = { command, args };
+            return JSON.stringify({
+                'org.opencontainers.image.version': actual.version,
+                'org.opencontainers.image.revision': actual.commit,
+                'com.sok.build.worktree-dirty': actual.dirty
+            });
+        });
+
+        assert.deepEqual(inspectCommand, {
+            command: 'docker',
+            args: ['inspect', '--format', '{{json .Config.Labels}}', 'sok-oferty']
+        });
+        assert.deepEqual(inspected, actual);
     });
 
     it('keeps documented shortcut names forwarding to their canonical launchers', () => {
