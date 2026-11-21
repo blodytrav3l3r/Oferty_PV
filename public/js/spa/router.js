@@ -429,7 +429,14 @@
         window.clearTimeout(transitionTimer);
         document.body.classList.add('spa-view-loading');
         if (layer) {
+            layer.classList.remove('is-error');
             layer.classList.add('is-visible');
+            layer.setAttribute('aria-hidden', 'false');
+            layer.innerHTML = `
+                <div class="spa-transition-box">
+                    <span class="spa-transition-spinner"></span>
+                    <span>Wczytywanie widoku</span>
+                </div>`;
         }
         return token;
     }
@@ -441,36 +448,83 @@
         transitionTimer = window.setTimeout(() => {
             if (token !== transitionToken) return;
             document.body.classList.remove('spa-view-loading');
-            if (layer) layer.classList.remove('is-visible');
+            if (layer) {
+                layer.classList.remove('is-visible', 'is-error');
+                layer.setAttribute('aria-hidden', 'true');
+            }
         }, delay);
+    }
+
+    function inspectIframeDocument(iframe, expectedSrc = iframe.src) {
+        try {
+            const frameWindow = iframe.contentWindow;
+            const frameDocument = iframe.contentDocument || frameWindow?.document;
+            const frameLocation = new URL(frameWindow.location.href);
+            const expectedLocation = new URL(expectedSrc, window.location.href);
+            if (frameLocation.href === 'about:blank') return { ok: false, reason: 'blank' };
+            if (frameLocation.origin !== window.location.origin)
+                return { ok: false, reason: 'origin' };
+            if (frameLocation.pathname !== expectedLocation.pathname)
+                return { ok: false, reason: 'document' };
+            const actualParams = new URLSearchParams(frameLocation.search);
+            const expectedParams = new URLSearchParams(expectedLocation.search);
+            actualParams.delete('_ts');
+            expectedParams.delete('_ts');
+            actualParams.sort();
+            expectedParams.sort();
+            if (actualParams.toString() !== expectedParams.toString())
+                return { ok: false, reason: 'document' };
+            if (
+                frameDocument?.readyState !== 'complete' ||
+                !frameDocument.documentElement ||
+                !frameDocument.body
+            )
+                return { ok: false, reason: 'document' };
+            const module = iframe.id.replace('spa-iframe-', '');
+            const hasReadyMarker =
+                module === 'cennik'
+                    ? frameDocument.querySelector('#section-cennik')
+                    : frameDocument.documentElement.classList?.contains('is-loaded');
+            if (!hasReadyMarker) return { ok: false, reason: 'document' };
+            return { ok: true, reason: '' };
+        } catch (_e) {
+            return { ok: false, reason: 'document' };
+        }
     }
 
     function waitForIframeReady(iframe, timeout = 1200) {
         return new Promise((resolve) => {
             let done = false;
-            const complete = () => {
+            const timeoutTimer = { id: undefined };
+            const finish = (result) => {
                 if (done) return;
                 done = true;
-                iframe.removeEventListener('load', complete);
-                resolve();
+                window.clearTimeout(timeoutTimer.id);
+                iframe.removeEventListener('load', onLoad);
+                iframe.removeEventListener('error', onError);
+                resolve(result);
             };
+            const onLoad = () => {
+                const result = inspectIframeDocument(iframe);
+                finish(result.ok ? result : { ok: false, reason: 'document' });
+            };
+            const onError = () => finish({ ok: false, reason: 'load' });
 
-            try {
-                // Nowy iframe ma initially about:blank z readyState=complete —
-                // to nie znaczy, że moduł jest gotowy (deep-link wołał funkcje za wcześnie).
-                const isBlank = iframe.contentWindow?.location.href === 'about:blank';
-                if (iframe.contentDocument?.readyState === 'complete' && !isBlank) {
-                    // Reużyty iframe — już załadowany, brak potrzeby 120ms opóźnienia.
-                    // Jedna klatka (16ms) wystarcza by zbatchować paint.
-                    window.setTimeout(complete, 16);
-                    return;
-                }
-            } catch (_e) {
-                // Oczekiwano iframe tej samej domeny, ale nawigacja pozostaje odporna.
+            const current = inspectIframeDocument(iframe);
+            if (current.ok) {
+                window.setTimeout(() => finish(current), 16);
+                return;
             }
-
-            iframe.addEventListener('load', complete);
-            window.setTimeout(complete, timeout);
+            if (current.reason !== 'blank' && iframe.contentDocument?.readyState === 'complete') {
+                finish(current);
+                return;
+            }
+            iframe.addEventListener('load', onLoad);
+            iframe.addEventListener('error', onError);
+            timeoutTimer.id = window.setTimeout(
+                () => finish({ ok: false, reason: 'timeout' }),
+                timeout
+            );
         });
     }
 
@@ -494,18 +548,79 @@
         });
     }
 
-    function waitForNextIframeLoad(iframe, timeout = 1800) {
+    function waitForNextIframeLoad(iframe, timeout = 1800, expectedSrc = iframe.src) {
         return new Promise((resolve) => {
             let done = false;
-            const complete = () => {
+            const timeoutTimer = { id: undefined };
+            const finish = (result) => {
                 if (done) return;
                 done = true;
-                iframe.removeEventListener('load', complete);
-                resolve();
+                window.clearTimeout(timeoutTimer.id);
+                iframe.removeEventListener('load', onLoad);
+                iframe.removeEventListener('error', onError);
+                resolve(result);
             };
+            const onLoad = () => {
+                const result = inspectIframeDocument(iframe, expectedSrc);
+                finish(result.ok ? result : { ok: false, reason: 'document' });
+            };
+            const onError = () => finish({ ok: false, reason: 'load' });
+            const current = inspectIframeDocument(iframe, expectedSrc);
+            if (current.ok) {
+                window.setTimeout(() => finish(current), 16);
+                return;
+            }
+            iframe.addEventListener('load', onLoad);
+            iframe.addEventListener('error', onError);
+            timeoutTimer.id = window.setTimeout(
+                () => finish({ ok: false, reason: 'timeout' }),
+                timeout
+            );
+        });
+    }
 
-            iframe.addEventListener('load', complete);
-            window.setTimeout(complete, timeout);
+    function showNavigationFailure(token, targetHash, returnHash, reason, iframe, restoreSrc) {
+        if (token !== transitionToken) return;
+        const layer = getTransitionLayer();
+        if (!layer) return;
+        document.body.classList.remove('spa-view-loading');
+        const message =
+            reason === 'timeout'
+                ? 'Widok nie odpowiedział na czas.'
+                : 'Dokument widoku jest niedostępny lub nieprawidłowy.';
+        layer.classList.add('is-error');
+        layer.setAttribute('aria-hidden', 'false');
+        layer.innerHTML = `
+            <div class="spa-transition-box spa-transition-error" role="alert">
+                <strong>Nie udało się wczytać widoku</strong>
+                <span>${message}</span>
+                <div class="spa-transition-actions">
+                    <button type="button" class="btn btn-primary" data-spa-retry>Ponów</button>
+                    ${returnHash ? '<button type="button" class="btn btn-secondary" data-spa-back>Wróć</button>' : ''}
+                </div>
+            </div>`;
+        layer.querySelector('[data-spa-retry]')?.addEventListener('click', () => {
+            if (window.location.hash !== targetHash) window.location.hash = targetHash;
+            const { module, params } = parseHash();
+            const retrySrc =
+                restoreSrc && iframe.dataset.spaAwaitingRestore === 'true'
+                    ? restoreSrc
+                    : _buildModuleSrc(module, params) + '&_ts=' + Date.now();
+            iframe.dataset.spaRetrying = 'true';
+            iframe.src = retrySrc;
+            if (window.location.hash === targetHash) void navigate();
+        });
+        layer.querySelector('[data-spa-back]')?.addEventListener('click', () => {
+            if (!returnHash) return;
+            if (restoreSrc) {
+                const returnModule = _moduleFromHash(returnHash);
+                if (iframes[returnModule] === iframe) {
+                    iframe.dataset.spaAwaitingRestore = 'true';
+                    iframe.src = restoreSrc;
+                }
+            }
+            if (window.location.hash === returnHash) void navigate();
+            else window.location.hash = returnHash;
         });
     }
 
@@ -715,31 +830,18 @@
             } catch (_eAB) {}
         }
 
-        // Zapamiętaj hash jako punkt powrotu dla przyszłego anulowania guarda
-        _lastCleanHash = window.location.hash;
-
-        // Opcja A: zapamiętaj ostatnią trasę (powrót z pulpitu). Best-effort.
-        try {
-            if (window.lastRoute && typeof window.lastRoute.save === 'function')
-                window.lastRoute.save(window.location.hash);
-        } catch (_eLR) {}
+        const targetHash = window.location.hash;
+        const returnHash = _lastCleanHash;
 
         const transition = startViewTransition();
 
-        // Aktualizuj nagłówek
-        updateAppNav(module);
-
-        // Klasa body dla scope CSS modułów
-        document.body.classList.toggle('module-studnie', module === 'studnie');
-
-        // Renderuj nawigację sekcji tylko przy przełączaniu modułów
-        if (currentModule !== module) {
+        const isModuleSwitch = currentModule !== module;
+        if (isModuleSwitch) {
             // P1.1b: synchroniczny flush draftu opuszczanego modułu (hash nie woła beforeunload).
             try {
                 const _prevWin = iframes[currentModule] && iframes[currentModule].contentWindow;
                 if (_prevWin && _prevWin.draftAutosave) _prevWin.draftAutosave.flushAll('route');
             } catch (_e) {}
-            renderSectionNav(module);
         }
 
         // Docelowy iframe — lifecycle: keep old visible under overlay → wait ready → atomically swap
@@ -759,21 +861,48 @@
             const prevKey = _getSpaLogicalSrc(iframe);
             if (newLogicalKey !== prevKey) needsReload = true;
         }
+        const isRestoringIframe = iframe.dataset.spaAwaitingRestore === 'true';
+        const isRetryingIframe = iframe.dataset.spaRetrying === 'true';
 
         let readyPromise;
-        if (needsReload) {
+        if (needsReload || isRestoringIframe || isRetryingIframe) {
             const newSrc = _buildModuleSrc(module, params) + '&_ts=' + Date.now();
-            _setSpaLogicalSrc(iframe, /** @type {string} */ (newLogicalKey));
-            readyPromise = waitForNextIframeLoad(iframe, 1800);
-            iframe.src = newSrc;
+            const expectedSrc = needsReload ? newSrc : iframe.src;
+            readyPromise = waitForNextIframeLoad(iframe, 1800, expectedSrc);
+            if (needsReload) iframe.src = newSrc;
         } else {
             readyPromise = waitForIframeReady(iframe);
         }
 
         // Odsłoń iframe dopiero gdy gotowy — eliminuje biały błysk pustego iframe
-        await readyPromise;
+        const readiness = await readyPromise;
         // Sprawdź czy navigate nie została wyprzedzona przez kolejny hashchange
         if (transition !== transitionToken) return;
+        if (!readiness.ok) {
+            showNavigationFailure(
+                transition,
+                targetHash,
+                returnHash,
+                readiness.reason,
+                iframe,
+                iframe.dataset.spaLastGoodSrc || ''
+            );
+            return;
+        }
+        if (needsReload) _setSpaLogicalSrc(iframe, /** @type {string} */ (newLogicalKey));
+        delete iframe.dataset.spaAwaitingRestore;
+        delete iframe.dataset.spaRetrying;
+        iframe.dataset.spaLastGoodSrc = iframe.src;
+
+        _lastCleanHash = targetHash;
+        try {
+            if (window.lastRoute && typeof window.lastRoute.save === 'function')
+                window.lastRoute.save(targetHash);
+        } catch (_eLR) {}
+        updateAppNav(module);
+        document.body.classList.toggle('module-studnie', module === 'studnie');
+        if (isModuleSwitch) renderSectionNav(module);
+
         // Atomowa zamiana: ukryj pozostałe, pokaż docelowy — zero czasu z pustym tłem
         Object.values(iframes).forEach((f) => {
             if (f !== iframe) f.classList.remove('spa-iframe-visible');
@@ -829,6 +958,7 @@
                 };
                 check(8);
             });
+            if (transition !== transitionToken) return;
             if (hostReady) {
                 try {
                     hostReady.activate(params.tab);
@@ -842,7 +972,7 @@
         if (module === 'studnie' && params.pvtype === 'preco') {
             const iframeWin = iframe.contentWindow;
             void waitForFunction(iframeWin, 'selectCennikTab').then((ok) => {
-                if (!ok) return;
+                if (!ok || transition !== transitionToken) return;
                 try {
                     iframeWin.selectCennikTab('preco');
                 } catch (e) {
@@ -863,6 +993,7 @@
                 const opener =
                     module === 'rury' ? 'openRuryVersionsPanel' : 'openStudnieVersionsPanel';
                 const hasOpener = await waitForFunction(iframeWin, opener);
+                if (transition !== transitionToken) return;
                 if (!hasOpener) {
                     logger.warn('router', '[SpaRouter] Moduł nie wystawił ' + opener);
                     if (typeof window.showToast === 'function') {
@@ -877,6 +1008,7 @@
                         ? iframeWin.openRuryVersionsPanel()
                         : iframeWin.openStudnieVersionsPanel(panelType);
                 const openPreview = (attempt = 0) => {
+                    if (transition !== transitionToken) return;
                     try {
                         const pv = iframeWin.pricelistVersions;
                         if (pv && typeof pv.openFromDeepLink === 'function') {

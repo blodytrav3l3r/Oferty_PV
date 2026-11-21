@@ -166,38 +166,66 @@ function silentPrint(htmlString, printTitle) {
     const doc = iframe.contentWindow.document;
     const originalTitle = document.title;
     let titleRestored = false;
+    let cleanedUp = false;
+    let printTimer = null;
+    let cleanupTimer = null;
     const restoreTitle = () => {
         if (titleRestored || !printTitle) return;
         document.title = originalTitle;
         titleRestored = true;
     };
-    doc.open();
-    doc.write(htmlString);
-    doc.close();
+    const cleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
+        restoreTitle();
+        if (printTimer !== null) clearTimeout(printTimer);
+        if (cleanupTimer !== null) clearTimeout(cleanupTimer);
+        iframe.onload = null;
+        iframe.onerror = null;
+        try {
+            iframe.contentWindow.removeEventListener('afterprint', cleanup);
+        } catch (_e) {}
+        if (document.body.contains(iframe)) document.body.removeChild(iframe);
+    };
+    cleanupTimer = setTimeout(cleanup, 60000);
+    iframe.onerror = cleanup;
+    try {
+        doc.open();
+        doc.write(htmlString);
+        doc.close();
+    } catch (err) {
+        if (typeof logger !== 'undefined') logger.error('formatters', 'silentPrint setup:', err);
+        cleanup();
+        return;
+    }
 
     iframe.onload = () => {
-        setTimeout(() => {
+        if (cleanedUp) return;
+        if (cleanupTimer !== null) clearTimeout(cleanupTimer);
+        cleanupTimer = null;
+        printTimer = setTimeout(() => {
+            if (cleanedUp) return;
             try {
                 fitPrintedText(doc);
             } catch (err) {
                 if (typeof logger !== 'undefined')
                     logger.error('formatters', 'fitPrintedText:', err);
             }
-            iframe.contentWindow.focus();
-            if (printTitle) {
-                doc.title = printTitle;
-                iframe.contentWindow.addEventListener('afterprint', restoreTitle, { once: true });
-                document.title = printTitle;
-            }
             try {
+                iframe.contentWindow.focus();
+                if (printTitle) {
+                    doc.title = printTitle;
+                    document.title = printTitle;
+                }
+                iframe.contentWindow.addEventListener('afterprint', cleanup, { once: true });
                 iframe.contentWindow.print();
+            } catch (err) {
+                if (typeof logger !== 'undefined') logger.error('formatters', 'silentPrint:', err);
+                cleanup();
             } finally {
                 restoreTitle();
+                if (!cleanedUp) cleanupTimer = setTimeout(cleanup, 60000);
             }
-            setTimeout(() => {
-                restoreTitle();
-                if (document.body.contains(iframe)) document.body.removeChild(iframe);
-            }, 60000);
         }, 500);
     };
 }

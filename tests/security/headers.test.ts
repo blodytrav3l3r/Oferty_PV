@@ -13,6 +13,7 @@ describe('P0.6 headers matrix', () => {
     it('nagłówki bezpieczeństwa na odpowiedzi HTML', async () => {
         const res = await request(app).get('/');
         expect(res.headers['x-content-type-options']).toBe('nosniff');
+        expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
         expect(res.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
         expect(res.headers['permissions-policy']).toContain('camera=()');
     });
@@ -27,6 +28,7 @@ describe('P0.6 headers matrix', () => {
         expect(scriptAttr).not.toContain("'unsafe-inline'");
         expect(csp).not.toMatch(/https?:\/\/(?!self)/);
         expect(csp).toContain("frame-ancestors 'self'");
+        expect(csp).toMatch(/(?:^|;\s*)frame-src 'self'(?:;|$)/);
     });
 
     it('CSP enforce: nonce per request (nie statyczny)', async () => {

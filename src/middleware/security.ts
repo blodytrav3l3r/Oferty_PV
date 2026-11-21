@@ -88,7 +88,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
  */
 export function securityHeaders(_req: Request, res: Response, next: NextFunction): void {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    // X-Frame-Options usunięte — SPA używa routowania hash, blokuje własne iframe'y w niektórych przeglądarkach
+    // Helmet ustawia X-Frame-Options: SAMEORIGIN; pozwala to na nasze iframe'y.
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
@@ -121,8 +121,7 @@ const CSP_DIRECTIVES = {
     objectSrc: ["'none'"],
     mediaSrc: ["'self'"],
     frameSrc: ["'self'"],
-    // Clickjacking: obce domeny nie osadzą SPA; własne iframe'y (same-origin)
-    // działają (X-Frame-Options zdjęte celowo).
+    // Clickjacking: obce domeny nie osadzą SPA; shell i moduły są same-origin.
     frameAncestors: ["'self'"]
 };
 

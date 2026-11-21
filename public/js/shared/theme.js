@@ -132,13 +132,14 @@ function _sokThemeBroadcast(mode) {
     // same-origin, postMessage dobija resztę (np. świeży iframe bez focusa).
     try {
         var msg = { type: SOK_THEME_MSG, theme: mode };
-        if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+        if (window.parent && window.parent !== window)
+            window.parent.postMessage(msg, window.location.origin);
         var frames = document.querySelectorAll('iframe');
         for (var i = 0; i < frames.length; i++) {
             var frame = frames[i];
             if (frame instanceof HTMLIFrameElement && frame.contentWindow) {
                 try {
-                    frame.contentWindow.postMessage(msg, '*');
+                    frame.contentWindow.postMessage(msg, window.location.origin);
                 } catch (_e) {}
             }
         }

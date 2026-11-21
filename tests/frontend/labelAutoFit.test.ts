@@ -42,11 +42,14 @@ describe('etykieta: auto-fit numerów', () => {
         const fn = FORMATTERS.slice(FORMATTERS.indexOf('function silentPrint'));
         expect(fn).toContain('function silentPrint(htmlString, printTitle)');
         expect(fn).toContain('document.title = printTitle');
-        expect(fn).toContain("addEventListener('afterprint', restoreTitle");
+        expect(fn).toContain("addEventListener('afterprint', cleanup");
         expect(fn).toContain('restoreTitle();');
     });
 
-    it('ustawia tytuł rodzica przed uruchomieniem print i przywraca go po nim', () => {
+    const createPrintContext = (print: () => void = () => {}) => {
+        const timers = new Map<number, { callback: () => void; delay: number }>();
+        let nextTimer = 0;
+        let removed = false;
         let printTitle = '';
         let iframeTitle = '';
         let afterPrint: (() => void) | undefined;
@@ -64,35 +67,106 @@ describe('etykieta: auto-fit numerów', () => {
                 print() {
                     printTitle = document.title;
                     iframeTitle = printDocument.title;
+                    print();
                 },
                 addEventListener(_name: string, callback: () => void) {
                     afterPrint = callback;
-                }
+                },
+                removeEventListener() {}
             }
         };
         const document: any = {
             title: 'Aplikacja',
             body: {
                 appendChild() {},
-                contains: () => true,
-                removeChild() {}
+                contains: () => !removed,
+                removeChild() {
+                    removed = true;
+                }
             },
             createElement: () => iframe
         };
         const context: any = {
             document,
             window: {},
-            setTimeout: (callback: () => void) => callback(),
+            setTimeout: (callback: () => void, delay = 0) => {
+                const id = ++nextTimer;
+                timers.set(id, { callback, delay });
+                return id;
+            },
+            clearTimeout: (id: number) => timers.delete(id),
             logger: { error() {} }
         };
         vm.runInNewContext(FORMATTERS, context);
+        return {
+            context,
+            document,
+            iframe,
+            timers,
+            get removed() {
+                return removed;
+            },
+            get printTitle() {
+                return printTitle;
+            },
+            get iframeTitle() {
+                return iframeTitle;
+            },
+            get afterPrint() {
+                return afterPrint;
+            },
+            runTimers(maxDelay = Number.POSITIVE_INFINITY) {
+                [...timers.entries()].forEach(([id, timer]) => {
+                    if (timer.delay > maxDelay) return;
+                    timers.delete(id);
+                    timer.callback();
+                });
+            }
+        };
+    };
 
-        context.window.silentPrint('<html></html>', 'N0001326 s2');
-        iframe.onload();
+    it('drukuje z nazwą pliku i sprząta iframe po afterprint', () => {
+        const test = createPrintContext();
+        test.context.window.silentPrint('<html></html>', 'N0001326 s2');
+        test.iframe.onload();
+        test.runTimers(500);
 
-        expect(printTitle).toBe('N0001326 s2');
-        expect(iframeTitle).toBe('N0001326 s2');
-        expect(document.title).toBe('Aplikacja');
-        expect(afterPrint).toEqual(expect.any(Function));
+        expect(test.printTitle).toBe('N0001326 s2');
+        expect(test.iframeTitle).toBe('N0001326 s2');
+        expect(test.document.title).toBe('Aplikacja');
+        expect(test.removed).toBe(false);
+        test.afterPrint?.();
+        expect(test.removed).toBe(true);
+    });
+
+    it('timeout ładowania usuwa iframe i przywraca tytuł bez wywołania print', () => {
+        const test = createPrintContext();
+        test.context.window.silentPrint('<html></html>', 'N0001326 s2');
+        test.runTimers(60000);
+
+        expect(test.removed).toBe(true);
+        expect(test.document.title).toBe('Aplikacja');
+        expect(test.printTitle).toBe('');
+    });
+
+    it('błąd ładowania iframe usuwa go od razu', () => {
+        const test = createPrintContext();
+        test.context.window.silentPrint('<html></html>', 'N0001326 s2');
+        test.iframe.onerror();
+
+        expect(test.removed).toBe(true);
+        expect(test.document.title).toBe('Aplikacja');
+    });
+
+    it('błąd print() przywraca tytuł i usuwa iframe', () => {
+        const test = createPrintContext(() => {
+            throw new Error('print failed');
+        });
+        test.context.window.silentPrint('<html></html>', 'N0001326 s2');
+        test.iframe.onload();
+        test.runTimers(500);
+
+        expect(test.document.title).toBe('Aplikacja');
+        expect(test.removed).toBe(true);
     });
 });

@@ -125,8 +125,38 @@ interface IconsModule {
     getIcon(name: string): string;
 }
 
+interface SpaRouterApi {
+    showSection(sectionId: string): void;
+    navigate(): Promise<void>;
+    openOfferInModule(type: string, offerId: string | number, action?: string): void;
+    refreshModule(module: string): void;
+    refreshProductionOrders(): Promise<boolean>;
+}
+
+interface SokDirtyDescription {
+    kind: string;
+    docId: string;
+    number: string;
+    module: string;
+}
+
 /** Augmentacja Window — globalne API dostępne przez window.* */
 interface Window {
+    /** Same-origin shell API exposed by public/js/spa/router.js. */
+    SpaRouter?: SpaRouterApi;
+    /** Unsaved-change contract exposed by public/js/shared/sokDirty.js. */
+    __sokIsDirty?: () => boolean;
+    __sokDescribeDirty?: () => SokDirtyDescription | null;
+    __sokSaveDirty?: (target: Window) => Promise<boolean>;
+    __sokCanSave?: (target: Window) => boolean;
+    __sokKindLabel?: (kind: string) => string;
+    __sokDirtyWindow?: (moduleHint?: string) => Window | null;
+    __sokCountDrafts?: () => number;
+    __sokAbandonLocal?: () => void;
+    __sokAbandonCurrent?: () => void;
+    __sokGoLogin?: () => boolean;
+    __sokNavigateShell?: (hash: string) => boolean;
+
     currentUser?: AuthUser | null;
     api: ApiClient;
     logger: Logger;

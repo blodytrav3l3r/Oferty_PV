@@ -91,6 +91,23 @@ body.spa-view-loading .spa-module-iframe.spa-iframe-visible {
     box-shadow: 0 18px 48px rgba(var(--black-rgb), 0.3);
 }
 
+.spa-transition-layer.is-error {
+    pointer-events: auto;
+    background: color-mix(in srgb, var(--bg-primary) 94%, transparent);
+}
+
+.spa-transition-error {
+    align-items: flex-start;
+    flex-direction: column;
+    max-width: min(30rem, calc(100% - 2rem));
+    color: var(--text-primary);
+}
+
+.spa-transition-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
 .spa-transition-spinner {
     width: 18px;
     height: 18px;

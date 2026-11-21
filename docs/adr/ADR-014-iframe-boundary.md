@@ -20,7 +20,27 @@ zderzyły.
 ## Decyzja
 
 Iframe zostaje jako **zaprojektowana granica** (modular monolith), nie dług tymczasowy.
-Cały ruch parent↔iframe wyłącznie przez kontrakt `__sok*` w `public/js/shared/sokDirty.js`:
+Komunikacja jest same-origin i korzysta z kilku jawnych, istniejących interfejsów. Nie
+deklarujemy jednego uniwersalnego protokołu ani nie przenosimy całości na `postMessage`.
+
+### Kontrakty parent–iframe
+
+- `__sok*` z `public/js/shared/sokDirty.js` obsługuje wyłącznie niezapisane zmiany, zapis,
+  porzucanie zmian i nawigację do shella: `__sokIsDirty()`, `__sokDescribeDirty()`,
+  `__sokSaveDirty(win)`, `__sokCanSave(win)`, `__sokKindLabel(kind)`,
+  `__sokDirtyWindow(hint)`, `__sokCountDrafts()`, `__sokAbandonLocal()`,
+  `__sokAbandonCurrent()`, `__sokGoLogin()` oraz `__sokNavigateShell(hash)`.
+- `window.SpaRouter` z `public/js/spa/router.js` jest interfejsem powłoki: `showSection`,
+  `navigate`, `openOfferInModule`, `refreshModule` i `refreshProductionOrders`. Moduły
+  wywołują go dla nawigacji i odświeżenia danych.
+- Bezpośrednie API domenowe pozostaje lokalne dla istniejącego modułu. Przykłady używane
+  przez powłokę to `CennikHost.activate`, `selectCennikTab`, `openRuryVersionsPanel`,
+  `openStudnieVersionsPanel`, `pricelistVersions.openFromDeepLink`, a dla odświeżania
+  kartoteki/zleceń `AppKartoteka.loadOffers` i `AppZlecenia.loadOrders`. To istniejące
+  mostki legacy; ich usunięcie wymaga osobnej migracji i testów.
+
+`public/js/types.d.ts` opisuje publiczne API powłoki i kontrakt `__sok*`. Test kontraktu
+sprawdza zgodność deklaracji z nazwami używanymi w kodzie.
 
 - `__sokIsDirty()` — SSoT niezapisanych zmian (flagi + diff draft-vs-SAVED + skan iframe),
 - `__sokDescribeDirty()` / `__sokKindLabel()` — kontekst do komunikatów,
@@ -33,15 +53,15 @@ Cały ruch parent↔iframe wyłącznie przez kontrakt `__sok*` w `public/js/shar
    za zysk głównie estetyczny (payload, brak quirksów focus/iframe).
 2. **Ryzyka granicy pokryte:** guard 3-btn na wszystkich wyjściach (moduł, link, F5, logout,
    A-vs-B), draft jako siatka ostatniej szansy, swornik E2E `tests/playwright/spa-guard.cjs`
-   (G0–G9) + vm `tests/frontend/sokDirty.test.ts` + `tests/spa/navGuard.test.ts`.
+   (G0–G9) + vm `tests/frontend/sokDirty.test.ts` + `tests/frontend/navGuard.test.ts`.
 3. **Spójność z ADR-002/ADR-008:** Vanilla SPA + klasyczne skrypty; iframe jest ich naturalną
    granicą modułów.
 
 ## Konsekwencje
 
-- Nowe globale `window.*` tylko przez kontrakt (strażnik: `collisions:check`, baseline 45).
-- Nowy dostęp parent↔iframe = dopisanie do kontraktu + test (vm lub E2E), nigdy surowy
-  `contentWindow.saveX` w kodzie produktu.
+- Nie dodajemy nowych globali przy okazji tej decyzji. Każdy przyszły interfejs
+  parent↔iframe musi mieć właściciela, deklarację typów i test kontraktu; API domenowe nie
+  powinno być rozszerzane bez potrzeby.
 - Kolejność `<script>` (w tym `sokDirty.js` po `ui.js`, przed `router.js`) częścią kontraktu.
 
 ## Triggery rewizyty
@@ -63,7 +83,6 @@ Cały ruch parent↔iframe wyłącznie przez kontrakt `__sok*` w `public/js/shar
 
 „Klasyczne skrypty” w tej decyzji opisują dominujący legacy i pozostają powodem,
 by nie łączyć modułów ani nie usuwać iframe. Nie wykluczają izolowanych entrypointów
-ESM i współdzielonych modułów ESM z mostkiem dla legacy callerów. Komunikacja
-parent↔iframe nadal odbywa się wyłącznie przez kontrakt `__sok*`; wprowadzanie ESM
-nie zmienia granicy ani zasad tego kontraktu. Zasady przyrostowego współistnienia
-opisuje ADR-008 oraz `docs/agents/frontend.md`.
+ESM i współdzielonych modułów ESM z mostkiem dla legacy callerów. `__sok*` pozostaje
+kontraktem niezapisanych zmian, a powłoka i moduły zachowują opisane wyżej interfejsy.
+Zasady przyrostowego współistnienia opisuje ADR-008 oraz `docs/agents/frontend.md`.

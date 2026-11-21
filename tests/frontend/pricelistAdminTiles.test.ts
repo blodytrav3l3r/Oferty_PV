@@ -194,8 +194,9 @@ describe('SPA: deep-link do panelu wersji', () => {
     });
 
     it('nowy iframe (about:blank) nie jest uznawany za gotowy', () => {
-        expect(router).toContain("location.href === 'about:blank'");
+        expect(router).toContain("frameLocation.href === 'about:blank'");
         expect(router).toContain('readyState === ');
+        expect(router).toContain("classList?.contains('is-loaded')");
     });
 
     it('timeout load nie kończy się cichym brakiem panelu (retry + toast)', () => {
