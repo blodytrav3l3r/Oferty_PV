@@ -281,6 +281,21 @@ async function _saveProductionOrderInner() {
         }
     }
 
+    const orderFindProductFn = (id) =>
+        typeof studnieProducts !== 'undefined'
+            ? typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(id)
+                : studnieProducts.find((pr) => pr.id === id)
+            : null;
+    const orderConfigMap =
+        typeof buildConfigMap === 'function' ? buildConfigMap(well, orderFindProductFn, true) : [];
+    const coatingSnapshot = getProductionOrderCoatingSnapshot(
+        well,
+        product,
+        elementIndex,
+        orderConfigMap
+    );
+
     const order = {
         id: existingIdx >= 0 ? productionOrders[existingIdx].id : 'prodorder_' + Date.now(),
         productionOrderNumber: currentOrderNumber,
@@ -325,10 +340,10 @@ async function _saveProductionOrderInner() {
         glebokosc: document.getElementById('zl-glebokosc')?.value || '',
         dnoKineta: document.getElementById('zl-dno-kineta')?.value || '',
         rodzajStudni: document.getElementById('zl-rodzaj-studni')?.value || '',
-        malowanieW: well.malowanieW ?? '',
-        malowanieZ: well.malowanieZ ?? '',
-        powlokaNameW: well.powlokaNameW ?? '',
-        powlokaNameZ: well.powlokaNameZ ?? '',
+        malowanieW: coatingSnapshot.malowanieW,
+        malowanieZ: coatingSnapshot.malowanieZ,
+        powlokaNameW: coatingSnapshot.powlokaNameW,
+        powlokaNameZ: coatingSnapshot.powlokaNameZ,
         wkladkaOsadnikPreco: well.wkladkaOsadnikPreco ?? '',
         wkladkaOsadnikH: well.wkladkaOsadnikH ?? '',
         precoFullHeight: well.precoFullHeight ?? '',
@@ -402,14 +417,6 @@ async function _saveProductionOrderInner() {
         status: existingIdx >= 0 ? productionOrders[existingIdx].status || 'draft' : 'draft'
     };
 
-    const orderFindProductFn = (id) =>
-        typeof studnieProducts !== 'undefined'
-            ? typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(id)
-                : studnieProducts.find((pr) => pr.id === id)
-            : null;
-    const orderConfigMap =
-        typeof buildConfigMap === 'function' ? buildConfigMap(well, orderFindProductFn, true) : [];
     const allPrzejsciaForKineta = well.przejscia || [];
     const rzDnaForKineta = parseFloat(well.rzednaDna) || 0;
     const blindKinetaPrzejscia = [];
@@ -453,7 +460,7 @@ async function _saveProductionOrderInner() {
                     angle,
                     isBlindKineta: true,
                     productCategory: 'Ślepa kineta',
-                    productDn: String(well.dn || ''),
+                    productDn: getProductionTransitionDiameter(item, orderFindProductFn),
                     displayIndex: blindKinetaPrzejscia.length
                 });
             });

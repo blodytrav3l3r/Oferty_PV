@@ -4,6 +4,10 @@ import path from 'path';
 import vm from 'vm';
 
 const PRINT_MANAGER = path.join(process.cwd(), 'public/js/studnie/printManager.js');
+const ORDER_ZLECENIA_HELPERS = path.join(
+    process.cwd(),
+    'public/js/studnie/orderZleceniaHelpers.js'
+);
 const ORDER_PRINT_HELPERS = path.join(process.cwd(), 'public/js/spa/zleceniaHelpers.js');
 
 const configMap = [
@@ -35,6 +39,7 @@ function loadPrintManager() {
         studnieProducts: []
     };
     vm.createContext(context);
+    vm.runInContext(fs.readFileSync(ORDER_ZLECENIA_HELPERS, 'utf8'), context);
     vm.runInContext(fs.readFileSync(PRINT_MANAGER, 'utf8'), context);
     return context;
 }
@@ -51,6 +56,30 @@ function createWell(overrides: Record<string, any> = {}) {
 }
 
 describe('ślepe kinety w PZ', () => {
+    test('wydruk PZ opisuje zakres powłoki tylko na ścianach dennicy', () => {
+        const context = loadPrintManager();
+
+        expect(context.getPowlokaString({ malowanieW: 'dennica', powlokaNameW: 'Bergolin' })).toBe(
+            'Wew: Dennica (Bergolin)'
+        );
+    });
+
+    test('grafika zapisanego PZ nie buduje mapy z nieobecnej konfiguracji całej studni', () => {
+        const context = loadPrintManager();
+        context.buildConfigMap = () => {
+            throw new Error('buildConfigMap nie powinien działać dla zapisanego PZ');
+        };
+
+        const svg = context.generateWellSvg({
+            well: { przejscia: [] },
+            product: { componentType: 'krag_ot' },
+            elementIndex: 6,
+            isSavedProductionOrder: true
+        });
+
+        expect(svg).toBe('');
+    });
+
     test('dodaje ślepą kinetę z przejścia kręgu na najniższej dennicy z kinetą', () => {
         const context = loadPrintManager();
         const rows = context.buildPrzejsciaRows({
@@ -59,9 +88,36 @@ describe('ślepe kinety w PZ', () => {
             elementIndex: 4
         });
 
-        expect(
-            rows.some((row: any) => row.rodzaj === 'Ślepa kineta' && row.katStopien === '90°')
-        ).toBe(true);
+        expect(rows).toContainEqual(
+            expect.objectContaining({
+                rodzaj: 'Ślepa kineta',
+                katStopien: '90°',
+                srednica: '300'
+            })
+        );
+    });
+
+    test('zachowuje DN przejścia własnego dla ślepej kinety', () => {
+        const context = loadPrintManager();
+        const rows = context.buildPrzejsciaRows({
+            well: createWell({
+                przejscia: [
+                    {
+                        isCustom: true,
+                        dn: 250,
+                        rzednaWlaczenia: 1.8,
+                        angle: 90,
+                        flowType: 'wlot'
+                    }
+                ]
+            }),
+            product: { componentType: 'dennica' },
+            elementIndex: 4
+        });
+
+        expect(rows).toContainEqual(
+            expect.objectContaining({ rodzaj: 'Ślepa kineta', katStopien: '90°', srednica: '250' })
+        );
     });
 
     test('nie dodaje ślepej kinety do górnej dennicy ani gdy dolna nie ma kinety', () => {

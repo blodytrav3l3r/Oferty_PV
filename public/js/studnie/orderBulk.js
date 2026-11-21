@@ -41,6 +41,14 @@ function buildAutoOrderData(el, sharedData) {
                 ? getStudnieProductById(id)
                 : studnieProducts.find((pr) => pr.id === id)
             : null;
+    const configMap =
+        typeof buildConfigMap !== 'undefined' ? buildConfigMap(well, findProductFn, true) : [];
+    const coatingSnapshot = getProductionOrderCoatingSnapshot(
+        well,
+        product,
+        elementIndex,
+        configMap
+    );
 
     let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
     let displayGlebokosc = parsed.glebokosc || '—';
@@ -126,20 +134,7 @@ function buildAutoOrderData(el, sharedData) {
     if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
         wklUwagi2.push('Zwieńczenie ' + well.wkladkaZwienczenie);
     if (wklUwagi2.length > 0) autoUwagi.push('PEHD: ' + wklUwagi2.join(', '));
-    if (well.malowanieW && well.malowanieW !== 'brak') {
-        let malWDesc = '';
-        if (well.malowanieW === 'kineta') malWDesc = 'Kineta';
-        else if (well.malowanieW === 'kineta_dennica') malWDesc = 'Kineta+denn.';
-        else if (well.malowanieW === 'cale') malWDesc = 'Całość';
-        if (malWDesc)
-            autoUwagi.push(
-                'Malowanie wew. ' + malWDesc + (well.powlokaNameW ? ' ' + well.powlokaNameW : '')
-            );
-    }
-    if (well.malowanieZ === 'zewnatrz')
-        autoUwagi.push(
-            'Malowanie zew. Zewnątrz' + (well.powlokaNameZ ? ' ' + well.powlokaNameZ : '')
-        );
+    autoUwagi.push(...coatingSnapshot.uwagi);
     if (well.dn === 'styczna') autoUwagi.push('STYCZNA');
     if (well.klasaNosnosci_korpus === 'E600' || well.klasaNosnosci_korpus === 'F900')
         autoUwagi.push('Kl. nośn. ' + well.klasaNosnosci_korpus);
@@ -153,8 +148,6 @@ function buildAutoOrderData(el, sharedData) {
         autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
 
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const configMap =
-        typeof buildConfigMap !== 'undefined' ? buildConfigMap(well, findProductFn, true) : [];
     const allPrzejscia = well.przejscia || [];
     const assignedPrzejscia = allPrzejscia
         .map((item) => {
@@ -229,10 +222,10 @@ function buildAutoOrderData(el, sharedData) {
         glebokosc: String(displayGlebokosc),
         dnoKineta: String(displayDnoKineta),
         rodzajStudni: domyslnyRodzajStudni,
-        malowanieW: well.malowanieW ?? '',
-        malowanieZ: well.malowanieZ ?? '',
-        powlokaNameW: well.powlokaNameW ?? '',
-        powlokaNameZ: well.powlokaNameZ ?? '',
+        malowanieW: coatingSnapshot.malowanieW,
+        malowanieZ: coatingSnapshot.malowanieZ,
+        powlokaNameW: coatingSnapshot.powlokaNameW,
+        powlokaNameZ: coatingSnapshot.powlokaNameZ,
         wkladkaOsadnikPreco: well.wkladkaOsadnikPreco ?? '',
         wkladkaOsadnikH: well.wkladkaOsadnikH ?? '',
         precoFullHeight: well.precoFullHeight ?? '',
@@ -297,7 +290,7 @@ function buildAutoOrderData(el, sharedData) {
                     angle,
                     isBlindKineta: true,
                     productCategory: 'Ślepa kineta',
-                    productDn: String(well.dn || ''),
+                    productDn: getProductionTransitionDiameter(item, findProductFn),
                     displayIndex: blindKinetaPrzejscia.length
                 });
             });

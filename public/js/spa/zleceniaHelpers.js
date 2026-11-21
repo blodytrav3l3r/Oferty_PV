@@ -12,6 +12,7 @@ function getPowloka(po) {
         let desc = '';
         if (po.malowanieW === 'kineta') desc = 'Kineta';
         else if (po.malowanieW === 'kineta_dennica') desc = 'Kineta+denn.';
+        else if (po.malowanieW === 'dennica') desc = 'Dennica';
         else if (po.malowanieW === 'cale') desc = 'Całość';
         if (desc) {
             let p = 'Wew: ' + desc;

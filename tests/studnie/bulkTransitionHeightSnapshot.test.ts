@@ -37,6 +37,13 @@ function loadBulkContext() {
     context.window = context;
     vm.createContext(context);
     vm.runInContext(
+        fs.readFileSync(
+            path.join(process.cwd(), 'public/js/studnie/orderZleceniaHelpers.js'),
+            'utf8'
+        ),
+        context
+    );
+    vm.runInContext(
         fs.readFileSync(path.join(process.cwd(), 'public/js/studnie/orderBulk.js'), 'utf8'),
         context
     );

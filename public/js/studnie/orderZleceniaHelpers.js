@@ -34,6 +34,69 @@ function calcStopnieExecution(angle) {
     return a > 0 ? 360 - a : 0;
 }
 
+function getProductionTransitionDiameter(transition, findProductFn) {
+    if (!transition) return '';
+    const product =
+        transition.productId && typeof findProductFn === 'function'
+            ? findProductFn(transition.productId)
+            : null;
+    const diameter = product?.dn ?? transition.productDn ?? transition.dn;
+    return diameter === null || diameter === undefined || diameter === '' ? '' : String(diameter);
+}
+
+function getProductionOrderCoatingSnapshot(well, product, elementIndex, configMap) {
+    const entries = Array.isArray(configMap) ? configMap : [];
+    const componentType = product && product.componentType;
+    const dennice = entries.filter((entry) => entry.componentType === 'dennica');
+    const bottomDennica = dennice.reduce(
+        (lowest, entry) => (!lowest || entry.start < lowest.start ? entry : lowest),
+        null
+    );
+    const isBottomDennica =
+        componentType === 'dennica' && bottomDennica && bottomDennica.index === elementIndex;
+    const coatingMode = well && well.malowanieW;
+    let malowanieW = 'brak';
+
+    if (isBottomDennica && coatingMode === 'kineta') {
+        malowanieW = 'kineta';
+    } else if (componentType === 'dennica' && ['kineta_dennica', 'cale'].includes(coatingMode)) {
+        malowanieW = isBottomDennica ? 'kineta_dennica' : 'dennica';
+    } else if (
+        coatingMode === 'cale' &&
+        componentType !== 'styczna' &&
+        componentType !== 'kineta' &&
+        Number(product && product.area) > 0
+    ) {
+        malowanieW = 'cale';
+    }
+
+    const hasExternalSurface =
+        Number(product && product.areaExt) > 0 ||
+        Number(product && product.malowanieZewnetrzne) > 0;
+    const malowanieZ =
+        well && well.malowanieZ === 'zewnatrz' && hasExternalSurface ? 'zewnatrz' : 'brak';
+    const powlokaNameW = malowanieW !== 'brak' ? well.powlokaNameW || '' : '';
+    const powlokaNameZ = malowanieZ !== 'brak' ? well.powlokaNameZ || '' : '';
+    const uwagi = [];
+
+    if (malowanieW !== 'brak') {
+        const labels = {
+            kineta: 'Kineta',
+            kineta_dennica: 'Kineta+denn.',
+            dennica: 'Dennica',
+            cale: 'Całość'
+        };
+        uwagi.push(
+            'Malowanie wew. ' + labels[malowanieW] + (powlokaNameW ? ' ' + powlokaNameW : '')
+        );
+    }
+    if (malowanieZ !== 'brak') {
+        uwagi.push('Malowanie zew. Zewnątrz' + (powlokaNameZ ? ' ' + powlokaNameZ : ''));
+    }
+
+    return { malowanieW, malowanieZ, powlokaNameW, powlokaNameZ, uwagi };
+}
+
 function buildEtykietaElementsSnapshot(well) {
     const config = well.config || [];
     const findProduct = (id) =>
@@ -127,6 +190,8 @@ window.getElementStatus = getElementStatus;
 window.parseWysokoscGlebokosc = parseWysokoscGlebokosc;
 window.getStudniaDIN = getStudniaDIN;
 window.calcStopnieExecution = calcStopnieExecution;
+window.getProductionOrderCoatingSnapshot = getProductionOrderCoatingSnapshot;
+window.getProductionTransitionDiameter = getProductionTransitionDiameter;
 window.buildEtykietaElementsSnapshot = buildEtykietaElementsSnapshot;
 window.singleProductionClaimKey = singleProductionClaimKey;
 window.claimSingleProductionNumber = claimSingleProductionNumber;

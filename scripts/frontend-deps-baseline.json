@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-21",
-    "totalEdges": 2973,
+    "totalEdges": 2979,
     "edges": [
         {
             "page": "public/app.html",
@@ -8101,6 +8101,22 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "_pehdRateInputValue",
+            "userFile": "public/js/studnie/pricelistSaveReset.js",
+            "defFile": "public/js/studnie/pricelistManager.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_pehdRateWasManuallyEdited",
+            "userFile": "public/js/studnie/pricelistSaveReset.js",
+            "defFile": "public/js/studnie/pricelistManager.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "_precoDirty",
             "userFile": "public/js/studnie/globals.js",
             "defFile": "public/js/studnie/pricelistPreco.js",
@@ -8160,6 +8176,30 @@
             "name": "_shouldRefreezePrices",
             "userFile": "public/js/studnie/offerDiscountsPopup.js",
             "defFile": "public/js/studnie/actionsWellDiscounts.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_studniePehdPricePerM2",
+            "userFile": "public/js/studnie/pricelistManager.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_studniePehdPricePerM2",
+            "userFile": "public/js/studnie/pricelistSaveReset.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_studniePehdPricePerM2",
+            "userFile": "public/js/studnie/uiHelpers.js",
+            "defFile": "public/js/studnie/globals.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
@@ -14152,6 +14192,54 @@
             "name": "getPehdTypeForComponent",
             "userFile": "public/js/studnie/solverValidation.js",
             "defFile": "public/js/studnie/actionsWellPainting.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getProductionOrderCoatingSnapshot",
+            "userFile": "public/js/studnie/orderBulk.js",
+            "defFile": "public/js/studnie/orderZleceniaHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getProductionOrderCoatingSnapshot",
+            "userFile": "public/js/studnie/orderZleceniaForm.js",
+            "defFile": "public/js/studnie/orderZleceniaHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getProductionOrderCoatingSnapshot",
+            "userFile": "public/js/studnie/orderZleceniaModal.js",
+            "defFile": "public/js/studnie/orderZleceniaHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getProductionTransitionDiameter",
+            "userFile": "public/js/studnie/orderBulk.js",
+            "defFile": "public/js/studnie/orderZleceniaHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getProductionTransitionDiameter",
+            "userFile": "public/js/studnie/orderZleceniaModal.js",
+            "defFile": "public/js/studnie/orderZleceniaHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getProductionTransitionDiameter",
+            "userFile": "public/js/studnie/printManager.js",
+            "defFile": "public/js/studnie/orderZleceniaHelpers.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -23422,6 +23510,14 @@
         {
             "page": "public/studnie.html",
             "name": "zleceniaElementsList",
+            "userFile": "public/js/studnie/diagramRenderer.js",
+            "defFile": "public/js/studnie/orderZlecenia.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "zleceniaElementsList",
             "userFile": "public/js/studnie/offerSvgDrag.js",
             "defFile": "public/js/studnie/orderZlecenia.js",
             "defKind": "lexical",
@@ -23495,6 +23591,14 @@
             "page": "public/studnie.html",
             "name": "zleceniaHideAccepted",
             "userFile": "public/js/studnie/orderZleceniaRender.js",
+            "defFile": "public/js/studnie/orderZlecenia.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "zleceniaSelectedIdx",
+            "userFile": "public/js/studnie/diagramRenderer.js",
             "defFile": "public/js/studnie/orderZlecenia.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -23729,62 +23833,6 @@
             "userFile": "public/js/shared/ui.js",
             "defFile": "public/js/shared/modalCore.js",
             "defKind": "window-module",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_pehdRateInputValue",
-            "userFile": "public/js/studnie/pricelistSaveReset.js",
-            "defFile": "public/js/studnie/pricelistManager.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_pehdRateWasManuallyEdited",
-            "userFile": "public/js/studnie/pricelistSaveReset.js",
-            "defFile": "public/js/studnie/pricelistManager.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_studniePehdPricePerM2",
-            "userFile": "public/js/studnie/pricelistManager.js",
-            "defFile": "public/js/studnie/globals.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_studniePehdPricePerM2",
-            "userFile": "public/js/studnie/pricelistSaveReset.js",
-            "defFile": "public/js/studnie/globals.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_studniePehdPricePerM2",
-            "userFile": "public/js/studnie/uiHelpers.js",
-            "defFile": "public/js/studnie/globals.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "zleceniaElementsList",
-            "userFile": "public/js/studnie/diagramRenderer.js",
-            "defFile": "public/js/studnie/orderZlecenia.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "zleceniaSelectedIdx",
-            "userFile": "public/js/studnie/diagramRenderer.js",
-            "defFile": "public/js/studnie/orderZlecenia.js",
-            "defKind": "lexical",
             "confidence": "CONFIRMED"
         }
     ]

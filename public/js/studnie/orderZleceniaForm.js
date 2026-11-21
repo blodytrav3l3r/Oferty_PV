@@ -187,6 +187,12 @@ async function populateZleceniaForm(el) {
             ? getStudnieProductById(id)
             : studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProductFn, true);
+    const coatingSnapshot = getProductionOrderCoatingSnapshot(
+        well,
+        product,
+        elementIndex,
+        configMap
+    );
 
     const assignedPrzejscia = (well.przejscia || []).filter((item) => {
         let pel = parseFloat(item.rzednaWlaczenia);
@@ -344,23 +350,7 @@ async function populateZleceniaForm(el) {
         wklUwagi.push('Zwieńczenie ' + well.wkladkaZwienczenie);
     if (wklUwagi.length > 0) autoUwagi.push('PEHD: ' + wklUwagi.join(', '));
 
-    if (well.malowanieW && well.malowanieW !== 'brak') {
-        let malWDesc = '';
-        if (well.malowanieW === 'kineta') malWDesc = 'Kineta';
-        else if (well.malowanieW === 'kineta_dennica') malWDesc = 'Kineta+denn.';
-        else if (well.malowanieW === 'cale') malWDesc = 'Całość';
-        if (malWDesc) {
-            autoUwagi.push(
-                'Malowanie wew. ' + malWDesc + (well.powlokaNameW ? ' ' + well.powlokaNameW : '')
-            );
-        }
-    }
-
-    if (well.malowanieZ === 'zewnatrz') {
-        autoUwagi.push(
-            'Malowanie zew. Zewnątrz' + (well.powlokaNameZ ? ' ' + well.powlokaNameZ : '')
-        );
-    }
+    autoUwagi.push(...coatingSnapshot.uwagi);
 
     if (well.dn === 'styczna') autoUwagi.push('STYCZNA');
 

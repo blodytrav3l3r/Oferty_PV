@@ -72,6 +72,13 @@ function loadModal(context: any) {
     context.renderZleceniaWellConfig = jest.fn();
     context.populateZleceniaForm = jest.fn();
     context.refreshGlobalMetrics = jest.fn();
+    vm.runInContext(
+        fs.readFileSync(path.join(JS_DIR, 'orderZleceniaHelpers.js'), 'utf8'),
+        context,
+        {
+            filename: 'orderZleceniaHelpers.js'
+        }
+    );
     vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'orderZleceniaModal.js'), 'utf8'), context, {
         filename: 'orderZleceniaModal.js'
     });

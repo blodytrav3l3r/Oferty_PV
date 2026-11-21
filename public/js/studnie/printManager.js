@@ -158,7 +158,14 @@ async function loadSavedProductionOrder(orderId) {
  * @param {boolean}  kinetaEnabled        - Czy na najniższej dennicy ma być kineta.
  * @returns {Array}  Lista przejść wymagających ślepej kinety.
  */
-function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna, kinetaEnabled) {
+function findBlindKinetaEntries(
+    well,
+    dennicaElementIndex,
+    configMap,
+    rzDna,
+    kinetaEnabled,
+    findProductFn
+) {
     const allPrzejscia = well.przejscia || [];
     if (!kinetaEnabled || allPrzejscia.length === 0) return [];
 
@@ -207,7 +214,7 @@ function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna, kin
             angle,
             isBlindKineta: true,
             productCategory: 'Ślepa kineta',
-            productDn: String(well.dn || ''),
+            productDn: getProductionTransitionDiameter(item, findProductFn),
             displayIndex: blindEntries.length
         });
     });
@@ -267,7 +274,8 @@ function buildPrzejsciaRows(data) {
             data.elementIndex,
             configMap,
             rzDna,
-            well.kineta !== 'brak' && configMap.some((entry) => entry.componentType === 'kineta')
+            well.kineta !== 'brak' && configMap.some((entry) => entry.componentType === 'kineta'),
+            findProductFn
         );
     }
 
@@ -431,6 +439,7 @@ function getPowlokaString(well) {
         let malWDesc = '';
         if (well.malowanieW === 'kineta') malWDesc = 'Kineta';
         else if (well.malowanieW === 'kineta_dennica') malWDesc = 'Kineta+denn.';
+        else if (well.malowanieW === 'dennica') malWDesc = 'Dennica';
         else if (well.malowanieW === 'cale') malWDesc = 'Całość';
         if (malWDesc) {
             let p = 'Wew: ' + malWDesc;
@@ -461,6 +470,7 @@ function generateWellSvg(data) {
     if (data.isSavedProductionOrder && data.product && data.product.componentType === 'dennica') {
         blindKinetaPrzejscia = data.blindKinetaPrzejscia || [];
     } else if (
+        !data.isSavedProductionOrder &&
         data.elementIndex !== undefined &&
         typeof buildConfigMap !== 'undefined' &&
         typeof findAssignedElement !== 'undefined'
@@ -490,7 +500,8 @@ function generateWellSvg(data) {
                     configMap,
                     rzDna,
                     well.kineta !== 'brak' &&
-                        configMap.some((entry) => entry.componentType === 'kineta')
+                        configMap.some((entry) => entry.componentType === 'kineta'),
+                    findProductFn
                 );
             }
         }
