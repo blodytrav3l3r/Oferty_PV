@@ -332,6 +332,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         prz[field] = _c.value;
     }
     if (field === 'angle') {
+        prz.angle = Math.min(360, parseFloat(prz.angle) || 0);
         prz.angleExecution = parseFloat(prz.angle) || 0;
         prz.angleGony = (parseFloat(prz.angle) || 0).toFixed(2);
         prz.flowType = (parseFloat(prz.angle) || 0) === 0 ? 'WYLOT' : 'WLOT';

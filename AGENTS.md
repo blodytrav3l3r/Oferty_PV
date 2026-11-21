@@ -46,7 +46,8 @@ Twarde reguły dowodowe, Evidence Ledger i szablon checkpointu: `docs/agents/evi
 
 - Read-first: grep/read przed pisaniem; nie reimplementuj helperów z sąsiedztwa (najpierw SSoT: `getSortedRuryItems`, `ownership.ts`, `versionWrite.ts`, `snapshots.ts`).
 - **Zgoda na działania**: stosuj `docs/AUTONOMY_CONTRACT.md` (poziomy 🟢/🟡/🔴, zakres zgody, commit i push). Dla pushu zawsze podaj dokładny cel `remote/branch` i poczekaj na osobny GO.
-- Niejasność → najbardziej logiczny default zgodny z architekturą + krótka notka; pytania tylko gdy ryzyko poważnego błędu lub decyzja należy do użytkownika.
+- Niepewność co do wymagań lub brak informacji → zadaj konkretne pytanie przed zależną zmianą; wskaż, czego brakuje i jak odpowiedź wpłynie na zachowanie aplikacji. Nie rozszerzaj samodzielnie zakresu polecenia.
+- Zmiana poza zakresem, usunięcie lub zastąpienie istniejącej funkcji wymaga wcześniejszego pytania i zgody, nawet jeśli wygląda na zbędną albo wadliwą. Pytanie nazwij konkretnie: co chcesz zmienić lub usunąć oraz jaki będzie skutek dla użytkownika; nie usuwaj działającej funkcji „przy okazji”. Niezależną część zadania kontynuuj bez czekania na odpowiedź.
 - Tradeoffy jawnie: widzisz prostsze rozwiązanie — powiedz przed kodowaniem, nie po; nie wybieraj interpretacji po cichu.
 - Cudzy dead code i niepowiązane poprawki: zgłoś, nie usuwaj; każda zmieniona linia musi wynikać z zadania.
 - Zadanie wieloetapowe → krótki plan z `verify:` na krok.

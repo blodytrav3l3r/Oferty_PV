@@ -509,6 +509,12 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
                 element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" data-csp-2="$select" data-csp-3="$select" data-csp-3-on="focus" data-csp-4="saveQuickEdit" data-csp-4-args="${escapeHtmlAttr(JSON.stringify([index, field, '$value', '$el']))}" data-csp-4-on="blur" data-csp-5="$dom" data-csp-5-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-5-on="keydown" data-csp-5-key="Enter">`;
                 const inp = element.querySelector('input');
+                if (field === 'angle' && typeof inp.addEventListener === 'function') {
+                    inp.addEventListener('input', () => {
+                        const enteredAngle = parseCalcExpression(inp.value);
+                        if (enteredAngle !== null && enteredAngle > 360) inp.value = '360';
+                    });
+                }
                 inp.focus();
                 try {
                     inp.select();

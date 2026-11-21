@@ -16,7 +16,10 @@ function syncEditState() {
     const rzednaEl = document.getElementById('edit-rzedna-' + editPrzejscieIdx);
     const angleEl = document.getElementById('edit-angle-' + editPrzejscieIdx);
     if (rzednaEl) editPrzejscieState.rzedna = rzednaEl.value;
-    if (angleEl) editPrzejscieState.angle = parseFloat(angleEl.value) || 0;
+    if (angleEl) {
+        editPrzejscieState.angle = Math.min(360, parseFloat(angleEl.value) || 0);
+        if (parseFloat(angleEl.value) > 360) angleEl.value = String(editPrzejscieState.angle);
+    }
     const spKEl = document.getElementById('edit-spadek-kineta-' + editPrzejscieIdx);
     const spMEl = document.getElementById('edit-spadek-mufa-' + editPrzejscieIdx);
     if (spKEl) editPrzejscieState.spadekKineta = spKEl.value;
@@ -26,7 +29,8 @@ function syncEditState() {
 function editUpdateAngles(index) {
     const el = document.getElementById('edit-angle-' + index);
     if (!el) return;
-    const angle = parseFloat(el.value) || 0;
+    const angle = Math.min(360, parseFloat(el.value) || 0);
+    if (parseFloat(el.value) > 360) el.value = '360';
     const exec = angle === 0 || angle === 360 ? 0 : 360 - angle;
     const gons = ((angle * 400) / 360).toFixed(2);
     const execEl = document.getElementById('edit-exec-' + index);

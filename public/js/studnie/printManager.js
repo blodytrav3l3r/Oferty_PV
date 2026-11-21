@@ -148,19 +148,28 @@ async function loadSavedProductionOrder(orderId) {
 }
 
 /**
- * Znajduje przejścia w kręgu z otworem (krag_ot) lub drugiej dennicy powyżej,
- * dla których w pierwszej dennicy nie istnieje przejście na tym samym kącie.
- * Zwraca listę obiektów przejść wymagających ślepej kinety na zleceniu dennicy.
+ * Znajduje przejścia powyżej dolnej dennicy, dla których nie ma w niej
+ * przejścia pod tym samym kątem. Wymaga aktywnej kinety.
  *
  * @param {Object}   well                - Obiekt studni.
  * @param {number}   dennicaElementIndex  - Indeks dennicy w well.config.
  * @param {Array}    configMap            - Mapa konfiguracji z buildConfigMap().
  * @param {number}   rzDna                - Rzędna dna studni.
+ * @param {boolean}  kinetaEnabled        - Czy na najniższej dennicy ma być kineta.
  * @returns {Array}  Lista przejść wymagających ślepej kinety.
  */
-function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna) {
+function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna, kinetaEnabled) {
     const allPrzejscia = well.przejscia || [];
-    if (allPrzejscia.length === 0) return [];
+    if (!kinetaEnabled || allPrzejscia.length === 0) return [];
+
+    const dennice = configMap.filter((entry) => entry.componentType === 'dennica');
+    if (dennice.length === 0) return [];
+    const bottomDennica = dennice.reduce((lowest, entry) =>
+        entry.start < lowest.start ? entry : lowest
+    );
+    if (bottomDennica.index !== dennicaElementIndex) return [];
+
+    const normalizeAngle = (value) => (((parseFloat(value) || 0) % 360) + 360) % 360;
 
     // Przejścia przypisane do dennicy
     const dennicaAngles = new Set();
@@ -170,7 +179,7 @@ function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna) {
         const mm = (pel - rzDna) * 1000;
         const { assignedIndex } = findAssignedElement(mm, configMap);
         if (assignedIndex === dennicaElementIndex) {
-            dennicaAngles.add(parseFloat(item.angle) || 0);
+            dennicaAngles.add(normalizeAngle(item.angle));
         }
     });
 
@@ -188,12 +197,19 @@ function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna) {
         if (!entry) return;
         if (entry.componentType !== 'krag_ot' && entry.componentType !== 'dennica') return;
 
-        const angle = parseFloat(item.angle) || 0;
+        const angle = normalizeAngle(item.angle);
         if (dennicaAngles.has(angle)) return;
         if (seenAngles.has(angle)) return;
 
         seenAngles.add(angle);
-        blindEntries.push(item);
+        blindEntries.push({
+            ...item,
+            angle,
+            isBlindKineta: true,
+            productCategory: 'Ślepa kineta',
+            productDn: String(well.dn || ''),
+            displayIndex: blindEntries.length
+        });
     });
 
     return blindEntries;
@@ -243,8 +259,16 @@ function buildPrzejsciaRows(data) {
     // Ślepe kinety — tylko gdy element to dennica
     let blindEntries = [];
     const isDennica = data.product && data.product.componentType === 'dennica';
-    if (isDennica && !data.isSavedProductionOrder) {
-        blindEntries = findBlindKinetaEntries(well, data.elementIndex, configMap, rzDna);
+    if (isDennica && data.isSavedProductionOrder) {
+        blindEntries = data.blindKinetaPrzejscia || [];
+    } else if (isDennica) {
+        blindEntries = findBlindKinetaEntries(
+            well,
+            data.elementIndex,
+            configMap,
+            rzDna,
+            well.kineta !== 'brak' && configMap.some((entry) => entry.componentType === 'kineta')
+        );
     }
 
     // Uwzględnij displayIndex ślepych kinet przy obliczaniu maxIdx
@@ -352,7 +376,7 @@ function formatPrzejscieRow(label, p, findProductFn, heightFromElementMm) {
  */
 function formatBlindKinetaRow(label, p, findProductFn) {
     const product = findProductFn ? findProductFn(p.productId) : null;
-    const srednica = product ? product.dn : '';
+    const srednica = p.productDn || (product ? product.dn : '');
     const angle = parseFloat(p.angle) || 0;
 
     const katGon = p.angleGony || ((angle * 400) / 360).toFixed(2);
@@ -434,8 +458,9 @@ function generateWellSvg(data) {
 
     // Filtruj przejścia według przypisanego elementu, jeśli podano elementIndex
     let blindKinetaPrzejscia = [];
-    if (
-        !data.isSavedProductionOrder &&
+    if (data.isSavedProductionOrder && data.product && data.product.componentType === 'dennica') {
+        blindKinetaPrzejscia = data.blindKinetaPrzejscia || [];
+    } else if (
         data.elementIndex !== undefined &&
         typeof buildConfigMap !== 'undefined' &&
         typeof findAssignedElement !== 'undefined'
@@ -463,7 +488,9 @@ function generateWellSvg(data) {
                     well,
                     data.elementIndex,
                     configMap,
-                    rzDna
+                    rzDna,
+                    well.kineta !== 'brak' &&
+                        configMap.some((entry) => entry.componentType === 'kineta')
                 );
             }
         }

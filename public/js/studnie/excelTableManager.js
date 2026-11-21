@@ -686,10 +686,16 @@ function _excelPasteCreateWells(text) {
                     typeof _excelCreatePrzejscie === 'function' ? _excelCreatePrzejscie() : {};
                 if (pr.rzednaWlaczenia != null) np.rzednaWlaczenia = pr.rzednaWlaczenia;
                 if (pr.angle != null) {
-                    np.angle = pr.angle;
-                    np.angleExecution = pr.angleExecution != null ? pr.angleExecution : pr.angle;
-                    np.angleGony = pr.angleGony || String(pr.angle);
-                    np.flowType = pr.flowType || (pr.angle === 0 ? 'WYLOT' : 'WLOT');
+                    np.angle = Math.min(360, parseFloat(pr.angle) || 0);
+                    np.angleExecution = Math.min(
+                        360,
+                        parseFloat(pr.angleExecution != null ? pr.angleExecution : pr.angle) || 0
+                    );
+                    np.angleGony =
+                        parseFloat(pr.angle) > 360
+                            ? ((np.angle * 400) / 360).toFixed(2)
+                            : pr.angleGony || String(pr.angle);
+                    np.flowType = pr.flowType || (np.angle === 0 ? 'WYLOT' : 'WLOT');
                 }
                 if (pr.tempCategory) np.tempCategory = pr.tempCategory;
                 if (pr.productId) np.productId = pr.productId;
@@ -930,10 +936,10 @@ function _excelParsePasteData(text) {
                 if (katRaw) {
                     const k = parseFloat(String(katRaw).replace(',', '.'));
                     if (!isNaN(k)) {
-                        p.angle = k;
-                        p.angleExecution = k;
-                        p.angleGony = k.toFixed(2);
-                        p.flowType = k === 0 ? 'WYLOT' : 'WLOT';
+                        p.angle = Math.min(360, k);
+                        p.angleExecution = p.angle;
+                        p.angleGony = p.angle.toFixed(2);
+                        p.flowType = p.angle === 0 ? 'WYLOT' : 'WLOT';
                     }
                 }
                 if (rodzRaw) p.tempCategory = rodzRaw;
@@ -982,10 +988,10 @@ function _excelParsePasteData(text) {
                     if (k2) {
                         const kk = parseFloat(String(k2).replace(',', '.'));
                         if (!isNaN(kk)) {
-                            pp.angle = kk;
-                            pp.angleExecution = kk;
-                            pp.angleGony = kk.toFixed(2);
-                            pp.flowType = kk === 0 ? 'WYLOT' : 'WLOT';
+                            pp.angle = Math.min(360, kk);
+                            pp.angleExecution = pp.angle;
+                            pp.angleGony = pp.angle.toFixed(2);
+                            pp.flowType = pp.angle === 0 ? 'WYLOT' : 'WLOT';
                         }
                     }
                     if (d) {

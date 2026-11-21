@@ -569,7 +569,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 trHideCls +
                 '"' +
                 przIdAttr +
-                '><input type="number" step="1" value="' +
+                '><input type="number" step="1" max="360" value="' +
                 (prz.angle != null ? prz.angle : '') +
                 '" data-csp="excelOnPrzejscieChange" data-csp-on="change" data-csp-args="[' +
                 wIdx +

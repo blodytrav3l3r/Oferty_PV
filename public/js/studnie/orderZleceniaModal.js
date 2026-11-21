@@ -402,6 +402,65 @@ async function _saveProductionOrderInner() {
         status: existingIdx >= 0 ? productionOrders[existingIdx].status || 'draft' : 'draft'
     };
 
+    const orderFindProductFn = (id) =>
+        typeof studnieProducts !== 'undefined'
+            ? typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(id)
+                : studnieProducts.find((pr) => pr.id === id)
+            : null;
+    const orderConfigMap =
+        typeof buildConfigMap === 'function' ? buildConfigMap(well, orderFindProductFn, true) : [];
+    const allPrzejsciaForKineta = well.przejscia || [];
+    const rzDnaForKineta = parseFloat(well.rzednaDna) || 0;
+    const blindKinetaPrzejscia = [];
+    if (
+        product.componentType === 'dennica' &&
+        order.kineta !== 'brak' &&
+        typeof findAssignedElement === 'function' &&
+        orderConfigMap.some((entry) => entry.componentType === 'kineta')
+    ) {
+        const dennice = orderConfigMap.filter((entry) => entry.componentType === 'dennica');
+        const bottomDennica = dennice.reduce(
+            (lowest, entry) => (entry.start < lowest.start ? entry : lowest),
+            null
+        );
+        if (bottomDennica && bottomDennica.index === elementIndex) {
+            const normalizeAngle = (value) => (((parseFloat(value) || 0) % 360) + 360) % 360;
+            const getAssigned = (item) => {
+                let pel = parseFloat(item.rzednaWlaczenia);
+                if (isNaN(pel)) pel = rzDnaForKineta;
+                return findAssignedElement((pel - rzDnaForKineta) * 1000, orderConfigMap);
+            };
+            const dennicaAngles = new Set(
+                allPrzejsciaForKineta
+                    .filter((item) => getAssigned(item).assignedIndex === elementIndex)
+                    .map((item) => normalizeAngle(item.angle))
+            );
+            const seenAngles = new Set();
+            allPrzejsciaForKineta.forEach((item) => {
+                const { assignedIndex, entry } = getAssigned(item);
+                if (
+                    assignedIndex === elementIndex ||
+                    !entry ||
+                    (entry.componentType !== 'krag_ot' && entry.componentType !== 'dennica')
+                )
+                    return;
+                const angle = normalizeAngle(item.angle);
+                if (dennicaAngles.has(angle) || seenAngles.has(angle)) return;
+                seenAngles.add(angle);
+                blindKinetaPrzejscia.push({
+                    ...item,
+                    angle,
+                    isBlindKineta: true,
+                    productCategory: 'Ślepa kineta',
+                    productDn: String(well.dn || ''),
+                    displayIndex: blindKinetaPrzejscia.length
+                });
+            });
+        }
+    }
+    order.blindKinetaPrzejscia = blindKinetaPrzejscia;
+
     // P0-V: rebuild nie gubi version istniejącego rekordu (predykat lockingu).
     // Tylko number — nowy rekord jedzie bez version (create, semantyka bez zmian).
     // Nigdy version: undefined w payloadzie.

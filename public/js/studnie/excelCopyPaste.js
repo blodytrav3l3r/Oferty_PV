@@ -1346,12 +1346,12 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
             } else if (subType === 1) {
                 const num = parseFloat(valStr.replace(',', '.'));
                 if (!isNaN(num)) {
-                    prz.angle = num;
-                    prz.angleExecution = num;
+                    prz.angle = Math.min(360, num);
+                    prz.angleExecution = prz.angle;
                     prz.angleGony =
                         typeof window !== 'undefined' && typeof window.degToGon === 'function'
-                            ? window.degToGon(num)
-                            : ((num * 400) / 360).toFixed(2);
+                            ? window.degToGon(prz.angle)
+                            : ((prz.angle * 400) / 360).toFixed(2);
                 }
             } else if (subType === 2) {
                 if (!valStr) {

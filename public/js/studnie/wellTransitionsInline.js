@@ -55,7 +55,8 @@ window.editInlineSetDN = function (dnId) {
 window.inlineUpdateAngles = (contextId = 'main') => {
     const el = document.getElementById(`inl-angle-${contextId}`);
     if (!el) return;
-    const angle = parseFloat(el.value) || 0;
+    const angle = Math.min(360, parseFloat(el.value) || 0);
+    if (parseFloat(el.value) > 360) el.value = '360';
     const exec = angle === 0 || angle === 360 ? 0 : 360 - angle;
     const gons = ((angle * 400) / 360).toFixed(2);
 
@@ -84,7 +85,8 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     const spadekMufaEl = document.getElementById(`inl-spadek-mufa-${contextId}`);
 
     const rzedna = rzednaEl ? rzednaEl.value : '';
-    const angle = angleEl ? parseFloat(angleEl.value) || 0 : 0;
+    const angle = angleEl ? Math.min(360, parseFloat(angleEl.value) || 0) : 0;
+    if (angleEl && parseFloat(angleEl.value) > 360) angleEl.value = String(angle);
 
     const spadekKineta = spadekKinetaEl ? spadekKinetaEl.value.trim() : '';
     const spadekMufa = spadekMufaEl ? spadekMufaEl.value.trim() : '';

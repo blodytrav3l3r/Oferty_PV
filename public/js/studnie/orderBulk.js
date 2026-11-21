@@ -194,7 +194,7 @@ function buildAutoOrderData(el, sharedData) {
 
     const todayStr = new Date().toISOString().split('T')[0];
 
-    return {
+    const order = {
         id: 'prodorder_' + Date.now() + '_' + wellIndex + '_' + elementIndex,
         productionOrderNumber: '',
         userId: sharedData.userId || null,
@@ -254,6 +254,57 @@ function buildAutoOrderData(el, sharedData) {
         updatedAt: new Date().toISOString(),
         status: 'draft'
     };
+    const allPrzejsciaForKineta = well.przejscia || [];
+    const hasConfiguredKineta = configMap.some((entry) => entry.componentType === 'kineta');
+    const blindKinetaPrzejscia = [];
+    if (
+        product.componentType === 'dennica' &&
+        !shouldForceBrak &&
+        well.kineta !== 'brak' &&
+        hasConfiguredKineta
+    ) {
+        const dennice = configMap.filter((entry) => entry.componentType === 'dennica');
+        const bottomDennica = dennice.reduce(
+            (lowest, entry) => (entry.start < lowest.start ? entry : lowest),
+            null
+        );
+        if (bottomDennica && bottomDennica.index === elementIndex) {
+            const normalizeAngle = (value) => (((parseFloat(value) || 0) % 360) + 360) % 360;
+            const getAssigned = (item) => {
+                let pel = parseFloat(item.rzednaWlaczenia);
+                if (isNaN(pel)) pel = rzDna;
+                return findAssignedElement((pel - rzDna) * 1000, configMap);
+            };
+            const dennicaAngles = new Set(
+                allPrzejsciaForKineta
+                    .filter((item) => getAssigned(item).assignedIndex === elementIndex)
+                    .map((item) => normalizeAngle(item.angle))
+            );
+            const seenAngles = new Set();
+            allPrzejsciaForKineta.forEach((item) => {
+                const { assignedIndex, entry } = getAssigned(item);
+                if (
+                    assignedIndex === elementIndex ||
+                    !entry ||
+                    (entry.componentType !== 'krag_ot' && entry.componentType !== 'dennica')
+                )
+                    return;
+                const angle = normalizeAngle(item.angle);
+                if (dennicaAngles.has(angle) || seenAngles.has(angle)) return;
+                seenAngles.add(angle);
+                blindKinetaPrzejscia.push({
+                    ...item,
+                    angle,
+                    isBlindKineta: true,
+                    productCategory: 'Ślepa kineta',
+                    productDn: String(well.dn || ''),
+                    displayIndex: blindKinetaPrzejscia.length
+                });
+            });
+        }
+    }
+    order.blindKinetaPrzejscia = blindKinetaPrzejscia;
+    return order;
 }
 
 /* ===== P1 — VIRTUAL popup kolejności (>100 studni) =====

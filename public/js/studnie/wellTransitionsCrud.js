@@ -74,7 +74,7 @@ function editPrzejscie(index) {
         type: p ? p.category : null,
         dnId: item.productId,
         rzedna: item.rzednaWlaczenia,
-        angle: item.angle,
+        angle: Math.min(360, Number(item.angle) || 0),
 
         spadekKineta: item.spadekKineta || '',
         spadekMufa: item.spadekMufa || ''
@@ -105,7 +105,7 @@ function savePrzejscieEdit(index) {
 
     const newProductId = editPrzejscieState.dnId;
     const rzedna = editPrzejscieState.rzedna;
-    const angle = editPrzejscieState.angle || 0;
+    const angle = Math.min(360, Number(editPrzejscieState.angle) || 0);
 
     const spadekKineta = editPrzejscieState.spadekKineta;
     const spadekMufa = editPrzejscieState.spadekMufa;

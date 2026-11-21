@@ -72,7 +72,7 @@ async function fetchTemplate(path) {
  * Etykiety (Wlot/Wylot) odpowiadają rzeczywistemu flowType przejścia.
  */
 function buildPrzejsciaRowsFromPO(po) {
-    const przejscia = po.przejscia || [];
+    const przejscia = [...(po.przejscia || []), ...(po.blindKinetaPrzejscia || [])];
 
     ensureDisplayIndices(przejscia);
 
@@ -87,15 +87,16 @@ function buildPrzejsciaRowsFromPO(po) {
 
         const katGon = p.angleGony || ((angle * 400) / 360).toFixed(2);
         const katWyk = p.angleExecution !== undefined ? p.angleExecution : 360 - angle;
+        const isBlindKineta = p.isBlindKineta === true;
 
         return {
             label,
-            rodzaj: p.productCategory || '',
+            rodzaj: isBlindKineta ? 'Ślepa kineta' : p.productCategory || '',
             srednica: p.productDn || '',
-            spadekKineta: spadekK ? Math.round(parseFloat(spadekK)) + ' %' : '',
-            spadekMufa: spadekM ? Math.round(parseFloat(spadekM)) + ' %' : '',
+            spadekKineta: !isBlindKineta && spadekK ? Math.round(parseFloat(spadekK)) + ' %' : '',
+            spadekMufa: !isBlindKineta && spadekM ? Math.round(parseFloat(spadekM)) + ' %' : '',
             katStopien: angle + '°',
-            uwagi: hasHeightFromElement ? '+ ' + wysokoscMm + ' mm' : '—',
+            uwagi: isBlindKineta ? 'Ślepa' : hasHeightFromElement ? '+ ' + wysokoscMm + ' mm' : '—',
             katGon,
             katWykonania: katWyk + '°'
         };
@@ -140,7 +141,7 @@ function buildPrzejsciaRowsFromPO(po) {
 /* ===== SVG GENERATION ===== */
 
 function generateSvgFromPO(po) {
-    const przejscia = po.przejscia || [];
+    const przejscia = [...(po.przejscia || []), ...(po.blindKinetaPrzejscia || [])];
     if (przejscia.length === 0) return '';
 
     const size = 400;
@@ -191,8 +192,9 @@ function generateSvgFromPO(po) {
     ensureDisplayIndices(przejscia);
     const labelsMap = new Map();
     przejscia.forEach((p) => {
-        const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
-        labelsMap.set(p, prefix + ' ' + p.displayIndex);
+        const prefix =
+            p.isBlindKineta === true ? 'Ślepa' : p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
+        labelsMap.set(p, prefix + (p.isBlindKineta === true ? '' : ' ' + p.displayIndex));
     });
 
     przejscia.forEach((p) => {
@@ -212,9 +214,14 @@ function generateSvgFromPO(po) {
                 '" y2="' +
                 y +
                 '" style="stroke:' +
-                (isWylot ? 'var(--black)' : 'var(--slate-700)') +
+                (p.isBlindKineta === true
+                    ? 'var(--slate-400)'
+                    : isWylot
+                      ? 'var(--black)'
+                      : 'var(--slate-700)') +
                 '" stroke-width="' +
-                (isWylot ? 3.5 : 1.8) +
+                (p.isBlindKineta === true ? 1.5 : isWylot ? 3.5 : 1.8) +
+                (p.isBlindKineta === true ? '" stroke-dasharray="4,3' : '') +
                 '" />'
         );
 

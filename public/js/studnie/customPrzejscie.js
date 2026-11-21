@@ -646,6 +646,12 @@ function openCustomPrzejscieModal(opts) {
             return true;
         }
     });
+    const angleInput = _customPrzejscieEl('cp-angle');
+    if (angleInput && typeof angleInput.addEventListener === 'function') {
+        angleInput.addEventListener('input', () => {
+            if (parseFloat(angleInput.value) > 360) angleInput.value = '360';
+        });
+    }
 
     const submit = function () {
         const values = {
