@@ -2343,6 +2343,23 @@ html[data-theme='light'] #btn-auto-select:disabled {
     stroke: var(--warn) !important;
 }
 
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component {
+    opacity: 1 !important;
+    filter: drop-shadow(0 0 2px var(--slate-950)) !important;
+}
+
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component > * {
+    opacity: 1 !important;
+}
+
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component > rect,
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component > path,
+#drop-zone-diagram .diag-comp-grp.zlecenia-active-component > polygon {
+    stroke: var(--white) !important;
+    stroke-width: 4px !important;
+    paint-order: stroke fill;
+}
+
 .zlecenia-right-header {
     padding: 0.8rem 1.2rem;
     border-bottom: 1px solid var(--border-glass);
