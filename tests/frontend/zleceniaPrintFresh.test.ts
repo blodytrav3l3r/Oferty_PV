@@ -17,6 +17,8 @@ function loadZlecenia(
             katStopni: string;
             productionOrderNumber: string;
             wellName: string;
+            productionOrderPrintNumber?: string;
+            dbSalesOrderNumber?: string;
         }>;
         failedDetailId?: string;
         malformedDetailId?: string;
@@ -97,10 +99,20 @@ function loadZlecenia(
                     : '<html><head><title>Zlecenie Produkcyjne {{NR_ZLECENIA}}</title></head><body><div class="page">{{NR_ZLECENIA}}</div></body></html>',
             silentPrint: (html: string) => printed.push(html),
             applyPrintTokens: (s: string) => s,
-            buildZlecenieFromPO: (_tpl: string, po: any) =>
-                '<div class="page">KAT=' + po.katStopni + '</div>',
-            buildEtykietaFromPO: (_tpl: string, po: any) =>
-                '<div class="page">KAT=' + po.katStopni + '</div>',
+            buildZlecenieFromPO: (tpl: string, po: any) => {
+                const page = '<div class="page">KAT=' + po.katStopni + '</div>';
+                return tpl.includes('<html')
+                    ? '<html><head><title>Zlecenie Produkcyjne</title></head><body>' +
+                          page +
+                          '</body></html>'
+                    : page;
+            },
+            buildEtykietaFromPO: (tpl: string, po: any) => {
+                const page = '<div class="page">KAT=' + po.katStopni + '</div>';
+                return tpl.includes('<html')
+                    ? '<html><head><title>Etykieta</title></head><body>' + page + '</body></html>'
+                    : page;
+            },
             buildZlecenieFromPageBlock: () => '<div class="page">INNY BLOK</div>',
             buildEtykietaPageBlock: () => '<div class="page">INNY BLOK</div>'
         },
@@ -124,6 +136,24 @@ describe('kartoteka zleceń — wydruk używa świeżych danych z serwera', () =
         expect(printed[0]).toContain('KAT=90');
     });
 
+    test('ustawia nazwę pojedynczego zlecenia z numeru i nazwy studni', async () => {
+        const { app, printed } = loadZlecenia({
+            orders: [
+                {
+                    id: 'po1',
+                    katStopni: '45',
+                    productionOrderNumber: 'N/0003/26',
+                    productionOrderPrintNumber: 'N/0003/26',
+                    wellName: 's2'
+                }
+            ]
+        });
+        await app.loadOrders();
+        await app.printSingleZlecenie('po1');
+
+        expect(printed[0]).toContain('<title>N000326 s2</title>');
+    });
+
     test('printSingleEtykieta dociąga GET /:id i drukuje nowy kąt', async () => {
         const { app, printed } = loadZlecenia();
         await app.loadOrders();
@@ -131,6 +161,24 @@ describe('kartoteka zleceń — wydruk używa świeżych danych z serwera', () =
 
         expect(printed).toHaveLength(1);
         expect(printed[0]).toContain('KAT=90');
+    });
+
+    test('ustawia taką samą nazwę pliku dla pojedynczej etykiety', async () => {
+        const { app, printed } = loadZlecenia({
+            orders: [
+                {
+                    id: 'po1',
+                    katStopni: '45',
+                    productionOrderNumber: 'N/0003/26',
+                    productionOrderPrintNumber: 'N/0003/26',
+                    wellName: 's2'
+                }
+            ]
+        });
+        await app.loadOrders();
+        await app.printSingleEtykieta('po1');
+
+        expect(printed[0]).toContain('<title>N000326 s2</title>');
     });
 
     test('nie drukuje nieaktualnej kopii, gdy pobranie świeżego rekordu się nie powiedzie', async () => {
@@ -194,7 +242,7 @@ describe('kartoteka zleceń — wydruk używa świeżych danych z serwera', () =
         await app.printBatchZlecenia();
 
         expect(printed).toHaveLength(2);
-        expect(printed[1]).toContain(printed[0]);
+        expect(printed[1]).toContain('KAT=90');
         expect(printed[1]).toContain('<title>Zlecenia produkcyjne — 1 szt.</title>');
         expect(printed[1]).not.toContain('{{NR_ZLECENIA}}');
     });
@@ -207,8 +255,30 @@ describe('kartoteka zleceń — wydruk używa świeżych danych z serwera', () =
         await app.printBatchEtykiety();
 
         expect(printed).toHaveLength(2);
-        expect(printed[1]).toContain(printed[0]);
+        expect(printed[1]).toContain('KAT=90');
         expect(printed[1]).toContain('<title>Etykiety zleceń — 1 szt.</title>');
+    });
+
+    test('nazywa wsady według numeru zamówienia i rodzaju dokumentu', async () => {
+        const { app, printed } = loadZlecenia({
+            orders: [
+                {
+                    id: 'po1',
+                    katStopni: '45',
+                    productionOrderNumber: 'N/1',
+                    wellName: 's2',
+                    dbSalesOrderNumber: 'ZS/00013/2026'
+                }
+            ]
+        });
+        await app.loadOrders();
+        app.selectAllRows();
+        await app.printBatchZlecenia();
+        await app.printBatchEtykiety();
+
+        expect(printed).toHaveLength(2);
+        expect(printed[0]).toContain('<title>ZS000132026 zlecenia</title>');
+        expect(printed[1]).toContain('<title>ZS000132026 etykiety</title>');
     });
 
     test('anulowanie potwierdzenia nie drukuje i nie zwiększa licznika', async () => {

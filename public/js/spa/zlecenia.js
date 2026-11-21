@@ -631,11 +631,72 @@ const AppZlecenia = (() => {
         if (headEnd < 0) return null;
 
         const head = applyPrintTokens(template.substring(0, headEnd));
-        const titleTag = '<title>' + title + '</title>';
+        const titleTag = '<title>' + escapePrintTitle(title) + '</title>';
         if (/<title\b[^>]*>[\s\S]*?<\/title>/i.test(head)) {
             return head.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, titleTag);
         }
         return head + titleTag;
+    }
+
+    function escapePrintTitle(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function cleanPrintNamePart(value) {
+        return String(value || '')
+            .replace(/[<>:"/\\|?*]/g, '')
+            .split('')
+            .filter((character) => character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127)
+            .join('')
+            .replace(/\s+/g, ' ')
+            .replace(/^[. ]+|[. ]+$/g, '')
+            .trim();
+    }
+
+    function buildSinglePrintFileName(po) {
+        const number = String(
+            po.productionOrderPrintNumber || po.productionOrderNumber || ''
+        ).replace(/[^a-zA-Z0-9]/g, '');
+        const wellName = cleanPrintNamePart(po.wellName || po.snr);
+        return [number, wellName].filter(Boolean).join(' ') || 'zlecenie';
+    }
+
+    function buildBatchPrintFileName(orders, kind, listedOrders) {
+        const suffix = kind === 'etykieta' ? 'etykiety' : 'zlecenia';
+        const orderNumbers = Array.from(
+            new Set(
+                orders
+                    .map((po, index) =>
+                        cleanPrintNamePart(
+                            po.dbSalesOrderNumber ||
+                                po.salesOrderNumber ||
+                                listedOrders[index]?.dbSalesOrderNumber ||
+                                listedOrders[index]?.salesOrderNumber
+                        )
+                    )
+                    .filter(Boolean)
+            )
+        );
+        if (orderNumbers.length === 1) {
+            return cleanPrintNamePart(orderNumbers[0]) + ' ' + suffix;
+        }
+        if (orderNumbers.length > 1) return 'Wiele zamówień ' + suffix;
+        return kind === 'etykieta'
+            ? 'Etykiety zleceń — ' + orders.length + ' szt.'
+            : 'Zlecenia produkcyjne — ' + orders.length + ' szt.';
+    }
+
+    function replacePrintDocumentTitle(html, title) {
+        const titleTag = '<title>' + escapePrintTitle(title) + '</title>';
+        if (/<title\b[^>]*>[\s\S]*?<\/title>/i.test(html)) {
+            return html.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, titleTag);
+        }
+        return html.replace(/<head\b[^>]*>/i, (head) => head + titleTag);
     }
 
     /* ===== LICZNIKI WYDRUKÓW (liczba uruchomień wydruku) ===== */
@@ -801,7 +862,10 @@ const AppZlecenia = (() => {
         const template = await fetchTemplate('templates/zlecenie.html');
         if (!template) return;
 
-        const html = buildZlecenieFromPO(template, po);
+        const html = replacePrintDocumentTitle(
+            buildZlecenieFromPO(template, po),
+            buildSinglePrintFileName(po)
+        );
         const ok = await confirmPrintRun(
             'Wydruk zlecenia',
             'Wydrukować zlecenie?\n' +
@@ -826,7 +890,10 @@ const AppZlecenia = (() => {
         const template = await fetchTemplate('templates/etykieta.html');
         if (!template) return;
 
-        const html = buildEtykietaFromPO(template, po);
+        const html = replacePrintDocumentTitle(
+            buildEtykietaFromPO(template, po),
+            buildSinglePrintFileName(po)
+        );
         const ok = await confirmPrintRun(
             'Wydruk etykiety',
             'Wydrukować etykietę?\n' +
@@ -890,7 +957,7 @@ const AppZlecenia = (() => {
 
         const headSection = buildBatchHead(
             template,
-            'Zlecenia produkcyjne — ' + orders.length + ' szt.'
+            buildBatchPrintFileName(orders, 'zlecenie', picked)
         );
         if (!headSection) {
             showToast('Błąd szablonu zlecenia — brak sekcji <head>', 'error');
@@ -954,7 +1021,7 @@ const AppZlecenia = (() => {
 
         const headSection = buildBatchHead(
             template,
-            'Etykiety zleceń — ' + orders.length + ' szt.'
+            buildBatchPrintFileName(orders, 'etykieta', picked)
         );
         if (!headSection) {
             showToast('Błąd szablonu etykiety — brak sekcji <head>', 'error');
