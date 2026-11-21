@@ -149,13 +149,28 @@
         if (!version && !sysinfo) {
             html += row('Status', 'brak danych', 'UNKNOWN');
         } else {
-            if (version)
+            if (version) {
+                var versionCommit = sysinfo && sysinfo.commitHash;
+                var hasVersionCommit =
+                    typeof versionCommit === 'string' && /^[0-9a-f]{7,64}$/i.test(versionCommit);
+                var versionLabel = esc(version.version || '?');
+                if (hasVersionCommit) {
+                    versionLabel =
+                        '<span><span title="' +
+                        escAttr('Commit: ' + versionCommit) +
+                        '">' +
+                        versionLabel +
+                        '</span><br>' +
+                        esc(versionCommit.slice(0, 12)) +
+                        '</span>';
+                }
                 html += row(
                     'Wersja',
-                    esc(version.version || '?'),
+                    versionLabel,
                     'OK',
-                    'Numer wydania z /api/version. Porównaj z CHANGELOG — inna wersja niż po deployu = stary kod lub cache.'
+                    'Numer wydania z /api/version. Najedź na wersję, aby zobaczyć pełny SHA commita.'
                 );
+            }
             if (sysinfo) {
                 html += row(
                     'Środowisko',

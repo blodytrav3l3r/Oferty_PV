@@ -18,7 +18,23 @@
             return;
         }
 
-        // Pobieramy wersję z endpointu API
+        // Commit jest dostępny tylko z admin-only diagnostyki systemowej.
+        var commitPromise =
+            typeof window.authReady === 'function'
+                ? window
+                      .authReady()
+                      .then(function (ready) {
+                          return ready && ready.role === 'admin'
+                              ? fetch('/api/admin/system-info').then(function (response) {
+                                    return response.ok ? response.json() : null;
+                                })
+                              : null;
+                      })
+                      .catch(function () {
+                          return null;
+                      })
+                : Promise.resolve(null);
+
         fetch('/api/version')
             .then(function (response) {
                 // Sprawdzamy czy odpowiedź jest poprawna
@@ -30,14 +46,32 @@
             .then(function (data) {
                 // Wstrzykujemy wersję do elementu — format "vX.Y.Z" (textContent: brak HTML, P2 hardening SEC-01)
                 if (data && data.version) {
-                    versionEl.textContent = 'v' + data.version;
+                    var versionLabel = 'v' + data.version;
+                    versionEl.textContent = versionLabel;
+                    commitPromise.then(function (systemInfo) {
+                        var commitHash = systemInfo && systemInfo.commitHash;
+                        var hasCommit =
+                            typeof commitHash === 'string' && /^[0-9a-f]{7,64}$/i.test(commitHash);
+                        if (!hasCommit) return;
+                        versionEl.textContent = '';
+                        versionEl.classList.add('header-versions-stack');
+                        var versionLine = document.createElement('span');
+                        versionLine.textContent = versionLabel;
+                        versionLine.title = 'Commit: ' + commitHash;
+                        var commitLine = document.createElement('span');
+                        commitLine.textContent = commitHash.slice(0, 12);
+                        versionEl.appendChild(versionLine);
+                        versionEl.appendChild(commitLine);
+                    });
                 } else {
                     versionEl.textContent = 'v—';
+                    versionEl.classList.remove('header-versions-stack');
                 }
             })
             .catch(function () {
                 // W przypadku błędu (np. serwer nie odpowiada) wyświetlamy "v—"
                 versionEl.textContent = 'v—';
+                versionEl.classList.remove('header-versions-stack');
             });
     }
 

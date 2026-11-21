@@ -294,7 +294,11 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
         expect(panel).toContain('pokazano bieżący aktywny cennik');
     });
     it('pasek górny: aktywne cenniki obok wersji aplikacji, istniejąca logika nietknięta', () => {
-        expect(topbar).toContain("versionEl.textContent = 'v' + data.version");
+        expect(topbar).toContain("var versionLabel = 'v' + data.version");
+        expect(topbar).toContain('versionEl.textContent = versionLabel');
+        expect(topbar).toContain("versionEl.classList.add('header-versions-stack')");
+        expect(topbar).toContain("versionLine.title = 'Commit: ' + commitHash");
+        expect(topbar).toContain('commitHash.slice(0, 12)');
         expect(topbar).toContain('app-pricelists-toolbar');
         expect(topbar).toContain('/api/pricelist-versions/labels?type=');
         expect(topbar).toContain('header-versions-stack');
