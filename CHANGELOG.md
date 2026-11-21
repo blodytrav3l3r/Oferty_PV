@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.12](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.11...v1.64.12) (2026-11-21)
+
+### Bug Fixes
+
+- **orders:** ujednolicenie wydruków z zapisanym zleceniem produkcyjnym
+
 ### [1.64.11](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.10...v1.64.11) (2026-11-20)
 
 ### Bug Fixes

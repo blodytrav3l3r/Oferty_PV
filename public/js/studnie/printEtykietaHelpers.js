@@ -4,6 +4,10 @@
 /* Zależności: studnieProducts, renderTemplate (globalne) */
 
 function buildEtykietaElements(data) {
+    if (Array.isArray(data.etykietaElementy)) {
+        return data.etykietaElementy.map((item) => ({ ...item }));
+    }
+
     const well = data.well;
     const config = well.config || [];
     const items = [];
@@ -71,7 +75,7 @@ function getCertificationData(dn) {
 
 function buildEtykietaHtml(template, data) {
     const elementy = buildEtykietaElements(data);
-    const mainElement = data.product?.name || '';
+    const mainElement = data.productName || data.product?.name || '';
 
     const elementRows = elementy
         .map(

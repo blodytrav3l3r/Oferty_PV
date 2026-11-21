@@ -91,67 +91,60 @@ async function getTemplate(path) {
     }
 }
 
-/**
- * Zbiera wszystkie dane potrzebne do wydruku z bieżącego formularza zlecenia
- * i wybranego elementu. Zwraca null, jeśli nic nie zostało wybrane.
- */
-function collectPrintData() {
-    if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
-        showToast('Najpierw wybierz element z listy', 'error');
+/** Pobiera zapisane zlecenie po zapisie i tworzy dane druku wyłącznie z migawki PZ. */
+async function loadSavedProductionOrder(orderId) {
+    try {
+        const res = await fetch('/api/orders-studnie/production/' + encodeURIComponent(orderId), {
+            headers: typeof authHeaders === 'function' ? authHeaders() : {}
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const payload = await res.json();
+        const po = payload && payload.data;
+        if (!po || String(po.id) !== String(orderId)) throw new Error('Nieprawidłowa odpowiedź');
+
+        const product =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(po.productId)
+                : typeof studnieProducts !== 'undefined'
+                  ? studnieProducts.find((item) => item.id === po.productId)
+                  : null;
+        const well = {
+            id: po.wellId,
+            dn: po.dn,
+            rzednaDna: po.rzednaDna,
+            przejscia: Array.isArray(po.przejscia) ? po.przejscia : [],
+            malowanieW: po.malowanieW,
+            malowanieZ: po.malowanieZ,
+            powlokaNameW: po.powlokaNameW,
+            powlokaNameZ: po.powlokaNameZ,
+            wkladkaOsadnikPreco: po.wkladkaOsadnikPreco,
+            wkladkaOsadnikH: po.wkladkaOsadnikH,
+            precoFullHeight: po.precoFullHeight
+        };
+
+        return {
+            ...po,
+            productionOrderPrintNumber: po.productionOrderPrintNumber || po.productionOrderNumber,
+            snr: po.snr || po.wellName || '',
+            srednica: po.srednica || po.dn || '',
+            productName: po.productName || product?.name || '',
+            product: {
+                ...(product || {}),
+                name: po.productName || product?.name || '',
+                componentType: po.componentType || product?.componentType
+            },
+            well,
+            etykietaElementy: Array.isArray(po.etykietaElementy) ? po.etykietaElementy : [],
+            isSavedProductionOrder: true
+        };
+    } catch (err) {
+        logger.error('printManager', 'loadSavedProductionOrder error:', err);
+        showToast(
+            'Nie udało się pobrać zapisanego zlecenia ' + orderId + '. Wydruk przerwany.',
+            'error'
+        );
         return null;
     }
-
-    const el = zleceniaElementsList[zleceniaSelectedIdx];
-    const { well, product, elementIndex, wellIndex } = el;
-    const existing = pzGuard.findPzForElement(
-        productionOrders || [],
-        well.id,
-        (el.configItem && el.configItem._elemId) || '',
-        elementIndex
-    );
-
-    const getValue = (id, fallback = '') => document.getElementById(id)?.value || fallback;
-
-    return {
-        productionOrderNumber:
-            existing?.productionOrderNumber || getValue('zl-nr-zlecenia', '— brak —'),
-        // Wydruk zlecenia: numer z symbolem opiekuna (lista i etykieta bez zmian).
-        productionOrderPrintNumber:
-            existing?.productionOrderPrintNumber || existing?.productionOrderNumber || '',
-        obiekt: getValue('zl-obiekt'),
-        adres: getValue('zl-adres'),
-        wykonawca: getValue('zl-wykonawca'),
-        fakturowane: getValue('zl-fakturowane'),
-        data: getValue('zl-data'),
-        nazwisko: getValue('zl-nazwisko'),
-        dataProdukcji: getValue('zl-data-produkcji'),
-        // Parametry studni
-        snr: well.numer || well.name || '',
-        srednica: getValue('zl-srednica', well.dn),
-        wysokosc: getValue('zl-wysokosc'),
-        glebokosc: getValue('zl-glebokosc'),
-        dnoKineta: getValue('zl-dno-kineta'),
-        rodzajStudni: getValue('zl-rodzaj-studni'),
-        // Parametry
-        redukcjaKinety: getValue('zl-red-kinety'),
-        spocznikH: getValue('zl-spocznik-h'),
-        din: getValue('zl-din'),
-        rodzajStopni: getValue('zl-rodzaj-stopni'),
-        stopnieInne: getValue('zl-stopnie-inne'),
-        katStopni: getValue('zl-kat-stopni'),
-        wykonanie: getValue('zl-wykonanie'),
-        usytuowanie: getValue('zl-usytuowanie'),
-        kineta: getValue('zl-kineta'),
-        spocznik: getValue('zl-spocznik'),
-        klasaBetonu: getValue('zl-klasa-betonu'),
-        uwagi: getValue('zl-uwagi'),
-        // Surowe dane
-        well,
-        product,
-        elementIndex,
-        wellIndex,
-        existing
-    };
 }
 
 /**
@@ -223,27 +216,34 @@ function buildPrzejsciaRows(data) {
         typeof getStudnieProductById === 'function'
             ? getStudnieProductById(id)
             : studnieProducts.find((pr) => pr.id === id);
-    const configMap = buildConfigMap(well, findProductFn, true);
+    const configMap = data.isSavedProductionOrder ? [] : buildConfigMap(well, findProductFn, true);
 
     // Najpierw nadaj displayIndex WSZYSTKIM przejściom (spójność z Lista przejść)
     ensureDisplayIndices(przejscia);
 
-    const assignedPrzejscia = przejscia
-        .map((item) => {
-            let pel = parseFloat(item.rzednaWlaczenia);
-            if (isNaN(pel)) pel = rzDna;
-            const mmFromBottom = (pel - rzDna) * 1000;
-            const { assignedIndex, entry } = findAssignedElement(mmFromBottom, configMap);
-            if (assignedIndex !== data.elementIndex) return null;
-            const heightFromElementMm = entry ? Math.round(mmFromBottom - entry.start) : null;
-            return { item, heightFromElementMm };
-        })
-        .filter(Boolean);
+    const assignedPrzejscia = data.isSavedProductionOrder
+        ? przejscia.map((item) => ({
+              item,
+              heightFromElementMm: Number.isFinite(item.heightFromElementMm)
+                  ? item.heightFromElementMm
+                  : null
+          }))
+        : przejscia
+              .map((item) => {
+                  let pel = parseFloat(item.rzednaWlaczenia);
+                  if (isNaN(pel)) pel = rzDna;
+                  const mmFromBottom = (pel - rzDna) * 1000;
+                  const { assignedIndex, entry } = findAssignedElement(mmFromBottom, configMap);
+                  if (assignedIndex !== data.elementIndex) return null;
+                  const heightFromElementMm = entry ? Math.round(mmFromBottom - entry.start) : null;
+                  return { item, heightFromElementMm };
+              })
+              .filter(Boolean);
 
     // Ślepe kinety — tylko gdy element to dennica
     let blindEntries = [];
     const isDennica = data.product && data.product.componentType === 'dennica';
-    if (isDennica) {
+    if (isDennica && !data.isSavedProductionOrder) {
         blindEntries = findBlindKinetaEntries(well, data.elementIndex, configMap, rzDna);
     }
 
@@ -297,20 +297,24 @@ function buildPrzejsciaRows(data) {
 function formatPrzejscieRow(label, p, findProductFn, heightFromElementMm) {
     const product = findProductFn ? findProductFn(p.productId) : null;
     const isCustom = p.isCustom === true;
-    const rodzaj = product
-        ? product.category
-        : typeof getPrzejscieCategoryLabel === 'function'
-          ? getPrzejscieCategoryLabel(p, null)
-          : isCustom
-            ? String(p.customName || '')
-            : '';
-    const srednica = product
-        ? product.dn
-        : typeof getPrzejscieDnLabel === 'function'
-          ? getPrzejscieDnLabel(p, null)
-          : isCustom
-            ? p.dn || ''
-            : '';
+    const rodzaj =
+        p.productCategory ||
+        (product
+            ? product.category
+            : typeof getPrzejscieCategoryLabel === 'function'
+              ? getPrzejscieCategoryLabel(p, null)
+              : isCustom
+                ? String(p.customName || '')
+                : '');
+    const srednica =
+        p.productDn ||
+        (product
+            ? product.dn
+            : typeof getPrzejscieDnLabel === 'function'
+              ? getPrzejscieDnLabel(p, null)
+              : isCustom
+                ? p.dn || ''
+                : '');
 
     const spadekKineta = p.spadekKineta || '';
     const spadekMufa = p.spadekMufa || '';
@@ -377,7 +381,7 @@ async function printZlecenie() {
         return;
     }
 
-    const data = collectPrintData();
+    const data = await loadSavedProductionOrder(orderId);
     if (!data) return;
 
     showToast('Generowanie zlecenia...', 'info');
@@ -431,6 +435,7 @@ function generateWellSvg(data) {
     // Filtruj przejścia według przypisanego elementu, jeśli podano elementIndex
     let blindKinetaPrzejscia = [];
     if (
+        !data.isSavedProductionOrder &&
         data.elementIndex !== undefined &&
         typeof buildConfigMap !== 'undefined' &&
         typeof findAssignedElement !== 'undefined'
@@ -578,14 +583,14 @@ function generateWellSvg(data) {
                 : null;
         const rodzaj = isBlind
             ? 'ŚLEPA'
-            : product
-              ? product.category
-              : p.isCustom === true
-                ? String(p.customName || '')
-                : '';
-        const dn = product ? product.dn : p.isCustom === true ? (p.dn != null ? p.dn : '') : '';
-        const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
-        const hMm = Math.round((pel - rzDna) * 1000);
+            : p.productCategory ||
+              (product ? product.category : p.isCustom === true ? String(p.customName || '') : '');
+        const dn =
+            p.productDn ||
+            (product ? product.dn : p.isCustom === true ? (p.dn != null ? p.dn : '') : '');
+        const hMm = Number.isFinite(p.heightFromElementMm)
+            ? Math.round(p.heightFromElementMm)
+            : null;
         const uwagiText = isBlind ? 'ślepa' : hMm > 0 ? `+${hMm}mm` : '';
 
         const labelRadius = radius + 40;
@@ -830,7 +835,7 @@ function buildZlecenieHtml(template, data) {
     };
 
     // Dodaj odwołania do powiązanych elementów (dennica ↔ kręgi) w sekcji Uwagi
-    const crossRefs = buildSiblingCrossReferences(data);
+    const crossRefs = data.isSavedProductionOrder ? '' : buildSiblingCrossReferences(data);
     if (crossRefs) {
         payload.UWAGI = (payload.UWAGI ? payload.UWAGI + '<br>' : '') + '<b>' + crossRefs + '</b>';
     }
@@ -889,7 +894,7 @@ async function printEtykieta() {
         return;
     }
 
-    const data = collectPrintData();
+    const data = await loadSavedProductionOrder(orderId);
     if (!data) return;
 
     showToast('Generowanie etykiety...', 'info');

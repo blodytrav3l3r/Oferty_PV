@@ -1288,6 +1288,13 @@ router.get('/:id', requireAuth, async (req, res) => {
         }
 
         const parsedData = parseJsonField<Record<string, unknown>>(order.data, {});
+        const owners = order.userId
+            ? await prisma.users.findMany({
+                  where: { id: order.userId },
+                  select: { symbol: true },
+                  take: 1
+              })
+            : [];
 
         res.json({
             data: {
@@ -1301,6 +1308,10 @@ router.get('/:id', requireAuth, async (req, res) => {
                 createdAt: order.createdAt,
                 updatedAt: order.updatedAt,
                 ...parsedData,
+                productionOrderPrintNumber: formatProductionPrintNumber(
+                    getProductionNumber(order.data, order.productionNumber),
+                    owners[0]?.symbol
+                ),
                 // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
                 version: order.version ?? 1,
                 // Liczniki wydruków: jawny kontrakt, brak pola = 0.

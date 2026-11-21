@@ -156,26 +156,37 @@ function buildAutoOrderData(el, sharedData) {
     const configMap =
         typeof buildConfigMap !== 'undefined' ? buildConfigMap(well, findProductFn, true) : [];
     const allPrzejscia = well.przejscia || [];
-    const assignedPrzejscia =
-        configMap.length > 0
-            ? allPrzejscia.filter((p) => {
-                  let pel = parseFloat(p.rzednaWlaczenia);
-                  if (isNaN(pel)) pel = rzDna;
-                  const mmFromBottom = (pel - rzDna) * 1000;
-                  const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
-                  return assignedIndex === elementIndex;
-              })
-            : allPrzejscia;
+    const assignedPrzejscia = allPrzejscia
+        .map((item) => {
+            let pel = parseFloat(item.rzednaWlaczenia);
+            if (isNaN(pel)) pel = rzDna;
+            const mmFromBottom = (pel - rzDna) * 1000;
+            const assignment =
+                configMap.length > 0
+                    ? findAssignedElement(mmFromBottom, configMap)
+                    : { assignedIndex: elementIndex, entry: null };
+            if (assignment.assignedIndex !== elementIndex) return null;
+            return {
+                item,
+                heightFromElementMm: assignment.entry
+                    ? Math.round(mmFromBottom - assignment.entry.start)
+                    : null
+            };
+        })
+        .filter(Boolean);
 
-    const przejsciaSnapshot = assignedPrzejscia.map((p) => {
-        const clone = structuredClone(p);
-        const prod = findProductFn(p.productId);
+    const przejsciaSnapshot = assignedPrzejscia.map(({ item, heightFromElementMm }) => {
+        const clone = structuredClone(item);
+        if (Number.isFinite(heightFromElementMm)) {
+            clone.heightFromElementMm = heightFromElementMm;
+        }
+        const prod = findProductFn(item.productId);
         if (prod) {
             clone.productCategory = prod.category || '';
             clone.productDn = prod.dn || '';
-        } else if (p.isCustom === true) {
-            clone.productCategory = String(p.customName || '');
-            clone.productDn = p.dn != null ? String(p.dn) : '';
+        } else if (item.isCustom === true) {
+            clone.productCategory = String(item.customName || '');
+            clone.productDn = item.dn != null ? String(item.dn) : '';
             clone.isCustom = true;
         }
         return clone;
@@ -203,6 +214,7 @@ function buildAutoOrderData(el, sharedData) {
         elementKey: (well.config[elementIndex] && well.config[elementIndex]._elemId) || '',
         productName: product.name,
         productId: product.id,
+        componentType: product.componentType || '',
         dn: well.dn,
         obiekt: sharedData.obiekt || '',
         data: todayStr,
@@ -217,6 +229,13 @@ function buildAutoOrderData(el, sharedData) {
         glebokosc: String(displayGlebokosc),
         dnoKineta: String(displayDnoKineta),
         rodzajStudni: domyslnyRodzajStudni,
+        malowanieW: well.malowanieW ?? '',
+        malowanieZ: well.malowanieZ ?? '',
+        powlokaNameW: well.powlokaNameW ?? '',
+        powlokaNameZ: well.powlokaNameZ ?? '',
+        wkladkaOsadnikPreco: well.wkladkaOsadnikPreco ?? '',
+        wkladkaOsadnikH: well.wkladkaOsadnikH ?? '',
+        precoFullHeight: well.precoFullHeight ?? '',
         przejscia: przejsciaSnapshot,
         etykietaElementy: buildEtykietaElementsSnapshot(well),
         uwagi: autoUwagi.join(', '),

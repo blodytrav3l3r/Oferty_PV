@@ -142,9 +142,6 @@ function buildPrzejsciaRowsFromPO(po) {
 function generateSvgFromPO(po) {
     const przejscia = po.przejscia || [];
     if (przejscia.length === 0) return '';
-    const parsedRzDna = parseFloat(po.rzednaDna);
-    const hasRzDna = Number.isFinite(parsedRzDna);
-    const rzDna = hasRzDna ? parsedRzDna : 0;
 
     const size = 400;
     const center = size / 2;
@@ -235,8 +232,10 @@ function generateSvgFromPO(po) {
             offsetX = 4;
         }
 
-        const pel = parseFloat(p.rzednaWlaczenia);
-        const hMm = hasRzDna && Number.isFinite(pel) ? Math.round((pel - rzDna) * 1000) : 0;
+        const hMm =
+            typeof p.heightFromElementMm === 'number' && Number.isFinite(p.heightFromElementMm)
+                ? Math.round(p.heightFromElementMm)
+                : null;
         const hText = hMm > 0 ? ' (+' + hMm + 'mm)' : '';
 
         const rodzaj = (p.productCategory || '').toUpperCase();
@@ -398,6 +397,14 @@ function generateSvgFromPO(po) {
 /** Buduje payload zlecenia wspólny dla druku pojedynczego i wsadowego */
 function buildZleceniePayload(po) {
     const przejsciaRows = buildPrzejsciaRowsFromPO(po);
+    const dnMatch = String(po.dn || '').match(/(\d{3,4})/);
+    const dnNumber = dnMatch ? Number(dnMatch[1]) : 0;
+    const angleTypeTitle =
+        po.componentType !== 'krag_ot' &&
+        ![2000, 2500].includes(dnNumber) &&
+        [1000, 1200, 1500].includes(dnNumber)
+            ? 'Kąt wykonania'
+            : 'Kąt stopień';
 
     const payload = {
         // Wydruk zlecenia: prefiks roku → symbol opiekuna; etykieta niżej bez zmian.
@@ -427,8 +434,21 @@ function buildZleceniePayload(po) {
         KAT_STOPNI: po.katStopni ? po.katStopni + '°' : 'Brak',
         WYKONANIE: po.wykonanie || 'Brak',
         POWLOKA: getPowloka(po),
+        TYP_KATA: angleTypeTitle,
         GRAFIKA_KATOW: generateSvgFromPO(po)
     };
+
+    if (po.wkladkaOsadnikPreco === 'tak' && ['dennica', 'styczna'].includes(po.componentType)) {
+        const osadnikNote = `<strong style="color:var(--warn); font-size:1.1em; display:block; margin-top:5px;">UWAGA: OSADNIK - WKŁADKA PRECO (Dno + Ściany ${po.wkladkaOsadnikH || 0} mm)</strong>`;
+        payload.UWAGI = payload.UWAGI ? payload.UWAGI + '<br>' + osadnikNote : osadnikNote;
+    } else if (
+        (po.precoFullHeight === 'tak' || po.precoFullHeight === true) &&
+        ['dennica', 'styczna'].includes(po.componentType)
+    ) {
+        const fullHeightNote =
+            '<strong style="color:var(--danger); font-size:1.1em; display:block; margin-top:5px;">UWAGA: WKŁADKA PRECO NA CAŁEJ WYSOKOŚCI DENNICY!</strong>';
+        payload.UWAGI = payload.UWAGI ? payload.UWAGI + '<br>' + fullHeightNote : fullHeightNote;
+    }
 
     // Wiersze przejść 0-3 (zgodnie z konfiguratorem: renderuj wszystkie wiersze, także puste)
     for (let i = 0; i < 4; i++) {

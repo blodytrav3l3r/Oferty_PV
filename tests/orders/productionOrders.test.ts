@@ -559,6 +559,23 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.body.data.productionOrderNumber).toBe('AB/PZ/1/26');
         });
 
+        it('zwraca kanoniczny numer wydruku z symbolem opiekuna', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                productionNumber: TEST_PRODUCTION_NUMBER,
+                data: JSON.stringify({ productionOrderNumber: TEST_PRODUCTION_NUMBER })
+            });
+            (prisma as any).users.findMany.mockResolvedValue([{ symbol: 'SA' }]);
+
+            const res = await request(app).get('/api/orders/production/pz-1');
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.data.productionOrderPrintNumber).toBe(
+                TEST_PRODUCTION_NUMBER.replace(/^[A-Z]\//, 'SA/')
+            );
+        });
+
         it('zwraca 404 dla cudzego PZ', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'pz-1',

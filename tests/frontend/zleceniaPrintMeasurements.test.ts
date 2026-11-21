@@ -21,6 +21,27 @@ function buildRowsFromSavedOrder(order: Record<string, unknown>) {
 }
 
 describe('wydruk zlecenia — wysokość przejścia', () => {
+    test('etykieta grafiki używa lokalnej wysokości zapisanej w PZ', () => {
+        const svg = (
+            loadPrintHelpers().generateSvgFromPO as (value: Record<string, unknown>) => string
+        )({
+            rzednaDna: 10,
+            przejscia: [
+                {
+                    angle: 90,
+                    flowType: 'wlot',
+                    rzednaWlaczenia: 12,
+                    heightFromElementMm: 1000,
+                    productCategory: 'PVC SN8',
+                    productDn: '300'
+                }
+            ]
+        });
+
+        expect(svg).toContain('(+1000mm)');
+        expect(svg).not.toContain('(+2000mm)');
+    });
+
     test('pokazuje wysokość od dołu elementu, nie rzędną od dna całej studni', () => {
         const rows = buildRowsFromSavedOrder({
             rzednaDna: 152,

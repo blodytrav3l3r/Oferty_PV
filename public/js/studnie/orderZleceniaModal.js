@@ -307,6 +307,7 @@ async function _saveProductionOrderInner() {
         elementKey: (el.configItem && el.configItem._elemId) || '',
         productName: product.name,
         productId: product.id,
+        componentType: product.componentType || '',
         dn: well.dn,
 
         obiekt: document.getElementById('zl-obiekt')?.value || '',
@@ -324,6 +325,13 @@ async function _saveProductionOrderInner() {
         glebokosc: document.getElementById('zl-glebokosc')?.value || '',
         dnoKineta: document.getElementById('zl-dno-kineta')?.value || '',
         rodzajStudni: document.getElementById('zl-rodzaj-studni')?.value || '',
+        malowanieW: well.malowanieW ?? '',
+        malowanieZ: well.malowanieZ ?? '',
+        powlokaNameW: well.powlokaNameW ?? '',
+        powlokaNameZ: well.powlokaNameZ ?? '',
+        wkladkaOsadnikPreco: well.wkladkaOsadnikPreco ?? '',
+        wkladkaOsadnikH: well.wkladkaOsadnikH ?? '',
+        precoFullHeight: well.precoFullHeight ?? '',
 
         przejscia: (() => {
             const allPrzejscia = well.przejscia || [];
