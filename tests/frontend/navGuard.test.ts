@@ -25,6 +25,7 @@ function runContext() {
     let confirmResolve = null;
     let timerId = 0;
     const pendingTimers = new Map();
+    const readinessTimers = new Map();
 
     const makeClassList = () => {
         const values = new Set();
@@ -110,6 +111,9 @@ function runContext() {
                     this.contentDocument.readyState = 'complete';
                     this.contentDocument.documentElement.classList.remove('is-loaded');
                     dispatch(this, 'load');
+                } else if (this.behavior === 'delayed-ready') {
+                    this.contentDocument.readyState = 'complete';
+                    dispatch(this, 'load');
                 } else {
                     this.contentDocument.readyState = 'loading';
                 }
@@ -161,10 +165,14 @@ function runContext() {
             setTimeout: (fn, delay = 0) => {
                 const id = ++timerId;
                 if (delay >= 1000) pendingTimers.set(id, fn);
+                else if (delay === 50) readinessTimers.set(id, fn);
                 else fn();
                 return id;
             },
-            clearTimeout: (id) => pendingTimers.delete(id),
+            clearTimeout: (id) => {
+                pendingTimers.delete(id);
+                readinessTimers.delete(id);
+            },
             appConfirm: (message, opts) => {
                 confirmCalls.push({ message, opts });
                 return new Promise((resolve) => {
@@ -206,6 +214,10 @@ function runContext() {
         runPendingTimers: () => {
             [...pendingTimers.values()].forEach((callback) => callback());
             pendingTimers.clear();
+        },
+        runReadinessTimers: () => {
+            [...readinessTimers.values()].forEach((callback) => callback());
+            readinessTimers.clear();
         },
         resolveConfirm: (val) => {
             const r = confirmResolve;
@@ -359,15 +371,44 @@ describe('Cykl życia iframe w routerze SPA', () => {
     });
 
     test('pełny dokument błędu pod prawidłowym adresem nie jest gotowym modułem', async () => {
-        const { context, state, setNextIframeMode, elements } = runContext();
+        const { context, state, setNextIframeMode, runPendingTimers, elements } = runContext();
         await bootOnRury(context, state);
         setNextIframeMode('error-document');
         state.hash = '#/studnie';
-        await context.window.SpaRouter.navigate();
+        const pendingNavigation = context.window.SpaRouter.navigate();
+        runPendingTimers();
+        await pendingNavigation;
 
         expect(elements.get('spa-app-rury').classList.contains('active')).toBe(true);
         expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(true);
     });
+
+    test.each(['rury', 'studnie', 'kartoteka', 'zlecenia', 'cennik', 'pulpit'])(
+        'czeka na gotowość modułu %s po zdarzeniu load',
+        async (module) => {
+            const {
+                context,
+                state,
+                setNextIframeMode,
+                runReadinessTimers,
+                createdIframes,
+                elements
+            } = runContext();
+            if (module !== 'rury') await bootOnRury(context, state);
+            if (module === 'cennik') context.window.currentUser = { role: 'admin' };
+            setNextIframeMode('delayed-ready');
+            state.hash = `#/${module}`;
+            const pendingNavigation = context.window.SpaRouter.navigate();
+            const iframe = createdIframes[createdIframes.length - 1];
+
+            iframe.contentDocument.documentElement.classList.add('is-loaded');
+            runReadinessTimers();
+            await pendingNavigation;
+
+            expect(elements.get(`spa-app-${module}`).classList.contains('active')).toBe(true);
+            expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(false);
+        }
+    );
 
     test('ponowienie ponownie ładuje nieudany iframe i otwiera moduł po sukcesie', async () => {
         const { context, state, setNextIframeMode, runPendingTimers, createdIframes, elements } =

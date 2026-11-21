@@ -474,58 +474,77 @@
             expectedParams.sort();
             if (actualParams.toString() !== expectedParams.toString())
                 return { ok: false, reason: 'document' };
-            if (
-                frameDocument?.readyState !== 'complete' ||
-                !frameDocument.documentElement ||
-                !frameDocument.body
-            )
-                return { ok: false, reason: 'document' };
+            if (!frameDocument.documentElement) return { ok: false, reason: 'document' };
+            if (frameDocument.readyState !== 'complete' || !frameDocument.body)
+                return { ok: false, reason: 'pending' };
             const module = iframe.id.replace('spa-iframe-', '');
             const hasReadyMarker =
                 module === 'cennik'
                     ? frameDocument.querySelector('#section-cennik')
                     : frameDocument.documentElement.classList?.contains('is-loaded');
-            if (!hasReadyMarker) return { ok: false, reason: 'document' };
+            if (!hasReadyMarker) return { ok: false, reason: 'pending' };
             return { ok: true, reason: '' };
         } catch (_e) {
             return { ok: false, reason: 'document' };
         }
     }
 
-    function waitForIframeReady(iframe, timeout = 1200) {
+    function waitForIframeDocument(iframe, expectedSrc, timeout, waitForNextLoad) {
         return new Promise((resolve) => {
             let done = false;
-            const timeoutTimer = { id: undefined };
+            const timers = { timeout: undefined, readiness: undefined };
             const finish = (result) => {
                 if (done) return;
                 done = true;
-                window.clearTimeout(timeoutTimer.id);
+                window.clearTimeout(timers.timeout);
+                window.clearTimeout(timers.readiness);
                 iframe.removeEventListener('load', onLoad);
                 iframe.removeEventListener('error', onError);
                 resolve(result);
             };
-            const onLoad = () => {
-                const result = inspectIframeDocument(iframe);
-                finish(result.ok ? result : { ok: false, reason: 'document' });
+            const checkReadiness = () => {
+                if (done) return;
+                const result = inspectIframeDocument(iframe, expectedSrc);
+                if (result.ok) {
+                    finish(result);
+                    return;
+                }
+                if (result.reason === 'pending') {
+                    timers.readiness = window.setTimeout(checkReadiness, 50);
+                    return;
+                }
+                if (result.reason !== 'blank') finish(result);
             };
+            const onLoad = () => checkReadiness();
             const onError = () => finish({ ok: false, reason: 'load' });
 
-            const current = inspectIframeDocument(iframe);
+            iframe.addEventListener('load', onLoad);
+            iframe.addEventListener('error', onError);
+            timers.timeout = window.setTimeout(
+                () => finish({ ok: false, reason: 'timeout' }),
+                timeout
+            );
+            const current = inspectIframeDocument(iframe, expectedSrc);
+            if (waitForNextLoad) {
+                if (current.ok) window.setTimeout(() => finish(current), 16);
+                else if (current.reason === 'pending') checkReadiness();
+                return;
+            }
             if (current.ok) {
                 window.setTimeout(() => finish(current), 16);
                 return;
             }
-            if (current.reason !== 'blank' && iframe.contentDocument?.readyState === 'complete') {
-                finish(current);
+            if (current.reason === 'pending') {
+                checkReadiness();
                 return;
             }
-            iframe.addEventListener('load', onLoad);
-            iframe.addEventListener('error', onError);
-            timeoutTimer.id = window.setTimeout(
-                () => finish({ ok: false, reason: 'timeout' }),
-                timeout
-            );
+            if (current.reason !== 'blank' && iframe.contentDocument?.readyState === 'complete')
+                finish(current);
         });
+    }
+
+    function waitForIframeReady(iframe, timeout = 4500) {
+        return waitForIframeDocument(iframe, iframe.src, timeout, false);
     }
 
     /** Deep-link odporny na spóźnione skrypty modułu (timeout load ≠ gotowość API). */
@@ -548,35 +567,8 @@
         });
     }
 
-    function waitForNextIframeLoad(iframe, timeout = 1800, expectedSrc = iframe.src) {
-        return new Promise((resolve) => {
-            let done = false;
-            const timeoutTimer = { id: undefined };
-            const finish = (result) => {
-                if (done) return;
-                done = true;
-                window.clearTimeout(timeoutTimer.id);
-                iframe.removeEventListener('load', onLoad);
-                iframe.removeEventListener('error', onError);
-                resolve(result);
-            };
-            const onLoad = () => {
-                const result = inspectIframeDocument(iframe, expectedSrc);
-                finish(result.ok ? result : { ok: false, reason: 'document' });
-            };
-            const onError = () => finish({ ok: false, reason: 'load' });
-            const current = inspectIframeDocument(iframe, expectedSrc);
-            if (current.ok) {
-                window.setTimeout(() => finish(current), 16);
-                return;
-            }
-            iframe.addEventListener('load', onLoad);
-            iframe.addEventListener('error', onError);
-            timeoutTimer.id = window.setTimeout(
-                () => finish({ ok: false, reason: 'timeout' }),
-                timeout
-            );
-        });
+    function waitForNextIframeLoad(iframe, timeout = 4500, expectedSrc = iframe.src) {
+        return waitForIframeDocument(iframe, expectedSrc, timeout, true);
     }
 
     function showNavigationFailure(token, targetHash, returnHash, reason, iframe, restoreSrc) {
@@ -868,7 +860,7 @@
         if (needsReload || isRestoringIframe || isRetryingIframe) {
             const newSrc = _buildModuleSrc(module, params) + '&_ts=' + Date.now();
             const expectedSrc = needsReload ? newSrc : iframe.src;
-            readyPromise = waitForNextIframeLoad(iframe, 1800, expectedSrc);
+            readyPromise = waitForNextIframeLoad(iframe, 4500, expectedSrc);
             if (needsReload) iframe.src = newSrc;
         } else {
             readyPromise = waitForIframeReady(iframe);
