@@ -25,6 +25,60 @@ describe('powiązane numery PZ na wydrukach', () => {
         siblingCrossReferences: 'Kręgi: K/00002/26 <script>'
     };
 
+    it('wydruk zlecenia pokazuje magazyn zapisany w PZ, a dla starszych danych używa Kluczborka', () => {
+        const editorContext: any = {
+            window: {},
+            buildPrzejsciaRows: () => [],
+            ensureDisplayIndices: () => {},
+            getPowlokaString: () => 'Brak',
+            paramLabel: (value: string) => value || '',
+            generateWellSvg: () => '',
+            escapeHtml,
+            renderTemplate: (_template: string, payload: any) => payload.MAGAZYN
+        };
+        vm.createContext(editorContext);
+        vm.runInContext(read('public/js/studnie/printManager.js'), editorContext);
+
+        const editorData = {
+            ...savedPz,
+            magazyn: 'Włocławek',
+            isSavedProductionOrder: true,
+            well: { dn: savedPz.dn, przejscia: [] },
+            product: { componentType: 'dennica' }
+        };
+        expect(editorContext.buildZlecenieHtml('{{MAGAZYN}}', editorData)).toBe('Włocławek');
+        expect(
+            editorContext.buildZlecenieHtml('{{MAGAZYN}}', { ...editorData, magazyn: '<script>' })
+        ).toBe('&lt;script&gt;');
+
+        const catalogContext: any = {
+            window: { escapeHtml },
+            buildPrzejsciaRowsFromPO: () => [],
+            ensureDisplayIndices: () => {},
+            getPowloka: () => 'Brak',
+            paramLabel: (value: string) => value || '',
+            generateSvgFromPO: () => '',
+            renderTemplate: (_template: string, payload: any) => payload.MAGAZYN
+        };
+        vm.createContext(catalogContext);
+        vm.runInContext(read('public/js/spa/zleceniaHelpers.js'), catalogContext);
+
+        expect(catalogContext.buildZlecenieFromPO('{{MAGAZYN}}', editorData)).toBe('Włocławek');
+        expect(catalogContext.buildZlecenieFromPageBlock('{{MAGAZYN}}', editorData)).toBe(
+            'Włocławek'
+        );
+        expect(
+            catalogContext.buildZlecenieFromPO('{{MAGAZYN}}', {
+                ...editorData,
+                magazyn: '<script>'
+            })
+        ).toBe('&lt;script&gt;');
+        expect(
+            catalogContext.buildZlecenieFromPO('{{MAGAZYN}}', { ...editorData, magazyn: undefined })
+        ).toBe('Kluczbork');
+        expect(read('public/templates/zlecenie.html')).toContain('{{MAGAZYN}}');
+    });
+
     it('wydruk z edytora dopisuje powiązania ze świeżo pobranego PZ', () => {
         const context: any = {
             window: {},

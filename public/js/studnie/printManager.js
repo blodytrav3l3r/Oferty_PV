@@ -798,6 +798,7 @@ function buildZlecenieHtml(template, data) {
     // Zbudowanie dużego płaskiego obiektu z wartościami dla {{ZMIENNYCH}}
     const payload = {
         NR_ZLECENIA: data.productionOrderNumber || '',
+        MAGAZYN: escapeHtml(data.magazyn || 'Kluczbork'),
         OBIEKT: data.obiekt || '',
         ADRES: data.adres || '',
         WYKONAWCA: data.wykonawca || '',

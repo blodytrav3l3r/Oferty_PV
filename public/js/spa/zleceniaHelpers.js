@@ -416,6 +416,7 @@ function buildZleceniePayload(po) {
 
     const payload = {
         NR_ZLECENIA: po.productionOrderNumber || '',
+        MAGAZYN: window.escapeHtml(po.magazyn || 'Kluczbork'),
         OBIEKT: po.obiekt || '',
         ADRES: po.adres || '',
         WYKONAWCA: po.wykonawca || '',
