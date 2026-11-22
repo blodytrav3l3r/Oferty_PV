@@ -82,6 +82,28 @@ function stripWellRuntimeFields(wellsArr) {
 }
 
 /**
+ * Offer snapshots contain only product-bearing wells. Existing order-linked
+ * legacy positions stay in the payload until their link is explicitly removed.
+ * @param {Array} wellsArr
+ * @returns {Array}
+ */
+function _wellsForOfferSave(wellsArr) {
+    if (!Array.isArray(wellsArr)) return [];
+    const getProductById =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById
+            : (productId) =>
+                  typeof studnieProducts !== 'undefined'
+                      ? studnieProducts.find((product) => product.id === productId)
+                      : null;
+
+    return wellsArr.filter((well, index) => {
+        if (isWellProductBearing(well, getProductById)) return true;
+        return typeof isWellLocked === 'function' && isWellLocked(index);
+    });
+}
+
+/**
  * F2.5: czy dla bieżącej oferty istnieje zapisany draft. Komunikaty „zmiany
  * zachowane w drafcie" są prawdziwe tylko wtedy; dla ofert >4 MB (cap
  * `DRAFT_MAX_BYTES`) draftu nie ma i użytkownik musi wiedzieć, że grozi utrata.
@@ -142,12 +164,13 @@ async function saveOfferStudnie() {
 
     // Bramy zapisu przed pytaniem o opiekuna: pusta oferta i błędne przejścia
     // nie mogą otwierać wyboru opiekuna dla dokumentu, którego nie da się zapisać.
-    if (!wells || wells.length === 0) {
+    const offerWells = _wellsForOfferSave(wells);
+    if (offerWells.length === 0) {
         showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
         return false;
     }
     if (typeof validatePrzejsciaForSave === 'function') {
-        const v = validatePrzejsciaForSave(wells);
+        const v = validatePrzejsciaForSave(offerWells);
         if (!v.valid) {
             if (typeof showPrzejsciaValidationPopup === 'function')
                 showPrzejsciaValidationPopup(v.errors);
@@ -197,7 +220,7 @@ async function saveOfferStudnie() {
         simpleId =
             editingOfferIdStudnie || (pendingStudnieOfferId ||= 'offer_studnie_' + Date.now());
         const pricing = calculateOfferPricing(
-            wells,
+            offerWells,
             fields.transportKm,
             fields.transportRate,
             currentTransportMode
@@ -216,7 +239,7 @@ async function saveOfferStudnie() {
         });
 
         const offerDoc = Object.assign({}, base, {
-            wells: structuredClone(wells),
+            wells: structuredClone(offerWells),
             wellsExport: pricing.wellsForExport,
             visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
             customPrzejsciaTypes: structuredClone(customPrzejsciaTypes),

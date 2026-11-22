@@ -85,6 +85,7 @@ const mockOfferStudnie = {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
 };
+const validWellPayload = [{ id: 'w-valid', config: [{ productId: 'ring' }] }];
 
 function createApp() {
     const app = express();
@@ -128,7 +129,8 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
                             organizationUnit: 'WL_WLOCLAWEK',
                             generateOfferNumber: true,
                             number: 'OS/000001/WL/2026',
-                            status: 'draft'
+                            status: 'draft',
+                            wells: validWellPayload
                         }
                     ]
                 });
@@ -146,7 +148,16 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
 
             const res = await request(app)
                 .post('/api/offers/studnie')
-                .send({ data: [{ id: 's-new', clientName: 'ACME', status: 'draft' }] });
+                .send({
+                    data: [
+                        {
+                            id: 's-new',
+                            clientName: 'ACME',
+                            status: 'draft',
+                            wells: validWellPayload
+                        }
+                    ]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
@@ -159,13 +170,98 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(auditCall[6]).toBeDefined();
         });
 
+        it('odrzuca nową pozycję studni z pustą konfiguracją', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({
+                    data: [
+                        {
+                            id: 's-empty',
+                            clientId: 'client-1',
+                            status: 'draft',
+                            wells: [{ id: 'w-empty', config: [], przejscia: [] }]
+                        }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('EMPTY_WELL_POSITION');
+            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
+        });
+
+        it('odrzuca konfigurację bez produktu o dodatniej ilości', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({
+                    data: [
+                        {
+                            id: 's-zero-quantity',
+                            clientId: 'client-1',
+                            status: 'draft',
+                            wells: [
+                                {
+                                    id: 'w-zero-quantity',
+                                    config: [{ productId: 'ring', quantity: 0 }],
+                                    przejscia: []
+                                }
+                            ]
+                        }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('EMPTY_WELL_POSITION');
+            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
+        });
+
+        it('odrzuca nową ofertę bez pola wells', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({ data: [{ id: 's-no-wells', clientId: 'client-1', status: 'draft' }] });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('EMPTY_WELL_POSITION');
+            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
+        });
+
+        it('odrzuca nową ofertę z pustą tablicą wells', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({
+                    data: [
+                        { id: 's-empty-wells', clientId: 'client-1', status: 'draft', wells: [] }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('EMPTY_WELL_POSITION');
+            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
+        });
+
         it('brak numeru → NULL w DB (nie pusty string)', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .post('/api/offers/studnie')
-                .send({ data: [{ id: 's-no-number', clientName: 'ACME', status: 'draft' }] });
+                .send({
+                    data: [
+                        {
+                            id: 's-no-number',
+                            clientName: 'ACME',
+                            status: 'draft',
+                            wells: validWellPayload
+                        }
+                    ]
+                });
 
             expect(res.statusCode).toBe(200);
             expect(prisma.offers_studnie_rel.create).toHaveBeenCalledWith({
@@ -182,7 +278,15 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             const res = await request(app)
                 .post('/api/offers/studnie')
                 .send({
-                    data: [{ id: 's-race', number: 'S-RACE', clientName: 'ACME', status: 'draft' }]
+                    data: [
+                        {
+                            id: 's-race',
+                            number: 'S-RACE',
+                            clientName: 'ACME',
+                            status: 'draft',
+                            wells: validWellPayload
+                        }
+                    ]
                 });
 
             expect(res.statusCode).toBe(409);
@@ -338,7 +442,45 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(updateCall.data.totalPrice).toBe(500);
         });
 
-        it('jawne wells: [] kasuje studnie (zamierzony zapis)', async () => {
+        it('odrzuca dodaną pustą pozycję w istniejącej ofercie', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 's-1',
+                    userId: 'user-id',
+                    data: JSON.stringify({
+                        wells: [{ id: 'w-existing', config: [{ productId: 'ring' }] }]
+                    }),
+                    wellCount: 1,
+                    totalPrice: 500,
+                    version: 1,
+                    history: '[]',
+                    state: 'draft',
+                    createdAt: '2026-01-01T00:00:00.000Z',
+                    updatedAt: '2026-01-02T00:00:00.000Z'
+                }
+            ]);
+
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .send({
+                    data: [
+                        {
+                            id: 's-1',
+                            state: 'draft',
+                            wells: [
+                                { id: 'w-existing', config: [{ productId: 'ring' }] },
+                                { id: 'w-empty', config: [] }
+                            ]
+                        }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('EMPTY_WELL_POSITION');
+            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
+        });
+
+        it('odrzuca jawne wells: [] w aktualizacji istniejącej oferty', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
                 {
                     id: 's-1',
@@ -355,9 +497,21 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
                 .put('/api/offers/studnie')
                 .send({ data: [{ id: 's-1', state: 'draft', wells: [] }] });
 
-            expect(res.statusCode).toBe(200);
-            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
-            expect(updateCall.data.wellCount).toBe(0);
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('EMPTY_WELL_POSITION');
+            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
+        });
+
+        it('odrzuca nowy dokument PUT bez pola wells', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .send({ data: [{ state: 'draft' }] });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.code).toBe('EMPTY_WELL_POSITION');
+            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
         });
 
         it('PUT dopisuje history, updatedAt i audit w tx', async () => {

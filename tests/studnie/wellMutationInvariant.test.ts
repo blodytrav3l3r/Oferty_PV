@@ -14,6 +14,8 @@ describe('well mutation invariant 10k — filteredIndexes/Map/logicalRow/DOM/sel
             _excelMaxTransitions: { '1000': 1 },
             wellDiscounts: {},
             orderEditMode: null,
+            getStudnieProductById: (id: string) =>
+                id === 'base' ? { id, componentType: 'dennica' } : null,
             searchTerm: '',
             console,
             logger: { warn() {}, error() {} },
@@ -74,7 +76,7 @@ describe('well mutation invariant 10k — filteredIndexes/Map/logicalRow/DOM/sel
         };
         context.window = context;
         vm.createContext(context);
-        for (const f of ['globals.js', 'wellUI.js', 'wellVirtual.js']) {
+        for (const f of ['globals.js', 'wellUIHelpers.js', 'wellUI.js', 'wellVirtual.js']) {
             const code = fs.readFileSync(path.join(base, f), 'utf8');
             try {
                 vm.runInContext(code, context);
@@ -122,7 +124,13 @@ describe('well mutation invariant 10k — filteredIndexes/Map/logicalRow/DOM/sel
         ctx.wells = [];
         for (let i = 0; i < 1000; i++) {
             const dn = i % 3 === 0 ? '1200' : '1000';
-            ctx.wells.push({ id: 'well-' + i, name: 'Ss' + i, dn, config: [], przejscia: [] });
+            ctx.wells.push({
+                id: 'well-' + i,
+                name: 'Ss' + i,
+                dn,
+                config: [{ productId: 'base' }],
+                przejscia: []
+            });
         }
         if (typeof ctx._rebuildWellsById === 'function') ctx._rebuildWellsById();
         ctx._wellVirtualBuildFiltered();
@@ -138,7 +146,13 @@ describe('well mutation invariant 10k — filteredIndexes/Map/logicalRow/DOM/sel
         assertInvariant('after edit');
 
         // add row
-        ctx.wells.push({ id: 'well-new', name: 'Ss-new', dn: '1000', config: [], przejscia: [] });
+        ctx.wells.push({
+            id: 'well-new',
+            name: 'Ss-new',
+            dn: '1000',
+            config: [{ productId: 'base' }],
+            przejscia: []
+        });
         if (typeof ctx._rebuildWellsById === 'function') ctx._rebuildWellsById();
         ctx._wellVirtualBuildFiltered();
         expect(ctx.wells.length).toBe(1001);

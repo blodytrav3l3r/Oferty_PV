@@ -66,8 +66,17 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
     let runningTotalWeight = 0;
     const dnGroups = {};
 
+    const getProductById =
+        typeof getStudnieProductById === 'function' ? getStudnieProductById : () => null;
     const sortedWells = wells
         .map((well, originalIndex) => ({ well, originalIndex }))
+        .filter(({ well, originalIndex }) => {
+            if (typeof isWellProductBearing !== 'function') return true;
+            return (
+                isWellProductBearing(well, getProductById) ||
+                (typeof isWellLocked === 'function' && isWellLocked(originalIndex))
+            );
+        })
         .sort((a, b) => {
             const dnA = a.well.dn === 'styczna' ? Infinity : parseInt(a.well.dn) || 0;
             const dnB = b.well.dn === 'styczna' ? Infinity : parseInt(b.well.dn) || 0;
@@ -280,7 +289,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         };
     }
     html += renderOfferSummaryFooter(
-        wells.length,
+        sortedWells.length,
         runningTotalWeight,
         runningTotalPrice,
         showOrderSelection,

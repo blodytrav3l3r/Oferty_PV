@@ -134,9 +134,21 @@ function _wellVirtualBuildFiltered() {
         : '';
     const tmp = [];
     const order = { 1000: 0, 1200: 1, 1500: 2, 2000: 3, 2500: 4, styczna: 5 };
+    const productLookup =
+        typeof getStudnieProductById === 'function' ? getStudnieProductById : () => null;
+    const isProductBearing =
+        typeof isWellProductBearing === 'function'
+            ? (well) => isWellProductBearing(well, productLookup)
+            : () => true;
     for (let i = 0; i < wells.length; i++) {
         const w = wells[i];
         if (!w) continue;
+        if (
+            !isProductBearing(w) &&
+            !(typeof isWellLocked === 'function' && isWellLocked(i)) &&
+            !isWellLinkedToActiveOrder(w)
+        )
+            continue;
         if (
             q &&
             String(w.name || '')
@@ -279,7 +291,7 @@ function _wellVirtualPatchSearch() {
                 _wellVirtualBuildFiltered();
                 _wellVirtualRenderBody();
                 const counter = document.getElementById('wells-counter');
-                if (counter) counter.textContent = '(' + wells.length + ')';
+                if (counter) counter.textContent = '(' + _wellVirtualTotal + ')';
             }, 150);
         });
         searchEl._wellVirtualPatched = true;
@@ -377,7 +389,7 @@ function _wellVirtualRenderBody() {
 
     if (_wellVirtualTotal === 0) {
         container.innerHTML =
-            '<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: var(--fs-lg);">Brak dodanych studni.<br>Wybierz średnicę z przycisków powyżej.</div>';
+            '<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: var(--fs-lg);">Brak skonfigurowanych studni.<br>Wybierz elementy powyżej.</div>';
         return;
     }
 
@@ -522,7 +534,7 @@ function _wellVirtualRenderBody() {
         _wellVirtualAttach();
         _wellVirtualRenderBody();
         const counter = document.getElementById('wells-counter');
-        if (counter) counter.textContent = '(' + wells.length + ')';
+        if (counter) counter.textContent = '(' + _wellVirtualTotal + ')';
         // F3: panel rabatów za overlayem Excela niewidoczny (sidebar pod modalem) —
         // skip paint + wspólna flaga _excelListStale, flush przy close
         // (_excelCloseOverlay → renderWellsList, closeExcelTableModal → refreshAll).

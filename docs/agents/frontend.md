@@ -58,6 +58,7 @@ Jedyne źródło prawdy: `docs/UI_GUIDELINES.md`. Kluczowe reguły:
 - Layout: trójkolumnowy grid (diagram | konfigurator | lista) z `clamp()` + `minmax(0, 1fr)`.
 - Fokus po dodaniu przejścia: pole RZĘDNEJ (`inl-rzedna-*`), nie kąt — nie zmieniaj (feature `14907d3`/`7589ca5`).
 - Blokada PZ: usuwanie oferty/zamówienia z PZ (`production_orders_rel`, `draft`/`accepted`) blokuje backend 403 (`src/utils/productionOrderGuard.ts`) + pre-checki `public/js/studnie/pzGuard.js` (`hasPzForOffer`, `hasPzForOrder`, `hasPzForWell`). Usuwanie elementu studni blokuje wyłącznie PZ `accepted` (`hasPzForElementAtOrAfter`) — szkic nie zamyka edycji konfiguracji. Popup po polsku, `showToast` z `<i data-lucide="x-circle"></i>`. Rury nie mają PZ.
+- Pusta pozycja nie jest pełną studnią: do oferty/PZ wymaga co najmniej jednego produktu z dodatnią ilością w konfiguracji; same przejścia nie wystarczą. Pusty szkic pozostaje aktywny w edytorze, lecz znika z listy i podsumowania, nie wchodzi do wyceny, zapisu ani nowego PZ. Nie zmieniaj indeksów `wells[]`/`data-widx`; pusta pozycja legacy powiązana z aktywnym PZ pozostaje widoczna i chroniona również podczas edycji tego PZ.
 
 ### Excel studni (reguły nienaruszalne)
 

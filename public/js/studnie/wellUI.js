@@ -229,13 +229,26 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
         .trim();
 
     let html = '';
+    let visibleWellsCount = 0;
     const dktCap = [1000, 1200, 1500, 2000, 2500, 'styczna'];
+    const productLookup =
+        typeof getStudnieProductById === 'function' ? getStudnieProductById : () => null;
+    const isProductBearing =
+        typeof isWellProductBearing === 'function'
+            ? (well) => isWellProductBearing(well, productLookup)
+            : () => true;
 
     // P4-P0: jedno grupowanie per render zamiast 6× map+filter po wells.
     const groups = new Map();
     for (let _gi = 0; _gi < wells.length; _gi++) {
         const _gw = wells[_gi];
         if (!_gw) continue;
+        if (
+            !isProductBearing(_gw) &&
+            !(typeof isWellLocked === 'function' && isWellLocked(_gi)) &&
+            !isWellLinkedToActiveOrder(_gw)
+        )
+            continue;
         if (
             searchTerm &&
             String(_gw.name || '')
@@ -249,6 +262,7 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
             groups.set(_gw.dn, _arr);
         }
         _arr.push({ w: _gw, i: _gi });
+        visibleWellsCount++;
     }
 
     // Oblicz mapę transportu dla wszystkich studni (proporcjonalnie do wagi)
@@ -278,8 +292,8 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
         });
     });
 
-    if (wells.length === 0) {
-        html = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: var(--fs-lg);">Brak dodanych studni.<br>Wybierz średnicę z przycisków powyżej.</div>`;
+    if (visibleWellsCount === 0) {
+        html = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: var(--fs-lg);">Brak skonfigurowanych studni.<br>Wybierz elementy powyżej.</div>`;
     }
 
     container.innerHTML = html;
@@ -288,11 +302,11 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
         window.lucide.createIcons({ root: container });
 
     const counter = document.getElementById('wells-counter');
-    if (counter) counter.textContent = `(${wells.length})`;
+    if (counter) counter.textContent = `(${visibleWellsCount})`;
 
     // perf: wyłącz blur/anim przy dużej liście (klasa w studnie.css) — bez zmiany layoutu
     try {
-        container.classList.toggle('wells-list--many', wells.length > 200);
+        container.classList.toggle('wells-list--many', visibleWellsCount > 200);
     } catch (_e) {}
     renderDiscountPanel();
     _wellStatsCache = null;

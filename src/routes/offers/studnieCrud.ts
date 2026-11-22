@@ -224,6 +224,70 @@ function extractWellsFromIncoming(o: Record<string, unknown>): Array<Record<stri
     return [];
 }
 
+function getIncomingWellsIfProvided(
+    offer: Record<string, unknown>
+): Array<Record<string, unknown>> | null {
+    if (Array.isArray(offer.wells)) return offer.wells as Array<Record<string, unknown>>;
+    const data = offer.data as Record<string, unknown> | undefined;
+    if (data && Array.isArray(data.wells)) return data.wells as Array<Record<string, unknown>>;
+    const nested = data?.data as Record<string, unknown> | undefined;
+    return nested && Array.isArray(nested.wells)
+        ? (nested.wells as Array<Record<string, unknown>>)
+        : null;
+}
+
+function hasWellConfiguration(well: Record<string, unknown>): boolean {
+    const config = Array.isArray(well.config)
+        ? well.config
+        : Array.isArray(well.components)
+          ? well.components
+          : [];
+    return config.some((item) => {
+        if (!item || typeof item !== 'object') return false;
+        const component = item as Record<string, unknown>;
+        if (typeof component.productId !== 'string' || !component.productId.trim()) return false;
+        const quantity = component.quantity;
+        return quantity === undefined || !Number.isFinite(Number(quantity)) || Number(quantity) > 0;
+    });
+}
+
+function hasUnpermittedEmptyWell(
+    incomingWells: Array<Record<string, unknown>>,
+    existingWells: Array<Record<string, unknown>>,
+    orderedWellIds: Set<string>
+): boolean {
+    return incomingWells.some((incomingWell) => {
+        if (hasWellConfiguration(incomingWell)) return false;
+        const wellId = typeof incomingWell.id === 'string' ? incomingWell.id : '';
+        if (!wellId || !orderedWellIds.has(wellId)) return true;
+
+        const existingWell = existingWells.find((well) => well.id === wellId);
+        if (!existingWell || hasWellConfiguration(existingWell)) return true;
+
+        // Legacy PZ snapshots may already reference an empty well. Permit only
+        // an unchanged empty configuration; the normal order lock below still
+        // rejects edits to its protected fields.
+        const normalizedExisting = {
+            ...existingWell,
+            config: Array.isArray(existingWell.config) ? existingWell.config : [],
+            przejscia: Array.isArray(existingWell.przejscia) ? existingWell.przejscia : []
+        };
+        const normalizedIncoming = {
+            ...incomingWell,
+            config: Array.isArray(incomingWell.config) ? incomingWell.config : [],
+            przejscia: Array.isArray(incomingWell.przejscia) ? incomingWell.przejscia : []
+        };
+        return !isWellDiffWhitelisted(normalizedExisting, normalizedIncoming);
+    });
+}
+
+function emptyWellPositionError() {
+    return {
+        error: 'Każda zapisywana pozycja studni musi zawierać co najmniej jeden element.',
+        code: 'EMPTY_WELL_POSITION'
+    };
+}
+
 /**
  * Kolumna totalPrice z kształtu incoming (create i PUT współdzielą).
  * FE (offerSave) niesie totalBrutto/totalNetto bez totalPrice — bez tego
@@ -811,6 +875,32 @@ router.post(
                     }
                 }
 
+                const incomingWellRows = getIncomingWellsIfProvided(o as Record<string, unknown>);
+                const rejectsMissingNewWells = !old && incomingWellRows === null;
+                const rejectsEmptyWellList =
+                    incomingWellRows !== null && incomingWellRows.length === 0;
+                if (
+                    rejectsMissingNewWells ||
+                    rejectsEmptyWellList ||
+                    (incomingWellRows !== null &&
+                        hasUnpermittedEmptyWell(
+                            incomingWellRows,
+                            old ? extractWellsFromOfferData(old.data) : [],
+                            orderedGuardMap.get(docId) || new Set<string>()
+                        ))
+                ) {
+                    const emptyPosition = emptyWellPositionError();
+                    if (idemKey)
+                        await completeIdempotencyKey(
+                            idemUser,
+                            idemEndpoint,
+                            idemKey,
+                            400,
+                            emptyPosition
+                        );
+                    return res.status(400).json(emptyPosition);
+                }
+
                 let auditAction: 'create' | 'update' = 'create';
                 let auditOld: Record<string, unknown> | null = null;
                 if (old) {
@@ -1156,6 +1246,24 @@ router.put(
                             }
                         }
                     }
+                }
+
+                const putIncomingWellRows = getIncomingWellsIfProvided(o);
+                const existingPutDoc = existingById.get(docId);
+                const rejectsMissingNewWells = !existingPutDoc && putIncomingWellRows === null;
+                const rejectsEmptyWellList =
+                    putIncomingWellRows !== null && putIncomingWellRows.length === 0;
+                if (
+                    rejectsMissingNewWells ||
+                    rejectsEmptyWellList ||
+                    (putIncomingWellRows !== null &&
+                        hasUnpermittedEmptyWell(
+                            putIncomingWellRows,
+                            existingPutDoc ? extractWellsFromOfferData(existingPutDoc.data) : [],
+                            orderedGuardMapPut.get(docId) || new Set<string>()
+                        ))
+                ) {
+                    return res.status(400).json(emptyWellPositionError());
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';

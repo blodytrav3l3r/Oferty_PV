@@ -15,6 +15,8 @@ describe('wellVirtual oracle — legacy vs virtual configurator', () => {
             _excelMaxTransitions: { '1000': 1 },
             wellDiscounts: {},
             orderEditMode: null,
+            getStudnieProductById: (id: string) =>
+                id === 'base' ? { id, componentType: 'dennica' } : null,
             searchTerm: '',
             console,
             logger: { warn() {}, error() {} },
@@ -64,7 +66,7 @@ describe('wellVirtual oracle — legacy vs virtual configurator', () => {
         };
         context.window = context;
         vm.createContext(context);
-        for (const f of ['globals.js', 'wellUI.js', 'wellVirtual.js']) {
+        for (const f of ['globals.js', 'wellUIHelpers.js', 'wellUI.js', 'wellVirtual.js']) {
             const code = fs.readFileSync(path.join(base, f), 'utf8');
             try {
                 vm.runInContext(code, context);
@@ -79,7 +81,13 @@ describe('wellVirtual oracle — legacy vs virtual configurator', () => {
         ctx.wells = [];
         for (let i = 0; i < 100; i++) {
             const dn = i < 50 ? '1000' : '1200';
-            ctx.wells.push({ id: 'well-' + i, name: 'Ss' + i, dn, config: [], przejscia: [] });
+            ctx.wells.push({
+                id: 'well-' + i,
+                name: 'Ss' + i,
+                dn,
+                config: [{ productId: 'base' }],
+                przejscia: []
+            });
         }
         ctx._wellVirtualBuildFiltered();
         expect(ctx._wellVirtualTotal).toBe(100);
@@ -91,7 +99,13 @@ describe('wellVirtual oracle — legacy vs virtual configurator', () => {
     test('virtual slice values match legacy for same wellIdx', () => {
         ctx.wells = [
             { id: 'well-0', name: 'Ss0', dn: '1000', config: [{ productId: 'a' }], przejscia: [] },
-            { id: 'well-1', name: 'Ss1', dn: '1000', config: [], przejscia: [] }
+            {
+                id: 'well-1',
+                name: 'Ss1',
+                dn: '1000',
+                config: [{ productId: 'base' }],
+                przejscia: []
+            }
         ];
         ctx._wellVirtualBuildFiltered();
         const html0 = ctx._wellVirtualCardHtml(ctx.wells[0], 0, 0);
@@ -109,7 +123,7 @@ describe('wellVirtual oracle — legacy vs virtual configurator', () => {
                 id: 'well-' + i,
                 name: 'Ss' + i,
                 dn: '1000',
-                config: [],
+                config: [{ productId: 'base' }],
                 przejscia: []
             });
         ctx._wellVirtualBuildFiltered();
@@ -158,7 +172,7 @@ describe('wellVirtual oracle — legacy vs virtual configurator', () => {
                 id: 'well-' + i,
                 name: 'Ss' + i,
                 dn: '1000',
-                config: [],
+                config: [{ productId: 'base' }],
                 przejscia: []
             });
         ctx._wellVirtualBuildFiltered();

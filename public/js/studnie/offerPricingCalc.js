@@ -3,7 +3,17 @@
 function calculateOfferTotals() {
     let globalWeight = 0;
     const _cs = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
-    wells.forEach((w) => (globalWeight += _cs(w).weight));
+    const getProductById =
+        typeof getStudnieProductById === 'function' ? getStudnieProductById : () => null;
+    wells.forEach((well, index) => {
+        const isProductBearing =
+            typeof isWellProductBearing !== 'function' ||
+            isWellProductBearing(well, getProductById);
+        const isProtectedLegacyPosition = typeof isWellLocked === 'function' && isWellLocked(index);
+        if (isProductBearing || isProtectedLegacyPosition) {
+            globalWeight += _cs(well).weight;
+        }
+    });
 
     const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;

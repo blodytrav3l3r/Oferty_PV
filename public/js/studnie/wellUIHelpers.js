@@ -3,6 +3,43 @@
 /* renderDiscountPanel — panel rabatów i podsumowania w sidebarze */
 /* Zależności: wells, wellDiscounts, calcWellStats, studnieProducts, fmtInt, updateDiscount, updateGlobalPehdDiscount, updateGlobalPaintingCost, getPehdEffectiveArea (globalne) */
 
+/**
+ * A well position is non-empty when its configuration contains a catalog product.
+ * Passages are separate data and do not make an otherwise empty well non-empty.
+ * @param {{config?: unknown[] | null} | null | undefined} well
+ * @param {(productId: string) => {componentType?: string} | null | undefined} getProductById
+ * @returns {boolean}
+ */
+// eslint-disable-next-line no-unused-vars -- shared by subsequent classic scripts without a window export
+function isWellProductBearing(well, getProductById) {
+    if (!well || !Array.isArray(well.config)) return false;
+
+    return well.config.some((item) => {
+        if (!item || typeof item !== 'object') return false;
+        const configItem = /** @type {Record<string, unknown>} */ (item);
+        if (
+            configItem.quantity !== undefined &&
+            Number.isFinite(Number(configItem.quantity)) &&
+            Number(configItem.quantity) <= 0
+        )
+            return false;
+        const productId = String(configItem.productId || '');
+        if (!productId) return false;
+        return typeof getProductById !== 'function' || !!getProductById(productId);
+    });
+}
+
+/** A legacy empty well included in the active production order must stay visible. */
+// eslint-disable-next-line no-unused-vars -- shared by subsequent classic scripts without a window export
+function isWellLinkedToActiveOrder(well) {
+    if (!well || typeof orderEditMode === 'undefined' || !orderEditMode?.order) return false;
+    const orderWells = orderEditMode.order.wells;
+    return (
+        Array.isArray(orderWells) &&
+        orderWells.some((orderWell) => orderWell?.id && orderWell.id === well.id)
+    );
+}
+
 // Cache dla orderChanges — ten sam w ofercie i zamówieniu, liczony raz na tick
 let _orderChangesCache = null;
 let _orderChangesCacheWells = null;

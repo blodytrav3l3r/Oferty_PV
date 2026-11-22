@@ -181,3 +181,24 @@
 - **Tests:** `tests/pricelistActiveSource.test.ts`,
   `tests/offersPricelistStamp.test.ts`, `tests/productsV2.test.ts`,
   `tests/frontend/pricelistActiveSource.test.ts`.
+
+## I-015 — Zapisana pozycja studni zawiera produkt
+
+- **Invariant:** pozycja w ofercie i nowym PZ wymaga co najmniej jednego
+  produktu z dodatnią ilością w konfiguracji. Same przejścia nie tworzą pozycji.
+  Pusty szkic może istnieć w aktywnym edytorze, ale nie trafia do listy ani zapisu.
+  Pusta pozycja legacy powiązana z PZ pozostaje widoczna i zablokowana do czasu
+  jawnego rozwiązania powiązania.
+- **Owner:** frontend Studnie (`wellUIHelpers.js`, `offerSave.js`, `orderCrud.js`)
+    - backend (`offers/studnieCrud.ts`).
+- **Enforcement:** wspólny predykat frontendowy steruje listą, podsumowaniem,
+  wyceną, zapisem i selekcją do nowego PZ; backend odrzuca nowe lub zmieniane
+  pozycje bez identyfikatora produktu lub z nie-dodatnią ilością. Nie zmienia indeksów `wells[]` ani
+  `data-widx` Excela. Niezmieniona pusta pozycja legacy powiązana z PZ jest
+  dozwolona wyłącznie jako wyjątek kompatybilności.
+- **Tests:** `tests/studnie/wellEligibility.test.ts`,
+  `tests/studnie/wellListEligibility.test.ts`,
+  `tests/studnie/offerSaveGuards.test.ts`,
+  `tests/studnie/orderSelectionExcludesEmptyWells.test.ts`,
+  `tests/studnie/emptyWellSummary.test.ts`,
+  `tests/offers/studnieCrud.test.ts`.

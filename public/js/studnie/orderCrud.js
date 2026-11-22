@@ -54,12 +54,15 @@ async function createOrderFromOffer() {
             return;
         }
 
+        const orderableWells = wells.filter((well) =>
+            isWellProductBearing(well, getStudnieProductById)
+        );
         let selectedWells;
         const existingCheckboxes = document.querySelectorAll('.well-order-checkbox');
         if (existingCheckboxes.length > 0) {
             selectedWells = collectSelectedWellsForOrder();
         } else {
-            selectedWells = [...wells];
+            selectedWells = orderableWells;
         }
         if (selectedWells.length === 0) {
             showToast('Zaznacz co najmniej jedną studnię do zamówienia', 'error');
@@ -129,9 +132,9 @@ async function createOrderFromOffer() {
         }
 
         const confirmMsg =
-            selectedWells.length === wells.length
+            selectedWells.length === orderableWells.length
                 ? `Utworzysz zamówienie na WSZYSTKIE ${selectedWells.length} studni z oferty.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\n\nKontynuować?`
-                : `Utworzysz zamówienie na ${selectedWells.length} z ${wells.length} studni.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\nPozostałe studnie będziesz mógł domówić później.\n\nKontynuować?`;
+                : `Utworzysz zamówienie na ${selectedWells.length} z ${orderableWells.length} studni.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\nPozostałe studnie będziesz mógł domówić później.\n\nKontynuować?`;
 
         if (
             !(await appConfirm(confirmMsg, {
@@ -496,7 +499,7 @@ function collectSelectedWellsForOrder() {
     const selectedWells = [];
     checkboxes.forEach((cb) => {
         const idx = parseInt(cb.dataset.wellIndex, 10);
-        if (!isNaN(idx) && wells[idx]) {
+        if (!isNaN(idx) && wells[idx] && isWellProductBearing(wells[idx], getStudnieProductById)) {
             selectedWells.push(wells[idx]);
         }
     });
