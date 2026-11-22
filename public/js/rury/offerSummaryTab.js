@@ -321,7 +321,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
                 relatedOrders.length > 0
                     ? buildOpenOrderButton(
                           relatedOrders,
-                          '<i data-lucide="external-link" aria-hidden="true"></i>',
+                          '<i data-lucide="arrow-right" aria-hidden="true"></i>',
                           'btn-icon btn-icon-sm offer-summary-order-link'
                       )
                     : '';
