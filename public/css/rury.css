@@ -14,6 +14,10 @@ body.rury-page > .main:has(#section-builder.active) {
     padding-right: 0;
 }
 
+body.rury-page #order-mode-banner {
+    margin: 0.75rem 0.75rem 0.5rem;
+}
+
 /* ── Karty ── */
 .rury-card {
     background: var(--bg-card);
@@ -733,11 +737,24 @@ html[data-theme='light'] .pehd-badge {
 #wizard-step-5 {
     padding-bottom: calc(var(--bottom-bar-h) * 2 + 100px + env(safe-area-inset-bottom, 0px));
 }
+
+#wizard-step-5 > .card {
+    margin: 0.5rem 0.75rem 1rem;
+}
+
 @media (max-width: 768px) {
     #wizard-step-5 {
         padding-bottom: calc(
             var(--bottom-bar-h-mobile) * 2 + 100px + env(safe-area-inset-bottom, 0px)
         );
+    }
+
+    body.rury-page #order-mode-banner {
+        margin: 0.5rem;
+    }
+
+    #wizard-step-5 > .card {
+        margin: 0.35rem 0.5rem 0.75rem;
     }
 }
 
