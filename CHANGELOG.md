@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.22](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.21...v1.64.22) (2026-11-22)
+
+### Bug Fixes
+
+- **studnie:** ukrywaj puste pozycje studni ([cdfb340](https://github.com/blodytrav3l3r/Oferty_PV/commit/cdfb340bb9e0b0b54ed457d911d2cbe019aa7e6d))
+
 ### [1.64.21](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.20...v1.64.21) (2026-11-22)
 
 ### Bug Fixes

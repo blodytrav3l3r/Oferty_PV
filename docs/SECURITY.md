@@ -1,6 +1,6 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.64.21  
+**Wersja:** 1.64.22  
 **Ostatnia aktualizacja:** 2026-11-22 — przegląd wybranych opisów HTTPS, backupu i restore; nie jest to pełny audyt bezpieczeństwa.
 
 > Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
