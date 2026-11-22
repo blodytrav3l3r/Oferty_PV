@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.17](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.16...v1.64.17) (2026-11-22)
+
+### Bug Fixes
+
+- **ui:** popraw wczytywanie zakładki rur ([6a6e151](https://github.com/blodytrav3l3r/Oferty_PV/commit/6a6e151d64801e0f84db9763afe21afa8398f206))
+
 ### [1.64.16](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.14...v1.64.16) (2026-11-21)
 
 ### Features

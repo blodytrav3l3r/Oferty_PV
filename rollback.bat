@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.64.16
+REM  Wersja: 1.64.17
 REM ===========================================================
 REM  rollback.bat - Powrot do poprzedniej wersji (rdzen w rollback.mjs)
 REM  Przyklad: rollback.bat windows v1.15.1
