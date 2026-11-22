@@ -2,15 +2,17 @@
 
 **Docelowa architektura:** Node.js + Express + Prisma + PostgreSQL 18 + Vanilla JS SPA.
 
-**Status:** runtime S.O.K. używa PostgreSQL 18. Wydanie 1.56.4 przeszło lokalne
-bramki oraz testy na PostgreSQL 18.6; lokalnie potwierdzono readiness, aktywne
-cenniki i smoke backup/restore. Dokument opisuje wspieraną architekturę i
+**Status:** runtime S.O.K. używa PostgreSQL 18. Wyniki lokalne wydania 1.56.4
+na PostgreSQL 18.6 (readiness, aktywne cenniki i smoke backup/restore) są
+historycznym dowodem, nie wynikiem dla aktualnego HEAD. Dokument opisuje wspieraną architekturę i
 kontrolowany rollout. Produkcyjny cutover nie został wykonany; wymaga osobnego
 GO oraz walidacji docelowego hosta, backupu, sieci i procedury odzyskiwania.
 
-Instalator Windows został sprawdzony lokalnie na Docker Desktop. Czysta
-instalacja Linux na serwerze Ubuntu/Debian nie została jeszcze potwierdzona
-end-to-end; zweryfikuj ją na docelowym systemie przed produkcją.
+Aktualny checkout nie zawiera zapisu pozwalającego potwierdzić konfigurację
+lokalnego testu instalatora Windows na Docker Desktop. Testy kontraktu instalatora
+Linux w CI nie dowodzą pełnej instalacji na serwerze. Czysta instalacja Linux
+Ubuntu/Debian i gotowość docelowego hosta pozostają niepotwierdzone; sprawdź je
+przed produkcją.
 
 ## 1. Celowa topologia
 
@@ -77,7 +79,7 @@ Po zatwierdzeniu wdrożenia release przebiega w następującej kolejności:
 7. Dopiero po zielonych CI, testach migracji i backup/restore drill oraz osobnym
    GO na live przełącz ruch. Nie wykonuj dual-write.
 
-**Stan walidacji:** commit `2ef5d907` (1.56.4) przeszedł lokalne bramki
+**Historyczny stan walidacji:** commit `2ef5d907` (1.56.4) przeszedł lokalne bramki
 pre-push: wersja, kodowanie, licencje, collisions, ratchet i cenniki; backend i
 frontend lint/typecheck; 573 zestawy / 5 734 testy oraz 23 testy Git safety.
 Lokalna aplikacja PostgreSQL 18.6 zwraca `/health/ready` HTTP 200; import

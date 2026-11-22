@@ -4,7 +4,7 @@
 **Ostatnia aktualizacja:** 2026-11-06<br>
 **Stack:** Express + Prisma 7 + PostgreSQL 18 + VanillaJS SPA + ML Pipeline
 
-> **Status repozytorium (HEAD `5ab15ac0`, wydanie 1.56.5):** PostgreSQL 18 jest jedynym aktywnym providerem runtime. Udokumentowane lokalne wyniki pełnej walidacji PG18.6 i instalatora dotyczą wcześniejszego wydania 1.56.4. Nie są dowodem produkcyjnego cutoveru ani czystej instalacji Linux. Aktualny przegląd zależności SQLite i zakres weryfikacji opisuje [`documentation-audit.md`](documentation-audit.md).
+> **Snapshot architektury:** szczegóły opisano i zweryfikowano na HEAD `5ab15ac0` (2026-11-06); wskazane w treści linie i wyniki odnoszą się do tego punktu. Wydanie `1.56.4` oraz walidacja PG18.6 są historyczne i nie dowodzą stanu bieżącego, produkcyjnego cutoveru ani czystej instalacji Linux. Najnowszy ograniczony przegląd i otwarte luki opisuje [`documentation-audit.md`](documentation-audit.md); wersja aplikacji w nagłówku jest automatycznie propagowanym markerem, nie datą weryfikacji treści.
 
 ---
 

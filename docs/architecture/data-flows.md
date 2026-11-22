@@ -1,7 +1,8 @@
 # S.O.K. — architektura i przepływy danych
 
-- **Zweryfikowano:** 2026-11-06
+- **Snapshot zweryfikowany:** 2026-11-06
 - **HEAD:** `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`
+- **Aktualność:** opis i numery linii odnoszą się do powyższego SHA; przed decyzją o aktualnym runtime porównaj z bieżącym kodem. Wersja z markera release nie jest znacznikiem weryfikacji.
 - **Zakres:** diagramy na poziomie warstw i potwierdzonych przepływów. Nie są specyfikacją payloadów ani zamiennikiem implementacji.
 - **Legenda:** stan przepływu potwierdzony przez podane źródła; rozgałęzienia i szczegóły per feature należy czytać w kodzie.
 

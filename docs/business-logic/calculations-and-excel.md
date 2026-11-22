@@ -1,6 +1,6 @@
 # Kalkulacje ofert i Protected Zone Excela
 
-- **Stan kodu:** HEAD `5ab15ac0`
+- **Snapshot stanu kodu:** HEAD `5ab15ac0` (2026-11-06); nie traktuj jako weryfikacji bieżącego kodu.
 - **Data przeglądu:** 2026-11-06
 - **Zakres:** potwierdzone implementacją formuły Rury, Studnie/PRECO i transportu oraz chronione kontrakty tabeli Excel studni i importu/eksportu XLSX.
 - **Status QA:** audyt źródeł i istniejących testów; testów nie uruchamiano w ramach przygotowania dokumentu.

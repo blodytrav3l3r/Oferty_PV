@@ -5,9 +5,9 @@
 **ORM:** Prisma ORM 7
 
 **Status:** PostgreSQL 18 jest jedynym providerem runtime, development, CI i
-aktywnych testów. W wydaniu 1.56.4 migracje, Docker/Compose, instalatory,
-operacje backup/restore oraz import wyłącznie aktywnych cenników działają w
-ścieżce PostgreSQL.
+aktywnych testów. Szczegóły aktywnej konfiguracji opisują `prisma/schema.prisma`,
+`prisma.config.ts`, `docker-compose.yml` i aktualne skrypty. Poniższe liczby i
+wyniki są historyczną walidacją wydania 1.56.4, a nie bieżącym wynikiem testów.
 
 **Potwierdzona walidacja (2026-11-05):** lokalna instancja PostgreSQL 18.6,
 aplikacja `/health/ready` HTTP 200, `prices:verify` dla trzech aktywnych list
@@ -93,7 +93,10 @@ logach, dokumentacji ani argv widocznym dla innych procesów.
 Backup otrzymuje plik SHA-256; po weryfikacji archiwum skrypt próbuje zapisać marker
 ostatniej poprawnej kopii z czasem, nazwą, rozmiarem, sumą i statusem. Marker
 nie zapisuje wersji schematu; ustal ją osobno z metadanych i migracji przy
-kontroli odtworzenia. Retencję dobierz do wymagań RPO/RTO i potwierdź testem. Restore wykonuj najpierw
+kontroli odtworzenia. Implementacja `scripts/backup.ts` zachowuje maksymalnie
+jedną lokalną kopię, więc nie zapewnia historii wystarczającej do dowolnego
+RPO/RTO. Potrzebne archiwum poza tym mechanizmem skonfiguruj i monitoruj
+operacyjnie. Restore wykonuj najpierw
 do izolowanej bazy, sprawdź checksum, wersję/migracje, `prices:verify` oraz
 smoke aplikacji. Restore do live wymaga jawnej osobnej zgody.
 
@@ -101,8 +104,9 @@ smoke aplikacji. Restore do live wymaga jawnej osobnej zgody.
 `npm run restore` przyjmuje cel przez `RESTORE_DB_URL`, a narzędzia wspierają
 role/guards PostgreSQL. Live restore wymaga osobnej roli migracyjnej i po
 odtworzeniu ponownie stosuje granty dla runtime. Format archiwum, checksum,
-walidacja archiwum i retencja są zaimplementowane; lokalny smoke
-`pg_dump`/`pg_restore` na PostgreSQL 18 przeszedł. Przed produkcyjnym rolloutem
+kontrola listy TOC przez `pg_restore --list` i retencja są zaimplementowane;
+kontrola TOC nie odtwarza danych i nie jest restore drill. Lokalny smoke
+`pg_dump`/`pg_restore` opisany w starszym raporcie jest historyczny. Przed produkcyjnym rolloutem
 wymagany jest osobny restore drill do izolowanego celu, z oceną RPO/RTO.
 Wymagania bezpieczeństwa i kontrakty komend są w [`DEPLOYMENT.md`](DEPLOYMENT.md).
 

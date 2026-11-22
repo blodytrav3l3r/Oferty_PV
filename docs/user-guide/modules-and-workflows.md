@@ -4,7 +4,7 @@
 
 - **Status:** przewodnik oparty na kodzie UI, route’ach, dokumentacji i testach dostępnych na poprzednim HEAD; bieżąca zgodność modułów wymaga pełnej weryfikacji względem aktualnego UI/E2E.
 - **HEAD poprzedniej weryfikacji treści:** `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`.
-- **Data poprzedniej weryfikacji treści:** 2026-11-06. Przewodnik nie został ponownie zweryfikowany w całości na HEAD `fe8bbb3bcba36304e355d37051e4afb310c1f143`.
+- **Data poprzedniej weryfikacji treści:** 2026-11-06. Przewodnik nie został ponownie zweryfikowany w całości na HEAD `e582174efc6559917782b70f06c76764ee195170`; ostatni przegląd dokumentacji nie testował wszystkich ścieżek UI w przeglądarce.
 - **Klasyfikacja:** `FACT` — potwierdzone w kodzie/teście/dokumentacji; `INFERENCE` — wniosek z faktów; `UNKNOWN` — brak wystarczającego dowodu.
 - **Zakres:** sześć modułów SPA. Dokument nie zastępuje walidatorów, uprawnień backendu, zasad cenników ani procedur operacyjnych.
 

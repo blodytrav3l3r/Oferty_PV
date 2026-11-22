@@ -5,10 +5,11 @@ Tryb awaryjny bez TLS opisuje ADR-017 (`HTTPS_ENABLED=false`) — sekcja 3C.
 
 Zakres: konfiguracja serwera produkcyjnego. Nie zmienia logiki ofert, cen ani bazy.
 
-> **Status bazy danych:** wymaganym silnikiem jest PostgreSQL 18. Migracja aplikacji
-> i pełna weryfikacja CI/Compose trwają; poniższe kroki HTTPS nie oznaczają zgody
-> ani gotowości do produkcyjnego cutoveru. Przed wdrożeniem wymagane są zielone
-> bramki z `docs/DEPLOYMENT.md` i osobne GO na cutover.
+> **Status bazy danych:** wymaganym silnikiem jest PostgreSQL 18. Repozytorium
+> zawiera testy CI dla PostgreSQL i Docker/Compose, ale dokument nie potwierdza
+> ich bieżącego wyniku ani gotowości konkretnego serwera. Kroki HTTPS nie oznaczają
+> zgody na produkcyjny cutover. Przed wdrożeniem wymagane są aktualne bramki z
+> `docs/DEPLOYMENT.md`, backup/restore plan i osobne GO na cutover.
 
 ---
 

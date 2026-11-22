@@ -1,6 +1,8 @@
 # Dokumentacja S.O.K.
 
-**Nawigację zweryfikowano:** 2026-11-07 · **HEAD:** `fe8bbb3b` · **Wersja:** `1.56.6` · **Zakres:** sprawdzono lokalne cele linków i strukturę indeksu; aktualny status pokrycia opisuje [`documentation-audit.md`](documentation-audit.md).
+**Nawigację zweryfikowano:** 2026-11-22 · **HEAD:** `e582174e` · **Wersja:** `1.64.17` · **Zakres:** sprawdzono lokalne cele linków tego indeksu. Stan i ograniczenia przeglądu opisuje [`documentation-audit.md`](documentation-audit.md); to nie jest potwierdzenie pełnej aktualności każdego dokumentu.
+
+Wyniki audytu wybranych dokumentów operacyjnych z tego samego dnia są w [`documentation-audit.md`](documentation-audit.md). Modułowe indeksy: [przewodniki agentów](agents/README.md), [ADR](adr/README.md) i [plany](plans/README.md).
 
 ## Rozpoczęcie
 
@@ -17,7 +19,7 @@
 - [Mapa runtime, modułów i grup API](architecture/runtime-and-module-map.md)
 - [API](API.md) — endpointy i znane kontrakty.
 - [Kontrakty systemowe](SYSTEM_INVARIANTS.md)
-- [Decyzje architektoniczne](adr/)
+- [Decyzje architektoniczne](adr/README.md)
 - [Komponenty UI](COMPONENTS.md), [wytyczne UI](UI_GUIDELINES.md), [inwentarz projektu UI](design/frontend-inventory.md)
 
 ## Funkcje i reguły biznesowe
@@ -38,9 +40,9 @@
 - [Testy, PostgreSQL i CI](testing/postgres-install-ci-matrix.md)
 - [Procedury wdrożenia i aktualizacji](DEPLOYMENT.md), [HTTPS/reverse proxy](DEPLOY_HTTPS_IT.md)
 - [Znane błędy](errors-known.md), [proces wydania](RELEASE_PROCESS.md), [wersjonowanie](VERSIONING.md)
-- [Instrukcje agentów](agents/)
+- [Instrukcje agentów](agents/README.md)
 - [Audyt dokumentacji](documentation-audit.md) i [pełny inwentarz dopasowań SQLite dla HEAD 5ab15ac0](audits/SQLITE_REFERENCES_HEAD_5AB15AC0.md)
-- Pozostałe [audyty](audits/) i [plany](plans/)
+- Pozostałe [audyty](audits/) i [plany](plans/README.md)
 
 ## Status i ograniczenia
 

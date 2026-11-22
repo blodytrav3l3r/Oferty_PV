@@ -15,8 +15,10 @@ komend deployu i rollbacku opartych o kopiowanie lokalnego pliku ani `db push`.
 
 Po zatwierdzeniu konkretnego wdrożenia:
 
-1. Potwierdź zielone `npm run version:check`, `npm run validate`, `npm run format`
-   oraz workflow PostgreSQL 18 na dokładnym commicie.
+1. Zweryfikuj branch, commit i status repozytorium. Uruchom bramki wymagane dla
+   zmiany zgodnie z `AGENTS.md` oraz sprawdź zielone CI na dokładnym commicie.
+   `npm run validate` jest wymagane dla zmiany wysokiego ryzyka/wydania i przed
+   bezpośrednim pushem na `main`; pełny formatter nie jest krokiem każdej aktualizacji.
 2. Wykonaj PostgreSQL backup (`npm run backup`), sprawdź checksum i przeprowadź
    restore drill na izolowanym celu.
 3. Wdróż aplikację, zastosuj wyłącznie wersjonowane migracje przez

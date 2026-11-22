@@ -1,7 +1,7 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.64.17  
-**Ostatnia aktualizacja:** 2026-09-30
+**Ostatnia aktualizacja:** 2026-11-22 — przegląd wybranych opisów HTTPS, backupu i restore; nie jest to pełny audyt bezpieczeństwa.
 
 > Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
 
@@ -206,14 +206,17 @@ fragmentów z ikonami Lucide wywoływana jest inicjalizacja `lucide.createIcons(
 - Silnikiem runtime i instalacji jest PostgreSQL 18.
 - Narzędzia administracyjne PostgreSQL (`pg_dump`, `pg_restore`) otrzymują
   połączenie ze zmiennych środowiskowych; nie przekazuj URL ani haseł w argv
-  ani logach. Pełna weryfikacja narzędzi i runtime na PostgreSQL 18 trwa.
+  ani logach. Repozytorium zawiera testy tych ścieżek, ale dokument nie potwierdza
+  aktualnego wyniku CI ani produkcyjnej konfiguracji.
 
 ---
 
 ## 7. HTTPS
 
 **HTTPS jest docelowym środowiskiem aplikacji w produkcji.** TLS terminuje reverse proxy
-(Caddy/Nginx) — Node.js pozostaje serwerem HTTP i w produkcji binduje się do `127.0.0.1`.
+(Caddy/Nginx). W trybie natywnym Node może bindywać do loopback; w Docker proces
+nasłuchuje wewnątrz kontenera na `0.0.0.0`, a port hosta jest publikowany na
+`127.0.0.1`. To różne granice sieciowe — sprawdź `docker-compose.yml` przed zmianą.
 Zobacz [ADR-006](adr/ADR-006-https-transport.md).
 
 - W środowisku produkcyjnym (`NODE_ENV=production`) włączone jest przekierowanie HTTP → HTTPS
@@ -225,19 +228,10 @@ Zobacz [ADR-006](adr/ADR-006-https-transport.md).
 - Nagłówek HSTS (Strict-Transport-Security) ustawiony na 2 lata w produkcji (`max-age=63072000`, `includeSubDomains`, `preload`)
 - Przy `HTTPS_ENABLED` innym niż `false` ciastko sesji `authToken` ma flagę `Secure`, gdy żądanie jest rozpoznane jako HTTPS (`req.secure`) lub ustawiono `COOKIE_SECURE=true`. Za proxy wymaga to właściwego `TRUST_PROXY`; awaryjne `HTTPS_ENABLED=false` wyłącza flagę. `clearCookie` używa tych samych opcji.
 
-```typescript
-export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {
-    const forwardedProto = req.headers['x-forwarded-proto'];
-    const isHttps =
-        req.secure ||
-        (typeof forwardedProto === 'string' && forwardedProto.split(',')[0].trim() === 'https');
-    if (process.env.NODE_ENV === 'production' && !isHttps) {
-        res.redirect('https://' + req.headers.host + req.url);
-        return;
-    }
-    next();
-}
-```
+Nie kopiuj własnej implementacji redirectu z nagłówka `Host`. Kod musi walidować
+docelowy origin, aby zapobiec open redirect. Aktualna implementacja znajduje się
+w [`src/middleware/security.ts`](../src/middleware/security.ts); w konfiguracji
+sprawdź `PUBLIC_BASE_URL`, ustawienia zaufanego proxy i wyjątki healthcheck.
 
 ### Konfiguracja reverse proxy
 
@@ -341,13 +335,18 @@ osobnej zgody i pełnej walidacji na PostgreSQL 18.
 
 - Wykonaj PostgreSQL backup przez `npm run backup` po skonfigurowaniu
   `BACKUP_DATABASE_URL`; obecna implementacja używa archiwum `pg_dump` custom.
+- `scripts/backup.ts` nie szyfruje archiwum. Szyfrowanie i bezpieczne
+  przechowywanie kopii poza hostem należą do procedury operacyjnej.
 - Upewnij się, że backup nie zawiera danych wrażliwych, które nie powinny opuszczać urządzenia
 - W przypadku transportu przez sieć rozważ zaszyfrowanie pliku backupu (np. 7-Zip z hasłem)
 
 ### Po przywróceniu na nowym urządzeniu
 
 - Zweryfikuj integralność bazy: sprawdź czy endpoint `/health` działa
-- Upewnij się, że hasło `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją
+- `DEFAULT_ADMIN_PASSWORD` służy do bootstrapu konta początkowego; restore odtwarza
+  rekordy kont z kopii bazy. Zmienna nie jest kopią istniejącego hasła ani jego
+  hashy. Po restore zweryfikuj dostęp do odtworzonego konta zgodnie z procedurą
+  zarządzania dostępem.
 - Schemat PostgreSQL aktualizuj wersjonowanymi migracjami przez
   `npx prisma migrate deploy`; `prisma db push` nie jest wspieraną ścieżką.
 

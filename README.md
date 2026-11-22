@@ -17,7 +17,7 @@ S.O.K. — System Ofert i Kalkulacji to aplikacja webowa do generowania ofert ha
 
 Nazwa aplikacji wyświetlana na pulpicie i stronie logowania: **S.O.K. (System Ofert i Kalkulacji)** (rebranding z 2026-08-09, commit `a4b853f`).
 
-Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i PostgreSQL 18 jako jedyną bazą runtime oraz testów. Wydanie 1.56.4 przeszło lokalne bramki PostgreSQL 18, w tym integracyjne i health check. Wdrożenie produkcyjne wymaga osobnej akceptacji, backup/restore planu oraz walidacji docelowego serwera Linux. Szczegóły: [docs/DATABASE.md](docs/DATABASE.md) i [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i PostgreSQL 18 jako jedyną bazą runtime oraz testów. Historyczna walidacja wydania 1.56.4 potwierdziła lokalne bramki PostgreSQL i health check; nie jest to wynik dla obecnego HEAD. Wdrożenie produkcyjne wymaga osobnej akceptacji, planu backup/restore oraz walidacji docelowego serwera Linux. Szczegóły: [docs/DATABASE.md](docs/DATABASE.md) i [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
@@ -307,14 +307,16 @@ Przy ręcznie przygotowanym środowisku można uruchomić sam backend przez `npm
 
 1. Upewnij się, że `.env` zawiera lokalne ustawienia `POSTGRES_TEST_*` z `.env.example`. Uruchom `start-dev.bat` i sprawdź `/health` pod adresem wypisanym przez launcher.
 2. Przed commitem sprawdź `git branch --show-current`, `git status --short` oraz `git diff` i `git diff --staged`. Do commita dodaj tylko pliki związane ze zmianą.
-3. Uruchom wymagane bramy:
+3. Uruchom kontrole odpowiednie do zmiany:
 
     ```powershell
     npm run version:check
-    npm run validate
-    npm run format
-    npm run encoding:check
     ```
+
+    Uruchom także testy dotyczące zmienionego zachowania. `npm run validate` jest
+    przeznaczone dla zmian przekrojowych lub wysokiego ryzyka, diagnostyki przed
+    wydaniem, luk nieobjętych CI oraz bezpośredniego pushu na `main`. Hooki
+    formatują zmienione pliki; nie formatuj całego repozytorium przy małej zmianie.
 
 4. Zacommituj przez helper, zachowując format `typ(scope): opis`, np. `node scripts/commit.mjs "docs(docs): lokalny workflow"`.
 5. Push wymaga osobnego, jawnego GO dla dokładnego celu `remote/branch` i wskazanych commitów. Po GO wykonaj push bez omijania hooków, sprawdź kod procesu przez `$LASTEXITCODE`, a następnie `git status -sb`.
@@ -611,7 +613,8 @@ Oferty_PV/
 │   ├── schema.prisma          # Definicja schematu PostgreSQL
 │   └── migrations-postgresql/ # Kanoniczna historia migracji PostgreSQL
 ├── data/                      # Pliki aplikacji, cenników bazowych i backupów PostgreSQL
-│   └── seed_*.json            # Fabryczne cenniki dla świeżej instalacji
+│   ├── pricelists/             # Pakiet aktywnych cenników dla świeżej instalacji
+│   └── seed_*.json            # Format eksportu/legacy; nie jest źródłem aktywnego importu
 ├── tests/                     # Testy (Jest + Playwright)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie (Excel, solver, pzGuard)

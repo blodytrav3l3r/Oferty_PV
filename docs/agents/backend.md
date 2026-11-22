@@ -16,7 +16,7 @@ Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-014) — przeczytaj 
 
 ## Konwencje kodu
 
-- Prettier: pojedyncze cudzysłowy, średniki, spacje (bez tabów). Po zmianach `npm run format`. Respektuj `.prettierrc`, nie nadpisuj ustawień.
+- Prettier: pojedyncze cudzysłowy, średniki, spacje (bez tabów). Przy zmianie formatuj tylko zakres zadania; staged files formatuje `lint-staged`. Nie uruchamiaj pełnego `npm run format` dla małej poprawki.
 - Typy jawne (bez `any` bez powodu; `unknown` + type guards dla danych z zewnątrz). Dane wejściowe waliduj przez `zod` v4 (fail fast).
 - DRY (logika >2 razy → helper), SRP (pobieranie/walidacja/przetwarzanie/render osobno; biznes odseparowany od UI).
 - Rozmiary (zalecenia): funkcje ~100–150 linii, klasy ~500–800, pliki ~1000–1500. Najpierw SRP, potem rozmiar; spójny kod > limity.

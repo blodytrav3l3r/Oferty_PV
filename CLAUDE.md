@@ -9,11 +9,11 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 - **Backend**: TypeScript + Express + Prisma + PostgreSQL 18; `server.ts`, `src/`, `scripts/`, `tests/` (PostgreSQL jest jedynym runtime i testowym providerem; aktywne cenniki świeżej instalacji pochodzą z wersjonowanego pakietu w repozytorium)
 - **Frontend**: Vanilla JS (bez frameworka), serwowany przez Express z `public/`; moduły w `public/js/rury/` i `public/js/studnie/`
 - **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
-- **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
+- **Kontrole frontendu**: `public/js/` nie jest kompilowane do bundla TypeScript; jest jednak objęte osobnymi `typecheck:frontend` i `lint:frontend`.
 
 ## Architektura (ADR)
 
-Pełna lista i szczegóły: `docs/adr/` (ADR-001..016) oraz sekcja „Decyzje Architektoniczne (ADR)" w `AGENTS.md`.
+Pełna lista i statusy: `docs/adr/` oraz [indeks ADR](docs/adr/README.md). ADR-001 i ADR-012 są historyczne; obowiązujący kierunek bazy opisuje `docs/DATABASE.md`.
 
 ---
 
@@ -52,21 +52,20 @@ Jedynym źródłem prawdy jest sekcja „Wersjonowanie i Release Flow (Single So
 ### 6. Code style
 
 - single quotes, semicolons always, no tabs (Prettier)
-- `public/js/` NIE jest sprawdzane przez tsc ani eslint — weryfikacja manualna + `node -c <file>`
+- `public/js/` nie wchodzi do kompilacji backendu `tsc`, ale osobne `typecheck:frontend` i `lint:frontend` obejmują frontend. Dla zmienionego pliku JS można dodatkowo uruchomić `node -c <file>`.
 
 ### 7. Globals (frontend JS)
 
-- Wszystkie helpery globalne (bez ES modules); dostępne przez `window.X` lub hoisting
-- Wzorzec: na końcu pliku `window.foo = foo;`
+- Nie dodawaj nowych globali; nowy kod frontendowy pisz jako ES modules z `addEventListener`, zgodnie z `AGENTS.md` i `docs/agents/frontend.md`.
 - `lucide.createIcons({root: container})` po każdym `innerHTML = ...` z `data-lucide`
 
 ### 8. Baza danych (PostgreSQL + Prisma)
 
-- PostgreSQL 18 jest jedynym wspieranym runtime i providerem testów. Aktywne zapytania, FTS, narzędzia operacyjne, CI i Compose używają PostgreSQL. Lokalna walidacja wydania 1.56.4 na PG18.6 przeszła; to nie oznacza produkcyjnego cutoveru ani potwierdzenia czystej instalacji Linux.
+- PostgreSQL 18 jest jedynym wspieranym runtime i providerem testów. Historyczna lokalna walidacja wydania 1.56.4 na PG18.6 przeszła; wynik nie opisuje aktualnego HEAD, produkcyjnego cutoveru ani czystej instalacji Linux. Bieżące bramki są w `AGENTS.md`.
 - `DATABASE_URL` musi być jawny i używać protokołu `postgresql://` lub `postgres://`; zakaz fallbacku do lokalnej bazy i `db push` w aktywnych ścieżkach.
 - Aktywna historia migracji PostgreSQL: `prisma/migrations-postgresql/`; wdrożenie przez `prisma migrate deploy`. Dawna historia SQLite znajduje się wyłącznie w historii Git i nigdy nie jest uruchamiana.
 - Testy backendowe wymagają osobnego `POSTGRES_TEST_URL` do izolowanej bazy testowej. Harness tworzy schemat per worker; URL musi wskazywać lokalny host testowy i bazę o nazwie kończącej się `_test` lub `_test_db`.
-- Ostatnia potwierdzona walidacja PostgreSQL 18: release 1.56.4, pełne testy 5734 PASS i lokalny readiness HTTP 200. To nie potwierdza produkcyjnego cutoveru ani czystej instalacji Linux.
+- Historyczna, potwierdzona walidacja PostgreSQL 18: release 1.56.4, pełne testy 5734 PASS i lokalny readiness HTTP 200. Nie jest to bieżący status testów; nie potwierdza też produkcyjnego cutoveru ani czystej instalacji Linux.
 - SQLite nie jest wspierane w runtime, instalatorach, narzędziach ani testach aplikacji. Instalatory importują aktywne cenniki z `data/pricelists/active-pricelists.json`.
 
 ---

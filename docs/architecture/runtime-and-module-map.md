@@ -2,12 +2,12 @@
 
 ## Metadane i wiarygodność
 
-- **Status dokumentu:** opis potwierdzonego stanu kodu w zakresie wskazanych źródeł.
+- **Status dokumentu:** snapshot opisu kodu w zakresie wskazanych źródeł; nie jest potwierdzeniem bieżącego runtime.
 - **Klasyfikacja:** `FACT` oznacza fakt potwierdzony w kodzie/konfiguracji; `INFERENCE` oznacza wniosek z tych faktów; `UNKNOWN` oznacza informację, której ten dokument nie potwierdza.
 - **HEAD zweryfikowany:** `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`.
 - **Dzień weryfikacji:** 2026-11-06.
 - **Zakres:** rejestracja modułów SPA, montowanie API Express, granice uwierzytelniania i przepływ do bazy. Wskazane numery linii dotyczą powyższego HEAD.
-- **Ograniczenie:** mapa API potwierdza prefiksy i przypisane routery, nie specyfikuje kontraktów payloadów ani pełnej macierzy uprawnień.
+- **Ograniczenie:** mapa API potwierdza prefiksy i przypisane routery na wskazanym SHA, nie specyfikuje kontraktów payloadów ani pełnej macierzy uprawnień. Zweryfikuj ją ponownie przed użyciem jako bieżącej instrukcji.
 
 ## Przepływ runtime
 

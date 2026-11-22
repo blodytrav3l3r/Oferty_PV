@@ -2,24 +2,19 @@
 
 ## Codzienna praca
 
-- Pracujesz na `main` — to jedyna gałąź.
-- Commit: `git add -A` → `git commit -m "typ(scope): opis"` → `git push`
-- Przed commitem: `npm run validate` (typecheck backend+frontend, lint backend+frontend, testy)
-- Po modyfikacji kodu frontendowego: `npm run format`
+- Pracuj na gałęzi zadaniowej i kieruj zmiany przez pull request; nie zakładaj, że `main` jest jedyną gałęzią.
+- Przed zmianami sprawdź `git status --short --branch`; stage’uj tylko pliki związane z zadaniem.
+- Przed commitem uruchom `npm run version:check`, testy właściwe dla zmienionego zachowania i kontrole hooka `pre-commit`. Pełne `npm run validate` rezerwuj dla zmian przekrojowych/wysokiego ryzyka, wydania, braku pokrycia CI lub bezpośredniego pushu na `main`.
+- `lint-staged` formatuje pliki staged. Nie uruchamiaj `npm run format` dla całego repozytorium przy małej zmianie.
 - Po zmianie CSS testowanej w prod (`start.bat`, `NODE_ENV=production`): zrestartuj serwer (prestart regeneruje ignorowany w gicie `public/css/min/`, który prod serwuje zamiast źródeł) i zrób twardy refresh (Ctrl+Shift+R) — `?v=` zmienia tylko release, więc zwykłe F5 poda stare pliki z cache.
-- **OBOWIĄZKOWO przed każdym commitem i pushem**: `npm run version:check` — waliduje spójność wersji we WSZYSTKICH źródłach (VERSION, package.json, CHANGELOG.md, *.bat, HTML `?v=`, oraz markery `**Wersja:**`/`> Wersja:`/JSON w `README.md` i `docs/*.md`). **Bez wyjątków** — także przy samych poprawkach dokumentacji. Rozjazd = blokada (pre-push).
-- **Uwaga:** Husky pre-commit hook jest aktywny (python `scripts/excel-validator.py` + lint-staged). Gdyby zablokował commit (np. błąd walidatora Excel), obejście:
-    ```bash
-    git -c core.hooksPath=/dev/null commit -m "typ(scope): opis"
-    ```
-    (Obejście hooka NIE zwalnia z obowiązku `npm run version:check` — uruchom go ręcznie przed commitem.)
+- Hooki są częścią bram jakości. Jeśli któryś odrzuci zmianę, zdiagnozuj przyczynę, popraw ją i ponów polecenie; nie wyłączaj hooków.
 
 ## Workflow
 
-1. Utwórz branch z `main` (jeśli zadanie jest złożone)
+1. Utwórz branch z aktualnego `main` zgodnie z konwencją repozytorium.
 2. Wprowadź zmiany
-3. Uruchom `npm run validate` (typecheck + lint + testy)
-4. Uruchom `npm run format`
+3. Uruchom testy dobrane do zmienionego zachowania i `npm run version:check`; pozwól hookom wykonać kontrole staged files.
+4. Uruchom pełne `npm run validate` tylko w przypadkach wskazanych w `AGENTS.md` i `docs/agents/testing.md`.
 5. Utwórz commit zgodny z [Conventional Commits](https://www.conventionalcommits.org/):
     - `feat(scope):` — nowa funkcjonalność
     - `fix(scope):` — naprawa błędu
@@ -27,7 +22,7 @@
     - `docs(scope):` — zmiany w dokumentacji
     - `chore(scope):` — zadania techniczne (zależności, konfiguracja)
     - **Zalecany helper (bez mojibake z konsoli Windows):** `node scripts/commit.mjs "typ(scope): temat" ["linia body"...]` (lub `npm run commit`). Waliduje reguły commitlint (scope z listy, ≤72 znaki, małe litery) i zapisuje wiadomość przez plik UTF-8.
-6. Push na `main`
+6. Otwórz pull request; push i bezpośrednie zmiany na `main` podlegają `docs/AUTONOMY_CONTRACT.md`.
 
 ## Release
 
@@ -67,7 +62,7 @@ Proces release:
 
 **Uwaga:** Nie zmieniaj ręcznie parametrów `?v=` w HTML — są synchronizowane z `VERSION` podczas release.
 
-**Pre-push validation:** hook `.husky/pre-push` uruchamia `npm run version:check` + `npm run encoding:check` (pełny skan repo, blokada przy mojibake/niepoprawnym UTF-8) + `npm run typecheck` + `npm run typecheck:frontend` + `npm run test:quick`. Jeśli hook blokuje push, użyj obejścia: `HUSKY=0 git push` (lub `git -c core.hooksPath=/dev/null push`).
+**Hooki Git:** sprawdź aktualne skrypty [pre-commit](.husky/pre-commit) i [pre-push](.husky/pre-push), ponieważ ich zestaw kontroli może się zmieniać. Nie omijaj hooka w celu przepchnięcia błędnej lub niewalidowanej zmiany; napraw przyczynę i ponów operację. Zasady commitów/pushów opisuje [kontrakt autonomii](docs/AUTONOMY_CONTRACT.md).
 
 ## Świeża instalacja
 
@@ -84,7 +79,7 @@ Przy pierwszym uruchomieniu na nowym komputerze (bez istniejącej bazy danych):
     bash install.sh # Linux
     ```
     Instalator: skopiuje `.env`, zainstaluje zależności, skonfiguruje bazę i załaduje dane początkowe (produkty, konto admina).
-    Przy pierwszym starcie serwer założy wersję cennika `v1` (ACTIVE) z plików `data/seed_*.json`.
+    Instalator importuje zatwierdzone aktywne cenniki z `data/pricelists/active-pricelists.json`; eksporty do `data/seed_*.json` nie są źródłem cenników świeżej instalacji.
     Niestandardowe ceny przeniesiesz między instalacjami przez panel „Wersje cennika” (eksport/import XLSX).
 3. Uruchom serwer:
     ```bash
@@ -129,7 +124,7 @@ npm run test:frontend    # Testy frontendowe
 npm run test:watch       # Watch mode
 ```
 
-Przed mergem upewnij się, że wszystkie testy przechodzą.
+Przed mergem sprawdź wymagane statusy CI na pull requeście; pełny lokalny zestaw uruchamiaj wtedy, gdy wymaga tego ryzyko lub procedura release.
 
 ## Formatowanie i lint
 
@@ -145,7 +140,7 @@ npm run lint:fix         # ESLint z auto-naprawą
 
 - Kod w `public/js/` nie jest kompilowany przez TypeScript, ale jest sprawdzany przez `npm run typecheck:frontend` oraz `npm run lint:frontend` (osobny zestaw reguł ESLint dla przeglądarki)
 - Zawsze weryfikuj składnię: `node -c public/js/<plik>.js`
-- Nowe globalne helpery rejestruj przez `window.mojHelper = mojHelper;`
+- Nie dodawaj nowych globali. Nowy kod modułowy używa jawnych eksportów/importów i `addEventListener`; przy istniejącym legacy zachowaj jego kontrakt zgodnie z `docs/agents/frontend.md`.
 - Używaj `escapeHtml(str)` przy interpolacji do `innerHTML` (zapobieganie XSS)
 - Po dynamicznym wstrzyknięciu HTML z ikonami Lucide wywołaj: `lucide.createIcons({root: container})`
 

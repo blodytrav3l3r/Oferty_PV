@@ -1,33 +1,58 @@
 # Audyt dokumentacji i zależności SQLite
 
-- **Zaktualizowano:** 2026-11-07
+- **Zaktualizowano:** 2026-11-22
 - **Repozytorium:** `blodytrav3l3r/Oferty_PV`
-- **Aktualny checkpoint:** `fe8bbb3bcba36304e355d37051e4afb310c1f143` (`main`), wersja `1.56.6`.
-- **Zakres bieżącego checkpointu:** aktualność metadanych dokumentacji, nawigacja, statusy i otwarte luki. Szczegółowy raport poniżej pozostaje snapshotem z HEAD `5ab15ac077d8eb94e66bcb08bac9d3c19d09f53f`.
+- **Checkpoint tego przeglądu:** `e582174efc6559917782b70f06c76764ee195170` (`main`), `VERSION` i `package.json`: `1.64.17`.
+- **Zakres:** aktualność instrukcji dla kontrybutorów i agentów, indeksy dokumentacji, statusy snapshotów oraz wybrane procedury operacyjne. To nie jest pełny semantyczny audyt każdego dokumentu ani pełna walidacja runtime.
 - **Status wdrożenia:** dokumentacja i lokalny checkout nie potwierdzają produkcyjnego cutoveru ani czystej instalacji Linux.
-- **Źródła:** bieżący checkout, konfiguracja i dokumentacja; status GitHub Actions odczytano dla jawnie wskazanego SHA. Każdy wniosek ogranicza się do podanego zakresu i chwili weryfikacji.
+- **Źródła:** checkout, kod, konfiguracja, package scripts, testy oraz wyniki poleceń wskazanych niżej. Nie odpytano zdalnego CI ani środowiska produkcyjnego.
 
-## Checkpoint aktualności — 2026-11-07
+## Checkpoint aktualności — 2026-11-22
 
-**FACT:** lokalny branch to `main`, HEAD to `fe8bbb3bcba36304e355d37051e4afb310c1f143`, a `VERSION` i `package.json` wskazują `1.56.6`. `npm run version:check` zakończył się sukcesem. Lokalne cele linków w `docs/README.md` istnieją; sprawdzenie nie obejmowało zewnętrznych URL ani kotwic nagłówków.
+**FACT:** checkout na początku przeglądu był czysty, branch `main`, HEAD `e582174efc6559917782b70f06c76764ee195170`, a `VERSION` i `package.json` wskazywały `1.64.17`. Wynik `npm run version:check` i sprawdzenia dokumentacji odnotowano w sekcji kontroli tego przeglądu. Lokalne odnośniki sprawdzono w indeksach; nie oznacza to weryfikacji wszystkich zewnętrznych URL ani semantyki każdej kotwicy.
 
-**FACT:** w bieżącym kodzie Prisma provider to PostgreSQL, klient używa `@prisma/adapter-pg`, a `prisma.config.ts` wskazuje `prisma/migrations-postgresql/`. Workflow PostgreSQL Docker deklaruje PostgreSQL 18. To potwierdza kierunek runtime w repozytorium, nie konfigurację zewnętrznego serwera.
+**FACT:** stare punkty odniesienia `fe8bbb3b` / `1.56.6` oraz `5ab15ac0` w dalszej części tego pliku opisują datowane audyty historyczne, nie ten checkpoint. Zachowano je, żeby nie zmieniać dowodów z wcześniejszych audytów.
 
-**FACT:** `docs/API.md` deklaruje wersję `1.56.6` i jawnie oznacza katalog endpointów jako niekompletny. Bieżący statyczny przegląd route’ów wykrył trzy pominięte odczyty Opieki (`GET /api/care/queue`, `/api/care/panel`, `/api/care/notifications`); dodano je do katalogu. Skorygowano też ogólną uwagę o publicznych trasach, która pomijała anonimowe `POST /api/auth/logout`. To uzupełnia wykryte przypadki, ale nie jest dowodem kompletnego opisu każdej trasy, walidatora i odpowiedzi API.
+**FACT:** zaktualizowano ogólne workflow contributorów, korektę nieaktualnych wskazówek o hookach i kontroli frontendu oraz dodano indeksy ADR, przewodników agentów i planów. Nie zmieniano logiki aplikacji, konfiguracji, migracji ani wyników historycznych.
 
-**Zakres przeglądu API:** statyczny licznik znalazł 205 literalnych rejestracji w kodzie (196 wywołań `router.*` w `src/routes/**/*.ts` oraz 9 wywołań `app.*` w `src/app.ts`/`src/mountRoutes.ts`). Przed poprawkami `docs/API.md` zawierał 197 wierszy metod w tabelach i 17 nagłówków endpointów z opisem prozą; po dodaniu trzech tras Opieki zawiera 200 wierszy tabel. To nie są bezpośrednio porównywalne liczby unikalnych zewnętrznych tras: mounty/aliasy mogą powielać ścieżki, a dokumentacja może grupować aliasy. Nie wykonano pełnej kontroli semantycznej każdej trasy.
+**FACT:** `docs/README.md` i nowo dodane indeksy katalogów są nawigacją do dokumentów, nie potwierdzeniem ich kompletności. Statusy instalacji produkcyjnej/Linux, restore drill, RPO/RTO, ostatnie zdalne CI oraz pełna zgodność UI/E2E nadal wymagają odrębnych dowodów.
 
-**FACT:** `GET /api/care/queue` i `GET /api/care/panel` przyjmują `scope`, `cursor`, `limit`, `hidePaused`, `from`, `to`, `repId`; `GET /api/care/notifications` przyjmuje `scope`, `unreadOnly`, `limit`, `repId`. Potwierdza to `src/routes/care.ts`. W `docs/OPIEKA.md` usunięto nieobsługiwany parametr `status` z przykładu kolejki i dopisano bieżące parametry zapytań.
+**INFERENCE:** największe ryzyko jakościowe dokumentacji to mieszanie aktualnych wskazówek i checkpointów z prawdziwymi, ale historycznymi raportami. Data/SHA przy twierdzeniu operacyjnym powinny określać jego zakres; brak aktualnego dowodu oznacza `UNKNOWN`, nie „w trakcie” ani „gotowe”.
 
-**FACT:** przewodnik modułów nadal wskazuje poprzednią pełną weryfikację na SHA `5ab15ac0` z 2026-11-06. Metadane doprecyzowano, by nie sugerowały pełnej weryfikacji na aktualnym HEAD `fe8bbb3b`.
-
-**UNKNOWN:** czysta instalacja Linux i produkcyjny cutover nie zostały wykonane ani potwierdzone w tym przeglądzie. Runbook deploymentu opisuje wyniki lokalne wydania `1.56.4`; nie są one dowodem dla aktualnego release ani zewnętrznego środowiska.
+**UNKNOWN:** niniejszy przegląd nie potwierdza działania aplikacji na aktualnym HEAD, czystej instalacji Linux, produkcyjnego cutoveru/restore, ani wyniku zdalnego CI.
 
 **TODO:** docelowe RPO/RTO wymagają decyzji właściciela operacji i restore drill na izolowanym celu. W tym przeglądzie nie wykonano połączenia do produkcyjnej bazy, migracji, backupu ani restore.
 
-**Kontrola przed commitem (2026-11-07):** `npm run validate` zakończył się kodem 0 na świeżej, izolowanej bazie PostgreSQL 18 `sok_test`: 586 suite’ów PASS, 2 SKIP; 5817 testów PASS, 4 SKIP. Migracje dotyczyły wyłącznie schematów testowych. `prices:verify` poprawnie zwrócił `SKIP` dla pustego schematu. Zwykła baza aplikacji i produkcyjne środowisko nie były używane.
+**Kontrole tego przeglądu:** po zmianach zapisano wyniki `npm run version:check`, walidacji formatowania dokumentów i lokalnych linków oraz `git diff --check` w końcowej sekcji. Pełnych testów aplikacji nie uruchamiano, ponieważ zmiany dotyczą wyłącznie dokumentacji.
 
-**GitHub Actions:** dla SHA `fe8bbb3bcba36304e355d37051e4afb310c1f143` o 2026-11-07, 12:12 UTC odczytano 4 check runs: `Typecheck (tsc)`, `Lint (ESLint + Prettier)` i `Analyze (javascript-typescript)` zakończone sukcesem; `Test (Jest)` pozostawał `in_progress`. To jest chwilowy status zdalnego CI, nie wynik pełnego CI ani dowód wdrożenia. [Workflow CI](https://github.com/blodytrav3l3r/Oferty_PV/actions/runs/42370292127) · [CodeQL](https://github.com/blodytrav3l3r/Oferty_PV/actions/runs/42370292162).
+**Wyniki końcowe (2026-11-22):** `npm run version:check` PASS (`1.64.17`); Prettier `--check` PASS dla 20 zmienionych dokumentów; sprawdzenie lokalnych celów Markdown PASS dla tych 20 plików (bez kontroli zewnętrznych URL i kotwic); `git diff --check` PASS. Nie uruchamiano testów aplikacji ani pełnego `npm run validate` — nie zmieniano kodu ani konfiguracji.
+
+**Graphify:** indeks odpowiadał commitowi `cb361eb` z 2026-11-03, a nie HEAD `e582174e`; wynik wykorzystano wyłącznie nawigacyjnie. Twierdzenia o bieżącym stanie potwierdzano ponownie w plikach, konfiguracji i skryptach aktualnego checkoutu.
+
+## Poprzedni checkpoint — 2026-11-07
+
+Poniższe wyniki zachowują zakres i chwilowy stan z 2026-11-07. Nie należy ich interpretować jako dowodu stanu HEAD z 2026-11-22.
+
+**FACT (w tamtym checkpointcie):** branch `main`, HEAD `fe8bbb3bcba36304e355d37051e4afb310c1f143`, `VERSION` i `package.json` `1.56.6`; `npm run version:check` zakończył się sukcesem. Lokalnie sprawdzono cele linków w `docs/README.md`, bez weryfikacji URL zewnętrznych i kotwic.
+
+**FACT (kod i konfiguracja sprawdzone wtedy):** Prisma używała providera PostgreSQL, klient `@prisma/adapter-pg`, `prisma.config.ts` wskazywał `prisma/migrations-postgresql/`, a workflow Docker deklarował PostgreSQL 18. To nie potwierdza konfiguracji zewnętrznego serwera.
+
+**Zakres API (statyczny, niepełny):** licznik wykrył 205 literalnych rejestracji (196 `router.*` w `src/routes/**/*.ts`, 9 `app.*` w `src/app.ts`/`src/mountRoutes.ts`). Dokumentacja miała przed poprawkami 197 wierszy metod w tabelach i 17 opisowych nagłówków endpointów; dodano trzy odczyty Opieki (`GET /api/care/queue`, `/api/care/panel`, `/api/care/notifications`) i zapisano 200 wierszy tabel. Wtedy wykryto też anonimowe `POST /api/auth/logout`, którego wcześniejsza uwaga o trasach publicznych nie obejmowała. Liczby nie są porównaniem unikalnych tras z powodu mountów, aliasów i grupowania; pełnej kontroli semantycznej każdej trasy nie wykonano.
+
+**FACT (parametry potwierdzone w `src/routes/care.ts`):** `/api/care/queue` i `/api/care/panel` przyjmowały `scope`, `cursor`, `limit`, `hidePaused`, `from`, `to`, `repId`; `/api/care/notifications` przyjmowało `scope`, `unreadOnly`, `limit`, `repId`. W raporcie odnotowano poprawienie przykładu w `docs/OPIEKA.md`.
+
+**Walidacja lokalna (2026-11-07):** `npm run validate` zakończył się kodem 0 na świeżej, izolowanej bazie PostgreSQL 18 `sok_test`: 586 suite’ów PASS / 2 SKIP, 5 817 testów PASS / 4 SKIP. Migracje dotyczyły schematów testowych; zwykła baza aplikacji i produkcja nie były używane. `prices:verify` poprawnie zwrócił `SKIP` dla pustego schematu.
+
+**GitHub Actions — chwilowy odczyt (2026-11-07, 12:12 UTC, SHA `fe8bbb3bcba36304e355d37051e4afb310c1f143`):** `Typecheck (tsc)`, `Lint (ESLint + Prettier)` i `Analyze (javascript-typescript)` były zakończone sukcesem; `Test (Jest)` pozostawał `in_progress`. To nie był pełny wynik CI ani dowód wdrożenia. [Workflow CI](https://github.com/blodytrav3l3r/Oferty_PV/actions/runs/42370292127) · [CodeQL](https://github.com/blodytrav3l3r/Oferty_PV/actions/runs/42370292162).
+
+**UNKNOWN/TODO (w tamtym przeglądzie):** czysta instalacja Linux i produkcyjny cutover nie były potwierdzone; wymagania RPO/RTO oczekiwały decyzji operatora i restore drill. Zachowano jako ograniczenia wymagające nowego dowodu.
+
+## Ocena dokumentacji
+
+- **Przed aktualizacją: 5/10.** Pokrycie szerokie i ograniczenia częściowo jawne, ale aktualne metadane były niezgodne z HEAD, workflow contributorów przeczył `AGENTS.md`, a kluczowym katalogom brakowało indeksów.
+- **Po aktualizacji: 7/10.** Poprawiono sprzeczne aktywne instrukcje, oddzielono bieżący checkpoint od historycznych SHA/wyników, dopisano indeksy ADR/agentów/planów i sprostowano wybrane twierdzenia operacyjne na podstawie kodu. Nadal brakuje pełnej weryfikacji semantycznej wszystkich dokumentów, statusu 24 niesarchiwizowanych planów, procedur UI w przeglądarce, bieżącego wyniku CI i dowodów z serwera Linux/produkcji.
+
+Ocena 7/10 dotyczy jakości dokumentacji po tym ograniczonym przeglądzie, a nie kompletności produktu ani gotowości operacyjnej.
 
 ## Raport bazowy — stan na HEAD 5ab15ac0
 
