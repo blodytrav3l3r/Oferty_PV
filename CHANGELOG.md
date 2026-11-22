@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.19](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.18...v1.64.19) (2026-11-22)
+
+### Bug Fixes
+
+- **studnie:** ponawiaj zapis po konflikcie numeru ([d0da459](https://github.com/blodytrav3l3r/Oferty_PV/commit/d0da45916af26cd7e61bd1d5ff3fbb3b76887f32))
+
 ### [1.64.18](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.17...v1.64.18) (2026-11-22)
 
 ### Features
