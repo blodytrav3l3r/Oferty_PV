@@ -163,28 +163,39 @@ describe('snapshot przejść przy hurtowym tworzeniu PZ', () => {
 
     test('kafelki globalne aktualizują wybór studni, a kafelek pozycji może go nadpisać', () => {
         const context = loadBulkContext();
-        const overlay = document.createElement('div');
-        const globalTile = document.createElement('button');
-        globalTile.className = 'bulk-seq-warehouse-tile';
-        globalTile.dataset.warehouseScope = 'global';
-        globalTile.dataset.warehouseChoice = 'Kluczbork';
-        const rowTile = document.createElement('button');
-        rowTile.className = 'bulk-seq-warehouse-tile';
-        rowTile.dataset.warehouseScope = 'well';
-        rowTile.dataset.wellIndex = '2';
-        rowTile.dataset.warehouseChoice = 'Włocławek';
-        const row = document.createElement('div');
-        row.className = 'bulk-seq-item';
-        row.dataset.wellIndex = '2';
-        row.append(rowTile);
-        overlay.append(globalTile, row);
+        const createTile = (dataset: Record<string, string>) => {
+            const attributes = new Map<string, string>();
+            return {
+                dataset,
+                disabled: false,
+                closest: jest.fn(),
+                setAttribute: (name: string, value: string) => attributes.set(name, value),
+                getAttribute: (name: string) => attributes.get(name),
+                classList: { toggle: jest.fn() }
+            };
+        };
+        const globalTile = createTile({ warehouseScope: 'global', warehouseChoice: 'Kluczbork' });
+        const rowTile = createTile({
+            warehouseScope: 'well',
+            wellIndex: '2',
+            warehouseChoice: 'Włocławek'
+        });
+        const row = { querySelectorAll: jest.fn(() => [rowTile]) };
+        rowTile.closest.mockReturnValue(row);
+        let handleClick: (event: any) => void = () => undefined;
+        const overlay = {
+            addEventListener: jest.fn((_type, handler) => {
+                handleClick = handler;
+            }),
+            querySelectorAll: jest.fn(() => [globalTile, rowTile])
+        };
         context._bulkSeqBindWarehouseControls(overlay);
 
-        globalTile.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        handleClick({ target: { closest: () => globalTile }, stopPropagation: jest.fn() });
         expect(globalTile.getAttribute('aria-pressed')).toBe('true');
         expect(rowTile.getAttribute('aria-pressed')).toBe('false');
 
-        rowTile.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        handleClick({ target: { closest: () => rowTile }, stopPropagation: jest.fn() });
         const html = vm.runInContext(
             '_bulkSeqRowHtml({wellIndex:2,wellName:"S3",wellDn:1000,openCount:1,totalCount:1,warehouseDefaults:{dennica:"Kluczbork"}},1,false,null)',
             context

@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-21",
-    "totalEdges": 2979,
+    "generatedAt": "2026-11-22",
+    "totalEdges": 2990,
     "edges": [
         {
             "page": "public/app.html",
@@ -17846,6 +17846,38 @@
         {
             "page": "public/studnie.html",
             "name": "partForProduct",
+            "userFile": "public/js/studnie/orderBulk.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "partForProduct",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "partForProduct",
+            "userFile": "public/js/studnie/orderZleceniaForm.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "partForProduct",
+            "userFile": "public/js/studnie/orderZleceniaModal.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "partForProduct",
             "userFile": "public/js/studnie/popupsRedukcjaChoice.js",
             "defFile": "public/js/studnie/wellConfigRules.js",
             "defKind": "window",
@@ -19270,6 +19302,14 @@
         {
             "page": "public/studnie.html",
             "name": "renderWellParams",
+            "userFile": "public/js/studnie/orderZleceniaForm.js",
+            "defFile": "public/js/studnie/uiWellParams.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "renderWellParams",
             "userFile": "public/js/studnie/popupsKonusPehd.js",
             "defFile": "public/js/studnie/uiWellParams.js",
             "defKind": "window",
@@ -19560,6 +19600,38 @@
             "name": "resolveStudnieProduct",
             "userFile": "public/js/studnie/solverValidation.js",
             "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "resolveWellMagazyn",
+            "userFile": "public/js/studnie/orderBulk.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "resolveWellMagazyn",
+            "userFile": "public/js/studnie/orderHelpers.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "resolveWellMagazyn",
+            "userFile": "public/js/studnie/orderZleceniaForm.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "resolveWellMagazyn",
+            "userFile": "public/js/studnie/orderZleceniaModal.js",
+            "defFile": "public/js/studnie/wellConfigRules.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -21885,6 +21957,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "syncWellWarehouseToProductionOrders",
+            "userFile": "public/js/studnie/wellManager.js",
+            "defFile": "public/js/studnie/orderHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "syncZleceniaFormToPz",
             "userFile": "public/js/studnie/orderZleceniaModal.js",
             "defFile": "public/js/studnie/orderZleceniaForm.js",
@@ -22215,6 +22295,14 @@
             "page": "public/studnie.html",
             "name": "updateParamTilesUI",
             "userFile": "public/js/studnie/orderManager.js",
+            "defFile": "public/js/studnie/uiParamTiles.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "updateParamTilesUI",
+            "userFile": "public/js/studnie/orderZleceniaForm.js",
             "defFile": "public/js/studnie/uiParamTiles.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
