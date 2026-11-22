@@ -1,6 +1,6 @@
 # Opieka nad ofertą — hub
 
-**Wersja:** 1.64.22
+**Wersja:** 1.64.23
 **Ostatnia aktualizacja:** 2026-11-07
 
 > Warstwa opieki nad istniejącym modelem ofert, nie drugi CRM.

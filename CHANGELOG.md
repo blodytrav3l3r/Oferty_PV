@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.23](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.22...v1.64.23) (2026-11-22)
+
+### Bug Fixes
+
+- **studnie:** ukrywaj puste pozycje w excelu ([ffb03ee](https://github.com/blodytrav3l3r/Oferty_PV/commit/ffb03eec556075d25e09ce2f74a5f2936dca2001))
+
 ### [1.64.22](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.21...v1.64.22) (2026-11-22)
 
 ### Bug Fixes

@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-22",
-    "totalEdges": 3008,
+    "generatedAt": "2026-11-23",
+    "totalEdges": 3016,
     "edges": [
         {
             "page": "public/app.html",
@@ -14590,6 +14590,22 @@
         {
             "page": "public/studnie.html",
             "name": "getStudnieProductById",
+            "userFile": "public/js/studnie/excelState.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getStudnieProductById",
+            "userFile": "public/js/studnie/excelTabs.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getStudnieProductById",
             "userFile": "public/js/studnie/excelWellActions.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
@@ -15998,6 +16014,22 @@
         {
             "page": "public/studnie.html",
             "name": "isWellLinkedToActiveOrder",
+            "userFile": "public/js/studnie/excelState.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLinkedToActiveOrder",
+            "userFile": "public/js/studnie/excelTabs.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLinkedToActiveOrder",
             "userFile": "public/js/studnie/wellUI.js",
             "defFile": "public/js/studnie/wellUIHelpers.js",
             "defKind": "lexical",
@@ -16071,6 +16103,22 @@
             "page": "public/studnie.html",
             "name": "isWellLocked",
             "userFile": "public/js/studnie/excelHelpers.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
+            "userFile": "public/js/studnie/excelState.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
+            "userFile": "public/js/studnie/excelTabs.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -16273,6 +16321,22 @@
             "userFile": "public/js/studnie/pricingCalculator.js",
             "defFile": "public/js/studnie/actionsWellPricing.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/excelState.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/excelTabs.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {
