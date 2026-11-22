@@ -119,6 +119,22 @@ function runContext() {
                     this.contentWindow.location.href = previousHref;
                     this.contentDocument.readyState = 'complete';
                     dispatch(this, 'load');
+                } else if (this.behavior === 'module-tab') {
+                    const moduleUrl = new URL(absoluteUrl);
+                    moduleUrl.searchParams.set('tab', 'builder');
+                    this.contentWindow.location.href = moduleUrl.href;
+                    this.contentWindow.location.origin = moduleUrl.origin;
+                    this.contentDocument.readyState = 'complete';
+                    this.contentDocument.documentElement.classList.add('is-loaded');
+                    dispatch(this, 'load');
+                } else if (this.behavior === 'invalid-module-tab') {
+                    const moduleUrl = new URL(absoluteUrl);
+                    moduleUrl.searchParams.set('tab', 'unknown');
+                    this.contentWindow.location.href = moduleUrl.href;
+                    this.contentWindow.location.origin = moduleUrl.origin;
+                    this.contentDocument.readyState = 'complete';
+                    this.contentDocument.documentElement.classList.add('is-loaded');
+                    dispatch(this, 'load');
                 } else {
                     this.contentDocument.readyState = 'loading';
                 }
@@ -355,6 +371,45 @@ describe('Guard nawigacji SPA — appConfirm przy niezapisanych zmianach', () =>
 });
 
 describe('Cykl życia iframe w routerze SPA', () => {
+    test('akceptuje sekcję domyślną zapisaną przez moduł Rury, jeśli trasa jej nie określa', async () => {
+        const { context, state, setNextIframeMode, elements } = runContext();
+        state.hash = '#/pulpit';
+        await context.window.SpaRouter.navigate();
+
+        setNextIframeMode('module-tab');
+        state.hash = '#/rury';
+        await context.window.SpaRouter.navigate();
+
+        expect(elements.get('spa-app-rury').classList.contains('active')).toBe(true);
+        expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(false);
+    });
+
+    test('nadal odrzuca inną sekcję Rur niż jawnie wskazana w trasie', async () => {
+        const { context, state, setNextIframeMode, elements } = runContext();
+        state.hash = '#/pulpit';
+        await context.window.SpaRouter.navigate();
+
+        setNextIframeMode('module-tab');
+        state.hash = '#/rury?tab=offer';
+        await context.window.SpaRouter.navigate();
+
+        expect(elements.get('spa-app-rury').classList.contains('active')).toBe(false);
+        expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(true);
+    });
+
+    test('odrzuca nieznaną sekcję dopisaną przez moduł Rury', async () => {
+        const { context, state, setNextIframeMode, elements } = runContext();
+        state.hash = '#/pulpit';
+        await context.window.SpaRouter.navigate();
+
+        setNextIframeMode('invalid-module-tab');
+        state.hash = '#/rury';
+        await context.window.SpaRouter.navigate();
+
+        expect(elements.get('spa-app-rury').classList.contains('active')).toBe(false);
+        expect(elements.get('spa-transition-layer').classList.contains('is-error')).toBe(true);
+    });
+
     test('timeout nie przełącza aktywnego widoku i pokazuje ponowienie/powrót', async () => {
         const { context, state, setNextIframeMode, runPendingTimers, elements } = runContext();
         await bootOnRury(context, state);

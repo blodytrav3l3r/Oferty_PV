@@ -470,6 +470,13 @@
             const expectedParams = new URLSearchParams(expectedLocation.search);
             actualParams.delete('_ts');
             expectedParams.delete('_ts');
+            const module = iframe.id.replace('spa-iframe-', '');
+            const moduleTab = actualParams.get('tab');
+            const isModuleManagedTab = MODULES[module]?.sections?.some(
+                (section) => section.id === moduleTab
+            );
+            if (module === 'rury' && !expectedParams.has('tab') && isModuleManagedTab)
+                actualParams.delete('tab');
             actualParams.sort();
             expectedParams.sort();
             if (actualParams.toString() !== expectedParams.toString())
@@ -477,7 +484,6 @@
             if (!frameDocument.documentElement) return { ok: false, reason: 'missing-document' };
             if (frameDocument.readyState !== 'complete' || !frameDocument.body)
                 return { ok: false, reason: 'pending' };
-            const module = iframe.id.replace('spa-iframe-', '');
             const hasReadyMarker =
                 module === 'cennik'
                     ? frameDocument.querySelector('#section-cennik')
