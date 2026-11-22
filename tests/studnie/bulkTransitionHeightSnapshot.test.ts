@@ -137,52 +137,58 @@ describe('snapshot przejść przy hurtowym tworzeniu PZ', () => {
         expect(krag.magazyn).toBe('Kluczbork');
     });
 
-    test('popup kolejności domyślnie zachowuje magazyn z konfiguratora i przyjmuje wybór per studnia', () => {
+    test('popup pokazuje magazyny domyślne pozycji jako kafelki wyboru', () => {
         const context = loadBulkContext();
         const group = {
             wellIndex: 2,
             wellName: 'S3',
             wellDn: 1000,
             openCount: 2,
-            totalCount: 2
+            totalCount: 2,
+            warehouseDefaults: { dennica: 'Włocławek', nadbudowa: 'Kluczbork' }
         };
 
-        const defaultRow = context._bulkSeqRowHtml(group, 1, false, null);
-        expect(defaultRow).toContain('<option value="config" selected>Z konfiguratora</option>');
+        const defaultRow = context._bulkSeqRowHtml(group, 1, false, 67);
+        expect(defaultRow).toContain('height:67px; box-sizing:border-box; overflow:hidden;');
+        expect(defaultRow).toContain('Dennica: Włocławek');
+        expect(defaultRow).toContain('Nadbudowa: Kluczbork');
+        expect(defaultRow).toContain('data-warehouse-choice="config" aria-pressed="true"');
 
         const overriddenRow = vm.runInContext(
             '_bulkSeqWarehouseOverrides.set(2, "Włocławek"); _bulkSeqRowHtml(group, 1, false, null)',
             Object.assign(context, { group })
         );
-        expect(overriddenRow).toContain('<option value="Włocławek" selected>Włocławek</option>');
+        expect(overriddenRow).toContain('data-warehouse-choice="Włocławek" aria-pressed="true"');
     });
 
-    test('zmiana globalna ustawia wiersze, a wybór studni może ją nadpisać', () => {
+    test('kafelki globalne aktualizują wybór studni, a kafelek pozycji może go nadpisać', () => {
         const context = loadBulkContext();
-        context.HTMLSelectElement = HTMLSelectElement;
         const overlay = document.createElement('div');
-        const globalSelect = document.createElement('select');
-        globalSelect.id = 'bulk-seq-global-warehouse';
-        const rowSelect = document.createElement('select');
-        rowSelect.className = 'bulk-seq-warehouse';
-        rowSelect.dataset.wellIndex = '2';
-        ['config', 'Kluczbork', 'Włocławek'].forEach((value) => {
-            globalSelect.add(new Option(value, value));
-            rowSelect.add(new Option(value, value));
-        });
-        overlay.append(globalSelect, rowSelect);
+        const globalTile = document.createElement('button');
+        globalTile.className = 'bulk-seq-warehouse-tile';
+        globalTile.dataset.warehouseScope = 'global';
+        globalTile.dataset.warehouseChoice = 'Kluczbork';
+        const rowTile = document.createElement('button');
+        rowTile.className = 'bulk-seq-warehouse-tile';
+        rowTile.dataset.warehouseScope = 'well';
+        rowTile.dataset.wellIndex = '2';
+        rowTile.dataset.warehouseChoice = 'Włocławek';
+        const row = document.createElement('div');
+        row.className = 'bulk-seq-item';
+        row.dataset.wellIndex = '2';
+        row.append(rowTile);
+        overlay.append(globalTile, row);
         context._bulkSeqBindWarehouseControls(overlay);
 
-        globalSelect.value = 'Kluczbork';
-        globalSelect.dispatchEvent(new Event('change', { bubbles: true }));
-        expect(rowSelect.value).toBe('Kluczbork');
+        globalTile.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(globalTile.getAttribute('aria-pressed')).toBe('true');
+        expect(rowTile.getAttribute('aria-pressed')).toBe('false');
 
-        rowSelect.value = 'Włocławek';
-        rowSelect.dispatchEvent(new Event('change', { bubbles: true }));
-        const row = vm.runInContext(
-            '_bulkSeqRowHtml({wellIndex:2,wellName:"S3",wellDn:1000,openCount:1,totalCount:1},1,false,null)',
+        rowTile.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const html = vm.runInContext(
+            '_bulkSeqRowHtml({wellIndex:2,wellName:"S3",wellDn:1000,openCount:1,totalCount:1,warehouseDefaults:{dennica:"Kluczbork"}},1,false,null)',
             context
         );
-        expect(row).toContain('<option value="Włocławek" selected>Włocławek</option>');
+        expect(html).toContain('data-warehouse-choice="Włocławek" aria-pressed="true"');
     });
 });

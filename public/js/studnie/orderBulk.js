@@ -343,6 +343,29 @@ function _bulkSeqIsVirtualRequested() {
     return true;
 }
 
+function _bulkSeqWarehouseTiles(choice, scope, wellIndex, disabled, wellName) {
+    const choices = [
+        ['config', 'Z konfiguratora'],
+        ['Kluczbork', 'Kluczbork'],
+        ['Włocławek', 'Włocławek']
+    ];
+    const buttons = choices
+        .map(
+            ([value, label]) =>
+                `<button type="button" class="bulk-seq-warehouse-tile${choice === value ? ' is-selected' : ''}" data-warehouse-scope="${scope}"${wellIndex == null ? '' : ` data-well-index="${wellIndex}"`} data-warehouse-choice="${value}" aria-pressed="${choice === value}" aria-label="${scope === 'global' ? 'Magazyn dla wszystkich studni' : `Magazyn dla studni ${escapeHtml(wellName)}`}: ${label}"${disabled ? ' disabled' : ''}>${label}</button>`
+        )
+        .join('');
+    return `<div class="bulk-seq-warehouse-tiles" role="group" aria-label="Magazyn">${buttons}</div>`;
+}
+
+function _bulkSeqWarehouseDefaultsLabel(defaults) {
+    const labels = [];
+    const valueLabel = (value) => (Array.isArray(value) ? value.join(' / ') : value);
+    if (defaults?.dennica) labels.push(`Dennica: ${valueLabel(defaults.dennica)}`);
+    if (defaults?.nadbudowa) labels.push(`Nadbudowa: ${valueLabel(defaults.nadbudowa)}`);
+    return labels.length ? labels.join(' · ') : 'Domyślne magazyny z konfiguratora';
+}
+
 /** Jeden wiersz popupu — ten sam HTML dla legacy i virtual (DRY, legacy bez zmian). */
 function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
     const disabled = g.openCount === 0;
@@ -376,14 +399,10 @@ function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
                 <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${escapeHtml(g.wellName)}</div>
                 <div class="fs-xs-muted">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
             </div>
-            <label class="bulk-seq-warehouse-label">
-                <span>Magazyn</span>
-                <select class="bulk-seq-warehouse" data-well-index="${g.wellIndex}" aria-label="Magazyn dla studni ${escapeHtml(g.wellName)}"${disabled || isExcluded ? ' disabled' : ''}>
-                    <option value="config"${warehouseChoice === 'config' ? ' selected' : ''}>Z konfiguratora</option>
-                    <option value="Kluczbork"${warehouseChoice === 'Kluczbork' ? ' selected' : ''}>Kluczbork</option>
-                    <option value="Włocławek"${warehouseChoice === 'Włocławek' ? ' selected' : ''}>Włocławek</option>
-                </select>
-            </label>
+            <div class="bulk-seq-warehouse-label">
+                <span>Domyślnie: ${escapeHtml(_bulkSeqWarehouseDefaultsLabel(g.warehouseDefaults))}</span>
+                ${_bulkSeqWarehouseTiles(warehouseChoice, 'well', g.wellIndex, disabled || isExcluded, g.wellName)}
+            </div>
             ${
                 !disabled
                     ? `<button data-csp="toggleBulkSeqItem" data-csp-args="[&quot;$el&quot;]" class="btn btn-sm" style="background:transparent; border:none; color:${isExcluded ? 'var(--success-hover)' : 'var(--danger-hover)'}; padding:0.2rem; cursor:pointer;" title="${isExcluded ? 'Przywróć studnię' : 'Pomiń studnię'}">
@@ -488,22 +507,35 @@ function _bulkSeqResetState() {
 }
 
 function _bulkSeqBindWarehouseControls(overlay) {
-    overlay.addEventListener('change', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLSelectElement)) return;
-        if (target.id === 'bulk-seq-global-warehouse') {
-            _bulkSeqGlobalWarehouse = target.value;
+    overlay.addEventListener('click', (event) => {
+        const target = event.target?.closest?.('.bulk-seq-warehouse-tile');
+        if (!target || target.disabled) return;
+        event.stopPropagation();
+        const choice = target.dataset.warehouseChoice;
+        if (!['config', 'Kluczbork', 'Włocławek'].includes(choice)) return;
+        if (target.dataset.warehouseScope === 'global') {
+            _bulkSeqGlobalWarehouse = choice;
             _bulkSeqWarehouseOverrides.clear();
-            overlay.querySelectorAll('.bulk-seq-warehouse').forEach((select) => {
-                select.value = _bulkSeqGlobalWarehouse;
+            overlay.querySelectorAll('.bulk-seq-warehouse-tile').forEach((tile) => {
+                const pressed = tile.dataset.warehouseChoice === choice;
+                tile.setAttribute('aria-pressed', String(pressed));
+                tile.classList.toggle('is-selected', pressed);
             });
             return;
         }
-        if (!target.matches('.bulk-seq-warehouse')) return;
+        if (target.dataset.warehouseScope !== 'well') return;
         const wellIndex = Number(target.dataset.wellIndex);
         if (!Number.isInteger(wellIndex)) return;
-        if (target.value === _bulkSeqGlobalWarehouse) _bulkSeqWarehouseOverrides.delete(wellIndex);
-        else _bulkSeqWarehouseOverrides.set(wellIndex, target.value);
+        if (choice === _bulkSeqGlobalWarehouse) _bulkSeqWarehouseOverrides.delete(wellIndex);
+        else _bulkSeqWarehouseOverrides.set(wellIndex, choice);
+        const row = target.closest('.bulk-seq-item');
+        row?.querySelectorAll('.bulk-seq-warehouse-tile[data-warehouse-scope="well"]').forEach(
+            (tile) => {
+                const pressed = tile.dataset.warehouseChoice === choice;
+                tile.setAttribute('aria-pressed', String(pressed));
+                tile.classList.toggle('is-selected', pressed);
+            }
+        );
     });
 }
 
@@ -528,10 +560,29 @@ function openBulkOrderSequencePopup() {
                 wellName: el.well.name,
                 wellDn: el.well.dn,
                 totalCount: 0,
-                openCount: 0
+                openCount: 0,
+                warehouseDefaults: {}
             };
         }
-        wellGroups[el.wellIndex].totalCount++;
+        const group = wellGroups[el.wellIndex];
+        group.totalCount++;
+        const part =
+            typeof partForProduct === 'function'
+                ? partForProduct(el.product)
+                : ['dennica', 'kineta', 'styczna'].includes(el.product?.componentType)
+                  ? 'dennica'
+                  : 'nadbudowa';
+        const defaultWarehouse =
+            typeof resolveWellMagazyn === 'function'
+                ? resolveWellMagazyn(el.well, part)
+                : (part === 'dennica' ? el.well.magazynDennica : el.well.magazynNadbudowa) ||
+                  el.well.magazyn ||
+                  'Kluczbork';
+        const warehouseKey = part === 'dennica' ? 'dennica' : 'nadbudowa';
+        const currentDefaults = group.warehouseDefaults[warehouseKey] || [];
+        if (!currentDefaults.includes(defaultWarehouse)) {
+            group.warehouseDefaults[warehouseKey] = [...currentDefaults, defaultWarehouse];
+        }
         if (_bulkElementStatus(el, pzMap) === 'open') wellGroups[el.wellIndex].openCount++;
     });
 
@@ -592,14 +643,10 @@ function openBulkOrderSequencePopup() {
                     <i data-lucide="x"></i>
                 </button>
             </div>
-            <label class="bulk-seq-global-warehouse-label" for="bulk-seq-global-warehouse">
+            <div class="bulk-seq-global-warehouse-label">
                 <span>Magazyn dla wszystkich studni</span>
-                <select id="bulk-seq-global-warehouse" class="bulk-seq-warehouse">
-                    <option value="config" selected>Z konfiguratora dla każdej studni</option>
-                    <option value="Kluczbork">Kluczbork</option>
-                    <option value="Włocławek">Włocławek</option>
-                </select>
-            </label>
+                ${_bulkSeqWarehouseTiles(_bulkSeqGlobalWarehouse, 'global', null, false, '')}
+            </div>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
             <button data-csp="executeBulkFromPopup" data-csp-args="[]" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight: var(--fw-extrabold); padding:0.6rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">
                 <i data-lucide="zap"></i> Generuj w tej kolejności
