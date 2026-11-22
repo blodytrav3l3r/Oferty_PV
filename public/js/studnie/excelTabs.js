@@ -6,7 +6,18 @@ function _excelRenderTabs() {
     if (!container) return;
 
     const dnCounts = {};
-    wells.forEach((w) => {
+    wells.forEach((w, index) => {
+        if (!w) return;
+        const isProductBearing =
+            typeof isWellProductBearing !== 'function' ||
+            isWellProductBearing(
+                w,
+                typeof getStudnieProductById === 'function' ? getStudnieProductById : null
+            );
+        const isProtectedLegacyWell =
+            (typeof isWellLocked === 'function' && isWellLocked(index)) ||
+            (typeof isWellLinkedToActiveOrder === 'function' && isWellLinkedToActiveOrder(w));
+        if (!isProductBearing && !isProtectedLegacyWell) return;
         const key = w.dn === 'styczna' ? 'styczne' : String(w.dn);
         dnCounts[key] = (dnCounts[key] || 0) + 1;
     });
@@ -40,7 +51,23 @@ function _excelRenderTabs() {
 
 function _excelUpdateWellCount() {
     const el = document.getElementById('excel-well-count');
-    if (el) el.textContent = wells.length + ' studni';
+    if (el) {
+        const visibleCount = wells.filter((well, index) => {
+            if (!well) return false;
+            const isProductBearing =
+                typeof isWellProductBearing !== 'function' ||
+                isWellProductBearing(
+                    well,
+                    typeof getStudnieProductById === 'function' ? getStudnieProductById : null
+                );
+            const isProtectedLegacyWell =
+                (typeof isWellLocked === 'function' && isWellLocked(index)) ||
+                (typeof isWellLinkedToActiveOrder === 'function' &&
+                    isWellLinkedToActiveOrder(well));
+            return isProductBearing || isProtectedLegacyWell;
+        }).length;
+        el.textContent = visibleCount + ' studni';
+    }
     _excelUpdateVirtualModeBadge();
 }
 
