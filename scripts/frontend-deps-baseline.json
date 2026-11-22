@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-22",
-    "totalEdges": 2990,
+    "totalEdges": 3008,
     "edges": [
         {
             "page": "public/app.html",
@@ -14638,6 +14638,22 @@
         {
             "page": "public/studnie.html",
             "name": "getStudnieProductById",
+            "userFile": "public/js/studnie/offerSave.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getStudnieProductById",
+            "userFile": "public/js/studnie/offerSummaryTable.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getStudnieProductById",
             "userFile": "public/js/studnie/offerWellComponents.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
@@ -14847,6 +14863,22 @@
             "page": "public/studnie.html",
             "name": "getStudnieProductById",
             "userFile": "public/js/studnie/wellTransitionsPopup.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getStudnieProductById",
+            "userFile": "public/js/studnie/wellUI.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getStudnieProductById",
+            "userFile": "public/js/studnie/wellVirtual.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
@@ -15965,6 +15997,22 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "isWellLinkedToActiveOrder",
+            "userFile": "public/js/studnie/wellUI.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLinkedToActiveOrder",
+            "userFile": "public/js/studnie/wellVirtual.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "isWellLocked",
             "userFile": "public/js/studnie/actionsConfigDrag.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
@@ -16031,6 +16079,30 @@
             "page": "public/studnie.html",
             "name": "isWellLocked",
             "userFile": "public/js/studnie/excelWellActions.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
+            "userFile": "public/js/studnie/offerPricingCalc.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
+            "userFile": "public/js/studnie/offerSave.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
+            "userFile": "public/js/studnie/offerSummaryTable.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -16110,7 +16182,23 @@
         {
             "page": "public/studnie.html",
             "name": "isWellLocked",
+            "userFile": "public/js/studnie/wellUI.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
             "userFile": "public/js/studnie/wellUIHelpers.js",
+            "defFile": "public/js/studnie/actionsWellCrud.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellLocked",
+            "userFile": "public/js/studnie/wellVirtual.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -16185,6 +16273,54 @@
             "userFile": "public/js/studnie/pricingCalculator.js",
             "defFile": "public/js/studnie/actionsWellPricing.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/offerPricingCalc.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/offerSave.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/offerSummaryTable.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/orderCrud.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/wellUI.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isWellProductBearing",
+            "userFile": "public/js/studnie/wellVirtual.js",
+            "defFile": "public/js/studnie/wellUIHelpers.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {
@@ -21399,6 +21535,14 @@
             "page": "public/studnie.html",
             "name": "studnieProducts",
             "userFile": "public/js/studnie/offerPrintManagerHelpers.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "studnieProducts",
+            "userFile": "public/js/studnie/offerSave.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
             "confidence": "CONFIRMED"

@@ -74,6 +74,8 @@ describe('wellVirtual oracle — legacy vs virtual configurator', () => {
                 // ignore
             }
         }
+        context.getStudnieProductById = (id: string) =>
+            id === 'base' ? { id, componentType: 'dennica' } : null;
         ctx = context;
     });
 

@@ -117,7 +117,8 @@ describe('SQL Injection - scenariusze ataku', () => {
                     id: "test'; DROP TABLE audit_logs; --",
                     clientId: 'c1',
                     status: 'draft',
-                    createdAt: Date.now()
+                    createdAt: Date.now(),
+                    wells: [{ id: 'w1', config: [{ productId: 'p1', quantity: 1 }] }]
                 }
             ]
         };

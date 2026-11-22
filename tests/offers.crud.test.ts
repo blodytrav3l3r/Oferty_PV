@@ -424,7 +424,15 @@ describe('Offers CRUD Routes', () => {
             const res = await request(app)
                 .put('/api/offers/studnie')
                 .set('x-user-id', 'user-id')
-                .send({ data: [{ id: 's-1', status: 'draft' }] });
+                .send({
+                    data: [
+                        {
+                            id: 's-1',
+                            status: 'draft',
+                            wells: [{ id: 'w-1', config: [{ productId: 'p-1', quantity: 1 }] }]
+                        }
+                    ]
+                });
             expect(res.statusCode).toBe(200);
         });
 

@@ -115,7 +115,7 @@ const ruryDoc = (over: Record<string, unknown> = {}) => ({
 const studnieDoc = (over: Record<string, unknown> = {}) => ({
     id: 's1',
     clientId: 'c1',
-    wells: [{ id: 'w1', dn: 1000 }],
+    wells: [{ id: 'w1', dn: 1000, config: [{ productId: 'p1', quantity: 1 }] }],
     version: 1,
     ...over
 });
