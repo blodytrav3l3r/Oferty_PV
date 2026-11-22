@@ -1,8 +1,8 @@
 // @ts-nocheck
 /**
- * Regresja: pasek podsumowania rur (Zapisz ofertę / Utwórz zamówienie)
- * widoczny w zakładce Oferta oraz w kroku 3 Konfiguracji (Pozycje oferty).
- * Powrót Oferta → Konfiguracja (krok ≠ 3) musi pasek ukrywać
+ * Regresja: pasek podsumowania rur widoczny w zakładce Oferta, kroku 3
+ * Konfiguracji oraz kroku 5 aktywnego zamówienia.
+ * Pozostałe kroki muszą pasek ukrywać
  * (jeden mechanizm: klasa `hidden`, bez style.display).
  */
 import fs from 'fs';
@@ -50,9 +50,15 @@ function loadNav() {
         'section-builder': { id: 'section-builder', classList: new Cl(true) },
         'section-offer': { id: 'section-offer', classList: new Cl() },
         'section-pricelist': { id: 'section-pricelist', classList: new Cl() },
-        'wizard-step-3': { id: 'wizard-step-3', classList: new Cl() }
+        'wizard-step-3': { id: 'wizard-step-3', classList: new Cl() },
+        'wizard-step-5': { id: 'wizard-step-5', classList: new Cl() }
     };
-    const els = { ...sections, 'rury-summary-bar': bar };
+    const saveButton = { innerHTML: '' };
+    const els = {
+        ...sections,
+        'rury-summary-bar': bar,
+        'btn-save-offer-order': saveButton
+    };
     const context = {
         document: {
             getElementById: (id) => els[id] || null,
@@ -60,6 +66,8 @@ function loadNav() {
             querySelector: () => null
         },
         window: {
+            orderEditMode: false,
+            editingRuryOrderId: null,
             location: { search: '', pathname: '/rury.html' },
             history: { replaceState: () => {} }
         },
@@ -67,7 +75,7 @@ function loadNav() {
     };
     vm.createContext(context);
     vm.runInContext(code, context, { filename: 'offerNavigation.js' });
-    return { ctx: context, bar, sections, removed };
+    return { ctx: context, bar, sections, removed, saveButton };
 }
 
 describe('frontend: pasek rur w zakładce Oferta i kroku 3', () => {
@@ -112,6 +120,24 @@ describe('frontend: pasek rur w zakładce Oferta i kroku 3', () => {
         expect('display' in bar.style).toBe(false);
         sections['wizard-step-3'].classList.remove('active');
         vm.runInContext("showSectionRury('builder')", ctx);
+        expect(bar.classList.contains('hidden')).toBe(true);
+    });
+
+    it('krok 5 pokazuje pasek tylko dla aktywnego zamówienia', () => {
+        const { ctx, bar, sections, saveButton } = loadNav();
+        sections['wizard-step-5'].classList.add('active');
+
+        vm.runInContext('updateRurySummaryBarVisibility()', ctx);
+        expect(bar.classList.contains('hidden')).toBe(true);
+
+        ctx.window.orderEditMode = true;
+        ctx.window.editingRuryOrderId = 'order-rury-1';
+        vm.runInContext('updateRurySummaryBarVisibility()', ctx);
+        expect(bar.classList.contains('hidden')).toBe(false);
+        expect(saveButton.innerHTML).toContain('Zapisz zamówienie');
+
+        ctx.window.orderEditMode = false;
+        vm.runInContext('updateRurySummaryBarVisibility()', ctx);
         expect(bar.classList.contains('hidden')).toBe(true);
     });
 

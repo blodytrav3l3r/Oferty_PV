@@ -211,6 +211,30 @@ body.rury-page #order-mode-banner {
     text-align: center;
 }
 
+.offer-summary-table .offer-summary-product-cell {
+    text-align: left;
+    max-width: 320px;
+    color: var(--text-primary);
+    font-weight: var(--fw-semibold);
+}
+
+.offer-summary-product {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.offer-summary-product-name {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.offer-summary-product > .pehd-badge {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
 .rury-table {
     width: 100%;
     border-collapse: separate;
@@ -272,6 +296,32 @@ body.rury-page #order-mode-banner {
     white-space: nowrap;
 }
 
+.rury-input-suffix-wrap {
+    display: inline-flex;
+    position: relative;
+    vertical-align: middle;
+}
+
+.rury-input-suffix-wrap > .edit-input.w-75-c {
+    padding-right: 1.55rem;
+}
+
+.rury-input-suffix {
+    position: absolute;
+    top: 50%;
+    right: 0.45rem;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.rury-input-suffix-wrap > input:disabled + .rury-input-suffix {
+    opacity: 0.5;
+}
+
 .rury-table tbody td input.edit-input:disabled,
 .rury-table tbody td input[disabled] {
     opacity: 0.5;
@@ -300,6 +350,34 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
     transition:
         border-color 0.15s,
         box-shadow 0.15s;
+}
+.rury-input-suffix-wrap > .order-partial-qty {
+    width: 70px;
+    padding-right: 1.75rem;
+}
+.rury-input-suffix-wrap > .order-partial-qty--order {
+    width: 78px;
+    padding: 0.35rem 1.75rem 0.35rem 0.55rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border-color: var(--border);
+    font:
+        var(--fw-medium) var(--fs-md) 'Inter',
+        sans-serif;
+}
+.rury-input-suffix-wrap > .order-partial-qty--order:focus {
+    border-color: var(--accent);
+    background: var(--bg-input);
+    box-shadow: 0 0 0 2px var(--accent-bg);
+}
+.rury-order-remaining {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--text-muted);
+    font-size: var(--fs-2xs);
+    line-height: 1.25;
+    white-space: nowrap;
 }
 .order-partial-qty:focus {
     border-color: var(--warn);
@@ -339,6 +417,32 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
     color: var(--warn);
     background: rgba(var(--warn-rgb), 0.1);
     border-color: rgba(var(--warn-rgb), 0.3);
+}
+
+.order-fully-badge--link {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.order-fully-badge--link:hover {
+    background: rgba(var(--success-rgb), 0.18);
+    border-color: rgba(var(--success-rgb), 0.5);
+}
+
+.order-fully-badge--link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.offer-summary-order-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.offer-summary-order-link {
+    color: var(--accent-text);
 }
 
 .order-qty-all {
@@ -1084,11 +1188,17 @@ html[data-theme='light'] .pehd-badge {
 .wizard-step#wizard-step-3.active {
     padding-bottom: calc(var(--bottom-bar-h) * 2 + 100px + env(safe-area-inset-bottom, 0px));
 }
+#wizard-step-3 > .rury-card {
+    margin: 0.75rem 1rem 1rem;
+}
 @media (max-width: 768px) {
     .wizard-step#wizard-step-3.active {
         padding-bottom: calc(
             var(--bottom-bar-h-mobile) * 2 + 100px + env(safe-area-inset-bottom, 0px)
         );
+    }
+    #wizard-step-3 > .rury-card {
+        margin: 0.5rem;
     }
 }
 
@@ -1293,6 +1403,51 @@ html[data-theme='light'] .pehd-badge {
     width: 16px;
     height: 16px;
     cursor: pointer;
+}
+
+.rury-order-picker-modal {
+    width: min(92vw, 550px);
+    padding: 1.25rem;
+}
+
+.rury-order-picker-modal .modal-header {
+    margin-bottom: 0.5rem;
+}
+
+.rury-order-picker-modal .modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: var(--fs-xl);
+}
+
+.rury-order-picker-hint {
+    margin: 0 0 1rem;
+    color: var(--text-secondary);
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+}
+
+.rury-order-picker-list {
+    display: grid;
+    gap: 0.5rem;
+    max-height: min(55vh, 420px);
+    overflow-y: auto;
+}
+
+.rury-order-picker-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    min-height: 2.75rem;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.rury-order-picker-option svg {
+    flex: 0 0 auto;
 }
 
 /* Tryb jasny — aktywny przycisk PEHD: selektor .pehd-btn.pehd-btn-active

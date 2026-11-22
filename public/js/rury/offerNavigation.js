@@ -1,8 +1,8 @@
 // @ts-check
 /* ===== NAWIGACJA SEKCJI (RURY) ===== */
 
-// SSoT widoczności paska podsumowania: pasek (Zapisz ofertę / Utwórz zamówienie)
-// widoczny w zakładce Oferta oraz w kroku 3 Konfiguracji (Pozycje oferty).
+// SSoT widoczności paska podsumowania: oferta pokazuje go w zakładce Oferta
+// i kroku 3, a aktywne zamówienie w kroku 5.
 // Jedyny mechanizm: klasa `hidden` (display:none !important) — zakaz style.display
 // (desync z wizard.js).
 function updateRurySummaryBarVisibility() {
@@ -12,7 +12,12 @@ function updateRurySummaryBarVisibility() {
     const step3Active =
         !!document.getElementById('section-builder')?.classList.contains('active') &&
         !!document.getElementById('wizard-step-3')?.classList.contains('active');
-    const barVisible = offerActive || step3Active;
+    const orderStep5Active =
+        !!document.getElementById('section-builder')?.classList.contains('active') &&
+        !!document.getElementById('wizard-step-5')?.classList.contains('active') &&
+        !!window.orderEditMode &&
+        !!window.editingRuryOrderId;
+    const barVisible = offerActive || step3Active || orderStep5Active;
     // ponytail: czyści legacy inline display ze starego sterowania style.display
     summaryBar.style.removeProperty('display');
     summaryBar.classList.toggle('hidden', !barVisible);

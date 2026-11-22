@@ -205,6 +205,55 @@ function showOfferHistory(id) {
     if (window.lucide) lucide.createIcons();
 }
 
+function showRuryOrderPicker(rawOrders) {
+    let parsedOrders;
+    try {
+        parsedOrders = JSON.parse(rawOrders || '');
+    } catch {
+        showToast('Nie udało się odczytać listy powiązanych zamówień.', 'error');
+        return;
+    }
+    if (!Array.isArray(parsedOrders)) {
+        showToast('Lista powiązanych zamówień jest nieprawidłowa.', 'error');
+        return;
+    }
+    const orders = parsedOrders.filter(
+        (order) =>
+            order && typeof order.id === 'string' && order.id && typeof order.label === 'string'
+    );
+    if (orders.length === 1) {
+        window.location.href = 'rury.html?order=' + encodeURIComponent(orders[0].id);
+        return;
+    }
+    if (orders.length < 2) {
+        showToast('Brak powiązanych zamówień do otwarcia.', 'error');
+        return;
+    }
+
+    const overlay = window.showModal({
+        id: 'rury-order-picker-modal',
+        title: 'Wybierz zamówienie',
+        titleId: 'rury-order-picker-title',
+        html: `<div class="modal modal--md rury-order-picker-modal" role="document">
+            <div class="modal-header">
+                <h3 id="rury-order-picker-title"><i data-lucide="package-check" aria-hidden="true"></i> Wybierz zamówienie</h3>
+                <button type="button" class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
+            <p class="rury-order-picker-hint">Ta pozycja znajduje się w kilku zamówieniach. Wybierz, które otworzyć.</p>
+            <div class="rury-order-picker-list">${orders
+                .map(
+                    (
+                        order
+                    ) => `<button type="button" class="btn btn-secondary rury-order-picker-option" data-action="openOrderRury" data-id="${escapeHtmlAttr(order.id)}">
+                        <span>${escapeHtml(order.label)}</span><i data-lucide="arrow-right" aria-hidden="true"></i>
+                    </button>`
+                )
+                .join('')}</div>
+        </div>`
+    });
+    if (window.lucide?.createIcons) window.lucide.createIcons({ root: overlay });
+}
+
 /* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
 if (typeof document !== 'undefined' && !window.__ochDelegated) {
     window.__ochDelegated = true;
@@ -232,7 +281,9 @@ if (typeof document !== 'undefined' && !window.__ochDelegated) {
         } else if (action === 'restoreOfferVersion') {
             window.restoreOfferVersion(id, parseInt(i, 10));
         } else if (action === 'openOrderRury') {
-            window.location.href = 'rury.html?order=' + id;
+            window.location.href = 'rury.html?order=' + encodeURIComponent(id || '');
+        } else if (action === 'showRuryOrderPicker') {
+            showRuryOrderPicker(el.getAttribute('data-orders'));
         } else if (action === 'exportKartaDirectRury') {
             window.exportKartaDirectRury_action(id, fmt);
         } else if (action === 'shareOffer') {

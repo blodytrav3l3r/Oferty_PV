@@ -125,11 +125,7 @@ function renderOfferItems() {
                 : '';
             const is1m = isOneMetrePipe(item.productId);
 
-            let pName = escapeHtml(item.name);
-            if (item.pehdType === 'PEHD-3MM')
-                pName += ' <span class="pehd-badge">+ PEHD 3mm</span>';
-            if (item.pehdType === 'PEHD-4MM')
-                pName += ' <span class="pehd-badge">+ PEHD 4mm</span>';
+            const pName = escapeHtml(item.name);
 
             let rowClass = '';
             if (item.autoAdded) {
@@ -197,7 +193,7 @@ function renderOfferItems() {
             } else if (remaining > 0) {
                 const inputId = 'order-qty-' + item.uid;
                 orderCell = `<td class="text-center text-nowrap" data-csp-stop="1" >
-                  <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})" aria-label="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
+                  <span class="rury-input-suffix-wrap"><input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})" aria-label="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})"><span class="rury-input-suffix" aria-hidden="true">szt.</span></span>
                   <span class="order-qty-max">/ ${item.quantity}</span>
                 </td>`;
             } else {
@@ -216,12 +212,12 @@ function renderOfferItems() {
           <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
           <td class="text-right qty-cell"><span class="text-center-block">${
               hasLength
-                  ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" data-csp-2="$select" data-csp-3="updateItemMeters" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, '$value']))}" data-csp-3-on="change" title="Metry bieżące" aria-label="Metry bieżące"${lockAttr}> m`
+                  ? `<span class="rury-input-suffix-wrap"><input type="number" class="edit-input w-75-c" min="0" step="0.1" value="${metersVal}" data-csp-2="$select" data-csp-3="updateItemMeters" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, '$value']))}" data-csp-3-on="change" title="Metry bieżące" aria-label="Metry bieżące"${lockAttr}><span class="rury-input-suffix" aria-hidden="true">m</span></span>`
                   : '—'
           }</span></td>
-          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${displayQuantity}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'quantity', '$value']))}" data-csp-3-on="change" aria-label="Ilość [szt.]"${lockAttr}> szt.</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><span class="rury-input-suffix-wrap"><input type="number" class="edit-input w-75-c" min="1" value="${displayQuantity}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'quantity', '$value']))}" data-csp-3-on="change" aria-label="Ilość [szt.]"${lockAttr}><span class="rury-input-suffix" aria-hidden="true">szt.</span></span></span></td>
           ${orderCell}
-          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'discount', '$value']))}" data-csp-3-on="change" aria-label="Rabat [%]"${lockAttr}>%</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><span class="rury-input-suffix-wrap"><input type="number" class="edit-input w-75-c" min="0" max="100" step="0.5" value="${item.discount}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'discount', '$value']))}" data-csp-3-on="change" aria-label="Rabat [%]"${lockAttr}><span class="rury-input-suffix" aria-hidden="true">%</span></span></span></td>
           <td class="rury-col-num text-right" ><span class="text-center-block">${unitTotalLabel}</span></td>
           <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'surcharge', '$value']))}" data-csp-3-on="change" aria-label="Dopłata [PLN]"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportLabel}</span></td>

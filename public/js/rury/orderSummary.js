@@ -58,6 +58,37 @@ function updateRuryOrderSummary(orderData) {
     }
 
     if (isOrderMode) {
+        const updateRemainingOfferLabels = function () {
+            const currentOrder = (ordersRury || []).find(
+                (order) => order && order.id === editingRuryOrderId
+            );
+            dst.querySelectorAll('tr[data-uid]').forEach((row) => {
+                const uid = row.dataset.uid;
+                const item = (orderCurrentItems || []).find((entry) => entry.uid === uid);
+                const cell = row.querySelector('td:nth-child(7)');
+                if (!item || item.autoAdded || !cell || !cell.querySelector('.order-partial-qty'))
+                    return;
+
+                const savedItem = (currentOrder?.items || []).find((entry) => entry.uid === uid);
+                const savedQuantity = Number(
+                    savedItem?.orderedQuantity || savedItem?.quantity || 0
+                );
+                const currentQuantity = Number(item.orderedQuantity || item.quantity) || 0;
+                const otherOrdered = Math.max(0, getItemOrderedQty(item) - savedQuantity);
+                const remaining = Math.max(
+                    0,
+                    (Number(item.quantity) || 0) - otherOrdered - currentQuantity
+                );
+                let label = cell.querySelector('.rury-order-remaining');
+                if (!label) {
+                    label = document.createElement('span');
+                    label.className = 'rury-order-remaining';
+                    label.setAttribute('aria-live', 'polite');
+                    cell.appendChild(label);
+                }
+                label.textContent = `Pozostało na ofercie: ${remaining} szt.`;
+            });
+        };
         const applyOrderQty = async function (row, v) {
             const uid = row.dataset.uid;
             const item = (orderCurrentItems || []).find((it) => it.uid === uid);
@@ -125,6 +156,7 @@ function updateRuryOrderSummary(orderData) {
                     });
                 }
             }
+            updateRemainingOfferLabels();
         };
         dst.querySelectorAll('.order-partial-qty').forEach((el) => {
             el.removeAttribute('disabled');
@@ -154,9 +186,9 @@ function updateRuryOrderSummary(orderData) {
                 const item = (orderCurrentItems || []).find((it) => it.uid === uid);
                 const currentQty = item ? item.orderedQuantity || item.quantity || 0 : 0;
                 orderCell.innerHTML =
-                    '<input type="number" class="order-partial-qty" value="' +
+                    '<span class="rury-input-suffix-wrap"><input type="number" class="order-partial-qty order-partial-qty--order" value="' +
                     escapeHtml(String(currentQty)) +
-                    '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius: var(--radius-2xs);padding:2px 4px">';
+                    '" min="1" aria-label="Ilość do zamówienia [szt.]"><span class="rury-input-suffix" aria-hidden="true">szt.</span></span>';
                 const newInput = /** @type {HTMLInputElement} */ (
                     orderCell.querySelector('.order-partial-qty')
                 );
@@ -169,6 +201,7 @@ function updateRuryOrderSummary(orderData) {
                 }
             }
         });
+        updateRemainingOfferLabels();
     } else {
         dst.querySelectorAll('.order-partial-qty').forEach((el) => el.setAttribute('disabled', ''));
     }

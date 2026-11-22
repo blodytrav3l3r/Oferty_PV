@@ -105,6 +105,45 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
               snapTotalTransportCost
           )
         : { version: 1, items: [] };
+    const ordersByItemUid = new Map();
+    if (window.editingOfferId && Array.isArray(ordersRury)) {
+        ordersRury.forEach((order) => {
+            if (
+                !order ||
+                !order.id ||
+                order.offerId !== window.editingOfferId ||
+                !Array.isArray(order.items)
+            ) {
+                return;
+            }
+            const parsedCreatedAt = Date.parse(order.createdAt || '');
+            const createdAt = Number.isFinite(parsedCreatedAt) ? parsedCreatedAt : 0;
+            order.items.forEach((orderItem) => {
+                if (!orderItem?.uid) return;
+                const relatedOrders = ordersByItemUid.get(orderItem.uid) || [];
+                if (relatedOrders.some((entry) => entry.order.id === order.id)) return;
+                ordersByItemUid.set(orderItem.uid, [...relatedOrders, { order, createdAt }]);
+            });
+        });
+    }
+    const buildOpenOrderButton = (orders, content, className) => {
+        const sortedOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
+        const orderOptions = sortedOrders.map(({ order }) => ({
+            id: order.id,
+            label: order.orderNumber || order.offerNumber || order.id
+        }));
+        if (orderOptions.length === 1) {
+            const [order] = orderOptions;
+            const accessibleLabel = escapeHtmlAttr(`Otwórz zamówienie ${order.label}`);
+            return `<button type="button" class="${className}" data-action="openOrderRury" data-id="${escapeHtmlAttr(order.id)}" title="${accessibleLabel}" aria-label="${accessibleLabel}">${content}</button>`;
+        }
+        const orderLabels = orderOptions.map((order) => order.label).join(', ');
+        const accessibleLabel = escapeHtmlAttr(
+            `Wybierz jedno z ${orderOptions.length} zamówień: ${orderLabels}`
+        );
+        const serializedOrders = escapeHtmlAttr(JSON.stringify(orderOptions));
+        return `<button type="button" class="${className}" data-action="showRuryOrderPicker" data-orders="${serializedOrders}" title="${accessibleLabel}" aria-label="${accessibleLabel}">${content}</button>`;
+    };
 
     let progressHtml = '';
     if (!window.orderEditMode && typeof computeOrderedQuantities === 'function') {
@@ -233,9 +272,13 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
         }
 
         let pName = escapeHtml(item.name);
-        if (item.pehdType === 'PEHD-3MM') pName += ' <span class="pehd-badge">+ PEHD 3mm</span>';
-        if (item.pehdType === 'PEHD-4MM') pName += ' <span class="pehd-badge">+ PEHD 4mm</span>';
         if (item.autoAdded) pName += ' <span class="fs-xs-warn80">(dodane automatycznie)</span>';
+        const pehdBadge =
+            item.pehdType === 'PEHD-3MM'
+                ? '<span class="pehd-badge">+ PEHD 3mm</span>'
+                : item.pehdType === 'PEHD-4MM'
+                  ? '<span class="pehd-badge">+ PEHD 4mm</span>'
+                  : '';
         if (item.surcharge) {
             const isPos = item.surcharge > 0;
             const color = isPos ? 'var(--success-hover)' : 'var(--danger-hover)';
@@ -246,6 +289,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
 
         const remaining =
             typeof getRemainingQuantity === 'function' ? getRemainingQuantity(item) : item.quantity;
+        const relatedOrders = item.uid ? ordersByItemUid.get(item.uid) || [] : [];
         const isOrdered =
             remaining <= 0 &&
             (typeof isItemInAnyOrder === 'function' ? isItemInAnyOrder(item.uid) : false);
@@ -257,8 +301,15 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
         if (isOrdered) {
             summaryCheckboxCell =
                 '<td class="text-center"><i data-lucide="package-check" class="icon-16-accent"></i></td>';
-            summaryOrderCell =
-                '<td class="text-center"><span class="order-fully-badge">Zamówione</span></td>';
+            const status =
+                relatedOrders.length > 0
+                    ? buildOpenOrderButton(
+                          relatedOrders,
+                          'Zamówione',
+                          'order-fully-badge order-fully-badge--link'
+                      )
+                    : '<span class="order-fully-badge">Zamówione</span>';
+            summaryOrderCell = `<td class="text-center">${status}</td>`;
         } else if (item.autoAdded) {
             summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} data-csp="$summaryPipeCheck" data-csp-on="change" data-csp-args="[${item.autoAdded ? 0 : 1}]" ></td>`;
             summaryOrderCell =
@@ -266,9 +317,19 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
         } else if (remaining > 0) {
             summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} data-csp="$summaryPipeCheck" data-csp-on="change" data-csp-args="[${item.autoAdded ? 0 : 1}]" ></td>`;
             const inputId = 'offer-summary-qty-' + item.uid;
-            summaryOrderCell = `<td class="text-center text-nowrap" data-csp-stop="1" >
-                <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
-                <span class="order-qty-max">/ ${item.quantity}</span>
+            const orderLink =
+                relatedOrders.length > 0
+                    ? buildOpenOrderButton(
+                          relatedOrders,
+                          '<i data-lucide="external-link" aria-hidden="true"></i>',
+                          'btn-icon btn-icon-sm offer-summary-order-link'
+                      )
+                    : '';
+            summaryOrderCell = `<td class="text-center text-nowrap offer-summary-order-cell" data-csp-stop="1" >
+                <span class="offer-summary-order-status">
+                <span class="rury-input-suffix-wrap"><input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})" aria-label="Ilość do zamówienia [szt.], pozostało ${remaining} z ${item.quantity}"><span class="rury-input-suffix" aria-hidden="true">szt.</span></span>
+                <span class="order-qty-max">/ ${item.quantity}</span>${orderLink}
+                </span>
             </td>`;
         } else {
             summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} data-csp="$summaryPipeCheck" data-csp-on="change" data-csp-args="[${item.autoAdded ? 0 : 1}]" ></td>`;
@@ -299,7 +360,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
         html += `<tr style="border-bottom:1px solid var(--border-glass); ${isFullyOrdered ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.05);' : ''}">
             ${summaryCheckboxCell}
             <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold); white-space:nowrap;">${i + 1}</td>
-            <td style="text-align:left; font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${pName}</td>
+            <td class="offer-summary-product-cell"><div class="offer-summary-product"><span class="offer-summary-product-name">${pName}</span>${pehdBadge}</div></td>
             <td class="text-center">${fmt(item.unitPrice)}</td>
             <td class="text-center">${item.discount}%</td>
             <td class="text-center">${fmt(_moneyRoundTransport(priceAfterDiscount))}</td>
