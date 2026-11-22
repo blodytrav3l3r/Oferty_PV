@@ -100,7 +100,6 @@ function renderOfferItems() {
 
             const baseCents = Math.round(_moneyRoundTransport(priceAfterDiscount) * 100);
             const transportCents = getTransportAllocationCents(transportAllocation, item.uid);
-            const transportSegments = getTransportSegments(transportAllocation, item.uid);
             const transportPerUnit =
                 Number.isInteger(displayQuantity) && displayQuantity > 0
                     ? transportCents / 100 / displayQuantity
@@ -110,19 +109,15 @@ function renderOfferItems() {
                 (baseCents * displayQuantity + transportCents) / 100
             );
             const unitTotalLabel =
-                transportSegments.length > 1
-                    ? `${fmt(_moneyRoundTransport(baseCents / 100 + transportSegments[0].transportCentsPerUnit / 100))}–${fmt(_moneyRoundTransport(baseCents / 100 + transportSegments[1].transportCentsPerUnit / 100))}`
-                    : !Number.isInteger(displayQuantity) && transportCents
-                      ? fmt(_moneyRoundTransport(baseCents / 100))
-                      : fmt(unitTotal);
+                !Number.isInteger(displayQuantity) && transportCents
+                    ? fmt(_moneyRoundTransport(baseCents / 100))
+                    : fmt(unitTotal);
             const transportLabel =
-                transportSegments.length > 1
-                    ? `${fmt(transportSegments[0].transportCentsPerUnit / 100)}–${fmt(transportSegments[1].transportCentsPerUnit / 100)}`
-                    : !Number.isInteger(displayQuantity) && transportCents
-                      ? `${fmt(transportCents / 100)} / poz.`
-                      : transportPerUnit > 0
-                        ? fmt(transportPerUnit)
-                        : '—';
+                !Number.isInteger(displayQuantity) && transportCents
+                    ? `${fmt(transportCents / 100)} / poz.`
+                    : transportPerUnit > 0
+                      ? fmt(_moneyRoundTransport(transportPerUnit))
+                      : '—';
             const hasLength = item.lengthM && item.lengthM > 0;
             const metersVal = hasLength ? item.meters || 0 : '';
             const autoTag = item.autoAdded

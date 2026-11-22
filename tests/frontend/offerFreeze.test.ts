@@ -11,7 +11,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const readPub = (rel) => fs.readFileSync(path.join(ROOT, 'public', rel), 'utf8');
 
 describe('frontend vm: rury renderOfferItems nie rusza unitPrice edycji', () => {
-    function loadRendering(items) {
+    function loadRendering(items, transportCents = 0, transportSegments = []) {
         const ctxDir = path.join(ROOT, 'public/js/rury');
         const tbody = { innerHTML: '' };
         const colgroup = { innerHTML: '' };
@@ -32,8 +32,8 @@ describe('frontend vm: rury renderOfferItems nie rusza unitPrice edycji', () => 
             getCostPerTrip: () => 0,
             getRuryTransportCount: () => 0,
             getCurrentRuryTransportAllocation: () => ({ version: 1, items: [] }),
-            getTransportAllocationCents: () => 0,
-            getTransportSegments: () => [],
+            getTransportAllocationCents: () => transportCents,
+            getTransportSegments: () => transportSegments,
             calculateTransports: () => ({ totalTransports: 0, lines: [] }),
             _moneyRoundTransport: (value) => Math.round(Number(value) * 100) / 100,
             getSortedRuryItems: (list) => ({
@@ -69,6 +69,31 @@ describe('frontend vm: rury renderOfferItems nie rusza unitPrice edycji', () => 
         vm.runInContext('renderOfferItems()', sandbox);
         expect(items[0].unitPrice).toBe(100);
         expect(items[1].unitPrice).toBe(150);
+    });
+
+    test('renderuje jedną średnią cenę transportu i ceny po rabacie z rozbitych groszy', () => {
+        const items = [
+            {
+                uid: 'rur-1',
+                productId: 'P1',
+                name: 'Rura',
+                unitPrice: 420,
+                quantity: 20,
+                discount: 0
+            }
+        ];
+        const { sandbox, tbody } = loadRendering(items, 85361, [
+            { quantity: 19, transportCentsPerUnit: 4268 },
+            { quantity: 1, transportCentsPerUnit: 4269 }
+        ]);
+
+        vm.runInContext('renderOfferItems()', sandbox);
+
+        expect(tbody.innerHTML).toContain('42.68');
+        expect(tbody.innerHTML).toContain('462.68');
+        expect(tbody.innerHTML).toContain('9253.61');
+        expect(tbody.innerHTML).not.toContain('42.68–42.69');
+        expect(tbody.innerHTML).not.toContain('462.68–462.69');
     });
 });
 

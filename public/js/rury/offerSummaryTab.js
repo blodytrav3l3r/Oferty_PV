@@ -192,7 +192,6 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
         const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
         const roundedBaseCents = Math.round(_moneyRoundTransport(priceAfterDiscount) * 100);
         const transportCents = getTransportAllocationCents(transportAllocation, item.uid);
-        const segments = getTransportSegments(transportAllocation, item.uid);
         const tpu =
             Number.isInteger(displayQuantity) && displayQuantity > 0
                 ? transportCents / 100 / displayQuantity
@@ -304,8 +303,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip, transportAlloc
             <td class="text-center">${fmt(item.unitPrice)}</td>
             <td class="text-center">${item.discount}%</td>
             <td class="text-center">${fmt(_moneyRoundTransport(priceAfterDiscount))}</td>
-            <td style=" color:var(--warn); white-space:nowrap;">${segments.length > 1 ? `${fmt(segments[0].transportCentsPerUnit / 100)}–${fmt(segments[1].transportCentsPerUnit / 100)}` : !Number.isInteger(item.quantity) && transportCents ? `${fmt(transportCents / 100)} / poz.` : tpu > 0 ? fmt(tpu) : '—'}</td>
-            <td style=" color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${segments.length > 1 ? `${fmt(_moneyRoundTransport(roundedBaseCents / 100 + segments[0].transportCentsPerUnit / 100))}–${fmt(_moneyRoundTransport(roundedBaseCents / 100 + segments[1].transportCentsPerUnit / 100))}` : Number.isInteger(item.quantity) ? fmt(unitTotal) : fmt(_moneyRoundTransport(roundedBaseCents / 100))}</td>
+            <td style=" color:var(--warn); white-space:nowrap;">${!Number.isInteger(displayQuantity) && transportCents ? `${fmt(transportCents / 100)} / poz.` : tpu > 0 ? fmt(_moneyRoundTransport(tpu)) : '—'}</td>
+            <td style=" color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${Number.isInteger(displayQuantity) ? fmt(unitTotal) : fmt(_moneyRoundTransport(roundedBaseCents / 100))}</td>
             <td style="text-align:center; font-weight: var(--fw-semibold); white-space:nowrap;">${displayQuantity} szt.</td>
             ${summaryOrderCell}
             <td style=" font-weight: var(--fw-bold); color:var(--success); white-space:nowrap;">${fmt(netto)} PLN</td>
