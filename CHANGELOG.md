@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.18](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.17...v1.64.18) (2026-11-22)
+
+### Features
+
+- **studnie:** dodaj wybór magazynu w zleceniach ([b47bac9](https://github.com/blodytrav3l3r/Oferty_PV/commit/b47bac9b66f9c8738218e1923d48e1fef88a281d))
+- **studnie:** pokaż magazyny w kafelkach pz ([b8592f0](https://github.com/blodytrav3l3r/Oferty_PV/commit/b8592f0425412b2f20192385c5769c9bf89e8338))
+
 ### [1.64.17](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.16...v1.64.17) (2026-11-22)
 
 ### Bug Fixes

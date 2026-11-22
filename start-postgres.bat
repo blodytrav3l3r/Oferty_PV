@@ -1,12 +1,12 @@
 @echo off
-REM  Wersja: 1.64.17
+REM  Wersja: 1.64.18
 REM Rola: Pomocnicza implementacja startu Docker Compose dla start-docker.bat.
 REM Uzycie: start-postgres.bat
 REM Uruchamia: docker compose up --detach --build dla postgres i app.
 REM Wplyw: Buduje aplikacje z lokalnego folderu, bez pobierania kodu z GitHub; zachowuje wolumen PostgreSQL.
 setlocal
 cd /d "%~dp0"
-set "APP_VERSION=1.64.17"
+set "APP_VERSION=1.64.18"
 set "HTTPS_ENABLED=false"
 set "APP_COMMIT_SHA=unknown"
 set "APP_GIT_BRANCH=unknown"
