@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.20](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.19...v1.64.20) (2026-11-22)
+
+### Bug Fixes
+
+- **rury:** pokazuj jedna cene transportu ([66905db](https://github.com/blodytrav3l3r/Oferty_PV/commit/66905db6cf768d6886886c8bf45eef192e807c2b))
+- **rury:** popraw kolejność grup w tabeli ([d5f20e4](https://github.com/blodytrav3l3r/Oferty_PV/commit/d5f20e4736af695ee66423ea3288397777b75301))
+- **rury:** usprawnij obsługę zamówień rur ([ce28e43](https://github.com/blodytrav3l3r/Oferty_PV/commit/ce28e43c33c464fbeea89692c6edb4b9dcc9b69c))
+- **studnie:** drukuj magazyn ze zlecenia ([d3f22c0](https://github.com/blodytrav3l3r/Oferty_PV/commit/d3f22c0804dbac848ed0bc4809ace639b3fe62e6))
+- **ui:** poszerz modal kolejności generowania ([c88c073](https://github.com/blodytrav3l3r/Oferty_PV/commit/c88c073e53c180c63da12d821194767aa82280d8))
+
 ### [1.64.19](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.18...v1.64.19) (2026-11-22)
 
 ### Bug Fixes

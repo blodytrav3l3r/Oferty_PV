@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.64.19  
+**Wersja:** 1.64.20  
 **Ostatnia aktualizacja:** 2026-11-07
 
 **Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera), surowy JSON: `GET /api/docs.json`. Specyfikacja jest generowana z adnotacji `@openapi` w wybranych plikach; jej pokrycie jest częściowe i nie stanowi kompletnego źródła kontraktów.
@@ -34,7 +34,7 @@ Publiczny numer wersji aplikacji.
 **Odpowiedź:**
 
 ```json
-{ "version": "1.64.19" }
+{ "version": "1.64.20" }
 ```
 
 ### `GET /health/live`
@@ -69,12 +69,12 @@ Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `
 
 ```json
 {
-    "version": "1.64.19",
+    "version": "1.64.20",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.64.19",
+    "dbVersion": "1.64.20",
     "uptime": 123.45,
     "memory": { ... }
 }
