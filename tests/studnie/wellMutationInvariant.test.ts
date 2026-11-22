@@ -84,6 +84,8 @@ describe('well mutation invariant 10k — filteredIndexes/Map/logicalRow/DOM/sel
                 // ignore parse quirks
             }
         }
+        context.getStudnieProductById = (id: string) =>
+            id === 'base' ? { id, componentType: 'dennica' } : null;
         ctx = context;
     });
 
