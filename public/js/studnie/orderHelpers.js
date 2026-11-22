@@ -1168,7 +1168,24 @@ function buildPzParamsFromWell(well, po) {
     let spocznikH = forceBrak ? 'brak' : pick(well.spocznikH, po.spocznikH, 'brak');
     if (kineta === 'preco' || kineta === 'precotop' || kineta === 'unolith') spocznikH = '1/1';
 
+    const warehousePart =
+        product && typeof partForProduct === 'function'
+            ? partForProduct(product)
+            : type === 'dennica' || type === 'kineta' || type === 'styczna'
+              ? 'dennica'
+              : 'nadbudowa';
+    const magazyn =
+        typeof resolveWellMagazyn === 'function'
+            ? resolveWellMagazyn(well, warehousePart)
+            : (warehousePart === 'dennica' ? well.magazynDennica : well.magazynNadbudowa) ||
+              well.magazyn ||
+              'Kluczbork';
+    const hasConfiguredWarehouse = Boolean(
+        well.magazyn || well.magazynDennica || well.magazynNadbudowa
+    );
+
     return {
+        ...(hasConfiguredWarehouse ? { magazyn } : {}),
         kineta,
         spocznik: forceBrak ? 'brak' : pick(well.spocznik, po.spocznik, 'brak'),
         spocznikH,
@@ -1240,6 +1257,40 @@ function syncWellParamsToProductionOrders(well) {
     return changedCount;
 }
 
+/** Synchronizuje wyłącznie magazyn między konfiguracją a roboczymi PZ studni. */
+function syncWellWarehouseToProductionOrders(well) {
+    if (
+        !well ||
+        !well.id ||
+        typeof productionOrders === 'undefined' ||
+        !Array.isArray(productionOrders)
+    )
+        return 0;
+    let changedCount = 0;
+    productionOrders.forEach((po) => {
+        if (!po || String(po.wellId) !== String(well.id) || po.status === 'accepted') return;
+        const product = pzElementProduct(well, po);
+        if (!product) return;
+        const part =
+            typeof partForProduct === 'function'
+                ? partForProduct(product)
+                : ['dennica', 'kineta', 'styczna'].includes(product.componentType)
+                  ? 'dennica'
+                  : 'nadbudowa';
+        const warehouse =
+            typeof resolveWellMagazyn === 'function'
+                ? resolveWellMagazyn(well, part)
+                : (part === 'dennica' ? well.magazynDennica : well.magazynNadbudowa) ||
+                  well.magazyn ||
+                  'Kluczbork';
+        if (po.magazyn === warehouse) return;
+        po.magazyn = warehouse;
+        changedCount += 1;
+        if (typeof markProductionOrderPending === 'function') markProductionOrderPending(po);
+    });
+    return changedCount;
+}
+
 function syncAllWellParamsToProductionOrders() {
     if (typeof wells === 'undefined' || !Array.isArray(wells)) return 0;
     let total = 0;
@@ -1250,6 +1301,7 @@ function syncAllWellParamsToProductionOrders() {
 }
 
 window.syncWellParamsToProductionOrders = syncWellParamsToProductionOrders;
+window.syncWellWarehouseToProductionOrders = syncWellWarehouseToProductionOrders;
 window.syncAllWellParamsToProductionOrders = syncAllWellParamsToProductionOrders;
 window.buildPzParamsFromWell = buildPzParamsFromWell;
 window.klasaBetonuPzToWell = klasaBetonuPzToWell;

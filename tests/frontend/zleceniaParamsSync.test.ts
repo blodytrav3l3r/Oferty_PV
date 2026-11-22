@@ -37,6 +37,14 @@ function loadSandbox(wells: any[], orders: any[]) {
         wells,
         productionOrders: orders,
         studnieProducts: PRODUCTS,
+        resolveWellMagazyn: (well: any, part: string) =>
+            (part === 'dennica' ? well.magazynDennica : well.magazynNadbudowa) ||
+            well.magazyn ||
+            'Kluczbork',
+        partForProduct: (product: any) =>
+            product && ['dennica', 'kineta', 'styczna'].includes(product.componentType)
+                ? 'dennica'
+                : 'nadbudowa',
         markProductionOrderPending: (po: any) => pending.push(po)
     };
     sandbox.window = sandbox;
@@ -167,5 +175,71 @@ describe('syncWellParamsToProductionOrders: studnia → zlecenia', () => {
         expect(sandbox.syncAllWellParamsToProductionOrders()).toBe(2);
         expect(order1.kineta).toBe('preco');
         expect(order2.kineta).toBe('klinkier');
+    });
+
+    test('magazyn synchronizuje się do szkiców według typu elementu', () => {
+        const well = makeWell({
+            magazyn: 'Kluczbork',
+            magazynDennica: 'Włocławek',
+            magazynNadbudowa: 'Kluczbork',
+            config: [
+                { productId: 'p-dennica', _elemId: 'e1' },
+                { productId: 'p-krag', _elemId: 'e2' }
+            ]
+        });
+        const bottomOrder = makeOrder(0, { productId: 'p-dennica', magazyn: 'Kluczbork' });
+        const upperOrder = makeOrder(1, { productId: 'p-krag', magazyn: 'Włocławek' });
+        const { sandbox, pending } = loadSandbox([well], [bottomOrder, upperOrder]);
+
+        expect(sandbox.syncWellParamsToProductionOrders(well)).toBe(2);
+        expect(bottomOrder.magazyn).toBe('Włocławek');
+        expect(upperOrder.magazyn).toBe('Kluczbork');
+        expect(pending).toEqual([bottomOrder, upperOrder]);
+    });
+
+    test('zmiana magazynu studni synchronizuje robocze PZ, ale nie rusza zaakceptowanych', () => {
+        const well = makeWell({
+            magazyn: 'Włocławek',
+            magazynDennica: 'Włocławek',
+            magazynNadbudowa: 'Włocławek'
+        });
+        const draft = makeOrder(0, { magazyn: 'Kluczbork' });
+        const accepted = makeOrder(1, { status: 'accepted', magazyn: 'Kluczbork' });
+        const { sandbox, pending } = loadSandbox([well], [draft, accepted]);
+
+        sandbox.syncWellParamsToProductionOrders(well);
+
+        expect(draft.magazyn).toBe('Włocławek');
+        expect(accepted.magazyn).toBe('Kluczbork');
+        expect(pending).toEqual([draft]);
+    });
+
+    test('synchronizacja samego magazynu nie zmienia innych pól roboczych PZ', () => {
+        const well = makeWell({
+            magazyn: 'Włocławek',
+            magazynDennica: 'Włocławek',
+            magazynNadbudowa: 'Włocławek',
+            config: [
+                { productId: 'p-dennica', _elemId: 'e1' },
+                { productId: 'p-krag', _elemId: 'e2' }
+            ]
+        });
+        const bottomOrder = makeOrder(0, {
+            productId: 'p-dennica',
+            magazyn: 'Kluczbork',
+            kineta: 'klinkier',
+            uwagi: 'zachować'
+        });
+        const upperOrder = makeOrder(1, { productId: 'p-krag', magazyn: 'Kluczbork' });
+        const accepted = makeOrder(2, { status: 'accepted', magazyn: 'Kluczbork' });
+        const { sandbox, pending } = loadSandbox([well], [bottomOrder, upperOrder, accepted]);
+
+        expect(sandbox.syncWellWarehouseToProductionOrders(well)).toBe(2);
+        expect(bottomOrder.magazyn).toBe('Włocławek');
+        expect(upperOrder.magazyn).toBe('Włocławek');
+        expect(bottomOrder.kineta).toBe('klinkier');
+        expect(bottomOrder.uwagi).toBe('zachować');
+        expect(accepted.magazyn).toBe('Kluczbork');
+        expect(pending).toEqual([bottomOrder, upperOrder]);
     });
 });

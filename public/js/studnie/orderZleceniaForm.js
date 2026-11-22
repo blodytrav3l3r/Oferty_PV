@@ -170,6 +170,19 @@ async function populateZleceniaForm(el) {
         elementIndex
     );
     const isAccepted = existing && existing.status === 'accepted';
+    const warehousePart =
+        typeof partForProduct === 'function'
+            ? partForProduct(product)
+            : ['dennica', 'kineta', 'styczna'].includes(product.componentType)
+              ? 'dennica'
+              : 'nadbudowa';
+    const configuredWarehouse =
+        typeof resolveWellMagazyn === 'function'
+            ? resolveWellMagazyn(well, warehousePart)
+            : (warehousePart === 'dennica' ? well.magazynDennica : well.magazynNadbudowa) ||
+              well.magazyn ||
+              'Kluczbork';
+    const magazynVal = existing?.magazyn || configuredWarehouse;
 
     const btnAccept = document.getElementById('zl-btn-accept');
     const btnRevoke = document.getElementById('zl-btn-revoke');
@@ -459,8 +472,9 @@ async function populateZleceniaForm(el) {
         </div>
     </div>
 
-    <div id="zl-dane-elementu-grid" style="display:grid; grid-template-columns:${daneElementuVisible ? '230px' : '36px'} 1fr; gap:0.5rem; margin-bottom:0.5rem; transition:grid-template-columns 0.25s ease;">
-        <div class="card card-compact" style="overflow:hidden; min-width:0; transition:all 0.25s ease; position:relative;">
+    <div id="zl-dane-elementu-grid" class="zlecenia-element-grid" style="display:grid; grid-template-columns:230px 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+        <div class="zlecenia-element-side-stack${daneElementuVisible ? '' : ' is-data-collapsed'}">
+        <div id="zl-dane-elementu-card" class="card card-compact" style="overflow:hidden; min-width:0; transition:all 0.25s ease; position:relative;">
             <div id="zl-dane-elementu-header-full" class="card-title-sm" data-action="toggleDaneElementu" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'flex' : 'none'}; justify-content:space-between; align-items:center;">
                 <span><i data-lucide="hard-hat"></i> Dane elementu</span>
                 <span class="text-xs"><i data-lucide="chevron-left"></i></span>
@@ -512,6 +526,16 @@ async function populateZleceniaForm(el) {
                 </div>
 
             </div>
+        </div>
+
+        <section class="card card-compact zlecenia-warehouse-card" aria-labelledby="zl-magazyn-heading">
+            <h3 id="zl-magazyn-heading" class="card-title-sm"><i data-lucide="warehouse"></i> Magazyn</h3>
+            <div class="zlecenia-warehouse-options" role="group" aria-label="Magazyn zlecenia">
+                <button type="button" class="param-tile${magazynVal === 'Kluczbork' ? ' active' : ''}" data-action="selectZleceniaWarehouse" data-value="Kluczbork"${isAccepted ? ' disabled' : ''}>Kluczbork</button>
+                <button type="button" class="param-tile${magazynVal === 'Włocławek' ? ' active' : ''}" data-action="selectZleceniaWarehouse" data-value="Włocławek"${isAccepted ? ' disabled' : ''}>Włocławek</button>
+            </div>
+            <input type="hidden" id="zl-magazyn" value="${escapeHtmlAttr(magazynVal)}">
+        </section>
         </div>
 
         <div style="display:flex; flex-direction:column; gap:0.5rem; min-width:0;">
@@ -776,7 +800,8 @@ const ZLECENIA_FORM_INPUTS = {
     usytuowanie: 'zl-usytuowanie',
     kineta: 'zl-kineta',
     spocznik: 'zl-spocznik',
-    klasaBetonu: 'zl-klasa-betonu'
+    klasaBetonu: 'zl-klasa-betonu',
+    magazyn: 'zl-magazyn'
 };
 
 /* Przenosi wartości formularza do wpisu PZ w RAM i oznacza go do zapisu,
@@ -825,6 +850,45 @@ function setZlTile(fieldId, val) {
             group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
         tile.classList.add('active');
     }
+}
+
+function selectZleceniaWarehouse(button, warehouse) {
+    if (!['Kluczbork', 'Włocławek'].includes(warehouse)) return;
+    const element =
+        Array.isArray(zleceniaElementsList) && zleceniaSelectedIdx >= 0
+            ? zleceniaElementsList[zleceniaSelectedIdx]
+            : null;
+    if (!element || !element.well || !element.product) return;
+
+    const existing = pzGuard.findPzForElement(
+        productionOrders || [],
+        element.well.id,
+        (element.configItem && element.configItem._elemId) || '',
+        element.elementIndex
+    );
+    if (existing && existing.status === 'accepted') return;
+
+    element.well.magazyn = warehouse;
+    element.well.magazynDennica = warehouse;
+    element.well.magazynNadbudowa = warehouse;
+
+    const input = document.getElementById('zl-magazyn');
+    if (input) input.value = warehouse;
+    const group = button.closest('.zlecenia-warehouse-options');
+    if (group) {
+        group.querySelectorAll('button').forEach((option) => {
+            option.classList.toggle('active', option.dataset.value === warehouse);
+        });
+    }
+
+    if (typeof window.syncWellWarehouseToProductionOrders === 'function') {
+        window.syncWellWarehouseToProductionOrders(element.well);
+    } else if (existing && existing.magazyn !== warehouse) {
+        existing.magazyn = warehouse;
+        if (typeof markProductionOrderPending === 'function') markProductionOrderPending(existing);
+    }
+    if (typeof renderWellParams === 'function') renderWellParams();
+    if (typeof updateParamTilesUI === 'function') updateParamTilesUI();
 }
 
 async function selectZleceniaTile(btn, targetId, val) {
@@ -1039,6 +1103,7 @@ async function selectZleceniaTile(btn, targetId, val) {
 
 window.toggleDaneElementu = function () {
     const grid = document.getElementById('zl-dane-elementu-grid');
+    const sideStack = grid && grid.querySelector('.zlecenia-element-side-stack');
     const content = document.getElementById('zl-dane-elementu-content');
     const headerFull = document.getElementById('zl-dane-elementu-header-full');
     const headerCollapsed = document.getElementById('zl-dane-elementu-header-collapsed');
@@ -1051,12 +1116,12 @@ window.toggleDaneElementu = function () {
         content.style.display = 'none';
         if (headerFull) headerFull.style.display = 'none';
         if (headerCollapsed) headerCollapsed.style.display = 'flex';
-        grid.style.gridTemplateColumns = '36px 1fr';
+        if (sideStack) sideStack.classList.add('is-data-collapsed');
     } else {
         content.style.display = 'flex';
         if (headerFull) headerFull.style.display = 'flex';
         if (headerCollapsed) headerCollapsed.style.display = 'none';
-        grid.style.gridTemplateColumns = '230px 1fr';
+        if (sideStack) sideStack.classList.remove('is-data-collapsed');
     }
     _zlPersist('zl-dane-elementu', !isVisible);
 };
@@ -1122,6 +1187,8 @@ if (typeof document !== 'undefined' && !window.__ozfDelegated) {
             window.toggleZlDaneZlecenia();
         } else if (action === 'selectZleceniaTile') {
             window.selectZleceniaTile(el, field, value);
+        } else if (action === 'selectZleceniaWarehouse') {
+            selectZleceniaWarehouse(el, value);
         } else if (action === 'toggleCard') {
             window.toggleCard(id, icon);
         } else if (action === 'zlSetKat') {

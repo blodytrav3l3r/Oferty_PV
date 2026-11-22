@@ -49,6 +49,18 @@ function buildAutoOrderData(el, sharedData) {
         elementIndex,
         configMap
     );
+    const warehousePart =
+        typeof partForProduct === 'function'
+            ? partForProduct(product)
+            : ['dennica', 'kineta', 'styczna'].includes(product.componentType)
+              ? 'dennica'
+              : 'nadbudowa';
+    const magazyn =
+        typeof resolveWellMagazyn === 'function'
+            ? resolveWellMagazyn(well, warehousePart)
+            : (warehousePart === 'dennica' ? well.magazynDennica : well.magazynNadbudowa) ||
+              well.magazyn ||
+              'Kluczbork';
 
     let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
     let displayGlebokosc = parsed.glebokosc || '—';
@@ -209,6 +221,7 @@ function buildAutoOrderData(el, sharedData) {
         productId: product.id,
         componentType: product.componentType || '',
         dn: well.dn,
+        magazyn,
         obiekt: sharedData.obiekt || '',
         data: todayStr,
         adres: sharedData.adres || '',
@@ -316,6 +329,8 @@ let _bulkSeqScrollRaf = 0;
 let _bulkSeqRange = { start: 0, end: 0 };
 let _bulkSeqDragWell = null;
 let _bulkSeqDropTarget = null;
+let _bulkSeqGlobalWarehouse = 'config';
+let _bulkSeqWarehouseOverrides = new Map();
 
 function _bulkSeqIsVirtualRequested() {
     try {
@@ -338,6 +353,9 @@ function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
     const heightStyle = fixedH
         ? ` height:${fixedH}px; box-sizing:border-box; overflow:hidden;`
         : '';
+    const warehouseChoice = _bulkSeqWarehouseOverrides.has(g.wellIndex)
+        ? _bulkSeqWarehouseOverrides.get(g.wellIndex)
+        : _bulkSeqGlobalWarehouse;
     return `<div class="bulk-seq-item ${disabled ? 'bulk-seq-disabled' : ''}${isExcluded ? ' bulk-seq-excluded' : ''}"
                 draggable="${!disabled && !isExcluded}" data-well-index="${g.wellIndex}"
                 style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
@@ -358,6 +376,14 @@ function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
                 <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${escapeHtml(g.wellName)}</div>
                 <div class="fs-xs-muted">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
             </div>
+            <label class="bulk-seq-warehouse-label">
+                <span>Magazyn</span>
+                <select class="bulk-seq-warehouse" data-well-index="${g.wellIndex}" aria-label="Magazyn dla studni ${escapeHtml(g.wellName)}"${disabled || isExcluded ? ' disabled' : ''}>
+                    <option value="config"${warehouseChoice === 'config' ? ' selected' : ''}>Z konfiguratora</option>
+                    <option value="Kluczbork"${warehouseChoice === 'Kluczbork' ? ' selected' : ''}>Kluczbork</option>
+                    <option value="Włocławek"${warehouseChoice === 'Włocławek' ? ' selected' : ''}>Włocławek</option>
+                </select>
+            </label>
             ${
                 !disabled
                     ? `<button data-csp="toggleBulkSeqItem" data-csp-args="[&quot;$el&quot;]" class="btn btn-sm" style="background:transparent; border:none; color:${isExcluded ? 'var(--success-hover)' : 'var(--danger-hover)'}; padding:0.2rem; cursor:pointer;" title="${isExcluded ? 'Przywróć studnię' : 'Pomiń studnię'}">
@@ -457,6 +483,28 @@ function _bulkSeqResetState() {
     _bulkSeqRange = { start: 0, end: 0 };
     _bulkSeqDragWell = null;
     _bulkSeqDropTarget = null;
+    _bulkSeqGlobalWarehouse = 'config';
+    _bulkSeqWarehouseOverrides = new Map();
+}
+
+function _bulkSeqBindWarehouseControls(overlay) {
+    overlay.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLSelectElement)) return;
+        if (target.id === 'bulk-seq-global-warehouse') {
+            _bulkSeqGlobalWarehouse = target.value;
+            _bulkSeqWarehouseOverrides.clear();
+            overlay.querySelectorAll('.bulk-seq-warehouse').forEach((select) => {
+                select.value = _bulkSeqGlobalWarehouse;
+            });
+            return;
+        }
+        if (!target.matches('.bulk-seq-warehouse')) return;
+        const wellIndex = Number(target.dataset.wellIndex);
+        if (!Number.isInteger(wellIndex)) return;
+        if (target.value === _bulkSeqGlobalWarehouse) _bulkSeqWarehouseOverrides.delete(wellIndex);
+        else _bulkSeqWarehouseOverrides.set(wellIndex, target.value);
+    });
 }
 
 /**
@@ -534,7 +582,7 @@ function openBulkOrderSequencePopup() {
         LAYERS.BULK_ORDER +
         '; display:flex; align-items:center; justify-content:center;';
     overlay.innerHTML = `
-        <div style="background:var(--bg-secondary); border:1px solid rgba(var(--accent2-rgb), 0.3); border-radius: var(--radius-md); padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
+        <div class="bulk-seq-dialog" style="background:var(--bg-secondary); border:1px solid rgba(var(--accent2-rgb), 0.3); border-radius: var(--radius-md); padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                 <div>
                     <div style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
@@ -544,6 +592,14 @@ function openBulkOrderSequencePopup() {
                     <i data-lucide="x"></i>
                 </button>
             </div>
+            <label class="bulk-seq-global-warehouse-label" for="bulk-seq-global-warehouse">
+                <span>Magazyn dla wszystkich studni</span>
+                <select id="bulk-seq-global-warehouse" class="bulk-seq-warehouse">
+                    <option value="config" selected>Z konfiguratora dla każdej studni</option>
+                    <option value="Kluczbork">Kluczbork</option>
+                    <option value="Włocławek">Włocławek</option>
+                </select>
+            </label>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
             <button data-csp="executeBulkFromPopup" data-csp-args="[]" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight: var(--fw-extrabold); padding:0.6rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">
                 <i data-lucide="zap"></i> Generuj w tej kolejności
@@ -551,6 +607,7 @@ function openBulkOrderSequencePopup() {
         </div>
     `;
     document.body.appendChild(overlay);
+    _bulkSeqBindWarehouseControls(overlay);
     overlay.classList.add('js-modal-overlay');
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
@@ -827,6 +884,8 @@ function closeBulkOrderPopup() {
  * Wywołane z popupu kolejności — odczytuje kolejność studni z DOM i generuje.
  */
 async function executeBulkFromPopup() {
+    const warehouseChoices = new Map(_bulkSeqWarehouseOverrides);
+    const globalWarehouse = _bulkSeqGlobalWarehouse;
     // P1: w virtual kolejność z seqOrder SSoT — nigdy z DOM.
     let orderedIndexes;
     if (_bulkSeqVirtual) {
@@ -875,6 +934,22 @@ async function executeBulkFromPopup() {
         }))
     )
         return;
+
+    const affectedWellIndexes = new Set(unsaved.map((el) => el.wellIndex));
+    affectedWellIndexes.forEach((wellIndex) => {
+        const warehouse = warehouseChoices.has(wellIndex)
+            ? warehouseChoices.get(wellIndex)
+            : globalWarehouse;
+        if (warehouse === 'config') return;
+        const well = wells[wellIndex];
+        if (!well) return;
+        well.magazyn = warehouse;
+        well.magazynDennica = warehouse;
+        well.magazynNadbudowa = warehouse;
+        if (typeof window.syncWellWarehouseToProductionOrders === 'function') {
+            window.syncWellWarehouseToProductionOrders(well);
+        }
+    });
 
     await executeBulkGeneration(unsaved);
 }

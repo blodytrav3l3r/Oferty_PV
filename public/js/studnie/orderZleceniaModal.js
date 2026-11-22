@@ -324,6 +324,18 @@ async function _saveProductionOrderInner() {
         productId: product.id,
         componentType: product.componentType || '',
         dn: well.dn,
+        magazyn:
+            document.getElementById('zl-magazyn')?.value ||
+            (typeof resolveWellMagazyn === 'function'
+                ? resolveWellMagazyn(
+                      well,
+                      typeof partForProduct === 'function'
+                          ? partForProduct(product)
+                          : ['dennica', 'kineta', 'styczna'].includes(product.componentType)
+                            ? 'dennica'
+                            : 'nadbudowa'
+                  )
+                : well.magazyn || 'Kluczbork'),
 
         obiekt: document.getElementById('zl-obiekt')?.value || '',
         data: document.getElementById('zl-data')?.value || '',

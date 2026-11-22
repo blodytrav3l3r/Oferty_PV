@@ -124,6 +124,13 @@ async function updateWellParam(paramKey, value) {
     }
     const oldParamVal = well[paramKey];
     well[paramKey] = value;
+    if (paramKey === 'magazyn') {
+        well.magazynDennica = value;
+        well.magazynNadbudowa = value;
+        if (typeof syncWellWarehouseToProductionOrders === 'function') {
+            syncWellWarehouseToProductionOrders(well);
+        }
+    }
 
     // Zastosuj cenę malowania dla wszystkich studni w ofercie
     if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
