@@ -46,6 +46,17 @@ describe('frontend: tabela podsumowania oferty (rury) — markup i wyrównanie',
         );
     });
 
+    it('ukrywa kolumnę zamówienia tylko w konfiguratorze oferty', () => {
+        expect(css).toMatch(
+            /#wizard-step-3 \.rury-table col:nth-child\(7\),\s*#wizard-step-3 \.rury-table tr > :nth-child\(7\)\s*\{\s*display:\s*none;/
+        );
+        expect(css).not.toContain('#wizard-step-5 .rury-table');
+    });
+
+    it('nie przykleja nagłówków nad pierwszą sekcją i średnicą w kroku 3', () => {
+        expect(css).toMatch(/#wizard-step-3 \.rury-table thead th\s*\{\s*position:\s*static;/);
+    });
+
     it('pokazuje pojedynczą średnią kwotę przy alokacji transportu z różnicą grosza', () => {
         const container = { innerHTML: '' };
         const item = {

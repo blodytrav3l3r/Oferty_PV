@@ -259,6 +259,17 @@ body.rury-page #order-mode-banner {
     white-space: nowrap;
 }
 
+/* Kolumna zamówienia jest potrzebna w podsumowaniu oferty i PZ,
+   ale nie w kroku konfiguracji produktu. */
+#wizard-step-3 .rury-table col:nth-child(7),
+#wizard-step-3 .rury-table tr > :nth-child(7) {
+    display: none;
+}
+
+#wizard-step-3 .rury-table thead th {
+    position: static;
+}
+
 .table-wrap.table-wrap-scroll .rury-table thead th {
     top: 0;
 }
