@@ -5759,7 +5759,9 @@ td.excel-tr-selected .excel-sel-wrap > div {
 }
 
 .bulk-seq-dialog {
-    width: min(560px, 92vw) !important;
+    box-sizing: border-box;
+    width: min(1900px, calc(100vw - 2rem)) !important;
+    max-width: min(1900px, calc(100vw - 2rem));
 }
 
 .bulk-seq-item .flex-1 {
