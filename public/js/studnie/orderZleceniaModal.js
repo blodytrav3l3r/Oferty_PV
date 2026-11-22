@@ -208,6 +208,7 @@ async function closeZleceniaModal() {
 // klik claimuje kolejny numer PZ (podwojny numer PZ, P1). Wzorzec
 // _pzSaveInFlight z orderZleceniaData.js:205-212.
 let _spoSaveInFlight = null;
+const _spoNumberClaimAttempts = new Map();
 
 async function saveProductionOrder() {
     if (_spoSaveInFlight) return _spoSaveInFlight;
@@ -219,7 +220,7 @@ async function saveProductionOrder() {
     }
 }
 
-async function _saveProductionOrderInner() {
+async function _saveProductionOrderInner(retriedNumberConflict = false) {
     if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
         showToast('Najpierw wybierz element z listy', 'error');
         return;
@@ -261,7 +262,10 @@ async function _saveProductionOrderInner() {
                 // retry i double-click trafiają w ten sam klucz = 1 numer, brak gapów.
                 const claimScopeId =
                     existingIdx >= 0 && existingOrder && existingOrder.id
-                        ? existingOrder.id
+                        ? existingOrder.id +
+                          (_spoNumberClaimAttempts.has(existingOrder.id)
+                              ? '_recovery_' + _spoNumberClaimAttempts.get(existingOrder.id)
+                              : '')
                         : 'new_' +
                           well.id +
                           '_' +
@@ -495,6 +499,7 @@ async function _saveProductionOrderInner() {
 
     try {
         await saveProductionOrdersData([order]);
+        _spoNumberClaimAttempts.delete(order.id);
 
         if (wellsSnapshotBeforeZlecenia) {
             wellsSnapshotBeforeZlecenia = structuredClone(wells);
@@ -510,6 +515,17 @@ async function _saveProductionOrderInner() {
         return order.id;
     } catch (err) {
         logger.error('orderManager', 'saveProductionOrder error:', err);
+        if (['PRODUCTION_NUMBER_NOT_CLAIMED', 'PRODUCTION_NUMBER_CONFLICT'].includes(err?.code)) {
+            order.productionOrderNumber = '';
+            const attempt = (_spoNumberClaimAttempts.get(order.id) || 0) + 1;
+            _spoNumberClaimAttempts.set(order.id, attempt);
+            if (!retriedNumberConflict) return _saveProductionOrderInner(true);
+            showToast(
+                'Numer zlecenia został odrzucony. Przy następnym zapisie zostanie pobrany nowy numer.',
+                'error'
+            );
+            return null;
+        }
         showToast('<i data-lucide="x-circle"></i> Błąd zapisu: ' + err.message, 'error');
         return null;
     }

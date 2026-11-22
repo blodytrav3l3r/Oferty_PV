@@ -8,9 +8,17 @@ import vm from 'vm';
 
 const JS_DIR = path.join(__dirname, '../../public/js/studnie');
 
-function loadModal(hooks: { gateSave?: boolean; failSave?: boolean } = {}) {
+function loadModal(
+    hooks: {
+        gateSave?: boolean;
+        failSave?: boolean;
+        failNumberConflictOnce?: string | boolean;
+    } = {}
+) {
     let fetchCalls = 0;
     let saveCalls = 0;
+    const claimKeys: string[] = [];
+    let numberConflictFailed = false;
     let releaseSave!: () => void;
     const saveGate = new Promise<void>((resolve) => {
         releaseSave = resolve;
@@ -27,11 +35,21 @@ function loadModal(hooks: { gateSave?: boolean; failSave?: boolean } = {}) {
         logger: { debug() {}, info() {}, warn() {}, error() {} },
         showToast: () => {},
         authHeaders: () => ({}),
-        fetch: async () => {
+        fetch: async (_url: string, options: any) => {
             fetchCalls++;
+            claimKeys.push(options.headers['Idempotency-Key']);
             return { ok: true, json: async () => ({ number: 'PZ-TEST-' + fetchCalls }) };
         },
-        pzGuard: { findPzForElement: () => null },
+        pzGuard: {
+            findPzForElement: (orders: any[], wellId: string, elementKey: string, index: number) =>
+                orders.find(
+                    (order) =>
+                        order.wellId === wellId &&
+                        (elementKey
+                            ? order.elementKey === elementKey
+                            : order.elementIndex === index)
+                ) || null
+        },
         productionOrders: [],
         zleceniaSelectedIdx: 0,
         zleceniaElementsList: [
@@ -54,6 +72,15 @@ function loadModal(hooks: { gateSave?: boolean; failSave?: boolean } = {}) {
         saveProductionOrdersData: async () => {
             saveCalls++;
             if (hooks.gateSave) await saveGate;
+            if (hooks.failNumberConflictOnce && !numberConflictFailed) {
+                numberConflictFailed = true;
+                const error: any = new Error('Numer nie jest zarezerwowany dla tego użytkownika');
+                error.code =
+                    typeof hooks.failNumberConflictOnce === 'string'
+                        ? hooks.failNumberConflictOnce
+                        : 'PRODUCTION_NUMBER_NOT_CLAIMED';
+                throw error;
+            }
             if (hooks.failSave) throw new Error('boom-zapis');
             return [];
         }
@@ -73,11 +100,27 @@ function loadModal(hooks: { gateSave?: boolean; failSave?: boolean } = {}) {
     return {
         sb,
         stats: () => ({ fetchCalls, saveCalls }),
+        claimKeys: () => claimKeys,
         releaseSave: () => releaseSave()
     };
 }
 
 describe('orderZleceniaDoubleSubmit (P1: podwojny numer PZ)', () => {
+    test.each(['PRODUCTION_NUMBER_NOT_CLAIMED', 'PRODUCTION_NUMBER_CONFLICT'])(
+        '409 %s powoduje nową rezerwację i ponawia zapis przed wydrukiem',
+        async (code) => {
+            const { sb, stats, claimKeys } = loadModal({ failNumberConflictOnce: code });
+
+            const orderId = await sb.saveProductionOrder();
+
+            expect(orderId).toMatch(/^prodorder_\d+$/);
+            expect(stats()).toEqual({ fetchCalls: 2, saveCalls: 2 });
+            expect(claimKeys()).toHaveLength(2);
+            expect(claimKeys()[0]).not.toBe(claimKeys()[1]);
+            expect(sb.productionOrders[0].productionOrderNumber).toBe('PZ-TEST-2');
+        }
+    );
+
     test('double-click → 1 claim numeru + 1 zapis, oba wywolania resolve', async () => {
         const { sb, stats, releaseSave } = loadModal({ gateSave: true });
         const p1 = sb.saveProductionOrder();
