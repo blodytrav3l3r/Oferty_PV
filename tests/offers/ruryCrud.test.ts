@@ -196,6 +196,33 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             expect(JSON.parse(created.data).number).toBe(created.offer_number);
         });
 
+        it('zastępuje powtórzony podgląd numerem serwerowym nawet bez markera klienta', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ maxNumber: 7n }]);
+
+            const res = await request(app)
+                .post('/api/offers')
+                .send({
+                    data: [
+                        {
+                            id: 'o-stale-preview',
+                            clientId: 'client-1',
+                            organizationUnit: 'ASM_KLUCZBORK',
+                            number: 'OF/999999/ASM/1999',
+                            status: 'draft',
+                            items: []
+                        }
+                    ]
+                });
+
+            const created = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0].data;
+            expect(res.statusCode).toBe(200);
+            expect(res.body.results[0].number).toBe(`OF/000008/ASM/${new Date().getFullYear()}`);
+            expect(created.offer_number).toBe(`OF/000008/ASM/${new Date().getFullYear()}`);
+            expect(created.offer_number).not.toBe('OF/999999/ASM/1999');
+        });
+
         it('brak numeru → NULL w DB (nie pusty string)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
@@ -223,6 +250,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
         it('P2002 z DB (wyścig) → 409 DUPLICATE_NUMBER', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ maxNumber: 0n }]);
             (prisma.offers_rel.create as jest.Mock).mockRejectedValue(
                 Object.assign(new Error('Unique constraint'), { code: 'P2002' })
             );
@@ -651,9 +679,21 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
     });
 
     describe('M3: unikalność numeru oferty (I-004)', () => {
-        it('dwa create z tym samym numerem w batchu → 409 DUPLICATE_NUMBER, nic nie zapisane', async () => {
+        it('dwa create z tym samym podglądem dostają różne numery serwerowe', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            let highestNumber = 0n;
+            (prisma.$queryRaw as jest.Mock).mockImplementation(
+                async (strings: TemplateStringsArray) => {
+                    const sql = strings.join(' ');
+                    if (sql.includes('SELECT MAX')) {
+                        const maxNumber = highestNumber;
+                        highestNumber += 1n;
+                        return [{ maxNumber }];
+                    }
+                    return [];
+                }
+            );
 
             const res = await request(app)
                 .post('/api/offers')
@@ -665,10 +705,11 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                     ]
                 });
 
-            expect(res.statusCode).toBe(409);
-            expect(res.body.code).toBe('DUPLICATE_NUMBER');
-            expect(prisma.offers_rel.create).not.toHaveBeenCalled();
-            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
+            expect(res.statusCode).toBe(200);
+            expect(res.body.results.map((result: { number: string }) => result.number)).toEqual([
+                `OF/000001/ASM/${new Date().getFullYear()}`,
+                `OF/000002/ASM/${new Date().getFullYear()}`
+            ]);
         });
 
         it('update na numer cudzego dokumentu → 409, własny numer przechodzi', async () => {
@@ -676,6 +717,9 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             (prisma.offers_rel.findMany as jest.Mock).mockImplementation(async (args: any) => {
                 if (args?.where?.offer_number?.in) {
                     return [{ id: 'o-2', offer_number: 'OF/9' }];
+                }
+                if (args?.where?.id?.in?.includes('o-2')) {
+                    return [{ ...mockOfferRury, id: 'o-2', offer_number: 'OF/9', version: 1 }];
                 }
                 return [{ ...mockOfferRury, id: 'o-1', version: 1 }];
             });

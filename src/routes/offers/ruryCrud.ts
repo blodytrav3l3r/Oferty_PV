@@ -257,6 +257,8 @@ router.post(
             const wantedNumbers = new Map<string, string>();
             for (const o of incoming) {
                 if (o.generateOfferNumber) continue;
+                const docId = typeof o.id === 'string' ? o.id : '';
+                if (!oldById.has(docId)) continue;
                 const num =
                     typeof o.offer_number === 'string' && o.offer_number
                         ? o.offer_number
@@ -264,7 +266,6 @@ router.post(
                           ? o.number
                           : '';
                 if (!num) continue;
-                const docId = typeof o.id === 'string' ? o.id : '';
                 const clash = wantedNumbers.get(num);
                 // Pusty docId (create) nigdy nie „pasuje" — dwa create z tym
                 // samym numerem to kolizja.
@@ -450,7 +451,7 @@ router.post(
                     docId,
                     effectiveUserId,
                     offerNumber,
-                    generateOfferNumber: !old && o.generateOfferNumber === true,
+                    generateOfferNumber: !old && (o.generateOfferNumber === true || !!offerNumber),
                     organizationUnit: o.organizationUnit || null,
                     state,
                     clientName,

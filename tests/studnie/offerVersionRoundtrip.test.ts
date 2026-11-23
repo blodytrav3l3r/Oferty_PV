@@ -78,7 +78,8 @@ describe('offer version roundtrip (P0-D2)', () => {
     });
 
     test('isVersionConflict: tylko status/code, nigdy tekst', () => {
-        expect(ctx.isVersionConflict({ status: 409 })).toBe(true);
+        expect(ctx.isVersionConflict({ status: 409 })).toBe(false);
+        expect(ctx.isVersionConflict({ status: 409, code: 'DUPLICATE_NUMBER' })).toBe(false);
         expect(ctx.isVersionConflict({ code: 'VERSION_CONFLICT' })).toBe(true);
         expect(
             ctx.isVersionConflict({

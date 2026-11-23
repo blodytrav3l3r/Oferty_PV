@@ -696,6 +696,8 @@ router.post(
             const retryGeneratedResults: Record<string, unknown>[] = [];
             for (const o of incoming) {
                 if (o.generateOfferNumber) continue;
+                const candidateId = typeof o.id === 'string' ? o.id : '';
+                if (!oldMap.has(candidateId)) continue;
                 const num =
                     typeof o.number === 'string' && o.number
                         ? o.number
@@ -988,7 +990,7 @@ router.post(
                 pending.push({
                     docId,
                     exists: !!old,
-                    generateOfferNumber: !old && o.generateOfferNumber === true,
+                    generateOfferNumber: !old && (o.generateOfferNumber === true || !!offerNumber),
                     organizationUnit: o.organizationUnit || null,
                     serverVersion: old?.version ?? null,
                     clientVersion: postClientVersion,

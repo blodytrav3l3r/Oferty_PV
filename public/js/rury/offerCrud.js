@@ -168,9 +168,7 @@ async function saveOffer() {
             return;
         }
         const result = await storageService.saveOffer(offerDoc, {
-            generateOfferNumber:
-                !editingOfferId &&
-                document.getElementById('offer-number')?.dataset.numberGenerated === 'true'
+            generateOfferNumber: !editingOfferId
         });
         if (!importedTransport && window.isRuryTransportSeparate)
             window.isRuryTransportSeparate.imported = null;
@@ -238,7 +236,7 @@ async function saveOffer() {
         const conflict =
             typeof isVersionConflict === 'function'
                 ? isVersionConflict(err)
-                : err?.status === 409 || err?.code === 'VERSION_CONFLICT';
+                : err?.code === 'VERSION_CONFLICT';
         if (conflict) {
             showToast(
                 'Oferta zmieniona przez innego użytkownika — wczytano aktualną wersję. Niezapisane zmiany zachowane w drafcie.',

@@ -458,8 +458,8 @@ function buildBaseOfferDoc(spec) {
  */
 function isVersionConflict(err) {
     if (!err || typeof err !== 'object') return false;
-    const e = /** @type {{status?: unknown, code?: unknown}} */ (err);
-    return e.status === 409 || e.code === 'VERSION_CONFLICT';
+    const e = /** @type {{code?: unknown}} */ (err);
+    return e.code === 'VERSION_CONFLICT';
 }
 
 /**

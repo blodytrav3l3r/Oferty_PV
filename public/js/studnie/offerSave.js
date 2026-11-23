@@ -305,9 +305,7 @@ async function saveOfferStudnie() {
             return false;
         }
         const result = await storageService.saveOffer(offerDoc, {
-            generateOfferNumber:
-                !editingOfferIdStudnie &&
-                document.getElementById('offer-number')?.dataset.numberGenerated === 'true'
+            generateOfferNumber: !editingOfferIdStudnie
         });
         window.pendingStudnieStampId = null;
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
@@ -461,7 +459,7 @@ async function saveOfferStudnie() {
         const conflict =
             typeof isVersionConflict === 'function'
                 ? isVersionConflict(err)
-                : err?.status === 409 || err?.code === 'VERSION_CONFLICT';
+                : err?.code === 'VERSION_CONFLICT';
         if (conflict) {
             const _hasDraft = _draftAvailableForOffer();
             showToast(

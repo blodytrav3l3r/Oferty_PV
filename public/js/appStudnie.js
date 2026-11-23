@@ -60,8 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const dateEl = document.getElementById('offer-date');
         if (dateEl) dateEl.value = new Date().toISOString().slice(0, 10);
         const nrEl = document.getElementById('offer-number');
-        if (nrEl && typeof generateOfferNumberStudnie === 'function')
+        if (nrEl && typeof generateOfferNumberStudnie === 'function') {
             nrEl.value = generateOfferNumberStudnie();
+            nrEl.dataset.numberGenerated = 'true';
+        }
         if (window.draftAutosave?.resetEmptyOfferBaseline) {
             window.draftAutosave.resetEmptyOfferBaseline();
         }
@@ -246,7 +248,10 @@ async function loadDataInBackground() {
     // Aktualizuj numer oferty po załadowaniu rzeczywistej liczby ofert
     if (typeof generateOfferNumberStudnie === 'function') {
         const nrEl = document.getElementById('offer-number');
-        if (nrEl) nrEl.value = generateOfferNumberStudnie();
+        if (nrEl) {
+            nrEl.value = generateOfferNumberStudnie();
+            nrEl.dataset.numberGenerated = 'true';
+        }
     }
 
     // Jeśli studnia ma już ustawione rzędne, ale config jest pusty → auto-dobór

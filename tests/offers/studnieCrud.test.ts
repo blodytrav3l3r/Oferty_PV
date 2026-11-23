@@ -142,6 +142,31 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(JSON.parse(created.data).number).toBe(created.offer_number);
         });
 
+        it('zastępuje powtórzony podgląd numerem serwerowym nawet bez markera klienta', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ maxNumber: 3n }]);
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({
+                    data: [
+                        {
+                            id: 's-stale-preview',
+                            organizationUnit: 'WL_WLOCLAWEK',
+                            number: 'OS/999999/WL/1999',
+                            status: 'draft',
+                            wells: validWellPayload
+                        }
+                    ]
+                });
+
+            const created = (prisma.offers_studnie_rel.create as jest.Mock).mock.calls[0][0].data;
+            expect(res.statusCode).toBe(200);
+            expect(res.body.results[0].number).toBe(`OS/000004/WL/${new Date().getFullYear()}`);
+            expect(created.offer_number).toBe(`OS/000004/WL/${new Date().getFullYear()}`);
+            expect(created.offer_number).not.toBe('OS/999999/WL/1999');
+        });
+
         it('tworzy nową ofertę studni i wywołuje create', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
@@ -271,6 +296,7 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
 
         it('P2002 z DB (wyścig) → 409 DUPLICATE_NUMBER', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ maxNumber: 0n }]);
             (prisma.offers_studnie_rel.create as jest.Mock).mockRejectedValue(
                 Object.assign(new Error('Unique constraint'), { code: 'P2002' })
             );
