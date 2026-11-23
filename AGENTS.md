@@ -103,7 +103,7 @@ Dyscyplina kontekstu:
 
 ## Plany
 
-Wszystkie plany/taski (`.md`) w `docs/plans/` (wyjątek: `.hermes/`, `.opencode/`). Zakończone: `git mv` do `docs/plans/archive/`.
+Plany i taski (`.md`) zapisuj w `docs/plans/` (wyjątek: `.hermes/`, `.opencode/`). Zakończone lub archiwizowane decyzją użytkownika przenoś przez `git mv` do `docs/plans/archive/`. Dokumenty w archiwum są wyłącznie historią: nie używaj ich jako wymagań ani kontekstu projektowego, chyba że użytkownik wyraźnie wskaże dokument lub poprosi o kontekst historyczny.
 
 ## Subagenty i konfiguracja OpenCode V2
 
