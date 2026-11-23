@@ -2,6 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
+import type { NextFunction, Request, Response } from 'express';
 
 const findUser = jest.fn();
 const updateUser = jest.fn();
@@ -12,6 +13,15 @@ const createSession = jest.fn();
 const deleteSession = jest.fn();
 const deleteUserSessions = jest.fn();
 const authState: { user: Record<string, unknown> | null } = { user: null };
+let passwordChangeLimitHits = 0;
+const adminUsersLimiter = jest.fn((_req: unknown, _res: unknown, next: () => void) => next());
+const changePasswordLimiter = jest.fn((_req: Request, res: Response, next: NextFunction) => {
+    passwordChangeLimitHits += 1;
+    if (passwordChangeLimitHits > 5) {
+        return res.status(429).json({ error: 'Zbyt wiele prób zmiany hasła. Odczekaj 15 minut.' });
+    }
+    next();
+});
 
 jest.mock('../../src/prismaClient', () => {
     const tx = {
@@ -46,7 +56,8 @@ jest.mock('../../src/middleware/auth', () => ({
 
 jest.mock('../../src/middleware/rateLimiters', () => ({
     LOGIN_LIMITER: (_req: any, _res: any, next: any) => next(),
-    CHANGE_PASSWORD_LIMITER: (_req: any, _res: any, next: any) => next()
+    CHANGE_PASSWORD_LIMITER: changePasswordLimiter,
+    ADMIN_USERS_LIMITER: adminUsersLimiter
 }));
 
 jest.mock('../../src/utils/logger', () => ({
@@ -90,6 +101,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    passwordChangeLimitHits = 0;
     authState.user = { id: 'u1', username: 'jkowalski', role: 'user', subUsers: [] };
     findUser.mockResolvedValue(USER_ROW);
     createSession.mockResolvedValue('nowy-token');
@@ -219,6 +231,22 @@ describe('POST /api/auth/login', () => {
 
 describe('POST /api/auth/register', () => {
     const body = { username: 'nowy', password: 'dlugie-haslo', role: 'pro' };
+
+    it('nie zużywa limitu zmiany hasła podczas dodawania użytkowników', async () => {
+        const responses = [];
+        for (let index = 0; index < 6; index += 1) {
+            findUser.mockResolvedValue(null);
+            responses.push(
+                await request(app)
+                    .post('/api/auth/register')
+                    .send({ ...body, username: `nowy-${index}` })
+            );
+        }
+
+        expect(responses.map((response) => response.status)).toEqual(Array(6).fill(200));
+        expect(adminUsersLimiter).toHaveBeenCalledTimes(6);
+        expect(changePasswordLimiter).not.toHaveBeenCalled();
+    });
 
     it('409 gdy login już istnieje', async () => {
         const res = await request(app).post('/api/auth/register').send(body);
@@ -422,6 +450,7 @@ describe('POST /api/auth/change-password', () => {
             .send({ oldPassword: PASSWORD, newPassword: 'krotkie' });
 
         expect(res.status).toBe(400);
+        expect(changePasswordLimiter).toHaveBeenCalledTimes(1);
         expect(findUser).not.toHaveBeenCalled();
     });
 

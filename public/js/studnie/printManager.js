@@ -297,7 +297,11 @@ function buildPrzejsciaRows(data) {
 
     // Mapuj unikalne kąty do numerów etykiet (0=0, 90=1, 180=2, ...) dla grupowania wizualnego
     const uniqueAngles = [
-        ...new Set(assignedPrzejscia.map(({ item }) => parseFloat(item.angle) || 0))
+        ...new Set(
+            [...assignedPrzejscia.map(({ item }) => item), ...blindEntries].map(
+                (item) => parseFloat(item.angle) || 0
+            )
+        )
     ].sort((a, b) => a - b);
     const angleToLabelNum = {};
     uniqueAngles.forEach((a, idx) => {
@@ -320,7 +324,14 @@ function buildPrzejsciaRows(data) {
         // Sprawdź czy na tym indeksie jest ślepa kineta
         const blind = blindEntries[i - assignedPrzejscia.length];
         if (blind) {
-            rows.push(formatBlindKinetaRow('Wlot ', blind, findProductFn));
+            const blindAngleNum = angleToLabelNum[parseFloat(blind.angle) || 0];
+            rows.push(
+                formatBlindKinetaRow(
+                    'Wlot ' + (blindAngleNum === undefined ? '' : blindAngleNum),
+                    blind,
+                    findProductFn
+                )
+            );
             continue;
         }
 

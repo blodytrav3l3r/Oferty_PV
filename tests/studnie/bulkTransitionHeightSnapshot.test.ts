@@ -137,7 +137,7 @@ describe('snapshot przejść przy hurtowym tworzeniu PZ', () => {
         expect(krag.magazyn).toBe('Kluczbork');
     });
 
-    test('popup pokazuje magazyny domyślne pozycji jako kafelki wyboru', () => {
+    test('popup pokazuje tylko magazyny i zaznacza domyślny magazyn konfiguratora', () => {
         const context = loadBulkContext();
         const group = {
             wellIndex: 2,
@@ -145,20 +145,45 @@ describe('snapshot przejść przy hurtowym tworzeniu PZ', () => {
             wellDn: 1000,
             openCount: 2,
             totalCount: 2,
-            warehouseDefaults: { dennica: 'Włocławek', nadbudowa: 'Kluczbork' }
+            warehouseDefaults: { dennica: ['Włocławek'], nadbudowa: ['Włocławek'] }
         };
 
         const defaultRow = context._bulkSeqRowHtml(group, 1, false, 67);
         expect(defaultRow).toContain('height:67px; box-sizing:border-box; overflow:hidden;');
         expect(defaultRow).toContain('Dennica: Włocławek');
-        expect(defaultRow).toContain('Nadbudowa: Kluczbork');
-        expect(defaultRow).toContain('data-warehouse-choice="config" aria-pressed="true"');
+        expect(defaultRow).toContain('Nadbudowa: Włocławek');
+        expect(defaultRow).toContain('data-warehouse-choice="Włocławek" aria-pressed="true"');
+        expect(defaultRow).not.toContain('data-warehouse-choice="config"');
+        expect(defaultRow).toContain('data-warehouse-choice="Kluczbork" aria-pressed="false"');
+        expect(context._bulkSeqWarehouseTiles(null, 'global', null, false, '')).not.toContain(
+            'Z konfiguratora'
+        );
 
         const overriddenRow = vm.runInContext(
             '_bulkSeqWarehouseOverrides.set(2, "Włocławek"); _bulkSeqRowHtml(group, 1, false, null)',
             Object.assign(context, { group })
         );
         expect(overriddenRow).toContain('data-warehouse-choice="Włocławek" aria-pressed="true"');
+    });
+
+    test('nie zaznacza jednego magazynu, gdy konfigurator ma różne magazyny części studni', () => {
+        const context = loadBulkContext();
+        const row = context._bulkSeqRowHtml(
+            {
+                wellIndex: 3,
+                wellName: 'S4',
+                wellDn: 1200,
+                openCount: 2,
+                totalCount: 2,
+                warehouseDefaults: { dennica: ['Włocławek'], nadbudowa: ['Kluczbork'] }
+            },
+            1,
+            false,
+            null
+        );
+
+        expect(row).toContain('data-warehouse-choice="Kluczbork" aria-pressed="false"');
+        expect(row).toContain('data-warehouse-choice="Włocławek" aria-pressed="false"');
     });
 
     test('kafelki globalne aktualizują wybór studni, a kafelek pozycji może go nadpisać', () => {
@@ -175,31 +200,93 @@ describe('snapshot przejść przy hurtowym tworzeniu PZ', () => {
             };
         };
         const globalTile = createTile({ warehouseScope: 'global', warehouseChoice: 'Kluczbork' });
+        const globalOtherTile = createTile({
+            warehouseScope: 'global',
+            warehouseChoice: 'Włocławek'
+        });
         const rowTile = createTile({
             warehouseScope: 'well',
             wellIndex: '2',
             warehouseChoice: 'Włocławek'
         });
-        const row = { querySelectorAll: jest.fn(() => [rowTile]) };
+        const rowConfiguredTile = createTile({
+            warehouseScope: 'well',
+            wellIndex: '2',
+            warehouseChoice: 'Kluczbork'
+        });
+        const globalReset = { dataset: { warehouseScope: 'global' }, hidden: true };
+        const rowReset = {
+            dataset: { warehouseScope: 'well', wellIndex: '2' },
+            hidden: true,
+            closest: jest.fn()
+        };
+        const row = {
+            dataset: { configWarehouse: 'Kluczbork' },
+            querySelectorAll: jest.fn(() => [rowConfiguredTile, rowTile]),
+            querySelector: jest.fn(() => rowReset)
+        };
         rowTile.closest.mockReturnValue(row);
+        rowConfiguredTile.closest.mockReturnValue(row);
+        rowReset.closest.mockReturnValue(row);
         let handleClick: (event: any) => void = () => undefined;
         const overlay = {
             addEventListener: jest.fn((_type, handler) => {
                 handleClick = handler;
             }),
-            querySelectorAll: jest.fn(() => [globalTile, rowTile])
+            querySelectorAll: jest.fn((selector: string) =>
+                selector === '.bulk-seq-warehouse-reset'
+                    ? [globalReset, rowReset]
+                    : [globalTile, globalOtherTile, rowConfiguredTile, rowTile]
+            )
         };
         context._bulkSeqBindWarehouseControls(overlay);
 
-        handleClick({ target: { closest: () => globalTile }, stopPropagation: jest.fn() });
+        handleClick({
+            target: {
+                closest: (selector: string) => (selector.includes('reset') ? null : globalTile)
+            },
+            stopPropagation: jest.fn()
+        });
         expect(globalTile.getAttribute('aria-pressed')).toBe('true');
         expect(rowTile.getAttribute('aria-pressed')).toBe('false');
 
-        handleClick({ target: { closest: () => rowTile }, stopPropagation: jest.fn() });
+        handleClick({
+            target: {
+                closest: (selector: string) => (selector.includes('reset') ? null : rowTile)
+            },
+            stopPropagation: jest.fn()
+        });
         const html = vm.runInContext(
             '_bulkSeqRowHtml({wellIndex:2,wellName:"S3",wellDn:1000,openCount:1,totalCount:1,warehouseDefaults:{dennica:"Kluczbork"}},1,false,null)',
             context
         );
         expect(html).toContain('data-warehouse-choice="Włocławek" aria-pressed="true"');
+
+        handleClick({
+            target: {
+                closest: (selector: string) => (selector.includes('reset') ? rowReset : null)
+            },
+            stopPropagation: jest.fn()
+        });
+        expect(rowReset.hidden).toBe(true);
+        expect(rowConfiguredTile.getAttribute('aria-pressed')).toBe('true');
+        expect(rowTile.getAttribute('aria-pressed')).toBe('false');
+        expect(vm.runInContext('_bulkSeqWarehouseOverrides.has(2)', context)).toBe(false);
+
+        handleClick({
+            target: {
+                closest: (selector: string) => (selector.includes('reset') ? null : globalOtherTile)
+            },
+            stopPropagation: jest.fn()
+        });
+        handleClick({
+            target: {
+                closest: (selector: string) =>
+                    selector.includes('reset') ? null : rowConfiguredTile
+            },
+            stopPropagation: jest.fn()
+        });
+        expect(rowConfiguredTile.getAttribute('aria-pressed')).toBe('true');
+        expect(vm.runInContext('_bulkSeqWarehouseOverrides.get(2)', context)).toBe('config');
     });
 });

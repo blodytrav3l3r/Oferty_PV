@@ -752,14 +752,58 @@
 
     // ── Publiczne API ──
 
+    /**
+     * Zbiera istniejące możliwości modułu w prywatny mostek powłoki.
+     * Mostek nie jest publikowany do iframe i nie zmienia kontraktu SpaRouter.
+     */
+    function getModuleBridge(module) {
+        const win = iframes[module]?.contentWindow;
+        if (!win) return null;
+
+        const call = (owner, method, args = []) => {
+            const fn = owner && owner[method];
+            if (typeof fn !== 'function') return false;
+            fn.apply(owner, args);
+            return true;
+        };
+        const sectionBridge = { showSection: (sectionId) => call(win, 'showSection', [sectionId]) };
+
+        if (module === 'zlecenia') {
+            return { ...sectionBridge, refresh: () => call(win.AppZlecenia, 'loadOrders') };
+        }
+        if (module === 'kartoteka') {
+            return {
+                ...sectionBridge,
+                isReady: () => win.kartotekaUI?.initialized === true,
+                refresh: () =>
+                    call(win.AppKartoteka, 'loadOffers') || call(win.kartotekaUI, 'loadLocalOffers')
+            };
+        }
+        if (module === 'studnie') {
+            return {
+                ...sectionBridge,
+                refreshProductionOrders: async () => {
+                    if (typeof win.loadProductionOrders !== 'function') return false;
+                    const orders = await win.loadProductionOrders(false, true);
+                    if (!Array.isArray(orders))
+                        throw new Error('Nieprawidłowy indeks zleceń produkcyjnych');
+                    call(win, 'auditPzElementKeyMismatch');
+                    call(win, 'renderZleceniaList');
+                    call(win, 'renderZleceniaWellConfig');
+                    call(win, 'refreshAll');
+                    return true;
+                }
+            };
+        }
+
+        return sectionBridge;
+    }
+
     function showSection(sectionId) {
         if (!currentModule || !iframes[currentModule]) return;
 
         try {
-            const iframeWin = iframes[currentModule].contentWindow;
-            if (iframeWin && typeof iframeWin.showSection === 'function') {
-                iframeWin.showSection(sectionId);
-            }
+            getModuleBridge(currentModule)?.showSection?.(sectionId);
         } catch (e) {
             logger.warn('router', '[SpaRouter] Cannot call showSection in iframe:', e);
         }
@@ -935,8 +979,8 @@
 
         // Auto-odświeżanie danych, jeśli moduł ma funkcję odświeżania
         try {
-            const kartotekaReady =
-                module !== 'kartoteka' || iframe.contentWindow.kartotekaUI?.initialized === true;
+            const bridge = getModuleBridge(module);
+            const kartotekaReady = module !== 'kartoteka' || bridge?.isReady?.() === true;
             if (!isNewIframe && kartotekaReady) refreshModule(module);
         } catch (_e) {
             // Problemy z kontekstem - ignoruj
@@ -1173,26 +1217,10 @@
      * Odświeża dane konkretnego modułu, jeśli jego iframe istnieje.
      */
     function refreshModule(module) {
-        const iframe = iframes[module];
-        if (!iframe) return;
+        const bridge = getModuleBridge(module);
+        if (!bridge?.refresh) return;
         try {
-            const win = iframe.contentWindow;
-            if (
-                module === 'zlecenia' &&
-                win.AppZlecenia &&
-                typeof win.AppZlecenia.loadOrders === 'function'
-            ) {
-                win.AppZlecenia.loadOrders();
-            } else if (module === 'kartoteka') {
-                if (win.AppKartoteka && typeof win.AppKartoteka.loadOffers === 'function') {
-                    win.AppKartoteka.loadOffers();
-                } else if (
-                    win.kartotekaUI &&
-                    typeof win.kartotekaUI.loadLocalOffers === 'function'
-                ) {
-                    win.kartotekaUI.loadLocalOffers();
-                }
-            }
+            bridge.refresh();
         } catch (e) {
             logger.warn('router', '[SpaRouter] Could not refresh module:', module, e);
         }
@@ -1200,20 +1228,11 @@
 
     /** Odświeża indeks PZ w zachowanym iframe Studni po zmianie z kartoteki. */
     async function refreshProductionOrders() {
-        const win = iframes.studnie && iframes.studnie.contentWindow;
-        if (!win) return true;
-        if (typeof win.loadProductionOrders !== 'function') return false;
+        const bridge = getModuleBridge('studnie');
+        if (!bridge) return true;
 
         try {
-            const orders = await win.loadProductionOrders(false, true);
-            if (!Array.isArray(orders))
-                throw new Error('Nieprawidłowy indeks zleceń produkcyjnych');
-            if (typeof win.auditPzElementKeyMismatch === 'function')
-                win.auditPzElementKeyMismatch();
-            if (typeof win.renderZleceniaList === 'function') win.renderZleceniaList();
-            if (typeof win.renderZleceniaWellConfig === 'function') win.renderZleceniaWellConfig();
-            if (typeof win.refreshAll === 'function') win.refreshAll();
-            return true;
+            return await bridge.refreshProductionOrders();
         } catch (e) {
             logger.error('router', '[SpaRouter] Nie udało się odświeżyć zleceń produkcyjnych:', e);
             return false;

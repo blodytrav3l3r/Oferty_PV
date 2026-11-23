@@ -93,13 +93,23 @@
         return true;
     }
 
-    function resolveBadgeHost(anchorId) {
+    function resolveBadgeHost(type, anchorId) {
         if (typeof document === 'undefined' || !document.getElementById) return null;
-        var ids = [WIZARD_ANCHOR];
-        if (anchorId && anchorId !== WIZARD_ANCHOR) ids.push(anchorId);
+        var ids = [];
+        if (type) ids.push(type + '-pricelist-badge-anchor');
+        ids.push(WIZARD_ANCHOR);
+        if (anchorId && ids.indexOf(anchorId) === -1) ids.push(anchorId);
         for (var i = 0; i < ids.length; i++) {
             var anchor = document.getElementById(ids[i]);
-            if (!anchor || !isShown(anchor)) continue;
+            if (!anchor) continue;
+            if (
+                ids[i] === type + '-pricelist-badge-anchor' &&
+                anchor.getAttribute('data-pv-offer-badge-host') === type &&
+                typeof anchor.appendChild === 'function'
+            ) {
+                return { mode: 'append', node: anchor };
+            }
+            if (!isShown(anchor)) continue;
             if (ids[i] === WIZARD_ANCHOR) {
                 if (typeof anchor.appendChild === 'function')
                     return { mode: 'append', node: anchor };
@@ -112,13 +122,13 @@
         return null;
     }
 
-    function waitForBadgeHost(anchorId, tries, delayMs) {
-        var host = resolveBadgeHost(anchorId);
+    function waitForBadgeHost(type, anchorId, tries, delayMs) {
+        var host = resolveBadgeHost(type, anchorId);
         if (host) return Promise.resolve(host);
         if (tries <= 0 || typeof setTimeout !== 'function') return Promise.resolve(null);
         return new Promise(function (resolve) {
             setTimeout(function () {
-                resolve(waitForBadgeHost(anchorId, tries - 1, delayMs));
+                resolve(waitForBadgeHost(type, anchorId, tries - 1, delayMs));
             }, delayMs);
         });
     }
@@ -140,7 +150,7 @@
             hideBadge(type);
             return false;
         }
-        var host = resolveBadgeHost(anchorId);
+        var host = resolveBadgeHost(type, anchorId);
         if (!host) {
             if (typeof console !== 'undefined' && typeof console.debug === 'function')
                 console.debug('[pv-badge] brak kotwicy dla typu ' + type);
@@ -154,8 +164,7 @@
             el.className = 'badge-info text-nowrap pv-offer-badge';
             el.setAttribute('data-pv-offer-badge', type);
         }
-        // Relokacja: badge namalowany w ukrytej sekcji oferty wraca do
-        // widocznego wizard-indicator przy wejściu w builder (kroki 1-5).
+        // Studnie używają kotwicy w prawym panelu; Rury pozostają przy wizardzie.
         if (host.mode === 'append') {
             host.node.appendChild(el);
         } else if (host.mode === 'sibling') {
@@ -192,7 +201,12 @@
         // Partial z #wizard-indicator może być jeszcze niewstrzyknięty.
         var waitTries = opts && typeof opts.waitTries === 'number' ? opts.waitTries : 3;
         var waitMs = opts && typeof opts.waitDelayMs === 'number' ? opts.waitDelayMs : 300;
-        var ready = await waitForBadgeHost((opts && opts.anchorId) || null, waitTries, waitMs);
+        var ready = await waitForBadgeHost(
+            type,
+            (opts && opts.anchorId) || null,
+            waitTries,
+            waitMs
+        );
         if (!ready) {
             if (typeof console !== 'undefined' && typeof console.debug === 'function')
                 console.debug('[pv-badge] brak kotwicy dla typu ' + type);
@@ -332,7 +346,8 @@
     function reattachBadge(type) {
         if (!type || typeof document === 'undefined') return Promise.resolve(false);
         var stamp = Object.prototype.hasOwnProperty.call(lastStamp, type) ? lastStamp[type] : null;
-        return refreshBadge({ type: type, stampId: stamp });
+        var anchorId = type + '-pricelist-badge-anchor';
+        return refreshBadge({ type: type, stampId: stamp, anchorId: anchorId });
     }
 
     window.offerPricelistBanner = {

@@ -122,6 +122,136 @@ describe('powiązane numery PZ na wydrukach', () => {
         expect(batchPrint).toBe(singlePrint);
     });
 
+    it('kartoteka i edytor budują zgodne wiersze przejść z tego samego zapisanego PZ', () => {
+        const savedOrder = {
+            ...savedPz,
+            componentType: 'dennica',
+            dn: 'DN1000',
+            przejscia: [
+                {
+                    productId: 'PVC-200',
+                    productCategory: 'PVC SN8',
+                    productDn: '200',
+                    flowType: 'wlot',
+                    angle: 45,
+                    angleGony: '50.00',
+                    angleExecution: 315,
+                    heightFromElementMm: 300,
+                    spadekKineta: '0',
+                    spadekMufa: '0'
+                }
+            ],
+            blindKinetaPrzejscia: [
+                {
+                    productId: 'PVC-200',
+                    productCategory: 'Ślepa kineta',
+                    productDn: '200',
+                    flowType: 'wlot',
+                    angle: 90,
+                    angleGony: '100.00',
+                    angleExecution: 270,
+                    isBlindKineta: true
+                }
+            ]
+        };
+        const editorData = {
+            ...savedOrder,
+            srednica: savedOrder.dn,
+            product: { componentType: savedOrder.componentType },
+            well: {
+                dn: savedOrder.dn,
+                rzednaDna: 0,
+                przejscia: savedOrder.przejscia,
+                malowanieW: 'brak',
+                malowanieZ: 'brak'
+            },
+            isSavedProductionOrder: true
+        };
+        const helperContext: any = {
+            window: { escapeHtml },
+            ensureDisplayIndices: () => {},
+            paramLabel: (value: string) => value || '',
+            getPowloka: () => 'Brak',
+            generateSvgFromPO: () => '',
+            renderTemplate: (_template: string, payload: any) => payload.UWAGI
+        };
+        vm.createContext(helperContext);
+        vm.runInContext(read('public/js/spa/zleceniaHelpers.js'), helperContext);
+
+        const editorContext: any = {
+            window: { escapeHtml },
+            FLOW_TYPES: { WYLOT: 'wylot' },
+            studnieProducts: [],
+            ensureDisplayIndices: () => {},
+            paramLabel: (value: string) => value || '',
+            escapeHtml,
+            logger: { error() {}, warn() {}, info() {} }
+        };
+        vm.createContext(editorContext);
+        vm.runInContext(read('public/js/studnie/printManager.js'), editorContext);
+
+        const catalogRows = helperContext.buildPrzejsciaRowsFromPO(savedOrder);
+        const editorRows = editorContext.buildPrzejsciaRows(editorData);
+
+        expect(catalogRows).toEqual(editorRows);
+        expect(catalogRows[0]).toMatchObject({
+            rodzaj: 'PVC SN8',
+            srednica: '200',
+            spadekKineta: '',
+            spadekMufa: '',
+            uwagi: '+ 300 mm'
+        });
+        expect(catalogRows[1]).toMatchObject({
+            rodzaj: 'Ślepa kineta',
+            srednica: '200',
+            uwagi: 'Ślepa'
+        });
+    });
+
+    it('kartoteka i edytor budują tę samą zawartość etykiety z zapisanego PZ', () => {
+        const savedOrder = {
+            ...savedPz,
+            snr: 's2',
+            srednica: 'DN1000',
+            productName: 'Dennica DN1000 H=750/600',
+            etykietaElementy: [
+                { ilosc: '1 szt.', indeks: 'DDD-10-075', nazwa: 'Dennica DN1000' },
+                { ilosc: '3 szt.', indeks: 'KZ-10-100', nazwa: 'Krąg DN1000' }
+            ]
+        };
+        const template =
+            '{{SNR}}|{{MAIN_ELEMENT}}|{{NR_ZLECENIA}}|{{ELEMENTY_ROWS}}|{{CERT_IMG}}|{{CERT_ALT}}|{{CERT_TEXT}}';
+        const helperContext: any = {
+            window: { escapeHtml },
+            escapeHtml,
+            renderTemplate: (html: string, payload: any) =>
+                html.replace(/{{([A-Z_]+)}}/g, (_match, key) => payload[key] || '')
+        };
+        vm.createContext(helperContext);
+        vm.runInContext(read('public/js/spa/zleceniaHelpers.js'), helperContext);
+
+        const editorContext: any = {
+            window: { escapeHtml },
+            escapeHtml,
+            renderTemplate: (html: string, payload: any) =>
+                html.replace(/{{([A-Z_]+)}}/g, (_match, key) => payload[key] || '')
+        };
+        vm.createContext(editorContext);
+        vm.runInContext(read('public/js/studnie/printEtykietaHelpers.js'), editorContext);
+
+        const catalogOutput = helperContext.buildEtykietaFromPO(template, savedOrder);
+        const editorOutput = editorContext.buildEtykietaHtml(template, savedOrder);
+        const normalizeMarkupWhitespace = (html: string) =>
+            html
+                .replace(/>\s+</g, '><')
+                .replace(/\s*\|\s*/g, '|')
+                .trim();
+
+        expect(normalizeMarkupWhitespace(catalogOutput)).toBe(
+            normalizeMarkupWhitespace(editorOutput)
+        );
+    });
+
     it('wydruk PZ używa kanonicznego numeru zamiast numeru z symbolem opiekuna', () => {
         const context: any = {
             window: { escapeHtml },

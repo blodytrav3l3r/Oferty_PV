@@ -265,6 +265,40 @@ async function bootOnRury(context, state) {
 }
 
 describe('Guard nawigacji SPA — appConfirm przy niezapisanych zmianach', () => {
+    test('adapter odświeża zlecenia przez istniejące AppZlecenia API', async () => {
+        const { context, state, createdIframes } = runContext();
+        await bootOnRury(context, state);
+        state.hash = '#/zlecenia';
+        await context.window.SpaRouter.navigate();
+
+        const calls = [];
+        const childWindow = createdIframes[1].contentWindow;
+        childWindow.showSection = (sectionId) => calls.push(`section:${sectionId}`);
+        childWindow.AppZlecenia = {
+            loadOrders: () => calls.push('orders')
+        };
+        context.window.SpaRouter.showSection('orders');
+        context.window.SpaRouter.refreshModule('zlecenia');
+
+        expect(calls).toEqual(['section:orders', 'orders']);
+    });
+
+    test('adapter zachowuje fallback kartoteki, gdy AppKartoteka API nie istnieje', async () => {
+        const { context, state, createdIframes } = runContext();
+        await bootOnRury(context, state);
+        state.hash = '#/kartoteka';
+        await context.window.SpaRouter.navigate();
+
+        const calls = [];
+        createdIframes[1].contentWindow.kartotekaUI = {
+            initialized: true,
+            loadLocalOffers: () => calls.push('local-offers')
+        };
+        context.window.SpaRouter.refreshModule('kartoteka');
+
+        expect(calls).toEqual(['local-offers']);
+    });
+
     test('odświeżenie PZ pobiera aktualny indeks i odświeża widoki istniejącej Studni', async () => {
         const { context, state, createdIframes } = runContext();
         await bootOnRury(context, state);

@@ -96,6 +96,12 @@ describe('themeResztka gate fazy D', () => {
         expect(selectorBlocks(UPM, '.upm-overlay')).not.toMatch(/backdrop-filter/);
     });
 
+    test('pasek wsadowy używa nieprzezroczystego tła tokenowego dla kontrastu tekstu', () => {
+        expect(selectorBlocks(ZLEC, '.zlecenia-batch-bar')).toMatch(
+            /background:\s*var\(--bg-secondary\)/
+        );
+    });
+
     test('edytowane selektory bez golych hexow (tylko var(--*))', () => {
         const blocks = [
             selectorBlocks(RESP, '.kartoteka-filter-bar'),

@@ -327,6 +327,7 @@ let _bulkSeqRange = { start: 0, end: 0 };
 let _bulkSeqDragWell = null;
 let _bulkSeqDropTarget = null;
 let _bulkSeqGlobalWarehouse = 'config';
+let _bulkSeqConfiguredGlobalWarehouse = null;
 let _bulkSeqWarehouseOverrides = new Map();
 
 function _bulkSeqIsVirtualRequested() {
@@ -342,7 +343,6 @@ function _bulkSeqIsVirtualRequested() {
 
 function _bulkSeqWarehouseTiles(choice, scope, wellIndex, disabled, wellName) {
     const choices = [
-        ['config', 'Z konfiguratora'],
         ['Kluczbork', 'Kluczbork'],
         ['Włocławek', 'Włocławek']
     ];
@@ -353,6 +353,14 @@ function _bulkSeqWarehouseTiles(choice, scope, wellIndex, disabled, wellName) {
         )
         .join('');
     return `<div class="bulk-seq-warehouse-tiles" role="group" aria-label="Magazyn">${buttons}</div>`;
+}
+
+function _bulkSeqSingleDefaultWarehouse(defaults) {
+    const warehouses = [defaults?.dennica, defaults?.nadbudowa]
+        .flatMap((value) => (Array.isArray(value) ? value : value ? [value] : []))
+        .filter((value) => value === 'Kluczbork' || value === 'Włocławek');
+    const uniqueWarehouses = [...new Set(warehouses)];
+    return uniqueWarehouses.length === 1 ? uniqueWarehouses[0] : null;
 }
 
 function _bulkSeqWarehouseDefaultsLabel(defaults) {
@@ -373,11 +381,20 @@ function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
     const heightStyle = fixedH
         ? ` height:${fixedH}px; box-sizing:border-box; overflow:hidden;`
         : '';
-    const warehouseChoice = _bulkSeqWarehouseOverrides.has(g.wellIndex)
-        ? _bulkSeqWarehouseOverrides.get(g.wellIndex)
-        : _bulkSeqGlobalWarehouse;
+    const configWarehouse = _bulkSeqSingleDefaultWarehouse(g.warehouseDefaults);
+    const hasOverride = _bulkSeqWarehouseOverrides.has(g.wellIndex);
+    const override = _bulkSeqWarehouseOverrides.get(g.wellIndex);
+    const warehouseChoice =
+        override === 'config'
+            ? configWarehouse
+            : hasOverride
+              ? override
+              : _bulkSeqGlobalWarehouse === 'config'
+                ? configWarehouse
+                : _bulkSeqGlobalWarehouse;
+    const hasWarehouseOverride = hasOverride && override !== 'config';
     return `<div class="bulk-seq-item ${disabled ? 'bulk-seq-disabled' : ''}${isExcluded ? ' bulk-seq-excluded' : ''}"
-                draggable="${!disabled && !isExcluded}" data-well-index="${g.wellIndex}"
+                draggable="${!disabled && !isExcluded}" data-well-index="${g.wellIndex}" data-config-warehouse="${configWarehouse || ''}"
                 style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
                 background:${disabled || isExcluded ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.1)'};
                 border:1px solid ${disabled || isExcluded ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.3)'};
@@ -399,6 +416,7 @@ function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
             <div class="bulk-seq-warehouse-label">
                 <span>Domyślnie: ${escapeHtml(_bulkSeqWarehouseDefaultsLabel(g.warehouseDefaults))}</span>
                 ${_bulkSeqWarehouseTiles(warehouseChoice, 'well', g.wellIndex, disabled || isExcluded, g.wellName)}
+                <button type="button" class="bulk-seq-warehouse-reset" data-warehouse-scope="well" data-well-index="${g.wellIndex}"${hasWarehouseOverride ? '' : ' hidden'}>Domyślne z konfiguratora</button>
             </div>
             ${
                 !disabled
@@ -500,16 +518,60 @@ function _bulkSeqResetState() {
     _bulkSeqDragWell = null;
     _bulkSeqDropTarget = null;
     _bulkSeqGlobalWarehouse = 'config';
+    _bulkSeqConfiguredGlobalWarehouse = null;
     _bulkSeqWarehouseOverrides = new Map();
 }
 
 function _bulkSeqBindWarehouseControls(overlay) {
     overlay.addEventListener('click', (event) => {
+        const reset = event.target?.closest?.('.bulk-seq-warehouse-reset');
+        if (reset) {
+            event.stopPropagation();
+            const scope = reset.dataset.warehouseScope;
+            if (scope === 'global') {
+                _bulkSeqGlobalWarehouse = 'config';
+                _bulkSeqWarehouseOverrides.clear();
+                overlay.querySelectorAll('.bulk-seq-warehouse-tile').forEach((tile) => {
+                    const selected =
+                        tile.dataset.warehouseScope === 'global'
+                            ? tile.dataset.warehouseChoice === _bulkSeqConfiguredGlobalWarehouse
+                            : tile.dataset.warehouseChoice ===
+                              tile.closest('.bulk-seq-item')?.dataset.configWarehouse;
+                    tile.setAttribute('aria-pressed', String(selected));
+                    tile.classList.toggle('is-selected', selected);
+                });
+                overlay.querySelectorAll('.bulk-seq-warehouse-reset').forEach((button) => {
+                    button.hidden = true;
+                });
+                return;
+            }
+            if (scope !== 'well') return;
+            const wellIndex = Number(reset.dataset.wellIndex);
+            if (!Number.isInteger(wellIndex)) return;
+            const row = reset.closest('.bulk-seq-item');
+            const configuredWarehouse = row?.dataset.configWarehouse || null;
+            if (
+                _bulkSeqGlobalWarehouse !== 'config' &&
+                configuredWarehouse !== _bulkSeqGlobalWarehouse
+            ) {
+                _bulkSeqWarehouseOverrides.set(wellIndex, 'config');
+            } else {
+                _bulkSeqWarehouseOverrides.delete(wellIndex);
+            }
+            const selectedWarehouse = configuredWarehouse;
+            row?.querySelectorAll('.bulk-seq-warehouse-tile').forEach((tile) => {
+                const selected = tile.dataset.warehouseChoice === selectedWarehouse;
+                tile.setAttribute('aria-pressed', String(selected));
+                tile.classList.toggle('is-selected', selected);
+            });
+            reset.hidden = true;
+            return;
+        }
         const target = event.target?.closest?.('.bulk-seq-warehouse-tile');
         if (!target || target.disabled) return;
         event.stopPropagation();
         const choice = target.dataset.warehouseChoice;
-        if (!['config', 'Kluczbork', 'Włocławek'].includes(choice)) return;
+        if (!['Kluczbork', 'Włocławek'].includes(choice)) return;
         if (target.dataset.warehouseScope === 'global') {
             _bulkSeqGlobalWarehouse = choice;
             _bulkSeqWarehouseOverrides.clear();
@@ -518,21 +580,43 @@ function _bulkSeqBindWarehouseControls(overlay) {
                 tile.setAttribute('aria-pressed', String(pressed));
                 tile.classList.toggle('is-selected', pressed);
             });
+            overlay.querySelectorAll('.bulk-seq-warehouse-reset').forEach((button) => {
+                button.hidden = button.dataset.warehouseScope !== 'global';
+            });
             return;
         }
         if (target.dataset.warehouseScope !== 'well') return;
         const wellIndex = Number(target.dataset.wellIndex);
         if (!Number.isInteger(wellIndex)) return;
-        if (choice === _bulkSeqGlobalWarehouse) _bulkSeqWarehouseOverrides.delete(wellIndex);
-        else _bulkSeqWarehouseOverrides.set(wellIndex, choice);
         const row = target.closest('.bulk-seq-item');
+        const configuredWarehouse = row?.dataset.configWarehouse || null;
+        if (_bulkSeqGlobalWarehouse === 'config' && choice === configuredWarehouse) {
+            _bulkSeqWarehouseOverrides.delete(wellIndex);
+        } else if (_bulkSeqGlobalWarehouse !== 'config' && choice === configuredWarehouse) {
+            _bulkSeqWarehouseOverrides.set(wellIndex, 'config');
+        } else if (_bulkSeqGlobalWarehouse !== 'config' && choice === _bulkSeqGlobalWarehouse) {
+            _bulkSeqWarehouseOverrides.delete(wellIndex);
+        } else {
+            _bulkSeqWarehouseOverrides.set(wellIndex, choice);
+        }
+        const override = _bulkSeqWarehouseOverrides.get(wellIndex);
+        const selectedWarehouse =
+            override === 'config'
+                ? configuredWarehouse
+                : _bulkSeqWarehouseOverrides.has(wellIndex)
+                  ? override
+                  : _bulkSeqGlobalWarehouse === 'config'
+                    ? configuredWarehouse
+                    : _bulkSeqGlobalWarehouse;
         row?.querySelectorAll('.bulk-seq-warehouse-tile[data-warehouse-scope="well"]').forEach(
             (tile) => {
-                const pressed = tile.dataset.warehouseChoice === choice;
+                const pressed = tile.dataset.warehouseChoice === selectedWarehouse;
                 tile.setAttribute('aria-pressed', String(pressed));
                 tile.classList.toggle('is-selected', pressed);
             }
         );
+        const resetButton = row?.querySelector('.bulk-seq-warehouse-reset');
+        if (resetButton) resetButton.hidden = !_bulkSeqWarehouseOverrides.has(wellIndex);
     });
 }
 
@@ -592,6 +676,13 @@ function openBulkOrderSequencePopup() {
 
     // P1: virtual powyżej progu — seqOrder SSoT, DOM tylko slice (jak excelVirtual).
     _bulkSeqResetState();
+    const configuredWarehouses = [
+        ...new Set(
+            groupList.map((group) => _bulkSeqSingleDefaultWarehouse(group.warehouseDefaults))
+        )
+    ];
+    _bulkSeqConfiguredGlobalWarehouse =
+        configuredWarehouses.length === 1 ? configuredWarehouses[0] : null;
     _bulkSeqVirtual = groupList.length > BULK_SEQ_VIRTUAL_THRESHOLD && _bulkSeqIsVirtualRequested();
     let itemsHtml;
     if (_bulkSeqVirtual) {
@@ -641,8 +732,9 @@ function openBulkOrderSequencePopup() {
                 </button>
             </div>
             <div class="bulk-seq-global-warehouse-label">
-                <span>Magazyn dla wszystkich studni</span>
-                ${_bulkSeqWarehouseTiles(_bulkSeqGlobalWarehouse, 'global', null, false, '')}
+                <span>Magazyn dla wszystkich studni · domyślnie według konfiguratora</span>
+                ${_bulkSeqWarehouseTiles(_bulkSeqConfiguredGlobalWarehouse, 'global', null, false, '')}
+                <button type="button" class="bulk-seq-warehouse-reset" data-warehouse-scope="global" hidden>Domyślne według konfiguratora</button>
             </div>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
             <button data-csp="executeBulkFromPopup" data-csp-args="[]" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight: var(--fw-extrabold); padding:0.6rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">
@@ -689,7 +781,7 @@ function openBulkOrderSequencePopup() {
                 dragEl && dragEl.dataset.wellIndex ? parseInt(dragEl.dataset.wellIndex, 10) : null;
             _bulkSeqDropTarget = null;
         }
-        if (dragEl) dragEl.style.opacity = '0.4';
+        if (dragEl) dragEl.classList.add('bulk-seq-dragging');
     });
     list.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -720,8 +812,9 @@ function openBulkOrderSequencePopup() {
             }
             if (after) pending.target.after(dragEl);
             else pending.target.before(dragEl);
-            // Pozycja widoczna po ruchu DOM — wyczyść linię do kolejnego mousemove.
+            // Pulsująca linia pozostaje na przeciąganym wierszu i wskazuje jego pozycję.
             pending.target.classList.remove('bulk-seq-drop-before', 'bulk-seq-drop-after');
+            dragEl.classList.add(after ? 'bulk-seq-drop-after' : 'bulk-seq-drop-before');
             bulkDragLastTarget = null;
             bulkDragLastAfter = null;
         });
@@ -756,7 +849,7 @@ function openBulkOrderSequencePopup() {
             _bulkSeqRenderSlice();
             return;
         }
-        if (dragEl) dragEl.style.opacity = '1';
+        if (dragEl) dragEl.classList.remove('bulk-seq-dragging');
         dragEl = null;
         updateBulkSeqNumbers();
     }
@@ -981,10 +1074,9 @@ async function executeBulkFromPopup() {
 
     const affectedWellIndexes = new Set(unsaved.map((el) => el.wellIndex));
     affectedWellIndexes.forEach((wellIndex) => {
-        const warehouse = warehouseChoices.has(wellIndex)
-            ? warehouseChoices.get(wellIndex)
-            : globalWarehouse;
-        if (warehouse === 'config') return;
+        const warehouseOverride = warehouseChoices.get(wellIndex);
+        if (warehouseOverride === 'config' || globalWarehouse === 'config') return;
+        const warehouse = warehouseChoices.has(wellIndex) ? warehouseOverride : globalWarehouse;
         const well = wells[wellIndex];
         if (!well) return;
         well.magazyn = warehouse;

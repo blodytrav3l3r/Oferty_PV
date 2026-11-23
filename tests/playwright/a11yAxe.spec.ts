@@ -2,6 +2,44 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+const E2E_BASE = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
+
+async function prepareAxeFrameBackgrounds(page: any) {
+    await page.evaluate(() => {
+        const candidates = [
+            document.querySelector('#spa-main'),
+            document.body,
+            document.documentElement
+        ].filter(Boolean);
+        const background = candidates
+            .map((element) => getComputedStyle(element).backgroundColor)
+            .find((color) => !color.startsWith('rgba(0, 0, 0, 0)'));
+        if (!background) return;
+
+        document.querySelectorAll('iframe.spa-module-iframe').forEach((iframe) => {
+            const childDocument = iframe.contentDocument;
+            if (!childDocument?.body) return;
+            if (getComputedStyle(childDocument.body).backgroundColor !== 'rgba(0, 0, 0, 0)') {
+                return;
+            }
+            childDocument.documentElement.style.backgroundColor = background;
+            childDocument.body.style.backgroundColor = background;
+        });
+    });
+}
+
+async function expectNoSeriousAxeViolations(page: any) {
+    await prepareAxeFrameBackgrounds(page);
+    const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa'])
+        .exclude('#toast-container')
+        .analyze();
+    const serious = results.violations.filter(
+        (violation) => violation.impact === 'critical' || violation.impact === 'serious'
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+}
+
 test.describe('a11y axe', () => {
     test('index.html ma 0 poważnych naruszeń', async ({ page }) => {
         await page.goto('/');
@@ -15,6 +53,7 @@ test.describe('a11y axe', () => {
             null,
             { timeout: 10000 }
         );
+        await prepareAxeFrameBackgrounds(page);
         const results = await new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa'])
             .exclude('#toast-container')
@@ -63,6 +102,7 @@ test.describe('a11y axe', () => {
                 null,
                 { timeout: 10000 }
             );
+            await prepareAxeFrameBackgrounds(page);
             const results = await new AxeBuilder({ page })
                 .withTags(['wcag2a', 'wcag2aa'])
                 .exclude('#toast-container')
@@ -83,6 +123,7 @@ test.describe('a11y axe', () => {
                     label.style.color = 'rgb(200, 200, 200)';
                     label.style.backgroundColor = 'rgb(255, 255, 255)';
                 });
+            await prepareAxeFrameBackgrounds(page);
             const regression = await new AxeBuilder({ page })
                 .withTags(['wcag2a', 'wcag2aa'])
                 .analyze();
@@ -188,10 +229,192 @@ test.describe('a11y axe', () => {
             'Brak etykiety dla #ka-date-from'
         ).toBeTruthy();
         // Dodatkowo uruchom axe na całym frame (bez include — unika błędu No elements for include)
+        await prepareAxeFrameBackgrounds(page);
         const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         const missingLabel = results.violations.filter(
             (v) => v.id === 'label' || v.id === 'aria-input-field-name'
         );
         expect(missingLabel).toEqual([]);
+    });
+
+    const remainingModules = [
+        {
+            route: 'pulpit',
+            frameUrl: 'index.html?host=pulpit',
+            readySelector: '#user-section'
+        },
+        {
+            route: 'kartoteka',
+            frameUrl: 'kartoteka.html',
+            readySelector: '#ka-user-filter'
+        },
+        {
+            route: 'zlecenia',
+            frameUrl: 'zlecenia.html',
+            readySelector: '#zlecenia-search-input'
+        },
+        {
+            route: 'cennik?tab=studnie',
+            frameUrl: 'cennik.html',
+            readySelector: '#cennik-frame-studnie'
+        }
+    ];
+
+    for (const module of remainingModules) {
+        test(`${module.route} ma 0 naruszeń axe critical/serious w stanie początkowym`, async ({
+            page
+        }) => {
+            const login = await page.request.post('/api/auth/login', {
+                data: {
+                    username: 'admin',
+                    password: process.env.TEST_ADMIN_PASSWORD || 'anim123456'
+                }
+            });
+            expect(login.ok(), `login failed: ${login.status()}`).toBe(true);
+
+            await page.goto(`/app.html#/${module.route}`);
+            const frame = await waitForModuleFrame(page, module.frameUrl);
+            expect(frame, `brak iframe ${module.frameUrl}`).not.toBeNull();
+            await frame!.locator(module.readySelector).waitFor({ timeout: 15000 });
+
+            if (module.route.startsWith('cennik?')) {
+                await expect(frame!.locator('#cennik-frame-studnie')).toBeVisible();
+                await expect
+                    .poll(() => page.frames().some((child) => child.url().includes('studnie.html')))
+                    .toBe(true);
+            }
+
+            if (module.route === 'zlecenia') {
+                await frame!.waitForFunction(
+                    () => {
+                        const activeFilter = document.querySelector(
+                            'button[data-filter="all"].zlecenia-filter-tab.active'
+                        );
+                        if (!activeFilter) return false;
+
+                        const colorProbe = document.createElement('span');
+                        colorProbe.style.backgroundColor = 'var(--accent-strong)';
+                        document.body.append(colorProbe);
+                        const expectedBackground = getComputedStyle(colorProbe).backgroundColor;
+                        colorProbe.remove();
+
+                        return (
+                            getComputedStyle(activeFilter).backgroundColor === expectedBackground
+                        );
+                    },
+                    null,
+                    { timeout: 10000 }
+                );
+            }
+
+            await prepareAxeFrameBackgrounds(page);
+            const results = await new AxeBuilder({ page })
+                .withTags(['wcag2a', 'wcag2aa'])
+                .exclude('#toast-container')
+                .analyze();
+            const serious = results.violations.filter(
+                (violation) => violation.impact === 'critical' || violation.impact === 'serious'
+            );
+            expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+
+            if (module.route === 'pulpit') {
+                const contrastViolation = results.violations.find(
+                    (violation) => violation.id === 'color-contrast'
+                );
+                const contrastNodes = contrastViolation?.nodes ?? [];
+                expect(
+                    contrastNodes.some((node) => node.html.includes('admin-user-login')),
+                    'CTA dodawania użytkownika ma zachować kontrast tekstu na ciemnym tle'
+                ).toBe(false);
+                expect(
+                    contrastNodes.some((node) =>
+                        node.html.includes('Kwalifikujące nowe rekordy od ostatniego SUCCESS')
+                    ),
+                    'Wartość karty Nowe dane ma zachować kontrast tekstu'
+                ).toBe(false);
+            }
+
+            if (module.route === 'kartoteka') {
+                const search = frame!.locator('#ka-local-search-input');
+                await search.fill(`brak-wynikow-${Date.now()}`);
+                await expect(frame!.locator('#ka-offers-list')).toContainText(
+                    'Brak ofert pasujących do filtrów.',
+                    { timeout: 10000 }
+                );
+                await expectNoSeriousAxeViolations(page);
+            }
+        });
+    }
+
+    test('Pulpit użytkownika bez ofert ma dostępny stan pustej kolejki', async ({ page }) => {
+        const adminPassword = process.env.TEST_ADMIN_PASSWORD;
+        if (!adminPassword) throw new Error('TEST_ADMIN_PASSWORD jest wymagane.');
+
+        const origin = new URL(E2E_BASE).origin;
+        const adminLogin = await page.request.post('/api/auth/login', {
+            headers: { Origin: origin },
+            data: { username: 'admin', password: adminPassword }
+        });
+        expect(adminLogin.ok(), `admin login failed: ${adminLogin.status()}`).toBe(true);
+
+        const username = `a11y-user-${Date.now()}`;
+        const userPassword = 'A11yBrowserTest123!';
+        const registration = await page.request.post('/api/auth/register', {
+            headers: { Origin: origin },
+            data: { username, password: userPassword, role: 'user' }
+        });
+        expect(registration.ok(), `user registration failed: ${registration.status()}`).toBe(true);
+
+        const userLogin = await page.request.post('/api/auth/login', {
+            headers: { Origin: origin },
+            data: { username, password: userPassword }
+        });
+        expect(userLogin.ok(), `user login failed: ${userLogin.status()}`).toBe(true);
+
+        await page.goto('/app.html#/pulpit');
+        const frame = page.frameLocator('#spa-iframe-pulpit');
+        await expect(frame.locator('#followup-panel')).toBeVisible({ timeout: 15000 });
+        await expect(frame.locator('#care-queue-list')).toBeVisible();
+        await expectNoSeriousAxeViolations(page);
+    });
+
+    test('nawigacja modułów jest osiągalna klawiaturą z widocznym focusem', async ({ page }) => {
+        const login = await page.request.post('/api/auth/login', {
+            data: {
+                username: 'admin',
+                password: process.env.TEST_ADMIN_PASSWORD || 'anim123456'
+            }
+        });
+        expect(login.ok(), `login failed: ${login.status()}`).toBe(true);
+
+        await page.goto('/app.html#/pulpit');
+        const pulpitLink = page.getByRole('link', { name: 'Pulpit' });
+        const studnieLink = page.getByRole('link', { name: 'Studnie' });
+        await expect(pulpitLink).toBeVisible();
+        await expect(studnieLink).toBeVisible();
+
+        await expect.poll(() => page.evaluate(() => document.activeElement?.id)).toBe('spa-main');
+        await pulpitLink.focus();
+        await expect
+            .poll(() => page.evaluate(() => document.activeElement?.id))
+            .toBe('spa-app-pulpit');
+
+        await page.keyboard.press('Tab');
+
+        const nextFocusedId = await page.evaluate(() => document.activeElement?.id);
+        expect(nextFocusedId).toBe('spa-app-studnie');
+        const focusStyle = await studnieLink.evaluate((element) => {
+            const style = getComputedStyle(element);
+            return {
+                isKeyboardFocused: element.matches(':focus-visible'),
+                outlineStyle: style.outlineStyle,
+                outlineWidth: style.outlineWidth
+            };
+        });
+        expect(focusStyle).toEqual({
+            isKeyboardFocused: true,
+            outlineStyle: 'solid',
+            outlineWidth: '2px'
+        });
     });
 });

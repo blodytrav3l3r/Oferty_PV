@@ -1665,18 +1665,18 @@
         return availableTypes().indexOf(type) !== -1;
     }
 
-    /** Przełącznik typu: taby tylko dla załadowanych modułów (btn-primary, aria-pressed). */
+    /** Przełącznik typu: przyciski wyboru tylko dla załadowanych modułów. */
     function tabsHtml(activeType) {
         var types = availableTypes();
         if (types.length < 2) return '';
         var labels = { rury: 'Rury', studnie: 'Studnie', preco: 'PRECO' };
         return (
-            '<div class="pv-actions" role="tablist" aria-label="Typ cennika">' +
+            '<div class="pv-actions" role="group" aria-label="Typ cennika">' +
             types
                 .map(function (t) {
                     var active = t === activeType;
                     return (
-                        '<button type="button" role="tab" class="btn btn-sm ' +
+                        '<button type="button" class="btn btn-sm ' +
                         (active ? 'btn-primary' : 'btn-secondary') +
                         '" data-pv-tab="' +
                         t +

@@ -1156,7 +1156,6 @@ a.admin-stat-card {
 
 .admin-user-tile--new .admin-user-login {
     color: var(--danger-hover);
-    opacity: 0.75;
 }
 
 .admin-user-head {

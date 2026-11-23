@@ -57,6 +57,28 @@ describe('frontend: unifikacja chrome cenników (Faza A/B)', () => {
     });
 });
 
+describe('frontend: akcje paska bocznego studni', () => {
+    it('przycisk Excel ma taką samą wysokość jak Przelicz', () => {
+        const sidebar = fs.readFileSync(
+            path.join(process.cwd(), 'public/partials/studnie/sidebar.html'),
+            'utf-8'
+        );
+        const getButtonHeight = (actionId: string) => {
+            const actionIndex = sidebar.indexOf(`data-csp="${actionId}"`);
+            const buttonStart = sidebar.lastIndexOf('<button', actionIndex);
+            const buttonEnd = sidebar.indexOf('</button>', actionIndex);
+            const buttonMarkup = sidebar.slice(buttonStart, buttonEnd);
+            return buttonMarkup.match(/height:\s*(\d+px)/)?.[1];
+        };
+
+        const excelHeight = getButtonHeight('openExcelTableModal');
+        const recalcHeight = getButtonHeight('openGlobalRecalcModal');
+        expect(excelHeight).toBeDefined();
+        expect(recalcHeight).toBeDefined();
+        expect(excelHeight).toBe(recalcHeight);
+    });
+});
+
 describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () => {
     const ruryPartial = fs.readFileSync(
         path.join(process.cwd(), 'public/partials/rury/pricelist.html'),
@@ -128,9 +150,10 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel.indexOf('>Transfer plików</h4>')).toBeLessThan(
             panel.indexOf('>Cenniki domyślne</h4>')
         );
-        for (const tab of ['data-pv-tab="', 'aria-pressed', 'role="tablist"']) {
+        for (const tab of ['data-pv-tab="', 'aria-pressed', 'role="group"']) {
             expect(panel).toContain(tab);
         }
+        expect(panel).not.toContain('role="tab"');
         expect(panel).toContain('labels[t]');
         expect(panel).toContain('id="pv-type-tabs"');
     });

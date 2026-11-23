@@ -10,7 +10,11 @@ import {
     SESSION_MAX_AGE_MS,
     AuthenticatedRequest
 } from '../middleware/auth';
-import { LOGIN_LIMITER, CHANGE_PASSWORD_LIMITER } from '../middleware/rateLimiters';
+import {
+    LOGIN_LIMITER,
+    CHANGE_PASSWORD_LIMITER,
+    ADMIN_USERS_LIMITER
+} from '../middleware/rateLimiters';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import {
     loginSchema,
@@ -108,7 +112,7 @@ router.post(
     '/register',
     requireAuth,
     requireAdmin,
-    CHANGE_PASSWORD_LIMITER,
+    ADMIN_USERS_LIMITER,
     validateData(registerSchema),
     async (req, res) => {
         const {

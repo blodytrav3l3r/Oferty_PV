@@ -553,6 +553,21 @@ html[data-theme='light'] .unit-popup-preview {
     background: var(--bg-secondary);
 }
 
+.studnie-pricelist-badge-anchor {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.studnie-pricelist-badge-anchor .pv-offer-badge {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 38px;
+    justify-content: center;
+    margin-left: 0;
+    font-size: var(--fs-xs);
+}
+
 .wells-sidebar-header h3 {
     font-size: var(--fs-md);
     font-weight: var(--fw-bold);
@@ -1578,7 +1593,7 @@ html[data-theme='light'] .unit-popup-preview {
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-sm);
     background: var(--bg-tile);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font:
         var(--fw-semibold) var(--fs-md) 'Inter',
         sans-serif;
@@ -5715,7 +5730,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
 
 .bulk-seq-warehouse-tiles {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.25rem;
     min-width: 0;
 }
@@ -5755,13 +5770,37 @@ td.excel-tr-selected .excel-sel-wrap > div {
 }
 
 .bulk-seq-global-warehouse-label .bulk-seq-warehouse-tiles {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bulk-seq-warehouse-reset[hidden] {
+    display: none;
+}
+
+.bulk-seq-warehouse-reset {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent2-hover);
+    font: inherit;
+    font-size: var(--fs-xs);
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 .bulk-seq-dialog {
     box-sizing: border-box;
     width: min(1900px, calc(100vw - 2rem)) !important;
     max-width: min(1900px, calc(100vw - 2rem));
+    height: calc(100vh - 2rem) !important;
+    height: calc(100dvh - 2rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+    max-height: calc(100dvh - 2rem) !important;
+}
+
+.bulk-seq-dialog #bulk-seq-list {
+    min-height: 0;
 }
 
 .bulk-seq-item .flex-1 {

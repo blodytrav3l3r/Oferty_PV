@@ -94,8 +94,14 @@ function buildPrzejsciaRowsFromPO(po) {
             label,
             rodzaj: isBlindKineta ? 'Ślepa kineta' : p.productCategory || '',
             srednica: p.productDn || '',
-            spadekKineta: !isBlindKineta && spadekK ? Math.round(parseFloat(spadekK)) + ' %' : '',
-            spadekMufa: !isBlindKineta && spadekM ? Math.round(parseFloat(spadekM)) + ' %' : '',
+            spadekKineta:
+                !isBlindKineta && spadekK && parseFloat(spadekK) !== 0
+                    ? Math.round(parseFloat(spadekK)) + ' %'
+                    : '',
+            spadekMufa:
+                !isBlindKineta && spadekM && parseFloat(spadekM) !== 0
+                    ? Math.round(parseFloat(spadekM)) + ' %'
+                    : '',
             katStopien: angle + '°',
             uwagi: isBlindKineta ? 'Ślepa' : hasHeightFromElement ? '+ ' + wysokoscMm + ' mm' : '—',
             katGon,

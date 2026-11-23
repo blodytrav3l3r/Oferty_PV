@@ -773,6 +773,44 @@ html[data-theme='light'] .pehd-badge {
     border-right: 1px solid var(--border);
 }
 
+.rury-summary-discount-card {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-xs);
+    height: 100%;
+}
+
+.rury-summary-discount-card .rury-btn-discount {
+    flex: 1 1 auto;
+    height: auto;
+}
+
+.rury-pricelist-badge-anchor {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    margin-top: 0;
+}
+
+.rury-pricelist-badge-anchor .pv-offer-badge {
+    box-sizing: border-box;
+    flex: 0 0 100%;
+    width: 100%;
+    justify-content: center;
+    max-width: 100%;
+    margin-left: 0;
+    border-color: var(--accent-border-dim);
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-size: var(--fs-2xs);
+}
+
 .rury-summary-label {
     font-size: var(--fs-base);
     text-transform: uppercase;

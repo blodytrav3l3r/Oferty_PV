@@ -77,10 +77,16 @@
             <div class="rury-summary-value-lg" id="sum-total-netto">0,00 PLN</div>
             <div class="rury-summary-sub" id="sum-brutto-details">Brutto: 0,00 PLN</div>
         </div>
-        <div class="rury-summary-card" style="border-left: 1px solid var(--border-glass)">
+        <div class="rury-summary-card rury-summary-discount-card">
             <button type="button" class="rury-btn-discount" data-csp="showItemDiscountModal">
                 % Edytuj rabaty
             </button>
+            <div
+                id="rury-pricelist-badge-anchor"
+                class="rury-pricelist-badge-anchor"
+                data-pv-offer-badge-host="rury"
+                aria-label="Wersja cennika oferty"
+            ></div>
         </div>
         <!-- Akcje oferty -->
         <div

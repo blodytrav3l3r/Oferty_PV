@@ -49,7 +49,7 @@
                 (g.newSinceLastTrain != null ? g.newSinceLastTrain : '—') +
                     ' / ' +
                     (g.minNewData != null ? g.minNewData : 50),
-                'var(--accent)',
+                'var(--accent-text)',
                 'Kwalifikujące nowe rekordy od ostatniego SUCCESS na tle progu (ta sama definicja co w pipeline)'
             ),
             window.aiStatCard(
@@ -147,7 +147,7 @@
                         window.aiStatCard(
                             'Wersja modelu',
                             window.escapeHtml(activeVer) + activeAuc,
-                            'var(--accent2)',
+                            'var(--accent2-hover)',
                             'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)',
                             activeVer + activeAuc
                         ),
@@ -198,7 +198,7 @@
                         window.aiStatCard(
                             'PR-AUC',
                             fmt(m.prAuc),
-                            'var(--accent)',
+                            'var(--accent-text)',
                             'Precision-Recall AUC — jakość przy niezbalansowanych danych (im wyżej, tym lepiej)'
                         ),
                         window.aiStatCard(

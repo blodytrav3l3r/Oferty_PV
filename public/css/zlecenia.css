@@ -102,8 +102,8 @@
     border-color: var(--bg-tertiary);
 }
 .zlecenia-filter-tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
     color: var(--white);
     box-shadow: var(--shadow-sm);
 }
@@ -409,8 +409,8 @@
     border: 1px solid rgba(var(--pink-rgb), 0.5);
     border-radius: var(--radius-md);
     margin-bottom: var(--tile-gap-lg);
-    /* P3: plaski tint + cien --shadow-md zamiast gradientu i blur. */
-    background: rgba(var(--pink-rgb), 0.15);
+    /* P3: nieprzezroczysta powierzchnia tokenowa bez gradientu i blur. */
+    background: var(--bg-secondary);
     box-shadow: var(--shadow-md);
     animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -477,28 +477,24 @@
 }
 .batch-btn-print {
     border-color: rgba(var(--blue-alt-rgb), 0.5);
-    color: var(--blue-alt);
 }
 .batch-btn-print:hover {
     background: rgba(var(--blue-alt-rgb), 0.1);
 }
 .batch-btn-label {
     border-color: rgba(var(--accent2-rgb), 0.5);
-    color: var(--purple-alt);
 }
 .batch-btn-label:hover {
     background: rgba(var(--accent2-rgb), 0.1);
 }
 .batch-btn-delete {
     border-color: rgba(var(--danger-rgb), 0.5);
-    color: var(--danger-hover);
 }
 .batch-btn-delete:hover {
     background: rgba(var(--danger-rgb), 0.1);
 }
 .batch-btn-select-all {
     border-color: rgba(var(--accent-rgb), 0.5);
-    color: var(--accent-hover);
 }
 .batch-btn-select-all:hover {
     background: rgba(var(--accent-rgb), 0.1);
@@ -682,7 +678,7 @@
     }
 }
 .zlecenia-batch-bar .batch-info {
-    color: var(--pink-hover);
+    color: var(--text-primary);
 }
 .zlecenia-batch-bar .batch-info svg {
     width: 16px;

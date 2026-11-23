@@ -23,6 +23,7 @@ function makeButton() {
 }
 
 function makeEl(id, button) {
+    const attributes = {};
     return {
         id,
         innerHTML: '',
@@ -30,7 +31,15 @@ function makeEl(id, button) {
         children: [],
         removed: false,
         firstChild: null,
-        setAttribute() {},
+        setAttribute(name, value) {
+            attributes[name] = value;
+        },
+        getAttribute(name) {
+            return attributes[name] || '';
+        },
+        appendChild(child) {
+            if (!this.children.includes(child)) this.children.push(child);
+        },
         remove() {
             this.removed = true;
         },
@@ -247,7 +256,13 @@ describe('frontend vm: offerPricelistBanner.refresh', () => {
 });
 
 describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', () => {
-    function makeBadgeDoc({ noWizard = false, hiddenTitle = false } = {}) {
+    function makeBadgeDoc({
+        noWizard = false,
+        hiddenTitle = false,
+        sideHost = false,
+        ruryHost = false
+    } = {}) {
+        const badgeEls = {};
         const inserted = [];
         const wizard = {
             id: 'wizard-indicator',
@@ -268,7 +283,24 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             },
             after() {}
         };
-        const badgeEls = {};
+        const studnieHost = {
+            id: 'studnie-pricelist-badge-anchor',
+            children: [],
+            appendChild(child) {
+                badgeEls[child.id] = child;
+                this.children.push(child);
+            },
+            getAttribute: (key) => (key === 'data-pv-offer-badge-host' ? 'studnie' : '')
+        };
+        const ruryFooterHost = {
+            id: 'rury-pricelist-badge-anchor',
+            children: [],
+            appendChild(child) {
+                badgeEls[child.id] = child;
+                this.children.push(child);
+            },
+            getAttribute: (key) => (key === 'data-pv-offer-badge-host' ? 'rury' : '')
+        };
         let created = 0;
         return {
             inserted,
@@ -277,6 +309,8 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             addWizard: () => {},
             getElementById: (id) => {
                 if (id === 'wizard-indicator') return noWizard ? null : wizard;
+                if (id === 'studnie-pricelist-badge-anchor') return sideHost ? studnieHost : null;
+                if (id === 'rury-pricelist-badge-anchor') return ruryHost ? ruryFooterHost : null;
                 if (id === 'offer-form-title-studnie' || id === 'offer-form-title') return anchor;
                 return badgeEls[id] || null;
             },
@@ -305,6 +339,8 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
                 });
                 return el;
             },
+            studnieHost,
+            ruryFooterHost,
             body: { appendChild: jest.fn(), firstChild: null }
         };
     }
@@ -498,6 +534,79 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         // ikona tag w iconsSlim (test kontraktu ikon wyżej sprawdza resztę)
         const slim = fs.readFileSync(path.join(ROOT, 'public/js/shared/iconsSlim.js'), 'utf8');
         expect(slim).toMatch(/['"]?tag['"]?\s*:/);
+    });
+
+    test('badge Studni trafia do prawego panelu nad Excel zamiast do wizarda', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            docOpts: { sideHost: true }
+        });
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:null,anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+
+        const badge = document.badgeEls['pv-offer-badge-studnie'];
+        expect(document.studnieHost.children).toContain(badge);
+        expect(document.getElementById('wizard-indicator').children).not.toContain(badge);
+
+        const sidebarHtml = fs.readFileSync(
+            path.join(ROOT, 'public/partials/studnie/sidebar.html'),
+            'utf8'
+        );
+        expect(sidebarHtml.indexOf('id="studnie-pricelist-badge-anchor"')).toBeLessThan(
+            sidebarHtml.indexOf('data-csp="openExcelTableModal"')
+        );
+        const studnieCss = fs.readFileSync(path.join(ROOT, 'public/css/studnie.css'), 'utf8');
+        const studnieBadgeCss = studnieCss.match(
+            /\.studnie-pricelist-badge-anchor \.pv-offer-badge\s*\{([^}]+)\}/
+        )?.[1];
+        expect(studnieBadgeCss).toMatch(/\bwidth:\s*100%/);
+        expect(studnieBadgeCss).toContain('min-height: 38px');
+        expect(studnieBadgeCss).not.toContain('--success-');
+        const sharedBadgeCss = fs.readFileSync(
+            path.join(ROOT, 'public/css/style.utilities.css'),
+            'utf8'
+        );
+        expect(sharedBadgeCss).toMatch(/\.badge-info\s*\{[^}]*var\(--blue-rgb\)/s);
+    });
+
+    test('badge Rur trafia pod edycję rabatów na dolnym pasku', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            docOpts: { ruryHost: true }
+        });
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"rury",stampId:null})',
+            sandbox
+        );
+
+        const badge = document.badgeEls['pv-offer-badge-rury'];
+        expect(document.ruryFooterHost.children).toContain(badge);
+        expect(document.getElementById('wizard-indicator').children).not.toContain(badge);
+
+        const summaryHtml = fs.readFileSync(
+            path.join(ROOT, 'public/partials/rury/summary-bar.html'),
+            'utf8'
+        );
+        expect(summaryHtml.indexOf('data-csp="showItemDiscountModal"')).toBeLessThan(
+            summaryHtml.indexOf('id="rury-pricelist-badge-anchor"')
+        );
+        expect(summaryHtml).toContain('rury-summary-discount-card');
+        const ruryCss = fs.readFileSync(path.join(ROOT, 'public/css/rury.css'), 'utf8');
+        const discountCardCss = ruryCss.match(/\.rury-summary-discount-card\s*\{([^}]+)\}/)?.[1];
+        expect(discountCardCss).toContain('border: 0');
+        expect(discountCardCss).toMatch(/display:\s*flex/);
+        expect(discountCardCss).toMatch(/height:\s*100%/);
+        const discountButtonCss = ruryCss.match(
+            /\.rury-summary-discount-card \.rury-btn-discount\s*\{([^}]+)\}/
+        )?.[1];
+        expect(discountButtonCss).toMatch(/flex:\s*1\s+1\s+auto/);
+        expect(discountButtonCss).not.toMatch(/min-height:\s*0/);
+        const badgeCss = ruryCss.match(
+            /\.rury-pricelist-badge-anchor \.pv-offer-badge\s*\{([^}]+)\}/
+        )?.[1];
+        expect(badgeCss).toMatch(/\bwidth:\s*100%/);
     });
 
     test('hide() gasi tylko pasek ostrzeżenia — badge trwały zostaje', async () => {

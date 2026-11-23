@@ -39,6 +39,26 @@ deklarujemy jednego uniwersalnego protokołu ani nie przenosimy całości na `po
   kartoteki/zleceń `AppKartoteka.loadOffers` i `AppZlecenia.loadOrders`. To istniejące
   mostki legacy; ich usunięcie wymaga osobnej migracji i testów.
 
+### Mostki odświeżania wywoływane przez powłokę
+
+Powłoka mapuje istniejące możliwości potomnych modułów w prywatnym `getModuleBridge`
+w `public/js/spa/router.js`. `refreshModule`, `showSection` i odświeżanie indeksu PZ
+korzystają z tego adaptera zamiast samodzielnie rozpoznawać globalne API modułów.
+Adapter nie jest eksportowany do iframe i nie dodaje nowego publicznego protokołu.
+Lista istniejących mostków jest jawna, aby zmiany w API miały właściciela i mogły być
+zsynchronizowane z typami/testami modułu:
+
+| Moduł iframe | Istniejące wywołania                                              | Cel                                                                                                                                                                          |
+| ------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Zlecenia     | `AppZlecenia.loadOrders`                                          | Ponowne pobranie listy zleceń.                                                                                                                                               |
+| Kartoteka    | `AppKartoteka.loadOffers`; fallback `kartotekaUI.loadLocalOffers` | Ponowne pobranie lub odświeżenie lokalnej kartoteki.                                                                                                                         |
+| Studnie      | `loadProductionOrders(false, true)`                               | Pobranie indeksu zleceń produkcyjnych; opcjonalne `auditPzElementKeyMismatch`, `renderZleceniaList`, `renderZleceniaWellConfig` i `refreshAll` aktualizują powiązane widoki. |
+
+Wywołania te nie tworzą nowego, uniwersalnego protokołu iframe. Funkcje są opcjonalne
+zależnie od modułu i bieżącej gotowości jego dokumentu. Zmiana ich parametrów, kolejności
+lub zachowania wymaga aktualizacji testu `tests/frontend/iframeContract.test.ts` oraz
+odpowiednich testów przepływu, w tym `tests/frontend/navGuard.test.ts` dla odświeżenia PZ.
+
 `public/js/types.d.ts` opisuje publiczne API powłoki i kontrakt `__sok*`. Test kontraktu
 sprawdza zgodność deklaracji z nazwami używanymi w kodzie.
 
