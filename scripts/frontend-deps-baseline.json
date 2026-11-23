@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-23",
-    "totalEdges": 3016,
+    "totalEdges": 3018,
     "edges": [
         {
             "page": "public/app.html",
@@ -8288,6 +8288,14 @@
             "name": "announceRzednaClamp",
             "userFile": "public/js/studnie/wellTransitionsInline.js",
             "defFile": "public/js/studnie/solverValidation.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "appAlert",
+            "userFile": "public/js/studnie/orderBulk.js",
+            "defFile": "public/js/shared/ui.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -22105,6 +22113,14 @@
             "userFile": "public/js/studnie/wellManager.js",
             "defFile": "public/js/studnie/actionsWellSync.js",
             "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "syncOfferClientSummary",
+            "userFile": "public/js/studnie/offerSave.js",
+            "defFile": "public/js/studnie/globals.js",
+            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {

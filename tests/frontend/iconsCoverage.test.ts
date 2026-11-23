@@ -56,7 +56,7 @@ describe('iconsSlim pokrycie ikon shared', () => {
         const keys = iconKeys();
         expect(keys.has('star')).toBe(true);
         const code = fs.readFileSync(path.join(SHARED_DIR, 'ui.js'), 'utf8');
-        expect(code).toMatch('data-lucide="star"');
+        expect(code).toMatch(/u\.role === 'pro' \? 'star'/);
         expect(code).not.toMatch('⭐');
     });
 
