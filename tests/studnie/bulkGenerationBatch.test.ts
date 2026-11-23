@@ -35,12 +35,15 @@ function loadCtx(fetchImpl: any) {
         authHeaders: () => ({}),
         logger: { info: () => {}, warn: () => {}, error: () => {} },
         showToast: jest.fn(),
+        appAlert: jest.fn(async () => {}),
         productionOrders: [],
         wells: [],
         zleceniaElementsList: [],
         zleceniaSelectedIdx: -1,
         wellsSnapshotBeforeZlecenia: null,
         currentUser: { id: 'u1', firstName: 'A', lastName: 'B' },
+        editingOfferAssignedUserId: 'u1',
+        orderEditMode: null,
         document: doc,
         window: {} as any,
         requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
@@ -69,12 +72,12 @@ function loadCtx(fetchImpl: any) {
         );
     }
     // Deterministyczny builder zamiast buildAutoOrderData (ciężki, produktowy).
-    context.buildAutoOrderData = (el: any) => ({
+    context.buildAutoOrderData = (el: any, sharedData: any) => ({
         id: 'po_' + el.i,
         wellId: 'w' + el.i,
+        userId: sharedData.userId,
         productionOrderNumber: ''
     });
-    context.collectSharedFormData = () => ({ userId: 'u1' });
     context.buildZleceniaWellList = () => {};
     context.renderZleceniaList = () => {};
     context.refreshGlobalMetrics = () => {};
@@ -91,6 +94,78 @@ function jsonResp(status: number, body: any, headers: Record<string, string> = {
 }
 
 describe('executeBulkGeneration — batch', () => {
+    test('używa Opiekuna oferty zamiast zalogowanego operatora', async () => {
+        const calls: any[] = [];
+        const fetchImpl = jest.fn(async (url: string, opts: any) => {
+            calls.push({ url, method: opts && opts.method, body: opts && opts.body });
+            if (url.includes('claim-production-numbers')) {
+                return jsonResp(200, { numbers: ['N1'], seqs: [1] });
+            }
+            return jsonResp(200, { ok: true, saved: ['po_1'] });
+        });
+        const ctx = loadCtx(fetchImpl);
+        ctx.editingOfferAssignedUserId = 'opiekun-1';
+
+        await ctx.executeBulkGeneration([{ i: 1, product: { name: 'Dennica' } }]);
+
+        expect(calls[0].url).toContain('/opiekun-1');
+        const saveCall = calls.find((call) => call.method === 'PUT');
+        expect(JSON.parse(saveCall.body).data[0].userId).toBe('opiekun-1');
+    });
+
+    test('w trybie zamówienia używa Opiekuna zamówienia', async () => {
+        const calls: any[] = [];
+        const fetchImpl = jest.fn(async (url: string, opts: any) => {
+            calls.push({ url, method: opts && opts.method, body: opts && opts.body });
+            if (url.includes('claim-production-numbers')) {
+                return jsonResp(200, { numbers: ['N1'], seqs: [1] });
+            }
+            return jsonResp(200, { ok: true, saved: ['po_1'] });
+        });
+        const ctx = loadCtx(fetchImpl);
+        ctx.orderEditMode = { order: { userId: 'opiekun-zamowienia' } };
+        ctx.editingOfferAssignedUserId = 'opiekun-oferty';
+
+        await ctx.executeBulkGeneration([{ i: 1, product: { name: 'Dennica' } }]);
+
+        expect(calls[0].url).toContain('/opiekun-zamowienia');
+        const saveCall = calls.find((call) => call.method === 'PUT');
+        expect(JSON.parse(saveCall.body).data[0].userId).toBe('opiekun-zamowienia');
+    });
+
+    test('pokazuje błąd braku zakresu Opiekuna i nie zapisuje PZ', async () => {
+        const fetchImpl = jest.fn(async () =>
+            jsonResp(409, {
+                error: 'Użytkownik nie ma ustawionego zakresu numerów zleceń produkcyjnych'
+            })
+        );
+        const ctx = loadCtx(fetchImpl);
+        ctx.editingOfferAssignedUserId = 'opiekun-1';
+
+        await ctx.executeBulkGeneration([{ i: 1, product: { name: 'Dennica' } }]);
+
+        expect(ctx.appAlert).toHaveBeenCalledWith(
+            'Użytkownik nie ma ustawionego zakresu numerów zleceń produkcyjnych',
+            expect.objectContaining({ title: 'Nie można pobrać numerów zleceń', type: 'warning' })
+        );
+        expect(fetchImpl).toHaveBeenCalledTimes(1);
+        expect(ctx.productionOrders).toHaveLength(0);
+    });
+
+    test('bez Opiekuna pokazuje okno i nie wysyła claimu ani zapisu', async () => {
+        const fetchImpl = jest.fn();
+        const ctx = loadCtx(fetchImpl);
+        ctx.editingOfferAssignedUserId = null;
+
+        await ctx.executeBulkGeneration([{ i: 1, product: { name: 'Dennica' } }]);
+
+        expect(ctx.appAlert).toHaveBeenCalledWith(
+            'Przypisz Opiekuna do oferty lub zamówienia przed generowaniem zleceń produkcyjnych.',
+            expect.objectContaining({ title: 'Brak Opiekuna', type: 'warning' })
+        );
+        expect(fetchImpl).not.toHaveBeenCalled();
+    });
+
     test('450 elementów: 3 claimy 200+200+50 + 3 PUT + retry 429 + recycle tylko 2 niezapisanych', async () => {
         const calls: any[] = [];
         let seqBase = 0;

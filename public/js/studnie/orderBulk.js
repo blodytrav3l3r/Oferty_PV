@@ -10,13 +10,10 @@ function collectSharedFormData() {
         ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() ||
           currentUser.username
         : '';
-    const targetUserId =
-        (typeof orderEditMode !== 'undefined' &&
-            orderEditMode &&
-            orderEditMode.order &&
-            orderEditMode.order.userId) ||
-        (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ||
-        (currentUser ? currentUser.id : null);
+    const isEditingOrder = typeof orderEditMode !== 'undefined' && Boolean(orderEditMode);
+    const targetUserId = isEditingOrder
+        ? orderEditMode.order?.userId || null
+        : (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) || null;
     return {
         obiekt: document.getElementById('invest-name')?.value || '',
         adres: document.getElementById('invest-address')?.value || '',
@@ -1131,6 +1128,17 @@ async function executeBulkGeneration(elements) {
     const list = Array.isArray(elements) ? elements : [];
     const sharedData = collectSharedFormData();
     const userId = (sharedData && sharedData.userId) || null;
+    if (!userId) {
+        if (typeof appAlert === 'function') {
+            await appAlert(
+                'Przypisz Opiekuna do oferty lub zamówienia przed generowaniem zleceń produkcyjnych.',
+                { title: 'Brak Opiekuna', type: 'warning' }
+            );
+        } else {
+            showToast('Brak Opiekuna — generowanie zleceń zostało przerwane', 'error');
+        }
+        return;
+    }
     const built = [];
     for (const el of list) {
         try {
@@ -1144,10 +1152,6 @@ async function executeBulkGeneration(elements) {
                 e
             );
         }
-    }
-    if (!userId) {
-        showToast('Brak użytkownika do numeracji zleceń', 'error');
-        return;
     }
     // Świeży kontroler na start — excelBulkController.cancel() z progressu anuluje ten przebieg.
     let signal = null;
@@ -1208,6 +1212,7 @@ async function executeBulkGeneration(elements) {
     // Retry 3× w _bulkClaimRange (429 + sieć, ten sam klucz = te same numery).
     const claimed = [];
     let stopped = false;
+    let claimError = null;
     for (let start = 0; start < built.length && !stopped; start += _BULK_CHUNK) {
         if (isAborted()) {
             stopped = true;
@@ -1219,6 +1224,7 @@ async function executeBulkGeneration(elements) {
             range = await _bulkClaimRange(userId, n, bulkRunKey + '_claim_' + start, signal);
         } catch (e) {
             logger.error('orderManager', 'Błąd claima numerów produkcyjnych:', e);
+            claimError = e instanceof Error ? e : new Error(String(e));
             range = null;
         }
         if (
@@ -1314,6 +1320,18 @@ async function executeBulkGeneration(elements) {
         stopped || putErrors > 0
             ? ` (przerwano, zapisano ${newOrders.length} z ${built.length})`
             : '';
+    if (claimError && !isAborted()) {
+        const message = claimError.message || 'Nie udało się pobrać numerów zleceń produkcyjnych.';
+        if (typeof appAlert === 'function') {
+            await appAlert(message, {
+                title: 'Nie można pobrać numerów zleceń',
+                type: 'warning'
+            });
+        } else {
+            showToast(message, 'error');
+        }
+        return;
+    }
     showToast(
         `<i data-lucide="zap"></i> Wygenerowano ${newOrders.length} zleceń produkcyjnych${errMsg}`,
         newOrders.length > 0 && !stopped ? 'success' : newOrders.length > 0 ? 'info' : 'error'
