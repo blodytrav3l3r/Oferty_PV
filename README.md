@@ -47,8 +47,8 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 | Składnik       | Wersja minimalna | Użycie                                                                                             |
 | -------------- | ---------------- | -------------------------------------------------------------------------------------------------- |
 | Docker Desktop | aktualna         | Instalacja nowego komputera Windows; backend WSL 2 dla PostgreSQL 18 Compose                       |
-| Node.js        | >= 22.13         | Tylko rozwój lokalny bez Compose; [nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x) |
-| npm            | 9+               | Tylko rozwój lokalny; instaluje się automatycznie z Node.js                                        |
+| Node.js        | >= 22.13         | Rozwój lokalny i hostowy deploy Docker na Linux; [nodejs.org](https://nodejs.org), LTS 22.x / 24.x |
+| npm            | 9+               | Rozwój lokalny i hostowy deploy Docker na Linux; instalowany z Node.js                             |
 | Git            | dowolna          | Opcjonalnie do pobierania i aktualizacji źródeł; [git-scm.com](https://git-scm.com)                |
 | PostgreSQL     | 18.x             | Dostarczany w Compose dla instalacji nowego komputera; lokalny serwer wymagany tylko poza Compose  |
 | Python         | 3.10+            | Opcjonalnie — walidacja plików Excel w pre-commit                                                  |
@@ -351,6 +351,61 @@ node scripts/deploy.mjs <windows|linux|docker> vX.Y.Z              # deploy
 node scripts/rollback.mjs <windows|linux|docker> vX.Y.Z            # powrót do poprzedniej wersji
 npm run deploy:check                                               # smoke check /health
 ```
+
+### Linux + Docker — aktualizacja serwera
+
+Wdrożenie wykonuj w oknie serwisowym z zatwierdzonego tagu release, np.
+`v1.64.23`. Na serwerze musi być checkout repozytorium z zachowanym `.env`,
+Git, Docker Engine/Compose oraz Node.js 22.13+ i npm. Hostowy skrypt deploy
+wykonuje backup, `npm ci`, build i kontrole; instalator Linux nie instaluje
+Node.js.
+
+Samo `git pull` aktualizuje wyłącznie pliki w checkoutcie. Nie przebudowuje
+obrazu ani nie odtwarza kontenera, więc aplikacja może nadal serwować starą
+wersję JavaScript i CSS. Nie aktualizuj produkcji przez przejście na `main` i
+ręczny restart kontenera. Użyj procesu release poniżej — pobiera wskazany tag,
+przebudowuje obraz z metadanymi wersji i commita, a następnie odtwarza usługę.
+
+```bash
+# Połącz się przez SSH i przejdź do katalogu repozytorium na serwerze.
+cd /ścieżka/do/Oferty_PV
+
+# Sprawdź wymagane narzędzia, działające usługi i lokalne zmiany.
+node --version
+npm --version
+docker compose version
+docker compose ps
+git status --short
+
+# Najpierw obejrzyj plan, potem wdrażaj dokładny, zatwierdzony tag release.
+node scripts/deploy.mjs docker vX.Y.Z --dry-run
+node scripts/deploy.mjs docker vX.Y.Z
+
+# Potwierdź gotowość i numer wdrożonej wersji.
+docker compose ps
+curl -fsS http://127.0.0.1:3000/health/ready
+curl -fsS http://127.0.0.1:3000/api/version
+git rev-parse --short HEAD
+```
+
+Zastąp `vX.Y.Z` numerem wydania faktycznie opublikowanym w GitHub Releases.
+W katalogu repozytorium nie może być niezacommitowanych zmian — skrypt przerwie
+wdrożenie, jeśli checkout jest brudny. Automatycznie wykonuje backup, pobiera i
+przełącza repozytorium na wskazany tag, instaluje zależności, buduje aplikację i
+obraz `app`, uruchamia bootstrap bazy, odtwarza kontener oraz sprawdza readiness,
+wersję i dostępność PDF. Pełny render testowy PDF uruchomi się, jeśli ustawisz
+`SOK_ADMIN_PASSWORD` w środowisku wdrożenia. Podczas budowy skrypt zapisuje SHA
+commita w metadanych obrazu, dzięki czemu numer commita jest dostępny w nagłówku
+aplikacji; zalogowany administrator sprawdzi pełne dane w `/api/admin/system-info`.
+
+Jeśli host nie używa adresu `http://127.0.0.1:3000`, ustaw `APP_URL` na lokalny
+adres i port opublikowany przez Compose przed uruchomieniem wdrożenia, np.
+`APP_URL=http://127.0.0.1:3100 node scripts/deploy.mjs docker vX.Y.Z`.
+Nie wykonuj `docker compose down -v` ani nie usuwaj wolumenów — wolumen
+`sok_postgres-data` zawiera bazę. Czysta instalacja Linux na Ubuntu/Debian nie
+została jeszcze potwierdzona end-to-end; przed produkcją sprawdź proces na
+stagingu i potwierdź możliwość odtworzenia kopii. Szczegóły okna serwisowego
+i rollbacku opisuje [docs/DEPLOY_UPDATE.md](docs/DEPLOY_UPDATE.md).
 
 ---
 
