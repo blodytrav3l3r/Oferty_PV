@@ -103,47 +103,42 @@ function showUserSelectionPopup(users, defaultUserId) {
             }
         };
 
-        let html = `<div id="user-selection-title" style="font-size: var(--fs-3xl); font-weight: var(--fw-bold); margin-bottom:1rem; color:var(--warn);"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
-        html += `<div style="font-size: var(--fs-base); color:var(--text-secondary); margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
-        html += `<div style="display:flex; flex-direction:column; gap:0.4rem;">`;
+        let html = `<div class="modal modal--user-selection">`;
+        html += `<header class="user-selection-header">`;
+        html += `<h2 id="user-selection-title" class="user-selection-title"><i data-lucide="user" aria-hidden="true"></i> Przypisz do użytkownika (Opiekun)</h2>`;
+        html += `<p class="user-selection-description">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</p>`;
+        html += `</header>`;
+        html += `<div class="user-selection-grid" aria-label="Lista użytkowników">`;
 
         users.forEach((u) => {
             const displayName =
                 u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.username;
             const isDefault = u.id === defaultUserId;
             const symbol = u.symbol || '??';
-            const roleBadge =
-                u.role === 'admin'
-                    ? '<i data-lucide="key"></i>'
-                    : u.role === 'pro'
-                      ? '<i data-lucide="star"></i>'
-                      : '<i data-lucide="user"></i>';
+            const roleIcon = u.role === 'admin' ? 'key' : u.role === 'pro' ? 'star' : 'user';
 
-            html += `<button class="user-select-btn" data-user-id="${escapeHtmlAttr(u.id)}" style="
-                display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
-                background:${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'var(--bg-subtle)'};
-                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border-color)'};
-                border-radius: var(--radius-sm); cursor:pointer; color:var(--text-primary); font:var(--fw-medium) var(--fs-lg) Inter,sans-serif;
-                transition:all 0.15s; text-align:left; width:100%;
-            " data-csp="$stylePair" data-csp-on="mouseover" data-csp-args="${escapeHtmlAttr(JSON.stringify(['borderColor', 'rgba(var(--accent-rgb), 0.5)', 'background', 'rgba(var(--accent-rgb), 0.1)']))}" data-csp-2="$userBtnLeave" data-csp-2-on="mouseout" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border-color)', isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'var(--bg-subtle)']))}">
-                <span class="fs-3xl">${roleBadge}</span>
-                <div class="flex-1">
-                    <div class="fw-bold">${escapeHtml(displayName)}</div>
-                    <div style="font-size: var(--fs-sm); color:var(--text-secondary);">Symbol: ${escapeHtml(symbol)}</div>
-                </div>
-                ${isDefault ? '<span style="font-size: var(--fs-xs); color:var(--accent-hover); font-weight: var(--fw-bold);">DOMYŚLNY</span>' : ''}
+            html += `<button type="button" class="user-select-btn${isDefault ? ' is-default' : ''}" data-user-id="${escapeHtmlAttr(u.id)}" aria-pressed="${isDefault}">
+                <i class="user-select-icon" data-lucide="${roleIcon}" aria-hidden="true"></i>
+                <span class="user-select-details">
+                    <span class="user-select-name">${escapeHtml(displayName)}</span>
+                    <span class="user-select-symbol">Symbol: ${escapeHtml(symbol)}</span>
+                </span>
+                ${isDefault ? '<span class="user-select-default">Domyślny</span>' : ''}
             </button>`;
         });
 
+        if (users.length === 0) {
+            html += `<p class="user-selection-empty">Brak użytkowników do przypisania.</p>`;
+        }
         html += `</div>`;
-        html += `<div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">`;
-        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid var(--border-color); border-radius: var(--radius-sm); background:var(--bg-subtle); color:var(--text-secondary); cursor:pointer; font:var(--fw-medium) var(--fs-md) Inter,sans-serif;">Anuluj</button>`;
-        html += `</div>`;
+        html += `<footer class="user-selection-actions">`;
+        html += `<button id="user-select-cancel" type="button" class="btn btn-secondary">Anuluj</button>`;
+        html += `</footer></div>`;
 
         const overlay = showModal({
             id: 'user-selection-overlay',
             titleId: 'user-selection-title',
-            html: `<div class="modal">${html}</div>`,
+            html,
             onClose: () => once(null)
         });
         if (window.lucide) lucide.createIcons();
@@ -153,15 +148,17 @@ function showUserSelectionPopup(users, defaultUserId) {
                 const userId = btn.getAttribute('data-user-id');
                 const selectedUser = users.find((u) => u.id === userId);
                 if (selectedUser) {
-                    selectedUser.displayName =
-                        selectedUser.firstName && selectedUser.lastName
-                            ? `${selectedUser.firstName} ${selectedUser.lastName}`
-                            : selectedUser.username;
+                    once({
+                        ...selectedUser,
+                        displayName:
+                            selectedUser.firstName && selectedUser.lastName
+                                ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                                : selectedUser.username
+                    });
+                    untrapFocus(overlay);
+                    overlay.remove();
+                    _restoreBodyScroll();
                 }
-                untrapFocus(overlay);
-                overlay.remove();
-                _restoreBodyScroll();
-                once(selectedUser);
             });
         });
 
