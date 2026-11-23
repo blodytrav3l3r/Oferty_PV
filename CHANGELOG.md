@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.24](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.23...v1.64.24) (2026-11-23)
+
+### Bug Fixes
+
+- **offers:** nadawaj numery ofert atomowo ([46bfd07](https://github.com/blodytrav3l3r/Oferty_PV/commit/46bfd07bfe932470d1e467f4a328e1e13829936f))
+- **studnie:** użyj opiekuna do numeracji pz ([53ceab3](https://github.com/blodytrav3l3r/Oferty_PV/commit/53ceab3e5d47a194577c63f5cf76dbb22665b4e1))
+- **ui:** popraw nawigację, oferty i wydruki ([811ec99](https://github.com/blodytrav3l3r/Oferty_PV/commit/811ec994ce6461bf023b8af59a8fdbefeef3f286))
+- **ui:** popraw okno przypisywania opiekuna ([ba55580](https://github.com/blodytrav3l3r/Oferty_PV/commit/ba555801fb9c6a8c4adbed3ede1b73ac1f86dc77))
+- **ui:** synchronizuj podgląd i pokazuj hash commita ([f017d3c](https://github.com/blodytrav3l3r/Oferty_PV/commit/f017d3cbe7091a40b13c0129d10eaaf8a0daeceb))
+
 ### [1.64.23](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.22...v1.64.23) (2026-11-22)
 
 ### Bug Fixes

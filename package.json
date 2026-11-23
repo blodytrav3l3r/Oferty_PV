@@ -1,6 +1,6 @@
 {
     "name": "sok-oferty",
-    "version": "1.64.23",
+    "version": "1.64.24",
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
