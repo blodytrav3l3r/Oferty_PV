@@ -765,7 +765,7 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 }
 
 .user-selection-title > i {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .user-selection-description {
@@ -825,7 +825,7 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 .user-select-icon {
     width: 1.15rem;
     height: 1.15rem;
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .user-select-details {

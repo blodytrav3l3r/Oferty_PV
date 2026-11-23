@@ -10,7 +10,8 @@ import authRouter from '../src/routes/auth';
 
 jest.mock('../src/middleware/rateLimiters', () => ({
     LOGIN_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next(),
-    CHANGE_PASSWORD_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next()
+    CHANGE_PASSWORD_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next(),
+    ADMIN_USERS_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next()
 }));
 
 jest.mock('../src/utils/logger', () => ({
