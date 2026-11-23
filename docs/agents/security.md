@@ -26,9 +26,9 @@
 - Cookie `authToken`: HttpOnly + SameSite=Lax (+ Secure na HTTPS). Legacy shim `x-auth-token` usunięty — nie przywracaj.
 - CSRF: `src/middleware/csrf.ts` — mutacje wymagają Origin/Referer zgodnego z Host (403 w p.p.); GET/HEAD/OPTIONS nietknięte; `/api/csp-report` zwolniony. Skrypty nie-przeglądarkowe wysyłają `Origin: BASE`.
 - Helmet CSP enforce AKTYWNE: `script-src 'self'` + nonce per-request, zero `unsafe-inline` dla skryptów (kontrakt `tests/security/headers.test.ts`); `style-src` zostaje z `unsafe-inline` (ryzyko szczątkowe, ADR w komentarzu `src/app.ts`). Równolegle Report-Only z nonce (monitoring). Nowy kod: `addEventListener`, zero nowych inline.
-- Sonda CSP dashboardu Operacje czyta enforce z `/api/telemetry/ai/ml-status` (za Helmet); `/api/version` i `/api/admin/system-info` są przed Helmet i nie niosą CSP (celowo publiczne).
+- Sonda CSP dashboardu Operacje czyta enforce z `/api/telemetry/ai/ml-status` (za Helmet); publiczne `/api/version` i admin-only `/api/admin/system-info` są przed Helmet, a uwierzytelnione `/api/version/commit` przechodzi przez Helmet, nagłówki bezpieczeństwa i wymuszenie HTTPS.
 - Rate limiting in-memory (single-instance): login 60/min IP oraz 10/min IP+login, hasła 5/15min, API 1200/15min, writes 60/min. Bez Redis (decyzja).
-- Publiczne endpointy minimalne: `/health` `{status,timestamp}`, `/api/version` `{version}`, `/health/ready` bez klucza `error`; diagnostyka tylko `/api/admin/system-info` (admin). Inwarianty I-010/I-011.
+- Publiczne endpointy minimalne: `/health` `{status,timestamp}`, `/api/version` `{version}`, `/health/ready` bez klucza `error`; `/api/version/commit` wymaga zalogowania i zwraca tylko 12-znakowy hash; pozostała diagnostyka tylko `/api/admin/system-info` (admin). Inwarianty I-010/I-011.
 - Ownership fail-closed (`src/utils/ownership.ts`); 409 optimistic locking (`versionWrite.ts`); audit: błąd logowany strukturalnie + metryka, nigdy silent (I-012).
 
 ## CSP / DOM / storage

@@ -119,8 +119,10 @@
 ## I-011 — Publiczne endpointy nie ujawniają diagnostyki
 
 - **Invariant:** `/health` → `{status, timestamp}`; `/api/version` → `{version}`;
-  `/health/ready` nigdy klucza `error` (503 generyczne); szczegóły
-  (commit/branch/env/memory) tylko `/api/admin/system-info` (admin).
+  `/api/version/commit` wymaga dowolnej zalogowanej sesji i zwraca wyłącznie
+  12-znakowy hash commita; `/health/ready` nigdy klucza `error` (503 generyczne);
+  pełny hash oraz pozostałe szczegóły (branch/env/memory) tylko
+  `/api/admin/system-info` (admin).
 - **Owner:** backend (`src/app.ts`).
 - **Enforcement:** selektywne odpowiedzi + `requireAuth`/`requireAdmin`.
 - **Tests:** `tests/security/informationDisclosure.test.ts`,

@@ -1,10 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import app from '../../src/app';
 import prisma from '../../src/prismaClient';
 import { createSession } from '../../src/middleware/auth';
 
-async function openSession(role: 'admin' | 'user'): Promise<string> {
-    const id = `ops-test-${role}`;
+async function openSession(role: 'admin' | 'pro' | 'user'): Promise<string> {
+    const id = `ops-test-${role}-${randomUUID()}`;
     await prisma.users.create({ data: { id, username: id, password: 'unused', role } });
     return `authToken=${await createSession(id)}`;
 }
@@ -12,7 +13,8 @@ async function openSession(role: 'admin' | 'user'): Promise<string> {
 /**
  * P0.2: publiczne endpointy diagnostyczne nie ujawniają szczegółów.
  * - GET /health -> tylko status + timestamp (bez memory/uptime/version)
- * - GET /api/version -> tylko { version } (frontend versionDisplay.js używa wyłącznie data.version)
+ * - GET /api/version -> tylko { version }
+ * - GET /api/version/commit -> krótki hash dla zalogowanych, bez dodatkowej diagnostyki
  * - GET /health/ready -> 200 albo 503, ale nigdy klucza `error` ze szczegółami DB
  * - GET /api/admin/system-info bez auth -> 401 (szczegóły tylko dla admina)
  */
@@ -74,6 +76,24 @@ describe('P0.2 information disclosure', () => {
         expect(res.body).not.toHaveProperty('branch');
         expect(res.body).not.toHaveProperty('environment');
         expect(res.body).not.toHaveProperty('dbVersion');
+    });
+
+    it('udostępnia skrócony hash commita wszystkim zalogowanym rolom', async () => {
+        const user = await openSession('user');
+        const pro = await openSession('pro');
+
+        await request(app).get('/api/version/commit').expect(401);
+
+        for (const cookie of [user, pro]) {
+            const res = await request(app)
+                .get('/api/version/commit')
+                .set('Cookie', cookie)
+                .expect(200);
+            expect(Object.keys(res.body)).toEqual(res.body.commitHash ? ['commitHash'] : []);
+            if (res.body.commitHash) expect(res.body.commitHash).toMatch(/^[0-9a-f]{12}$/);
+            expect(res.headers['cache-control']).toBe('private, no-store');
+            await request(app).get('/api/admin/system-info').set('Cookie', cookie).expect(403);
+        }
     });
 
     it('/health/ready nigdy nie ujawnia błędu DB', async () => {

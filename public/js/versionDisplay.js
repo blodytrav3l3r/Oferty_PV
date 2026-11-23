@@ -18,14 +18,14 @@
             return;
         }
 
-        // Commit jest dostępny tylko z admin-only diagnostyki systemowej.
+        // Skrócony hash jest dostępny dla każdej zalogowanej roli.
         var commitPromise =
             typeof window.authReady === 'function'
                 ? window
                       .authReady()
                       .then(function (ready) {
-                          return ready && ready.role === 'admin'
-                              ? fetch('/api/admin/system-info').then(function (response) {
+                          return ready && ready.role
+                              ? fetch('/api/version/commit').then(function (response) {
                                     return response.ok ? response.json() : null;
                                 })
                               : null;
@@ -48,10 +48,10 @@
                 if (data && data.version) {
                     var versionLabel = 'v' + data.version;
                     versionEl.textContent = versionLabel;
-                    commitPromise.then(function (systemInfo) {
-                        var commitHash = systemInfo && systemInfo.commitHash;
+                    commitPromise.then(function (commitInfo) {
+                        var commitHash = commitInfo && commitInfo.commitHash;
                         var hasCommit =
-                            typeof commitHash === 'string' && /^[0-9a-f]{7,64}$/i.test(commitHash);
+                            typeof commitHash === 'string' && /^[0-9a-f]{12}$/i.test(commitHash);
                         if (!hasCommit) return;
                         versionEl.textContent = '';
                         versionEl.classList.add('header-versions-stack');

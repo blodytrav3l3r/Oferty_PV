@@ -316,6 +316,7 @@ async function saveOfferStudnie() {
         if (result.number && numberInput) {
             numberInput.value = result.number;
             numberInput.dataset.numberGenerated = 'false';
+            if (typeof syncOfferClientSummary === 'function') syncOfferClientSummary();
         }
         // P1.1b: sukces SAVED kasuje draft (zapis draftu ≠ zapis SAVED).
         if (window.draftAutosave)

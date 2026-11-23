@@ -8,13 +8,13 @@ describe('serwerowy przydział numeru przy tworzeniu oferty', () => {
     test('Rury proszą serwer o numer dla każdej nowej oferty', () => {
         const source = readPublic('js/rury/offerCrud.js');
 
-        expect(source).toMatch(/generateOfferNumber:\s*!editingOfferId\s*,/);
+        expect(source).toMatch(/generateOfferNumber:\s*!editingOfferId\s*,?/);
     });
 
     test('Studnie proszą serwer o numer dla każdej nowej oferty', () => {
         const source = readPublic('js/studnie/offerSave.js');
 
-        expect(source).toMatch(/generateOfferNumber:\s*!editingOfferIdStudnie\s*,/);
+        expect(source).toMatch(/generateOfferNumber:\s*!editingOfferIdStudnie\s*,?/);
     });
 
     test('orchestrator Studni oznacza oba podglądy jako automatyczne', () => {
@@ -30,5 +30,13 @@ describe('serwerowy przydział numeru przy tworzeniu oferty', () => {
         const template = readPublic('partials/shared/step1-client.html');
 
         expect(template).toMatch(/<input(?=[^>]*id="offer-number")(?=[^>]*readonly)[^>]*>/);
+    });
+
+    test('po zapisie synchronizuje numer serwera z nagłówkiem oferty', () => {
+        const source = readPublic('js/studnie/offerSave.js');
+
+        expect(source).toMatch(
+            /numberInput\.value = result\.number;[\s\S]{0,160}syncOfferClientSummary\(\);/
+        );
     });
 });

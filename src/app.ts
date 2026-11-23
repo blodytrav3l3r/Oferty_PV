@@ -93,7 +93,7 @@ app.use(requestLogger);
  *     summary: Publiczna wersja aplikacji (tylko numer wersji)
  *     responses:
  *       200:
- *         description: Numer wersji (szczegóły w /api/admin/system-info dla admina)
+ *         description: Numer wersji; hash commita wymaga zalogowania, pozostała diagnostyka jest admin-only
  */
 app.get('/api/version', (_req, res) => {
     res.json({ version: getVersion().version });
@@ -275,6 +275,26 @@ app.use(csrfProtection);
 
 /* ===== CSP REPORT-ONLY (monitoring po enforce, Faza 1 planu CSP) ===== */
 app.use(cspReportOnly);
+
+/**
+ * @openapi
+ * /api/version/commit:
+ *   get:
+ *     tags: [System]
+ *     summary: Skrócony hash commita dla zalogowanych użytkowników
+ *     responses:
+ *       200:
+ *         description: Skrócony hash commita bez pozostałych danych diagnostycznych
+ *       401:
+ *         description: Brak autoryzacji
+ */
+app.get('/api/version/commit', requireAuth, (_req, res) => {
+    res.setHeader('Cache-Control', 'private, no-store');
+    const { commitHash } = getVersion();
+    const hasValidCommitHash = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(commitHash);
+    if (!hasValidCommitHash) return res.json({});
+    res.json({ commitHash: commitHash.slice(0, 12).toLowerCase() });
+});
 
 /* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */
 // P1.3: brak globalnego express.json — limity rozmiaru JSON są per-route
