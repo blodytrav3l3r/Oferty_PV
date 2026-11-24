@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-11-23",
-    "totalEdges": 3018,
+    "generatedAt": "2026-11-24",
+    "totalEdges": 3014,
     "edges": [
         {
             "page": "public/app.html",
@@ -4589,6 +4589,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "_excelAppendUndoPropertySnapshot",
+            "userFile": "public/js/studnie/excelCopyPaste.js",
+            "defFile": "public/js/studnie/excelUndo.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "_excelApplyColWidths",
             "userFile": "public/js/studnie/excelVirtual.js",
             "defFile": "public/js/studnie/excelTableRenderer.js",
@@ -6270,6 +6278,14 @@
         {
             "page": "public/studnie.html",
             "name": "_excelMaxTransitions",
+            "userFile": "public/js/studnie/excelUndo.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_excelMaxTransitions",
             "userFile": "public/js/studnie/excelVirtual.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
@@ -6680,6 +6696,14 @@
             "name": "_excelRedo",
             "userFile": "public/js/studnie/excelCellNavigation.js",
             "defFile": "public/js/studnie/excelUndo.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_excelRedoStack",
+            "userFile": "public/js/studnie/excelCopyPaste.js",
+            "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
@@ -7672,6 +7696,14 @@
             "name": "_excelUndo",
             "userFile": "public/js/studnie/excelCellNavigation.js",
             "defFile": "public/js/studnie/excelUndo.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_excelUndoStack",
+            "userFile": "public/js/studnie/excelCopyPaste.js",
+            "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
@@ -14598,22 +14630,6 @@
         {
             "page": "public/studnie.html",
             "name": "getStudnieProductById",
-            "userFile": "public/js/studnie/excelState.js",
-            "defFile": "public/js/studnie/globals.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "getStudnieProductById",
-            "userFile": "public/js/studnie/excelTabs.js",
-            "defFile": "public/js/studnie/globals.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "getStudnieProductById",
             "userFile": "public/js/studnie/excelWellActions.js",
             "defFile": "public/js/studnie/globals.js",
             "defKind": "window",
@@ -16022,22 +16038,6 @@
         {
             "page": "public/studnie.html",
             "name": "isWellLinkedToActiveOrder",
-            "userFile": "public/js/studnie/excelState.js",
-            "defFile": "public/js/studnie/wellUIHelpers.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "isWellLinkedToActiveOrder",
-            "userFile": "public/js/studnie/excelTabs.js",
-            "defFile": "public/js/studnie/wellUIHelpers.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "isWellLinkedToActiveOrder",
             "userFile": "public/js/studnie/wellUI.js",
             "defFile": "public/js/studnie/wellUIHelpers.js",
             "defKind": "lexical",
@@ -16111,22 +16111,6 @@
             "page": "public/studnie.html",
             "name": "isWellLocked",
             "userFile": "public/js/studnie/excelHelpers.js",
-            "defFile": "public/js/studnie/actionsWellCrud.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "isWellLocked",
-            "userFile": "public/js/studnie/excelState.js",
-            "defFile": "public/js/studnie/actionsWellCrud.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "isWellLocked",
-            "userFile": "public/js/studnie/excelTabs.js",
             "defFile": "public/js/studnie/actionsWellCrud.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -16329,22 +16313,6 @@
             "userFile": "public/js/studnie/pricingCalculator.js",
             "defFile": "public/js/studnie/actionsWellPricing.js",
             "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "isWellProductBearing",
-            "userFile": "public/js/studnie/excelState.js",
-            "defFile": "public/js/studnie/wellUIHelpers.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "isWellProductBearing",
-            "userFile": "public/js/studnie/excelTabs.js",
-            "defFile": "public/js/studnie/wellUIHelpers.js",
-            "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
         {

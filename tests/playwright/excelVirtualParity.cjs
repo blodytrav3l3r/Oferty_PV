@@ -50,7 +50,7 @@ function buildWells(n) {
             id: 'vp' + i,
             name: 'VP-' + String(i + 1).padStart(3, '0'),
             dn: '1000',
-            rzednaWlazu: 2.0,
+            rzednaWlazu: 2.0 + i,
             rzednaDna: 0.5,
             przejscia: [],
             config: [],
@@ -67,7 +67,7 @@ function buildWells(n) {
 /** Faza 2 (wywolywana z Node dla prawdziwych trusted events): selection + copy + paste. */
 async function runSelectionPhase(frame, page) {
     const sel = (w, c) => `tr[data-widx="${w}"] td:nth-child(${c + 1})`;
-    await frame.click(sel(0, 3));
+    await frame.click(sel(0, 4));
     // przyczyna: DOM — stan selekcji (_excelSelectedCells) po clicku; warunek zamiast snu.
     await frame
         .waitForFunction(
@@ -85,7 +85,7 @@ async function runSelectionPhase(frame, page) {
             { timeout: 10000 }
         )
         .catch(() => {});
-    await frame.click(sel(3, 3), { modifiers: ['Shift'] });
+    await frame.click(sel(3, 4), { modifiers: ['Shift'] });
     // przyczyna: DOM — zakres Shift-click (4 komórki) zamiast snu.
     await frame
         .waitForFunction(
@@ -110,15 +110,21 @@ async function runSelectionPhase(frame, page) {
             .sort()
             .join(',')
     }));
-    // Esc zamyka ewentualne menu — nie uzywane; Ctrl+C na dokumencie
+    await frame.evaluate(() => {
+        window.__excelParityClipboard = '';
+        document.addEventListener(
+            'copy',
+            (event) => {
+                window.__excelParityClipboard = event.clipboardData
+                    ? event.clipboardData.getData('text/plain')
+                    : '';
+            },
+            { once: true }
+        );
+    });
     await page.keyboard.press('Control+c');
-    // przyczyna: kolejka — asynchroniczny zapis schowka (headless-shell, permissions);
-    // brak warunku DOM/odpowiedzi do zastąpienia.
-    await page.waitForTimeout(300);
-    // readText niedostepny w headless-shell (permissions) — payload copy
-    // dowodzony przez paste: wiersze-docelowe musza dostac kopiowane nazwy.
-    const copyText = 'via-paste';
-    await frame.click(sel(10, 3));
+    const copyText = await frame.evaluate(() => window.__excelParityClipboard);
+    await frame.click(sel(10, 4));
     // przyczyna: DOM — nowa kotwica selekcji przed paste; warunek zamiast snu.
     await frame
         .waitForFunction(
@@ -136,45 +142,288 @@ async function runSelectionPhase(frame, page) {
             { timeout: 10000 }
         )
         .catch(() => {});
+    const targetRowsBefore = await frame.evaluate(() => {
+        const canonicalize = (value) => {
+            if (Array.isArray(value)) return value.map(canonicalize);
+            if (!value || typeof value !== 'object') return value;
+            return Object.keys(value)
+                .filter(
+                    (key) =>
+                        !key.startsWith('__') &&
+                        key !== '_discountCorrupt' &&
+                        key !== '_pricingError'
+                )
+                .sort()
+                .reduce((result, key) => {
+                    result[key] = canonicalize(value[key]);
+                    return result;
+                }, {});
+        };
+        return JSON.stringify(canonicalize(wells.slice(10, 14)));
+    });
     await page.keyboard.press('Control+v');
-    // przyczyna: debounce/zapis — wklejanie + odroczony refresh tabeli;
-    // brak pojedynczego warunku DOM (wiele komórek + re-render).
-    await page.waitForTimeout(1200);
+    await frame.waitForFunction(
+        () =>
+            typeof _excelPasteInProgress !== 'undefined' &&
+            !_excelPasteInProgress &&
+            wells[10]?.rzednaWlazu === 2 &&
+            wells[13]?.rzednaWlazu === 5,
+        null,
+        { timeout: 10000 }
+    );
     const after = await frame.evaluate(() => {
         const djb2 = (s) => {
             let h = 5381;
             for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
             return String(h >>> 0);
         };
+        const canonicalize = (value) => {
+            if (Array.isArray(value)) return value.map(canonicalize);
+            if (!value || typeof value !== 'object') return value;
+            return Object.keys(value)
+                .filter(
+                    (key) =>
+                        !key.startsWith('__') &&
+                        key !== '_discountCorrupt' &&
+                        key !== '_pricingError'
+                )
+                .sort()
+                .reduce((result, key) => {
+                    result[key] = canonicalize(value[key]);
+                    return result;
+                }, {});
+        };
         return {
-            wellsHashAfterPaste: djb2(
-                JSON.stringify(wells, function (k, v) {
-                    return k && k.indexOf('__') === 0 ? undefined : v;
-                })
-            ),
+            wellsHashAfterPaste: djb2(JSON.stringify(canonicalize(wells))),
             undoLen: typeof _excelUndoStack !== 'undefined' ? _excelUndoStack.length : -1,
-            pastedNames: [10, 11, 12, 13].map((i) => wells[i] && wells[i].name)
+            pastedValues: [10, 11, 12, 13].map((i) => wells[i] && wells[i].rzednaWlazu),
+            targetRowsAfterPaste: JSON.stringify(canonicalize(wells.slice(10, 14)))
         };
     });
-    await frame.evaluate(() => _excelUndo());
-    // przyczyna: stabilizacja — re-render po undo przed odczytem hash; brak
-    // deterministycznego warunku (undo synchroniczne + malowanie).
-    await page.waitForTimeout(600);
-    const undone = await frame.evaluate(() => {
+    const undone = await frame.evaluate((beforeRows) => {
         const djb2 = (s) => {
             let h = 5381;
             for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
             return String(h >>> 0);
         };
+        const canonicalize = (value) => {
+            if (Array.isArray(value)) return value.map(canonicalize);
+            if (!value || typeof value !== 'object') return value;
+            return Object.keys(value)
+                .filter(
+                    (key) =>
+                        !key.startsWith('__') &&
+                        key !== '_discountCorrupt' &&
+                        key !== '_pricingError'
+                )
+                .sort()
+                .reduce((result, key) => {
+                    result[key] = canonicalize(value[key]);
+                    return result;
+                }, {});
+        };
+        _excelUndo();
         return {
-            wellsHashAfterUndo2: djb2(
-                JSON.stringify(wells, function (k, v) {
-                    return k && k.indexOf('__') === 0 ? undefined : v;
-                })
-            )
+            wellsHashAfterUndo2: djb2(JSON.stringify(canonicalize(wells))),
+            undoLenAfterUndo: _excelUndoStack.length,
+            undoRestoredTargets: JSON.stringify(canonicalize(wells.slice(10, 14))) === beforeRows,
+            targetRowsAfterUndo: JSON.stringify(canonicalize(wells.slice(10, 14)))
+        };
+    }, targetRowsBefore);
+    const redone = await frame.evaluate((expectedRows) => {
+        const canonicalize = (value) => {
+            if (Array.isArray(value)) return value.map(canonicalize);
+            if (!value || typeof value !== 'object') return value;
+            return Object.keys(value)
+                .filter(
+                    (key) =>
+                        !key.startsWith('__') &&
+                        key !== '_discountCorrupt' &&
+                        key !== '_pricingError'
+                )
+                .sort()
+                .reduce((result, key) => {
+                    result[key] = canonicalize(value[key]);
+                    return result;
+                }, {});
+        };
+        _excelRedo();
+        return {
+            redoRestoredPaste: JSON.stringify(canonicalize(wells.slice(10, 14))) === expectedRows,
+            redoLen: _excelRedoStack.length
+        };
+    }, after.targetRowsAfterPaste);
+    await frame.evaluate(() => {
+        const container = document.getElementById('excel-table-container');
+        container.scrollTop = 0;
+        _excelUndoStack = [];
+        _excelRedoStack = [];
+    });
+    await frame.waitForFunction(() => !!document.querySelector('tr[data-widx="23"]'), null, {
+        timeout: 10000
+    });
+    await frame.click(sel(20, 4));
+    await frame.waitForFunction(() => _excelSelectedCells.length === 1, null, { timeout: 10000 });
+    await frame.click(sel(23, 4), { modifiers: ['Shift'] });
+    await frame.waitForFunction(() => _excelSelectedCells.length === 4, null, { timeout: 10000 });
+    await page.keyboard.press('Control+c');
+    await frame.evaluate(() => {
+        const container = document.getElementById('excel-table-container');
+        container.scrollTop = container.scrollHeight;
+    });
+    await frame
+        .waitForFunction(
+            () => {
+                const row = document.querySelector('#excel-table-container tbody tr[data-widx]');
+                return row && parseInt(row.getAttribute('data-widx'), 10) > 0;
+            },
+            null,
+            { timeout: 10000 }
+        )
+        .catch(() => {});
+    const columnPaste = await frame.evaluate(() => {
+        _excelSelectedCells = [];
+        _excelSelectCol(4, false, false);
+        const visible = _excelGetVisibleRows();
+        const startWIdx =
+            visible.length > 0 ? parseInt(visible[0].getAttribute('data-widx'), 10) : 0;
+        const canonicalize = (value) => {
+            if (Array.isArray(value)) return value.map(canonicalize);
+            if (!value || typeof value !== 'object') return value;
+            return Object.keys(value)
+                .filter(
+                    (key) =>
+                        !key.startsWith('__') &&
+                        key !== '_discountCorrupt' &&
+                        key !== '_pricingError'
+                )
+                .sort()
+                .reduce((result, key) => {
+                    result[key] = canonicalize(value[key]);
+                    return result;
+                }, {});
+        };
+        return {
+            startWIdx,
+            targetRowsBefore: JSON.stringify(canonicalize(wells.slice(startWIdx, startWIdx + 4)))
         };
     });
-    return { ...selState, copyText, ...after, ...undone };
+    await page.keyboard.press('Control+v');
+    await frame.waitForFunction(
+        ({ startWIdx }) =>
+            !_excelPasteInProgress &&
+            wells[startWIdx]?.rzednaWlazu === 22 &&
+            wells[startWIdx + 3]?.rzednaWlazu === 25,
+        columnPaste,
+        { timeout: 10000 }
+    );
+    const columnUndo = await frame.evaluate((target) => {
+        const canonicalize = (value) => {
+            if (Array.isArray(value)) return value.map(canonicalize);
+            if (!value || typeof value !== 'object') return value;
+            return Object.keys(value)
+                .filter(
+                    (key) =>
+                        !key.startsWith('__') &&
+                        key !== '_discountCorrupt' &&
+                        key !== '_pricingError'
+                )
+                .sort()
+                .reduce((result, key) => {
+                    result[key] = canonicalize(value[key]);
+                    return result;
+                }, {});
+        };
+        const changed = JSON.stringify(
+            canonicalize(wells.slice(target.startWIdx, target.startWIdx + 4))
+        );
+        _excelUndo();
+        return {
+            changed,
+            restored:
+                JSON.stringify(
+                    canonicalize(wells.slice(target.startWIdx, target.startWIdx + 4))
+                ) === target.targetRowsBefore,
+            undoLen: _excelUndoStack.length
+        };
+    }, columnPaste);
+    const transitionPaste = await frame.evaluate(() => {
+        const before = wells.map((well) =>
+            well && Array.isArray(well.przejscia) ? structuredClone(well.przejscia) : null
+        );
+        const activeTab = _excelActiveTab;
+        _excelMaxTransitions[activeTab] = 1;
+        const matchingCount = wells.filter((well) => _excelWellMatchesTab(well, activeTab)).length;
+        const header = ['Rz. Wlazu', 'Rz. Dna'];
+        const values = ['2', '0.5'];
+        for (let index = 0; index < 4; index++) {
+            header.push(`Rz wlot ${index}`, `Kat ${index}`, `Rodzaj ${index}`, `Średnica ${index}`);
+            values.push('', '', '', '');
+        }
+        const text = header.join('\t') + '\n' + values.join('\t');
+        _excelSelectedCells = [];
+        _excelSelectedCols = [3];
+        _excelUndoStack = [];
+        _excelRedoStack = [];
+        _excelHandlePaste({
+            clipboardData: { getData: () => text },
+            preventDefault() {},
+            stopPropagation() {}
+        });
+        return {
+            before,
+            activeTab,
+            matchingCount,
+            maxTransitions: _excelMaxTransitions[activeTab]
+        };
+    });
+    await frame.waitForFunction(
+        () => typeof _excelPasteInProgress !== 'undefined' && !_excelPasteInProgress,
+        null,
+        { timeout: 10000 }
+    );
+    const transitionAfterPaste = await frame.evaluate(() => ({
+        count: wells.filter((well) => well && well.przejscia && well.przejscia.length >= 4).length,
+        undoLen: _excelUndoStack.length
+    }));
+    const transitionUndo = await frame.evaluate((state) => {
+        const before = state.before;
+        _excelUndo();
+        const restored = before.every((passages, index) => {
+            const current =
+                wells[index] && Array.isArray(wells[index].przejscia)
+                    ? wells[index].przejscia
+                    : null;
+            return JSON.stringify(current) === JSON.stringify(passages);
+        });
+        const restoredCount = wells.filter(
+            (well) => well && well.przejscia && well.przejscia.length >= 4
+        ).length;
+        const maxTransitionsAfterUndo = _excelMaxTransitions[state.activeTab];
+        _excelRedo();
+        const redoCount = wells.filter(
+            (well) => well && well.przejscia && well.przejscia.length >= 4
+        ).length;
+        return {
+            restored,
+            restoredCount,
+            redoCount,
+            maxTransitionsAfterUndo,
+            maxTransitionsAfterRedo: _excelMaxTransitions[state.activeTab]
+        };
+    }, transitionPaste);
+    return {
+        ...selState,
+        copyText,
+        ...after,
+        ...undone,
+        ...redone,
+        columnPaste,
+        columnUndo,
+        transitionPaste,
+        transitionAfterPaste,
+        transitionUndo
+    };
 }
 
 /** Faza 3: search/tab/sort/selection-after-filter/edit-after-sort (model/hash). */
@@ -625,33 +874,92 @@ async function runMode(frame, page, virtualOn, wellsData) {
             pOff.cells === pOn.cells,
             pOff.cells + ' vs ' + pOn.cells
         );
+        const expectedCopyText = '2\n3\n4\n5\n';
         check(
-            'copy payload identyczny (dowod przez paste)',
+            'copy payload ma oczekiwane dane',
+            pOff.copyText === expectedCopyText && pOn.copyText === expectedCopyText,
+            JSON.stringify(pOff.copyText) + ' vs ' + JSON.stringify(pOn.copyText)
+        );
+        check(
+            'copy payload parity OFF=ON',
             pOff.copyText === pOn.copyText,
             JSON.stringify(pOff.copyText) + ' vs ' + JSON.stringify(pOn.copyText)
         );
         check(
-            'copy niesie 4 nazwy (wiersze 10-13 nadpisane VP-001..004)',
-            JSON.stringify(pOff.pastedNames) ===
-                JSON.stringify(['VP-001', 'VP-002', 'VP-003', 'VP-004']),
-            JSON.stringify(pOff.pastedNames)
+            'copy niesie wartości z edytowalnej kolumny',
+            JSON.stringify(pOff.pastedValues) === JSON.stringify([2, 3, 4, 5]),
+            JSON.stringify(pOff.pastedValues)
         );
         check(
-            'paste: te same nazwy w wierszach 10-13',
-            JSON.stringify(pOff.pastedNames) === JSON.stringify(pOn.pastedNames),
-            JSON.stringify(pOff.pastedNames) + ' vs ' + JSON.stringify(pOn.pastedNames)
+            'paste: te same wartości w wierszach 10-13',
+            JSON.stringify(pOff.pastedValues) === JSON.stringify(pOn.pastedValues),
+            JSON.stringify(pOff.pastedValues) + ' vs ' + JSON.stringify(pOn.pastedValues)
         );
         check(
             'paste: wells hash identyczny',
             pOff.wellsHashAfterPaste === pOn.wellsHashAfterPaste,
             pOff.wellsHashAfterPaste + ' vs ' + pOn.wellsHashAfterPaste
         );
-        // Granica: przy N=600 undo-stack po paste jest pusty w OBU trybach
-        // (gate pelnego klona N>100) — asercja parity, nie absolutnego restore.
         check(
-            'paste+undo: ten sam stan w obu trybach',
-            pOff.wellsHashAfterUndo2 === pOn.wellsHashAfterUndo2 && pOff.undoLen === pOn.undoLen,
-            pOff.wellsHashAfterUndo2 + '/' + pOn.wellsHashAfterUndo2
+            'paste na 600 studniach tworzy pojedynczy undo patch',
+            pOff.undoLen === 1 && pOn.undoLen === 1,
+            pOff.undoLen + '/' + pOn.undoLen
+        );
+        check(
+            'undo przywraca wszystkie dotkniete studnie',
+            pOff.undoRestoredTargets && pOn.undoRestoredTargets,
+            String(pOff.undoRestoredTargets) + '/' + String(pOn.undoRestoredTargets)
+        );
+        // Rerender może dopisać runtime diagnostics (_discountCorrupt/_pricingError)
+        // tylko do renderowanych rekordów; porównujemy snapshot undo z baseline każdego trybu.
+        check(
+            'undo opróżnia stack w obu trybach',
+            pOff.undoLenAfterUndo === 0 && pOn.undoLenAfterUndo === 0,
+            pOff.undoLenAfterUndo + '/' + pOn.undoLenAfterUndo
+        );
+        check(
+            'redo przywraca stan po wklejeniu',
+            pOff.redoRestoredPaste && pOn.redoRestoredPaste,
+            String(pOff.redoRestoredPaste) + '/' + String(pOn.redoRestoredPaste)
+        );
+        check(
+            'column paste start odpowiada widocznemu wierszowi',
+            pOff.columnPaste.startWIdx === 0 && pOn.columnPaste.startWIdx > 0,
+            pOff.columnPaste.startWIdx + '/' + pOn.columnPaste.startWIdx
+        );
+        check(
+            'undo column paste przywraca wiersze obu trybów',
+            pOff.columnUndo.restored &&
+                pOn.columnUndo.restored &&
+                pOff.columnUndo.undoLen === 0 &&
+                pOn.columnUndo.undoLen === 0,
+            JSON.stringify([pOff.columnUndo, pOn.columnUndo])
+        );
+        check(
+            'semantic paste rozszerza przejścia dla aktywnej zakładki',
+            pOff.transitionAfterPaste.count === pOff.transitionPaste.matchingCount &&
+                pOn.transitionAfterPaste.count === pOn.transitionPaste.matchingCount,
+            pOff.transitionAfterPaste.count +
+                '/' +
+                pOff.transitionPaste.matchingCount +
+                ' vs ' +
+                pOn.transitionAfterPaste.count +
+                '/' +
+                pOn.transitionPaste.matchingCount
+        );
+        check(
+            'undo/redo rozszerzenia przywraca przejścia wszystkich studni',
+            pOff.transitionUndo.restored &&
+                pOn.transitionUndo.restored &&
+                pOff.transitionUndo.restoredCount === 0 &&
+                pOn.transitionUndo.restoredCount === 0 &&
+                pOff.transitionUndo.redoCount === pOff.transitionAfterPaste.count &&
+                pOn.transitionUndo.redoCount === pOn.transitionAfterPaste.count &&
+                pOff.transitionUndo.maxTransitionsAfterUndo === 1 &&
+                pOn.transitionUndo.maxTransitionsAfterUndo === 1 &&
+                pOff.transitionUndo.maxTransitionsAfterRedo === 4 &&
+                pOn.transitionUndo.maxTransitionsAfterRedo === 4,
+            JSON.stringify([pOff.transitionUndo, pOn.transitionUndo])
         );
         // ---- Faza 3: search/tab/sort (model MUST, DOM order raportowany) ----
         const fOff = off.phase3;

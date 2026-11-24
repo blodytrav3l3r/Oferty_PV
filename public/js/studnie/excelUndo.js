@@ -95,7 +95,10 @@ function _excelNotifyUndoRejected(reason) {
     } catch (_eToast) {}
 }
 function _excelSaveUndoSnapshot() {
-    if (typeof wells === 'undefined') return;
+    // Paste already saved one bounded snapshot before setting this flag.
+    // Ignore snapshots requested by nested cell handlers until paste finishes.
+    if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) return false;
+    if (typeof wells === 'undefined') return false;
     const args = Array.prototype.slice.call(arguments);
     let idxs = [];
     if (args.length === 1 && Array.isArray(args[0])) idxs = args[0];
@@ -107,17 +110,13 @@ function _excelSaveUndoSnapshot() {
         args[0].wellIdx != null
     )
         idxs = [args[0].wellIdx];
-    // P2-undo: 1 snapshot na całe wklejenie (wołany przed flagą, bez idxs);
-    // per-cell (z idxs) w trakcie flagi to leak — przykryty snapshotem całości.
-    if (idxs.length > 0 && typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress)
-        return;
     const n = Array.isArray(wells) ? wells.length : 0;
     // v1.1 hard gate: N>100 → structuredClone(wells) FORBIDDEN — bytes budget > entry count
     if (n > 100 && idxs.length === 0) {
         // bulk op without idxs at >100: use bulk-add pattern, not full — caller should use _excelPushBulkAddUndo
         // compact fallback: store ids only if possible, else single patch of last well
         _excelNotifyUndoRejected('za dużo studni (>100) — operacja zbiorcza bez Ctrl+Z');
-        return;
+        return false;
     }
     // patch dla 1..N wells, full dla braku args (np. bulk add) lub dużych zmian
     if (idxs.length > 0 && idxs.length < wells.length && idxs.length <= 100) {
@@ -127,7 +126,7 @@ function _excelSaveUndoSnapshot() {
             if (wells[i])
                 patch.wells.push({ idx: i, id: wells[i].id, before: structuredClone(wells[i]) });
         }
-        if (patch.wells.length === 0) return;
+        if (patch.wells.length === 0) return false;
         // per-entry bytes cap: if patch >1MB split via bulk-add — not full
         if (
             _excelEstimateUndoBytes(patch) >
@@ -136,19 +135,93 @@ function _excelSaveUndoSnapshot() {
                 : 1024 * 1024)
         ) {
             _excelNotifyUndoRejected('wpis undo >1 MB — pominięto snapshot (Ctrl+Z niedostępne)');
-            return;
+            return false;
         }
         _excelUndoStack.push(patch);
+        _excelEvictUndoIfNeeded();
+        _excelRedoStack = [];
+        return patch;
     } else {
         if (n > 100) {
             _excelNotifyUndoRejected('za dużo studni (>100) — pełny snapshot zablokowany');
-            return; // hard gate — never full snapshot at >100
+            return false; // hard gate — never full snapshot at >100
         }
         // fallback full snapshot (np. add/delete, duże paste) only when N<=100
-        _excelUndoStack.push({ type: 'full', data: structuredClone(wells) });
+        const full = { type: 'full', data: structuredClone(wells) };
+        _excelUndoStack.push(full);
+        _excelEvictUndoIfNeeded();
+        _excelRedoStack = [];
+        return full;
     }
+}
+
+function _excelAppendUndoPropertySnapshot(property, wellIndexes, globalSnapshot, expectedEntry) {
+    if (!Array.isArray(wellIndexes)) return false;
+    const undoIndex = _excelUndoStack.length - 1;
+    const entry = _excelUndoStack[undoIndex];
+    if (!entry || entry !== expectedEntry || (entry.type !== 'patch' && entry.type !== 'full'))
+        return false;
+
+    if (entry.type === 'full') {
+        const globals = entry.globals || [];
+        const nextGlobals =
+            globalSnapshot && !globals.some((snapshot) => snapshot.key === globalSnapshot.key)
+                ? [...globals, globalSnapshot]
+                : globals;
+        _excelUndoStack[undoIndex] = { ...entry, globals: nextGlobals };
+        return true;
+    }
+
+    const existing = entry.properties || [];
+    const seen = new Set(existing.map((snapshot) => snapshot.idx + ':' + snapshot.property));
+    const snapshots = wellIndexes
+        .filter((idx) => Number.isInteger(idx) && wells[idx] && !seen.has(idx + ':' + property))
+        .map((idx) => ({
+            idx,
+            id: wells[idx].id,
+            property,
+            hadProperty: Object.prototype.hasOwnProperty.call(wells[idx], property),
+            before: structuredClone(wells[idx][property])
+        }));
+    const globals = entry.globals || [];
+    const nextGlobals =
+        globalSnapshot && !globals.some((snapshot) => snapshot.key === globalSnapshot.key)
+            ? [...globals, globalSnapshot]
+            : globals;
+    const nextEntry = {
+        ...entry,
+        properties: [...existing, ...snapshots],
+        globals: nextGlobals
+    };
+    const maxBytes =
+        typeof _EXCEL_UNDO_MAX_BYTES_PER_ENTRY !== 'undefined'
+            ? _EXCEL_UNDO_MAX_BYTES_PER_ENTRY
+            : 1024 * 1024;
+    if (_excelEstimateUndoBytes(nextEntry) > maxBytes) {
+        _excelNotifyUndoRejected('wpis undo >1 MB — nie rozszerzono układu przejść');
+        return false;
+    }
+    _excelUndoStack[undoIndex] = nextEntry;
     _excelEvictUndoIfNeeded();
-    _excelRedoStack = [];
+    return true;
+}
+
+function _excelRestoreUndoProperty(well, snapshot, value, hadProperty) {
+    if (!well) return;
+    if (hadProperty) well[snapshot.property] = structuredClone(value);
+    else delete well[snapshot.property];
+}
+
+function _excelCaptureUndoGlobals(entry) {
+    return (entry.globals || []).map((snapshot) => ({
+        ...snapshot,
+        before: _excelMaxTransitions[snapshot.key]
+    }));
+}
+
+function _excelApplyUndoGlobals(entry) {
+    for (const snapshot of entry.globals || [])
+        _excelMaxTransitions[snapshot.key] = snapshot.before;
 }
 
 function _excelApplyPatchPath(obj, path, value) {
@@ -224,7 +297,7 @@ function _excelUndo() {
             }
         }
     } else if (patch.type === 'patch') {
-        const redoPatch = { type: 'patch', wells: [] };
+        const redoPatch = { type: 'patch', wells: [], properties: [] };
         for (let k = 0; k < patch.wells.length; k++) {
             const e = patch.wells[k];
             const curIdx =
@@ -240,6 +313,17 @@ function _excelUndo() {
                     before: structuredClone(wells[curIdx])
                 });
         }
+        for (let k = 0; k < (patch.properties || []).length; k++) {
+            const snapshot = patch.properties[k];
+            const well = wells[snapshot.idx];
+            if (!well) continue;
+            redoPatch.properties.push({
+                ...snapshot,
+                hadProperty: Object.prototype.hasOwnProperty.call(well, snapshot.property),
+                before: structuredClone(well[snapshot.property])
+            });
+        }
+        redoPatch.globals = _excelCaptureUndoGlobals(patch);
         _excelRedoStack.push(redoPatch);
         const locked = _excelSnapshotLockedWells();
         for (let k = 0; k < patch.wells.length; k++) {
@@ -253,6 +337,16 @@ function _excelUndo() {
             if (curIdx >= 0) wells[curIdx] = structuredClone(e.before);
             else if (e.before) wells.push(structuredClone(e.before));
         }
+        for (let k = 0; k < (patch.properties || []).length; k++) {
+            const snapshot = patch.properties[k];
+            _excelRestoreUndoProperty(
+                wells[snapshot.idx],
+                snapshot,
+                snapshot.before,
+                snapshot.hadProperty
+            );
+        }
+        _excelApplyUndoGlobals(patch);
         _excelRestoreLockedWells(locked);
     } else if (patch.type === 'bulk-add') {
         const ids = patch.ids || [];
@@ -281,12 +375,17 @@ function _excelUndo() {
             _excelInvalidateFilteredIndexes();
         _excelRedoStack.push({ type: 'bulk-add-redo', wells: removed, batchId: patch.batchId });
     } else {
-        _excelRedoStack.push({ type: 'full', data: structuredClone(wells) });
+        _excelRedoStack.push({
+            type: 'full',
+            data: structuredClone(wells),
+            globals: _excelCaptureUndoGlobals(patch)
+        });
         const snap = patch.data || patch;
         const locked = _excelSnapshotLockedWells();
         const arr = Array.isArray(snap) ? snap : snap.data;
         wells.splice(0, wells.length, ...(Array.isArray(arr) ? arr : []));
         if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+        _excelApplyUndoGlobals(patch);
         _excelRestoreLockedWells(locked);
     }
     _excelMarkDirty();
@@ -333,7 +432,7 @@ function _excelRedo() {
             }
         }
     } else if (patch.type === 'patch') {
-        const undoPatch = { type: 'patch', wells: [] };
+        const undoPatch = { type: 'patch', wells: [], properties: [] };
         for (let k = 0; k < patch.wells.length; k++) {
             const e = patch.wells[k];
             const curIdx =
@@ -349,6 +448,17 @@ function _excelRedo() {
                     before: structuredClone(wells[curIdx])
                 });
         }
+        for (let k = 0; k < (patch.properties || []).length; k++) {
+            const snapshot = patch.properties[k];
+            const well = wells[snapshot.idx];
+            if (!well) continue;
+            undoPatch.properties.push({
+                ...snapshot,
+                hadProperty: Object.prototype.hasOwnProperty.call(well, snapshot.property),
+                before: structuredClone(well[snapshot.property])
+            });
+        }
+        undoPatch.globals = _excelCaptureUndoGlobals(patch);
         _excelUndoStack.push(undoPatch);
         const locked = _excelSnapshotLockedWells();
         for (let k = 0; k < patch.wells.length; k++) {
@@ -361,6 +471,16 @@ function _excelRedo() {
                       });
             if (curIdx >= 0) wells[curIdx] = structuredClone(e.before);
         }
+        for (let k = 0; k < (patch.properties || []).length; k++) {
+            const snapshot = patch.properties[k];
+            _excelRestoreUndoProperty(
+                wells[snapshot.idx],
+                snapshot,
+                snapshot.before,
+                snapshot.hadProperty
+            );
+        }
+        _excelApplyUndoGlobals(patch);
         _excelRestoreLockedWells(locked);
     } else if (patch.type === 'bulk-add') {
         const ids = patch.ids || [];
@@ -406,12 +526,17 @@ function _excelRedo() {
             batchId: patch.batchId
         });
     } else {
-        _excelUndoStack.push({ type: 'full', data: structuredClone(wells) });
+        _excelUndoStack.push({
+            type: 'full',
+            data: structuredClone(wells),
+            globals: _excelCaptureUndoGlobals(patch)
+        });
         const snap = patch.data || patch;
         const arr = Array.isArray(snap) ? snap : snap.data;
         const locked = _excelSnapshotLockedWells();
         wells.splice(0, wells.length, ...(Array.isArray(arr) ? arr : []));
         if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+        _excelApplyUndoGlobals(patch);
         _excelRestoreLockedWells(locked);
     }
     _excelMarkDirty();

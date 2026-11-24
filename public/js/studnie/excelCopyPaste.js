@@ -392,6 +392,18 @@ function _excelHandleCut(e) {
     }
 }
 
+function _excelGetPasteUndoWellIndexes(text, startWIdx) {
+    const raw = String(text || '').replace(/\r/g, '');
+    const lines = raw.split('\n');
+    if (raw.endsWith('\n')) lines.pop();
+    if (lines.length > 1 && _excelDetectHeader(lines[0].split('\t'))) lines.shift();
+
+    const filtered = _excelGetFilteredIndexes();
+    if (!Array.isArray(filtered) || filtered.length === 0 || lines.length === 0) return [];
+    const startPosition = startWIdx == null ? 0 : Math.max(0, filtered.indexOf(startWIdx));
+    return filtered.slice(startPosition, startPosition + lines.length);
+}
+
 function _excelHandlePaste(e) {
     /* Tylko gdy Excel otwarty */
     if (!document.getElementById('excel-table-overlay')) return;
@@ -425,10 +437,46 @@ function _excelHandlePaste(e) {
         return;
     }
 
-    /* Jeden snapshot undo dla CAŁEGO wklejenia; flaga blokuje indywidualne
-       snapshoty w handlerach zmian (per komórka) — inaczej stack undo
-       przepełnia się po 20 komórkach i Ctrl+Z nie cofa wklejenia. */
-    _excelSaveUndoSnapshot();
+    const _undoStackBeforePaste = [..._excelUndoStack];
+    const _redoStackBeforePaste = [..._excelRedoStack];
+    const _abortPasteWithoutUndo = function () {
+        _excelUndoStack = [..._undoStackBeforePaste];
+        _excelRedoStack = [..._redoStackBeforePaste];
+        _excelPasteInProgress = false;
+        if (typeof showToast === 'function')
+            showToast('Wklejanie anulowane: nie można bezpiecznie zapisać cofnięcia.', 'warning');
+    };
+    /* Jeden snapshot undo dla całego paste. Przy selekcji komórek/kolumn
+       zapisujemy wyłącznie wiersze, których dotknie wklejenie; pełny clone
+       wells[] jest zablokowany dla dużych ofert. */
+    let _undoStartWIdx = null;
+    if (_excelSelectedCells.length > 0) {
+        _undoStartWIdx = Math.min.apply(
+            null,
+            _excelSelectedCells.map(function (cell) {
+                return cell.wIdx;
+            })
+        );
+    } else if (_excelSelectedCols.length > 0) {
+        const _undoVisibleRows = _excelGetVisibleRows();
+        const _firstVisibleWIdx =
+            _undoVisibleRows.length > 0
+                ? parseInt(_undoVisibleRows[0].getAttribute('data-widx'), 10)
+                : NaN;
+        if (!isNaN(_firstVisibleWIdx)) _undoStartWIdx = _firstVisibleWIdx;
+    }
+    const _undoWellIndexes =
+        _excelSelectedCells.length > 0 || _excelSelectedCols.length > 0
+            ? _excelGetPasteUndoWellIndexes(text, _undoStartWIdx)
+            : [];
+    const _pasteUndoEntry =
+        _undoWellIndexes.length > 0
+            ? _excelSaveUndoSnapshot(_undoWellIndexes)
+            : _excelSaveUndoSnapshot();
+    if (!_pasteUndoEntry) {
+        _abortPasteWithoutUndo();
+        return;
+    }
     _excelPasteInProgress = true;
     _excelResetMismatches();
     let _batched = false;
@@ -652,6 +700,27 @@ function _excelHandlePaste(e) {
                     const _curTr =
                         (_excelMaxTransitions && _excelMaxTransitions[_excelActiveTab]) || 1;
                     if (_needTr > _curTr) {
+                        const _transitionIndexes = [];
+                        if (typeof wells !== 'undefined')
+                            wells.forEach(function (w, wIdx) {
+                                if (
+                                    _excelWellMatchesTab(w, _excelActiveTab) &&
+                                    (!Array.isArray(w.przejscia) || w.przejscia.length < _needTr)
+                                )
+                                    _transitionIndexes.push(wIdx);
+                            });
+                        if (
+                            typeof _excelAppendUndoPropertySnapshot !== 'function' ||
+                            !_excelAppendUndoPropertySnapshot(
+                                'przejscia',
+                                _transitionIndexes,
+                                { key: _excelActiveTab, before: _curTr },
+                                _pasteUndoEntry
+                            )
+                        ) {
+                            _abortPasteWithoutUndo();
+                            return;
+                        }
                         _excelMaxTransitions[_excelActiveTab] = _needTr;
                         // Upewnij się że wells mają przejścia dla nowych kolumn
                         if (typeof wells !== 'undefined')
@@ -707,6 +776,28 @@ function _excelHandlePaste(e) {
                                 (_excelMaxTransitions && _excelMaxTransitions[_excelActiveTab]) ||
                                 1;
                             if (_needTr2 > _curTr2) {
+                                const _transitionIndexes2 = [];
+                                if (typeof wells !== 'undefined')
+                                    wells.forEach(function (w, wIdx) {
+                                        if (
+                                            _excelWellMatchesTab(w, _excelActiveTab) &&
+                                            (!Array.isArray(w.przejscia) ||
+                                                w.przejscia.length < _needTr2)
+                                        )
+                                            _transitionIndexes2.push(wIdx);
+                                    });
+                                if (
+                                    typeof _excelAppendUndoPropertySnapshot !== 'function' ||
+                                    !_excelAppendUndoPropertySnapshot(
+                                        'przejscia',
+                                        _transitionIndexes2,
+                                        { key: _excelActiveTab, before: _curTr2 },
+                                        _pasteUndoEntry
+                                    )
+                                ) {
+                                    _abortPasteWithoutUndo();
+                                    return;
+                                }
                                 _excelMaxTransitions[_excelActiveTab] = _needTr2;
                                 if (typeof wells !== 'undefined')
                                     wells.forEach((w) => {
