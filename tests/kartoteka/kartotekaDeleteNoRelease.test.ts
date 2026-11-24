@@ -11,6 +11,8 @@ describe('kartotekaActions delete — brak releaseOf po DELETE', () => {
     let releaseCalls: Array<{ docType: string; docId: string }>;
     let toasts: string[];
     let deletedOffers: string[];
+    let loadLocalOffers: jest.Mock;
+    let updateOfferCard: jest.Mock;
 
     function nextFetch(): Promise<any> {
         return Promise.resolve({
@@ -69,7 +71,21 @@ describe('kartotekaActions delete — brak releaseOf po DELETE', () => {
         mod = context.__kartotekaActions;
         mod.ordersMap = new Map();
         mod.currentFilter = 'all';
-        mod.loadLocalOffers = async () => {};
+        mod.searchResults = {
+            items: [{ id: 'offer_studnie_1', type: 'studnia_oferta', _orderCount: 1 }],
+            totalCount: 1,
+            hasMore: false,
+            nextCursor: null,
+            nextCursorId: null,
+            nextCursorType: null
+        };
+        loadLocalOffers = jest.fn(async () => {});
+        updateOfferCard = jest.fn();
+        mod.loadLocalOffers = loadLocalOffers;
+        mod.updateOfferCard = updateOfferCard;
+        mod.updateOfferCounter = jest.fn();
+        mod.updateSearchResultControls = jest.fn();
+        mod._offerListSignature = jest.fn(() => 'updated-signature');
     });
 
     test('deleteOrderUnified: DELETE + lista + toast, zero POST /api/locks/release', async () => {
@@ -78,7 +94,58 @@ describe('kartotekaActions delete — brak releaseOf po DELETE', () => {
         expect(fetchCalls).toEqual([{ url: '/api/orders-studnie/ord-1', method: 'DELETE' }]);
         expect(releaseCalls).toHaveLength(0);
         expect(mod.ordersMap.has('offer_studnie_1')).toBe(false);
+        expect(mod.searchResults.items[0]._orderCount).toBe(0);
+        expect(updateOfferCard).toHaveBeenCalledWith('offer_studnie_1');
+        expect(loadLocalOffers).not.toHaveBeenCalled();
         expect(toasts.some((t) => t.includes('usunięte'))).toBe(true);
+    });
+
+    test('removes the offer locally without restarting the search', async () => {
+        const abort = jest.fn();
+        mod.abortController = { abort };
+        mod.isLoading = true;
+
+        await mod.deleteOfferWithConfirmation('offer_studnie_1');
+
+        expect(deletedOffers).toEqual(['offer_studnie_1']);
+        expect(mod.searchResults.items).toEqual([]);
+        expect(mod.searchResults.totalCount).toBe(0);
+        expect(abort).toHaveBeenCalledTimes(1);
+        expect(mod.abortController).toBeNull();
+        expect(mod.isLoading).toBe(false);
+        expect(updateOfferCard).toHaveBeenCalledWith('offer_studnie_1');
+        expect(loadLocalOffers).not.toHaveBeenCalled();
+    });
+
+    test('removes the last order locally while keeping the with-order filter', async () => {
+        mod.currentFilter = 'with_order';
+        mod.ordersMap.set('offer_studnie_1', [{ id: 'ord-1', offerStudnieId: 'offer_studnie_1' }]);
+
+        await mod.deleteOrderUnified('ord-1', 'studnia_oferta');
+
+        expect(mod.currentFilter).toBe('with_order');
+        expect(mod.searchResults.items).toEqual([]);
+        expect(mod.searchResults.totalCount).toBe(0);
+        expect(updateOfferCard).toHaveBeenCalledWith('offer_studnie_1');
+        expect(loadLocalOffers).not.toHaveBeenCalled();
+    });
+
+    test('keeps the offer and updates its remaining order count when another order exists', async () => {
+        mod.ordersMap.set('offer_studnie_1', [
+            { id: 'ord-1', offerStudnieId: 'offer_studnie_1' },
+            { id: 'ord-2', offerStudnieId: 'offer_studnie_1' }
+        ]);
+        mod.searchResults.items[0]._orderCount = 2;
+
+        await mod.deleteOrderUnified('ord-1', 'studnia_oferta');
+
+        expect(mod.ordersMap.get('offer_studnie_1')).toEqual([
+            { id: 'ord-2', offerStudnieId: 'offer_studnie_1' }
+        ]);
+        expect(mod.searchResults.items[0]._orderCount).toBe(1);
+        expect(mod.searchResults.totalCount).toBe(1);
+        expect(updateOfferCard).toHaveBeenCalledWith('offer_studnie_1');
+        expect(loadLocalOffers).not.toHaveBeenCalled();
     });
 
     test('deleteOfferWithConfirmation: deleteOffer + toast, zero releaseOf', async () => {

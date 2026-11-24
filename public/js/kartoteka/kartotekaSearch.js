@@ -331,6 +331,56 @@ export default {
         }
     },
 
+    updateOfferCard(offerId) {
+        const listDiv = document.getElementById('ka-offers-list');
+        if (!listDiv) return false;
+
+        const normalizedId = String(offerId || '');
+        const card = Array.from(listDiv.querySelectorAll('.modern-offer-card[data-offer-id]')).find(
+            (item) => item.getAttribute('data-offer-id') === normalizedId
+        );
+        if (!card) return false;
+
+        const offer = this.searchResults?.items?.find(
+            (item) => String(item.id || '') === normalizedId
+        );
+        if (!offer) {
+            card.remove();
+            if (this.searchResults?.items?.length === 0 && !this.searchResults.hasMore) {
+                listDiv.innerHTML =
+                    '<div class="empty-muted">Brak ofert pasujących do filtrów.</div>';
+            }
+            return true;
+        }
+
+        const template = document.createElement('template');
+        template.innerHTML = this.renderOffersList([offer], true).trim();
+        const updatedCard = /** @type {HTMLElement | null} */ (template.content.firstElementChild);
+        if (!updatedCard) return false;
+
+        card.replaceWith(updatedCard);
+        if (window.lucide) window.lucide.createIcons({ root: updatedCard });
+        if (window.pricelistVersions) {
+            window.pricelistVersions.hydrateBadges(updatedCard);
+            window.pricelistVersions.hydrateActiveBadges(updatedCard);
+        }
+        return true;
+    },
+
+    updateSearchResultControls() {
+        const items = this.searchResults?.items || [];
+        const totalCount = this.searchResults?.totalCount ?? items.length;
+        this.updateOfferCounter(items.length, totalCount);
+
+        const button = document.getElementById('ka-load-more-btn');
+        if (!button) return;
+        if (!this.searchResults?.hasMore || items.length >= totalCount) {
+            button.parentElement?.remove();
+            return;
+        }
+        button.textContent = 'Pokaż więcej (' + items.length + ' z ' + totalCount + ')';
+    },
+
     /**
      * HTML przycisku "Pokaż więcej"
      */

@@ -17,6 +17,58 @@ export default {
         return { offerId: '', order: null };
     },
 
+    invalidatePendingSearch() {
+        if (this.abortController) this.abortController.abort();
+        this.abortController = null;
+        this.isLoading = false;
+    },
+
+    removeOfferFromSearchResults(offerId) {
+        if (!this.searchResults || !Array.isArray(this.searchResults.items)) return false;
+        const normalizedId = this.normalizeId(offerId);
+        const items = this.searchResults.items.filter(
+            (offer) => this.normalizeId(offer.id) !== normalizedId
+        );
+        if (items.length === this.searchResults.items.length) return false;
+
+        this.invalidatePendingSearch();
+        this.searchResults = {
+            ...this.searchResults,
+            items,
+            totalCount: Math.max(0, Number(this.searchResults.totalCount || 0) - 1)
+        };
+        this._lastOfferSignature = this._offerListSignature(items);
+        this.updateOfferCounter(items.length, this.searchResults.totalCount);
+        this.updateSearchResultControls();
+        this.updateOfferCard(offerId);
+        return true;
+    },
+
+    updateOfferOrderCount(offerId, orderCount) {
+        if (!this.searchResults || !Array.isArray(this.searchResults.items)) return false;
+        const normalizedId = this.normalizeId(offerId);
+        const hasOffer = this.searchResults.items.some(
+            (offer) => this.normalizeId(offer.id) === normalizedId
+        );
+        if (!hasOffer) return false;
+
+        if (this.currentFilter === 'with_order' && orderCount === 0) {
+            return this.removeOfferFromSearchResults(offerId);
+        }
+
+        this.invalidatePendingSearch();
+        const items = this.searchResults.items.map((offer) =>
+            this.normalizeId(offer.id) === normalizedId
+                ? { ...offer, _orderCount: orderCount }
+                : offer
+        );
+        this.searchResults = { ...this.searchResults, items };
+        this._lastOfferSignature = this._offerListSignature(items);
+
+        this.updateOfferCard(offerId);
+        return true;
+    },
+
     async loadOrdersMap(offerIds, retry = true) {
         const headers =
             typeof authHeaders === 'function'
@@ -441,30 +493,25 @@ export default {
                 throw new Error(data.error || 'Nie udało się usunąć zamówienia z serwera');
             }
 
-            if (offerIdForOrder && this.ordersMap.has(offerIdForOrder)) {
-                const list = this.ordersMap.get(offerIdForOrder);
-                const idx = list.findIndex(
-                    (o) => this.normalizeId(o.id) === this.normalizeId(orderId)
-                );
-                if (idx !== -1) list.splice(idx, 1);
-                if (list.length === 0) this.ordersMap.delete(offerIdForOrder);
+            const existingOrders = offerIdForOrder ? this.ordersMap.get(offerIdForOrder) || [] : [];
+            const remainingOrders = existingOrders.filter(
+                (order) => this.normalizeId(order.id) !== this.normalizeId(orderId)
+            );
+            if (offerIdForOrder && existingOrders.length !== remainingOrders.length) {
+                const nextOrdersMap = new Map(this.ordersMap);
+                if (remainingOrders.length > 0) nextOrdersMap.set(offerIdForOrder, remainingOrders);
+                else nextOrdersMap.delete(offerIdForOrder);
+                this.ordersMap = nextOrdersMap;
             }
-            const remainingOrders = offerIdForOrder
-                ? this.ordersMap.get(offerIdForOrder) || []
-                : [];
-            const shouldUnlockOffer = offerIdForOrder && remainingOrders.length === 0;
+
+            const nextOrderCount = remainingOrders.length;
+            const shouldUnlockOffer = offerIdForOrder && nextOrderCount === 0;
 
             // Uwaga: status „zamówiona" wynika z _orderCount (JOIN po tabelach zamówień
             // w /api/offers/search) — sam DELETE zamówienia odblokowuje ofertę.
             // Nie wolno tu robić saveOffer na okrojonym wrapperze z getOffers()
             // (brak number/clientName/data/wells) — upsert nadpisywał ofertę
             // pustymi polami i oferta „znikała" z wyszukiwania.
-            // Reset filtra, żeby odblokowana oferta nie zniknęła z listy.
-            if (shouldUnlockOffer && this.currentFilter === 'with_order') {
-                this.currentFilter = 'all';
-                if (typeof this._syncFilterUI === 'function') this._syncFilterUI();
-            }
-
             if (typeof window.showToast === 'function') {
                 window.showToast(
                     shouldUnlockOffer
@@ -474,7 +521,9 @@ export default {
                 );
             }
 
-            await this.loadLocalOffers();
+            if (!offerIdForOrder || !this.updateOfferOrderCount(offerIdForOrder, nextOrderCount)) {
+                await this.loadLocalOffers();
+            }
             // Brak release po DELETE z premedytacją: dokumentu nie ma, więc
             // POST /api/locks/release wróciłby z celowym 404 guarda P1.5
             // (nierozróżnialne: brak dokumentu vs brak uprawnień), nic nie
@@ -516,7 +565,10 @@ export default {
                     deleteResult === 'already-gone' ? 'info' : 'success'
                 );
             }
-            this.loadLocalOffers(); // Odświeżenie listy ofert
+            const nextOrdersMap = new Map(this.ordersMap);
+            nextOrdersMap.delete(this.normalizeId(id));
+            this.ordersMap = nextOrdersMap;
+            if (!this.removeOfferFromSearchResults(id)) await this.loadLocalOffers();
         } catch (error) {
             logger.error('kartotekaUi', 'Błąd podczas usuwania:', error);
             if (typeof window.showToast === 'function') {
