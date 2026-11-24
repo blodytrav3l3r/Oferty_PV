@@ -1074,6 +1074,25 @@ a.admin-stat-card {
     gap: var(--tile-gap-sm, 0.6rem);
 }
 
+.admin-user-role-heading {
+    padding: 0.55rem 0.9rem 0.15rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.admin-user-role-heading h4 {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+}
+
+.admin-user-role-heading span {
+    margin-left: 0.25rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-normal);
+}
+
 .admin-user-tile {
     background: var(--bg-card);
     border: 1px solid var(--border);

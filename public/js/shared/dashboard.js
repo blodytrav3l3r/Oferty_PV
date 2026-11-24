@@ -852,13 +852,37 @@ async function loadUsers() {
         </button>
       </article>`;
 
+        const roleOrder = { admin: 0, pro: 1, user: 2 };
+        const roleLabels = { admin: 'Admin', pro: 'Pro', user: 'User' };
+        const nameCollator = new Intl.Collator('pl', { sensitivity: 'base' });
+        const displayName = (user) =>
+            ((user.firstName || '') + ' ' + (user.lastName || '')).trim() || user.username;
+        const sortedUsers = [...adminUsers].sort((a, b) => {
+            const roleA = String(a.role || 'user').toLowerCase();
+            const roleB = String(b.role || 'user').toLowerCase();
+            const roleDifference = (roleOrder[roleA] ?? 3) - (roleOrder[roleB] ?? 3);
+            if (roleDifference !== 0) return roleDifference;
+            return (
+                nameCollator.compare(displayName(a), displayName(b)) ||
+                nameCollator.compare(a.username, b.username)
+            );
+        });
+
         grid.innerHTML =
             newUserTile +
-            adminUsers
-                .map((u) => {
+            sortedUsers
+                .map((u, index) => {
                     const fullName = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
                     const label = fullName || u.username;
                     const role = String(u.role || 'user').toLowerCase();
+                    const previousRole =
+                        index > 0
+                            ? String(sortedUsers[index - 1].role || 'user').toLowerCase()
+                            : null;
+                    const roleHeading =
+                        role !== previousRole
+                            ? `<div class="admin-user-role-heading" role="listitem"><h4>${escapeHtml(roleLabels[role] || role.toUpperCase())} <span>(${adminUsers.filter((user) => String(user.role || 'user').toLowerCase() === role).length})</span></h4></div>`
+                            : '';
                     const session = sessionByUser[u.id];
                     const isSelf =
                         typeof currentUser !== 'undefined' &&
@@ -907,7 +931,7 @@ async function loadUsers() {
             </div>
         </div>`;
                     }
-                    return `
+                    return `${roleHeading}
       <article class="admin-user-tile" role="listitem" aria-label="${escapeHtmlAttr(label)}">
         <div class="admin-user-head">
             <div class="admin-user-avatar" aria-hidden="true">${escapeHtml(initialsOf(u))}</div>

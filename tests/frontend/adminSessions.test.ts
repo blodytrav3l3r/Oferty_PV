@@ -366,6 +366,48 @@ describe('pulpit admina: sesje', () => {
         expect(html).not.toContain('onclick=');
     });
 
+    it('kafle: grupuje role admin → pro → user i sortuje nazwy alfabetycznie', async () => {
+        const users = [
+            { id: 'u2', username: 'zofia', role: 'user', firstName: 'Zofia', lastName: 'Z' },
+            { id: 'p2', username: 'roza', role: 'pro', firstName: 'Róża', lastName: 'R' },
+            { id: 'a2', username: 'z-admin', role: 'admin', firstName: 'Zofia', lastName: 'Admin' },
+            { id: 'u1', username: 'lukasz', role: 'user', firstName: 'Łukasz', lastName: 'L' },
+            { id: 'p1', username: 'piotr', role: 'pro', firstName: 'Piotr', lastName: 'P' },
+            { id: 'a1', username: 'alicja', role: 'admin', firstName: 'Alicja', lastName: 'Admin' },
+            { id: 'u3', username: 'marek', role: 'user', firstName: 'Marek', lastName: 'M' },
+            { id: 'a3', username: 'a-admin', role: 'admin', firstName: 'Admin', lastName: 'Szef' }
+        ];
+        const { context, els } = loadDashboard(async (url: string) => {
+            const u = String(url);
+            if (u.includes('/api/admin/sessions')) return okJson(sessionsPayload());
+            if (u.includes('/api/users')) return okJson({ data: users });
+            return okJson({});
+        });
+
+        await context.showLoggedIn(adminUser);
+        await flush();
+
+        const html = els['users-tiles'].innerHTML;
+        const orderedNames = [
+            html.indexOf('Admin Szef'),
+            html.indexOf('Alicja Admin'),
+            html.indexOf('Zofia Admin'),
+            html.indexOf('Piotr P'),
+            html.indexOf('Róża R'),
+            html.indexOf('Łukasz L'),
+            html.indexOf('Marek M'),
+            html.indexOf('Zofia Z')
+        ];
+        expect(html.indexOf('>Admin <span>(3)</span>')).toBeLessThan(
+            html.indexOf('>Pro <span>(2)</span>')
+        );
+        expect(html.indexOf('>Pro <span>(2)</span>')).toBeLessThan(
+            html.indexOf('>User <span>(3)</span>')
+        );
+        expect(orderedNames.every((position) => position >= 0)).toBe(true);
+        expect([...orderedNames].sort((a, b) => a - b)).toEqual(orderedNames);
+    });
+
     it('kafle: kolejność edytuj → usuń → status → wyloguj, akcje niedostępne wyblakłe', async () => {
         const { context, els } = loadDashboard(async (url: string) => {
             const u = String(url);
