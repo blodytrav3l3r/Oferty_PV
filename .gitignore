@@ -105,28 +105,7 @@ check_db_temp.js
 # === AI Agent configs (autogenerowane, NIE część S.O.K.) ===
 .kilo/
 .agents/
-# .opencode/: lokalny tooling ignorowany, ALE rules/ to wersjonowany kontrakt
-# procesu inzynierskiego (jak AGENTS.md) — trackowane celowo (P0.0).
-.opencode/*
-!.opencode/rules/
-!.opencode/rules/**/*
-# Konfiguracja OpenCode V2 i materialy agenta: wersjonowane (odtwarzalny setup).
-!.opencode/opencode.json
-!.opencode/LICENSE
-!.opencode/THIRD-PARTY-NOTICES.md
-!.opencode/plugins/
-!.opencode/prompts/
-.opencode/skills/*
-!.opencode/skills/
-!.opencode/skills/verification-loop/
-!.opencode/skills/e2e-testing/
-!.opencode/skills/prisma-patterns/
-!.opencode/skills/database-migrations/
-!.opencode/skills/search-first/
-!.opencode/skills/break-ui/
-# Plugin projektu (hook graphify) — przenośny setup, nie lokalny tooling.
-!.opencode/plugins/
-!.opencode/plugins/graphify.js
+/.opencode/
 ./~/
 
 # === Temp/working files ===
@@ -195,7 +174,13 @@ test-results/
 e2e-appname-fail.png
 e2e-appname-server.log
 
-# Lokalne artefakty harnessow Excel (pomiary parity/hang — output, nie baseline;
-# patrz docs/plans/_active-evidence.md E-113d/E-113e; baselines bench/golden sa trackowane celowo)
-docs/plans/parity-excel-virtual-*.json
-docs/plans/hang-2000-harness-*.json
+# Lokalne plany, wyniki pomiarów i audyty. Wzorce Golden DOM są w tests/fixtures/.
+/docs/plans/
+/docs/audits/
+
+# Lokalne materiały agentów. Konfiguracja skills:* pozostaje w .hermes/skills/.
+/.hermes/agents/
+/.hermes/memory/
+/CLAUDE.md
+/.caveman.json
+/.graphifyignore

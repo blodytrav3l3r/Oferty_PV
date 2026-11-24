@@ -220,4 +220,4 @@ D+14 (`OVERDUE_D14` powyżej).
 - [COMPONENTS](COMPONENTS.md) — katalog komponentów UI (panel/kolejka wg `UI_GUIDELINES.md`)
 - [Macierz uprawnień](security/permission-matrix.md) — per-trasa, SSoT `ownership.ts`
 - [DATABASE](DATABASE.md) — model `offer_follow_ups`
-- Historia realizacji: [plan follow-up](plans/archive/opieka-nad-oferta.md) i [plan monitoringu P0](plans/archive/opieka-monitoring-przypomnienia-p0.md). To archiwalne zapisy wykonanych prac, nie bieżące wymagania.
+- Archiwum lokalne projektu zawiera plany realizacji follow-upu i monitoringu P0.

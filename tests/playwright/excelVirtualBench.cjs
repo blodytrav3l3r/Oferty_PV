@@ -211,6 +211,7 @@ async function measure(frame, n) {
             }
         }
         try {
+            fs.mkdirSync(path.dirname(OUT), { recursive: true });
             fs.writeFileSync(
                 OUT,
                 JSON.stringify(

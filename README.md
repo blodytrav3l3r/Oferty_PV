@@ -239,7 +239,7 @@ docker compose up -d app
 unset APP_GIT_BRANCH
 ```
 
-Dockerfile pobiera SHA commita z checkoutu automatycznie. `APP_COMMIT_SHA` można ustawić ręcznie jako nadpisanie.
+Dockerfile pobiera SHA commita z checkoutu automatycznie. `APP_COMMIT_SHA` można ustawić ręcznie na zweryfikowany SHA. Przy budowaniu z ZIP bez metadanych Git i bez podanego SHA aplikacja raportuje commit jako `unknown`.
 
 Aplikacja: **http://localhost:3000** (port zgodny z konfiguracją w `.env`)
 
@@ -430,7 +430,7 @@ i rollbacku opisuje [docs/DEPLOY_UPDATE.md](docs/DEPLOY_UPDATE.md).
 | Powrót do poprzedniej wersji         | `rollback.bat`                   | L1      | Wywołuje `scripts/rollback.mjs`.                                                                                       | Przywraca wersję; może odtworzyć bazę z kopii.                                           |
 | Utwardzenie lokalnych uprawnień      | `scripts/harden-local-perms.bat` | L3      | Ogranicza ACL `.env` i `data\` do właściciela, SYSTEM i Administratorów; `--restore-dir` przywraca snapshot.           | Zmienia ACL plików.                                                                      |
 
-Launchery `start-docker.bat`, `start-native.bat` i `start.bat` pokazują lokalny commit oraz aktualny `origin/main`; przy braku sieci informują, że zdalnego SHA nie udało się sprawdzić. Docker buduje kod z lokalnego folderu i zapisuje jego SHA w metadanych obrazu. Launchery nie pobierają ani nie przełączają kodu automatycznie; jeśli lokalny folder różni się od `origin/main`, komunikat wyjaśnia, że uruchomiony zostanie kod lokalny.
+Launchery `start-docker.bat`, `start-native.bat` i `start.bat` pokazują lokalny commit oraz aktualny `origin/main`, gdy metadane są dostępne. Docker buduje kod z lokalnego folderu i zapisuje SHA obrazu, gdy zna commit źródłowy. Launchery uruchamiają kod z lokalnego folderu.
 
 Przed startem użyj `status.bat`, aby szybko sprawdzić wersję, commity i niezacommitowane zmiany. Do pobrania nowych commitów użyj Git/GitHub ręcznie, a potem ponownie sprawdź status; sam launcher niczego nie aktualizuje.
 

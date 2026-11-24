@@ -4,7 +4,7 @@
 
 **Nawigację zweryfikowano:** 2026-11-24 · **HEAD kodu:** `0aa625c2` · **Wersja aplikacji przy weryfikacji:** `1.64.24` · **Zakres:** sprawdzono lokalne cele linków tego indeksu. Stan i ograniczenia przeglądu opisuje [`documentation-audit.md`](documentation-audit.md); to nie jest potwierdzenie pełnej aktualności każdego dokumentu.
 
-Wyniki uzgodnienia dokumentacji z 2026-11-24, poprawione rozbieżności i ograniczenia przeglądu są w [`documentation-audit.md`](documentation-audit.md). Modułowe indeksy: [przewodniki agentów](agents/README.md), [ADR](adr/README.md) i [plany](plans/README.md).
+Wyniki uzgodnienia dokumentacji z 2026-11-24, poprawione rozbieżności i ograniczenia przeglądu są w [`documentation-audit.md`](documentation-audit.md). Modułowe indeksy: [przewodniki agentów](agents/README.md) i [ADR](adr/README.md).
 
 ## Rozpoczęcie
 
@@ -43,8 +43,7 @@ Wyniki uzgodnienia dokumentacji z 2026-11-24, poprawione rozbieżności i ograni
 - [Procedury wdrożenia i aktualizacji](DEPLOYMENT.md), [HTTPS/reverse proxy](DEPLOY_HTTPS_IT.md)
 - [Znane błędy](errors-known.md), [proces wydania](RELEASE_PROCESS.md), [wersjonowanie](VERSIONING.md)
 - [Instrukcje agentów](agents/README.md)
-- [Audyt dokumentacji](documentation-audit.md) i [pełny inwentarz dopasowań SQLite dla HEAD 5ab15ac0](audits/SQLITE_REFERENCES_HEAD_5AB15AC0.md)
-- Pozostałe [audyty](audits/) i [plany](plans/README.md)
+- [Audyt dokumentacji](documentation-audit.md). Szczegółowe raporty i plany robocze pozostają w lokalnym obszarze projektu.
 
 ## Status i ograniczenia
 

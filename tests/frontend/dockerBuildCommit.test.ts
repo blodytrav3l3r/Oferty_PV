@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 import {
     resolveDockerCommitSha,
@@ -58,5 +59,40 @@ describe('Docker build commit metadata', () => {
         expect(() => resolveDockerCommitSha(path.join(root, 'missing.git'))).toThrow(
             /Cannot resolve Docker image commit SHA/
         );
+    });
+
+    function runArchiveBuild(gitPath: string, override = '') {
+        const outputPath = path.join(root, 'docker-commit.sha');
+        const cli = path.resolve(__dirname, '../../scripts/docker-build-commit.cjs');
+        const result = spawnSync(
+            process.execPath,
+            [cli, gitPath, outputPath, '--allow-source-archive'],
+            { encoding: 'utf8', env: { ...process.env, APP_COMMIT_SHA: override } }
+        );
+        return { result, outputPath };
+    }
+
+    test('allows a source ZIP without recording an invented commit SHA', () => {
+        const { result, outputPath } = runArchiveBuild(path.join(root, 'missing.git'));
+
+        expect(result.status).toBe(0);
+        expect(result.stdout).toMatch(/commit unknown/);
+        expect(fs.existsSync(outputPath)).toBe(false);
+    });
+
+    test('still rejects incomplete Git metadata when the Git directory exists', () => {
+        const { result, outputPath } = runArchiveBuild(gitDir);
+
+        expect(result.status).toBe(1);
+        expect(result.stderr).toMatch(/Cannot resolve Docker image commit SHA/);
+        expect(fs.existsSync(outputPath)).toBe(false);
+    });
+
+    test('records a supplied commit for a source archive', () => {
+        const commitSha = 'e'.repeat(40);
+        const { result, outputPath } = runArchiveBuild(path.join(root, 'missing.git'), commitSha);
+
+        expect(result.status).toBe(0);
+        expect(fs.readFileSync(outputPath, 'utf8')).toBe(`${commitSha}\n`);
     });
 });

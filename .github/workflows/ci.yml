@@ -497,7 +497,7 @@ jobs:
                   name: excel-gates-forensics
                   path: |
                       docs/plans/parity-excel-virtual-600.json
-                      docs/plans/golden-excel-dom-1200.json
+                      tests/fixtures/golden-excel-dom-1200.json
                       excel-gates-server.log
                   if-no-files-found: warn
                   retention-days: 30

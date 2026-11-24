@@ -78,7 +78,7 @@ Poniższe ustalenia, inwentarz, macierz pokrycia i wyniki weryfikacji opisują a
 
 **Wniosek ograniczony:** w zbadanych aktywnych ścieżkach nie ma zależności wykonawczej od SQLite. Historyczne teksty i negatywne testy nie dowodzą, że repo nie zawiera żadnego ciągu `sqlite`; historyczne decyzje nie powinny być przepisywane ani traktowane jako konfiguracja runtime.
 
-Pełny indeks wszystkich śledzonych wierszy dopasowań `plik → linie` dla SHA powyżej (z klasyfikacją testów, guardów, historii, planów i false positives) znajduje się w [`inwentarzu tekstowych trafień`](audits/SQLITE_REFERENCES_HEAD_5AB15AC0.md): 563 wiersze w 127 plikach. Jest to indeks wzorca tekstowego, nie liczba użyć SQLite. Poprzedni [`lokalny audyt cleanupu`](audits/SQLITE_POSTGRESQL_CLEANUP_AUDIT.md) jest snapshotem HEAD `81a68d1a`, nie bieżącym raportem; jego część o ignorowanych lokalnych artefaktach nie powinna być interpretowana jako aktualny stan zewnętrznej instalacji.
+Archiwalny inwentarz `SQLITE_REFERENCES_HEAD_5AB15AC0.md` zawiera 563 dopasowania tekstowe w 127 plikach. Raport `SQLITE_POSTGRESQL_CLEANUP_AUDIT.md` dotyczy stanu na `81a68d1a`. Oba szczegółowe raporty pozostają w lokalnym archiwum projektu.
 
 ## Mapa zależności i pozostałości SQLite
 

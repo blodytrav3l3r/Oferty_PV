@@ -281,6 +281,7 @@ async function openFrame(browser, token) {
                 openStages: stageMed(warm, 'openStages')
             }
         };
+        fs.mkdirSync(path.dirname(OUT), { recursive: true });
         fs.writeFileSync(OUT, JSON.stringify(baseline, null, 2) + '\n');
         console.log('BASELINE zapisany: ' + OUT);
         console.log(

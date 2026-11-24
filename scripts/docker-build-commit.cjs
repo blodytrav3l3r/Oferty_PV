@@ -93,15 +93,35 @@ function writeDockerCommitSha(gitPath, outputPath, override = '') {
 
 module.exports = { resolveDockerCommitSha, writeDockerCommitSha };
 
+function isSourceArchive(gitPath) {
+    try {
+        fs.lstatSync(gitPath);
+        return false;
+    } catch (error) {
+        if (error.code === 'ENOENT') return true;
+        throw error;
+    }
+}
+
+function recordBuildCommit(gitPath, outputPath, allowArchive, override) {
+    if (allowArchive && !normalizeSha(override) && isSourceArchive(gitPath)) {
+        process.stdout.write('[docker-build] commit unknown (source archive)\n');
+        return;
+    }
+    const commitSha = writeDockerCommitSha(gitPath, outputPath, override);
+    process.stdout.write(`[docker-build] commit ${commitSha.slice(0, 12)}\n`);
+}
+
 if (require.main === module) {
     try {
-        const [gitPath, outputPath] = process.argv.slice(2);
-        const commitSha = writeDockerCommitSha(
-            gitPath || '/tmp/build-context/.git',
-            outputPath || '/app/docker-commit.sha',
+        const [gitPath = '/tmp/build-context/.git', outputPath = '/app/docker-commit.sha', mode] =
+            process.argv.slice(2);
+        recordBuildCommit(
+            gitPath,
+            outputPath,
+            mode === '--allow-source-archive',
             process.env.APP_COMMIT_SHA
         );
-        process.stdout.write(`[docker-build] commit ${commitSha.slice(0, 12)}\n`);
     } catch (error) {
         process.stderr.write(`[docker-build] ${error.message}\n`);
         process.exitCode = 1;

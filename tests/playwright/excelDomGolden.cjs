@@ -29,7 +29,7 @@ const {
 } = require('./throttleHelper.cjs');
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
-const OUT_DEFAULT = path.join(__dirname, '../../docs/plans/golden-excel-dom-1200.json');
+const OUT_DEFAULT = path.join(__dirname, '../fixtures/golden-excel-dom-1200.json');
 // Pin katalogu do seeda: dev-DB ma kastomizowane ceny/flagi (inne kolumny/ceny
 // w DOM), fresh-seed nie — bez pinu golden zależy od DB, nie od kodu.
 const SEED_STUDNIE = require('../../data/seed_studnie.json');

@@ -1036,6 +1036,7 @@ async function runMode(frame, page, virtualOn, wellsData) {
             bOff.wellsHash + ' vs ' + bOn.wellsHash
         );
         try {
+            fs.mkdirSync(path.dirname(OUT), { recursive: true });
             fs.writeFileSync(
                 OUT,
                 JSON.stringify(

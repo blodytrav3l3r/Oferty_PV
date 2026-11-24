@@ -528,6 +528,7 @@ function buildVerdict(m) {
             verdict: v.verdict,
             verdictDetail: { tripsFired: v.tripsFired, strongFired: v.strongFired, hangBoth: v.hangBoth }
         };
+        fs.mkdirSync(path.dirname(OUT), { recursive: true });
         fs.writeFileSync(OUT, JSON.stringify(out, null, 2) + '\n');
         console.log('OUT: ' + OUT);
         console.log('VERDICT: ' + v.verdict + ' (trips=' + v.tripsFired + ' strong=' + v.strongFired + ' hangBoth=' + v.hangBoth + ')');

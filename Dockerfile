@@ -47,7 +47,7 @@ COPY data/pricelists/active-pricelists.json ./data/pricelists/
 
 # Odczytujemy tylko metadane HEAD z kontekstu; .git nie trafia do warstwy obrazu.
 RUN --mount=type=bind,target=/tmp/build-context,ro \
-    node scripts/docker-build-commit.cjs /tmp/build-context/.git /app/docker-commit.sha
+    node scripts/docker-build-commit.cjs /tmp/build-context/.git /app/docker-commit.sha --allow-source-archive
 
 # Build potrzebuje URL ze względu na prisma.config.ts; to syntaktyczny adres
 # bez sekretu i nie jest utrwalany w obrazie. Runtime wymaga DATABASE_URL z Compose.

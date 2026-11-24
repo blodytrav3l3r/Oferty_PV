@@ -17,20 +17,22 @@ V1 i V2 dzielą nazwę komendy `opencode`, więc obecność V1 w `PATH` myli. W 
 
 ## 2. Pliki konfiguracyjne
 
+Konfigurację projektową OpenCode przechowuj lokalnie. Poniższa tabela opisuje układ plików i ich dostępność w bieżącym drzewie Git.
+
 | Plik                                | Zakres                                                                  | W repo |
 | ----------------------------------- | ----------------------------------------------------------------------- | ------ |
-| `.opencode/opencode.json`           | projekt: model, agenci, permissions, MCP, instructions                  | tak    |
+| `.opencode/opencode.json`           | projekt: model, agenci, permissions, MCP, instructions                  | nie    |
 | `~/.config/opencode/opencode.json`  | globalnie: `plugins`, `mcp.servers`                                     | nie    |
 | `~/.config/opencode/opencode.jsonc` | globalnie: `providers` (V1 `provider`, normalizowane)                   | nie    |
 | `~/.config/opencode/cli.json`       | tylko klient TUI (motyw, keybindy, pluginy TUI)                         | nie    |
-| `.opencode/prompts/agents/*.txt`    | system prompty 10 agentów                                               | tak    |
-| `.opencode/rules/**`                | kontrakt inżynierski (rules; wstrzykiwane tylko wpisy z `instructions`) | tak    |
-| `.opencode/skills/<id>/SKILL.md`    | 5 skilli specyficznych dla S.O.K.                                       | tak    |
-| `.caveman.json`                     | projekt: domyślny tryb caveman (`defaultMode`)                          | tak    |
+| `.opencode/prompts/agents/*.txt`    | system prompty 10 agentów                                               | nie    |
+| `.opencode/rules/**`                | kontrakt inżynierski (rules; wstrzykiwane tylko wpisy z `instructions`) | nie    |
+| `.opencode/skills/<id>/SKILL.md`    | skille specyficzne dla S.O.K.                                           | nie    |
+| `.caveman.json`                     | projekt: domyślny tryb caveman (`defaultMode`)                          | nie    |
 
 Pozostałe skille (design, ui-ux-pro-max, slides, brand, banner-design, ui-styling, design-system) są lokalne — `.gitignore` trzyma je poza repo.
 
-`instructions` wstrzykuje 3 pliki: `AGENTS.md` + 2 scalone rules (`coding-style`, `security`). Scalanie usunęło duplikaty między `common/*` i `typescript/*`/`web/*` (te same normy, inne źródło). Świadomie **poza** injection: `CONTRIBUTING.md` oraz pozostałe pliki `.opencode/rules/**` (`git-workflow`, `development-workflow`, `code-review`, `testing`, `performance`, `ui-ux`, `typescript/security`, `typescript/testing`, `web/*`) — ich treść dubluje `AGENTS.md` (bramy, `commit.mjs`, Git Safety) i `docs/agents/*.md`. Zostają w repo dla ludzi; agent sięga po nie tylko na żądanie.
+`instructions` wstrzykuje 3 pliki: `AGENTS.md` + 2 scalone rules (`coding-style`, `security`). Pozostałe reguły `.opencode/rules/**` służą do lokalnej pracy z OpenCode. Wersjonowane zasady projektu są w `AGENTS.md`, `CONTRIBUTING.md` i `docs/agents/`.
 
 Zmiana configu przeładowuje się bez restartu. Weryfikacja: `opencode-cli.exe debug config` (źródła), `opencode-cli.exe debug agents` (agenci z promptami).
 
@@ -42,8 +44,8 @@ Zmiana configu przeładowuje się bez restartu. Weryfikacja: `opencode-cli.exe d
 | `caveman`                  | `~/.config/opencode/plugins/caveman`                           | dynamiczny tryb caveman (flagi, parsowanie komend)                                                            |
 | `@dietrichgebert/ponytail` | npm, **pin `5.3.2`** (nie `@latest`)                           | 6 skilli + ruleset minimalizmu (`ponytail`, `-review`, `-audit`, `-debt`, `-gain`, `-help`)                   |
 | `open-code-review`         | `~/.config/opencode/plugins/open-code-review.ts`               | tools `ocr_review`, `ocr_health`                                                                              |
-| `graphify`                 | `.opencode/plugins/graphify.js` (wersjonowany)                 | przypomnienie o `graphify-out/` przed pierwszą komendą                                                        |
-| `git-safety-guard`         | `.opencode/plugins/git-safety-guard.js` (wersjonowany)         | `ask` przed operacją Tier A (`reset --hard`, `clean -f`, `checkout --`, `restore`) — pokrywa bypass `git.exe` |
+| `graphify`                 | lokalny `.opencode/plugins/graphify.js`                        | przypomnienie o `graphify-out/` przed pierwszą komendą                                                        |
+| `git-safety-guard`         | lokalny `.opencode/plugins/git-safety-guard.js`                | `ask` przed operacją Tier A (`reset --hard`, `clean -f`, `checkout --`, `restore`) — pokrywa bypass `git.exe` |
 
 Zasady: plugin V2 to **katalog z punktem wejścia** (`index.ts` lub `package.json`) **albo pojedynczy plik `.js`** z `export default { id, setup }` (`effect` wg API). Dowód: `graphify.js` działa jako jedna plikowa definicja bez importu pakietu opencode.
 

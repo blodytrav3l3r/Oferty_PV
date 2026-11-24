@@ -527,6 +527,7 @@ async function runCycles(browser, token, n, cycles) {
                 );
             }
             const out = path.join(__dirname, '../../docs/plans/baseline-excel-retention-f0.json');
+            fs.mkdirSync(path.dirname(out), { recursive: true });
             fs.writeFileSync(
                 out,
                 JSON.stringify(
@@ -572,6 +573,7 @@ async function runCycles(browser, token, n, cycles) {
         }
 
         try {
+            fs.mkdirSync(path.dirname(OUT), { recursive: true });
             fs.writeFileSync(
                 OUT,
                 JSON.stringify(

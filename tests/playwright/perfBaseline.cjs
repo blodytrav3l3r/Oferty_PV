@@ -14,7 +14,7 @@
  */
 
 const { execFileSync, spawn } = require('child_process');
-const { join, resolve } = require('path');
+const { dirname, join, resolve } = require('path');
 const fs = require('fs');
 const { createIsolatedPostgresSchema } = require('./isolatedPostgres.cjs');
 
@@ -399,6 +399,7 @@ function median(a) {
     }
     const OUT_DEFAULT = join(ROOT, 'docs', 'plans', 'p16-baseline.json');
     const outPath = resolveOutPath(process.env.PERF_OUT || OUT_DEFAULT);
+    fs.mkdirSync(dirname(outPath), { recursive: true });
     fs.writeFileSync(
         outPath,
         JSON.stringify({ base: BASE, runs: RUNS, summary, raw: result }, null, 1)

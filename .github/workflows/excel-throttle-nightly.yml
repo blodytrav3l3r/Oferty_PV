@@ -115,6 +115,7 @@ jobs:
                   name: excel-throttle-x4-forensics
                   path: |
                       docs/plans/*-throttle-x4.json
+                      tests/fixtures/golden-excel-dom-1200-throttle-x4.json
                       excel-throttle-server.log
                   if-no-files-found: warn
                   retention-days: 30
