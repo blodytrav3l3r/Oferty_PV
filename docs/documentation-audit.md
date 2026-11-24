@@ -1,11 +1,23 @@
 # Audyt dokumentacji i zależności SQLite
 
-- **Zaktualizowano:** 2026-11-22
+- **Zaktualizowano:** 2026-11-24
 - **Repozytorium:** `blodytrav3l3r/Oferty_PV`
-- **Checkpoint tego przeglądu:** `e582174efc6559917782b70f06c76764ee195170` (`main`), `VERSION` i `package.json`: `1.64.17`.
-- **Zakres:** aktualność instrukcji dla kontrybutorów i agentów, indeksy dokumentacji, statusy snapshotów oraz wybrane procedury operacyjne. To nie jest pełny semantyczny audyt każdego dokumentu ani pełna walidacja runtime.
+- **Baza kodu przeglądu:** HEAD `0aa625c2738b64d97f2cd24016bc599cd3f4afd6` (`main`), `VERSION` i `package.json`: `1.64.24`; szczegóły w sekcji z 2026-11-24.
+- **Zakres najnowszego uzgodnienia:** kontrola lokalnych linków w aktywnej dokumentacji i ponowna weryfikacja kluczowych instrukcji; szczegóły oraz wyłączenia w sekcji 2026-11-24. Nie jest to walidacja runtime ani produkcji.
 - **Status wdrożenia:** dokumentacja i lokalny checkout nie potwierdzają produkcyjnego cutoveru ani czystej instalacji Linux.
 - **Źródła:** checkout, kod, konfiguracja, package scripts, testy oraz wyniki poleceń wskazanych niżej. Nie odpytano zdalnego CI ani środowiska produkcyjnego.
+
+## Uzupełnienie dokumentacji — 2026-11-24
+
+**FACT:** kod i konfigurację dokumentacji zweryfikowano na `main` / HEAD `0aa625c2738b64d97f2cd24016bc599cd3f4afd6`; `VERSION` i `package.json` wskazywały `1.64.24`. Walidator i test automatyzacji wersji uruchomiono ponownie po zmianach dokumentacji.
+
+**FACT:** aktywne instrukcje poprawiono w miejscach, gdzie tekst wyglądał na bieżący, choć opisywał stan historyczny albo niezweryfikowany: instalacja Windows ma teraz wersję dokumentacji propagowaną z `VERSION`; walidacja PostgreSQL w `TECH_STACK.md` jest oznaczona datą i wydaniem; `errors-known.md` opisuje zakończony wybór PostgreSQL; runbook HTTPS nie deklaruje stanu zewnętrznego serwera; `OPIEKA.md` opisuje bieżące zapytania JSONB, SQL powiadomień i znaczniki ETag.
+
+**FACT:** proces wydania opisuje wyłącznie istniejące komendy `release:patch`, `release:minor` i `release:major`, zakres aktualizacji wersji oraz osobne GO przed pushem. Linki z instrukcji cenników i opieki prowadzą do aktywnej dokumentacji albo są jawnie opisane jako historia.
+
+**INFERENCE:** nagłówek wersji synchronizowany automatycznie z wydaniem nie potwierdza aktualności całej treści. Daty weryfikacji i numery przy historycznych wynikach pozostają związane z ich checkpointami.
+
+**Zakres:** sprawdzono lokalne cele Markdown w 69 aktywnych plikach (README + docs), z wyłączeniem audytów, planów i dwóch zastąpionych ADR-ów SQLite. Twierdzenia techniczne w kluczowych instrukcjach porównano z kodem, konfiguracją i testami; nie jest to semantyczny audyt każdego akapitu. Nie wykonywano wdrożenia, testu czystej instalacji Linux, restore drill ani odczytu produkcyjnego środowiska.
 
 ## Checkpoint aktualności — 2026-11-22
 

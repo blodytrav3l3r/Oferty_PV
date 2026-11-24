@@ -1,8 +1,10 @@
 # Dokumentacja S.O.K.
 
-**Nawigację zweryfikowano:** 2026-11-22 · **HEAD:** `e582174e` · **Wersja:** `1.64.17` · **Zakres:** sprawdzono lokalne cele linków tego indeksu. Stan i ograniczenia przeglądu opisuje [`documentation-audit.md`](documentation-audit.md); to nie jest potwierdzenie pełnej aktualności każdego dokumentu.
+**Wersja:** 1.64.24
 
-Wyniki audytu wybranych dokumentów operacyjnych z tego samego dnia są w [`documentation-audit.md`](documentation-audit.md). Modułowe indeksy: [przewodniki agentów](agents/README.md), [ADR](adr/README.md) i [plany](plans/README.md).
+**Nawigację zweryfikowano:** 2026-11-24 · **HEAD kodu:** `0aa625c2` · **Wersja aplikacji przy weryfikacji:** `1.64.24` · **Zakres:** sprawdzono lokalne cele linków tego indeksu. Stan i ograniczenia przeglądu opisuje [`documentation-audit.md`](documentation-audit.md); to nie jest potwierdzenie pełnej aktualności każdego dokumentu.
+
+Wyniki uzgodnienia dokumentacji z 2026-11-24, poprawione rozbieżności i ograniczenia przeglądu są w [`documentation-audit.md`](documentation-audit.md). Modułowe indeksy: [przewodniki agentów](agents/README.md), [ADR](adr/README.md) i [plany](plans/README.md).
 
 ## Rozpoczęcie
 

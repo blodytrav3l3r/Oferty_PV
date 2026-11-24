@@ -76,7 +76,8 @@ potwierdza `src/routes/care.ts`.
 ## Payload kolejki i powiadomień (Symbol oferty - Obiekt/kontakt)
 
 `GET /queue`, `GET /panel.queue`, `GET /notifications` zwracają pola
-pochodne ze snapshotu `offers_*.data` (bez migracji, `json_extract`):
+pochodne ze snapshotu `offers_*.data`. Runtime PostgreSQL odczytuje te wartości
+przez JSONB (`::jsonb`, `->>` i `#>>`); nie wymaga to migracji kolumn:
 
 | Pole            | Źródło                                                       | Uwagi                                                     |
 | --------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
@@ -147,25 +148,25 @@ FE carePanel.js (polling 60 s, backoff do 300 s)
 ├─ renderNotifications: badge ← unreadCount (cap 99+), banner ← careRep,
 │    karty (max 20) + stopka `+N więcej` (hasOverflow) + POST :id/read → markRead(user.id)
 └─ clearNotifications: POST /read {ids} + fallback pojedynczych
-BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, COUNT||MAX(rowid)
-  shares w haśle) i /notifications (sync self-only + list per mailbox
+BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, znaczniki a–l
+  oraz guarded `m`; `l` to hash udostępnień adresata) i /notifications
+  (sync self-only + list per mailbox
   `repOwner ?? user.id`),
   POST /read bulk/single (guard WHERE userId)
 SERWIS careService.ts: notifCandidates (latest z tabeli `latest_followup`
 + CASE ntype:
-  SLA_BREACH / ESCALATION / CALLBACK_DUE) → sync (INSERT OR IGNORE
+  SLA_BREACH / ESCALATION / CALLBACK_DUE) → sync (INSERT ... ON CONFLICT
   + auto-read + retencja 90d/500; z repOwner no-op; throttle 60 s per
   skrzynka od P0.3 — rerun w oknie zwraca `skipped: 'throttled'`)
   → list/markRead self
 DB care_notifications(id, userId, offerKind, offerId, type, readAt, createdAt)
 ```
 
-Znane rysy (nie bugi krytyczne): treść Centrum zależy od repa (mailbox
+Znane ograniczenia prezentacji: treść Centrum zależy od repa (mailbox
 `repOwner ?? self`, kontrakt A+C); guard `panelLoading` gubi szybkie podwójne
-kliknięcia; wyjątek w `renderSummary/renderQueue` blokuje `renderNotifications`;
-ETag już unieważniają shares (COUNT + MAX(rowid) `document_shares`
-w `getCareEtagInput`, `careService.ts:495-538`) — ślepa została edycja
-follow-up w miejscu (POST bez dotknięcia znaczników ETag a/b).
+kliknięcia; wyjątek w `renderSummary/renderQueue` blokuje `renderNotifications`.
+ETag uwzględnia zmiany ofert, udostępnień i follow-upów: znaczniki `j/k`, hash
+`l` oraz znacznik `m` opisany niżej.
 Cap przepełnienia tylko prezentacja (R2, VERIFIED 2026-10-12): BE tnie listę,
 licznik cały — `hasOverflow` w `/panel` (`care.ts:269`) i `/notifications`
 (`care.ts:614`), FE badge `99+` + stopka `+N więcej`
@@ -219,4 +220,4 @@ D+14 (`OVERDUE_D14` powyżej).
 - [COMPONENTS](COMPONENTS.md) — katalog komponentów UI (panel/kolejka wg `UI_GUIDELINES.md`)
 - [Macierz uprawnień](security/permission-matrix.md) — per-trasa, SSoT `ownership.ts`
 - [DATABASE](DATABASE.md) — model `offer_follow_ups`
-- Plany: [opieka-nad-oferta](plans/archive/opieka-nad-oferta.md) (follow-up, DONE), [monitoring P0](plans/opieka-monitoring-przypomnienia-p0.md) (care read-only, P0 DONE)
+- Historia realizacji: [plan follow-up](plans/archive/opieka-nad-oferta.md) i [plan monitoringu P0](plans/archive/opieka-monitoring-przypomnienia-p0.md). To archiwalne zapisy wykonanych prac, nie bieżące wymagania.

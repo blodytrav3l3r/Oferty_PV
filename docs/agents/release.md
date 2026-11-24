@@ -16,6 +16,7 @@
 ## Wersje (SSoT: plik VERSION)
 
 - Nie edytuj ręcznie wersji w `package.json`, `CHANGELOG.md`, `*.bat`, `?v=` w HTML ani markerów w docs — robi to wyłącznie `npm run release` (hook `postbump` = `npm run version:propagate && git add -u`, więc propagacja wchodzi do commita release).
+- Bieżące markery `**Wersja dokumentacji:**` są propagowane z `VERSION`; numery w raportach historycznych, audytach, ADR i planach archiwalnych pozostają bez zmian.
 - Nie dodawaj do docs nowych formatów markerów wersji poza obsługiwanymi przez `auto-docs-version.mjs`.
 - Po release: `npm run version:check` (EXIT=0) przed `git push --follow-tags`. Nigdy nie taguj ręcznie. Po zmianie wersji restart backendu.
 

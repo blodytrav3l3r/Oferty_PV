@@ -2,7 +2,7 @@
 
 > Historyczny kontekst SQLite: pozycje opisujące `SQLITE_BUSY`, `PRAGMA`, FTS5
 > i wydajność pliku SQLite dokumentują przyczyny oraz dawną naprawę. Nie są
-> aktywną instrukcją dla nowego backendu. S.O.K. migruje do PostgreSQL-only;
+> aktywną instrukcją dla backendu. Runtime S.O.K. używa wyłącznie PostgreSQL;
 > nie przenoś tych mechanizmów do kodu PostgreSQL. Zachowaj numerację i fakty
 > historyczne dla audytu.
 

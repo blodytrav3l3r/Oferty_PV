@@ -1,8 +1,8 @@
 # Aktualizacja wdrożenia S.O.K.
 
 **Wersja:** 1.64.24<br>
-**Status:** PostgreSQL 18 jest jedynym backendem S.O.K. Wydanie 1.56.4 przeszło
-lokalne bramki i testy PG18; rollout produkcyjny nadal wymaga zatwierdzonego GO,
+**Status:** PostgreSQL 18 jest jedynym backendem S.O.K. **Historyczny wynik:**
+wydanie 1.56.4 przeszło lokalne bramki i testy PG18; rollout produkcyjny wymaga zatwierdzonego GO,
 backup/restore planu dla konkretnego środowiska oraz odrębnej walidacji instalacji
 Linux.
 

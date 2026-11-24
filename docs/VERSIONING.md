@@ -46,7 +46,7 @@ Bump jest atomowy i sam propaguje numer (`npm run version:propagate`):
 
 1. `VERSION` + `package.json`
 2. `?v=` w HTML (`public/*.html`, `public/templates/*.html`)
-3. markery `**Wersja:**` / `> Wersja:` / `"version"` / `"dbVersion"` / `?v=` w `README.md` i `docs/*.md`
+3. markery `**Wersja:**` / `**Wersja dokumentacji:**` / `> Wersja:` / `"version"` / `"dbVersion"` / `?v=` w `README.md` i aktywnych `docs/*.md`
 4. `APP_VERSION` w plikach `.bat`
 5. `package-lock.json`
 

@@ -329,11 +329,12 @@ Dlatego deploy tylko w oknie serwisowym.
 
 ---
 
-## Uwaga o obecnym stanie
+## Weryfikacja stanu serwera
 
-Na serwerze nie ma jeszcze wdrożonej bieżącej wersji z pliku `VERSION`, a repozytorium
-nie ma automatycznego deployu — ktoś musi wykonać sekcję 4 ręcznie. Do tego czasu stary
-błąd certyfikatu zostaje.
+Ten runbook opisuje konfigurację HTTPS, nie bieżący stan konkretnego serwera.
+Przed zmianą sprawdź na docelowym hoście uruchomioną wersję aplikacji, status
+usługi i certyfikatu oraz działanie `/health/ready`. Nie wyciągaj wniosków o
+wdrożeniu ani certyfikacie wyłącznie z wersji kodu w repozytorium.
 
 ## Referencje
 

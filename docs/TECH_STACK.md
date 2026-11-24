@@ -1,7 +1,9 @@
 # Tech Stack — stos technologiczny
 
 **Wersja:** 1.64.24  
-**Ostatnia aktualizacja:** 2026-11-05
+**Ostatnia aktualizacja pełnego wykazu:** 2026-11-05
+
+**Korekta statusu walidacji:** 2026-11-24
 
 ## Licencje — podsumowanie
 
@@ -69,8 +71,7 @@ pliku `LICENSE` w dystrybucji: [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES
 
 PostgreSQL 18 jest jedynym wspieranym silnikiem runtime, testów i instalatorów.
 Świeże instalacje importują aktywne cenniki z wersjonowanego pakietu S.O.K.
-Lokalna walidacja PostgreSQL 18 jest zakończona; ograniczenia produkcyjnego rollout’u i Linux opisuje
-[DEPLOYMENT.md](DEPLOYMENT.md).
+**Historyczny wynik walidacji (2026-11-05, wydanie 1.56.4):** lokalna walidacja PostgreSQL 18 jest zakończona. Nie jest to wynik walidacji aktualnego HEAD; ograniczenia produkcyjnego rollout’u i Linux opisuje [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Zasoby frontendowe (vendored)
 

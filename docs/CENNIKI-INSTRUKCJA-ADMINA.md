@@ -4,7 +4,7 @@
 
 Jedyny dokument o tym, jak tworzyć, publikować i korygować cenniki.
 Szczegóły techniczne (endpointy, limity, schematy): `docs/API.md`.
-Stan techniczny (dlaczego tak działa): `docs/plans/archive/wersjonowanie-cennikow-effectiveFrom-plan.md`.
+Aktualny przepływ techniczny opisuje [przewodnik ofert, cenników i wersji roboczych](business-logic/offer-pricelist-draft-flows.md); archiwalne plany są wyłącznie historią.
 
 ## 1. Dla kogo i zasady
 

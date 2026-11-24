@@ -104,19 +104,13 @@ for (const file of VERSIONED_BAT_FILES) {
 // ── Wersja w dokumentacji (README.md + docs/*.md) — utrzymywana przez auto-docs-version.mjs ──
 // BEZWZGLĘDNIE sprawdzana: rozjazd w markerze = błąd = blokada pre-push. Bez wyjątków.
 const DOCS_DIR = resolve(ROOT, 'docs');
-const DOC_SKIP_DIRS = new Set([
-    'plans',
-    'audits',
-    'adr',
-    'baseline',
-    'import-export',
-    'examples',
-    'node_modules'
-]);
+// Snapshot/history zones keep their original release numbers; active docs are versioned.
+const DOC_SKIP_DIRS = new Set(['plans', 'audits', 'adr', 'baseline', 'examples', 'node_modules']);
 // Wzorce muszą być 1:1 z auto-docs-version.mjs (2. grupa = numer wersji).
 const DOC_VERSION_RES = [
     /(\*\*Wersja:\*{0,2}\s*)(\d+\.\d+\.\d+)/g,
     /(\*\*Wersja projektu:\*{0,2}\s*)(\d+\.\d+\.\d+)/g,
+    /(\*\*Wersja dokumentacji:\*{0,2}\s*)(\d+\.\d+\.\d+)/g,
     /(\*\*Wersja aplikacji:\*{0,2}\s*)(\d+\.\d+\.\d+)/g,
     /(> Wersja:\s*)(\d+\.\d+\.\d+)/g,
     /("version":\s*")(\d+\.\d+\.\d+)(")/g,

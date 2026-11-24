@@ -1,7 +1,10 @@
 # Proces wydawniczy (Release Process)
 
 **Wersja:** 1.64.24  
-**Ostatnia aktualizacja:** 2026-08-24
+**Ostatnia aktualizacja:** 2026-11-24
+
+Marker `Wersja` jest automatycznie synchronizowany z bieżącą wersją projektu i
+nie oznacza daty weryfikacji treści.
 
 Projekt używa **jednej gałęzi `main`** — brak gałęzi `develop`, `release/*`, `hotfix/*`.
 
@@ -21,8 +24,10 @@ git pull
 npm run release:patch  # Małe poprawki (bug fixy)
 npm run release:minor  # Nowe funkcje (zgodne wstecz)
 npm run release:major  # Zmiany przełamujące kompatybilność
-npm run release        # Automatyczny dobór na podstawie commitów
 ```
+
+W `package.json` nie ma komendy `npm run release`; wybierz jawnie jedną z trzech
+komend powyżej.
 
 To wykonuje:
 
@@ -32,12 +37,12 @@ To wykonuje:
 - Aktualizację `CHANGELOG.md` (plik wskazany jako `infile`)
 - Hook `postbump` (klucz `standard-version.scripts.postbump` w `package.json`;
   `.versionrc.json` trzyma tylko `bumpFiles`/`infile`/`tagPrefix`) uruchamia
-  `npm run version:propagate && git add -u`, czyli **trzy skrypty**:
+  `npm run version:propagate && git add -u`, czyli **trzy skrypty i odświeżenie lockfile**:
     - `scripts/auto-cache-bust.mjs` — podmienia `?v=` we wszystkich plikach HTML
       (w tym `public/templates/*.html`) na nową wersję
     - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji
-      `README.md` + `docs/*.md` (`**Wersja:**`, `**Wersja projektu:**`,
-      `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON
+      `README.md` + aktywne `docs/*.md` (`**Wersja:**`, `**Wersja projektu:**`,
+      `**Wersja dokumentacji:**`, `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON
       `"version"`/`"dbVersion"` w `docs/API.md`
     - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat`
       (lista w `scripts/bat-files.mjs`, 14 plików)
@@ -56,7 +61,7 @@ To wykonuje:
 3. `CHANGELOG.md` (nagłówki)
 4. `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`
 5. `*.bat` (lista w `scripts/bat-files.mjs`, 14 plików) → `APP_VERSION`
-6. `README.md` + `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja aplikacji:**` / `> Wersja:`
+6. `README.md` + aktywne `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja dokumentacji:**` / `**Wersja aplikacji:**` / `> Wersja:`
 7. `docs/API.md` przykłady JSON → `"version"` / `"dbVersion"`
 
 ### 3. Weryfikacja
@@ -68,7 +73,7 @@ npm run validate  # lint + typecheck + test
 ### 4. Push z tagami
 
 ```bash
-git push --follow-tags
+git push --follow-tags  # tylko po osobnym GO dla dokładnego remote/branch
 ```
 
 Push taga automatycznie uruchamia workflow `.github/workflows/release.yml`, który:
@@ -109,5 +114,5 @@ W sytuacji awaryjnej (na `main`):
 git checkout main
 # Naprawa błędu
 npm run release:patch
-git push --follow-tags
+# Push dopiero po osobnym GO wskazującym dokładny remote/branch.
 ```

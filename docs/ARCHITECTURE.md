@@ -748,5 +748,3 @@ docker compose up --build
 Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
-
-_Ostatnia aktualizacja: 2026-10-24_

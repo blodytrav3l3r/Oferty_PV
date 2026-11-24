@@ -22,6 +22,9 @@
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research
 
+Numer wersji powyżej jest automatycznym markerem bieżącego projektu. Nie
+oznacza wersji ani stanu kodu objętego historycznym audytem z lipca 2026.
+
 ---
 
 ## Remediation 2026-09-28 (cykl P0–P2, 10 commitów na `main`)

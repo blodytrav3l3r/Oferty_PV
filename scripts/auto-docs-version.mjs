@@ -5,6 +5,7 @@
  * Czyta wersję z VERSION i podmienia w plikach docs/*.md:
  *   - **Wersja:** X.Y.Z  →  **Wersja:** <VERSION>
  *   - **Wersja projektu:** X.Y.Z  →  **Wersja projektu:** <VERSION>
+ *   - **Wersja dokumentacji:** X.Y.Z  →  **Wersja dokumentacji:** <VERSION>
  *   - > Wersja: X.Y.Z  →  > Wersja: <VERSION>
  *
  * Uruchamiany automatycznie przez standard-version (postbump).
@@ -23,15 +24,8 @@ if (!VERSION) {
 }
 
 const DOCS_DIR = resolve(ROOT, 'docs');
-const SKIP_DIRS = new Set([
-    'plans',
-    'audits',
-    'adr',
-    'baseline',
-    'import-export',
-    'examples',
-    'node_modules'
-]);
+// Snapshot/history zones keep their original release numbers; active docs are versioned.
+const SKIP_DIRS = new Set(['plans', 'audits', 'adr', 'baseline', 'examples', 'node_modules']);
 
 function collectMdFiles(dir) {
     const files = [];
@@ -66,6 +60,7 @@ function processFile(filePath) {
     const patterns = [
         /(\*\*Wersja:\*{0,2}\s*)\d+\.\d+\.\d+/g,
         /(\*\*Wersja projektu:\*{0,2}\s*)\d+\.\d+\.\d+/g,
+        /(\*\*Wersja dokumentacji:\*{0,2}\s*)\d+\.\d+\.\d+/g,
         /(\*\*Wersja aplikacji:\*{0,2}\s*)\d+\.\d+\.\d+/g,
         /(> Wersja:\s*)\d+\.\d+\.\d+/g,
         /("version":\s*")\d+\.\d+\.\d+(")/g,

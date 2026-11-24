@@ -568,10 +568,10 @@ Wersja jest synchronizowana automatycznie podczas release (hook `postbump` w `.v
 | 4   | `CHANGELOG.md` (nagłówki wersji)                                     | `standard-version` (infile)     |
 | 5   | `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`             | `scripts/auto-cache-bust.mjs`   |
 | 6   | `*.bat` (start, install, build, setup-ai, ensure-db) → `APP_VERSION` | `scripts/auto-bat-version.mjs`  |
-| 7   | `README.md` + `docs/*.md` → `**Wersja:**` itd.                       | `scripts/auto-docs-version.mjs` |
+| 7   | `README.md` + aktywne `docs/*.md` → markery bieżącej wersji          | `scripts/auto-docs-version.mjs` |
 | 8   | `docs/API.md` przykłady JSON (`"version"`/`"dbVersion"`)             | `scripts/auto-docs-version.mjs` |
 
-**Nieedytowalne ręcznie (tylko przez release):** `VERSION`, `?v=` w HTML, wersje w `.bat`, `**Wersja:**` w docs.
+**Nieedytowalne ręcznie (tylko przez release):** `VERSION`, `?v=` w HTML, wersje w `.bat`, `**Wersja:**` i `**Wersja dokumentacji:**` w aktywnej dokumentacji. Numery w audytach, ADR, planach i opisach historycznych pozostają niezmienione.
 
 ### Release
 
