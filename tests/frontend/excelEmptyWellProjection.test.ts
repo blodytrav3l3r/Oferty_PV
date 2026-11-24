@@ -53,16 +53,19 @@ function makeContext() {
 }
 
 describe('Excel studni — projekcja pustych pozycji', () => {
-    test('ukrywa puste studnie i liczy tylko produktowe oraz chronione pozycje', () => {
+    test('zachowuje puste pozycje i indeksy wells w tabeli Excel', () => {
         const { context, count, tabs } = makeContext();
 
-        expect(Array.from(context._excelRebuildFilteredIndexes())).toEqual([1, 2, 3]);
+        expect(Array.from(context._excelRebuildFilteredIndexes())).toEqual([0, 1, 2, 3]);
         context._excelUpdateWellCount();
         context._excelRenderTabs();
 
-        expect(count.textContent).toBe('3 studni');
-        expect(tabs.innerHTML).toMatch(/DN1200<span[^>]*>3<\/span>/);
+        expect(count.textContent).toBe('4 studni');
+        expect(tabs.innerHTML).toMatch(/DN1200<span[^>]*>4<\/span>/);
         expect(context.wells).toHaveLength(4);
+        expect(
+            context._excelRebuildFilteredIndexes().map((index: number) => context.wells[index].id)
+        ).toEqual(['empty', 'full', 'legacy-locked', 'legacy-linked']);
         expect(context.wells[3].id).toBe('legacy-linked');
     });
 });

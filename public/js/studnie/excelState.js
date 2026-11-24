@@ -468,16 +468,6 @@ function _excelRebuildFilteredIndexes() {
         for (let i = 0; i < wells.length; i++) {
             const w = wells[i];
             if (!w) continue;
-            const isProductBearing =
-                typeof isWellProductBearing !== 'function' ||
-                isWellProductBearing(
-                    w,
-                    typeof getStudnieProductById === 'function' ? getStudnieProductById : null
-                );
-            const isProtectedLegacyWell =
-                (typeof isWellLocked === 'function' && isWellLocked(i)) ||
-                (typeof isWellLinkedToActiveOrder === 'function' && isWellLinkedToActiveOrder(w));
-            if (!isProductBearing && !isProtectedLegacyWell) continue;
             const matchesTab =
                 typeof _excelWellMatchesTab === 'function'
                     ? _excelWellMatchesTab(w, dn)
