@@ -5,7 +5,7 @@ Informacje o oprogramowaniu firm trzecich używanym w projekcie
 
 > Plik generowany automatycznie z `package-lock.json` oraz zasobów w `public/` przez `npm run licenses:generate`. Nie edytuj ręcznie — zmień generator `scripts/generate-licenses.mjs`.
 
-Dane na dzień: **2026-11-16**.
+Dane na dzień: **2026-11-24**.
 
 ## 1. Licencja projektu
 
