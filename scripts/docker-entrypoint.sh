@@ -3,6 +3,12 @@ set -eu
 
 export NODE_ENV=production
 
+if ! printf '%s' "${APP_COMMIT_SHA:-}" | grep -Eq '^([0-9a-fA-F]{40}|[0-9a-fA-F]{64})$' && \
+    [ -s /app/docker-commit.sha ]; then
+    APP_COMMIT_SHA=$(cat /app/docker-commit.sha)
+    export APP_COMMIT_SHA
+fi
+
 echo '[INFO] Starting S.O.K. container.'
 
 if [ -z "${DATABASE_URL:-}" ]; then

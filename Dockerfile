@@ -1,4 +1,10 @@
+# syntax=docker/dockerfile:1
 FROM node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+
+ARG APP_COMMIT_SHA=
+ARG APP_GIT_BRANCH=
+ARG APP_VERSION=unknown
+ARG APP_WORKTREE_DIRTY=unknown
 
 # Instalacja bibliotek systemowych i PostgreSQL 18 client wymaganych przez runtime.
 RUN apt-get update && apt-get install -y \
@@ -39,6 +45,10 @@ COPY scripts/ ./scripts/
 COPY data/seed_preco.json data/seed_rury.json data/seed_studnie.json ./data/
 COPY data/pricelists/active-pricelists.json ./data/pricelists/
 
+# Odczytujemy tylko metadane HEAD z kontekstu; .git nie trafia do warstwy obrazu.
+RUN --mount=type=bind,target=/tmp/build-context,ro \
+    node scripts/docker-build-commit.cjs /tmp/build-context/.git /app/docker-commit.sha
+
 # Build potrzebuje URL ze względu na prisma.config.ts; to syntaktyczny adres
 # bez sekretu i nie jest utrwalany w obrazie. Runtime wymaga DATABASE_URL z Compose.
 RUN DATABASE_URL='postgresql://sok_build:sok_build@127.0.0.1:5432/sok_build?schema=public' npm run build && \
@@ -60,10 +70,6 @@ RUN sed -i 's/\r$//' ./scripts/docker-entrypoint.sh ./scripts/docker-db-bootstra
 ENV NODE_ENV=production
 ENV PORT=10000
 ENV HOST=0.0.0.0
-ARG APP_COMMIT_SHA=
-ARG APP_GIT_BRANCH=
-ARG APP_VERSION=unknown
-ARG APP_WORKTREE_DIRTY=unknown
 ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}
 ENV APP_GIT_BRANCH=${APP_GIT_BRANCH}
 LABEL org.opencontainers.image.version=${APP_VERSION} \

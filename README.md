@@ -231,14 +231,15 @@ Aplikacja: **http://TWOJ_ADRES_IP:3000**
 ### Instalacja przez Docker
 
 ```bash
-export APP_COMMIT_SHA="$(git rev-parse HEAD)"
 export APP_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 docker compose build app
 docker compose up -d postgres
 docker compose run --rm db-bootstrap
 docker compose up -d app
-unset APP_COMMIT_SHA APP_GIT_BRANCH
+unset APP_GIT_BRANCH
 ```
+
+Dockerfile pobiera SHA commita z checkoutu automatycznie. `APP_COMMIT_SHA` można ustawić ręcznie jako nadpisanie.
 
 Aplikacja: **http://localhost:3000** (port zgodny z konfiguracją w `.env`)
 

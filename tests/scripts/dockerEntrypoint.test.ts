@@ -29,7 +29,13 @@ describe('PostgreSQL Docker startup and bootstrap', () => {
             '!data/seed_rury.json',
             '!data/seed_studnie.json',
             '!data/pricelists/',
-            '!data/pricelists/active-pricelists.json'
+            '!data/pricelists/active-pricelists.json',
+            '!.git/',
+            '!.git/HEAD',
+            '!.git/packed-refs',
+            '!.git/refs/',
+            '!.git/refs/heads/',
+            '!.git/refs/heads/**'
         ];
         const rules = dockerignore
             .split(/\r?\n/)
@@ -47,6 +53,8 @@ describe('PostgreSQL Docker startup and bootstrap', () => {
             rules.indexOf('!data/pricelists/active-pricelists.json')
         );
         expect(dockerfile).not.toMatch(/^COPY\s+\.\s/m);
+        expect(dockerfile).toContain('RUN --mount=type=bind,target=/tmp/build-context,ro');
+        expect(dockerfile).toContain('docker-build-commit.cjs');
         expect(dockerfile).toContain(
             'COPY data/pricelists/active-pricelists.json ./data/pricelists/'
         );
@@ -72,6 +80,8 @@ describe('PostgreSQL Docker startup and bootstrap', () => {
         const source = fs.readFileSync(path.join(ROOT, 'scripts', 'docker-entrypoint.sh'), 'utf8');
 
         expect(source).toContain('DATABASE_URL');
+        expect(source).toContain('/app/docker-commit.sha');
+        expect(source).toContain('export APP_COMMIT_SHA');
         expect(source).toContain('exec node dist/server.js');
 
         const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');

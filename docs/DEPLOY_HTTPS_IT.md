@@ -162,13 +162,14 @@ Zależnie od sposobu uruchomienia (ustalcie w kroku 1).
 cd <katalog-projektu>
 node scripts/deploy.mjs docker vX.Y.Z      # X.Y.Z = wersja z pliku VERSION
 # równoważnie:
-export APP_COMMIT_SHA="$(git rev-parse HEAD)"
 export APP_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 docker compose up -d --build
 docker compose ps
 docker compose logs --tail=100 app
-unset APP_COMMIT_SHA APP_GIT_BRANCH
+unset APP_GIT_BRANCH
 ```
+
+Podczas budowania Dockerfile automatycznie zapisuje SHA commita z bieżącego checkoutu w obrazie. `APP_COMMIT_SHA` można przekazać ręcznie, aby nadpisać wykryty SHA.
 
 Zakazane: `docker compose down -v` — kasuje dane.
 

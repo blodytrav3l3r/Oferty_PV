@@ -23,6 +23,12 @@ data/**
 !data/pricelists/
 data/pricelists/**
 !data/pricelists/active-pricelists.json
+!.git/
+!.git/HEAD
+!.git/packed-refs
+!.git/refs/
+!.git/refs/heads/
+!.git/refs/heads/**
 
 # Keep local configuration and generated files out of allowed trees.
 **/.env*
