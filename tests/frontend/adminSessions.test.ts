@@ -38,13 +38,27 @@ function loadDashboard(fetchImpl: any, confirmResult = true) {
                 remove(c: string) {
                     this._set.delete(c);
                 },
-                toggle() {}
+                toggle(c: string, force?: boolean) {
+                    const shouldAdd = force === undefined ? !this._set.has(c) : force;
+                    if (shouldAdd) this._set.add(c);
+                    else this._set.delete(c);
+                    return shouldAdd;
+                }
             },
-            addEventListener() {},
-            setAttribute() {},
+            _attributes: {} as Record<string, string>,
+            _listeners: {} as Record<string, (event: any) => void>,
+            addEventListener(name: string, listener: (event: any) => void) {
+                this._listeners[name] = listener;
+            },
+            dispatchEvent(event: { type: string }) {
+                this._listeners[event.type]?.(event);
+            },
+            setAttribute(name: string, value: string) {
+                this._attributes[name] = String(value);
+            },
             querySelector: () => el('child'),
-            getAttribute() {
-                return null;
+            getAttribute(name: string) {
+                return this._attributes[name] ?? null;
             }
         });
     const context: any = {
@@ -142,6 +156,62 @@ describe('pulpit admina: sesje', () => {
         html.indexOf('id="users-tiles"')
     );
 
+    it('zwija i rozwija sekcję AI/ML, pozostawiając nagłówek dostępny', () => {
+        const section = html.slice(
+            html.indexOf('<!-- AI / ML Health Dashboard -->'),
+            html.indexOf('<!-- Operacje')
+        );
+        expect(section).toContain('id="ai-dashboard-content"');
+        expect(section).toContain('aria-controls="ai-dashboard-content"');
+        expect(section).toContain('id="ml-health-container"');
+        expect(section).toContain('id="ai-dashboard-container"');
+
+        const { context } = loadDashboard(async () => okJson({}));
+        const toggle = context.document.getElementById('ai-dashboard-toggle');
+        const content = context.document.getElementById('ai-dashboard-content');
+        toggle.setAttribute('aria-expanded', 'true');
+
+        toggle.dispatchEvent({ type: 'click' });
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(toggle.getAttribute('aria-label')).toBe('Rozwiń sekcję AI / ML Dashboard');
+        expect(content.classList._set.has('hidden')).toBe(true);
+
+        toggle.dispatchEvent({ type: 'click' });
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(toggle.getAttribute('aria-label')).toBe('Zwiń sekcję AI / ML Dashboard');
+        expect(content.classList._set.has('hidden')).toBe(false);
+    });
+
+    it.each([
+        ['followup', 'Opieka nad ofertami'],
+        ['recycled', 'Numery do odzysku'],
+        ['system-config', 'Konfiguracja Systemu'],
+        ['pricelists', 'Cenniki'],
+        ['users', 'Zarządzanie Użytkownikami'],
+        ['operations', 'Operacje']
+    ])('zwija i rozwija sekcję %s', (sectionId, label) => {
+        const toggleId = `${sectionId}-toggle`;
+        const contentId = `${sectionId}-content`;
+        expect(html).toContain(`id="${toggleId}"`);
+        expect(html).toContain(`aria-controls="${contentId}"`);
+        expect(html).toContain(`id="${contentId}"`);
+
+        const { context, els } = loadDashboard(async () => okJson({}));
+        const toggle = context.document.getElementById(toggleId);
+        const content = context.document.getElementById(contentId);
+
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        toggle.dispatchEvent({ type: 'click' });
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(toggle.getAttribute('aria-label')).toBe(`Rozwiń sekcję ${label}`);
+        expect(content.classList._set.has('hidden')).toBe(true);
+
+        toggle.dispatchEvent({ type: 'click' });
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(content.classList._set.has('hidden')).toBe(false);
+        expect(els[contentId]).toBe(content);
+    });
+
     it('kafle sesji w #admin-panel, aria-live, bez nowych klas CSS', () => {
         expect(adminPanel).toContain('id="session-tiles"');
         expect(adminPanel).toContain('aria-live="polite"');
@@ -182,9 +252,18 @@ describe('pulpit admina: sesje', () => {
         });
 
         expect(els['user-display-name'].textContent).toBe('Jan Kowalski');
-        expect(els['user-display-contact'].textContent).toBe(
-            'jkowalski · jan@firma.pl · +48111222333'
-        );
+        expect(els['user-display-contact'].textContent).toBe('jan@firma.pl · +48111222333');
+        expect(html).not.toContain('id="user-display-role"');
+    });
+
+    it('hero administratora nie powiela roli w karcie profilu', async () => {
+        const { context, els } = loadDashboard(async () => okJson({}));
+
+        await context.showLoggedIn(adminUser);
+
+        expect(els['user-display-name'].textContent).toBe('Admin Szef');
+        expect(els['user-display-contact'].textContent).toBe('');
+        expect(els['user-display-contact'].classList._set.has('hidden')).toBe(true);
     });
 
     it('fail-soft: błąd /sessions → placeholdery + warn, bez toastu i bez badge', async () => {

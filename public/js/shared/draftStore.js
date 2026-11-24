@@ -2,7 +2,7 @@
 /* ===== DRAFT STORE (P1.1b) — lokalny draft formularzy, protokół docs/plans/e2-draft-review.md =====
  * Czysta warstwa danych BEZ zależności od DOM i sieci:
  * - klucz: sok_draft_v1_{userId}_{kind}_{docIdOrNew}, schemat v:1, jawny JSON (BEZ szyfrowania),
- * - allowlista pól (bez runtime, bez wellsExport, bez pól osobowych), cap 200 MB, TTL 14 dni sliding,
+ * - allowlista pól (bez runtime, bez wellsExport, bez pól osobowych), cap 200 MB, TTL 5 dni sliding,
  * - SAVED zawsze wygrywa: ten moduł nigdy nie czyta draftu przy zapisie ani go nie wysyła.
  * Wszystkie funkcje przyjmują storage (localStorage lub zamiennik) — testowalne w izolacji.
  * Efekty uboczne (toast, popup recovery, debounce) należą do draftAutosave.js, nie tutaj.
@@ -24,8 +24,8 @@ var DRAFT_MAX_BYTES = 200 * 1024 * 1024;
  */
 var DRAFT_SYNC_MAX_BYTES = 4000000;
 
-/** TTL draftu (sliding, odświeżane przy każdym zapisie): 14 dni w ms. */
-var DRAFT_TTL_MS = 14 * 24 * 3600 * 1000;
+/** TTL draftu (sliding, odświeżane przy każdym zapisie): 5 dni w ms. */
+var DRAFT_TTL_MS = 5 * 24 * 3600 * 1000;
 
 /** Dozwolone rodzaje dokumentów (osobne klucze dla rur i studni). */
 var DRAFT_KINDS = ['offer_studnie', 'order_studnie', 'offer_rury', 'order_rury'];
@@ -266,7 +266,7 @@ function normalizeDraftExit(raw) {
 }
 
 /**
- * Buduje kopertę draftu (expiresAt = updatedAt + 14 dni, sliding).
+ * Buduje kopertę draftu (expiresAt = updatedAt + 5 dni, sliding).
  * @param {object} spec {userId, kind, docId, baseVersion, payload, exit?, now?}
  * @returns {object|null} koperta lub null przy niepoprawnym wejściu
  */
@@ -329,7 +329,7 @@ function draftUserPrefix(userId) {
 
 /**
  * Backend IndexedDB dla dużych draftów (`draftIdb.js`). Brak wsparcia → null.
- * @returns {{put: Function, get: Function, keys: Function, del: Function, delPrefix: Function}|null}
+ * @returns {{put: Function, get: Function, keys: Function, del: Function, delIfValue: Function, delPrefix: Function}|null}
  */
 function draftIdbBackend() {
     var win = /** @type {any} */ (typeof window !== 'undefined' ? window : null);
@@ -394,8 +394,10 @@ function normalizeDraftRaw(raw, now, remove, key) {
     if (!parsed || typeof parsed !== 'object' || parsed.v !== DRAFT_SCHEMA_VERSION) {
         return drop(parsed && parsed.v !== undefined ? 'version' : 'invalid');
     }
+    var updatedAt = Date.parse(parsed.updatedAt);
     var exp = Date.parse(parsed.expiresAt);
-    if (isNaN(exp) || exp <= now) return drop('expired');
+    if (isNaN(updatedAt) || isNaN(exp) || exp <= now || updatedAt + DRAFT_TTL_MS <= now)
+        return drop('expired');
     if (!parsed.payload || typeof parsed.payload !== 'object') return drop('invalid');
     return { status: 'ok', draft: parsed };
 }
@@ -766,6 +768,68 @@ function sweepDrafts(storage, userId, opts) {
 }
 
 /**
+ * Sprząta wygasłe szkice wszystkich użytkowników w obu magazynach.
+ * @param {*} storage
+ * @param {object} [opts] {now?}
+ * @returns {Promise<number>} liczba usuniętych kopii
+ */
+function sweepAllDrafts(storage, opts) {
+    var now = opts && typeof opts.now === 'number' ? opts.now : Date.now();
+    var keys = [];
+    try {
+        for (var i = 0; i < storage.length; i++) {
+            var key = storage.key(i);
+            if (typeof key === 'string' && key.indexOf(DRAFT_KEY_PREFIX) === 0) keys.push(key);
+        }
+    } catch (_e) {}
+    var removed = 0;
+    keys.forEach(function (key) {
+        try {
+            var raw = storage.getItem(key);
+            if (raw === null || raw === undefined) return;
+            var result = normalizeDraftRaw(raw, now, null, key);
+            if (result.status === 'ok' || storage.getItem(key) !== raw) return;
+            storage.removeItem(key);
+            removed++;
+        } catch (_e2) {}
+    });
+
+    var idb = draftIdbBackend();
+    if (!idb || typeof idb.keys !== 'function' || typeof idb.delIfValue !== 'function')
+        return Promise.resolve(removed);
+    return Promise.resolve(idb.keys())
+        .then(function (idbKeys) {
+            return Promise.all(
+                idbKeys
+                    .filter(function (key) {
+                        return key.indexOf(DRAFT_KEY_PREFIX) === 0;
+                    })
+                    .map(function (key) {
+                        return Promise.resolve(idb.get(key)).then(function (raw) {
+                            if (raw === null || raw === undefined) return false;
+                            var result = normalizeDraftRaw(raw, now, null, key);
+                            if (result.status === 'ok') return false;
+                            try {
+                                var localRaw = storage && storage.getItem(key);
+                                if (localRaw !== null && localRaw !== undefined) {
+                                    var localResult = normalizeDraftRaw(localRaw, now, null, key);
+                                    if (localResult.status !== 'ok') storage.removeItem(key);
+                                }
+                            } catch (_e) {}
+                            return Promise.resolve(idb.delIfValue(key, raw)).then(Boolean);
+                        });
+                    })
+            );
+        })
+        .then(function (removedIdb) {
+            return removed + removedIdb.filter(Boolean).length;
+        })
+        .catch(function () {
+            return removed;
+        });
+}
+
+/**
  * Kanoniczny JSON payloadu (sortowanie kluczy + tablicy typów przejść).
  * @param {*} payload
  * @param {object} [opts] {ignoreVolatile?: boolean, ignoreWizard?: boolean}
@@ -866,8 +930,23 @@ window.draftStore = {
     removeDraft: removeDraft,
     removeUserDrafts: removeUserDrafts,
     sweepDrafts: sweepDrafts,
+    sweepAllDrafts: sweepAllDrafts,
     sweepIdbDrafts: sweepIdbDrafts,
     canonicalPayloadJson: canonicalPayloadJson,
     draftDiffersFromSaved: draftDiffersFromSaved,
     summarizeDraftCounts: summarizeDraftCounts
 };
+
+// Przeglądarka nie wykonuje kodu po zamknięciu strony. Czyścimy przy starcie,
+// po powrocie do karty i cyklicznie podczas działania aplikacji.
+function sweepExpiredDraftStorage() {
+    window.draftStore.sweepAllDrafts(window.localStorage);
+}
+
+sweepExpiredDraftStorage();
+if (typeof window.setInterval === 'function')
+    window.setInterval(sweepExpiredDraftStorage, 60 * 1000);
+if (typeof window.addEventListener === 'function') {
+    window.addEventListener('pageshow', sweepExpiredDraftStorage);
+    window.addEventListener('focus', sweepExpiredDraftStorage);
+}

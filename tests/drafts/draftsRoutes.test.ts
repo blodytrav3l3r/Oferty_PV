@@ -73,8 +73,10 @@ describe('L2 drafty — zapis i CAS', () => {
         const row = await prisma.drafts.findUnique({
             where: { userId_kind_docId: { userId: USER, kind: 'offer_rury', docId: 'o1' } }
         });
+        if (!row) throw new Error('Nowy draft nie został zapisany');
         expect(row?.version).toBe(1);
         expect(row?.baseVersion).toBe(3);
+        expect(Date.parse(row.expiresAt) - Date.parse(row.updatedAt)).toBe(5 * 24 * 3600 * 1000);
     });
 
     test('nadpisanie bez If-Match → 428, poprzednia treść nietknięta', async () => {
@@ -284,6 +286,7 @@ describe('L2 drafty — izolacja i cykl życia', () => {
     });
 
     test('wygasły draft → 404 i wiersz usunięty (leniwe TTL)', async () => {
+        const now = Date.now();
         await prisma.drafts.create({
             data: {
                 userId: USER,
@@ -293,8 +296,8 @@ describe('L2 drafty — izolacja i cykl życia', () => {
                 payload: '{"fields":{}}',
                 bytes: 14,
                 version: 1,
-                updatedAt: new Date(Date.now() - 1000).toISOString(),
-                expiresAt: new Date(Date.now() - 500).toISOString()
+                updatedAt: new Date(now - 6 * 24 * 3600 * 1000).toISOString(),
+                expiresAt: new Date(now + 24 * 24 * 3600 * 1000).toISOString()
             }
         });
         await request(app).get(url('offer_rury', 'stary')).set('x-test-user', USER).expect(404);
@@ -319,6 +322,17 @@ describe('L2 drafty — izolacja i cykl życia', () => {
                 {
                     userId: USER,
                     kind: 'offer_rury',
+                    docId: 'legacy-stary',
+                    baseVersion: null,
+                    payload: '{}',
+                    bytes: 2,
+                    version: 1,
+                    updatedAt: new Date(now - 6 * 24 * 3600 * 1000).toISOString(),
+                    expiresAt: new Date(now + 24 * 24 * 3600 * 1000).toISOString()
+                },
+                {
+                    userId: USER,
+                    kind: 'offer_rury',
                     docId: 'swiezy',
                     baseVersion: null,
                     payload: '{}',
@@ -330,7 +344,7 @@ describe('L2 drafty — izolacja i cykl życia', () => {
             ]
         });
         const removed = await sweepExpiredDrafts();
-        expect(removed).toBeGreaterThanOrEqual(1);
+        expect(removed).toBeGreaterThanOrEqual(2);
         const left = await prisma.drafts.findMany({ where: { userId: USER } });
         expect(left.map((d) => d.docId)).toEqual(['swiezy']);
     });

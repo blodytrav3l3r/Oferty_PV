@@ -195,7 +195,16 @@ function toggleSubUsersList() {
     const role = roleEl.value;
     if (role === 'pro') {
         container.classList.remove('hidden');
-        const regularUsers = adminUsers.filter((u) => u.role !== 'admin' && u.id !== editingUserId);
+        const getDisplayName = (user) =>
+            user.firstName && user.lastName ? user.firstName + ' ' + user.lastName : user.username;
+        const nameCollator = new Intl.Collator('pl', { sensitivity: 'base' });
+        const regularUsers = adminUsers
+            .filter((u) => u.role !== 'admin' && u.id !== editingUserId)
+            .sort(
+                (a, b) =>
+                    nameCollator.compare(getDisplayName(a), getDisplayName(b)) ||
+                    nameCollator.compare(a.username, b.username)
+            );
         if (regularUsers.length === 0) {
             listObj.innerHTML =
                 '<span class="text-muted">Brak innych użytkowników do przypisania</span>';
@@ -205,7 +214,7 @@ function toggleSubUsersList() {
                     (u) => `
                         <label class="sub-user-checkbox">
                             <input type="checkbox" value="${escapeHtmlAttr(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} data-csp="updateSubUsers" data-csp-args="[&quot;$el&quot;]" data-csp-on="change">
-                            ${u.firstName && u.lastName ? escapeHtml(u.firstName + ' ' + u.lastName) : escapeHtml(u.username)}
+                            ${escapeHtml(getDisplayName(u))}
                         </label>
                     `
                 )
@@ -224,6 +233,39 @@ function updateSubUsers(checkbox) {
         selectedSubUsers = selectedSubUsers.filter((id) => id !== checkbox.value);
     }
 }
+
+(function bindDashboardSectionToggles() {
+    if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
+
+    const sections = [
+        ['followup-toggle', 'followup-content', 'Opieka nad ofertami'],
+        ['recycled-toggle', 'recycled-content', 'Numery do odzysku'],
+        ['system-config-toggle', 'system-config-content', 'Konfiguracja Systemu'],
+        ['pricelists-toggle', 'pricelists-content', 'Cenniki'],
+        ['users-toggle', 'users-content', 'Zarządzanie Użytkownikami'],
+        ['ai-dashboard-toggle', 'ai-dashboard-content', 'AI / ML Dashboard'],
+        ['operations-toggle', 'operations-content', 'Operacje']
+    ];
+
+    sections.forEach(([toggleId, contentId, label]) => {
+        const button = document.getElementById(toggleId);
+        const content = document.getElementById(contentId);
+        if (!button || !content || typeof button.addEventListener !== 'function') return;
+
+        const updateExpanded = (isExpanded) => {
+            const action = isExpanded ? 'Zwiń' : 'Rozwiń';
+            button.setAttribute('aria-expanded', String(isExpanded));
+            button.setAttribute('aria-label', `${action} sekcję ${label}`);
+            button.title = `${action} sekcję`;
+            content.classList.toggle('hidden', !isExpanded);
+        };
+
+        updateExpanded(button.getAttribute('aria-expanded') !== 'false');
+        button.addEventListener('click', () => {
+            updateExpanded(button.getAttribute('aria-expanded') !== 'true');
+        });
+    });
+})();
 
 window.addEventListener('DOMContentLoaded', async () => {
     const html = document.documentElement;
@@ -515,13 +557,10 @@ function showLoggedIn(user) {
     document.getElementById('user-avatar-initial').textContent = user.username
         .charAt(0)
         .toUpperCase();
-    const roleEl = document.getElementById('user-display-role');
-    roleEl.textContent = user.role.toUpperCase();
-    // Podstawowe dane kontaktowe obok nazwy — bez nich hero pokazywał tylko akcje.
+    // Górny pasek pokazuje rolę; karta profilu skupia się na nazwie i kontakcie.
     const contactEl = document.getElementById('user-display-contact');
     if (contactEl) {
         const parts = [];
-        if (user.username && user.username !== displayName) parts.push(user.username);
         if (user.email) parts.push(user.email);
         if (user.phone) parts.push(user.phone);
         contactEl.textContent = parts.join(' · ');

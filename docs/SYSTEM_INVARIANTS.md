@@ -142,8 +142,9 @@
 - **Invariant:** zapis, autosave, synchronizacja ani odzyskiwanie draftu nie mogą
   bez jawnej decyzji użytkownika doprowadzić do cichej utraty lub zastąpienia
   nowszej wersji dokumentu. Konflikt wersji wykryty i jawnie obsłużony; nieudany
-  zapis nie jest przedstawiany jako udany; lokalna kopia draftu zostaje
-  zabezpieczona do rozstrzygnięcia konfliktu; automatyczne ponowienie zapisu nie
+  zapis nie jest przedstawiany jako udany; lokalna i synchronizowana kopia
+  draftu zostaje zabezpieczona do rozstrzygnięcia konfliktu lub wygaśnięcia po
+  5 dniach bez zmian; automatyczne ponowienie zapisu nie
   omija kontroli wersji (żadnego przyjęcia nowszej rewizji bez weryfikacji);
   odtwarzanie draftu nie nadpisuje automatycznie aktualnego dokumentu.
 - **Owner:** frontend (`public/js/shared/draftStore.js`,

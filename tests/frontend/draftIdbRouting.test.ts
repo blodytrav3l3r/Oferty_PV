@@ -234,7 +234,9 @@ describe('draftStore — limit i routing backendów', () => {
         const storage = memStorage();
         const key = store.buildDraftKey('u1', 'offer_rury', 'o1');
         const draft = bigDraft(store);
-        draft.expiresAt = new Date(Date.now() - 1000).toISOString();
+        const now = Date.now();
+        draft.updatedAt = new Date(now - 6 * 24 * 3600 * 1000).toISOString();
+        draft.expiresAt = new Date(now + 8 * 24 * 3600 * 1000).toISOString();
         idb.map.set(key, JSON.stringify(draft));
         const loaded = await store.loadDraftAuto(storage, key);
         expect(loaded.status).toBe('expired');

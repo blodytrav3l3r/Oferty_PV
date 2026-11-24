@@ -154,6 +154,46 @@
     }
 
     /**
+     * Usuwa wpis tylko wtedy, gdy jego wartość nie zmieniła się od odczytu.
+     * @param {string} key
+     * @param {string} expected
+     * @returns {Promise<boolean>}
+     */
+    function delIfValue(key, expected) {
+        return openDb().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var removed = false;
+                var tx;
+                try {
+                    tx = db.transaction(STORE_NAME, 'readwrite');
+                } catch (err) {
+                    reject(err);
+                    return;
+                }
+                tx.oncomplete = function () {
+                    resolve(removed);
+                };
+                tx.onerror = function () {
+                    reject(tx.error || new Error('idb-tx'));
+                };
+                tx.onabort = function () {
+                    reject(tx.error || new Error('idb-abort'));
+                };
+                var store = tx.objectStore(STORE_NAME);
+                var req = store.get(key);
+                req.onsuccess = function () {
+                    if (req.result !== expected) return;
+                    store.delete(key);
+                    removed = true;
+                };
+                req.onerror = function () {
+                    reject(req.error || new Error('idb-read'));
+                };
+            });
+        });
+    }
+
+    /**
      * Usuwa wszystkie klucze z prefiksem (logout / „Odrzuć wszystkie”).
      * @param {string} prefix
      * @returns {Promise<number>} liczba usuniętych
@@ -181,6 +221,7 @@
         get: get,
         keys: keys,
         del: del,
+        delIfValue: delIfValue,
         delPrefix: delPrefix
     };
 })();

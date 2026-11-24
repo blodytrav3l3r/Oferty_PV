@@ -574,11 +574,10 @@
         var route = getRoute(user);
         var hasData = list.length > 0 || !!route;
         var sub = list.length
-            ? 'Kopie lokalne w tej przeglądarce'
+            ? 'Kopie lokalne w tej przeglądarce · ' + countLabel(list.length)
             : route
               ? 'Ostatnia trasa: ' + route.label
               : 'Brak szkiców do wznowienia';
-        var badge = list.length ? countLabel(list.length) : route ? 'Ostatnia trasa' : '';
         box.innerHTML =
             '<button type="button" class="launch-card resume" data-resume-action="open"' +
             (hasData ? ' aria-haspopup="dialog"' : ' disabled') +
@@ -590,7 +589,6 @@
             esc(sub) +
             '</span>' +
             '</span>' +
-            (badge ? '<span class="resume-count">' + esc(badge) + '</span>' : '') +
             '<i data-lucide="chevron-right" class="resume-chevron icon-14" aria-hidden="true"></i>' +
             '</button>';
         paintIcons(box);
@@ -649,6 +647,8 @@
             'aria-hidden="true"></i></button>' +
             '</div>' +
             '<p class="resume-modal-hint">Kopie zapisane lokalnie w tej przeglądarce. ' +
+            'Szkice i ostatnia trasa wygasają po 5 dniach bez zmian. ' +
+            'Przeterminowane dane lokalne są usuwane podczas pracy aplikacji lub przy jej kolejnym uruchomieniu. ' +
             'Nazwy firmy i obiektu są pobierane z serwera tylko na czas wyświetlenia. ' +
             'Usunięcie szkicu nie usuwa zapisanej oferty.</p>' +
             '<ul class="resume-list">' +

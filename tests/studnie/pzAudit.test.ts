@@ -68,13 +68,19 @@ describe('auditPzElementKeyMismatch — klasyfikacja i dedupe', () => {
 
     test('osierocone PZ — WARN + wpis do pzAuditMismatches + toast raz', () => {
         const { sandbox, warnings, toasts } = loadAudit();
-        sandbox.runAudit([po], [{ id: 'well-1', config: [{ _elemId: 'x' }] }], []);
+        const anotherPo = { ...po, id: 'po2', productionOrderNumber: 'SA/N/00002/26' };
+        sandbox.runAudit([po, anotherPo], [{ id: 'well-1', config: [{ _elemId: 'x' }] }], []);
         expect(warnings.some((w: any[]) => String(w[1]).includes('nie pasuje'))).toBe(true);
-        expect(sandbox.window.pzAuditMismatches).toHaveLength(1);
+        expect(sandbox.window.pzAuditMismatches).toHaveLength(2);
         expect(toasts).toHaveLength(1);
+        expect(toasts[0]).toBe(
+            '<i data-lucide="alert-triangle"></i> 2 zlecenie(nia) wskazuje na usunięty/zmieniony element. Zweryfikuj w zakładce Zlecenia.'
+        );
+        expect(toasts[0]).not.toContain(po.productionOrderNumber);
+        expect(toasts[0]).not.toContain(anotherPo.productionOrderNumber);
         // drugi przebieg — dedupe: bez nowego warna i bez toastów
         const before = warnings.length;
-        sandbox.runAudit([po], [{ id: 'well-1', config: [{ _elemId: 'x' }] }], []);
+        sandbox.runAudit([po, anotherPo], [{ id: 'well-1', config: [{ _elemId: 'x' }] }], []);
         expect(warnings.length).toBe(before);
         expect(toasts).toHaveLength(1);
     });

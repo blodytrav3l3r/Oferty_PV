@@ -8,7 +8,7 @@
  *
  * Kontrakt:
  * - zapisujemy tylko trasy znanych modułów SPA, bez parametrów przejściowych,
- * - rekord ma wersję i termin ważności (30 dni), więc stary format jest ignorowany,
+ * - rekord ma wersję i termin ważności (5 dni), więc stary format jest ignorowany,
  * - nic nie jest przywracane automatycznie: link wymaga kliknięcia.
  */
 (function () {
@@ -16,7 +16,7 @@
 
     var KEY_PREFIX = 'sok_last_route_v1_';
     var SCHEMA_VERSION = 1;
-    var TTL_MS = 30 * 24 * 60 * 60 * 1000;
+    var TTL_MS = 5 * 24 * 60 * 60 * 1000;
     /** Parametry panelu/modału — nie opisują trasy, nie zapisujemy ich. */
     var TRANSIENT = ['panel', 'pvtype', 'version', 'against', 'tab'];
     var LABELS = {
@@ -133,9 +133,16 @@
             typeof parsed.updatedAt === 'string' &&
             typeof parsed.expiresAt === 'string';
         if (valid) {
+            var updatedAt = Date.parse(parsed.updatedAt);
             var expiresAt = Date.parse(parsed.expiresAt);
             var normalized = normalizeHash(parsed.hash);
-            if (!isNaN(expiresAt) && expiresAt > now && normalized === parsed.hash)
+            if (
+                !isNaN(updatedAt) &&
+                updatedAt + TTL_MS > now &&
+                !isNaN(expiresAt) &&
+                expiresAt > now &&
+                normalized === parsed.hash
+            )
                 return {
                     hash: parsed.hash,
                     label: labelFor(parsed.hash),
@@ -157,14 +164,46 @@
         } catch (_e) {}
     }
 
+    /** @param {object} [opts] {now?} */
+    function sweepExpired(opts) {
+        var now = opts && typeof opts.now === 'number' ? opts.now : Date.now();
+        var keys = [];
+        try {
+            for (var i = 0; i < window.localStorage.length; i++) {
+                var key = window.localStorage.key(i);
+                if (typeof key === 'string' && key.indexOf(KEY_PREFIX) === 0) keys.push(key);
+            }
+        } catch (_e) {
+            return 0;
+        }
+        var removed = 0;
+        keys.forEach(function (key) {
+            var userId = key.slice(KEY_PREFIX.length);
+            if (userId && get({ id: userId }, { now: now }) === null) removed++;
+        });
+        return removed;
+    }
+
     window.lastRoute = {
         KEY_PREFIX: KEY_PREFIX,
         TTL_MS: TTL_MS,
         save: save,
         get: get,
+        sweepExpired: sweepExpired,
         clear: clear,
         normalizeHash: normalizeHash
     };
+
+    function sweepExpiredRoutes() {
+        sweepExpired();
+    }
+
+    sweepExpiredRoutes();
+    if (typeof window.setInterval === 'function') window.setInterval(sweepExpiredRoutes, 60 * 1000);
+    if (typeof window.addEventListener === 'function') {
+        window.addEventListener('pageshow', sweepExpiredRoutes);
+        window.addEventListener('focus', sweepExpiredRoutes);
+    }
 
     // Trasa zapisana także przy opuszczaniu strony: pierwsza nawigacja bywa
     // szybsza niż ustalenie sesji, więc bez tego pojedyncza wizyta w module

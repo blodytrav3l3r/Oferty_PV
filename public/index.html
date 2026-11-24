@@ -207,14 +207,13 @@
                         <div class="user-avatar" id="user-avatar-initial">?</div>
                         <div class="user-info-text">
                             <span class="user-display-name" id="user-display-name">...</span>
-                            <span class="user-display-role-badge" id="user-display-role">...</span>
                             <span class="user-display-contact" id="user-display-contact"></span>
                         </div>
                     </div>
                     <div class="user-actions">
                         <button
                             type="button"
-                            class="btn btn-secondary btn-sm"
+                            class="btn btn-secondary user-password-button"
                             data-idx="showChangePassword"
                         >
                             <i data-lucide="key"></i> Hasło
@@ -259,7 +258,9 @@
 
                 <!-- Opieka nad ofertami (cockpit: akcja + radar) -->
                 <div id="followup-panel" class="admin-container">
-                    <div class="admin-section-title">
+                    <div
+                        class="admin-section-title admin-section-title--collapsible admin-section-title--care"
+                    >
                         <div class="admin-title-group">
                             <h3><i data-lucide="phone"></i> Opieka nad ofertami</h3>
                             <span id="care-task-count" class="ops-pill" aria-live="polite"></span>
@@ -305,421 +306,465 @@
                                 >Otwórz kartotekę</a
                             >
                         </div>
+                        <button
+                            type="button"
+                            id="followup-toggle"
+                            class="btn-icon admin-section-toggle"
+                            aria-expanded="true"
+                            aria-controls="followup-content"
+                            aria-label="Zwiń sekcję Opieka nad ofertami"
+                            title="Zwiń sekcję"
+                        >
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    <div class="admin-stats-row" id="followup-stats-row">
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon danger"><i data-lucide="phone"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-stat-needs">–</div>
-                                <div class="admin-stat-label">Do kontaktu</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon pro"><i data-lucide="clock"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-stat-progress">–</div>
-                                <div class="admin-stat-label">W toku</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon user"><i data-lucide="check"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-stat-won">–</div>
-                                <div class="admin-stat-label">Wygrane</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon admin"><i data-lucide="x-circle"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-stat-lost">–</div>
-                                <div class="admin-stat-label">Utracone</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon user"><i data-lucide="percent"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-kpi-conversion">–</div>
-                                <div class="admin-stat-label">Konwersja</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon pro">
-                                <i data-lucide="hourglass"></i>
-                            </div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-kpi-first">–</div>
-                                <div class="admin-stat-label">Śr. czas do kontaktu</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="admin-stats-row" id="followup-stats-values">
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon danger">
-                                <i data-lucide="package"></i>
-                            </div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-kpi-orders-value">–</div>
-                                <div class="admin-stat-label">Wartość zamówień</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon user"><i data-lucide="trophy"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-kpi-won-value">–</div>
-                                <div class="admin-stat-label">Wygrana wartość</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon admin">
-                                <i data-lucide="banknote"></i>
-                            </div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-kpi-lost">–</div>
-                                <div class="admin-stat-label">Utracona wartość</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon pro">
-                                <i data-lucide="folder-open"></i>
-                            </div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-kpi-open-value">–</div>
-                                <div class="admin-stat-label">Otwarta wartość</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon admin"><i data-lucide="layers"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="fu-kpi-total-value">–</div>
-                                <div class="admin-stat-label">Wartość ofert</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="care-dashboard-grid">
-                        <div class="card system-card recycled-card">
-                            <div class="recycled-title-row">
-                                <div class="recycled-subtitle">
-                                    Kolejka opieki
-                                    <span
-                                        id="care-queue-count"
-                                        class="ops-pill care-count-pill"
-                                        aria-live="polite"
-                                    ></span>
+                    <div id="followup-content" class="admin-section-content">
+                        <div class="admin-stats-row" id="followup-stats-row">
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon danger">
+                                    <i data-lucide="phone"></i>
                                 </div>
-                                <div class="care-queue-head-controls">
-                                    <div class="recycled-sync" id="care-sync-text">
-                                        Ostatnia synchronizacja: —
-                                    </div>
-                                    <label class="care-sort-wrap" title="Sortowanie kolejki">
-                                        <i data-lucide="arrow-down-wide-narrow"></i>
-                                        <select
-                                            id="care-sort"
-                                            class="form-input form-input-sm"
-                                            aria-label="Sortowanie kolejki"
-                                        >
-                                            <option value="sla">Termin SLA</option>
-                                            <option value="value">Wartość</option>
-                                            <option value="client">Klient</option>
-                                        </select>
-                                    </label>
-                                    <div
-                                        class="care-view-visual"
-                                        id="care-view"
-                                        role="group"
-                                        aria-label="Widok kolejki"
-                                    >
-                                        <button
-                                            type="button"
-                                            class="btn-icon care-view-btn"
-                                            data-care-view="grid"
-                                            aria-pressed="false"
-                                            aria-label="Widok siatki"
-                                            title="Siatka"
-                                        >
-                                            <i data-lucide="layout-grid"></i>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn-icon care-view-btn"
-                                            data-care-view="list"
-                                            aria-pressed="true"
-                                            aria-label="Widok listy"
-                                            title="Lista"
-                                        >
-                                            <i data-lucide="list"></i>
-                                        </button>
-                                    </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-stat-needs">–</div>
+                                    <div class="admin-stat-label">Do kontaktu</div>
                                 </div>
                             </div>
-                            <div class="recycled-desc">
-                                Oferty oczekujące na podjęcie lub kolejny kontakt handlowy
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon pro"><i data-lucide="clock"></i></div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-stat-progress">–</div>
+                                    <div class="admin-stat-label">W toku</div>
+                                </div>
                             </div>
-                            <div class="care-queue-filters" role="group" aria-label="Filtr kolejki">
-                                <button
-                                    type="button"
-                                    class="btn btn-sm ka-pill care-queue-filter-btn active"
-                                    data-queue-filter="all"
-                                    aria-pressed="true"
-                                >
-                                    Wszystkie
-                                </button>
-                                <label
-                                    class="care-sort-wrap care-search-wrap"
-                                    title="Szukaj w kolejce"
-                                >
-                                    <i data-lucide="search"></i>
-                                    <input
-                                        id="care-queue-search"
-                                        class="form-input form-input-sm"
-                                        type="search"
-                                        placeholder="Szukaj: numer, klient, obiekt…"
-                                        aria-label="Szukaj w kolejce opieki"
-                                        aria-controls="care-queue-list"
-                                        autocomplete="off"
-                                        maxlength="100"
-                                    />
-                                </label>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
-                                    data-queue-filter="urgent"
-                                    aria-pressed="false"
-                                >
-                                    Pilne
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
-                                    data-queue-filter="today"
-                                    aria-pressed="false"
-                                >
-                                    Dzisiaj
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
-                                    data-queue-filter="paused"
-                                    aria-pressed="false"
-                                >
-                                    Wstrzymane
-                                </button>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon user"><i data-lucide="check"></i></div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-stat-won">–</div>
+                                    <div class="admin-stat-label">Wygrane</div>
+                                </div>
                             </div>
-                            <div
-                                class="care-status-filters"
-                                role="group"
-                                aria-label="Status ofert w kolejce"
-                            >
-                                <span class="care-status-label">Status:</span>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill"
-                                    id="care-filters-reset"
-                                >
-                                    Resetuj filtry
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm ka-pill care-status-filter-btn active"
-                                    data-care-status="all"
-                                    aria-pressed="true"
-                                    aria-controls="care-queue-list"
-                                >
-                                    Wszystkie
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
-                                    data-care-status="contact"
-                                    aria-pressed="false"
-                                    aria-controls="care-queue-list"
-                                >
-                                    Do kontaktu
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
-                                    data-care-status="progress"
-                                    aria-pressed="false"
-                                    aria-controls="care-queue-list"
-                                >
-                                    W toku
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
-                                    data-care-status="won"
-                                    aria-pressed="false"
-                                    aria-controls="care-queue-list"
-                                >
-                                    Wygrane
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
-                                    data-care-status="lost"
-                                    aria-pressed="false"
-                                    aria-controls="care-queue-list"
-                                >
-                                    Utracone
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
-                                    data-care-status="abandoned"
-                                    aria-pressed="false"
-                                    aria-controls="care-queue-list"
-                                >
-                                    Porzucone
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
-                                    data-care-status="favorites"
-                                    aria-pressed="false"
-                                    aria-controls="care-queue-list"
-                                >
-                                    Ulubione
-                                </button>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon admin">
+                                    <i data-lucide="x-circle"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-stat-lost">–</div>
+                                    <div class="admin-stat-label">Utracone</div>
+                                </div>
                             </div>
-                            <div
-                                id="care-queue-miss"
-                                class="care-queue-miss"
-                                role="status"
-                                hidden
-                            ></div>
-                            <div id="care-queue-list" class="recycled-list">
-                                <span class="recycled-empty">Ładowanie…</span>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon user">
+                                    <i data-lucide="percent"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-kpi-conversion">–</div>
+                                    <div class="admin-stat-label">Konwersja</div>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon pro">
+                                    <i data-lucide="hourglass"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-kpi-first">–</div>
+                                    <div class="admin-stat-label">Śr. czas do kontaktu</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="care-side-col">
+                        <div class="admin-stats-row" id="followup-stats-values">
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon danger">
+                                    <i data-lucide="package"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-kpi-orders-value">–</div>
+                                    <div class="admin-stat-label">Wartość zamówień</div>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon user"><i data-lucide="trophy"></i></div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-kpi-won-value">–</div>
+                                    <div class="admin-stat-label">Wygrana wartość</div>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon admin">
+                                    <i data-lucide="banknote"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-kpi-lost">–</div>
+                                    <div class="admin-stat-label">Utracona wartość</div>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon pro">
+                                    <i data-lucide="folder-open"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-kpi-open-value">–</div>
+                                    <div class="admin-stat-label">Otwarta wartość</div>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon admin">
+                                    <i data-lucide="layers"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="fu-kpi-total-value">–</div>
+                                    <div class="admin-stat-label">Wartość ofert</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="care-dashboard-grid">
                             <div class="card system-card recycled-card">
                                 <div class="recycled-title-row">
                                     <div class="recycled-subtitle">
-                                        Centrum powiadomień
+                                        Kolejka opieki
                                         <span
-                                            id="care-notif-count"
-                                            class="ops-pill ops-err"
+                                            id="care-queue-count"
+                                            class="ops-pill care-count-pill"
                                             aria-live="polite"
-                                            title="Nieprzeczytane powiadomienia z wybranej skrzynki"
                                         ></span>
                                     </div>
+                                    <div class="care-queue-head-controls">
+                                        <div class="recycled-sync" id="care-sync-text">
+                                            Ostatnia synchronizacja: —
+                                        </div>
+                                        <label class="care-sort-wrap" title="Sortowanie kolejki">
+                                            <i data-lucide="arrow-down-wide-narrow"></i>
+                                            <select
+                                                id="care-sort"
+                                                class="form-input form-input-sm"
+                                                aria-label="Sortowanie kolejki"
+                                            >
+                                                <option value="sla">Termin SLA</option>
+                                                <option value="value">Wartość</option>
+                                                <option value="client">Klient</option>
+                                            </select>
+                                        </label>
+                                        <div
+                                            class="care-view-visual"
+                                            id="care-view"
+                                            role="group"
+                                            aria-label="Widok kolejki"
+                                        >
+                                            <button
+                                                type="button"
+                                                class="btn-icon care-view-btn"
+                                                data-care-view="grid"
+                                                aria-pressed="false"
+                                                aria-label="Widok siatki"
+                                                title="Siatka"
+                                            >
+                                                <i data-lucide="layout-grid"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-icon care-view-btn"
+                                                data-care-view="list"
+                                                aria-pressed="true"
+                                                aria-label="Widok listy"
+                                                title="Lista"
+                                            >
+                                                <i data-lucide="list"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="recycled-desc">
+                                    Oferty oczekujące na podjęcie lub kolejny kontakt handlowy
+                                </div>
+                                <div
+                                    class="care-queue-filters"
+                                    role="group"
+                                    aria-label="Filtr kolejki"
+                                >
                                     <button
                                         type="button"
-                                        class="admin-stat-card care-notif-clear-tile"
-                                        id="care-notif-clear"
-                                        title="Oznacz wszystkie powiadomienia jako przeczytane"
-                                        aria-label="Wyczyść wszystko"
+                                        class="btn btn-sm ka-pill care-queue-filter-btn active"
+                                        data-queue-filter="all"
+                                        aria-pressed="true"
                                     >
-                                        <span class="admin-stat-icon admin" aria-hidden="true"
-                                            ><i data-lucide="check-check"></i
-                                        ></span>
-                                        <span class="admin-stat-info">
-                                            <span class="admin-stat-label">Wyczyść wszystko</span>
-                                        </span>
+                                        Wszystkie
+                                    </button>
+                                    <label
+                                        class="care-sort-wrap care-search-wrap"
+                                        title="Szukaj w kolejce"
+                                    >
+                                        <i data-lucide="search"></i>
+                                        <input
+                                            id="care-queue-search"
+                                            class="form-input form-input-sm"
+                                            type="search"
+                                            placeholder="Szukaj: numer, klient, obiekt…"
+                                            aria-label="Szukaj w kolejce opieki"
+                                            aria-controls="care-queue-list"
+                                            autocomplete="off"
+                                            maxlength="100"
+                                        />
+                                    </label>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
+                                        data-queue-filter="urgent"
+                                        aria-pressed="false"
+                                    >
+                                        Pilne
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
+                                        data-queue-filter="today"
+                                        aria-pressed="false"
+                                    >
+                                        Dzisiaj
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
+                                        data-queue-filter="paused"
+                                        aria-pressed="false"
+                                    >
+                                        Wstrzymane
                                     </button>
                                 </div>
-                                <div id="care-notif-list" class="recycled-list">
-                                    <span class="recycled-empty">Brak nowych powiadomień.</span>
+                                <div
+                                    class="care-status-filters"
+                                    role="group"
+                                    aria-label="Status ofert w kolejce"
+                                >
+                                    <span class="care-status-label">Status:</span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill"
+                                        id="care-filters-reset"
+                                    >
+                                        Resetuj filtry
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm ka-pill care-status-filter-btn active"
+                                        data-care-status="all"
+                                        aria-pressed="true"
+                                        aria-controls="care-queue-list"
+                                    >
+                                        Wszystkie
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                        data-care-status="contact"
+                                        aria-pressed="false"
+                                        aria-controls="care-queue-list"
+                                    >
+                                        Do kontaktu
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                        data-care-status="progress"
+                                        aria-pressed="false"
+                                        aria-controls="care-queue-list"
+                                    >
+                                        W toku
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                        data-care-status="won"
+                                        aria-pressed="false"
+                                        aria-controls="care-queue-list"
+                                    >
+                                        Wygrane
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                        data-care-status="lost"
+                                        aria-pressed="false"
+                                        aria-controls="care-queue-list"
+                                    >
+                                        Utracone
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                        data-care-status="abandoned"
+                                        aria-pressed="false"
+                                        aria-controls="care-queue-list"
+                                    >
+                                        Porzucone
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary ka-pill care-status-filter-btn"
+                                        data-care-status="favorites"
+                                        aria-pressed="false"
+                                        aria-controls="care-queue-list"
+                                    >
+                                        Ulubione
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="card system-card recycled-card">
-                                <div class="recycled-title-row">
-                                    <div class="recycled-subtitle">
-                                        Pilność kolejek
-                                        <span
-                                            id="care-buckets-total"
-                                            class="ops-pill ops-ok"
-                                        ></span>
-                                    </div>
-                                    <div class="recycled-sync">Wskaźniki portfela</div>
-                                </div>
-                                <div id="care-buckets" class="recycled-list">
+                                <div
+                                    id="care-queue-miss"
+                                    class="care-queue-miss"
+                                    role="status"
+                                    hidden
+                                ></div>
+                                <div id="care-queue-list" class="recycled-list">
                                     <span class="recycled-empty">Ładowanie…</span>
                                 </div>
-                                <div class="care-buckets-foot">
-                                    <span id="care-buckets-top"
-                                        ><i data-lucide="circle-alert"></i> Najwyższy priorytet:
-                                        —</span
-                                    >
-                                    <span id="care-buckets-share"></span>
+                            </div>
+                            <div class="care-side-col">
+                                <div class="card system-card recycled-card">
+                                    <div class="recycled-title-row">
+                                        <div class="recycled-subtitle">
+                                            Centrum powiadomień
+                                            <span
+                                                id="care-notif-count"
+                                                class="ops-pill ops-err"
+                                                aria-live="polite"
+                                                title="Nieprzeczytane powiadomienia z wybranej skrzynki"
+                                            ></span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            class="admin-stat-card care-notif-clear-tile"
+                                            id="care-notif-clear"
+                                            title="Oznacz wszystkie powiadomienia jako przeczytane"
+                                            aria-label="Wyczyść wszystko"
+                                        >
+                                            <span class="admin-stat-icon admin" aria-hidden="true"
+                                                ><i data-lucide="check-check"></i
+                                            ></span>
+                                            <span class="admin-stat-info">
+                                                <span class="admin-stat-label"
+                                                    >Wyczyść wszystko</span
+                                                >
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <div id="care-notif-list" class="recycled-list">
+                                        <span class="recycled-empty">Brak nowych powiadomień.</span>
+                                    </div>
+                                </div>
+                                <div class="card system-card recycled-card">
+                                    <div class="recycled-title-row">
+                                        <div class="recycled-subtitle">
+                                            Pilność kolejek
+                                            <span
+                                                id="care-buckets-total"
+                                                class="ops-pill ops-ok"
+                                            ></span>
+                                        </div>
+                                        <div class="recycled-sync">Wskaźniki portfela</div>
+                                    </div>
+                                    <div id="care-buckets" class="recycled-list">
+                                        <span class="recycled-empty">Ładowanie…</span>
+                                    </div>
+                                    <div class="care-buckets-foot">
+                                        <span id="care-buckets-top"
+                                            ><i data-lucide="circle-alert"></i> Najwyższy priorytet:
+                                            —</span
+                                        >
+                                        <span id="care-buckets-share"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <details class="card system-card recycled-card" id="care-sla-box" hidden>
-                        <summary class="recycled-subtitle">
-                            Progi SLA (konfiguracja admin)
-                            <span class="ops-pill">Parametry systemu CRM</span>
-                            <span class="recycled-sync care-sla-hint"
-                                >Kliknij, aby rozwinąć ustawienia eskalacji</span
-                            >
-                        </summary>
-                        <div class="fu-form-grid">
-                            <label>
-                                Zakres progów
-                                <select
-                                    id="care-sla-scope"
-                                    class="form-input form-input-sm"
-                                    aria-label="Zakres progów SLA"
+                        <details class="card system-card recycled-card" id="care-sla-box" hidden>
+                            <summary class="recycled-subtitle">
+                                Progi SLA (konfiguracja admin)
+                                <span class="ops-pill">Parametry systemu CRM</span>
+                                <span class="recycled-sync care-sla-hint"
+                                    >Kliknij, aby rozwinąć ustawienia eskalacji</span
                                 >
-                                    <option value="mine">Moje</option>
-                                </select>
-                            </label>
-                            <label>
-                                Pierwszy kontakt (h)
-                                <input
-                                    type="number"
-                                    id="care-sla-first"
-                                    class="form-input form-input-sm"
-                                    min="1"
-                                    max="720"
-                                    step="1"
-                                />
-                            </label>
-                            <label>
-                                Zaległość (dni)
-                                <input
-                                    type="number"
-                                    id="care-sla-stale"
-                                    class="form-input form-input-sm"
-                                    min="1"
-                                    max="90"
-                                    step="1"
-                                />
-                            </label>
-                            <label>
-                                Eskalacja (h)
-                                <input
-                                    type="number"
-                                    id="care-sla-esc"
-                                    class="form-input form-input-sm"
-                                    min="1"
-                                    max="720"
-                                    step="1"
-                                />
-                            </label>
-                        </div>
-                        <div class="fu-form-actions">
-                            <button type="button" class="btn btn-sm btn-primary" id="care-sla-save">
-                                Zapisz progi
-                            </button>
-                        </div>
-                    </details>
+                            </summary>
+                            <div class="fu-form-grid">
+                                <label>
+                                    Zakres progów
+                                    <select
+                                        id="care-sla-scope"
+                                        class="form-input form-input-sm"
+                                        aria-label="Zakres progów SLA"
+                                    >
+                                        <option value="mine">Moje</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    Pierwszy kontakt (h)
+                                    <input
+                                        type="number"
+                                        id="care-sla-first"
+                                        class="form-input form-input-sm"
+                                        min="1"
+                                        max="720"
+                                        step="1"
+                                    />
+                                </label>
+                                <label>
+                                    Zaległość (dni)
+                                    <input
+                                        type="number"
+                                        id="care-sla-stale"
+                                        class="form-input form-input-sm"
+                                        min="1"
+                                        max="90"
+                                        step="1"
+                                    />
+                                </label>
+                                <label>
+                                    Eskalacja (h)
+                                    <input
+                                        type="number"
+                                        id="care-sla-esc"
+                                        class="form-input form-input-sm"
+                                        min="1"
+                                        max="720"
+                                        step="1"
+                                    />
+                                </label>
+                            </div>
+                            <div class="fu-form-actions">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-primary"
+                                    id="care-sla-save"
+                                >
+                                    Zapisz progi
+                                </button>
+                            </div>
+                        </details>
+                    </div>
                 </div>
 
                 <!-- Recycled Numbers Widget -->
                 <div id="recycled-panel" class="admin-container">
-                    <div class="admin-section-title">
+                    <div class="admin-section-title admin-section-title--collapsible">
                         <div class="admin-title-group">
                             <h3><i data-lucide="recycle"></i> Numery do odzysku</h3>
                         </div>
+                        <button
+                            type="button"
+                            id="recycled-toggle"
+                            class="btn-icon admin-section-toggle"
+                            aria-expanded="true"
+                            aria-controls="recycled-content"
+                            aria-label="Zwiń sekcję Numery do odzysku"
+                            title="Zwiń sekcję"
+                        >
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    <div class="card system-card recycled-card">
-                        <div class="recycled-subtitle">
-                            Gotowe do użycia przy następnym zleceniu
-                        </div>
-                        <div id="recycled-numbers-list" class="recycled-list">
-                            <span class="recycled-empty">Brak odzyskanych numerów.</span>
+                    <div id="recycled-content" class="admin-section-content">
+                        <div class="card system-card recycled-card">
+                            <div class="recycled-subtitle">
+                                Gotowe do użycia przy następnym zleceniu
+                            </div>
+                            <div id="recycled-numbers-list" class="recycled-list">
+                                <span class="recycled-empty">Brak odzyskanych numerów.</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -727,275 +772,353 @@
                 <!-- Admin Panel Section -->
                 <div id="admin-panel" class="admin-container hidden">
                     <!-- System Config Widget -->
-                    <div class="admin-section-title">
+                    <div class="admin-section-title admin-section-title--collapsible">
                         <div class="admin-title-group">
                             <h3><i data-lucide="settings"></i> Konfiguracja Systemu</h3>
                         </div>
+                        <button
+                            type="button"
+                            id="system-config-toggle"
+                            class="btn-icon admin-section-toggle"
+                            aria-expanded="true"
+                            aria-controls="system-config-content"
+                            aria-label="Zwiń sekcję Konfiguracja Systemu"
+                            title="Zwiń sekcję"
+                        >
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
                     </div>
-
-                    <div class="card system-card sysconfig-card">
-                        <div class="sysconfig-current">
-                            <span class="sysconfig-icon"><i data-lucide="calendar"></i></span>
-                            <div class="sysconfig-info">
-                                <span class="sysconfig-label">Litera roku</span>
-                                <span id="year-letter-preview" class="token-badge sysconfig-preview"
-                                    >-</span
-                                >
-                            </div>
-                        </div>
-                        <div class="sysconfig-edit">
-                            <span id="year-letter-year" class="sysconfig-year"></span>
-                            <input
-                                type="text"
-                                id="year-letter-input"
-                                maxlength="1"
-                                class="sysconfig-input"
-                                aria-label="Nowa litera roku"
-                            />
-                            <button
-                                type="button"
-                                class="btn btn-primary btn-sm"
-                                data-idx="saveYearLetter"
-                            >
-                                Zapisz
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="card system-card sysconfig-card">
-                        <div class="sysconfig-current">
-                            <span class="sysconfig-icon"><i data-lucide="warehouse"></i></span>
-                            <div class="sysconfig-info">
-                                <span class="sysconfig-label">Kody magazynów</span>
-                                <span id="mag-codes-preview" class="token-badge sysconfig-preview"
-                                    >-</span
-                                >
-                            </div>
-                        </div>
-                        <div class="sysconfig-edit sysconfig-codes-compact">
-                            <div class="sysconfig-code-group">
-                                <span class="sysconfig-section-tag">Dennica</span>
-                                <div class="sysconfig-code-pair">
-                                    <span class="sysconfig-mini-label">WŁ</span>
-                                    <input
-                                        type="text"
-                                        id="mag-den-wl"
-                                        maxlength="20"
-                                        class="sysconfig-code-input"
-                                        placeholder="WL"
-                                        aria-label="Kod Włocławek dla dennicy"
-                                    />
-                                    <span class="sysconfig-mini-label">KLB</span>
-                                    <input
-                                        type="text"
-                                        id="mag-den-klb"
-                                        maxlength="20"
-                                        class="sysconfig-code-input"
-                                        placeholder="M0"
-                                        aria-label="Kod Kluczbork dla dennicy"
-                                    />
+                    <div id="system-config-content" class="admin-section-content">
+                        <div class="card system-card sysconfig-card">
+                            <div class="sysconfig-current">
+                                <span class="sysconfig-icon"><i data-lucide="calendar"></i></span>
+                                <div class="sysconfig-info">
+                                    <span class="sysconfig-label">Litera roku</span>
+                                    <span
+                                        id="year-letter-preview"
+                                        class="token-badge sysconfig-preview"
+                                        >-</span
+                                    >
                                 </div>
                             </div>
-                            <div class="sysconfig-code-group">
-                                <span class="sysconfig-section-tag">Nadbudowa</span>
-                                <div class="sysconfig-code-pair">
-                                    <span class="sysconfig-mini-label">WŁ</span>
-                                    <input
-                                        type="text"
-                                        id="mag-nad-wl"
-                                        maxlength="20"
-                                        class="sysconfig-code-input"
-                                        placeholder="WL"
-                                        aria-label="Kod Włocławek dla nadbudowy"
-                                    />
-                                    <span class="sysconfig-mini-label">KLB</span>
-                                    <input
-                                        type="text"
-                                        id="mag-nad-klb"
-                                        maxlength="20"
-                                        class="sysconfig-code-input"
-                                        placeholder="M0"
-                                        aria-label="Kod Kluczbork dla nadbudowy"
-                                    />
+                            <div class="sysconfig-edit">
+                                <span id="year-letter-year" class="sysconfig-year"></span>
+                                <input
+                                    type="text"
+                                    id="year-letter-input"
+                                    maxlength="1"
+                                    class="sysconfig-input"
+                                    aria-label="Nowa litera roku"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-sm"
+                                    data-idx="saveYearLetter"
+                                >
+                                    Zapisz
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card system-card sysconfig-card">
+                            <div class="sysconfig-current">
+                                <span class="sysconfig-icon"><i data-lucide="warehouse"></i></span>
+                                <div class="sysconfig-info">
+                                    <span class="sysconfig-label">Kody magazynów</span>
+                                    <span
+                                        id="mag-codes-preview"
+                                        class="token-badge sysconfig-preview"
+                                        >-</span
+                                    >
                                 </div>
                             </div>
-                            <button
-                                type="button"
-                                class="btn btn-primary btn-sm"
-                                data-idx="saveMagazynCodes"
-                            >
-                                Zapisz
-                            </button>
+                            <div class="sysconfig-edit sysconfig-codes-compact">
+                                <div class="sysconfig-code-group">
+                                    <span class="sysconfig-section-tag">Dennica</span>
+                                    <div class="sysconfig-code-pair">
+                                        <span class="sysconfig-mini-label">WŁ</span>
+                                        <input
+                                            type="text"
+                                            id="mag-den-wl"
+                                            maxlength="20"
+                                            class="sysconfig-code-input"
+                                            placeholder="WL"
+                                            aria-label="Kod Włocławek dla dennicy"
+                                        />
+                                        <span class="sysconfig-mini-label">KLB</span>
+                                        <input
+                                            type="text"
+                                            id="mag-den-klb"
+                                            maxlength="20"
+                                            class="sysconfig-code-input"
+                                            placeholder="M0"
+                                            aria-label="Kod Kluczbork dla dennicy"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="sysconfig-code-group">
+                                    <span class="sysconfig-section-tag">Nadbudowa</span>
+                                    <div class="sysconfig-code-pair">
+                                        <span class="sysconfig-mini-label">WŁ</span>
+                                        <input
+                                            type="text"
+                                            id="mag-nad-wl"
+                                            maxlength="20"
+                                            class="sysconfig-code-input"
+                                            placeholder="WL"
+                                            aria-label="Kod Włocławek dla nadbudowy"
+                                        />
+                                        <span class="sysconfig-mini-label">KLB</span>
+                                        <input
+                                            type="text"
+                                            id="mag-nad-klb"
+                                            maxlength="20"
+                                            class="sysconfig-code-input"
+                                            placeholder="M0"
+                                            aria-label="Kod Kluczbork dla nadbudowy"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-sm"
+                                    data-idx="saveMagazynCodes"
+                                >
+                                    Zapisz
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Cenniki: wersje -->
-                    <div class="admin-section-title">
+                    <div class="admin-section-title admin-section-title--collapsible">
                         <div class="admin-title-group">
                             <h3><i data-lucide="layers"></i> Cenniki</h3>
                         </div>
+                        <button
+                            type="button"
+                            id="pricelists-toggle"
+                            class="btn-icon admin-section-toggle"
+                            aria-expanded="true"
+                            aria-controls="pricelists-content"
+                            aria-label="Zwiń sekcję Cenniki"
+                            title="Zwiń sekcję"
+                        >
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    <div class="admin-stats-row" id="pricelist-tiles" aria-live="polite">
-                        <a
-                            class="admin-stat-card pv-admin-tile"
-                            href="app.html#/cennik?tab=rury"
-                            title="Zarządzaj wersjami cennika rur"
-                            aria-label="Cennik rur — zarządzaj wersjami"
-                        >
-                            <div class="admin-stat-icon admin">
-                                <i data-lucide="scroll-text"></i>
-                            </div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="pv-tile-rury-version">—</div>
-                                <div class="admin-stat-label">
-                                    Rury · <span id="pv-tile-rury-date">—</span>
+                    <div id="pricelists-content" class="admin-section-content">
+                        <div class="admin-stats-row" id="pricelist-tiles" aria-live="polite">
+                            <a
+                                class="admin-stat-card pv-admin-tile"
+                                href="app.html#/cennik?tab=rury"
+                                title="Zarządzaj wersjami cennika rur"
+                                aria-label="Cennik rur — zarządzaj wersjami"
+                            >
+                                <div class="admin-stat-icon admin">
+                                    <i data-lucide="scroll-text"></i>
                                 </div>
-                                <div class="admin-stat-meta" id="pv-tile-rury-next">—</div>
-                            </div>
-                        </a>
-                        <a
-                            class="admin-stat-card pv-admin-tile"
-                            href="app.html#/cennik?tab=studnie"
-                            title="Zarządzaj wersjami cennika studni"
-                            aria-label="Cennik studni — zarządzaj wersjami"
-                        >
-                            <div class="admin-stat-icon pro"><i data-lucide="cylinder"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="pv-tile-studnie-version">—</div>
-                                <div class="admin-stat-label">
-                                    Studnie · <span id="pv-tile-studnie-date">—</span>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="pv-tile-rury-version">—</div>
+                                    <div class="admin-stat-label">
+                                        Rury · <span id="pv-tile-rury-date">—</span>
+                                    </div>
+                                    <div class="admin-stat-meta" id="pv-tile-rury-next">—</div>
                                 </div>
-                                <div class="admin-stat-meta" id="pv-tile-studnie-next">—</div>
-                            </div>
-                        </a>
-                        <a
-                            class="admin-stat-card pv-admin-tile"
-                            href="app.html#/cennik?tab=preco"
-                            title="Zarządzaj wersjami cennika PRECO"
-                            aria-label="Cennik PRECO — zarządzaj wersjami"
-                        >
-                            <div class="admin-stat-icon user"><i data-lucide="tag"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="pv-tile-preco-version">—</div>
-                                <div class="admin-stat-label">
-                                    PRECO · <span id="pv-tile-preco-date">—</span>
+                            </a>
+                            <a
+                                class="admin-stat-card pv-admin-tile"
+                                href="app.html#/cennik?tab=studnie"
+                                title="Zarządzaj wersjami cennika studni"
+                                aria-label="Cennik studni — zarządzaj wersjami"
+                            >
+                                <div class="admin-stat-icon pro">
+                                    <i data-lucide="cylinder"></i>
                                 </div>
-                                <div class="admin-stat-meta" id="pv-tile-preco-next">—</div>
-                            </div>
-                        </a>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="pv-tile-studnie-version">
+                                        —
+                                    </div>
+                                    <div class="admin-stat-label">
+                                        Studnie · <span id="pv-tile-studnie-date">—</span>
+                                    </div>
+                                    <div class="admin-stat-meta" id="pv-tile-studnie-next">—</div>
+                                </div>
+                            </a>
+                            <a
+                                class="admin-stat-card pv-admin-tile"
+                                href="app.html#/cennik?tab=preco"
+                                title="Zarządzaj wersjami cennika PRECO"
+                                aria-label="Cennik PRECO — zarządzaj wersjami"
+                            >
+                                <div class="admin-stat-icon user"><i data-lucide="tag"></i></div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="pv-tile-preco-version">—</div>
+                                    <div class="admin-stat-label">
+                                        PRECO · <span id="pv-tile-preco-date">—</span>
+                                    </div>
+                                    <div class="admin-stat-meta" id="pv-tile-preco-next">—</div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- User Management Widget -->
-                    <div class="admin-section-title">
+                    <div class="admin-section-title admin-section-title--collapsible">
                         <div class="admin-title-group">
                             <h3><i data-lucide="users"></i> Zarządzanie Użytkownikami</h3>
                         </div>
+                        <button
+                            type="button"
+                            id="users-toggle"
+                            class="btn-icon admin-section-toggle"
+                            aria-expanded="true"
+                            aria-controls="users-content"
+                            aria-label="Zwiń sekcję Zarządzanie Użytkownikami"
+                            title="Zwiń sekcję"
+                        >
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
                     </div>
-
-                    <!-- Stats Bar -->
-                    <div class="admin-stats-row" id="admin-stats-row">
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon admin"><i data-lucide="shield"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="stat-admin-count">0</div>
-                                <div class="admin-stat-label">Admin</div>
+                    <div id="users-content" class="admin-section-content">
+                        <!-- Stats Bar -->
+                        <div class="admin-stats-row" id="admin-stats-row">
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon admin">
+                                    <i data-lucide="shield"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="stat-admin-count">0</div>
+                                    <div class="admin-stat-label">Admin</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon pro"><i data-lucide="briefcase"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="stat-pro-count">0</div>
-                                <div class="admin-stat-label">Pro</div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon pro">
+                                    <i data-lucide="briefcase"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="stat-pro-count">0</div>
+                                    <div class="admin-stat-label">Pro</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon user"><i data-lucide="user"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="stat-user-count">0</div>
-                                <div class="admin-stat-label">User</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sesje: dane z GET /api/admin/sessions, fail-soft (bez toastu) -->
-                    <div class="admin-stats-row" id="session-tiles" aria-live="polite">
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon admin"><i data-lucide="activity"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="session-tile-users">—</div>
-                                <div class="admin-stat-label">Zalogowani</div>
-                                <div class="admin-stat-meta" id="session-tile-users-meta">—</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon pro">
-                                <i data-lucide="monitor"></i>
-                            </div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="session-tile-count">—</div>
-                                <div class="admin-stat-label">Aktywne sesje</div>
-                                <div class="admin-stat-meta">max 10 / konto</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="admin-stat-icon user"><i data-lucide="clock"></i></div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-value" id="session-tile-last">—</div>
-                                <div class="admin-stat-label">Ostatnia aktywność</div>
-                                <div class="admin-stat-meta" id="session-tile-last-meta">
-                                    w systemie
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon user"><i data-lucide="user"></i></div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="stat-user-count">0</div>
+                                    <div class="admin-stat-label">User</div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Sesje: dane z GET /api/admin/sessions, fail-soft (bez toastu) -->
+                        <div class="admin-stats-row" id="session-tiles" aria-live="polite">
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon admin">
+                                    <i data-lucide="activity"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="session-tile-users">—</div>
+                                    <div class="admin-stat-label">Zalogowani</div>
+                                    <div class="admin-stat-meta" id="session-tile-users-meta">
+                                        —
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon pro">
+                                    <i data-lucide="monitor"></i>
+                                </div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="session-tile-count">—</div>
+                                    <div class="admin-stat-label">Aktywne sesje</div>
+                                    <div class="admin-stat-meta">max 10 / konto</div>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="admin-stat-icon user"><i data-lucide="clock"></i></div>
+                                <div class="admin-stat-info">
+                                    <div class="admin-stat-value" id="session-tile-last">—</div>
+                                    <div class="admin-stat-label">Ostatnia aktywność</div>
+                                    <div class="admin-stat-meta" id="session-tile-last-meta">
+                                        w systemie
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Użytkownicy: kafle per konto + kafel „Nowy użytkownik" (render w loadUsers).
+                         Formularz dodawania/edycji żyje w modalu #user-modal. -->
+                        <div
+                            class="admin-users-grid"
+                            id="users-tiles"
+                            role="list"
+                            aria-live="polite"
+                        ></div>
                     </div>
 
-                    <!-- Użytkownicy: kafle per konto + kafel „Nowy użytkownik" (render w loadUsers).
-                         Formularz dodawania/edycji żyje w modalu #user-modal. -->
-                    <div
-                        class="admin-users-grid"
-                        id="users-tiles"
-                        role="list"
-                        aria-live="polite"
-                    ></div>
-
                     <!-- AI / ML Health Dashboard -->
-                    <div class="admin-section-title">
+                    <div class="admin-section-title admin-section-title--collapsible">
                         <div class="admin-title-group">
                             <h3><i data-lucide="brain-circuit"></i> AI / ML Dashboard</h3>
                         </div>
+                        <button
+                            type="button"
+                            id="ai-dashboard-toggle"
+                            class="btn-icon admin-section-toggle"
+                            aria-expanded="true"
+                            aria-controls="ai-dashboard-content"
+                            aria-label="Zwiń sekcję AI / ML Dashboard"
+                            title="Zwiń sekcję"
+                        >
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    <div class="card admin-card-padded">
-                        <div class="ai-toolbar">
-                            <button
-                                id="ai-ml-toggle-btn"
-                                class="ai-btn ai-btn-primary"
-                                type="button"
-                                aria-pressed="true"
-                                title="Włącza lub wyłącza wykonywanie operacji AI/ML (predykcje, treningi, modele). Statusy i telemetria pasywna działają dalej."
-                            >
-                                <i data-lucide="power"></i> <span>AI: ON</span>
-                            </button>
-                            <span class="text-muted"
-                                >Wyłączenie blokuje predykcje, treningi i operacje na modelach.
-                                Statusy działają dalej.</span
-                            >
+                    <div id="ai-dashboard-content" class="admin-section-content">
+                        <div class="card admin-card-padded">
+                            <div class="ai-toolbar">
+                                <button
+                                    id="ai-ml-toggle-btn"
+                                    class="ai-btn ai-btn-primary"
+                                    type="button"
+                                    aria-pressed="true"
+                                    title="Włącza lub wyłącza wykonywanie operacji AI/ML (predykcje, treningi, modele). Statusy i telemetria pasywna działają dalej."
+                                >
+                                    <i data-lucide="power"></i> <span>AI: ON</span>
+                                </button>
+                                <span class="text-muted"
+                                    >Wyłączenie blokuje predykcje, treningi i operacje na modelach.
+                                    Statusy działają dalej.</span
+                                >
+                            </div>
+                            <div id="ml-health-container"></div>
                         </div>
-                        <div id="ml-health-container"></div>
-                    </div>
-
-                    <div class="card admin-card-padded">
-                        <div id="ai-dashboard-container"></div>
+                        <div class="card admin-card-padded">
+                            <div id="ai-dashboard-container"></div>
+                        </div>
                     </div>
 
                     <!-- Operacje (P6: read-only dashboard) -->
-                    <div class="admin-section-title">
+                    <div class="admin-section-title admin-section-title--collapsible">
                         <div class="admin-title-group">
                             <h3><i data-lucide="activity"></i> Operacje</h3>
                         </div>
+                        <button
+                            type="button"
+                            id="operations-toggle"
+                            class="btn-icon admin-section-toggle"
+                            aria-expanded="true"
+                            aria-controls="operations-content"
+                            aria-label="Zwiń sekcję Operacje"
+                            title="Zwiń sekcję"
+                        >
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    <div class="card admin-card-padded">
-                        <div id="ops-container" aria-live="polite">
-                            <p class="text-muted">Ładowanie…</p>
+                    <div id="operations-content" class="admin-section-content">
+                        <div class="card admin-card-padded">
+                            <div id="ops-container" aria-live="polite">
+                                <p class="text-muted">Ładowanie…</p>
+                            </div>
                         </div>
                     </div>
                 </div>

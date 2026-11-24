@@ -33,7 +33,11 @@ function loadCtx() {
     sandbox.window.localStorage = {
         getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
         setItem: (k: string, v: string) => void store.set(k, String(v)),
-        removeItem: (k: string) => void store.delete(k)
+        removeItem: (k: string) => void store.delete(k),
+        key: (i: number) => Array.from(store.keys())[i] ?? null,
+        get length() {
+            return store.size;
+        }
     };
     sandbox.window.sessionStorage = {
         getItem: () => null,
@@ -85,6 +89,42 @@ describe('Opcja A lastRoute — ostatnia trasa', () => {
         );
         expect(lr.get({ id: 'u1' })).toBeNull();
         expect(store.has('sok_last_route_v1_u1')).toBe(false);
+    });
+
+    it('TTL: stary rekord z dawnym terminem 30 dni wygasa po 5 dniach', () => {
+        const { lr, store } = loadCtx();
+        const now = Date.now();
+        store.set(
+            'sok_last_route_v1_u1',
+            JSON.stringify({
+                v: 1,
+                hash: '#/rury',
+                updatedAt: new Date(now - 6 * 24 * 3600 * 1000).toISOString(),
+                expiresAt: new Date(now + 24 * 24 * 3600 * 1000).toISOString()
+            })
+        );
+
+        expect(lr.TTL_MS).toBe(5 * 24 * 3600 * 1000);
+        expect(lr.get({ id: 'u1' })).toBeNull();
+        expect(store.has('sok_last_route_v1_u1')).toBe(false);
+    });
+
+    it('czyści wygasłe trasy wszystkich użytkowników bez wywoływania get dla każdej z nich', () => {
+        const { lr, store } = loadCtx();
+        const now = Date.now();
+        store.set(
+            'sok_last_route_v1_u2',
+            JSON.stringify({
+                v: 1,
+                hash: '#/rury',
+                updatedAt: new Date(now - 6 * 24 * 3600 * 1000).toISOString(),
+                expiresAt: new Date(now + 24 * 24 * 3600 * 1000).toISOString()
+            })
+        );
+
+        lr.sweepExpired({ now });
+
+        expect(store.has('sok_last_route_v1_u2')).toBe(false);
     });
 
     it('uszkodzony JSON i zła wersja formatu → null bez wyjątku', () => {

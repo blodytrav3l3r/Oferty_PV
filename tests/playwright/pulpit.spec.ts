@@ -58,10 +58,16 @@ test.describe('SPA: pulpit jako moduł', () => {
         for (const sel of ['#page-loader', '.index-logo', '.subtitle']) {
             await expect(frame.locator(sel)).toBeHidden();
         }
-        // Globalny nagłówek i logout renderuje wyłącznie shell SPA.
+        // Nagłówek globalny i logout renderuje wyłącznie shell SPA; karta pokazuje dane użytkownika.
         await expect(frame.locator('#dash-header')).toHaveCount(0);
-        await expect(frame.locator('.user-profile-card')).toBeHidden();
+        await expect(frame.locator('.user-profile-card')).toBeVisible();
+        await expect(frame.locator('#user-display-name')).not.toBeEmpty();
         await expect(frame.locator('[data-idx="doLogout"]')).toBeHidden();
+        const profileBox = await frame.locator('.user-profile-card').boundingBox();
+        const passwordBox = await frame.locator('[data-idx="showChangePassword"]').boundingBox();
+        expect(profileBox).not.toBeNull();
+        expect(passwordBox).not.toBeNull();
+        expect(passwordBox.x).toBeGreaterThan(profileBox.x + profileBox.width);
         await expect(page.locator('#header-user-info')).toBeVisible();
 
         // Brak podwójnego logowania: formularz z pulpitu nie jest widoczny.

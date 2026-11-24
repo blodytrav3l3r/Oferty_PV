@@ -159,12 +159,14 @@ describe('L1 resumeDrafts — kafelek i popup „Wznów pracę"', () => {
         const box = tile(dom);
         expect(box.innerHTML).toContain('2 szkice');
         expect(box.innerHTML).toContain('Kopie lokalne w tej przeglądarce');
+        expect(box.innerHTML).not.toContain('resume-count');
         expect(box.innerHTML).not.toContain('disabled');
 
         rd.openPopup({ id: 'u1' });
         const overlay = sandbox.document.getElementById('resume-modal');
         expect(overlay.innerHTML).toContain('Oferta (Rury)');
         expect(overlay.innerHTML).toContain('Zamówienie (Studnie)');
+        expect(overlay.innerHTML).toContain('wygasają po 5 dniach bez zmian');
         expect(overlay.innerHTML).toContain('href="app.html#/rury?edit=o1"');
         expect(overlay.innerHTML).toContain('href="app.html#/studnie?order=z9"');
         expect(overlay.innerHTML).toContain('Usuń wszystkie kopie lokalne (2)');

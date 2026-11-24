@@ -50,6 +50,21 @@ function nowIso(now: number): string {
     return new Date(now).toISOString();
 }
 
+function dateValue(value: Date | string): number {
+    return value instanceof Date ? value.getTime() : Date.parse(value);
+}
+
+function isExpiredDraft(updatedAt: Date | string, expiresAt: Date | string, now: number): boolean {
+    const updatedAtMs = dateValue(updatedAt);
+    const expiresAtMs = dateValue(expiresAt);
+    return (
+        !Number.isFinite(updatedAtMs) ||
+        !Number.isFinite(expiresAtMs) ||
+        updatedAtMs + DRAFT_TTL_MS <= now ||
+        expiresAtMs <= now
+    );
+}
+
 /**
  * Usuwa wygasłe drafty użytkownika (leniwe sprzątanie przy odczycie).
  * Błąd sprzątania nie może zepsuć odczytu — loguje i idzie dalej.
@@ -57,7 +72,13 @@ function nowIso(now: number): string {
 async function sweepUserExpired(userId: string, now: number): Promise<void> {
     try {
         await prisma.drafts.deleteMany({
-            where: { userId, expiresAt: { lt: nowIso(now) } }
+            where: {
+                userId,
+                OR: [
+                    { expiresAt: { lte: nowIso(now) } },
+                    { updatedAt: { lte: nowIso(now - DRAFT_TTL_MS) } }
+                ]
+            }
         });
     } catch {
         // Odczyt ma pierwszeństwo; zaległe wiersze sprzątnie housekeeping.
@@ -99,7 +120,7 @@ export async function getDraft(
         });
         if (!row) return null;
 
-        if (row.expiresAt > nowIso(now)) {
+        if (!isExpiredDraft(row.updatedAt, row.expiresAt, now)) {
             const payload = parseDraftPayload(row.payload);
             if (payload !== undefined) {
                 return {
@@ -250,7 +271,12 @@ export async function deleteDraft(
 export async function sweepExpiredDrafts(now: number = Date.now()): Promise<number> {
     try {
         const res = await prisma.drafts.deleteMany({
-            where: { expiresAt: { lt: nowIso(now) } }
+            where: {
+                OR: [
+                    { expiresAt: { lte: nowIso(now) } },
+                    { updatedAt: { lte: nowIso(now - DRAFT_TTL_MS) } }
+                ]
+            }
         });
         return res.count;
     } catch {

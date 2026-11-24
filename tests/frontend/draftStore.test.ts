@@ -25,8 +25,8 @@ function memStorage() {
     };
 }
 
-function loadStore() {
-    const sandbox: any = { window: {}, console, URL };
+function loadStore(idb?: any) {
+    const sandbox: any = { window: { draftIdb: idb }, console, URL };
     vm.createContext(sandbox);
     vm.runInContext(readJs('shared/draftStore.js'), sandbox, { filename: 'draftStore.js' });
     return sandbox.window.draftStore;
@@ -105,6 +105,110 @@ describe('P1.1b draftStore — klucz', () => {
     });
 });
 
+describe('P1.1b draftStore — automatyczne wygasanie', () => {
+    it('usuwa wygasłe szkice wszystkich użytkowników z localStorage', async () => {
+        const store = memStorage();
+        const ds = loadStore();
+        const now = Date.now();
+        const expired = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_studnie',
+            docId: 'old',
+            payload: {},
+            now: now - 6 * 86400000
+        });
+        const current = ds.buildDraft({
+            userId: 'u2',
+            kind: 'offer_studnie',
+            docId: 'current',
+            payload: {},
+            now
+        });
+        store.setItem(ds.buildDraftKey('u1', 'offer_studnie', 'old'), JSON.stringify(expired));
+        store.setItem(ds.buildDraftKey('u2', 'offer_studnie', 'current'), JSON.stringify(current));
+
+        await ds.sweepAllDrafts(store, { now });
+
+        expect(store._keys()).toEqual([ds.buildDraftKey('u2', 'offer_studnie', 'current')]);
+    });
+
+    it('usuwa wygasłe szkice z IndexedDB', async () => {
+        const now = Date.now();
+        const expired = JSON.stringify({
+            ...loadStore().buildDraft({
+                userId: 'u1',
+                kind: 'offer_studnie',
+                docId: 'old',
+                payload: {},
+                now: now - 6 * 86400000
+            })
+        });
+        const key = 'sok_draft_v1_u1_offer_studnie_old';
+        const values = new Map([[key, expired]]);
+        const ds = loadStore({
+            put: async () => {},
+            keys: async () => Array.from(values.keys()),
+            get: async (id: string) => values.get(id) ?? null,
+            del: async (id: string) => void values.delete(id),
+            delIfValue: async (id: string, expected: string) => {
+                if (values.get(id) !== expected) return false;
+                values.delete(id);
+                return true;
+            }
+        });
+
+        await ds.sweepAllDrafts(memStorage(), { now });
+
+        expect(values.has(key)).toBe(false);
+    });
+
+    it('zachowuje szkic odświeżony między odczytem a warunkowym usunięciem IndexedDB', async () => {
+        const now = Date.now();
+        const stale = JSON.stringify(
+            loadStore().buildDraft({
+                userId: 'u1',
+                kind: 'offer_studnie',
+                docId: 'old',
+                payload: {},
+                now: now - 6 * 86400000
+            })
+        );
+        const fresh = JSON.stringify(
+            loadStore().buildDraft({
+                userId: 'u1',
+                kind: 'offer_studnie',
+                docId: 'old',
+                payload: { title: 'fresh' },
+                now
+            })
+        );
+        const key = 'sok_draft_v1_u1_offer_studnie_old';
+        const values = new Map([[key, stale]]);
+        const storage = memStorage();
+        storage.setItem(key, stale);
+        const ds = loadStore({
+            put: async () => {},
+            keys: async () => [key],
+            get: async (id: string) => {
+                const previous = values.get(id) ?? null;
+                values.set(id, fresh);
+                return previous;
+            },
+            del: async (id: string) => void values.delete(id),
+            delIfValue: async (id: string, expected: string) => {
+                if (values.get(id) !== expected) return false;
+                values.delete(id);
+                return true;
+            }
+        });
+
+        await ds.sweepAllDrafts(storage, { now });
+
+        expect(values.get(key)).toBe(fresh);
+        expect(storage.getItem(key)).toBeNull();
+    });
+});
+
 describe('P1.1b draftStore — allowlista', () => {
     it('obcina pola runtime studni i wyrzuca wellsExport oraz obce klucze', () => {
         const ds = loadStore();
@@ -166,7 +270,7 @@ describe('P1.1b draftStore — allowlista', () => {
         expect(d.payload.fields.validity).toBe('7 dni');
     });
 
-    it('koperta ma v:1, TTL 14 dni sliding, baseVersion', () => {
+    it('koperta ma v:1, TTL 5 dni sliding, baseVersion', () => {
         const ds = loadStore();
         const now = Date.parse('2026-09-01T10:00:00.000Z');
         const d = ds.buildDraft({
@@ -179,7 +283,7 @@ describe('P1.1b draftStore — allowlista', () => {
         });
         expect(d.v).toBe(1);
         expect(d.baseVersion).toBe(3);
-        expect(Date.parse(d.expiresAt) - Date.parse(d.updatedAt)).toBe(14 * 24 * 3600 * 1000);
+        expect(Date.parse(d.expiresAt) - Date.parse(d.updatedAt)).toBe(5 * 24 * 3600 * 1000);
     });
 
     it('exit: poprawny wyzwalacz zapisany, nieznany odrzucony', () => {
@@ -253,6 +357,29 @@ describe('P1.1b draftStore — cap 4 MB', () => {
 });
 
 describe('P1.1b draftStore — TTL i cleanup', () => {
+    it('usuwa starszą kopertę z dawnym TTL 14 dni po upływie 5 dni', () => {
+        const ds = loadStore();
+        const st = memStorage();
+        const now = Date.now();
+        const key = 'sok_draft_v1_u1_offer_rury_old';
+        st.setItem(
+            key,
+            JSON.stringify({
+                v: 1,
+                kind: 'offer_rury',
+                userId: 'u1',
+                docId: 'old',
+                baseVersion: null,
+                updatedAt: new Date(now - 6 * 24 * 3600 * 1000).toISOString(),
+                expiresAt: new Date(now + 8 * 24 * 3600 * 1000).toISOString(),
+                payload: {}
+            })
+        );
+
+        expect(ds.loadDraft(st, key, { now }).status).toBe('expired');
+        expect(st.getItem(key)).toBeNull();
+    });
+
     it('przeterminowany draft usuwany przy odczycie (cicho)', () => {
         const ds = loadStore();
         const st = memStorage();

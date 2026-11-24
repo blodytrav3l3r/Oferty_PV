@@ -138,13 +138,21 @@ describe('pulpit: rejestracja i nawigacja', () => {
         expect(html).not.toMatch(/<a href="index\.html" class="nav-tile"/);
     });
 
-    it('CSS chowa elementy strony wejścia i akcje globalne w trybie osadzonym', () => {
+    it('CSS chowa elementy strony wejścia i zostawia profil użytkownika w trybie osadzonym', () => {
         const css = read('public/css/index.css');
         expect(css).toContain("html[data-embedded='pulpit'] #page-loader");
         expect(css).toContain("html[data-embedded='pulpit'] #login-section");
         expect(css).toContain("html[data-embedded='pulpit'] .index-logo");
-        expect(css).toContain("html[data-embedded='pulpit'] .user-profile-card");
+        expect(css).not.toContain("html[data-embedded='pulpit'] .user-profile-card");
         expect(css).toContain("html[data-embedded='pulpit'] [data-idx='doLogout']");
+    });
+
+    it('sekcje pulpitu zachowują odstęp między kartami', () => {
+        const css = read('public/css/index.css');
+
+        expect(css).toContain('.admin-section-content {');
+        expect(css).toContain('gap: var(--tile-gap-md);');
+        expect(css).toContain('.admin-section-content > .admin-card-padded {');
     });
 
     it('dashboard zna tryb osadzony: login/redirect/nawigacja trasami shella', () => {

@@ -189,12 +189,8 @@ function auditPzElementKeyMismatch() {
     }
     if (warnCount > 0 && !_pzAuditToastShown) {
         _pzAuditToastShown = true;
-        const numbers = window.pzAuditMismatches
-            .map((m) => m.productionOrderNumber)
-            .filter(Boolean)
-            .join(', ');
         showToast(
-            `<i data-lucide="alert-triangle"></i> ${warnCount} zlecenie(nia) wskazuje na usunięty/zmieniony element (${numbers}). Zweryfikuj w zakładce Zlecenia.`,
+            `<i data-lucide="alert-triangle"></i> ${warnCount} zlecenie(nia) wskazuje na usunięty/zmieniony element. Zweryfikuj w zakładce Zlecenia.`,
             'warning'
         );
     }

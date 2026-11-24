@@ -197,6 +197,26 @@ describe('frontend jsdom: modal użytkownika', () => {
         expect(overlay.querySelector('#add-user-btn')?.textContent).toContain('Zapisz');
     });
 
+    it('create: lista przypisanych sortuje nazwy alfabetycznie', async () => {
+        const users = [
+            { id: 'm', username: 'marek', role: 'user', firstName: 'Marek', lastName: 'M' },
+            { id: 'b', username: 'Bolek', role: 'user', firstName: '', lastName: '' },
+            { id: 'l', username: 'lukasz', role: 'user', firstName: 'Łukasz', lastName: 'L' },
+            { id: 'a', username: 'adam', role: 'user', firstName: 'Adam', lastName: 'A' }
+        ];
+        const context = loadDashboard(defaultFetch(users));
+        await context.loadUsers();
+        const overlay = await openCreate(context);
+
+        setValue('new-user-role', 'pro');
+        context.toggleSubUsersList();
+
+        const names = Array.from(overlay.querySelectorAll('.sub-user-checkbox'), (label) =>
+            label.textContent?.trim()
+        );
+        expect(names).toEqual(['Adam A', 'Bolek', 'Łukasz L', 'Marek M']);
+    });
+
     it('walidacja: pusty login → alert, brak fetch, focus na polu', async () => {
         const context = loadDashboard(defaultFetch());
         const overlay = await openCreate(context);

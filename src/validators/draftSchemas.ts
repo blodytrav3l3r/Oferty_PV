@@ -17,8 +17,8 @@ export const DRAFT_MAX_BYTES = 256 * 1024;
 /** Limit liczby draftów na użytkownika (bez cichego usuwania nadmiaru). */
 export const DRAFT_MAX_PER_USER = 50;
 
-/** TTL draftu serwerowego. */
-export const DRAFT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** TTL draftu serwerowego (sliding od ostatniego zapisu): 5 dni. */
+export const DRAFT_TTL_MS = 5 * 24 * 60 * 60 * 1000;
 
 /** `docId` trafia do klucza i URL — tylko bezpieczny zestaw znaków. */
 const docIdSchema = z
