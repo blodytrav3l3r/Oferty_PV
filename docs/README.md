@@ -1,6 +1,6 @@
 # Dokumentacja S.O.K.
 
-**Wersja:** 1.64.25
+**Wersja:** 1.64.26
 
 **Nawigację zweryfikowano:** 2026-11-24 · **HEAD kodu:** `0aa625c2` · **Wersja aplikacji przy weryfikacji:** `1.64.24` · **Zakres:** sprawdzono lokalne cele linków tego indeksu. Stan i ograniczenia przeglądu opisuje [`documentation-audit.md`](documentation-audit.md); to nie jest potwierdzenie pełnej aktualności każdego dokumentu.
 

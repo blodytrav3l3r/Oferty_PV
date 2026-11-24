@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.26](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.25...v1.64.26) (2026-11-24)
+
+### Bug Fixes
+
+- **deploy:** zachowaj przenośną instalację i uporządkuj repozytorium ([bd3f5b0](https://github.com/blodytrav3l3r/Oferty_PV/commit/bd3f5b0a661c135535101f0955ae29958c0149cc))
+
 ### [1.64.25](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.24...v1.64.25) (2026-11-24)
 
 ### Bug Fixes
