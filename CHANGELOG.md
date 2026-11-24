@@ -4,6 +4,18 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.25](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.24...v1.64.25) (2026-11-24)
+
+### Bug Fixes
+
+- **docker:** osadzaj sha commita w obrazie ([7341776](https://github.com/blodytrav3l3r/Oferty_PV/commit/73417762e038bf3b0f953f60d3fe51bf30c67d2b))
+- **offers:** aktualizuj kartoteke bez ponownego wyszukania ([12c4fc9](https://github.com/blodytrav3l3r/Oferty_PV/commit/12c4fc93a407313656c46332e67f27f8b165a57a))
+- **studnie:** popraw kontrast i mock auth limiter ([ebd9c61](https://github.com/blodytrav3l3r/Oferty_PV/commit/ebd9c6167ef7ee411a0f5d82ef7119571b124934))
+- **studnie:** popraw undo wklejania w excelu ([7d2bd16](https://github.com/blodytrav3l3r/Oferty_PV/commit/7d2bd166c17ba335fb1e0483a7dc27ecf3e83336))
+- **studnie:** zachowaj puste pozycje w excelu ([1135be1](https://github.com/blodytrav3l3r/Oferty_PV/commit/1135be13f866b857f36494c46ba61b6d5e1dfec6))
+- **ui:** dopracuj pulpit, szkice i komunikaty pz ([0aa625c](https://github.com/blodytrav3l3r/Oferty_PV/commit/0aa625c2738b64d97f2cd24016bc599cd3f4afd6))
+- **ui:** grupuj użytkowników według roli ([9d0bf55](https://github.com/blodytrav3l3r/Oferty_PV/commit/9d0bf55e4f26244093973c8dfaaac4f48787da99))
+
 ### [1.64.24](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.23...v1.64.24) (2026-11-23)
 
 ### Bug Fixes
