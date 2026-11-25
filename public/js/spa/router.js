@@ -27,7 +27,7 @@
     let _navReverting = false; // cofanie hasha po anulowaniu — przepuść echo hashchange
     let _lastCleanHash = null; // ostatni hash bez niezapisanych zmian
     // Parametry sterujące panelem/modalem: nie trafiają do src iframe ani klucza reloadu.
-    const _TRANSIENT_PARAMS = new Set(['panel', 'pvtype', 'version', 'against']);
+    const _TRANSIENT_PARAMS = new Set(['panel', 'pvtype', 'version', 'against', 'newOffer']);
 
     function _isDirtyNow() {
         // SPA-GUARD-PRO P0.1: SSoT w shared/sokDirty.js (flagi + diff draft-vs-SAVED).
@@ -323,6 +323,38 @@
         }
         if (subView && !params.tab) params.tab = subView;
         return { module, params };
+    }
+
+    function _consumeNewOfferIntent(module, params) {
+        if (
+            params.newOffer !== '1' ||
+            (module !== 'rury' && module !== 'studnie') ||
+            params.edit ||
+            params.order
+        )
+            return false;
+
+        delete params.newOffer;
+        try {
+            const hash = window.location.hash || '';
+            const [path, queryString] = hash.slice(2).split('?');
+            const cleanParams = new URLSearchParams(queryString || '');
+            cleanParams.delete('newOffer');
+            const cleanQuery = cleanParams.toString();
+            const cleanHash = '#/' + path + (cleanQuery ? '?' + cleanQuery : '');
+            window.history.replaceState(window.history.state, '', cleanHash);
+        } catch (error) {
+            logger.warn('router', '[SpaRouter] Nie udało się zużyć intencji nowej oferty', {
+                error: error && error.name ? error.name : 'Error'
+            });
+            if (typeof window.showToast === 'function')
+                window.showToast(
+                    'Nie udało się rozpocząć nowej oferty. Bieżący dokument pozostał otwarty.',
+                    'error'
+                );
+            return false;
+        }
+        return true;
     }
 
     function syncCennikNavigation(user) {
@@ -828,7 +860,7 @@
     }
 
     function _isOfferModuleInProtectedMode(module, frameWindow) {
-        if (frameWindow.orderEditMode || frameWindow.isPreviewMode) return true;
+        if (frameWindow.isPreviewMode) return true;
         try {
             const versions = frameWindow.pricelistVersions;
             return (
@@ -850,13 +882,16 @@
             canSave = false;
         }
 
-        const message =
-            'Bieżąca oferta ma niezapisane zmiany. Rozpoczęcie nowej wyczyści formularz i szkic tej oferty.';
+        const isOrder = !!frameWindow.orderEditMode;
+        const subject = isOrder ? 'Bieżące zamówienie' : 'Bieżąca oferta';
+        const message = `${subject} ma niezapisane zmiany. Rozpoczęcie nowej oferty zakończy bieżący tryb i wyczyści jego formularz oraz szkic.`;
         if (canSave && typeof window.appConfirm3 === 'function')
             return window.appConfirm3(message, {
                 title: 'Rozpocząć nową ofertę?',
                 type: 'warning',
-                saveText: 'Zapisz i rozpocznij nową',
+                saveText: isOrder
+                    ? 'Zapisz zamówienie i rozpocznij nową'
+                    : 'Zapisz i rozpocznij nową',
                 okText: 'Usuń zmiany i rozpocznij nową',
                 cancelText: 'Wróć do edycji'
             });
@@ -883,7 +918,69 @@
             });
             if (typeof window.showToast === 'function')
                 window.showToast(
-                    'Nie udało się bezpiecznie odrzucić zmian. Bieżąca oferta pozostała otwarta.',
+                    'Nie udało się bezpiecznie odrzucić zmian. Bieżący dokument pozostał otwarty.',
+                    'error'
+                );
+            return false;
+        }
+    }
+
+    function _discardOrderDraftForNewOffer(module, frameWindow) {
+        if (!frameWindow.orderEditMode) return true;
+        const order = frameWindow.orderEditMode;
+        const orderId =
+            module === 'studnie'
+                ? order.orderId || order.order?.id
+                : frameWindow.editingRuryOrderId || order.orderId || order.order?.id;
+        const autosave = frameWindow.draftAutosave;
+        if (!orderId || !autosave || typeof autosave.clearContext !== 'function') {
+            if (typeof window.showToast === 'function')
+                window.showToast(
+                    'Nie udało się usunąć szkicu zamówienia. Bieżący dokument pozostał otwarty.',
+                    'error'
+                );
+            return false;
+        }
+        try {
+            autosave.clearContext(module === 'studnie' ? 'order_studnie' : 'order_rury', orderId);
+            return true;
+        } catch (error) {
+            logger.warn('router', '[SpaRouter] Nie udało się usunąć szkicu zamówienia', {
+                currentModule: module,
+                error: error && error.name ? error.name : 'Error'
+            });
+            if (typeof window.showToast === 'function')
+                window.showToast(
+                    'Nie udało się usunąć szkicu zamówienia. Bieżący dokument pozostał otwarty.',
+                    'error'
+                );
+            return false;
+        }
+    }
+
+    async function _exitOrderModeForNewOffer(module, frameWindow) {
+        if (!frameWindow.orderEditMode) return true;
+        try {
+            if (module === 'rury' && typeof frameWindow.exitOrderEditMode === 'function') {
+                await frameWindow.exitOrderEditMode();
+            } else if (
+                module === 'studnie' &&
+                typeof frameWindow.exitWizardOrderMode === 'function'
+            ) {
+                await frameWindow.exitWizardOrderMode(0, { silent: true });
+            } else {
+                throw new Error('Order exit handler unavailable');
+            }
+            if (frameWindow.orderEditMode) throw new Error('Order mode remains active');
+            return true;
+        } catch (error) {
+            logger.warn('router', '[SpaRouter] Nie udało się zakończyć trybu zamówienia', {
+                currentModule: module,
+                error: error && error.name ? error.name : 'Error'
+            });
+            if (typeof window.showToast === 'function')
+                window.showToast(
+                    'Nie udało się bezpiecznie zakończyć zamówienia. Bieżący dokument pozostał otwarty.',
                     'error'
                 );
             return false;
@@ -906,10 +1003,7 @@
         }
         if (_isOfferModuleInProtectedMode(module, frameWindow)) {
             if (typeof window.showToast === 'function')
-                window.showToast(
-                    'Zakończ najpierw tryb zamówienia, podglądu lub edycję cennika.',
-                    'warning'
-                );
+                window.showToast('Zamknij najpierw podgląd lub edycję cennika.', 'warning');
             return false;
         }
 
@@ -928,10 +1022,13 @@
                             );
                         return false;
                     }
-                } else if (!_abandonChangesForNewOffer()) {
-                    return false;
+                } else {
+                    if (!_discardOrderDraftForNewOffer(module, frameWindow)) return false;
+                    if (!_abandonChangesForNewOffer()) return false;
                 }
             }
+
+            if (!(await _exitOrderModeForNewOffer(module, frameWindow))) return false;
 
             frameWindow.clearOfferForm();
             showSection('builder');
@@ -1005,6 +1102,8 @@
                 }
             } catch (_eAB) {}
         }
+
+        const shouldStartNewOffer = _consumeNewOfferIntent(module, params);
 
         const targetHash = window.location.hash;
         const returnHash = _lastCleanHash;
@@ -1231,6 +1330,7 @@
 
         finishViewTransition(transition);
         document.getElementById('spa-main')?.focus();
+        if (shouldStartNewOffer) await startNewOffer();
     }
 
     function showAuthUnavailable() {

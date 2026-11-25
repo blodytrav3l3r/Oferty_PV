@@ -149,7 +149,7 @@ function enterWizardOrderMode() {
 /**
  * Wyjście z trybu zamówienia i powrót do trybu oferty.
  */
-async function exitWizardOrderMode(targetStep = 3) {
+async function exitWizardOrderMode(targetStep = 3, options = {}) {
     orderEditMode = null;
     if (typeof clearOrderNumberField === 'function') clearOrderNumberField();
     if (typeof renderOrderModeBanner === 'function') renderOrderModeBanner();
@@ -167,7 +167,8 @@ async function exitWizardOrderMode(targetStep = 3) {
         goToWizardStep(targetStep);
     }
 
-    showToast('<i data-lucide="bar-chart-2"></i> Powrót do edycji oferty', 'info');
+    if (!options.silent)
+        showToast('<i data-lucide="bar-chart-2"></i> Powrót do edycji oferty', 'info');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 

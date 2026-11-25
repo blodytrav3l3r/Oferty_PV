@@ -61,9 +61,9 @@ describe('Opcja A lastRoute — ostatnia trasa', () => {
         expect(typeof rec.updatedAt).toBe('string');
     });
 
-    it('parametry przejściowe i tab nie trafiają do trasy', () => {
+    it('parametry przejściowe, nowa oferta i tab nie trafiają do trasy', () => {
         const { lr } = loadCtx();
-        lr.save('#/studnie?order=z1&panel=discounts&tab=offer&pvtype=pdf&version=2');
+        lr.save('#/studnie?order=z1&newOffer=1&panel=discounts&tab=offer&pvtype=pdf&version=2');
         expect(lr.get({ id: 'u1' }).hash).toBe('#/studnie?order=z1');
     });
 

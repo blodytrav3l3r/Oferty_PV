@@ -18,7 +18,7 @@
     var SCHEMA_VERSION = 1;
     var TTL_MS = 5 * 24 * 60 * 60 * 1000;
     /** Parametry panelu/modału — nie opisują trasy, nie zapisujemy ich. */
-    var TRANSIENT = ['panel', 'pvtype', 'version', 'against', 'tab'];
+    var TRANSIENT = ['panel', 'pvtype', 'version', 'against', 'tab', 'newOffer'];
     var LABELS = {
         rury: 'Oferty Rury',
         studnie: 'Oferty Studnie',

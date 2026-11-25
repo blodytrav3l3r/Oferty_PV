@@ -191,6 +191,11 @@ function runContext() {
                     state.hash = v;
                 }
             },
+            history: {
+                replaceState(_data, _title, url) {
+                    state.hash = new URL(url, 'http://localhost/app.html').hash;
+                }
+            },
             addEventListener: (t, h) => {
                 winListeners[t] = h;
             },
@@ -727,6 +732,172 @@ describe('Rozpoczynanie nowej oferty z aktywnego modułu', () => {
         expect(elements.get('spa-section-nav').innerHTML).not.toContain('startNewOffer');
     });
 
+    test('kafelki ofert na Pulpicie jawnie rozpoczynają nowy dokument', () => {
+        const dashboard = fs.readFileSync(path.join(__dirname, '../../public/index.html'), 'utf8');
+
+        expect(dashboard).toContain('href="app.html#/rury?newOffer=1"');
+        expect(dashboard).toContain('href="app.html#/studnie?newOffer=1"');
+    });
+
+    test('intencja nowej oferty z Pulpitu resetuje zachowany iframe i jest jednorazowa', async () => {
+        const { context, state, createdIframes } = runContext();
+        state.hash = '#/pulpit';
+        await context.window.SpaRouter.navigate();
+
+        state.hash = '#/studnie?newOffer=1';
+        const navigation = context.window.SpaRouter.navigate();
+        const frameWindow = createdIframes[1].contentWindow;
+        frameWindow.orderEditMode = { orderId: 'order-1' };
+        frameWindow.exitWizardOrderMode = jest.fn(async () => {
+            frameWindow.orderEditMode = null;
+        });
+        frameWindow.clearOfferForm = jest.fn();
+
+        await navigation;
+
+        expect(createdIframes[1].src).not.toContain('newOffer');
+        expect(frameWindow.exitWizardOrderMode).toHaveBeenCalledWith(0, { silent: true });
+        expect(frameWindow.clearOfferForm).toHaveBeenCalledTimes(1);
+        expect(state.hash).toBe('#/studnie');
+    });
+
+    test.each([
+        ['rury', (frameWindow) => (frameWindow.orderEditMode = true), 'exitOrderEditMode'],
+        [
+            'studnie',
+            (frameWindow) => (frameWindow.orderEditMode = { orderId: 'order-1' }),
+            'exitWizardOrderMode'
+        ]
+    ])(
+        'nowa oferta bezpiecznie wychodzi z trybu zamówienia (%s)',
+        async (module, setMode, exitName) => {
+            const { context, state, createdIframes } = runContext();
+            state.hash = `#/${module}`;
+            await context.window.SpaRouter.navigate();
+            const frameWindow = createdIframes[0].contentWindow;
+            const calls = [];
+            setMode(frameWindow);
+            frameWindow[exitName] = jest.fn(async () => {
+                calls.push('exit');
+                frameWindow.orderEditMode = null;
+            });
+            frameWindow.clearOfferForm = jest.fn(() => calls.push('clear'));
+
+            expect(await context.window.SpaRouter.startNewOffer()).toBe(true);
+            expect(frameWindow[exitName]).toHaveBeenCalledTimes(1);
+            expect(calls).toEqual(['exit', 'clear']);
+        }
+    );
+
+    test('niezapisane zamówienie można zapisać przed przejściem do nowej oferty', async () => {
+        const { context, state, createdIframes, calls3, resolveChoice } = runContext3();
+        state.hash = '#/studnie';
+        await context.window.SpaRouter.navigate();
+        const frameWindow = createdIframes[0].contentWindow;
+        state.dirty = true;
+        frameWindow.orderEditMode = { orderId: 'order-1' };
+        frameWindow.exitWizardOrderMode = jest.fn(async () => {
+            frameWindow.orderEditMode = null;
+        });
+        frameWindow.clearOfferForm = jest.fn();
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+
+        expect(calls3[0].message).toMatch(/Bieżące zamówienie ma niezapisane zmiany/);
+        expect(calls3[0].opts.saveText).toBe('Zapisz zamówienie i rozpocznij nową');
+        resolveChoice('save');
+
+        expect(await startPromise).toBe(true);
+        expect(frameWindow.exitWizardOrderMode).toHaveBeenCalledWith(0, { silent: true });
+        expect(frameWindow.clearOfferForm).toHaveBeenCalledTimes(1);
+    });
+
+    test('porzucenie zamówienia usuwa jego lokalny szkic przed resetem', async () => {
+        const { context, state, createdIframes, resolveChoice } = runContext3();
+        state.hash = '#/studnie';
+        await context.window.SpaRouter.navigate();
+        const frameWindow = createdIframes[0].contentWindow;
+        const calls = [];
+        state.dirty = true;
+        frameWindow.orderEditMode = { orderId: 'order-1' };
+        frameWindow.draftAutosave = {
+            clearContext: jest.fn((kind, orderId) => calls.push(['discard-draft', kind, orderId]))
+        };
+        frameWindow.exitWizardOrderMode = jest.fn(async () => {
+            calls.push(['exit-order']);
+            frameWindow.orderEditMode = null;
+        });
+        frameWindow.clearOfferForm = jest.fn(() => calls.push(['reset-offer']));
+        context.window.__sokCanSave = () => true;
+        context.window.__sokAbandonCurrent = jest.fn(() => calls.push(['abandon-dirty-state']));
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+        resolveChoice('leave');
+
+        expect(await startPromise).toBe(true);
+        expect(frameWindow.draftAutosave.clearContext).toHaveBeenCalledWith(
+            'order_studnie',
+            'order-1'
+        );
+        expect(calls.map((call) => call[0])).toEqual([
+            'discard-draft',
+            'abandon-dirty-state',
+            'exit-order',
+            'reset-offer'
+        ]);
+    });
+
+    test('błąd usuwania szkicu zamówienia zatrzymuje reset', async () => {
+        const { context, state, createdIframes, resolveChoice } = runContext3();
+        state.hash = '#/studnie';
+        await context.window.SpaRouter.navigate();
+        const frameWindow = createdIframes[0].contentWindow;
+        state.dirty = true;
+        frameWindow.orderEditMode = { orderId: 'order-1' };
+        frameWindow.draftAutosave = {
+            clearContext: jest.fn(() => {
+                throw new Error('clear failed');
+            })
+        };
+        frameWindow.exitWizardOrderMode = jest.fn();
+        frameWindow.clearOfferForm = jest.fn();
+        context.window.__sokCanSave = () => true;
+        context.window.__sokAbandonCurrent = jest.fn();
+        context.window.showToast = jest.fn();
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+        resolveChoice('leave');
+
+        expect(await startPromise).toBe(false);
+        expect(context.window.__sokAbandonCurrent).not.toHaveBeenCalled();
+        expect(frameWindow.exitWizardOrderMode).not.toHaveBeenCalled();
+        expect(frameWindow.clearOfferForm).not.toHaveBeenCalled();
+        expect(context.window.showToast).toHaveBeenCalledWith(
+            'Nie udało się usunąć szkicu zamówienia. Bieżący dokument pozostał otwarty.',
+            'error'
+        );
+    });
+
+    test('brak bezpiecznego wyjścia z zamówienia zatrzymuje reset', async () => {
+        const { context, state, createdIframes } = runContext();
+        state.hash = '#/studnie';
+        await context.window.SpaRouter.navigate();
+        const frameWindow = createdIframes[0].contentWindow;
+        frameWindow.orderEditMode = { orderId: 'order-1' };
+        frameWindow.clearOfferForm = jest.fn();
+        context.window.showToast = jest.fn();
+
+        expect(await context.window.SpaRouter.startNewOffer()).toBe(false);
+        expect(frameWindow.clearOfferForm).not.toHaveBeenCalled();
+        expect(context.window.showToast).toHaveBeenCalledWith(
+            'Nie udało się bezpiecznie zakończyć zamówienia. Bieżący dokument pozostał otwarty.',
+            'error'
+        );
+    });
+
     test('czysty formularz resetuje się bez pytania i wraca do Konfiguracji', async () => {
         const { context, state, createdIframes, confirmCalls } = runContext();
         await bootOnRury(context, state);
@@ -836,7 +1007,7 @@ describe('Rozpoczynanie nowej oferty z aktywnego modułu', () => {
         expect(await startPromise).toBe(false);
         expect(clearOfferForm).not.toHaveBeenCalled();
         expect(context.window.showToast).toHaveBeenCalledWith(
-            'Nie udało się bezpiecznie odrzucić zmian. Bieżąca oferta pozostała otwarta.',
+            'Nie udało się bezpiecznie odrzucić zmian. Bieżący dokument pozostał otwarty.',
             'error'
         );
     });
@@ -862,8 +1033,6 @@ describe('Rozpoczynanie nowej oferty z aktywnego modułu', () => {
     });
 
     test.each([
-        ['rury', (frameWindow) => (frameWindow.orderEditMode = true)],
-        ['studnie', (frameWindow) => (frameWindow.orderEditMode = { orderId: 'order-1' })],
         ['studnie', (frameWindow) => (frameWindow.isPreviewMode = true)],
         [
             'rury',
