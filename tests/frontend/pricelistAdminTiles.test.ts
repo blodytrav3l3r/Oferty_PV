@@ -167,7 +167,7 @@ describe('SPA: deep-link do panelu wersji', () => {
 
     it('parametry panelu nie trafiają do src/logical key', () => {
         expect(router).toContain(
-            "_TRANSIENT_PARAMS = new Set(['panel', 'pvtype', 'version', 'against'])"
+            "_TRANSIENT_PARAMS = new Set(['panel', 'pvtype', 'version', 'against', 'newOffer'])"
         );
         expect(router).toContain("if (k === 'v' || _TRANSIENT_PARAMS.has(k)) return;");
         // Parametry trasy nie nadpisują stałych parametrów modułu (host=pulpit).

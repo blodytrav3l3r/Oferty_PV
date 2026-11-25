@@ -380,7 +380,8 @@ Object.defineProperties(addNewWell, {
             currentWellIndex = Math.min(removedIndex, Math.max(0, wells.length - 1));
             if (typeof window._excelResetLayoutDependentState === 'function')
                 window._excelResetLayoutDependentState();
-            if (typeof _excelRowSelectStates !== 'undefined') _excelRowSelectStates = {};
+            if (typeof window.clearExcelRowSelection === 'function')
+                window.clearExcelRowSelection();
             return true;
         }
     }

@@ -165,6 +165,10 @@ describe('scripts/frontend-deps-analyze.mjs — P1.1', () => {
         expect(contract.publicFacade).toHaveProperty('markExcelListStale');
         expect(contract.publicFacade).toHaveProperty('excelClearResolutionCache');
         expect(contract.publicFacade).toHaveProperty('excelSyncWellComponents');
+        expect(contract.publicFacade.clearExcelRowSelection).toMatchObject({
+            defFile: 'public/js/studnie/excelSelection.js',
+            allowedCallers: ['public/js/studnie/actionsWellCrud.js']
+        });
         expect(contract.publicFacade).toHaveProperty('isExcelDirty');
         expect(Object.keys(contract.legacyAllowlist)).toHaveLength(0);
     });

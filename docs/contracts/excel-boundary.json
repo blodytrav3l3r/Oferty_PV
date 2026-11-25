@@ -86,6 +86,10 @@
         "excelSyncWellComponents": {
             "defFile": "public/js/studnie/excelPolling.js",
             "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
+        },
+        "clearExcelRowSelection": {
+            "defFile": "public/js/studnie/excelSelection.js",
+            "allowedCallers": ["public/js/studnie/actionsWellCrud.js"]
         }
     },
     "legacyAllowlist": {}

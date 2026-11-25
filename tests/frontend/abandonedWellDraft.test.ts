@@ -30,6 +30,7 @@ interface TestContext {
         _rebuildWellsById: () => number;
         _excelRebuildWellIndex: () => number;
         _excelResetLayoutDependentState: () => number;
+        clearExcelRowSelection: () => void;
         _excelInvalidateFilteredIndexes: () => void;
         draftAutosave: { scheduleSave: () => number };
         pzGuard?: { hasPzForWell: () => boolean };
@@ -61,7 +62,14 @@ interface TestContext {
 
 function loadActions() {
     const toastMessages: string[] = [];
-    const calls = { rebuild: 0, excelRebuild: 0, excelReset: 0, draftSave: 0, stycznaPopup: 0 };
+    const calls = {
+        rebuild: 0,
+        excelRebuild: 0,
+        excelReset: 0,
+        excelSelectionClear: 0,
+        draftSave: 0,
+        stycznaPopup: 0
+    };
     const wellIndexes = new Map<string, number>();
     const excelIndexes = new Map<string, number>();
     let context: TestContext;
@@ -80,6 +88,10 @@ function loadActions() {
                 return excelIndexes.size;
             },
             _excelResetLayoutDependentState: () => calls.excelReset++,
+            clearExcelRowSelection: () => {
+                calls.excelSelectionClear++;
+                context._excelRowSelectStates = {};
+            },
             _excelInvalidateFilteredIndexes: () => {},
             draftAutosave: { scheduleSave: () => calls.draftSave++ }
         },
@@ -145,6 +157,7 @@ describe('addNewWell removes a pristine abandoned draft', () => {
             rebuild: 1,
             excelRebuild: 1,
             excelReset: 1,
+            excelSelectionClear: 1,
             draftSave: 1,
             stycznaPopup: 0
         });

@@ -297,6 +297,7 @@ declare function emitExcelMutated(): void;
 declare function excelRefreshActiveTable(): void;
 declare function excelRefreshDisplayUnits(): void;
 declare function excelSwitchTab(tab: string): void;
+declare function clearExcelRowSelection(): void;
 declare function excelOpenWellParams(idx: number): void;
 declare function closeExcelParamsPopup(): void;
 declare function isEmptyPrzejscie(p: any): boolean;

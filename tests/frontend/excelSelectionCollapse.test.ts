@@ -17,6 +17,8 @@ const BASE = path.join(process.cwd(), 'public/js/studnie');
 const SEEDS =
     'var _excelSelectedCells = [];' +
     'var _excelSelectedCols = [];' +
+    'var _excelRowSelectStates = {};' +
+    'var _excelLastClickedRow = null;' +
     'var _excelLastClickedCell = null;' +
     'var _excelGetVisibleRows = function() { return []; };' +
     'window._excelVirtualIsEnabled = function() { return false; };' +
@@ -89,6 +91,29 @@ describe('strzalka zwija .cell-selected', () => {
             "_excelHandleArrow({ key: 'ArrowDown', target: document.activeElement, preventDefault: function(){} })"
         );
         expect(selectedCount()).toBe(0);
+    });
+
+    test('clearExcelRowSelection clears internal index state and visible checkboxes', () => {
+        document.body.innerHTML =
+            '<div id="excel-table-container"><table><tbody>' +
+            '<tr data-widx="0"><td><input class="excel-row-select" type="checkbox" checked></td></tr>' +
+            '<tr data-widx="1"><td><input class="excel-row-select" type="checkbox" checked></td></tr>' +
+            '</tbody></table></div><input id="excel-select-all" type="checkbox" checked>';
+        (0, eval)('_excelRowSelectStates = { 0: true, 1: true }; _excelLastClickedRow = 1;');
+
+        expect(typeof (window as any).clearExcelRowSelection).toBe('function');
+        (window as any).clearExcelRowSelection();
+
+        expect((0, eval)('_excelRowSelectStates')).toEqual({});
+        expect((0, eval)('_excelLastClickedRow')).toBeNull();
+        expect(
+            Array.from(document.querySelectorAll<HTMLInputElement>('.excel-row-select')).every(
+                (checkbox) => !checkbox.checked
+            )
+        ).toBe(true);
+        expect((document.getElementById('excel-select-all') as HTMLInputElement).checked).toBe(
+            false
+        );
     });
 });
 

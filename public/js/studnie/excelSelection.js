@@ -147,6 +147,25 @@ function _excelToggleColClass(colIdx, add) {
 }
 
 /* ===== ROW SELECTION ===== */
+function clearExcelRowSelection() {
+    _excelRowSelectStates = {};
+    document.querySelectorAll('.excel-row-select').forEach(function (checkbox) {
+        checkbox.checked = false;
+    });
+    _excelLastClickedRow = null;
+    if (typeof _excelSyncHeaderCheckbox === 'function') {
+        _excelSyncHeaderCheckbox();
+        return;
+    }
+    const headerCheckbox = document.getElementById('excel-select-all');
+    if (!headerCheckbox) return;
+    headerCheckbox.checked = false;
+    headerCheckbox.indeterminate = false;
+    headerCheckbox.setAttribute('aria-checked', 'false');
+}
+
+window.clearExcelRowSelection = clearExcelRowSelection;
+
 function _excelToggleSelectAll(checked) {
     _excelRowSelectStates = {};
     if (typeof wells !== 'undefined') {
