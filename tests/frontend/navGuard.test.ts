@@ -739,23 +739,27 @@ describe('Rozpoczynanie nowej oferty z aktywnego modułu', () => {
         expect(dashboard).toContain('href="app.html#/studnie?newOffer=1"');
     });
 
-    test('intencja nowej oferty z Pulpitu resetuje zachowany iframe i jest jednorazowa', async () => {
+    test('kafel Pulpitu zamienia zachowane zamówienie na nową ofertę', async () => {
         const { context, state, createdIframes } = runContext();
-        state.hash = '#/pulpit';
-        await context.window.SpaRouter.navigate();
-
-        state.hash = '#/studnie?newOffer=1';
-        const navigation = context.window.SpaRouter.navigate();
-        const frameWindow = createdIframes[1].contentWindow;
+        state.hash = '#/studnie?order=order-1';
+        const openOrder = context.window.SpaRouter.navigate();
+        const frameWindow = createdIframes[0].contentWindow;
         frameWindow.orderEditMode = { orderId: 'order-1' };
         frameWindow.exitWizardOrderMode = jest.fn(async () => {
             frameWindow.orderEditMode = null;
         });
         frameWindow.clearOfferForm = jest.fn();
+        await openOrder;
 
-        await navigation;
+        state.hash = '#/pulpit';
+        await context.window.SpaRouter.navigate();
 
-        expect(createdIframes[1].src).not.toContain('newOffer');
+        state.hash = '#/studnie?newOffer=1';
+        await context.window.SpaRouter.navigate();
+
+        expect(createdIframes).toHaveLength(2);
+        expect(createdIframes[0].src).toContain('order=order-1');
+        expect(createdIframes[0].src).not.toContain('newOffer');
         expect(frameWindow.exitWizardOrderMode).toHaveBeenCalledWith(0, { silent: true });
         expect(frameWindow.clearOfferForm).toHaveBeenCalledTimes(1);
         expect(state.hash).toBe('#/studnie');
