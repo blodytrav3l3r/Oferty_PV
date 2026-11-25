@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type RequestHandler } from 'express';
 import prisma from '../../prismaClient';
 import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
@@ -32,6 +32,7 @@ import {
 import { recordDbBusy } from '../../utils/metrics';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import { resolveActive, resolveActiveForStamp } from '../../services/pricelistVersionService';
+import { lockFor } from '../../services/pricelist/validation';
 import {
     decimalMoneyValueToNumber,
     decimalMoneyRowsToNumbers
@@ -45,6 +46,27 @@ import {
 } from '../../services/offers/offerNumbering';
 
 const router = express.Router();
+
+export function withRuryPricelistWriteLock(
+    handler: (
+        req: Parameters<RequestHandler>[0],
+        res: Parameters<RequestHandler>[1]
+    ) => Promise<unknown>
+): RequestHandler {
+    return (req, res, next) => {
+        void lockFor('rury')
+            .runWithLock(() => handler(req, res))
+            .then((locked) => {
+                if (!locked.acquired && !res.headersSent) {
+                    res.status(503).json({
+                        error: 'Zapis oferty chwilowo zablokowany',
+                        code: 'LOCK_BUSY'
+                    });
+                }
+            })
+            .catch(next);
+    };
+}
 const uuidv4 = crypto.randomUUID.bind(crypto);
 
 const writeOffersLimiter = WRITE_LIMITER;
@@ -144,7 +166,7 @@ router.post(
     requireAuth,
     writeOffersLimiter,
     validateData(offersBatchSchema),
-    async (req, res) => {
+    withRuryPricelistWriteLock(async (req, res) => {
         const authReq = req as AuthenticatedRequest;
         // P1-A: Idempotency-Key (opcjonalny) — retry nie tworzy duplikatu.
         const idemEndpoint = 'POST /api/offers-rury';
@@ -623,7 +645,7 @@ router.post(
             logger.error('Offers', 'Błąd POST offers', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
-    }
+    })
 );
 
 router.put(
@@ -631,7 +653,7 @@ router.put(
     requireAuth,
     writeOffersLimiter,
     validateData(offersBatchSchema),
-    async (req, res) => {
+    withRuryPricelistWriteLock(async (req, res) => {
         const authReq = req as AuthenticatedRequest;
         try {
             const docId = req.body.id;
@@ -990,7 +1012,7 @@ router.put(
             logger.error('Offers', 'Błąd PUT offers', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
-    }
+    })
 );
 
 router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) => {

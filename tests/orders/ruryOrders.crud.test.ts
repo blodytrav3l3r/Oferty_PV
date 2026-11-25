@@ -45,6 +45,11 @@ jest.mock('../../src/prismaClient', () => ({
             deleteMany: jest.fn(),
             findMany: jest.fn()
         },
+        offers_rel: {
+            findUnique: jest.fn(),
+            findMany: jest.fn()
+        },
+        document_shares: { findFirst: jest.fn() },
         $queryRaw: jest.fn(),
         $executeRaw: jest.fn().mockResolvedValue(1),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
@@ -81,6 +86,13 @@ beforeEach(() => {
     mockUser.subUsers = [];
     // P1.2: wierny domyśl Prisma po resecie (updateMany zawsze zwraca {count}).
     (prisma.orders_rury_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+        id: 'off-1',
+        userId: 'user-id'
+    });
+    (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+        { id: 'off-1', pricelistVersionId: null }
+    ]);
     (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
 });
 
@@ -94,6 +106,13 @@ describe('Rury Orders CRUD', () => {
         mockUser.subUsers = [];
         // P1.2: wierny domyśl Prisma po resecie (updateMany zawsze zwraca {count}).
         (prisma.orders_rury_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+        (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'off-1',
+            userId: 'user-id'
+        });
+        (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+            { id: 'off-1', pricelistVersionId: null }
+        ]);
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
         app = createApp();
     });
@@ -240,6 +259,26 @@ describe('Rury Orders CRUD', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
+        });
+
+        it('odrzuca powiązanie nowego zamówienia z cudzą nieudostępnioną ofertą', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'offer-foreign',
+                userId: 'other-user'
+            });
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+                { id: 'offer-foreign', pricelistVersionId: null }
+            ]);
+            (prisma.document_shares.findFirst as jest.Mock).mockResolvedValue(null);
+
+            const res = await request(app)
+                .put('/api/orders-rury')
+                .send({ data: [{ id: 'order-foreign-link', offerId: 'offer-foreign' }] });
+
+            expect(res.statusCode).toBe(403);
+            expect(prisma.orders_rury_rel.create).not.toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('blokuje edycję cudzego zamówienia (P0.1)', async () => {

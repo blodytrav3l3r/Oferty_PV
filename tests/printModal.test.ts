@@ -366,6 +366,67 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
             ).toBe(true);
         });
 
+        it('pobiera wszystkie strony wyników bez duplikatów', async () => {
+            const { sandbox, documentMock, fetchCalls } = loadPrintModalInSandbox();
+            const { modal, fields } = createCombinedModal();
+            documentMock._elements['universal-print-modal'] = modal;
+            sandbox.window.showUniversalPrintModal({ combinedSection: { title: 'Wydruk łączny' } });
+            fields.dateFrom.value = '2026-11-01';
+
+            sandbox.fetch = async (url: string) => {
+                fetchCalls.push(url);
+                const params = new URL(url, 'http://test').searchParams;
+                const page = params.get('cursorId') ? 2 : 1;
+                const prefix = params.get('type') === 'offer' ? 'r' : 's';
+                const data =
+                    page === 1
+                        ? Array.from({ length: 100 }, (_, index) => ({
+                              id: `${prefix}-${index}`,
+                              number: `${prefix}-${index}`
+                          }))
+                        : [
+                              { id: `${prefix}-99`, number: `${prefix}-99` },
+                              { id: `${prefix}-100`, number: `${prefix}-100` },
+                              { id: `${prefix}-101`, number: `${prefix}-101` }
+                          ];
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data,
+                        hasMore: page === 1,
+                        nextCursor: page === 1 ? 'cursor-date' : null,
+                        nextCursorId: page === 1 ? `${prefix}-99` : null,
+                        nextCursorType: page === 1 ? prefix : null
+                    })
+                };
+            };
+
+            await sandbox.window.combinedFilter_action();
+
+            expect(fetchCalls).toHaveLength(4);
+            expect(fields.rury._upmItems).toHaveLength(102);
+            expect(fields.studnie._upmItems).toHaveLength(102);
+            expect(fields.rury._upmItems.map((item: any) => item.id)).toContain('r-101');
+            expect(new Set(fields.rury._upmItems.map((item: any) => item.id)).size).toBe(102);
+            expect(fields.status.textContent).toBe('Wczytano 102 ofert rur i 102 ofert studni.');
+            for (const url of fetchCalls) {
+                expect(new URL(url, 'http://test').searchParams.get('dateFrom')).toBe(
+                    new Date(2026, 10, 1).toISOString()
+                );
+            }
+            expect(
+                fetchCalls
+                    .filter((url) => new URL(url, 'http://test').searchParams.has('cursorId'))
+                    .every((url) => {
+                        const params = new URL(url, 'http://test').searchParams;
+                        return (
+                            params.get('cursor') === 'cursor-date' &&
+                            params.get('cursorType') !== null
+                        );
+                    })
+            ).toBe(true);
+        });
+
         it('odrzuca wyniki żądania, gdy użytkownik zmieni daty przed odpowiedzią', async () => {
             const { sandbox, documentMock, fetchCalls, registeredChangeListeners } =
                 loadPrintModalInSandbox();

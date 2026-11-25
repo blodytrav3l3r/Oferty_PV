@@ -13,7 +13,8 @@ import {
     resolveWriteUserId,
     resolveAssignUserId,
     canDeleteDoc,
-    canReadOrderWithOfferShare
+    canReadOrderWithOfferShare,
+    assertOrderOfferLinkAccess
 } from '../../utils/ownership';
 import { buildOrderListWhereWithOfferShare } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
@@ -226,7 +227,12 @@ router.put(
 
                     const old = await tx.orders_studnie_rel.findUnique({
                         where: { id: docId },
-                        select: { data: true, userId: true, version: true }
+                        select: {
+                            data: true,
+                            userId: true,
+                            version: true,
+                            offerStudnieId: true
+                        }
                     });
 
                     // P0.1: zapis wymaga prawa względem właściciela.
@@ -281,6 +287,14 @@ router.put(
                     const newData = { ...rest };
                     const resolvedOfferId =
                         offerStudnieId || (o.offerId as string | undefined) || '';
+                    if (!old || resolvedOfferId !== (old.offerStudnieId || '')) {
+                        await assertOrderOfferLinkAccess(
+                            tx,
+                            authReq.user,
+                            resolvedOfferId,
+                            'studnie'
+                        );
+                    }
 
                     if (old) {
                         logAudit(
@@ -361,10 +375,12 @@ router.put(
             if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
-            if ((e as { status?: number }).status === 403) {
-                return res
-                    .status(403)
-                    .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            const accessError = e as { status?: number; message?: string; code?: string };
+            if (accessError.status === 403 || accessError.status === 404) {
+                return res.status(accessError.status).json({
+                    error: accessError.message || 'Brak uprawnień',
+                    ...(accessError.code ? { code: accessError.code } : {})
+                });
             }
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('StudnieOrders', 'Błąd serwera', message);

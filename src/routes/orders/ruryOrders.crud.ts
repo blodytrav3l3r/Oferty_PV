@@ -13,7 +13,8 @@ import {
     canClaimNumber,
     resolveWriteUserId,
     resolveAssignUserId,
-    canReadOrderWithOfferShare
+    canReadOrderWithOfferShare,
+    assertOrderOfferLinkAccess
 } from '../../utils/ownership';
 import { buildOrderListWhereWithOfferShare } from '../../utils/roleFilter';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
@@ -225,7 +226,7 @@ router.put(
 
                     const old = await tx.orders_rury_rel.findUnique({
                         where: { id: docId },
-                        select: { data: true, userId: true, version: true }
+                        select: { data: true, userId: true, version: true, offerId: true }
                     });
 
                     // P0.1: zapis wymaga prawa względem STAREGO właściciela,
@@ -245,6 +246,10 @@ router.put(
                             throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
                         }
                         targetUserId = created.effectiveUserId;
+                    }
+                    const nextOfferId = offerId || '';
+                    if (!old || nextOfferId !== (old.offerId || '')) {
+                        await assertOrderOfferLinkAccess(tx, authReq.user, nextOfferId, 'rury');
                     }
                     const newData = { ...rest };
 
@@ -275,15 +280,15 @@ router.put(
                         clientVersion,
                         createData: {
                             userId: targetUserId,
-                            offerId: offerId || '',
+                            offerId: nextOfferId,
                             createdAt: createdAt,
                             status: status || 'new',
                             data: dataStr,
-                            pricelistVersionId: stampForOrder(stamps, offerId || '')
+                            pricelistVersionId: stampForOrder(stamps, nextOfferId)
                         },
                         updateData: {
                             userId: targetUserId,
-                            offerId: offerId || '',
+                            offerId: nextOfferId,
                             createdAt: createdAt,
                             status: status || 'new',
                             data: dataStr
@@ -299,10 +304,12 @@ router.put(
             if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
-            if ((e as { status?: number }).status === 403) {
-                return res
-                    .status(403)
-                    .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            const accessError = e as { status?: number; message?: string; code?: string };
+            if (accessError.status === 403 || accessError.status === 404) {
+                return res.status(accessError.status).json({
+                    error: accessError.message || 'Brak uprawnień',
+                    ...(accessError.code ? { code: accessError.code } : {})
+                });
             }
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Orders', 'Błąd PUT orders-rury', message);

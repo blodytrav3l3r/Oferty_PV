@@ -29,6 +29,22 @@ jest.mock('../src/prismaClient', () => ({
             create: jest.fn(),
             updateMany: jest.fn()
         },
+        offers_studnie_rel: {
+            findUnique: jest.fn(async ({ where }: { where: { id: string } }) => ({
+                id: where.id,
+                userId: 'test-user',
+                pricelistVersionId: null
+            })),
+            findMany: jest.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+                where.id.in.map((id) => ({ id, pricelistVersionId: null }))
+            )
+        },
+        pricelistVersion: { findFirst: jest.fn(async () => null) },
+        settings: { findUnique: jest.fn(async () => null) },
+        document_shares: {
+            findFirst: jest.fn(async () => null),
+            deleteMany: jest.fn(async () => ({ count: 0 }))
+        },
         production_orders_rel: {
             findMany: jest.fn()
         },

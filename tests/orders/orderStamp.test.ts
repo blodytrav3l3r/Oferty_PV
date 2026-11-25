@@ -32,8 +32,26 @@ jest.mock('../../src/prismaClient', () => ({
         users: { findUnique: jest.fn() },
         orders_rury_rel: { findUnique: jest.fn(), create: jest.fn(), updateMany: jest.fn() },
         orders_studnie_rel: { findUnique: jest.fn(), create: jest.fn(), updateMany: jest.fn() },
-        offers_rel: { findMany: jest.fn(async () => []) },
-        offers_studnie_rel: { findMany: jest.fn(async () => []) },
+        offers_rel: {
+            findUnique: jest.fn(async ({ where }: { where: { id: string } }) => ({
+                id: where.id,
+                userId: 'user-id',
+                pricelistVersionId: 'v-offer'
+            })),
+            findMany: jest.fn(async () => [])
+        },
+        offers_studnie_rel: {
+            findUnique: jest.fn(async ({ where }: { where: { id: string } }) => ({
+                id: where.id,
+                userId: 'user-id',
+                pricelistVersionId: 'v-s'
+            })),
+            findMany: jest.fn(async () => [])
+        },
+        document_shares: {
+            findFirst: jest.fn(async () => null),
+            deleteMany: jest.fn(async () => ({ count: 0 }))
+        },
         // resolveActive (pin + data) dla zamówień bez powiązanej oferty.
         pricelistVersion: { findFirst: jest.fn(async () => null) },
         settings: { findUnique: jest.fn(async () => null) },
@@ -62,6 +80,19 @@ beforeEach(() => {
     mockUser.subUsers = [];
     (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.offers_rel.findUnique as jest.Mock).mockImplementation(async ({ where }: any) => ({
+        id: where.id,
+        userId: mockUser.id,
+        pricelistVersionId: 'v-offer'
+    }));
+    (prisma.offers_studnie_rel.findUnique as jest.Mock).mockImplementation(
+        async ({ where }: any) => ({
+            id: where.id,
+            userId: mockUser.id,
+            pricelistVersionId: 'v-s'
+        })
+    );
+    (prisma.document_shares.findFirst as jest.Mock).mockResolvedValue(null);
     (prisma.pricelistVersion.findFirst as jest.Mock).mockResolvedValue(null);
     (prisma.settings.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.orders_rury_rel.create as jest.Mock).mockResolvedValue({});
@@ -76,7 +107,10 @@ function txDelegating(model: 'orders_rury_rel' | 'orders_studnie_rel') {
                 findUnique: (prisma as any)[model].findUnique,
                 create: (prisma as any)[model].create,
                 updateMany: (prisma as any)[model].updateMany
-            }
+            },
+            offers_rel: (prisma as any).offers_rel,
+            offers_studnie_rel: (prisma as any).offers_studnie_rel,
+            document_shares: (prisma as any).document_shares
         });
 }
 

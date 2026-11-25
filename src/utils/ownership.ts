@@ -134,11 +134,12 @@ export function isValidShareDocumentType(v: string): v is ShareDocumentType {
 export async function hasShare(
     userId: string,
     documentType: string,
-    documentId: string
+    documentId: string,
+    client: Pick<typeof prisma, 'document_shares'> = prisma
 ): Promise<boolean> {
     if (!userId || !documentType || !documentId) return false;
     try {
-        const row = await prisma.document_shares.findFirst({
+        const row = await client.document_shares.findFirst({
             where: { sharedWithUserId: userId, documentType, documentId },
             select: { id: true }
         });
@@ -170,11 +171,53 @@ export async function canReadWithShare(
     user: User | undefined,
     docUserId: string | null | undefined,
     documentType: string,
-    documentId: string
+    documentId: string,
+    client: Pick<typeof prisma, 'document_shares'> = prisma
 ): Promise<boolean> {
     if (canReadDoc(user, docUserId)) return true;
     if (!user || !documentType || !documentId) return false;
-    return hasShare(user.id, documentType, documentId);
+    return hasShare(user.id, documentType, documentId, client);
+}
+
+type OrderOfferLinkClient = Pick<
+    typeof prisma,
+    'offers_rel' | 'offers_studnie_rel' | 'document_shares'
+>;
+
+export async function assertOrderOfferLinkAccess(
+    client: OrderOfferLinkClient,
+    user: User | undefined,
+    offerId: string,
+    type: 'rury' | 'studnie'
+): Promise<void> {
+    if (!offerId) return;
+
+    const documentType = type === 'rury' ? 'offer' : 'offer_studnie';
+    const offer =
+        type === 'rury'
+            ? await client.offers_rel.findUnique({
+                  where: { id: offerId },
+                  select: { userId: true }
+              })
+            : await client.offers_studnie_rel.findUnique({
+                  where: { id: offerId },
+                  select: { userId: true }
+              });
+
+    if (!offer) {
+        throw {
+            status: 404,
+            code: 'OFFER_NOT_FOUND',
+            message: 'Powiązana oferta nie istnieje'
+        };
+    }
+    if (!(await canReadWithShare(user, offer.userId, documentType, offerId, client))) {
+        throw {
+            status: 403,
+            code: 'OFFER_ACCESS_DENIED',
+            message: 'Brak dostępu do powiązanej oferty'
+        };
+    }
 }
 
 /**

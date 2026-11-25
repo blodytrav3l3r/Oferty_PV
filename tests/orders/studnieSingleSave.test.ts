@@ -41,6 +41,11 @@ jest.mock('../../src/prismaClient', () => ({
             create: jest.fn(),
             updateMany: jest.fn()
         },
+        offers_studnie_rel: {
+            findUnique: jest.fn(),
+            findMany: jest.fn()
+        },
+        document_shares: { findFirst: jest.fn() },
         $queryRaw: jest.fn(),
         // P0-C/D2: PUT batch działa w $transaction — tx deleguje do mocków.
         $transaction: jest.fn()
@@ -74,6 +79,13 @@ beforeEach(() => {
     jest.resetAllMocks();
     // P1.2: wierny domyśl Prisma po resecie (updateMany zawsze zwraca {count}).
     mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 1 });
+    (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+        id: 'offer-1',
+        userId: 'user-id'
+    });
+    (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+        { id: 'offer-1', pricelistVersionId: null }
+    ]);
     mockedPrisma.$transaction.mockImplementation(async (fn: any) => fn(prisma));
 });
 
@@ -86,6 +98,28 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         expect(res.status).toBe(200);
         expect(res.body).toMatchObject({ ok: true, version: 1, updatedAt: 't1' });
         expect(mockedPrisma.orders_studnie_rel.create).toHaveBeenCalledTimes(1);
+    });
+
+    test('PUT odrzuca powiązanie nowego zamówienia z cudzą nieudostępnioną ofertą', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue(null);
+        (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'offer-foreign',
+            userId: 'other-user'
+        });
+        (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+            { id: 'offer-foreign', pricelistVersionId: null }
+        ]);
+        (prisma.document_shares.findFirst as jest.Mock).mockResolvedValue(null);
+
+        const res = await request(createApp())
+            .put('/api/orders-studnie')
+            .send({
+                data: [{ id: 'order-foreign-link', offerStudnieId: 'offer-foreign', wells: [] }]
+            });
+
+        expect(res.statusCode).toBe(403);
+        expect(mockedPrisma.orders_studnie_rel.create).not.toHaveBeenCalled();
+        expect(mockedPrisma.orders_studnie_rel.updateMany).not.toHaveBeenCalled();
     });
 
     test('PUT single ze zgodnym baseUpdatedAt przechodzi', async () => {

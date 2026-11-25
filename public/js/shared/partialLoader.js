@@ -11,23 +11,40 @@
             })
             .catch(function (e) {
                 console.error('partialLoader: failed to load ' + path, e);
+                throw e;
             });
     }
 
     const els = document.querySelectorAll('[data-partial]');
-    const promises = [];
+    const partials = [];
     for (let i = 0; i < els.length; i++) {
         const id = els[i].id;
         const path = els[i].getAttribute('data-partial');
-        if (id && path) promises.push(loadPartial(id, path));
+        if (id && path) partials.push({ id: id, path: path, promise: loadPartial(id, path) });
     }
-    Promise.allSettled(promises).then(function (results) {
-        const failed = results.filter(function (r) {
-            return r.status === 'rejected';
-        }).length;
-        if (failed > 0) {
-            console.warn('partialLoader: ' + failed + ' partiali nie załadowano');
+    Promise.allSettled(
+        partials.map(function (partial) {
+            return partial.promise;
+        })
+    ).then(function (results) {
+        const failures = [];
+        results.forEach(function (result, index) {
+            if (result.status !== 'rejected') return;
+            const partial = partials[index];
+            failures.push({
+                id: partial.id,
+                path: partial.path,
+                error:
+                    result.reason instanceof Error ? result.reason.message : String(result.reason)
+            });
+        });
+        if (failures.length > 0) {
+            console.warn('partialLoader: ' + failures.length + ' partiali nie załadowano');
         }
-        document.dispatchEvent(new CustomEvent('partials:loaded'));
+        document.dispatchEvent(
+            new CustomEvent('partials:loaded', {
+                detail: { failed: failures.length, failures: failures }
+            })
+        );
     });
 })();

@@ -40,10 +40,10 @@ function createApp() {
     return app;
 }
 
-function orderDoc(id: string) {
+function orderDoc(id: string, offerId: string) {
     return {
         id,
-        offerStudnieId: 'offer-1',
+        offerStudnieId: offerId,
         status: 'new',
         updatedAt: '2026-10-02T10:00:00.000Z',
         wizardState: { step: 5 },
@@ -63,20 +63,23 @@ function orderDoc(id: string) {
 describe('R-BLOB-3 orders studnie blob round-trip (real PostgreSQL)', () => {
     let app: express.Application;
     const orderId = uid('ord-rt');
+    const offerId = uid('offer-rt');
 
     beforeAll(() => {
         app = createApp();
+        return prisma.offers_studnie_rel.create({ data: { id: offerId, userId: mockUser.id } });
     });
 
     afterAll(async () => {
         await prisma.orders_studnie_rel.deleteMany({ where: { id: orderId } });
+        await prisma.offers_studnie_rel.deleteMany({ where: { id: offerId } });
         await prisma.$disconnect();
     });
 
     test('PUT create → GET: wells i klucze top-level bez utraty', async () => {
         const put = await request(app)
             .put('/api/orders-studnie')
-            .send({ data: [orderDoc(orderId)] });
+            .send({ data: [orderDoc(orderId, offerId)] });
         expect(put.status).toBe(200);
 
         const get = await request(app).get(`/api/orders-studnie/${orderId}`);
@@ -87,7 +90,7 @@ describe('R-BLOB-3 orders studnie blob round-trip (real PostgreSQL)', () => {
         expect(body.wells[0].config[0]).toMatchObject({ productId: 'k-1', quantity: 2 });
         expect(body.wells[0].przejscia[0]).toMatchObject({ productId: 'p-1', angle: 90 });
         // Top-level przez rest→blob wraca (passthrough wymagany — sim test).
-        expect(body.offerStudnieId).toBe('offer-1');
+        expect(body.offerStudnieId).toBe(offerId);
         expect(body.updatedAt).toBe('2026-10-02T10:00:00.000Z');
         expect(body.wizardState).toEqual({ step: 5 });
         // Wersja z kolumny (optimistic locking), start 1.
@@ -95,7 +98,7 @@ describe('R-BLOB-3 orders studnie blob round-trip (real PostgreSQL)', () => {
     });
 
     test('PUT update: zmiana qty + version increment', async () => {
-        const doc: any = orderDoc(orderId);
+        const doc: any = orderDoc(orderId, offerId);
         doc.wells[0].config[0].quantity = 7;
         const put = await request(app)
             .put('/api/orders-studnie')

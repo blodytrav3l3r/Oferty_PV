@@ -238,13 +238,44 @@
         input._upmItems = items;
     }
 
-    async function fetchOfferList(url) {
+    async function fetchOfferList(url, isCurrentRequest) {
         if (typeof fetch !== 'function') return [];
         const headers = typeof authHeaders === 'function' ? authHeaders() : {};
-        const res = await fetch(url, { headers });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        return Array.isArray(json.data) ? json.data : [];
+        const items = [];
+        const ids = new Set();
+        const seenCursors = new Set();
+        let nextUrl = url;
+
+        while (nextUrl && (!isCurrentRequest || isCurrentRequest())) {
+            const res = await fetch(nextUrl, { headers });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const page = Array.isArray(json.data) ? json.data : [];
+            for (const item of page) {
+                if (item?.id && ids.has(item.id)) continue;
+                if (item?.id) ids.add(item.id);
+                items.push(item);
+            }
+            if (!json.hasMore) break;
+
+            if (
+                typeof json.nextCursor !== 'string' ||
+                typeof json.nextCursorId !== 'string' ||
+                typeof json.nextCursorType !== 'string'
+            ) {
+                throw new Error('Niepełny kursor paginacji ofert');
+            }
+            const cursorKey = `${json.nextCursorType}:${json.nextCursorId}:${json.nextCursor}`;
+            if (seenCursors.has(cursorKey)) throw new Error('Powtórzony kursor ofert');
+            seenCursors.add(cursorKey);
+
+            const cursorParams = new URLSearchParams();
+            cursorParams.set('cursor', json.nextCursor);
+            cursorParams.set('cursorId', json.nextCursorId);
+            cursorParams.set('cursorType', json.nextCursorType);
+            nextUrl = `${url}&${cursorParams.toString()}`;
+        }
+        return items;
     }
 
     function readCombinedFilters(modal) {
@@ -336,9 +367,10 @@
 
         try {
             const filters = readCombinedFilters(modal);
+            const isCurrentRequest = () => requestId === combinedFilterRequestId;
             const [ruryOffers, studnieOffers] = await Promise.all([
-                fetchOfferList(buildSearchUrl('offer', filters)),
-                fetchOfferList(buildSearchUrl('studnia_oferta', filters))
+                fetchOfferList(buildSearchUrl('offer', filters), isCurrentRequest),
+                fetchOfferList(buildSearchUrl('studnia_oferta', filters), isCurrentRequest)
             ]);
             if (requestId !== combinedFilterRequestId) return;
             fillOfferInput(ruryInput, ruryList, ruryOffers);
