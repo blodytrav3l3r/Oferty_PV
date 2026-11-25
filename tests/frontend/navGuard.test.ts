@@ -98,6 +98,7 @@ function runContext() {
         Object.defineProperty(iframe, 'src', {
             get: () => src,
             set(value) {
+                this.srcAssignments = (this.srcAssignments || 0) + 1;
                 const previousHref = this.contentWindow.location.href;
                 src = value;
                 const absoluteUrl = new URL(value, 'http://localhost/app.html').href;
@@ -739,6 +740,71 @@ describe('Rozpoczynanie nowej oferty z aktywnego modułu', () => {
         expect(dashboard).toContain('href="app.html#/studnie?newOffer=1"');
     });
 
+    test.each([
+        ['studnie', 'edit', 'offer-1'],
+        ['rury', 'edit', 'offer-1'],
+        ['studnie', 'order', 'order-1'],
+        ['rury', 'order', 'order-1']
+    ])(
+        'po rozpoczęciu nowej oferty ponownie wczytuje ten sam dokument: %s/%s',
+        async (module, param, documentId) => {
+            const { context, state, createdIframes } = runContext();
+            state.hash = `#/${module}?${param}=${documentId}`;
+            await context.window.SpaRouter.navigate();
+
+            const iframe = createdIframes[0];
+            const frameWindow = iframe.contentWindow;
+            frameWindow.clearOfferForm = jest.fn();
+            if (param === 'order') {
+                frameWindow.orderEditMode = { orderId: documentId };
+                const exitMode = async () => {
+                    frameWindow.orderEditMode = null;
+                };
+                frameWindow.exitOrderEditMode = exitMode;
+                frameWindow.exitWizardOrderMode = exitMode;
+            }
+
+            state.hash = '#/pulpit';
+            await context.window.SpaRouter.navigate();
+            state.hash = `#/${module}?newOffer=1`;
+            await context.window.SpaRouter.navigate();
+
+            expect(frameWindow.clearOfferForm).toHaveBeenCalledTimes(1);
+            expect(state.hash).toBe(`#/${module}`);
+            expect(iframe.dataset.spaLogicalSrc).toBe(`${module}.html`);
+
+            const loadsBeforeReopen = iframe.srcAssignments;
+            state.hash = '#/kartoteka';
+            await context.window.SpaRouter.navigate();
+            state.hash = `#/${module}?${param}=${documentId}`;
+            await context.window.SpaRouter.navigate();
+
+            expect(iframe.srcAssignments).toBe(loadsBeforeReopen + 1);
+            expect(new URL(iframe.contentWindow.location.href).searchParams.get(param)).toBe(
+                documentId
+            );
+        }
+    );
+
+    test('ręczne rozpoczęcie nowej oferty zapisuje czystą trasę do wznowienia pracy', async () => {
+        const { context, state, createdIframes } = runContext();
+        state.hash = '#/studnie?order=order-1';
+        await context.window.SpaRouter.navigate();
+
+        const frameWindow = createdIframes[0].contentWindow;
+        frameWindow.orderEditMode = { orderId: 'order-1' };
+        frameWindow.exitWizardOrderMode = async () => {
+            frameWindow.orderEditMode = null;
+        };
+        frameWindow.clearOfferForm = jest.fn();
+        const saveRoute = jest.fn();
+        context.window.lastRoute = { save: saveRoute };
+
+        expect(await context.window.SpaRouter.startNewOffer()).toBe(true);
+        expect(state.hash).toBe('#/studnie');
+        expect(saveRoute).toHaveBeenCalledWith('#/studnie');
+    });
+
     test('kafel Pulpitu zamienia zachowane zamówienie na nową ofertę', async () => {
         const { context, state, createdIframes } = runContext();
         state.hash = '#/studnie?order=order-1';
@@ -760,6 +826,7 @@ describe('Rozpoczynanie nowej oferty z aktywnego modułu', () => {
         expect(createdIframes).toHaveLength(2);
         expect(createdIframes[0].src).toContain('order=order-1');
         expect(createdIframes[0].src).not.toContain('newOffer');
+        expect(createdIframes[0].dataset.spaLogicalSrc).toBe('studnie.html');
         expect(frameWindow.exitWizardOrderMode).toHaveBeenCalledWith(0, { silent: true });
         expect(frameWindow.clearOfferForm).toHaveBeenCalledTimes(1);
         expect(state.hash).toBe('#/studnie');

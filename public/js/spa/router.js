@@ -987,6 +987,31 @@
         }
     }
 
+    function _resetDocumentRouteForNewOffer(module) {
+        const iframe = iframes[module];
+        if (!iframe || !window.history || typeof window.history.replaceState !== 'function')
+            return false;
+
+        try {
+            window.history.replaceState(window.history.state, '', `#/${module}`);
+            _lastCleanHash = `#/${module}`;
+            _setSpaLogicalSrc(iframe, _logicalSrcKey(module, {}));
+            try {
+                if (window.lastRoute && typeof window.lastRoute.save === 'function')
+                    window.lastRoute.save(_lastCleanHash);
+            } catch (_error) {
+                logger.warn('router', '[SpaRouter] Nie udało się zapisać trasy nowej oferty');
+            }
+            return true;
+        } catch (error) {
+            logger.warn('router', '[SpaRouter] Nie udało się wyczyścić trasy dokumentu', {
+                currentModule: module,
+                error: error && error.name ? error.name : 'Error'
+            });
+            return false;
+        }
+    }
+
     async function startNewOffer() {
         const module = currentModule;
         if (module !== 'rury' && module !== 'studnie') return false;
@@ -1029,6 +1054,14 @@
             }
 
             if (!(await _exitOrderModeForNewOffer(module, frameWindow))) return false;
+            if (!_resetDocumentRouteForNewOffer(module)) {
+                if (typeof window.showToast === 'function')
+                    window.showToast(
+                        'Nie udało się bezpiecznie rozpocząć nowej oferty. Bieżący dokument pozostał otwarty.',
+                        'error'
+                    );
+                return false;
+            }
 
             frameWindow.clearOfferForm();
             showSection('builder');
