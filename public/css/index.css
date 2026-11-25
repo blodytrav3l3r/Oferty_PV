@@ -1223,9 +1223,7 @@ a.admin-stat-card {
     font-weight: var(--fw-bold);
     color: var(--text-primary);
     font-size: var(--fs-md);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
 }
 
 .admin-user-login {
