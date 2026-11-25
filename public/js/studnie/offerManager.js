@@ -51,6 +51,8 @@ function clearOfferForm() {
     offerDefaultRedukcjaZak = null;
 
     // Aktualizacja UI
+    const offerLockBanner = document.getElementById('offer-lock-banner');
+    if (offerLockBanner) offerLockBanner.remove();
     const titleEl = document.getElementById('offer-form-title-studnie');
     if (titleEl)
         titleEl.innerHTML = '<i data-lucide="clipboard-list"></i> Dane klienta i oferty (Nowa)';
