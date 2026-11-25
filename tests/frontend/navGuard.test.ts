@@ -48,6 +48,9 @@ function runContext() {
         },
         focus() {},
         innerHTML: '',
+        insertAdjacentHTML(_position, html) {
+            this.innerHTML += html;
+        },
         textContent: '',
         classList: makeClassList(),
         setAttribute() {},
@@ -703,5 +706,181 @@ describe('Guard SPA — 3-btn i A-vs-B (P0.3/P1.1/P1.2)', () => {
         await navPromise;
         expect(state.hash).toBe('#/rury');
         expect(state.dirty).toBe(true);
+    });
+});
+
+describe('Rozpoczynanie nowej oferty z aktywnego modułu', () => {
+    test.each(['rury', 'studnie'])('moduł %s pokazuje jawną akcję Nowa oferta', async (module) => {
+        const { context, state, elements } = runContext();
+        state.hash = `#/${module}`;
+        await context.window.SpaRouter.navigate();
+
+        expect(elements.get('spa-section-nav').innerHTML).toContain('Nowa oferta');
+        expect(elements.get('spa-section-nav').innerHTML).toContain('data-csp="startNewOffer"');
+    });
+
+    test('pulpit nie pokazuje akcji Nowa oferta', async () => {
+        const { context, state, elements } = runContext();
+        state.hash = '#/pulpit';
+        await context.window.SpaRouter.navigate();
+
+        expect(elements.get('spa-section-nav').innerHTML).not.toContain('startNewOffer');
+    });
+
+    test('czysty formularz resetuje się bez pytania i wraca do Konfiguracji', async () => {
+        const { context, state, createdIframes, confirmCalls } = runContext();
+        await bootOnRury(context, state);
+        const clearOfferForm = jest.fn();
+        createdIframes[0].contentWindow.clearOfferForm = clearOfferForm;
+
+        const started = await context.window.SpaRouter.startNewOffer();
+
+        expect(started).toBe(true);
+        expect(clearOfferForm).toHaveBeenCalledTimes(1);
+        expect(confirmCalls).toHaveLength(0);
+    });
+
+    test('zmiany wymagają wyboru, a Zostań nie resetuje edycji', async () => {
+        const { context, state, createdIframes, calls3, resolveChoice } = runContext3();
+        await bootOnRury(context, state);
+        state.dirty = true;
+        context.window.__sokCanSave = () => true;
+        const clearOfferForm = jest.fn();
+        createdIframes[0].contentWindow.clearOfferForm = clearOfferForm;
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+
+        expect(calls3).toHaveLength(1);
+        expect(calls3[0].opts.saveText).toBe('Zapisz i rozpocznij nową');
+        expect(calls3[0].opts.okText).toBe('Usuń zmiany i rozpocznij nową');
+        expect(clearOfferForm).not.toHaveBeenCalled();
+        resolveChoice('stay');
+
+        expect(await startPromise).toBe(false);
+        expect(clearOfferForm).not.toHaveBeenCalled();
+    });
+
+    test('zapis nieudany pozostawia bieżącą ofertę bez resetu', async () => {
+        const { context, state, createdIframes, resolveChoice } = runContext3({
+            saveFn: async () => false
+        });
+        await bootOnRury(context, state);
+        state.dirty = true;
+        context.window.__sokCanSave = () => true;
+        const clearOfferForm = jest.fn();
+        createdIframes[0].contentWindow.clearOfferForm = clearOfferForm;
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+        resolveChoice('save');
+
+        expect(await startPromise).toBe(false);
+        expect(clearOfferForm).not.toHaveBeenCalled();
+        expect(state.dirty).toBe(true);
+    });
+
+    test('udany zapis czyści stary kontekst dopiero po zakończeniu zapisu', async () => {
+        const { context, state, createdIframes, calls3, resolveChoice } = runContext3();
+        await bootOnRury(context, state);
+        state.dirty = true;
+        context.window.__sokCanSave = () => true;
+        const clearOfferForm = jest.fn();
+        createdIframes[0].contentWindow.clearOfferForm = clearOfferForm;
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+        resolveChoice('save');
+
+        expect(await startPromise).toBe(true);
+        expect(calls3).toHaveLength(1);
+        expect(state.dirty).toBe(false);
+        expect(clearOfferForm).toHaveBeenCalledTimes(1);
+    });
+
+    test('jawne usunięcie zmian odblokowuje rozpoczęcie nowej oferty', async () => {
+        const { context, state, createdIframes, resolveChoice } = runContext3();
+        await bootOnRury(context, state);
+        state.dirty = true;
+        context.window.__sokCanSave = () => true;
+        const abandonCurrent = jest.fn();
+        const clearOfferForm = jest.fn();
+        context.window.__sokAbandonCurrent = abandonCurrent;
+        createdIframes[0].contentWindow.clearOfferForm = clearOfferForm;
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+        resolveChoice('leave');
+
+        expect(await startPromise).toBe(true);
+        expect(abandonCurrent).toHaveBeenCalledTimes(1);
+        expect(clearOfferForm).toHaveBeenCalledTimes(1);
+    });
+
+    test('błąd oznaczenia zmian do usunięcia zatrzymuje reset formularza', async () => {
+        const { context, state, createdIframes, resolveChoice } = runContext3();
+        await bootOnRury(context, state);
+        state.dirty = true;
+        context.window.__sokCanSave = () => true;
+        context.window.__sokAbandonCurrent = () => {
+            throw new Error('abandon failed');
+        };
+        context.window.showToast = jest.fn();
+        const clearOfferForm = jest.fn();
+        createdIframes[0].contentWindow.clearOfferForm = clearOfferForm;
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+        resolveChoice('leave');
+
+        expect(await startPromise).toBe(false);
+        expect(clearOfferForm).not.toHaveBeenCalled();
+        expect(context.window.showToast).toHaveBeenCalledWith(
+            'Nie udało się bezpiecznie odrzucić zmian. Bieżąca oferta pozostała otwarta.',
+            'error'
+        );
+    });
+
+    test('oferta bez możliwości zapisu wymaga jawnego usunięcia zmian', async () => {
+        const { context, state, createdIframes, confirmCalls, resolveConfirm } = runContext3();
+        await bootOnRury(context, state);
+        state.dirty = true;
+        context.window.__sokCanSave = () => false;
+        context.window.__sokAbandonCurrent = jest.fn();
+        const clearOfferForm = jest.fn();
+        createdIframes[0].contentWindow.clearOfferForm = clearOfferForm;
+
+        const startPromise = context.window.SpaRouter.startNewOffer();
+        await flush();
+
+        expect(confirmCalls).toHaveLength(1);
+        expect(confirmCalls[0].opts.okText).toBe('Usuń zmiany i rozpocznij nową');
+        resolveConfirm(true);
+
+        expect(await startPromise).toBe(true);
+        expect(clearOfferForm).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([
+        ['rury', (frameWindow) => (frameWindow.orderEditMode = true)],
+        ['studnie', (frameWindow) => (frameWindow.orderEditMode = { orderId: 'order-1' })],
+        ['studnie', (frameWindow) => (frameWindow.isPreviewMode = true)],
+        [
+            'rury',
+            (frameWindow) => {
+                frameWindow.pricelistVersions = { isPricelistEditing: () => true };
+            }
+        ]
+    ])('chroniony kontekst %s blokuje reset formularza oferty', async (module, setMode) => {
+        const { context, state, createdIframes } = runContext();
+        state.hash = `#/${module}`;
+        await context.window.SpaRouter.navigate();
+        const frameWindow = createdIframes[0].contentWindow;
+        const clearOfferForm = jest.fn();
+        frameWindow.clearOfferForm = clearOfferForm;
+        setMode(frameWindow);
+
+        expect(await context.window.SpaRouter.startNewOffer()).toBe(false);
+        expect(clearOfferForm).not.toHaveBeenCalled();
     });
 });

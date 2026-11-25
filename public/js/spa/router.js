@@ -399,6 +399,16 @@
         `
             )
             .join('');
+        if (module === 'rury' || module === 'studnie') {
+            nav.insertAdjacentHTML(
+                'beforeend',
+                '<button type="button" class="nav-tile nav-tile--oferta" ' +
+                    'data-csp="startNewOffer" data-csp-scope="SpaRouter" ' +
+                    'aria-label="Rozpocznij nową ofertę" title="Rozpocznij nową ofertę">' +
+                    '<span class="nav-tile-icon"><i data-lucide="plus" aria-hidden="true"></i></span>' +
+                    '<span class="nav-tile-text">Nowa oferta</span></button>'
+            );
+        }
         if (window.lucide) window.lucide.createIcons({ root: nav });
     }
 
@@ -815,6 +825,120 @@
             if (isActive) btn.setAttribute('aria-current', 'page');
             else btn.removeAttribute('aria-current');
         });
+    }
+
+    function _isOfferModuleInProtectedMode(module, frameWindow) {
+        if (frameWindow.orderEditMode || frameWindow.isPreviewMode) return true;
+        try {
+            const versions = frameWindow.pricelistVersions;
+            return (
+                !!versions &&
+                typeof versions.isPricelistEditing === 'function' &&
+                versions.isPricelistEditing(module)
+            );
+        } catch (_e) {
+            return true;
+        }
+    }
+
+    async function _confirmStartNewOffer(frameWindow) {
+        let canSave = true;
+        try {
+            if (typeof window.__sokCanSave === 'function')
+                canSave = window.__sokCanSave(frameWindow) === true;
+        } catch (_e) {
+            canSave = false;
+        }
+
+        const message =
+            'Bieżąca oferta ma niezapisane zmiany. Rozpoczęcie nowej wyczyści formularz i szkic tej oferty.';
+        if (canSave && typeof window.appConfirm3 === 'function')
+            return window.appConfirm3(message, {
+                title: 'Rozpocząć nową ofertę?',
+                type: 'warning',
+                saveText: 'Zapisz i rozpocznij nową',
+                okText: 'Usuń zmiany i rozpocznij nową',
+                cancelText: 'Wróć do edycji'
+            });
+
+        const confirmed = await window.appConfirm(message, {
+            title: 'Rozpocząć nową ofertę?',
+            type: 'warning',
+            okText: 'Usuń zmiany i rozpocznij nową',
+            cancelText: 'Wróć do edycji'
+        });
+        return confirmed ? 'leave' : 'stay';
+    }
+
+    function _abandonChangesForNewOffer() {
+        try {
+            if (typeof window.__sokAbandonCurrent !== 'function')
+                throw new Error('Abandon handler unavailable');
+            window.__sokAbandonCurrent();
+            return true;
+        } catch (error) {
+            logger.warn('router', '[SpaRouter] Nie udało się oznaczyć zmian do usunięcia', {
+                currentModule: currentModule,
+                error: error && error.name ? error.name : 'Error'
+            });
+            if (typeof window.showToast === 'function')
+                window.showToast(
+                    'Nie udało się bezpiecznie odrzucić zmian. Bieżąca oferta pozostała otwarta.',
+                    'error'
+                );
+            return false;
+        }
+    }
+
+    async function startNewOffer() {
+        const module = currentModule;
+        if (module !== 'rury' && module !== 'studnie') return false;
+        if (_getConfirmLock()) return false;
+
+        const frameWindow = iframes[module]?.contentWindow;
+        if (!frameWindow || typeof frameWindow.clearOfferForm !== 'function') {
+            if (typeof window.showToast === 'function')
+                window.showToast(
+                    'Nie można rozpocząć nowej oferty — moduł nie jest gotowy.',
+                    'error'
+                );
+            return false;
+        }
+        if (_isOfferModuleInProtectedMode(module, frameWindow)) {
+            if (typeof window.showToast === 'function')
+                window.showToast(
+                    'Zakończ najpierw tryb zamówienia, podglądu lub edycję cennika.',
+                    'warning'
+                );
+            return false;
+        }
+
+        _setConfirmLock(true);
+        try {
+            if (_isDirtyNow()) {
+                const choice = await _confirmStartNewOffer(frameWindow);
+                if (choice === 'stay') return false;
+                if (choice === 'save') {
+                    const saved = await _saveDirtyPrev();
+                    if (!saved) {
+                        if (typeof window.showToast === 'function')
+                            window.showToast(
+                                'Nie udało się zapisać. Bieżąca oferta pozostała otwarta.',
+                                'warning'
+                            );
+                        return false;
+                    }
+                } else if (!_abandonChangesForNewOffer()) {
+                    return false;
+                }
+            }
+
+            frameWindow.clearOfferForm();
+            showSection('builder');
+            return true;
+        } finally {
+            _setConfirmLock(false);
+        }
     }
 
     async function navigate() {
@@ -1243,6 +1367,7 @@
 
     const api = {
         showSection,
+        startNewOffer,
         navigate,
         openOfferInModule,
         refreshModule,
