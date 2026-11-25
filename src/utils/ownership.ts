@@ -184,6 +184,22 @@ type OrderOfferLinkClient = Pick<
     'offers_rel' | 'offers_studnie_rel' | 'document_shares'
 >;
 
+type OrderOfferLinkErrorDetails =
+    | { status: 404; code: 'OFFER_NOT_FOUND'; message: string }
+    | { status: 403; code: 'OFFER_ACCESS_DENIED'; message: string };
+
+export class OrderOfferLinkError extends Error {
+    readonly status: OrderOfferLinkErrorDetails['status'];
+    readonly code: OrderOfferLinkErrorDetails['code'];
+
+    constructor(details: OrderOfferLinkErrorDetails) {
+        super(details.message);
+        this.name = 'OrderOfferLinkError';
+        this.status = details.status;
+        this.code = details.code;
+    }
+}
+
 export async function assertOrderOfferLinkAccess(
     client: OrderOfferLinkClient,
     user: User | undefined,
@@ -205,18 +221,18 @@ export async function assertOrderOfferLinkAccess(
               });
 
     if (!offer) {
-        throw {
+        throw new OrderOfferLinkError({
             status: 404,
             code: 'OFFER_NOT_FOUND',
             message: 'Powiązana oferta nie istnieje'
-        };
+        });
     }
     if (!(await canReadWithShare(user, offer.userId, documentType, offerId, client))) {
-        throw {
+        throw new OrderOfferLinkError({
             status: 403,
             code: 'OFFER_ACCESS_DENIED',
             message: 'Brak dostępu do powiązanej oferty'
-        };
+        });
     }
 }
 

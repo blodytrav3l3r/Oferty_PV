@@ -3,6 +3,7 @@ import express from 'express';
 import ruryOrdersRouter from '../../src/routes/orders/ruryOrders.crud';
 import studnieOrdersRouter from '../../src/routes/orders/studnieOrders.crud';
 import prisma from '../../src/prismaClient';
+import { assertOrderOfferLinkAccess, OrderOfferLinkError } from '../../src/utils/ownership';
 
 type Domain = 'rury' | 'studnie';
 type TestUser = { id: string; role: 'user'; subUsers: string[] };
@@ -91,9 +92,43 @@ async function readOrders(domain: Domain): Promise<request.Response> {
     );
 }
 
+async function readOrderOfferId(domain: Domain, id: string) {
+    if (domain === 'rury') {
+        return (
+            await prisma.orders_rury_rel.findUnique({
+                where: { id },
+                select: { offerId: true }
+            })
+        )?.offerId;
+    }
+    return (
+        await prisma.orders_studnie_rel.findUnique({
+            where: { id },
+            select: { offerStudnieId: true }
+        })
+    )?.offerStudnieId;
+}
+
 describe.each<Domain>(['rury', 'studnie'])('API link ofert — %s — PostgreSQL', (domain) => {
     beforeEach(() => {
         mockUser = { id: 'link-owner', role: 'user', subUsers: [] };
+    });
+
+    test('brakująca oferta daje typowany błąd domenowy', async () => {
+        const error = await assertOrderOfferLinkAccess(
+            prisma,
+            { ...mockUser, username: 'link-owner' },
+            offerId(domain, 'typed-error'),
+            domain
+        ).catch((reason: unknown) => reason);
+
+        expect(error).toBeInstanceOf(OrderOfferLinkError);
+        expect(error).toMatchObject({
+            name: 'OrderOfferLinkError',
+            status: 404,
+            code: 'OFFER_NOT_FOUND',
+            message: 'Powiązana oferta nie istnieje'
+        });
     });
 
     test('pozwala połączyć ofertę własną', async () => {
@@ -134,16 +169,23 @@ describe.each<Domain>(['rury', 'studnie'])('API link ofert — %s — PostgreSQL
         const foreignId = offerId(domain, 'foreign');
         await createOffer(domain, foreignId, 'link-foreign-owner');
 
-        const foreignResponse = await saveOrder(domain, orderId(domain, 'foreign'), foreignId);
+        const foreignOrderId = orderId(domain, 'foreign');
+        const foreignResponse = await saveOrder(domain, foreignOrderId, foreignId);
         expect(foreignResponse.status).toBe(403);
+        expect(foreignResponse.body).toEqual({
+            error: 'Brak dostępu do powiązanej oferty',
+            code: 'OFFER_ACCESS_DENIED'
+        });
+        expect(await readOrderOfferId(domain, foreignOrderId)).toBeUndefined();
 
-        const missingResponse = await saveOrder(
-            domain,
-            orderId(domain, 'missing'),
-            offerId(domain, 'missing')
-        );
+        const missingOrderId = orderId(domain, 'missing');
+        const missingResponse = await saveOrder(domain, missingOrderId, offerId(domain, 'missing'));
         expect(missingResponse.status).toBe(404);
-        expect(missingResponse.body.code).toBe('OFFER_NOT_FOUND');
+        expect(missingResponse.body).toEqual({
+            error: 'Powiązana oferta nie istnieje',
+            code: 'OFFER_NOT_FOUND'
+        });
+        expect(await readOrderOfferId(domain, missingOrderId)).toBeUndefined();
 
         const unlinkedOrderId = orderId(domain, 'unlinked');
         const unlinkedResponse = await saveOrder(domain, unlinkedOrderId, '');
@@ -163,6 +205,7 @@ describe.each<Domain>(['rury', 'studnie'])('API link ofert — %s — PostgreSQL
 
         const changed = await saveOrder(domain, linkedOrderId, foreignOfferId);
         expect(changed.status).toBe(403);
+        expect(await readOrderOfferId(domain, linkedOrderId)).toBe(ownOfferId);
     });
 });
 

@@ -14,7 +14,8 @@ import {
     resolveAssignUserId,
     canDeleteDoc,
     canReadOrderWithOfferShare,
-    assertOrderOfferLinkAccess
+    assertOrderOfferLinkAccess,
+    OrderOfferLinkError
 } from '../../utils/ownership';
 import { buildOrderListWhereWithOfferShare } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
@@ -375,6 +376,9 @@ router.put(
             if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
+            if (e instanceof OrderOfferLinkError) {
+                return res.status(e.status).json({ error: e.message, code: e.code });
+            }
             const accessError = e as { status?: number; message?: string; code?: string };
             if (accessError.status === 403 || accessError.status === 404) {
                 return res.status(accessError.status).json({

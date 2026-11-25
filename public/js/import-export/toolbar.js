@@ -45,10 +45,18 @@ window.importExportToolbar = /** @type {any} */ ({
             '<button class="btn btn-sm btn-secondary" id="ie-btn-import-json"><i data-lucide="file-up" class="icon-14"></i>Import 1:1 (JSON)</button>' +
             '</div>';
 
-        document.getElementById('ie-btn-export-xlsx').onclick = () => this.showExportXlsxDialog();
-        document.getElementById('ie-btn-export-json').onclick = () => this.showExportJsonPopup();
-        document.getElementById('ie-btn-import-json').onclick = () => this.showImportJsonDialog();
-        document.getElementById('ie-btn-import-xlsx').onclick = () => this.showImportXlsxDialog();
+        document
+            .getElementById('ie-btn-export-xlsx')
+            .addEventListener('click', () => this.showExportXlsxDialog());
+        document
+            .getElementById('ie-btn-export-json')
+            .addEventListener('click', () => this.showExportJsonPopup());
+        document
+            .getElementById('ie-btn-import-json')
+            .addEventListener('click', () => this.showImportJsonDialog());
+        document
+            .getElementById('ie-btn-import-xlsx')
+            .addEventListener('click', () => this.showImportXlsxDialog());
 
         if (window.lucide) lucide.createIcons({ root: host });
     },
