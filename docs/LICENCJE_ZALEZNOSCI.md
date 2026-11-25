@@ -1,4 +1,9 @@
-# Licencje zależności i kontrola dystrybucji
+# Licencje zależności i kontrola dystrybucji — audyt historyczny
+
+> **Nie jest aktualnym audytem wydania.** Poniższy raport dotyczy wersji 1.58.1
+> i commitu `9576be7d`, a jego wyniki o obrazach i zależnościach nie mogą być
+> przypisywane wydaniu 1.64.26. Aktualny przegląd źródłowego wydania bazowego
+> znajduje się w [`LICENCJE_ZALEZNOSCI_1.64.26.md`](LICENCJE_ZALEZNOSCI_1.64.26.md).
 
 Stan przeglądu: 2026-11-15, kod bazowy `9576be7d`, wersja aplikacji 1.58.1.
 Dokument obejmuje istniejące warianty Docker oraz instalacje Windows i Linux;
