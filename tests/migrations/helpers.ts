@@ -134,7 +134,7 @@ export function createIsolatedProject(name: string, migrations: string[]): Isola
                         '-NoProfile',
                         '-NonInteractive',
                         '-Command',
-                        'Remove-Item -LiteralPath $env:SOK_MIGRATION_TMP_PATH -Recurse -Force'
+                        '$attempt = 0; while ($true) { try { Remove-Item -LiteralPath $env:SOK_MIGRATION_TMP_PATH -Recurse -Force -ErrorAction Stop; break } catch { $win32Code = [int]($_.Exception.HResult -band 65535); $attempt++; if ($win32Code -ne 32 -or $attempt -ge 5) { throw }; Start-Sleep -Milliseconds ([int](50 * [Math]::Pow(2, $attempt - 1))) } }'
                     ],
                     {
                         stdio: 'pipe',
