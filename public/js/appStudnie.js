@@ -71,6 +71,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         createNewWell(null, 1000);
         renderWellsList();
         selectWell(0);
+        const rememberPristineDraft = Reflect.get(window.addNewWell, '__rememberPristineDraft');
+        if (typeof rememberPristineDraft === 'function') {
+            rememberPristineDraft(wells[0]);
+        }
         goToWizardStep(1);
         if (typeof setupParamTiles === 'function') setupParamTiles();
         document.documentElement.classList.remove('wizard-loading-state');

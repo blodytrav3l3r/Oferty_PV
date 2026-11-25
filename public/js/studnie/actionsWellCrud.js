@@ -169,8 +169,9 @@ function isWellLocked(wellIdx) {
 
 /**
  * @param {string|number} [dn=1000]
+ * @param {object|null} [preparedWell=null] A well created after a confirmed builder popup choice.
  */
-function addNewWell(dn = 1000) {
+function addNewWell(dn = 1000, preparedWell = null) {
     if (enforceGlobalKonusPehdRule()) {
         showToast(
             'Nie można dodać nowej studni, dopóki nie rozwiążesz konfliktu Konus+PEHD w poprzedniej.',
@@ -178,19 +179,59 @@ function addNewWell(dn = 1000) {
         );
         return;
     }
-    if (dn === 'styczna') {
+    if (dn === 'styczna' && !preparedWell) {
         showStycznaPopup('add');
         return;
     }
-    const well = createNewWell(null, dn);
+    if (preparedWell) {
+        const productById =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById
+                : (productId) => studnieProducts.find((product) => product.id === productId);
+        const hasSelectedStyczna =
+            dn === 'styczna' &&
+            preparedWell.dn === 'styczna' &&
+            Array.isArray(preparedWell.config) &&
+            preparedWell.config.some((item) => {
+                const product = item && productById(item.productId);
+                return product && product.componentType === 'styczna' && Number(item.quantity) > 0;
+            });
+        if (!hasSelectedStyczna) {
+            showToast('Nie można dodać studni stycznej bez wybranego produktu.', 'error');
+            return;
+        }
+    }
+    const well = preparedWell || createNewWell(null, dn);
+    const snapshots = /** @type {WeakMap<object, string>} */ (
+        Reflect.get(addNewWell, '__pristineSnapshots')
+    );
+    const removeAbandonedDraft = /** @type {() => boolean} */ (
+        Reflect.get(addNewWell, '__removeAbandonedDraft')
+    );
+    const removedAbandonedDraft = removeAbandonedDraft();
     wells.push(well);
     currentWellIndex = wells.length - 1;
+    if (removedAbandonedDraft) {
+        if (typeof window._rebuildWellsById === 'function') window._rebuildWellsById();
+        if (typeof window._excelRebuildWellIndex === 'function') window._excelRebuildWellIndex();
+    }
     const bcontentConcrete = document.getElementById('bcontent-concrete');
     if (bcontentConcrete && bcontentConcrete.style.display === 'none') {
         switchBuilderTab('concrete');
     }
     refreshAll();
-    showToast(`Dodano: ${well.name}`, 'success');
+    if (!preparedWell) snapshots.set(well, JSON.stringify(well));
+    if (removedAbandonedDraft && window.draftAutosave) {
+        if (typeof window.draftAutosave.scheduleSave === 'function') {
+            window.draftAutosave.scheduleSave();
+        }
+    }
+    showToast(
+        removedAbandonedDraft
+            ? `Dodano: ${well.name}. Pominięto pustą, nieuzupełnioną studnię.`
+            : `Dodano: ${well.name}`,
+        removedAbandonedDraft ? 'warning' : 'success'
+    );
 }
 
 function duplicateWell(index) {
@@ -300,6 +341,50 @@ function getCurrentWell() {
 }
 
 /* ===== Rejestracja globali ===== */
+Object.defineProperties(addNewWell, {
+    __pristineSnapshots: { value: new WeakMap() },
+    __rememberPristineDraft: {
+        value: function (well) {
+            if (well && typeof well === 'object') {
+                const snapshots = /** @type {WeakMap<object, string>} */ (
+                    Reflect.get(addNewWell, '__pristineSnapshots')
+                );
+                snapshots.set(well, JSON.stringify(well));
+            }
+        }
+    },
+    __removeAbandonedDraft: {
+        value: function () {
+            if (orderEditMode || !Array.isArray(wells)) return false;
+            const well = wells[currentWellIndex];
+            const snapshots = /** @type {WeakMap<object, string>} */ (
+                Reflect.get(addNewWell, '__pristineSnapshots')
+            );
+            const initialSnapshot = well && snapshots.get(well);
+            if (
+                !well ||
+                !initialSnapshot ||
+                String(well.numer || '').trim() ||
+                (Array.isArray(well.config) && well.config.length > 0) ||
+                (Array.isArray(well.przejscia) && well.przejscia.length > 0) ||
+                JSON.stringify(well) !== initialSnapshot ||
+                (typeof isWellLocked === 'function' && isWellLocked(currentWellIndex)) ||
+                (window.pzGuard &&
+                    typeof window.pzGuard.hasPzForWell === 'function' &&
+                    window.pzGuard.hasPzForWell(well.id))
+            )
+                return false;
+
+            const removedIndex = currentWellIndex;
+            wells = wells.filter((_well, index) => index !== removedIndex);
+            currentWellIndex = Math.min(removedIndex, Math.max(0, wells.length - 1));
+            if (typeof window._excelResetLayoutDependentState === 'function')
+                window._excelResetLayoutDependentState();
+            if (typeof _excelRowSelectStates !== 'undefined') _excelRowSelectStates = {};
+            return true;
+        }
+    }
+});
 window.addNewWell = addNewWell;
 window.duplicateWell = duplicateWell;
 window.selectWell = selectWell;

@@ -123,14 +123,7 @@ async function handleStycznaProductChoice(productId, mode) {
             ? 'St. Styczna z korkiem DN' + product.dn + ' (#' + wellCounter + ')'
             : 'St. Styczna DN' + product.dn + ' (#' + wellCounter + ')';
         well.config = [{ productId: productId, quantity: 1 }];
-        wells.push(well);
-        currentWellIndex = wells.length - 1;
-        const bcontentConcrete = document.getElementById('bcontent-concrete');
-        if (bcontentConcrete && bcontentConcrete.style.display === 'none') {
-            switchBuilderTab('concrete');
-        }
-        refreshAll();
-        showToast(`Dodano: ${well.name}`, 'success');
+        addNewWell('styczna', well);
     } else {
         const well = getCurrentWell();
         if (!well) return;
