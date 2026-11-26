@@ -163,7 +163,9 @@ function collectPackages(lock) {
             name: nameFromKey(key),
             version: pkg.version,
             license: normalizeLicense(licenseToString(pkg.license)),
-            dev: pkg.dev === true
+            dev: pkg.dev === true,
+            resolved: pkg.resolved,
+            integrity: pkg.integrity
         });
     }
     items.sort((a, b) => compareStrings(a.name + a.version + a.key, b.name + b.version + b.key));
@@ -283,6 +285,32 @@ function buildObligations(groups) {
         const [, , obligation] = metaFor(license);
         lines.push(`- **${license}** — ${obligation}`);
     }
+    return lines;
+}
+
+function buildPackageSources(items) {
+    const packages = items.filter((item) =>
+        /\b(?:Apache-2\.0|EPL-2\.0|MPL-2\.0)\b/.test(item.license)
+    );
+    if (packages.length === 0) return [];
+
+    const lines = [
+        '### Pakiety npm Apache-2.0, EPL/MPL — kod i teksty licencji',
+        '',
+        'Dockerfile wykonuje `npm ci` bez pomijania devDependencies i nie usuwa `node_modules`; pakiety pozostają w obrazie pod `/app/node_modules/<nazwa-pakietu>`. Zachowaj pliki LICENSE i NOTICE zawarte w tych pakietach. Pełny tekst Apache-2.0 jest też w `public/licenses/APACHE-2.0.txt`. Archiwa i SHA-512 pochodzą z lockfile.',
+        '',
+        '| Pakiet | Licencja | Katalog w obrazie | Archiwum z lockfile | SHA-512 |',
+        '| --- | --- | --- | --- | --- |'
+    ];
+
+    for (const item of packages) {
+        const source = item.resolved || 'brak URL w lockfile';
+        const integrity = item.integrity || 'brak integralności w lockfile';
+        lines.push(
+            `| ${item.name}@${item.version} | ${item.license} | \`/app/${item.key}\` | ${source} | \`${integrity}\` |`
+        );
+    }
+
     return lines;
 }
 
@@ -413,6 +441,9 @@ async function buildNotices(lock) {
         'Właściciel praw majątkowych i warunki licencji — patrz `LICENSE` (nagłówek Copyright).'
     );
     lines.push('Kod projektu nie jest objęty licencją open source; szczegóły w `LICENSE`.');
+    lines.push(
+        'Licencje zależności dotyczą wyłącznie wskazanych składników i nie zmieniają licencji S.O.K. Komercyjne użycie S.O.K. wymaga pisemnej zgody zgodnie z `LICENSE`.'
+    );
     lines.push('');
     lines.push('## 2. Model dystrybucji i zakres dokumentu');
     lines.push('');
@@ -449,6 +480,8 @@ async function buildNotices(lock) {
     lines.push(
         '- Teksty dla zasobów vendored są w `public/licenses/` i są dostępne pod `/licenses/<plik>` w działającej aplikacji.'
     );
+    lines.push('');
+    lines.push(...buildPackageSources(items));
     lines.push('');
     lines.push('## 5. Zasoby spoza npm (vendored)');
     lines.push('');

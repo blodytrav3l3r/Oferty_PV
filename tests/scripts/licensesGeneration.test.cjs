@@ -50,6 +50,42 @@ test('opisuje obowiązki Blue Oak, MPL i EPL przy dystrybucji', async () => {
     assert.doesNotMatch(notices, /Projekt nie modyfikuje plików objętych MPL/);
 });
 
+test('odróżnia licencję S.O.K. i wskazuje archiwa Apache/EPL/MPL', async () => {
+    const { buildNotices } = await import('../../scripts/generate-licenses.mjs');
+    const notices = await buildNotices({
+        packages: {
+            'node_modules/elkjs': {
+                version: '0.11.1',
+                license: 'EPL-2.0',
+                resolved: 'https://registry.npmjs.org/elkjs/-/elkjs-0.11.1.tgz',
+                integrity: 'sha512-elkjs'
+            },
+            'node_modules/axe-core': {
+                version: '4.14.0',
+                license: 'MPL-2.0',
+                resolved: 'https://registry.npmjs.org/axe-core/-/axe-core-4.14.0.tgz',
+                integrity: 'sha512-axe'
+            },
+            'node_modules/example-parent/node_modules/example-apache': {
+                version: '2.0.0',
+                license: 'Apache-2.0',
+                resolved: 'https://registry.npmjs.org/example-apache/-/example-apache-2.0.0.tgz',
+                integrity: 'sha512-apache'
+            }
+        }
+    });
+
+    assert.match(notices, /Licencje zależności.*nie zmieniają licencji S\.O\.K\./i);
+    assert.match(notices, /elkjs@0\.11\.1[\s\S]*EPL-2\.0/);
+    assert.match(notices, /axe-core@4\.14\.0[\s\S]*MPL-2\.0/);
+    assert.match(notices, /https:\/\/registry\.npmjs\.org\/elkjs\/-\/elkjs-0\.11\.1\.tgz/);
+    assert.match(notices, /sha512-elkjs/);
+    assert.match(notices, /\/app\/node_modules\/elkjs/);
+    assert.match(notices, /example-apache@2\.0\.0[\s\S]*Apache-2\.0/);
+    assert.match(notices, /sha512-apache/);
+    assert.match(notices, /\/app\/node_modules\/example-parent\/node_modules\/example-apache/);
+});
+
 test('wskazuje zapis credits Chrome i nie potwierdza wariantu BSD bez dowodów', async () => {
     const { buildNotices } = await import('../../scripts/generate-licenses.mjs');
     const notices = await buildNotices({
