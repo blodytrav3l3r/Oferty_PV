@@ -4,6 +4,30 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.64.27](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.26...v1.64.27) (2026-11-26)
+
+### Bug Fixes
+
+- **api:** popraw zapis, paginację i loader ([dd6c18e](https://github.com/blodytrav3l3r/Oferty_PV/commit/dd6c18ea1042813c12c93d740126b6114378ad50))
+- **offers:** dodaj bezpieczny start nowej oferty ([541c28e](https://github.com/blodytrav3l3r/Oferty_PV/commit/541c28e87009cb5a201f994908958973d9edd158))
+- **offers:** resetuj kontekst nowej oferty ([f81a3f4](https://github.com/blodytrav3l3r/Oferty_PV/commit/f81a3f4b0b588d51f32f95e9d08ef2c8f14bb05f))
+- **offers:** resetuj trasę po starcie nowej oferty ([c5bc298](https://github.com/blodytrav3l3r/Oferty_PV/commit/c5bc29815f04ba0b551c303281384adea471e22d))
+- **studnie:** animuj slot wstawiania przy drag and drop ([9df17f2](https://github.com/blodytrav3l3r/Oferty_PV/commit/9df17f2581c545255672e13b35bfacfc2d1c7c7b))
+- **studnie:** dobieraj najbliższą cenę kinety ([e3a1da3](https://github.com/blodytrav3l3r/Oferty_PV/commit/e3a1da365284242caf5b92cea6f7c1b13aaa7a8f))
+- **studnie:** izoluj reset selekcji excela ([c0576b2](https://github.com/blodytrav3l3r/Oferty_PV/commit/c0576b21bab1d1ad9db6cf497e26a2295a78f295))
+- **studnie:** ogranicz kolorowanie cen kinet ([e971a64](https://github.com/blodytrav3l3r/Oferty_PV/commit/e971a645f2234a17a1e1eca41716891b01c77290))
+- **studnie:** oznacz zakresy cen kinet ([204c7a8](https://github.com/blodytrav3l3r/Oferty_PV/commit/204c7a8ac50d79830b194ba41542e0ff591e715e))
+- **studnie:** pokaż miejsce upuszczenia na diagramie ([3a2f376](https://github.com/blodytrav3l3r/Oferty_PV/commit/3a2f37652d284b490dde6eb476ba9cd5f671eeca))
+- **studnie:** popraw responsywny układ konfiguracji ([c8bc1da](https://github.com/blodytrav3l3r/Oferty_PV/commit/c8bc1daa4ec52da10813df4cca476857df296342))
+- **studnie:** przywróć układ karty i usuń linię ([3684e98](https://github.com/blodytrav3l3r/Oferty_PV/commit/3684e985bb18898dab764bc19e7722ab3598f648))
+- **studnie:** usuń baner blokady przy nowej ofercie ([5c8c030](https://github.com/blodytrav3l3r/Oferty_PV/commit/5c8c0302a094822ce0613a81dd3d68e033dcd674))
+- **studnie:** usuwaj porzucony pusty szkic ([6f9a4eb](https://github.com/blodytrav3l3r/Oferty_PV/commit/6f9a4ebd50556ca5c0a1e6cac9f12286277bb2cb))
+- **studnie:** wyceniaj kinetę według dolnej dennicy ([643d40a](https://github.com/blodytrav3l3r/Oferty_PV/commit/643d40a12a814a21172da813a0256cdb8af14187))
+- **studnie:** zapisuj draft lokalnie bez przerwy ([f6d4120](https://github.com/blodytrav3l3r/Oferty_PV/commit/f6d4120d271029b8eaceaf59fa65ba9e7a9fabde))
+- **ui:** pokazuj pasek przewijania cennika ([610f073](https://github.com/blodytrav3l3r/Oferty_PV/commit/610f07386910df95afbc1ea5847e0657b3682b22))
+- **ui:** tolerate slow dashboard iframe startup ([dc97357](https://github.com/blodytrav3l3r/Oferty_PV/commit/dc973579f809e8e876971b3ec4dcefb2970d7080))
+- **ui:** zawijaj długie nazwy użytkowników ([f6b25f8](https://github.com/blodytrav3l3r/Oferty_PV/commit/f6b25f8b10367813ba40ccbb4490f2247d60b6fe))
+
 ### [1.64.26](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.25...v1.64.26) (2026-11-24)
 
 ### Bug Fixes

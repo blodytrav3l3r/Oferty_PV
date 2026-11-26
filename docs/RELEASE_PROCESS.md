@@ -1,6 +1,6 @@
 # Proces wydawniczy (Release Process)
 
-**Wersja:** 1.64.26  
+**Wersja:** 1.64.27  
 **Ostatnia aktualizacja:** 2026-11-24
 
 Marker `Wersja` jest automatycznie synchronizowany z bieżącą wersją projektu i
