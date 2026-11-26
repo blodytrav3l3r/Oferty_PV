@@ -325,6 +325,63 @@ describe('Reward feedback transaction — PostgreSQL', () => {
             await prisma.ai_telemetry_logs.deleteMany({ where: { id: telemetryId } });
         }
     });
+
+    it('równoległe acceptance zapisuje stan raz, a event dla każdego requestu', async () => {
+        const suffix = crypto.randomUUID();
+        const telemetryId = `acceptance-race-telemetry-${suffix}`;
+        const wellId = `acceptance-race-well-${suffix}`;
+        const featureId = `acceptance-race-feature-${suffix}`;
+        const event = {
+            eventType: 'reject' as const,
+            telemetryId,
+            wellId,
+            changeReason: 'offer_rejected'
+        };
+        await prisma.ai_telemetry_logs.create({ data: { id: telemetryId, wellId } });
+        await prisma.aiFeature.create({
+            data: {
+                id: featureId,
+                telemetryId,
+                dn: 1000,
+                heightMm: 1000,
+                warehouse: 'KLB',
+                wellType: 'standard',
+                bottomType: 'dennica',
+                topType: 'wlaz',
+                season: 'winter',
+                label: 'NO_FEEDBACK',
+                createdAt: new Date().toISOString()
+            }
+        });
+
+        try {
+            await Promise.all([
+                telemetryService.recordAcceptance(telemetryId, false, wellId, {
+                    event,
+                    userId: 'acceptance-race-user'
+                }),
+                telemetryService.recordAcceptance(telemetryId, false, wellId, {
+                    event,
+                    userId: 'acceptance-race-user'
+                })
+            ]);
+
+            const telemetry = await prisma.ai_telemetry_logs.findUnique({
+                where: { id: telemetryId }
+            });
+            expect(telemetry).toEqual(
+                expect.objectContaining({ wasAccepted: false, wasRejected: true, usageCount: 2 })
+            );
+            expect(await prisma.ai_telemetry_events.count({ where: { telemetryId } })).toBe(2);
+            expect((await prisma.aiFeature.findUnique({ where: { id: featureId } }))?.label).toBe(
+                'REJECTED'
+            );
+        } finally {
+            await prisma.ai_telemetry_events.deleteMany({ where: { telemetryId } });
+            await prisma.aiFeature.deleteMany({ where: { id: featureId } });
+            await prisma.ai_telemetry_logs.deleteMany({ where: { id: telemetryId } });
+        }
+    });
 });
 
 /* ===== Constants of telemetryService ===== */
