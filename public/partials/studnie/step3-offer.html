@@ -102,37 +102,22 @@
             "
         ></div>
         <!-- Toolbar: DN + Elevations + Height + Controls -->
-        <div class="well-info-card" style="padding: 0.6rem 0.8rem">
+        <div class="well-info-card well-config-card">
             <!-- Row 1: Title + height indicators -->
-            <div style="display: flex; align-items: center; margin-bottom: 0.35rem">
-                <span
-                    style="
-                        font-size: var(--fs-base);
-                        font-weight: var(--fw-extrabold);
-                        color: var(--text-primary);
-                    "
+            <div class="well-config-header">
+                <span class="well-config-title"
                     ><i data-lucide="settings"></i> Konfiguracja studni</span
                 >
-                <div style="flex: 1"></div>
-                <div
-                    class="gap-2"
-                    style="
-                        display: flex;
-                        align-items: center;
-                        font-size: var(--fs-base);
-                        color: var(--text-muted);
-                        white-space: nowrap;
-                    "
-                >
+                <div class="well-config-height-stats">
                     <span
                         >Wym:
-                        <strong id="well-required-height" style="color: var(--accent-hover)"
+                        <strong id="well-required-height" class="well-config-required-height"
                             >— m</strong
                         ></span
                     >
                     <span
                         >Konf:
-                        <strong id="well-configured-height" style="color: var(--success)"
+                        <strong id="well-configured-height" class="well-configured-height"
                             >0 m</strong
                         ></span
                     >
@@ -140,17 +125,9 @@
                 </div>
             </div>
             <!-- Row 2: Nr + Rz fields + DN + Dopłata -->
-            <div class="gap-1" style="display: flex; align-items: center; margin-bottom: 0.4rem">
-                <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Nr</label
-                    >
+            <div class="well-config-fields">
+                <label class="well-config-field">
+                    <span>Nr</span>
                     <input
                         type="text"
                         id="input-well-numer"
@@ -159,31 +136,11 @@
                         data-csp-on="input"
                         data-csp-2="$select"
                         data-csp-2-on="focus"
-                        style="
-                            width: 95px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--bg-input);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            color: var(--accent2-hover);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
-                        "
+                        class="well-config-input well-config-input--number"
                     />
-                </div>
-                <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
-                <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Rz. włazu</label
-                    >
+                </label>
+                <label class="well-config-field">
+                    <span>Rz. włazu</span>
                     <input
                         type="text"
                         inputmode="decimal"
@@ -198,30 +155,11 @@
                         data-csp-3-args='["blur", "$el"]'
                         data-csp-3-on="keydown"
                         data-csp-3-key="Enter"
-                        style="
-                            width: 95px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--bg-input);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            color: var(--text-primary);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
-                        "
+                        class="well-config-input"
                     />
-                </div>
-                <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Rz. dna</label
-                    >
+                </label>
+                <label class="well-config-field">
+                    <span>Rz. dna</span>
                     <input
                         type="text"
                         inputmode="decimal"
@@ -236,32 +174,12 @@
                         data-csp-3-args='["blur", "$el"]'
                         data-csp-3-on="keydown"
                         data-csp-3-key="Enter"
-                        style="
-                            width: 95px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--bg-input);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            color: var(--text-primary);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
-                        "
+                        class="well-config-input"
                     />
-                </div>
-                <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
-                <div class="gap-1" style="display: flex; align-items: center">
-                    <span
-                        style="
-                            font-size: var(--fs-lg);
-                            color: var(--text-muted);
-                            text-transform: uppercase;
-                            font-weight: var(--fw-bold);
-                        "
-                        >DN</span
-                    >
-                    <div class="dn-selector mb-0">
+                </label>
+                <div class="well-config-field well-config-dn">
+                    <span class="well-config-label">DN</span>
+                    <div class="dn-selector mb-0 well-config-dn-selector">
                         <button
                             type="button"
                             class="dn-btn dn-btn--1000 active"
@@ -312,17 +230,8 @@
                         </button>
                     </div>
                 </div>
-                <div style="flex: 1"></div>
-                <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Dopłata</label
-                    >
+                <label class="well-config-field well-config-surcharge">
+                    <span>Dopłata</span>
                     <input
                         type="text"
                         inputmode="decimal"
@@ -337,27 +246,14 @@
                         data-csp-3-args='["blur", "$el"]'
                         data-csp-3-on="keydown"
                         data-csp-3-key="Enter"
-                        style="
-                            width: 80px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--bg-input);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
-                        "
+                        class="well-config-input"
                     />
-                </div>
+                </label>
             </div>
 
             <!-- Row 3: controls (left) + zakończenie/Auto (right) -->
-            <div class="gap-2" style="display: flex; align-items: center; flex-wrap: wrap">
-                <div
-                    class="well-controls gap-1"
-                    style="display: flex; align-items: center; flex-wrap: wrap"
-                >
+            <div class="well-config-actions gap-2">
+                <div class="well-controls gap-1 well-config-toggle-controls">
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
@@ -440,11 +336,7 @@
                         </button>
                     </div>
                 </div>
-                <div style="flex: 1"></div>
-                <div
-                    class="well-controls gap-1"
-                    style="display: flex; align-items: center; flex-wrap: wrap"
-                >
+                <div class="well-controls gap-1 well-config-primary-controls">
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
