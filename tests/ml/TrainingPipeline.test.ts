@@ -4,6 +4,7 @@
 
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { AcceptanceModel, TrainingNumericalError } from '../../src/services/ml/AcceptanceModel';
+import { FEATURE_NAMES } from '../../src/config/mlConstants';
 
 const mockFindMany = jest.fn<any>();
 const mockFindFirst = jest.fn<any>();
@@ -865,6 +866,56 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         } finally {
             (prisma.ai_telemetry_logs as any).findMany = origTelemetryFindMany;
             (prisma as any).settings = origSettings;
+        }
+    });
+
+    it('dopasowuje min/max wyłącznie do train, bez wpływu wartości z test', async () => {
+        const { trainingPipeline } = await setupRun();
+        const { modelRegistry } = await import('../../src/services/ml/ModelRegistry');
+        const saveSpy = jest.spyOn(modelRegistry, 'saveModel').mockResolvedValue('candidate-v');
+        const trainSpy = jest
+            .spyOn(AcceptanceModel.prototype, 'train')
+            .mockImplementation(() => {});
+        const metrics = {
+            accuracy: 0.8,
+            precision: 0.8,
+            recall: 0.8,
+            f1: 0.8,
+            rocAuc: 0.9,
+            prAuc: 0.85,
+            logLoss: 0.3,
+            brierScore: 0.1,
+            ece: 0.05,
+            confusion: { tp: 1, fp: 1, fn: 1, tn: 1 },
+            trainSize: 280,
+            valSize: 60,
+            testRocAuc: 0.9
+        };
+        const evaluateSpy = jest
+            .spyOn(trainingPipeline as any, 'evaluateModel')
+            .mockReturnValue(metrics);
+        const features = Array.from({ length: 400 }, (_, i) =>
+            makeFeature(i % 2 === 0 ? 'ACCEPTED' : 'REJECTED', i)
+        );
+        features.slice(340).forEach((feature) => {
+            feature.totalPrice = 1_000_000;
+        });
+        mockFindMany.mockResolvedValue([...features].reverse());
+
+        try {
+            const result = await trainingPipeline.run();
+            const totalPriceIndex = FEATURE_NAMES.indexOf('totalPrice');
+            const [, , , featureMins, featureMaxs] = saveSpy.mock.calls[0];
+
+            expect(result.trained).toBe(true);
+            expect(featureMins[totalPriceIndex]).toBe(2500);
+            expect(featureMaxs[totalPriceIndex]).toBe(2779);
+            const evaluatedTestSet = evaluateSpy.mock.calls[0][2] as Array<{ vec: number[] }>;
+            expect(evaluatedTestSet[59].vec[totalPriceIndex]).toBeGreaterThan(1);
+        } finally {
+            saveSpy.mockRestore();
+            trainSpy.mockRestore();
+            evaluateSpy.mockRestore();
         }
     });
 

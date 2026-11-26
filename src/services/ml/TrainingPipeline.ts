@@ -223,6 +223,33 @@ function normalize(vec: number[], mins: number[], maxs: number[]): number[] {
     });
 }
 
+function fitMinMax(vectors: number[][], dim: number): { mins: number[]; maxs: number[] } {
+    const mins = new Array(dim).fill(Infinity);
+    const maxs = new Array(dim).fill(-Infinity);
+    for (const vec of vectors) {
+        for (let i = 0; i < dim; i++) {
+            if (vec[i] < mins[i]) mins[i] = vec[i];
+            if (vec[i] > maxs[i]) maxs[i] = vec[i];
+        }
+    }
+    for (let i = 0; i < dim; i++) {
+        if (!isFinite(mins[i])) mins[i] = 0;
+        if (!isFinite(maxs[i])) maxs[i] = 1;
+    }
+    return { mins, maxs };
+}
+
+function normalizeExamples(
+    examples: Array<{ vec: number[]; label: number; weight: number }>,
+    mins: number[],
+    maxs: number[]
+): Array<{ vec: number[]; label: number; weight: number }> {
+    return examples.map((example) => ({
+        ...example,
+        vec: normalize(example.vec, mins, maxs)
+    }));
+}
+
 export function computeRocAuc(scores: number[], labels: number[]): number {
     const n = scores.length;
     if (n < 2) return 0.5;
@@ -553,17 +580,23 @@ export class TrainingPipeline {
                 return finish(TRAINING_STATUS.SKIPPED, `insufficient_data:${features.length}`);
             }
 
-            const { normalized, mins, maxs, dim, records } =
-                await this.loadAndNormalizeFeatures(features);
+            const { examples, dim, records } = await this.loadTrainingExamples(features);
 
-            // ===== Split 70/15/15 chronologiczny =====
+            // ===== Split raw features 70/15/15 chronologiczny =====
             // TRAIN (najstarsze) → VALIDATION → TEST (najnowsze).
-            const n = normalized.length;
+            const n = examples.length;
             const trainIdx = Math.floor(n * 0.7);
             const valIdx = Math.floor(n * 0.85);
-            const trainSet = normalized.slice(0, trainIdx);
-            const valSet = normalized.slice(trainIdx, valIdx);
-            const testSet = normalized.slice(valIdx);
+            const trainExamples = examples.slice(0, trainIdx);
+            const valExamples = examples.slice(trainIdx, valIdx);
+            const testExamples = examples.slice(valIdx);
+            const { mins, maxs } = fitMinMax(
+                trainExamples.map((example) => example.vec),
+                FEATURE_NAMES.length
+            );
+            const trainSet = normalizeExamples(trainExamples, mins, maxs);
+            const valSet = normalizeExamples(valExamples, mins, maxs);
+            const testSet = normalizeExamples(testExamples, mins, maxs);
 
             // Guardy minimalnych rozmiarów — niespełnienie → SKIPPED (nie błąd).
             trainSize = trainSet.length;
@@ -795,12 +828,10 @@ export class TrainingPipeline {
         }
     }
 
-    private async loadAndNormalizeFeatures(
+    private async loadTrainingExamples(
         features: Awaited<ReturnType<typeof prisma.aiFeature.findMany>>
     ): Promise<{
-        normalized: Array<{ vec: number[]; label: number; weight: number }>;
-        mins: number[];
-        maxs: number[];
+        examples: Array<{ vec: number[]; label: number; weight: number }>;
         dim: number;
         records: Array<{ id: string; createdAt: string; label: string }>;
     }> {
@@ -860,21 +891,8 @@ export class TrainingPipeline {
             });
 
         const dim = FEATURE_NAMES.length;
-        const mins = new Array(dim).fill(Infinity);
-        const maxs = new Array(dim).fill(-Infinity);
-        for (const ex of examples) {
-            for (let i = 0; i < dim; i++) {
-                if (ex.vec[i] < mins[i]) mins[i] = ex.vec[i];
-                if (ex.vec[i] > maxs[i]) maxs[i] = ex.vec[i];
-            }
-        }
-        for (let i = 0; i < dim; i++) {
-            if (!isFinite(mins[i])) mins[i] = 0;
-            if (!isFinite(maxs[i])) maxs[i] = 1;
-        }
-
-        const normalized = examples.map((ex) => ({
-            vec: normalize(ex.vec, mins, maxs),
+        const trainingExamples = examples.map((ex) => ({
+            vec: ex.vec,
             label: ex.label,
             weight:
                 applyForgetting(ex.ageDays) * labelToTrainingWeight(ex.featureLabel as FeatureLabel)
@@ -884,7 +902,7 @@ export class TrainingPipeline {
             .filter((f) => f.label !== 'NO_FEEDBACK')
             .map((f) => ({ id: f.id, createdAt: f.createdAt, label: f.label }));
 
-        return { normalized, mins, maxs, dim, records };
+        return { examples: trainingExamples, dim, records };
     }
 
     private evaluateModel(
