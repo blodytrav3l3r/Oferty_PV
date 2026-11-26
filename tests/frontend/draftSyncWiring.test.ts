@@ -134,9 +134,65 @@ function dirtyRury(sandbox: any) {
     sandbox.currentOfferItems = [{ uid: 'rur_1', productId: 'p', quantity: 5 }];
 }
 
+function dirtyStudnie(sandbox: any) {
+    sandbox.editingOfferIdStudnie = 's1';
+    sandbox.offersStudnie = [
+        {
+            id: 's1',
+            version: 3,
+            ...RURY_FIELDS,
+            wells: [{ id: 'w1', config: [{ productId: 'p', quantity: 1 }] }]
+        }
+    ];
+    sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, clientName: 'ZMIENIONA' });
+    sandbox.wells = [{ id: 'w1', config: [{ productId: 'p', quantity: 2 }] }];
+    sandbox.wellDiscounts = {};
+    sandbox.visiblePrzejsciaTypes = [];
+    sandbox.currentTransportMode = 'full';
+    sandbox.getWizardGlobalParams = () => ({});
+    sandbox.currentWizardStep = 3;
+}
+
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
 describe('L2 draftSync — wpięcie w autosave', () => {
+    it('oferta studni zapisuje draft tylko lokalnie i nie pobiera kopii serwerowej', async () => {
+        const { sandbox, store, net } = loadCtx();
+        dirtyStudnie(sandbox);
+
+        expect(sandbox._draftWriteKind('offer_studnie', true)).toBe(true);
+        await tick();
+        expect(store.size).toBeGreaterThan(0);
+        expect(net.calls).toHaveLength(0);
+
+        sandbox.window.draftAutosave.checkRecovery('offer_studnie');
+        await tick();
+        await tick();
+        expect(net.calls).toHaveLength(0);
+
+        sandbox.window.draftAutosave.showModal(
+            'offer_studnie',
+            {
+                kind: 'offer_studnie',
+                userId: 'u1',
+                docId: 's1',
+                payload: { wells: [] },
+                _source: 'server'
+            },
+            sandbox.offersStudnie[0]
+        );
+        const modal = sandbox.document.getElementById('sok-draft-modal');
+        modal.handlers.click({
+            target: { closest: () => ({ getAttribute: () => 'discard' }) }
+        });
+        await tick();
+        expect(net.calls).toHaveLength(0);
+
+        sandbox.window.draftAutosave.clearContext('offer_studnie', 's1');
+        await tick();
+        expect(net.calls).toHaveLength(0);
+    });
+
     it('błąd sieci nie blokuje zapisu lokalnego (offline-first)', async () => {
         const { sandbox, store, net } = loadCtx();
         dirtyRury(sandbox);

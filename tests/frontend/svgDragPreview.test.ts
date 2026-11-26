@@ -44,16 +44,14 @@ const canvas = {
     relief: { ringZero: new Set(), gapAfter: new Set() }
 };
 
-describe('diagram studni — podgląd miejsca upuszczenia', () => {
-    it('rysuje wskaźnik na wysokości elementu wskazanego jako miejsce upuszczenia', () => {
+describe('diagram studni — brak przerwy w podglądzie przeciągania', () => {
+    it('nie dodaje markera ani przerwy przy wskazanym miejscu upuszczenia', () => {
         const context = createContext(1);
         const { svg } = context.drawAllComponents(components, canvas);
-        const markerIndex = svg.indexOf('well-diagram-drop-marker');
-        const targetIndex = svg.indexOf('data-cfg-idx="1"');
 
-        expect(markerIndex).toBeGreaterThanOrEqual(0);
-        expect(markerIndex).toBeGreaterThan(targetIndex);
-        expect(svg).toContain('cy="120"');
+        expect(svg).not.toContain('well-diagram-drop-marker');
+        expect(svg).toContain('y="120"');
+        expect(svg).toContain('data-cfg-idx="1"');
     });
 
     it('nie dodaje wskaźnika poza przeciąganiem', () => {
@@ -63,12 +61,21 @@ describe('diagram studni — podgląd miejsca upuszczenia', () => {
         expect(svg).not.toContain('well-diagram-drop-marker');
     });
 
-    it('pokazuje punkty miejsca upuszczenia bez animowanej linii', () => {
+    it('nie rysuje kropek, linii ani przerwy', () => {
         const { svg } = createContext(1).drawAllComponents(components, canvas);
 
-        expect(svg).toContain('well-diagram-drop-marker__dot');
-        expect(svg).not.toContain('well-diagram-drop-marker__line');
+        expect(svg).not.toContain('well-diagram-drop-marker');
+        expect(svg).not.toContain('well-diagram-drop-marker__dot');
         expect(diagramCss).not.toContain('well-diagram-drop-flow');
+        expect(diagramCss).not.toContain('well-diagram-drop-marker');
+    });
+
+    it('nie dodaje przerwy po ostatnim elemencie', () => {
+        const context = createContext(2);
+        const { svg } = context.drawAllComponents(components, canvas);
+
+        expect(svg).not.toContain('well-diagram-drop-marker');
+        expect(svg).not.toContain('height="8"');
     });
 
     it('aktualizuje wskaźnik zgodnie z pozycją kursora między elementami', () => {

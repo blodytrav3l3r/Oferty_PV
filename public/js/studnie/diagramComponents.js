@@ -343,13 +343,6 @@ function drawComponentDimension(y, h, heightMm) {
     return svg;
 }
 
-function drawWellDropMarker(cx, y, width) {
-    const halfWidth = Math.max(width / 2 + 8, 20);
-    const left = cx - halfWidth;
-    const right = cx + halfWidth;
-    return `<g class="well-diagram-drop-marker" pointer-events="none"><circle class="well-diagram-drop-marker__dot" cx="${left}" cy="${y}" r="3.5"/><circle class="well-diagram-drop-marker__dot" cx="${right}" cy="${y}" r="3.5"/></g>`;
-}
-
 /* ===== RYSOWANIE WSZYSTKICH KOMPONENTÓW ===== */
 
 /**
@@ -364,7 +357,6 @@ function drawAllComponents(visible, canvas) {
     const dylMm = reliefDylatacjaMm();
 
     let svgOut = '';
-    let dropMarkerSvg = '';
     let y = mT;
     const dimLinesY = [];
     // Pasy pierścieni kompletu malowane PONAD kręgami (nachodzenie) — po pętli.
@@ -383,10 +375,6 @@ function drawAllComponents(visible, canvas) {
 
         const isPlaceholder = comp.isPlaceholder;
         const pointerEvents = isPlaceholder ? 'pointer-events="none"' : '';
-        const dropTargetIndex = typeof _svgDropTargetIndex === 'number' ? _svgDropTargetIndex : -1;
-        if (comp._cfgIdx === dropTargetIndex) {
-            dropMarkerSvg = drawWellDropMarker(cx, y, w);
-        }
         const plStyle = isPlaceholder
             ? 'opacity:0.6; filter:drop-shadow(0px 0px 8px rgba(var(--blue-hover-rgb), 0.9));'
             : '';
@@ -454,7 +442,6 @@ function drawAllComponents(visible, canvas) {
 
     // Pasy pierścieni ponad kręgami (malowanie wierzchnie).
     svgOut += reliefBars;
-    svgOut += dropMarkerSvg;
 
     return { svg: svgOut, dimLinesY };
 }

@@ -10,6 +10,7 @@
 
 var DRAFT_AUTOSAVE_DEBOUNCE_MS = 2000;
 var DRAFT_MODAL_ID = 'sok-draft-modal';
+var DRAFT_LOCAL_ONLY_KINDS = { offer_studnie: true };
 /** L2: id modala konfliktu kopii serwerowej. */
 var DRAFT_SYNC_MODAL_ID = 'sok-draft-sync-modal';
 
@@ -1187,6 +1188,8 @@ function _draftWriteKind(kind, isFlush, exitTrigger) {
             return true;
         }
         _draftSetSaveState('ok');
+        // Drafty studni pozostają wyłącznie lokalne; nie tworzymy kopii L2.
+        if (DRAFT_LOCAL_ONLY_KINDS[kind]) return true;
         // L2: kopia serwerowa po potwierdzonym zapisie lokalnym. Flush (wyjście
         // z karty) idzie od razu z keepalive; zwykły autosave debounce'uje.
         if (isFlush) {
@@ -1293,7 +1296,13 @@ function _draftClearContext(kind, oldDocId, newDocId) {
     // Kopia serwerowa po SAVED jest martwa: bez DELETE wracałaby jako „starszy
     // draft do odzyskania”, a meta z nieaktualną wersją psuła CAS kolejnych zapisów.
     var sync = _draftG('draftSync');
-    if (sync && typeof sync.remove === 'function' && oldDocId !== undefined && oldDocId !== null) {
+    if (
+        !DRAFT_LOCAL_ONLY_KINDS[kind] &&
+        sync &&
+        typeof sync.remove === 'function' &&
+        oldDocId !== undefined &&
+        oldDocId !== null
+    ) {
         try {
             sync.remove({
                 storage: window.localStorage,
@@ -1670,7 +1679,7 @@ function _draftShowDraftModal(kind, draft, savedDoc) {
                 });
                 // Kopia serwerowa odrzucona jawnie = usuwamy też wiersz na serwerze,
                 // inaczej wracałaby przy każdym wejściu do dokumentu.
-                if (draft && draft._source === 'server') {
+                if (draft && draft._source === 'server' && !DRAFT_LOCAL_ONLY_KINDS[kind]) {
                     try {
                         _draftG('draftSync').remove({
                             storage: window.localStorage,
@@ -2040,7 +2049,8 @@ function _draftSyncForget(key) {
  */
 function _draftSyncSchedule(kind, docId, draft) {
     try {
-        if (!_draftG('draftSync') || !draft || !draft.payload) return;
+        if (DRAFT_LOCAL_ONLY_KINDS[kind] || !_draftG('draftSync') || !draft || !draft.payload)
+            return;
         var userId = _draftUserId();
         if (!userId) return;
         var key = window.draftStore.buildDraftKey(userId, kind, docId);
@@ -2182,6 +2192,10 @@ function _draftSyncRun(key, keepalive) {
         var sync = _draftG('draftSync');
         var pending = _draftSyncPending[key];
         if (!sync || !pending) return;
+        if (DRAFT_LOCAL_ONLY_KINDS[pending.kind]) {
+            delete _draftSyncPending[key];
+            return;
+        }
         // Niezapisana oferta nie ma tożsamości dokumentu (docId 'new') — kopia
         // serwerowa tylko generuje fałszywe konflikty CAS i nie jest nigdzie
         // pokazywana. Draft lokalny wystarcza.
@@ -2234,6 +2248,7 @@ function _draftSyncRun(key, keepalive) {
 function _draftSyncFinish(key, pending, res) {
     try {
         delete _draftSyncInFlight[key];
+        if (pending && DRAFT_LOCAL_ONLY_KINDS[pending.kind]) return;
         var status = res && res.status ? res.status : 'error';
         if (status === 'conflict') {
             // Jedna, ograniczona próba self-heal na klucz w sesji. Dogonienie meta
@@ -2326,6 +2341,7 @@ function _draftSyncTail(key) {
  */
 function _draftShowSyncConflictModal(key, pending, res) {
     try {
+        if (pending && DRAFT_LOCAL_ONLY_KINDS[pending.kind]) return;
         var sync = _draftG('draftSync');
         var showModalFn = _draftG('showModal');
         if (typeof showModal === 'function') showModalFn = showModal;
@@ -2440,6 +2456,7 @@ function _draftHideSyncConflictModal() {
  * @param {object} res
  */
 function _draftSyncApplyChoice(choice, userId, pending, res) {
+    if (pending && DRAFT_LOCAL_ONLY_KINDS[pending.kind]) return;
     var sync = _draftG('draftSync');
     if (!sync || !choice) return;
     var key = window.draftStore.buildDraftKey(userId, pending.kind, pending.docId);
@@ -2506,6 +2523,7 @@ function _draftSyncApplyChoice(choice, userId, pending, res) {
  */
 function _draftCheckServerRecovery(kind, cfg, docId) {
     try {
+        if (DRAFT_LOCAL_ONLY_KINDS[kind]) return;
         var sync = _draftG('draftSync');
         if (!sync || typeof sync.pull !== 'function') return;
         var userId = _draftUserId();
