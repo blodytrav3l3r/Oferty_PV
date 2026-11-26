@@ -1,7 +1,7 @@
 /**
  * P7.5 Extended — testy dataset FULL + knowledge + telemetry (prawdziwa DB).
  */
-import { describe, expect, it, afterAll, jest } from '@jest/globals';
+import { describe, expect, it, beforeAll, afterAll, jest } from '@jest/globals';
 import crypto from 'crypto';
 import JSZip from 'jszip';
 import prisma from '../../src/prismaClient';
@@ -9,6 +9,9 @@ import { ML_CONSTANTS, FEATURE_NAMES } from '../../src/config/mlConstants';
 import { buildExportPreview, buildModelPackage } from '../../src/services/ml/transfer/exportModel';
 import { runDryRun } from '../../src/services/ml/transfer/dryRun';
 import { importPackage } from '../../src/services/ml/transfer/importModel';
+import { parseRecordsNdjson } from '../../src/services/ml/transfer/dataset';
+import { buildTelemetryAggregates } from '../../src/services/ml/transfer/telemetryExport';
+import { importPatterns } from '../../src/services/ml/transfer/knowledge';
 import { clearDryRuns } from '../../src/services/ml/transfer/dryRunStore';
 import { inspectArchive } from '../../src/services/ml/transfer/archiveGate';
 import {
@@ -26,11 +29,42 @@ const UID = 'p7ext';
 const TAG = `p7ext-${Date.now().toString(36)}`;
 const createdModelIds: string[] = [];
 const createdTransferIds: string[] = [];
+let originalTrainingUsersSetting: { value: string | null } | null = null;
+let originalTrainingUsersMigratedSetting: { value: string | null } | null = null;
 
-function featureRow(id: string, label: string, createdAt: string) {
+beforeAll(async () => {
+    const [users, migrated] = await Promise.all([
+        prisma.settings.findUnique({ where: { key: 'ai_training_user_ids' } }),
+        prisma.settings.findUnique({ where: { key: 'ai_training_user_ids_migrated' } })
+    ]);
+    originalTrainingUsersSetting = users ? { value: users.value } : null;
+    originalTrainingUsersMigratedSetting = migrated ? { value: migrated.value } : null;
+});
+
+async function restoreSetting(
+    key: string,
+    original: { value: string | null } | null
+): Promise<void> {
+    if (original) {
+        await prisma.settings.upsert({
+            where: { key },
+            update: { value: original.value },
+            create: { key, value: original.value }
+        });
+        return;
+    }
+    await prisma.settings.deleteMany({ where: { key } });
+}
+
+function featureRow(
+    id: string,
+    label: string,
+    createdAt: string,
+    telemetryId: string | null = null
+) {
     return {
         id,
-        telemetryId: null,
+        telemetryId,
         dn: 1000,
         heightMm: 2000,
         warehouse: 'KLB',
@@ -59,8 +93,53 @@ function featureRow(id: string, label: string, createdAt: string) {
 async function seedFeatures(): Promise<string[]> {
     const ids = [0, 1, 2, 3, 4].map((i) => `${TAG}-f${i}`);
     const labels = ['ACCEPTED', 'REJECTED', 'MODIFIED', 'ACCEPTED', 'NO_FEEDBACK'];
+    await prisma.aiFeature.deleteMany({ where: { id: { startsWith: TAG } } });
+    await prisma.ai_telemetry_logs.deleteMany({ where: { id: { startsWith: TAG } } });
+    await prisma.settings.upsert({
+        where: { key: 'ai_training_user_ids' },
+        update: { value: JSON.stringify([UID]) },
+        create: { key: 'ai_training_user_ids', value: JSON.stringify([UID]) }
+    });
+    await prisma.settings.upsert({
+        where: { key: 'ai_training_user_ids_migrated' },
+        update: { value: '0' },
+        create: { key: 'ai_training_user_ids_migrated', value: '0' }
+    });
+    const telemetryIds = ids.map((id) => `${id}-telemetry`);
+    await prisma.ai_telemetry_logs.createMany({
+        data: telemetryIds.map((id) => ({ id, userId: UID }))
+    });
     await prisma.aiFeature.createMany({
-        data: ids.map((id, i) => featureRow(id, labels[i], `2026-09-2${i}T10:00:00.000Z`))
+        data: ids.map((id, i) =>
+            featureRow(id, labels[i], `2026-09-2${i}T10:00:00.000Z`, telemetryIds[i])
+        )
+    });
+    const foreignTelemetryId = `${TAG}-foreign-telemetry`;
+    await prisma.ai_telemetry_logs.create({
+        data: { id: foreignTelemetryId, userId: 'other-user' }
+    });
+    await prisma.aiFeature.createMany({
+        data: [
+            featureRow(
+                `${TAG}-foreign-feature`,
+                'ACCEPTED',
+                '2026-09-26T10:00:00.000Z',
+                foreignTelemetryId
+            ),
+            featureRow(`${TAG}-orphan-feature`, 'ACCEPTED', '2026-09-27T10:00:00.000Z')
+        ]
+    });
+    const ineligibleTelemetryId = `${TAG}-ineligible-telemetry`;
+    await prisma.ai_telemetry_logs.create({
+        data: { id: ineligibleTelemetryId, userId: UID, trainingEligible: false }
+    });
+    await prisma.aiFeature.create({
+        data: featureRow(
+            `${TAG}-ineligible-feature`,
+            'ACCEPTED',
+            '2026-09-28T10:00:00.000Z',
+            ineligibleTelemetryId
+        )
     });
     return ids;
 }
@@ -114,41 +193,204 @@ async function seedPattern(key: string) {
     });
 }
 
+async function addLegacyKnowledgeArtifact(buffer: Buffer): Promise<Buffer> {
+    const { manifest, files } = verifyGatedPackage(await inspectArchive(buffer));
+    const artifactText = '[]';
+    const artifacts = [
+        ...manifest.artifacts,
+        { path: 'knowledge/patterns.json', sha256: sha256Hex(artifactText) }
+    ];
+    const legacyManifest = {
+        ...manifest,
+        packageFingerprint: computePackageFingerprint(artifacts),
+        artifacts
+    };
+    const manifestText = JSON.stringify(legacyManifest);
+    const checksums = buildChecksumsFile([
+        ...artifacts,
+        { path: 'manifest.json', sha256: sha256Hex(manifestText) }
+    ]);
+    const zip = new JSZip();
+    for (const [path, content] of files) {
+        if (path !== 'manifest.json' && path !== 'checksums.sha256') zip.file(path, content);
+    }
+    zip.file('knowledge/patterns.json', artifactText);
+    zip.file('manifest.json', manifestText);
+    zip.file('checksums.sha256', checksums);
+    return zip.generateAsync({ type: 'nodebuffer' });
+}
+
 afterAll(async () => {
     await prisma.aiTransfer.deleteMany({ where: { transferId: { in: createdTransferIds } } });
     await prisma.aiModel.deleteMany({ where: { id: { in: createdModelIds } } });
     await prisma.aiFeature.deleteMany({ where: { id: { startsWith: TAG } } });
+    await prisma.ai_telemetry_logs.deleteMany({ where: { id: { startsWith: TAG } } });
     await prisma.ai_knowledge_base.deleteMany({ where: { patternKey: { startsWith: TAG } } });
+    await restoreSetting('ai_training_user_ids', originalTrainingUsersSetting);
+    await restoreSetting('ai_training_user_ids_migrated', originalTrainingUsersMigratedSetting);
     await prisma.$disconnect();
 });
 
 describe('P7.5 Extended', () => {
+    it('nie eksportuje knowledge bez lineage właściciela', async () => {
+        const { id } = await seedModel();
+        await expect(buildExportPreview(id, { knowledge: true })).rejects.toMatchObject({
+            code: 'DATA_SCOPE_UNAVAILABLE',
+            message: expect.stringContaining('lineage')
+        });
+        await expect(buildModelPackage(id, UID, { knowledge: true })).rejects.toMatchObject({
+            code: 'DATA_SCOPE_UNAVAILABLE'
+        });
+    }, 30000);
+
+    it('blokuje import starszego pakietu z knowledge bez lineage', async () => {
+        clearDryRuns();
+        const { id } = await seedModel();
+        const pkg = await buildModelPackage(id, UID);
+        createdTransferIds.push(pkg.transferId);
+        const legacyPackage = await addLegacyKnowledgeArtifact(pkg.buffer);
+        await prisma.aiModel.delete({ where: { id } });
+        await expect(runDryRun(legacyPackage, UID)).rejects.toMatchObject({
+            code: 'DATA_SCOPE_UNAVAILABLE'
+        });
+    }, 30000);
+
+    it('import starszego datasetu usuwa telemetryId', () => {
+        const row = featureRow(
+            `${TAG}-legacy`,
+            'ACCEPTED',
+            '2026-09-20T10:00:00.000Z',
+            'foreign-id'
+        );
+        const parsed = parseRecordsNdjson(JSON.stringify(row));
+
+        expect(parsed[0].telemetryId).toBeNull();
+    });
+
+    it('eksport modelu działa bez allowlisty na świeżej instalacji', async () => {
+        const original = await prisma.settings.findUnique({
+            where: { key: 'ai_training_user_ids' }
+        });
+        try {
+            await prisma.settings.deleteMany({ where: { key: 'ai_training_user_ids' } });
+            const { id } = await seedModel();
+            const pkg = await buildModelPackage(id, UID);
+            createdTransferIds.push(pkg.transferId);
+            expect(pkg.manifest.dataset.mode).toBe('not-included');
+        } finally {
+            await restoreSetting('ai_training_user_ids', original);
+        }
+    }, 30000);
+
+    it('telemetria eksportuje wyłącznie agregaty allowlisty z co najmniej 5 właścicielami', async () => {
+        const allowedUsers = Array.from({ length: 6 }, (_, i) => `${TAG}-user-${i}`);
+        await prisma.settings.upsert({
+            where: { key: 'ai_training_user_ids' },
+            update: { value: JSON.stringify(allowedUsers) },
+            create: { key: 'ai_training_user_ids', value: JSON.stringify(allowedUsers) }
+        });
+        const createdAt = new Date().toISOString();
+        await prisma.ai_telemetry_logs.createMany({
+            data: [
+                ...Array.from({ length: 30 }, (_, index) => ({
+                    id: `${TAG}-aggregate-heavy-${index}`,
+                    userId: allowedUsers[0],
+                    createdAt,
+                    solverSource: 'AUTO_JS',
+                    wasAccepted: true
+                })),
+                ...allowedUsers.slice(1, 5).map((userId, index) => ({
+                    id: `${TAG}-aggregate-${index}`,
+                    userId,
+                    createdAt,
+                    solverSource: 'AUTO_JS',
+                    wasAccepted: true
+                })),
+                {
+                    id: `${TAG}-ineligible-aggregate`,
+                    userId: allowedUsers[5],
+                    createdAt,
+                    solverSource: 'AUTO_JS',
+                    wasRejected: true,
+                    trainingEligible: false
+                },
+                ...Array.from({ length: 3 }, (_, index) => ({
+                    id: `${TAG}-foreign-${index}`,
+                    userId: `foreign-${index}`,
+                    createdAt,
+                    solverSource: 'AUTO_JS',
+                    wasRejected: true
+                }))
+            ]
+        });
+
+        const result = await buildTelemetryAggregates();
+
+        expect(result.rowsIncluded).toBe(24);
+        expect(result.byDaySource).toEqual([
+            expect.objectContaining({ count: 24, accepted: 24, rejected: 0 })
+        ]);
+        expect(JSON.stringify(result)).not.toContain('userId');
+
+        const { id } = await seedModel();
+        const preview = await buildExportPreview(id, { telemetry: true });
+        const pkg = await buildModelPackage(id, UID, { telemetry: true });
+        createdTransferIds.push(pkg.transferId);
+        const zip = await JSZip.loadAsync(pkg.buffer);
+        const artifact = JSON.parse(await zip.file('telemetry/selected.json')!.async('string'));
+        expect(preview.telemetry.groups).toBe(artifact.byDaySource.length);
+        expect(preview.telemetry.records).toBe(artifact.rowsIncluded);
+    }, 30000);
+
     it('preview full pokazuje rekordy i patterns', async () => {
         await seedFeatures();
         await seedPattern(`${TAG}-kb1`);
         const { id } = await seedModel();
         const preview = await buildExportPreview(id, {
             dataset: 'full',
-            knowledge: true,
             telemetry: true
         });
         expect(preview.dataset.mode).toBe('full');
         expect(preview.dataset.recordCount).toBe(4); // bez NO_FEEDBACK
-        expect(preview.knowledge.patterns).toBeGreaterThanOrEqual(1);
+        expect(preview.knowledge).toEqual({ included: false, patterns: 0 });
         expect(preview.telemetry.included).toBe(true);
+    }, 30000);
+
+    it('preview full zwraca pusty zbiór przy pustej allowliście', async () => {
+        await seedFeatures();
+        const { id } = await seedModel();
+        await prisma.settings.upsert({
+            where: { key: 'ai_training_user_ids' },
+            update: { value: '[]' },
+            create: { key: 'ai_training_user_ids', value: '[]' }
+        });
+
+        const preview = await buildExportPreview(id, { dataset: 'full' });
+
+        expect(preview.dataset.recordCount).toBe(0);
     }, 30000);
 
     it('export full → import odtwarza wiersze i fingerprint', async () => {
         clearDryRuns();
+        await seedFeatures();
         const { id } = await seedModel();
         const pkg = await buildModelPackage(id, UID, {
             dataset: 'full',
-            knowledge: true,
             telemetry: true
         });
         createdTransferIds.push(pkg.transferId);
         expect(pkg.manifest.dataset.mode).toBe('full');
         expect(pkg.manifest.dataset.recordCount).toBe(4);
+        const zip = await JSZip.loadAsync(pkg.buffer);
+        const rows = (await zip.file('datasets/records.ndjson')!.async('string'))
+            .trim()
+            .split('\n')
+            .map((line) => JSON.parse(line));
+        expect(rows).toHaveLength(4);
+        expect(rows.every((row) => row.telemetryId === null)).toBe(true);
+        expect(rows.some((row) => row.id.includes('foreign') || row.id.includes('orphan'))).toBe(
+            false
+        );
 
         // Symulacja PC-B: czyścimy cel.
         await prisma.aiModel.delete({ where: { id } });
@@ -164,12 +406,13 @@ describe('P7.5 Extended', () => {
         expect(await prisma.aiFeature.count({ where: { id: { startsWith: TAG } } })).toBe(4);
         const again = await runDryRun(pkg.buffer, UID);
         expect(again.preview.datasetRecords).toBe(4);
-        expect(again.preview.knowledgePatterns).toBeGreaterThanOrEqual(1);
+        expect(again.preview.knowledgePatterns).toBeNull();
         expect(again.preview.telemetryGroups).not.toBeNull();
     }, 30000);
 
     it('naruszone rekordy przy spójnych checksumach → DATASET_INVALID', async () => {
         clearDryRuns();
+        await seedFeatures();
         const { id } = await seedModel();
         const pkg = await buildModelPackage(id, UID, { dataset: 'full' });
         createdTransferIds.push(pkg.transferId);
@@ -213,28 +456,31 @@ describe('P7.5 Extended', () => {
         });
     }, 30000);
 
-    it('knowledge: istniejący patternKey pomijany, nowy wstawiany', async () => {
-        clearDryRuns();
+    it('knowledge import pomija istniejący patternKey i wstawia nowy', async () => {
         await seedPattern(`${TAG}-kbdup`);
-        const { id } = await seedModel();
-        const pkg = await buildModelPackage(id, UID, { knowledge: true });
-        createdTransferIds.push(pkg.transferId);
-        await prisma.aiModel.delete({ where: { id } });
-        const { record } = await runDryRun(pkg.buffer, UID);
-        const result = await importPackage(pkg.buffer, record.id, UID);
-        expect(result.status).toBe('IMPORTED');
-        createdTransferIds.push(result.transferId);
-        createdModelIds.push(result.modelId);
-        // Ten sam pakiet drugi raz: model istnieje → ALREADY_IMPORTED, zero duplikatów KB.
-        const kbBefore = await prisma.ai_knowledge_base.count({
-            where: { patternKey: { startsWith: TAG } }
+        const pattern = {
+            patternType: 'test',
+            patternKey: `${TAG}-kbdup`,
+            dn: null,
+            context: null,
+            description: null,
+            recommendation: null,
+            hitCount: 1,
+            confidence: 0.5,
+            successCount: 1,
+            rejectionCount: 0,
+            firstDetectedAt: null,
+            lastHitAt: null,
+            lastUpdatedAt: null,
+            changeHistory: null,
+            status: 'active',
+            generatedBy: 'legacy-package'
+        };
+        const result = await importPatterns([pattern, { ...pattern, patternKey: `${TAG}-kbnew` }]);
+        expect(result).toEqual({ inserted: 1, skipped: 1 });
+        const imported = await prisma.ai_knowledge_base.count({
+            where: { patternKey: { in: [`${TAG}-kbdup`, `${TAG}-kbnew`] } }
         });
-        const again = await runDryRun(pkg.buffer, UID);
-        const r2 = await importPackage(pkg.buffer, again.record.id, UID);
-        expect(r2.status).toBe('ALREADY_IMPORTED');
-        const kbAfter = await prisma.ai_knowledge_base.count({
-            where: { patternKey: { startsWith: TAG } }
-        });
-        expect(kbAfter).toBe(kbBefore);
+        expect(imported).toBe(2);
     }, 30000);
 });

@@ -226,6 +226,28 @@ describe('P7 round-trip', () => {
     it('awaria zapisu w transakcji → rollback bez częściowych danych', async () => {
         const freshVersion = uniqVersion();
         const freshId = await seedModel(freshVersion);
+        const telemetryId = `${freshVersion}-telemetry`;
+        await prisma.settings.upsert({
+            where: { key: 'ai_training_user_ids' },
+            update: { value: JSON.stringify([UID]) },
+            create: { key: 'ai_training_user_ids', value: JSON.stringify([UID]) }
+        });
+        await prisma.ai_telemetry_logs.create({ data: { id: telemetryId, userId: UID } });
+        await prisma.aiFeature.create({
+            data: {
+                id: `${freshVersion}-feature`,
+                telemetryId,
+                dn: 1000,
+                heightMm: 2000,
+                warehouse: 'KLB',
+                wellType: 'standard',
+                bottomType: 'dennica',
+                topType: 'wlaz',
+                season: 'spring',
+                label: 'ACCEPTED',
+                createdAt: new Date().toISOString()
+            }
+        });
         // Pakiet FULL, żeby importDatasetRows było wołane wewnątrz transakcji.
         const pkg = await buildModelPackage(freshId, UID, { dataset: 'full' });
         createdTransferIds.push(pkg.transferId);
@@ -244,6 +266,13 @@ describe('P7 round-trip', () => {
                 where: { packageFingerprint: pkg.packageFingerprint, direction: 'IMPORT' }
             })
         ).toBeNull();
+        await prisma.aiFeature.deleteMany({ where: { id: `${freshVersion}-feature` } });
+        await prisma.ai_telemetry_logs.delete({ where: { id: telemetryId } });
+        await prisma.settings.upsert({
+            where: { key: 'ai_training_user_ids' },
+            update: { value: '[]' },
+            create: { key: 'ai_training_user_ids', value: '[]' }
+        });
     }, 30000);
 });
 

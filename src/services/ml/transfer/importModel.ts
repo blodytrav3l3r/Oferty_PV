@@ -14,7 +14,6 @@ import {
     importDatasetRows,
     type DatasetRow
 } from './dataset';
-import { parsePatternsFile, importPatterns, type KnowledgePattern } from './knowledge';
 import { logAudit } from '../../auditService';
 
 /**
@@ -194,10 +193,12 @@ export async function importPackage(
             manifest.model.featureVersion
         );
     }
-    let kbPatterns: KnowledgePattern[] | null = null;
     const patternsText = files.get('knowledge/patterns.json')?.toString('utf8');
     if (patternsText !== undefined) {
-        kbPatterns = parsePatternsFile(patternsText);
+        throw new TransferError(
+            'DATA_SCOPE_UNAVAILABLE',
+            'Import knowledge jest zablokowany: pakiet nie potwierdza lineage właściciela wzorców.'
+        );
     }
     const telemetryText = files.get('telemetry/selected.json')?.toString('utf8');
     if (telemetryText !== undefined) {
@@ -215,7 +216,7 @@ export async function importPackage(
     }
 
     // Zapis: ZAWSZE CANDIDATE, active=false. PRODUCTION tylko przez APPROVE+PROMOTE.
-    // Jedna transakcja: model + dataset + wiedza + rekord transferu + audit —
+    // Jedna transakcja: model + dataset + rekord transferu + audit —
     // awaria w środku wycofuje wszystko (brak częściowych importów).
     const transferId = newTransferId();
     const now = new Date().toISOString();
@@ -254,11 +255,6 @@ export async function importPackage(
             const ds = await importDatasetRows(datasetRows, tx);
             extendedSummary.datasetInserted = ds.inserted;
             extendedSummary.datasetSkipped = ds.skipped;
-        }
-        if (kbPatterns) {
-            const kb = await importPatterns(kbPatterns, tx);
-            extendedSummary.knowledgeInserted = kb.inserted;
-            extendedSummary.knowledgeSkipped = kb.skipped;
         }
         await tx.aiTransfer.create({
             data: {

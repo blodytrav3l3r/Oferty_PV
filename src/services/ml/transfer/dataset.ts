@@ -1,9 +1,10 @@
 import prisma from '../../../prismaClient';
-import type { Prisma } from '../../../../generated/prisma-postgres/client';
+import { Prisma } from '../../../../generated/prisma-postgres/client';
 import { ML_CONSTANTS } from '../../../config/mlConstants';
 import { computeDatasetFingerprint } from '../TrainingPipeline';
 import { SOKML_DATASET_SCHEMA_VERSION } from './transferConstants';
 import { TransferError } from './transferErrors';
+import { getTrainingUserIds } from '../trainingUsers';
 
 /**
  * P7.4 / P7.5 — Dataset FULL DATA (records.ndjson).
@@ -70,13 +71,27 @@ const ROW_FIELDS = [
 ] as const;
 
 /** Snapshot kwalifikowalnych wierszy (jak okno treningowe pipeline). */
-export async function fetchEligibleDatasetRows(): Promise<DatasetRow[]> {
-    const rows = await prisma.aiFeature.findMany({
-        where: { label: { not: 'NO_FEEDBACK' } },
-        orderBy: { createdAt: 'desc' },
-        take: ML_CONSTANTS.TRAINING_BATCH_SIZE
-    });
-    return rows as DatasetRow[];
+export async function fetchEligibleDatasetRows(
+    allowedUserIds?: readonly string[]
+): Promise<DatasetRow[]> {
+    const allowlist = allowedUserIds ?? (await getTrainingUserIds());
+    if (allowlist.length === 0) return [];
+    return prisma.$queryRaw<DatasetRow[]>(Prisma.sql`
+        SELECT f."id", NULL::text AS "telemetryId", f."dn", f."heightMm",
+               f."warehouse", f."wellType", f."hasReduction", f."hasPsiaBuda",
+               f."hasStyczna", f."ringCount", f."bottomType", f."topType",
+               f."kinetaType", f."dennicaHeight", f."connectionCount",
+               f."transitionsAboveDennica", f."totalPrice", f."totalWeight",
+               f."ringVariety", f."season", f."label", f."reward",
+               f."decisionMs", f."createdAt"
+        FROM "AiFeature" AS f
+        INNER JOIN "ai_telemetry_logs" AS t ON t."id" = f."telemetryId"
+        WHERE f."label" <> 'NO_FEEDBACK'
+          AND t."trainingEligible" = TRUE
+          AND t."userId" IN (${Prisma.join(allowlist)})
+        ORDER BY f."createdAt" DESC, f."id" DESC
+        LIMIT ${ML_CONSTANTS.TRAINING_BATCH_SIZE}
+    `);
 }
 
 export function datasetFingerprintOf(
@@ -119,7 +134,9 @@ export function parseRecordsNdjson(text: string): DatasetRow[] {
         }
         const row = {} as DatasetRow;
         const src = parsed as unknown as Record<string, unknown>;
-        for (const f of ROW_FIELDS) (row as unknown as Record<string, unknown>)[f] = src[f];
+        for (const f of ROW_FIELDS) {
+            (row as unknown as Record<string, unknown>)[f] = f === 'telemetryId' ? null : src[f];
+        }
         rows.push(row);
     }
     return rows;

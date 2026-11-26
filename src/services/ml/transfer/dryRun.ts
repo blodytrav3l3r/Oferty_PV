@@ -36,6 +36,12 @@ export interface DryRunResult {
 export async function runDryRun(buffer: Buffer, userId: string): Promise<DryRunResult> {
     const gated = await inspectArchive(buffer);
     const { manifest, files } = verifyGatedPackage(gated);
+    if (files.has('knowledge/patterns.json')) {
+        throw new TransferError(
+            'DATA_SCOPE_UNAVAILABLE',
+            'Pakiet zawiera wzorce knowledge bez potwierdzonego lineage właściciela; import jest zablokowany.'
+        );
+    }
 
     const modelPath = manifest.artifacts.map((a) => a.path).find((p) => p.startsWith('models/'));
     if (!modelPath) throw new TransferError('MODEL_INVALID', 'Pakiet nie zawiera modelu');

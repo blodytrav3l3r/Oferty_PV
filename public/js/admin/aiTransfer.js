@@ -544,7 +544,7 @@
             '    </div>' +
             '    <div class="ai-transfer-options">' +
             '      <label><input type="checkbox" id="ai-tr-full"> Pełny zbiór uczący (records.ndjson)</label>' +
-            '      <label><input type="checkbox" id="ai-tr-kb"> Baza wiedzy (wzorce i reguły)</label>' +
+            '      <label title="Wzorce nie mają lineage właściciela."><input type="checkbox" id="ai-tr-kb" disabled> Baza wiedzy (niedostępna: brak lineage właściciela)</label>' +
             '      <label title="Agregaty operacyjne z ostatnich 30 dni — tylko informacyjnie"><input type="checkbox" id="ai-tr-tel"> Podsumowanie telemetrii (agregaty)</label>' +
             '    </div>' +
             '    <div class="ai-toolbar" style="margin-bottom:0">' +

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import JSZip from 'jszip';
 import prisma from '../../../prismaClient';
+import { Prisma } from '../../../../generated/prisma-postgres/client';
 import { getVersion } from '../../../version';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../../../config/mlConstants';
 import {
@@ -26,8 +27,8 @@ import {
     buildDatasetManifest,
     type DatasetRow
 } from './dataset';
-import { exportPatterns } from './knowledge';
 import { buildTelemetryAggregates } from './telemetryExport';
+import { getTrainingUserIds, TRAINING_USERS_KEY } from '../trainingUsers';
 
 /**
  * P7.2 — Export model-only (samowystarczalny artefakt).
@@ -119,7 +120,7 @@ export interface ExportPreview {
         recordCount: number | null;
     };
     knowledge: { included: boolean; patterns: number };
-    telemetry: { included: boolean; note: string };
+    telemetry: { included: boolean; groups: number; records: number; note: string };
     trainingRuns: number;
     lineageIncluded: boolean;
     estimatedBytes: number;
@@ -131,11 +132,43 @@ export interface ExportOptions {
     telemetry?: boolean;
 }
 
+function assertKnowledgeExportScope(options: ExportOptions): void {
+    if (options.knowledge === true) {
+        throw new TransferError(
+            'DATA_SCOPE_UNAVAILABLE',
+            'Eksport knowledge jest niedostępny: wzorce nie mają lineage właściciela i nie można potwierdzić zakresu allowlisty.'
+        );
+    }
+}
+
+function sameUserScope(left: readonly string[], right: readonly string[]): boolean {
+    if (left.length !== right.length) return false;
+    const sortedLeft = [...left].sort();
+    const sortedRight = [...right].sort();
+    return sortedLeft.every((userId, index) => userId === sortedRight[index]);
+}
+
+function parseUserScope(value: string | null | undefined): string[] | null {
+    if (value === null || value === undefined) return [];
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(value);
+    } catch {
+        return null;
+    }
+    if (!Array.isArray(parsed) || parsed.some((userId) => typeof userId !== 'string')) {
+        return null;
+    }
+    return [...new Set(parsed as string[])];
+}
+
 /** Podgląd eksportu (bez generowania pliku) — użytkownik widzi, co opuszcza komputer. */
 export async function buildExportPreview(
     modelId: string,
     options: ExportOptions = {}
 ): Promise<ExportPreview> {
+    assertKnowledgeExportScope(options);
+    const allowlist = await getTrainingUserIds();
     const record = await prisma.aiModel.findUnique({ where: { id: modelId } });
     if (!record) throw new TransferError('MODEL_NOT_FOUND', 'Model nie istnieje');
     const parsed = parseModelRecord(record);
@@ -151,19 +184,15 @@ export async function buildExportPreview(
             ? {
                   mode: datasetMode,
                   fingerprint: null as string | null,
-                  recordCount: await prisma.aiFeature.count({
-                      where: { label: { not: 'NO_FEEDBACK' } }
-                  })
+                  recordCount: (await fetchEligibleDatasetRows(allowlist)).length
               }
             : {
                   mode: datasetMode,
                   fingerprint: withFingerprint?.datasetFingerprint ?? null,
                   recordCount: withFingerprint?.datasetSize ?? null
               };
-    const knowledgePatterns =
-        options.knowledge === true
-            ? await prisma.ai_knowledge_base.count({ where: { status: { not: 'archived' } } })
-            : 0;
+    const telemetry =
+        options.telemetry === true ? await buildTelemetryAggregates(30, allowlist) : null;
     const estimatedBytes =
         record.weights.length + record.features.length + record.metrics.length + 4096;
     return {
@@ -176,12 +205,14 @@ export async function buildExportPreview(
             trainingRows: record.trainingRows
         },
         dataset: datasetBlock,
-        knowledge: { included: options.knowledge === true, patterns: knowledgePatterns },
+        knowledge: { included: false, patterns: 0 },
         telemetry: {
             included: options.telemetry === true,
+            groups: telemetry?.byDaySource.length ?? 0,
+            records: telemetry?.rowsIncluded ?? 0,
             note:
                 options.telemetry === true
-                    ? 'Agregaty operacyjne (30 dni) — informacyjnie, bez zapisu u celu'
+                    ? `Allowlista, agregaty ≥5 właścicieli, do 20 rekordów na właściciela/grupę. Podgląd informacyjny; pakiet użyje zakresu aktualnego przy generowaniu. ${telemetry?.byDaySource.length ?? 0} grup, ${telemetry?.rowsIncluded ?? 0} rekordów.`
                     : 'Wyłączona'
         },
         trainingRuns: runs.length,
@@ -203,6 +234,8 @@ export async function buildModelPackage(
     userId: string,
     options: ExportOptions = {}
 ): Promise<BuiltPackage> {
+    assertKnowledgeExportScope(options);
+    const allowlist = await getTrainingUserIds();
     const record = await prisma.aiModel.findUnique({ where: { id: modelId } });
     if (!record) throw new TransferError('MODEL_NOT_FOUND', 'Model nie istnieje');
     const parsed = parseModelRecord(record);
@@ -241,7 +274,7 @@ export async function buildModelPackage(
     let resolvedRecordCount: number | null = null;
     if (datasetMode === 'full') {
         // P7.5 Extended: snapshot kwalifikowalnych wierszy (semantyka w dataset.ts).
-        datasetRows = await fetchEligibleDatasetRows();
+        datasetRows = await fetchEligibleDatasetRows(allowlist);
         const fullManifest = buildDatasetManifest(datasetRows);
         resolvedFingerprint = fullManifest.fingerprint;
         resolvedRecordCount = fullManifest.recordCount;
@@ -266,16 +299,10 @@ export async function buildModelPackage(
             })
         });
     }
-    if (options.knowledge === true) {
-        contentArtifacts.push({
-            path: 'knowledge/patterns.json',
-            text: JSON.stringify(await exportPatterns())
-        });
-    }
     if (options.telemetry === true) {
         contentArtifacts.push({
             path: 'telemetry/selected.json',
-            text: JSON.stringify(await buildTelemetryAggregates())
+            text: JSON.stringify(await buildTelemetryAggregates(30, allowlist))
         });
     }
     // Model niesie finalny fingerprint datasetu (full ze snapshotu albo run).
@@ -372,26 +399,39 @@ export async function buildModelPackage(
     zip.file('manifest.json', manifestText);
     zip.file('checksums.sha256', checksums);
     const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
-
-    const extended =
-        datasetMode === 'full' || options.knowledge === true || options.telemetry === true;
-    await prisma.aiTransfer.create({
-        data: {
-            id: crypto.randomUUID(),
-            transferId,
-            direction: 'EXPORT',
-            packageFingerprint,
-            manifestFingerprint: 'sha256:' + sha256Hex(manifestText),
-            modelVersion: record.version,
-            modelFingerprint: 'sha256:' + hashes.find((h) => h.path === modelPath)?.sha256,
-            datasetFingerprint: resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null,
-            sourceSokVersion: sokVersion,
-            targetSokVersion: sokVersion,
-            status: 'COMPLETED',
-            result: extended ? 'FULL' : 'MODEL_ONLY',
-            userId,
-            createdAt: new Date().toISOString()
-        }
-    });
+    const extended = datasetMode === 'full' || options.telemetry === true;
+    const transferRecord = {
+        id: crypto.randomUUID(),
+        transferId,
+        direction: 'EXPORT' as const,
+        packageFingerprint,
+        manifestFingerprint: 'sha256:' + sha256Hex(manifestText),
+        modelVersion: record.version,
+        modelFingerprint: 'sha256:' + hashes.find((h) => h.path === modelPath)?.sha256,
+        datasetFingerprint: resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null,
+        sourceSokVersion: sokVersion,
+        targetSokVersion: sokVersion,
+        status: 'COMPLETED' as const,
+        result: extended ? 'FULL' : 'MODEL_ONLY',
+        userId,
+        createdAt: new Date().toISOString()
+    };
+    if (datasetMode === 'full' || options.telemetry === true) {
+        await prisma.$transaction(async (tx) => {
+            const rows = await tx.$queryRaw<Array<{ value: string | null }>>(
+                Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
+            );
+            const currentUsers = parseUserScope(rows[0]?.value);
+            if (currentUsers === null || !sameUserScope(allowlist, currentUsers)) {
+                throw new TransferError(
+                    'DATA_SCOPE_UNAVAILABLE',
+                    'Allowlista zmieniła się podczas eksportu. Wykonaj podgląd i eksport ponownie.'
+                );
+            }
+            await tx.aiTransfer.create({ data: transferRecord });
+        });
+    } else {
+        await prisma.aiTransfer.create({ data: transferRecord });
+    }
     return { buffer, transferId, packageFingerprint, manifest };
 }

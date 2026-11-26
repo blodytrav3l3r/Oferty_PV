@@ -31,6 +31,7 @@ export type TransferBlockCode =
     | 'MODEL_DUPLICATE'
     | 'MODEL_NOT_FOUND'
     | 'MODEL_INVALID'
+    | 'DATA_SCOPE_UNAVAILABLE'
     | 'DATASET_INVALID';
 
 export class TransferError extends Error {
