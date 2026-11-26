@@ -22,6 +22,21 @@ describe('frontend: kontrakt colspan nagłówków grup (błąd #7)', () => {
     });
 });
 
+describe('frontend: oznaczenia cen kinet', () => {
+    it('wyróżnia trzy zakresy cen i opisuje cenę bazową', () => {
+        expect(studnie).toContain('pricelist-kineta-band--1');
+        expect(studnie).toContain('pricelist-kineta-band--2');
+        expect(studnie).toContain('pricelist-kineta-band--3');
+        expect(studnie).toContain('Cena do wyceny dla wysokości dennicy w zakresie Hmin1–Hmax1');
+        expect(studnie).toContain('Cena do wyceny dla wysokości dennicy w zakresie Hmin2–Hmax2');
+        expect(studnie).toContain('Cena do wyceny dla wysokości dennicy w zakresie Hmin3–Hmax3');
+        expect(studnie).toContain('pricelist-kineta-catalog-price');
+        expect(studnie).toContain(
+            'Cena bazowa — używana tylko wtedy, gdy wysokość dolnej dennicy nie mieści się'
+        );
+    });
+});
+
 describe('frontend: unifikacja chrome cenników (Faza A/B)', () => {
     it('rury i studnie: ten sam toolbar i tytuł bez inline style', () => {
         const ruryPartial = fs.readFileSync(
