@@ -27,6 +27,9 @@ function moveWellComponent(index, direction) {
     const temp = well.config[index];
     well.config[index] = well.config[newIndex];
     well.config[newIndex] = temp;
+    if (typeof window.invalidateFrozenPricesForWell === 'function') {
+        window.invalidateFrozenPricesForWell(well);
+    }
 
     if (!well.autoLocked) {
         well.autoLocked = true;
@@ -47,6 +50,7 @@ function moveWellComponent(index, direction) {
 window.moveZleceniaComponent = moveWellComponent;
 
 let draggedCfgIndex = null;
+let draggedCfgChanged = false;
 
 window.handleCfgDragStart = function (e) {
     const well = getCurrentWell();
@@ -62,6 +66,7 @@ window.handleCfgDragStart = function (e) {
     const attr =
         e.currentTarget.getAttribute('data-cfg-idx') || e.currentTarget.getAttribute('data-zl-idx');
     draggedCfgIndex = parseInt(attr);
+    draggedCfgChanged = false;
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.classList.add('is-dragging');
 
@@ -89,6 +94,7 @@ window.handleCfgDragOver = function (e) {
                 const draggedItem = well.config.splice(draggedCfgIndex, 1)[0];
                 well.config.splice(dropIndex, 0, draggedItem);
                 draggedCfgIndex = dropIndex;
+                draggedCfgChanged = true;
                 window.requestAnimationFrame(() => renderWellDiagram());
             }
         }
@@ -160,6 +166,10 @@ window.handleCfgDrop = function (e) {
             tile.classList.remove('is-drop-target');
 
             well.config.forEach((c) => (c.isPlaceholder = false));
+            if (draggedCfgChanged && typeof window.invalidateFrozenPricesForWell === 'function') {
+                window.invalidateFrozenPricesForWell(well);
+            }
+            draggedCfgChanged = false;
 
             well.autoLocked = true;
             updateAutoLockUI();
@@ -195,6 +205,10 @@ window.handleCfgDrop = function (e) {
                         window.currentDraggedPlaceholderId,
                         actualIndex
                     );
+                }
+
+                if (typeof window.invalidateFrozenPricesForWell === 'function') {
+                    window.invalidateFrozenPricesForWell(well);
                 }
 
                 well.autoLocked = true;
@@ -238,11 +252,15 @@ window.handleCfgDragEnd = function (e) {
             '.config-tile.is-drop-target, .zl-config-tile.is-drop-target, .config-tile.is-dragging, .zl-config-tile.is-dragging'
         )
         .forEach((t) => t.classList.remove('is-drop-target', 'is-dragging'));
-    draggedCfgIndex = null;
-
     const well = getCurrentWell();
     if (well) {
         well.config.forEach((c) => (c.isPlaceholder = false));
+        if (draggedCfgChanged) {
+            if (typeof window.invalidateFrozenPricesForWell === 'function') {
+                window.invalidateFrozenPricesForWell(well);
+            }
+            updateSummary();
+        }
         window.requestAnimationFrame(() => {
             renderWellConfig();
             renderWellDiagram();
@@ -258,6 +276,8 @@ window.handleCfgDragEnd = function (e) {
             window.refreshZleceniaModalIfActive();
         }
     }
+    draggedCfgIndex = null;
+    draggedCfgChanged = false;
 };
 
 window.handleZlCfgDragOver = window.handleCfgDragOver;

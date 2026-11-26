@@ -8,6 +8,7 @@ window.decDiagramWellQty = async function (idx) {
 };
 
 window.svgDragStartIndex = -1;
+let svgConfigReordered = false;
 
 window.svgPointerDown = function (ev, idx) {
     if (ev.ctrlKey || ev.metaKey) return;
@@ -56,6 +57,7 @@ window.svgPointerDown = function (ev, idx) {
 
     startWellDragListeners();
     window.svgDragStartIndex = idx;
+    svgConfigReordered = false;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
 };
@@ -113,6 +115,7 @@ window.svgTouchStart = function (ev, idx) {
     }
     startWellDragListeners();
     window.svgDragStartIndex = idx;
+    svgConfigReordered = false;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
 };
@@ -150,6 +153,7 @@ function handleLiveSvgDrag(clientY) {
             const draggedItem = well.config.splice(window.svgDragStartIndex, 1)[0];
             well.config.splice(insertIdx, 0, draggedItem);
             window.svgDragStartIndex = insertIdx;
+            svgConfigReordered = true;
 
             window.requestAnimationFrame(() => renderWellDiagram());
         }
@@ -172,6 +176,8 @@ const _wellDragHandlers = {
         if (window.svgDragStartIndex >= 0) {
             const sourceIdx = window.svgDragStartIndex;
             window.svgDragStartIndex = -1;
+            const configWasReordered = svgConfigReordered;
+            svgConfigReordered = false;
 
             let shouldRemove = false;
 
@@ -187,6 +193,12 @@ const _wellDragHandlers = {
 
             const well = getCurrentWell();
             if (well) {
+                if (
+                    configWasReordered &&
+                    typeof window.invalidateFrozenPricesForWell === 'function'
+                ) {
+                    window.invalidateFrozenPricesForWell(well);
+                }
                 well.config.forEach((c) => (c.isPlaceholder = false));
                 if (!(typeof isWellLocked === 'function' && isWellLocked())) {
                     well.autoLocked = true;

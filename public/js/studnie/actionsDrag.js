@@ -143,6 +143,10 @@ function dropWellComponent(ev) {
             );
         }
 
+        if (typeof window.invalidateFrozenPricesForWell === 'function') {
+            window.invalidateFrozenPricesForWell(well);
+        }
+
         window.currentDraggedPlaceholderId = null;
 
         well.autoLocked = true;
@@ -157,6 +161,9 @@ function dropWellComponent(ev) {
         updateSummary();
     } else if (well && draggedCfgIndex !== null) {
         well.config.forEach((c) => (c.isPlaceholder = false));
+        if (typeof window.invalidateFrozenPricesForWell === 'function') {
+            window.invalidateFrozenPricesForWell(well);
+        }
         well.autoLocked = true;
         updateAutoLockUI();
         well.configSource = 'MANUAL';

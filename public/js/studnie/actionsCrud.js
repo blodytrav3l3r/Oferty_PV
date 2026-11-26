@@ -200,6 +200,9 @@ function addWellComponent(productId) {
     };
 
     addSingle(product);
+    if (typeof window.invalidateFrozenPricesForWell === 'function') {
+        window.invalidateFrozenPricesForWell(well);
+    }
 
     if (typeof window.ensureReliefRingPair === 'function') {
         window.ensureReliefRingPair(well);
@@ -301,6 +304,10 @@ function removeWellComponent(index) {
         }
     }
 
+    if (typeof window.invalidateFrozenPricesForWell === 'function') {
+        window.invalidateFrozenPricesForWell(well);
+    }
+
     if (typeof window.telemetryRecordEvent === 'function') {
         const removedProd = removedItem
             ? typeof getStudnieProductById === 'function'
@@ -399,6 +406,9 @@ async function clearWellConfig() {
     well.autoLocked = true;
     if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     well.config = [];
+    if (typeof window.invalidateFrozenPricesForWell === 'function') {
+        window.invalidateFrozenPricesForWell(well);
+    }
     refreshAll();
     if (typeof window.showToast === 'function')
         window.showToast('Wyczyszczono konfigurację studni', 'info');

@@ -26,6 +26,20 @@ describe('Ceny kinety według rzeczywistej wysokości dennicy', () => {
             name: 'Dennica DN1000 H=1300/1150'
         },
         {
+            id: 'dennica-1500-1350',
+            componentType: 'dennica',
+            dn: '1000',
+            height: 1350,
+            name: 'Dennica DN1000 H=1500/1350'
+        },
+        {
+            id: 'dennica-650-500',
+            componentType: 'dennica',
+            dn: '1000',
+            height: 500,
+            name: 'Dennica DN1000 H=650/500'
+        },
+        {
             id: 'kineta-dn1000-11',
             componentType: 'kineta',
             dn: '1000',
@@ -57,18 +71,24 @@ describe('Ceny kinety według rzeczywistej wysokości dennicy', () => {
         context
     );
 
-    function priceFor(baseId: string) {
+    function pricingForConfig(productIds: string[]) {
         const well = {
             dn: '1000',
             malowanieW: 'brak',
             malowanieZ: 'brak',
-            config: [
-                { productId: baseId, quantity: 1 },
-                { productId: 'kineta-dn1000-11', quantity: 1 }
-            ]
+            config: productIds.map((productId) => ({ productId, quantity: 1 }))
         };
         const kineta = products.find((product) => product.id === 'kineta-dn1000-11');
-        return context.getItemAssessedPrice(well, kineta, false, well.config[1]);
+        if (!kineta) throw new Error('Brak produktu kinety w fixture');
+        const kinetaItem = well.config.find((item) => item.productId === kineta.id);
+        return {
+            assessed: context.getItemAssessedPrice(well, kineta, false, kinetaItem),
+            breakdown: context.getItemPriceBreakdown(well, kineta, false, kinetaItem)
+        };
+    }
+
+    function priceFor(baseId: string) {
+        return pricingForConfig([baseId, 'kineta-dn1000-11']).assessed;
     }
 
     test('H=700/550 używa WYS. 550 mm i CENA1', () => {
@@ -81,5 +101,22 @@ describe('Ceny kinety według rzeczywistej wysokości dennicy', () => {
 
     test('H=1300/1150 używa WYS. 1150 mm i CENA3', () => {
         expect(priceFor('dennica-1300-1150')).toBe(280);
+    });
+
+    test('kineta używa wysokości dolnej dennicy, a nie pierwszej w konfiguracji', () => {
+        const pricing = pricingForConfig([
+            'dennica-1500-1350',
+            'dennica-650-500',
+            'kineta-dn1000-11'
+        ]);
+
+        expect(pricing.assessed).toBe(220);
+        expect(pricing.breakdown.base).toBe(220);
+    });
+
+    test('zmiana kolejności dennic aktualizuje próg ceny kinety', () => {
+        expect(
+            pricingForConfig(['dennica-650-500', 'dennica-1500-1350', 'kineta-dn1000-11']).assessed
+        ).toBe(280);
     });
 });

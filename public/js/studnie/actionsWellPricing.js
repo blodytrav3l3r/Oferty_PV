@@ -158,6 +158,18 @@ function getTransitionHostPct(well, disc, hostType) {
     return getWellNadbudowaPct(well, disc);
 }
 
+function getKinetaPricingDennicaHeight(well) {
+    const config = Array.isArray(well.config) ? well.config : [];
+    for (let index = config.length - 1; index >= 0; index -= 1) {
+        const product =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(config[index].productId)
+                : studnieProducts.find((entry) => entry.id === config[index].productId);
+        if (product && product.componentType === 'dennica') return product.height || 0;
+    }
+    return 0;
+}
+
 function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     let itemPrice = p.price || 0;
 
@@ -172,21 +184,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     const mult = 1 - discountPct / 100;
 
     if (p.componentType === 'kineta') {
-        let dennicaHeight = 0;
-        const dennicaItem = well.config.find((c) => {
-            const pr =
-                typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(c.productId)
-                    : studnieProducts.find((x) => x.id === c.productId);
-            return pr && pr.componentType === 'dennica';
-        });
-        if (dennicaItem) {
-            dennicaHeight =
-                (typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(dennicaItem.productId)
-                    : studnieProducts.find((x) => x.id === dennicaItem.productId)
-                )?.height || 0;
-        }
+        const dennicaHeight = getKinetaPricingDennicaHeight(well);
 
         const h1m = parseFloat(p.hMin1);
         const h1x = parseFloat(p.hMax1);
@@ -325,25 +323,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
     const mult = 1 - discountPct / 100;
 
     if (p.componentType === 'kineta') {
-        let dennicaHeight = 0;
-        const dennicaItem = well.config.find(function (c) {
-            const pr =
-                typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(c.productId)
-                    : studnieProducts.find(function (x) {
-                          return x.id === c.productId;
-                      });
-            return pr && pr.componentType === 'dennica';
-        });
-        if (dennicaItem) {
-            const pPr =
-                typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(dennicaItem.productId)
-                    : studnieProducts.find(function (x) {
-                          return x.id === dennicaItem.productId;
-                      });
-            dennicaHeight = pPr ? pPr.height || 0 : 0;
-        }
+        const dennicaHeight = getKinetaPricingDennicaHeight(well);
 
         const h1m = parseFloat(p.hMin1);
         const h1x = parseFloat(p.hMax1);
