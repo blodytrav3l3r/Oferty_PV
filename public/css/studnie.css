@@ -3840,6 +3840,8 @@ td.excel-tint--plyta_redukcyjna input {
     padding: 0.25rem 0.4rem;
     margin-bottom: 0.25rem;
     transition:
+        margin-top 0.18s ease,
+        margin-bottom 0.18s ease,
         filter 0.2s ease,
         box-shadow 0.2s ease;
     border: 1px solid transparent;
@@ -3864,10 +3866,52 @@ html[data-theme='light'] .config-tile.is-dragging,
 html[data-theme='light'] .zl-config-tile.is-dragging {
     opacity: 0.55;
 }
-/* Cel upuszczenia (klasa zamiast style.borderTop w actionsConfigDrag.js) */
+/* Slot upuszczenia — sąsiednie elementy rozsuwa animowany margines. */
 .config-tile.is-drop-target,
 .zl-config-tile.is-drop-target {
-    border-top: 2px solid var(--accent);
+    border-top-color: transparent;
+}
+
+.config-tile.is-drop-target:not(.is-drop-target--after),
+.zl-config-tile.is-drop-target:not(.is-drop-target--after) {
+    margin-top: var(--tile-gap-sm-plus);
+}
+
+.config-tile.is-drop-target--after,
+.zl-config-tile.is-drop-target--after {
+    margin-bottom: var(--tile-gap-sm-plus);
+}
+
+.config-tile.is-drop-target::before,
+.zl-config-tile.is-drop-target::before {
+    position: absolute;
+    top: calc(-1 * var(--tile-gap-sm-plus));
+    inset-inline: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--tile-gap-sm-plus);
+    border-block: 1px dashed var(--accent-border);
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent-text);
+    content: 'WSTAW ELEMENT';
+    font-size: var(--fs-3xs);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.04em;
+    pointer-events: none;
+}
+
+.config-tile.is-drop-target--after::before,
+.zl-config-tile.is-drop-target--after::before {
+    top: auto;
+    bottom: calc(-1 * var(--tile-gap-sm-plus));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .config-tile,
+    .zl-config-tile {
+        transition: none;
+    }
 }
 /* Tekst na kolorowym tle — dziedziczy fg kafelka (para AA z badge). */
 .config-tile .cfg-item-name,
@@ -3908,11 +3952,14 @@ html[data-theme='light'] .config-tile {
 /* Kafelki elementów w modalu zleceń (orderZleceniaRender.js) — ten sam
    kontrakt: motyw sterowany CSS, JS podaje tylko --tile-accent. */
 .zl-config-tile {
+    position: relative;
     border-radius: var(--radius-sm);
     padding: 0.35rem 0.5rem;
     margin-bottom: 0.25rem;
     cursor: grab;
     transition:
+        margin-top 0.18s ease,
+        margin-bottom 0.18s ease,
         background-color 0.15s,
         border-color 0.15s,
         box-shadow 0.15s;

@@ -52,6 +52,23 @@ window.moveZleceniaComponent = moveWellComponent;
 let draggedCfgIndex = null;
 let draggedCfgChanged = false;
 
+function setConfigDropTarget(list, target, after) {
+    list.querySelectorAll('.config-tile.is-drop-target, .zl-config-tile.is-drop-target').forEach(
+        (tile) => {
+            if (tile !== target) {
+                tile.classList.remove('is-drop-target', 'is-drop-target--after');
+            }
+        }
+    );
+    target.classList.toggle('is-drop-target--after', after);
+    target.classList.add('is-drop-target');
+}
+
+function isConfigDropAfter(event, tile) {
+    const rect = tile.getBoundingClientRect();
+    return event.clientY >= rect.top + rect.height / 2;
+}
+
 window.handleCfgDragStart = function (e) {
     const well = getCurrentWell();
     const zlReorder =
@@ -85,17 +102,17 @@ window.handleCfgDragOver = function (e) {
 
     if (draggedCfgIndex !== null) {
         if (tile) {
-            tile.classList.add('is-drop-target');
             const dropIndex = parseInt(
                 tile.getAttribute('data-cfg-idx') || tile.getAttribute('data-zl-idx')
             );
-            const well = getCurrentWell();
-            if (well && !isNaN(dropIndex) && draggedCfgIndex !== dropIndex) {
-                const draggedItem = well.config.splice(draggedCfgIndex, 1)[0];
-                well.config.splice(dropIndex, 0, draggedItem);
-                draggedCfgIndex = dropIndex;
-                draggedCfgChanged = true;
-                window.requestAnimationFrame(() => renderWellDiagram());
+            if (!isNaN(dropIndex) && draggedCfgIndex !== dropIndex) {
+                setConfigDropTarget(tile.parentElement, tile, isConfigDropAfter(e, tile));
+            } else {
+                tile.parentElement
+                    .querySelectorAll('.config-tile.is-drop-target, .zl-config-tile.is-drop-target')
+                    .forEach((target) =>
+                        target.classList.remove('is-drop-target', 'is-drop-target--after')
+                    );
             }
         }
     } else if (window.currentDraggedPlaceholderId) {
@@ -163,9 +180,25 @@ window.handleCfgDrop = function (e) {
         if (!well) return;
 
         if (draggedCfgIndex !== null) {
-            tile.classList.remove('is-drop-target');
-
-            well.config.forEach((c) => (c.isPlaceholder = false));
+            const sourceIndex = draggedCfgIndex;
+            const targetIndex = parseInt(
+                tile.getAttribute('data-cfg-idx') || tile.getAttribute('data-zl-idx')
+            );
+            if (!isNaN(targetIndex) && sourceIndex !== targetIndex) {
+                const after = isConfigDropAfter(e, tile);
+                const rawInsertIndex = targetIndex + (after ? 1 : 0);
+                const insertIndex = rawInsertIndex - (sourceIndex < rawInsertIndex ? 1 : 0);
+                if (insertIndex !== sourceIndex) {
+                    const nextConfig = [...well.config];
+                    const [draggedItem] = nextConfig.splice(sourceIndex, 1);
+                    nextConfig.splice(insertIndex, 0, draggedItem);
+                    well.config = nextConfig;
+                    draggedCfgChanged = true;
+                }
+            }
+            well.config = well.config.map((item) =>
+                item.isPlaceholder ? { ...item, isPlaceholder: false } : item
+            );
             if (draggedCfgChanged && typeof window.invalidateFrozenPricesForWell === 'function') {
                 window.invalidateFrozenPricesForWell(well);
             }
@@ -251,7 +284,9 @@ window.handleCfgDragEnd = function (e) {
         .querySelectorAll(
             '.config-tile.is-drop-target, .zl-config-tile.is-drop-target, .config-tile.is-dragging, .zl-config-tile.is-dragging'
         )
-        .forEach((t) => t.classList.remove('is-drop-target', 'is-dragging'));
+        .forEach((t) =>
+            t.classList.remove('is-drop-target', 'is-drop-target--after', 'is-dragging')
+        );
     const well = getCurrentWell();
     if (well) {
         well.config.forEach((c) => (c.isPlaceholder = false));
