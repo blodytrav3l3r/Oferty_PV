@@ -53,7 +53,7 @@ describe('diagram studni — podgląd miejsca upuszczenia', () => {
 
         expect(markerIndex).toBeGreaterThanOrEqual(0);
         expect(markerIndex).toBeGreaterThan(targetIndex);
-        expect(svg).toContain('y1="120"');
+        expect(svg).toContain('cy="120"');
     });
 
     it('nie dodaje wskaźnika poza przeciąganiem', () => {
@@ -63,10 +63,12 @@ describe('diagram studni — podgląd miejsca upuszczenia', () => {
         expect(svg).not.toContain('well-diagram-drop-marker');
     });
 
-    it('animuje wskaźnik z obsługą ograniczenia ruchu', () => {
-        expect(diagramCss).toContain('well-diagram-drop-flow');
-        expect(diagramCss).toContain('@media (prefers-reduced-motion: reduce)');
-        expect(diagramCss).toContain('#well-diagram .well-diagram-drop-marker__line');
+    it('pokazuje punkty miejsca upuszczenia bez animowanej linii', () => {
+        const { svg } = createContext(1).drawAllComponents(components, canvas);
+
+        expect(svg).toContain('well-diagram-drop-marker__dot');
+        expect(svg).not.toContain('well-diagram-drop-marker__line');
+        expect(diagramCss).not.toContain('well-diagram-drop-flow');
     });
 
     it('aktualizuje wskaźnik zgodnie z pozycją kursora między elementami', () => {

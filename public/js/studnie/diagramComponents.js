@@ -347,7 +347,7 @@ function drawWellDropMarker(cx, y, width) {
     const halfWidth = Math.max(width / 2 + 8, 20);
     const left = cx - halfWidth;
     const right = cx + halfWidth;
-    return `<g class="well-diagram-drop-marker" pointer-events="none"><line class="well-diagram-drop-marker__line" x1="${left}" y1="${y}" x2="${right}" y2="${y}"/><circle class="well-diagram-drop-marker__dot" cx="${left}" cy="${y}" r="3.5"/><circle class="well-diagram-drop-marker__dot" cx="${right}" cy="${y}" r="3.5"/></g>`;
+    return `<g class="well-diagram-drop-marker" pointer-events="none"><circle class="well-diagram-drop-marker__dot" cx="${left}" cy="${y}" r="3.5"/><circle class="well-diagram-drop-marker__dot" cx="${right}" cy="${y}" r="3.5"/></g>`;
 }
 
 /* ===== RYSOWANIE WSZYSTKICH KOMPONENTÓW ===== */

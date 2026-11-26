@@ -248,14 +248,6 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     transform-origin: center;
 }
 
-#well-diagram .well-diagram-drop-marker__line {
-    stroke: var(--accent-hover);
-    stroke-width: 3;
-    stroke-dasharray: 8 5;
-    stroke-linecap: round;
-    animation: well-diagram-drop-flow 900ms linear infinite;
-}
-
 #well-diagram .well-diagram-drop-marker__dot {
     fill: var(--accent-hover);
 }
@@ -272,15 +264,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     }
 }
 
-@keyframes well-diagram-drop-flow {
-    to {
-        stroke-dashoffset: -26;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    #well-diagram .well-diagram-drop-marker,
-    #well-diagram .well-diagram-drop-marker__line {
+    #well-diagram .well-diagram-drop-marker {
         animation: none;
     }
 }
@@ -1150,117 +1135,6 @@ html[data-theme='light'] .unit-popup-preview {
     border-radius: var(--radius-sm);
     padding: 0.5rem;
     margin-bottom: 0.5rem;
-}
-
-.well-config-card {
-    padding: var(--tile-gap-sm-plus);
-}
-
-.well-config-header,
-.well-config-height-stats,
-.well-config-actions {
-    display: flex;
-    align-items: center;
-}
-
-.well-config-header {
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--tile-gap-2xs) var(--tile-gap-sm-plus);
-    margin-bottom: var(--tile-gap-xs);
-}
-
-.well-config-title {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--tile-gap-2xs);
-    color: var(--text-primary);
-    font-size: var(--fs-base);
-    font-weight: var(--fw-extrabold);
-}
-
-.well-config-height-stats {
-    flex-wrap: wrap;
-    gap: var(--tile-gap-sm);
-    color: var(--text-muted);
-    font-size: var(--fs-base);
-}
-
-.well-config-required-height {
-    color: var(--accent-hover);
-}
-
-.well-configured-height {
-    color: var(--success);
-}
-
-.well-config-fields {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: end;
-    gap: var(--tile-gap-xs-plus) var(--tile-gap-sm-plus);
-    margin-bottom: var(--tile-gap-sm);
-}
-
-.well-config-field {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    min-width: 0;
-    gap: var(--tile-gap-2xs);
-    color: var(--text-muted);
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-semibold);
-}
-
-.well-config-label {
-    color: var(--text-muted);
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-bold);
-    text-transform: uppercase;
-}
-
-.well-config-input {
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-    padding: 0.35rem 0.45rem;
-    border: 1px solid var(--border-glass);
-    border-radius: var(--radius-2xs);
-    background: var(--bg-input);
-    color: var(--text-primary);
-    font: var(--fw-bold) var(--fs-md) var(--font-sans);
-    text-align: center;
-}
-
-.well-config-input--number {
-    color: var(--accent2-hover);
-}
-
-.well-config-dn {
-    grid-column: span 2;
-}
-
-.well-config-dn-selector {
-    min-width: 0;
-    gap: var(--tile-gap-2xs);
-}
-
-.well-config-dn-selector .dn-btn {
-    min-height: 2rem;
-    padding-inline: 0.65rem;
-}
-
-.well-config-actions {
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--tile-gap-sm);
-}
-
-.well-config-toggle-controls,
-.well-config-primary-controls {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
 }
 
 .well-info-grid {
@@ -2903,22 +2777,6 @@ select[id$='-czy'] option {
 /* Responsywność kreatora */
 
 @media (max-width: 768px) {
-    .well-config-header {
-        align-items: flex-start;
-    }
-
-    .well-config-height-stats {
-        justify-content: flex-start;
-    }
-
-    .well-config-actions {
-        align-items: flex-start;
-    }
-
-    .well-config-primary-controls {
-        justify-content: flex-start;
-    }
-
     .wizard-dot-label {
         display: none;
     }
@@ -2972,27 +2830,6 @@ select[id$='-czy'] option {
 }
 
 @media (max-width: 600px) {
-    .well-config-fields {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .well-config-dn {
-        grid-column: 1 / -1;
-    }
-
-    .well-config-dn-selector .dn-btn {
-        flex: 0 0 auto;
-    }
-
-    .well-config-actions {
-        align-items: stretch;
-    }
-
-    .well-config-toggle-controls,
-    .well-config-primary-controls {
-        width: 100%;
-    }
-
     .wizard-form-grid {
         grid-template-columns: 1fr;
     }
