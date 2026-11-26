@@ -1,6 +1,6 @@
 # Tech Stack — stos technologiczny
 
-**Wersja:** 1.64.27  
+**Wersja:** 1.64.28  
 **Ostatnia aktualizacja pełnego wykazu:** 2026-11-05
 
 **Korekta statusu walidacji:** 2026-11-24
