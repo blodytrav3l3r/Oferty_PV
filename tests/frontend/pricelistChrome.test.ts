@@ -6,6 +6,7 @@ const studnie = fs.readFileSync(
     path.join(process.cwd(), 'public/js/studnie/pricelistManager.js'),
     'utf-8'
 );
+const studnieCss = fs.readFileSync(path.join(process.cwd(), 'public/css/studnie.css'), 'utf-8');
 
 describe('frontend: kontrakt colspan nagłówków grup (błąd #7)', () => {
     it('studnie: nagłówek grupy używa labelki (colspan - 1) plus komórka akcji', () => {
@@ -34,6 +35,11 @@ describe('frontend: oznaczenia cen kinet', () => {
         expect(studnie).toContain(
             'Cena bazowa — używana tylko wtedy, gdy wysokość dolnej dennicy nie mieści się'
         );
+        expect(studnie).toContain('pricelist-kineta-price');
+        expect(studnieCss).toContain('color: var(--success-hover);');
+        expect(studnieCss).toContain('color: var(--warn-hover);');
+        expect(studnieCss).toContain('color: var(--danger-hover);');
+        expect(studnieCss).toContain('font-weight: var(--fw-bold);');
     });
 });
 

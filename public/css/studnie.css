@@ -11,29 +11,30 @@ body {
     padding: 0;
 }
 
-/* Cennik kinet: kolory łączą granice wysokości z przypisaną ceną. */
+/* Cennik kinet: kolory tekstu łączą granice wysokości z przypisaną ceną. */
 .pricelist-components-table th.pricelist-kineta-band--1,
 .pricelist-components-table td.pricelist-kineta-band--1 {
     color: var(--success-hover);
-    background-color: var(--success-bg-soft);
 }
 
 .pricelist-components-table th.pricelist-kineta-band--2,
 .pricelist-components-table td.pricelist-kineta-band--2 {
     color: var(--warn-hover);
-    background-color: var(--warn-bg-soft);
 }
 
 .pricelist-components-table th.pricelist-kineta-band--3,
 .pricelist-components-table td.pricelist-kineta-band--3 {
     color: var(--danger-hover);
-    background-color: var(--danger-bg-soft);
 }
 
 .pricelist-components-table th.pricelist-kineta-catalog-price,
 .pricelist-components-table td.pricelist-kineta-catalog-price {
     color: var(--accent-text);
-    background-color: var(--accent-bg);
+}
+
+.pricelist-components-table th.pricelist-kineta-price,
+.pricelist-components-table td.pricelist-kineta-price {
+    font-weight: var(--fw-bold);
 }
 
 .pricelist-components-table td.pricelist-kineta-catalog-price {

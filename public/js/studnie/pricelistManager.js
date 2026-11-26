@@ -195,13 +195,13 @@ function renderStudniePriceList() {
           <th scope="col" class="text-center ui-col-5">Pow. m²</th>
           <th scope="col" class="text-center w-4pct pricelist-kineta-band--1">Hmin1 mm</th>
           <th scope="col" class="text-center w-4pct pricelist-kineta-band--1">Hmax1 mm</th>
-          <th scope="col" class="text-right ui-col-6 pricelist-kineta-band--1" title="Cena do wyceny dla wysokości dennicy w zakresie Hmin1–Hmax1">Cena1</th>
+          <th scope="col" class="text-right ui-col-6 pricelist-kineta-band--1 pricelist-kineta-price" title="Cena do wyceny dla wysokości dennicy w zakresie Hmin1–Hmax1">Cena1</th>
           <th scope="col" class="text-center ui-col-5 pricelist-kineta-band--2">Hmin2 mm</th>
           <th scope="col" class="text-center ui-col-5 pricelist-kineta-band--2">Hmax2 mm</th>
-          <th scope="col" class="text-right ui-col-6 pricelist-kineta-band--2" title="Cena do wyceny dla wysokości dennicy w zakresie Hmin2–Hmax2">Cena2</th>
+          <th scope="col" class="text-right ui-col-6 pricelist-kineta-band--2 pricelist-kineta-price" title="Cena do wyceny dla wysokości dennicy w zakresie Hmin2–Hmax2">Cena2</th>
           <th scope="col" class="text-center ui-col-5 pricelist-kineta-band--3">Hmin3 mm</th>
           <th scope="col" class="text-center ui-col-5 pricelist-kineta-band--3">Hmax3 mm</th>
-          <th scope="col" class="text-right ui-col-6 pricelist-kineta-band--3" title="Cena do wyceny dla wysokości dennicy w zakresie Hmin3–Hmax3">Cena3</th>
+          <th scope="col" class="text-right ui-col-6 pricelist-kineta-band--3 pricelist-kineta-price" title="Cena do wyceny dla wysokości dennicy w zakresie Hmin3–Hmax3">Cena3</th>
           `
                     : `
           <th scope="col" class="text-right ui-col-5" title="Wysokość [mm]">Wys.</th>
@@ -302,13 +302,13 @@ function renderStudniePriceList() {
         <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="area" data-id="${escapeHtmlAttr(p.id)}" >${p.area != null ? fmt(p.area) : '—'}</td>
         <td class="text-center ui-pointer-bold pricelist-kineta-band--1" data-action="editStudnieCell" data-field="hMin1" data-id="${escapeHtmlAttr(p.id)}" >${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
         <td class="text-center ui-pointer-bold pricelist-kineta-band--1" data-action="editStudnieCell" data-field="hMax1" data-id="${escapeHtmlAttr(p.id)}" >${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
-        <td class="text-right cursor-success pricelist-kineta-band--1" data-action="editStudnieCell" data-field="cena1" data-id="${escapeHtmlAttr(p.id)}" >${p.cena1 != null ? fmt(p.cena1) : '—'}</td>
+        <td class="text-right cursor-success pricelist-kineta-band--1 pricelist-kineta-price" data-action="editStudnieCell" data-field="cena1" data-id="${escapeHtmlAttr(p.id)}" >${p.cena1 != null ? fmt(p.cena1) : '—'}</td>
         <td class="text-center ui-pointer-bold pricelist-kineta-band--2" data-action="editStudnieCell" data-field="hMin2" data-id="${escapeHtmlAttr(p.id)}" >${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
         <td class="text-center ui-pointer-bold pricelist-kineta-band--2" data-action="editStudnieCell" data-field="hMax2" data-id="${escapeHtmlAttr(p.id)}" >${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
-        <td class="text-right cursor-success pricelist-kineta-band--2" data-action="editStudnieCell" data-field="cena2" data-id="${escapeHtmlAttr(p.id)}" >${p.cena2 != null ? fmt(p.cena2) : '—'}</td>
+        <td class="text-right cursor-success pricelist-kineta-band--2 pricelist-kineta-price" data-action="editStudnieCell" data-field="cena2" data-id="${escapeHtmlAttr(p.id)}" >${p.cena2 != null ? fmt(p.cena2) : '—'}</td>
         <td class="text-center ui-pointer-bold pricelist-kineta-band--3" data-action="editStudnieCell" data-field="hMin3" data-id="${escapeHtmlAttr(p.id)}" >${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
         <td class="text-center ui-pointer-bold pricelist-kineta-band--3" data-action="editStudnieCell" data-field="hMax3" data-id="${escapeHtmlAttr(p.id)}" >${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
-        <td class="text-right cursor-success pricelist-kineta-band--3" data-action="editStudnieCell" data-field="cena3" data-id="${escapeHtmlAttr(p.id)}" >${p.cena3 != null ? fmt(p.cena3) : '—'}</td>
+        <td class="text-right cursor-success pricelist-kineta-band--3 pricelist-kineta-price" data-action="editStudnieCell" data-field="cena3" data-id="${escapeHtmlAttr(p.id)}" >${p.cena3 != null ? fmt(p.cena3) : '—'}</td>
                 `;
             } else {
                 html += `
