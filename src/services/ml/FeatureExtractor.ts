@@ -528,6 +528,7 @@ export class FeatureExtractor {
             select: {
                 id: true,
                 userId: true,
+                trainingEligible: true,
                 dn: true,
                 warehouse: true,
                 wellType: true,
@@ -555,6 +556,7 @@ export class FeatureExtractor {
         for (const f of features) {
             const t = f.telemetryId ? byId.get(f.telemetryId) : undefined;
             if (!t) continue;
+            if (t.trainingEligible !== true) continue;
             if (!isTelemetryAllowed(t.userId, trainingUserIds)) continue;
             const fv = this.extract(t as TelemetryRecordWithDetails);
             // Selektywny UPDATE (K5): pomiń wiersze, których cechy się nie zmieniły

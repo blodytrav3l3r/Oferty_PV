@@ -14,6 +14,7 @@ import type { KnowledgePattern } from './KnowledgeBase';
 import { KnowledgeBase } from './KnowledgeBase';
 import { ConfidenceCalculator } from './ConfidenceCalculator';
 import { logger } from '../../../utils/logger';
+import type { Prisma } from '../../../../generated/prisma-postgres/client';
 
 export class PatternDetector {
     private knowledge: KnowledgeBase;
@@ -160,7 +161,16 @@ export class PatternDetector {
     /**
      * Persist wykrytych wzorców do KnowledgeBase.
      */
-    async persist(patterns: KnowledgePattern[]): Promise<number> {
+    async persist(
+        patterns: KnowledgePattern[],
+        transaction?: Prisma.TransactionClient
+    ): Promise<number> {
+        if (transaction) {
+            for (const pattern of patterns) {
+                await this.knowledge.upsertPattern(pattern, transaction);
+            }
+            return patterns.length;
+        }
         const results = await Promise.allSettled(
             patterns.map((p) => this.knowledge.upsertPattern(p))
         );

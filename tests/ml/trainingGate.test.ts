@@ -56,7 +56,7 @@ function setEligibleRows(count: number): void {
     const rows = Array.from({ length: count }, (_, index) => ({ telemetryId: `tel-${index}` }));
     mockFeatureFindMany.mockResolvedValue(rows);
     mockTelemetryFindMany.mockResolvedValue(
-        rows.map((row) => ({ id: row.telemetryId, userId: 'u1' }))
+        rows.map((row) => ({ id: row.telemetryId, userId: 'u1', trainingEligible: true }))
     );
 }
 
@@ -132,13 +132,33 @@ describe('shouldTrain() — pre-flight gate', () => {
         mockTelemetryFindMany.mockResolvedValue(
             Array.from({ length: 100 }, (_, i) => ({
                 id: `tel-${i}`,
-                userId: i < 40 ? 'u1' : 'u2'
+                userId: i < 40 ? 'u1' : 'u2',
+                trainingEligible: true
             }))
         );
 
         const gate = await trainingPipeline.shouldTrain();
 
         expect(gate).toEqual({ ok: false, reason: 'insufficient_new_data:40' });
+    });
+
+    it('bramka wyklucza treningEligible=false nawet dla dozwolonego właściciela', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        mockRunFindFirst.mockResolvedValue(null);
+        const rows = Array.from({ length: 50 }, (_, index) => ({ telemetryId: `tel-${index}` }));
+        mockFeatureFindMany.mockResolvedValue(rows);
+        mockTelemetryFindMany.mockResolvedValue(
+            rows.map((row, index) => ({
+                id: row.telemetryId,
+                userId: 'u1',
+                trainingEligible: index < 49
+            }))
+        );
+
+        expect(await trainingPipeline.shouldTrain()).toEqual({
+            ok: false,
+            reason: 'insufficient_new_data:49'
+        });
     });
 });
 

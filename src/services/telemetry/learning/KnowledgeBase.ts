@@ -7,6 +7,7 @@
 
 import crypto from 'crypto';
 import prisma from '../../../prismaClient';
+import type { Prisma } from '../../../../generated/prisma-postgres/client';
 import { logger } from '../../../utils/logger';
 import { ConfidenceCalculator } from './ConfidenceCalculator';
 
@@ -72,12 +73,15 @@ export class KnowledgeBase {
     /**
      * Upsert wzorca - jeśli patternKey istnieje, aktualizuj; wpp wstaw.
      */
-    async upsertPattern(pattern: KnowledgePattern): Promise<string> {
+    async upsertPattern(
+        pattern: KnowledgePattern,
+        transaction?: Prisma.TransactionClient
+    ): Promise<string> {
         const id = pattern.id || crypto.randomUUID();
         const now = new Date().toISOString();
 
         try {
-            return await prisma.$transaction(async (tx) => {
+            const persist = async (tx: Prisma.TransactionClient): Promise<string> => {
                 const existing = await tx.ai_knowledge_base.findFirst({
                     where: {
                         patternKey: pattern.patternKey,
@@ -152,7 +156,8 @@ export class KnowledgeBase {
                     }
                 });
                 return id;
-            });
+            };
+            return transaction ? await persist(transaction) : await prisma.$transaction(persist);
         } catch (e) {
             logger.error('KnowledgeBase', `Błąd upsert pattern: ${e}`);
             throw e;

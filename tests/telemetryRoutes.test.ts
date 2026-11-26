@@ -649,8 +649,8 @@ describe('RecommendationEngine', () => {
 
 describe('LearningEngine - pipeline', () => {
     let le: LearningEngine;
-    // Izolacja od współdzielonego dev-DB: ustawiona allowlista
-    // (ai_training_user_ids) wykluczałaby fixture bez autora (userId null).
+    // Izolacja od współdzielonego dev-DB: fixture musi jawnie należeć do
+    // allowlisty i być kwalifikujący, tak jak realne dane dla LearningEngine.
     // Zapisujemy klucz, czyścimy na czas suity, potem przywracamy.
     let savedTrainingUsers: string | null = null;
     let hadTrainingUsersKey = false;
@@ -693,11 +693,18 @@ describe('LearningEngine - pipeline', () => {
     });
 
     it('runFullCycle z rekordami → patterns wykryte', async () => {
+        await prisma.settings.upsert({
+            where: { key: 'ai_training_user_ids' },
+            update: { value: JSON.stringify(['test-user']) },
+            create: { key: 'ai_training_user_ids', value: JSON.stringify(['test-user']) }
+        });
         // Wstaw kilka rekordów telemetry z dn='1200'
         for (let i = 0; i < 5; i++) {
             await prisma.ai_telemetry_logs.create({
                 data: {
                     id: crypto.randomUUID(),
+                    userId: 'test-user',
+                    trainingEligible: true,
                     dn: '1200',
                     wellHeight: 3000 + i * 100,
                     wasAccepted: i % 2 === 0,

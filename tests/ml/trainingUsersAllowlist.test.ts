@@ -146,6 +146,10 @@ const fakePrisma: any = {
         }),
         updateMany: jest.fn<any>(async () => ({ count: 0 }))
     },
+    $queryRaw: jest.fn<any>(async () => {
+        const value = store.settings.get('ai_training_user_ids');
+        return value === undefined ? [] : [{ value }];
+    }),
     $transaction: jest.fn<any>(async (fn: any) => fn(fakePrisma))
 };
 
@@ -315,6 +319,23 @@ describe('resync z allowlistą (P0)', () => {
         expect(store.features.find((f) => f.id === 'f-a')!.bottomType).not.toBe('unknown');
         expect(store.features.find((f) => f.id === 'f-b')!.bottomType).toBe('unknown');
     });
+
+    it('resyncFeatures: nie przelicza wektora z trainingEligible=false', async () => {
+        store.settings.set('ai_training_user_ids', JSON.stringify(['A']));
+        store.telemetry = [
+            telemetryFixture('tel-a1', 'A', '1000', {
+                trainingEligible: false,
+                allComponentIds: JSON.stringify([{ productId: 'DDD-1000-250' }])
+            })
+        ];
+        store.features = [{ id: 'f-a', telemetryId: 'tel-a1', bottomType: 'unknown' }];
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+
+        const n = await featureExtractor.resyncFeatures();
+
+        expect(n).toBe(0);
+        expect(store.features[0].bottomType).toBe('unknown');
+    });
 });
 
 describe('filterFeaturesByTrainingUsers (join AiFeature→telemetry)', () => {
@@ -347,6 +368,41 @@ describe('filterFeaturesByTrainingUsers (join AiFeature→telemetry)', () => {
         ]);
         expect(fakePrisma.settings.findUnique).not.toHaveBeenCalled();
     });
+
+    it('wyklucza telemetry trainingEligible=false, brak telemetrii i orphan', async () => {
+        const { filterFeaturesByTrainingUsers } =
+            await import('../../src/services/ml/trainingUsers');
+        store.telemetry = [
+            telemetryFixture('tel-a1', 'A', '1000'),
+            telemetryFixture('tel-a2', 'A', '1000', { trainingEligible: false })
+        ];
+        const features = [
+            { telemetryId: 'tel-a1' },
+            { telemetryId: 'tel-a2' },
+            { telemetryId: 'orphan' },
+            { telemetryId: null }
+        ];
+
+        expect(await filterFeaturesByTrainingUsers(features, ['A'])).toEqual([
+            { telemetryId: 'tel-a1' }
+        ]);
+    });
+
+    it('gate liczy tylko wektory z dozwolonej, kwalifikującej się telemetrii', async () => {
+        const { countEligibleNewFeatures } = await import('../../src/services/ml/trainingUsers');
+        store.settings.set('ai_training_user_ids', JSON.stringify(['A']));
+        store.features = [
+            { telemetryId: 'tel-a1' },
+            { telemetryId: 'tel-a2' },
+            { telemetryId: 'orphan' }
+        ];
+        store.telemetry = [
+            telemetryFixture('tel-a1', 'A', '1000'),
+            telemetryFixture('tel-a2', 'A', '1000', { trainingEligible: false })
+        ];
+
+        expect(await countEligibleNewFeatures(null)).toBe(1);
+    });
 });
 
 describe('LearningEngine E2E: historyczne KB od B + allowlista [A]', () => {
@@ -358,6 +414,7 @@ describe('LearningEngine E2E: historyczne KB od B + allowlista [A]', () => {
             telemetryFixture('tel-a1', 'A', '1000'),
             telemetryFixture('tel-a2', 'A', '1000'),
             telemetryFixture('tel-a3', 'A', '1000'),
+            telemetryFixture('tel-a4', 'A', '2000', { trainingEligible: false }),
             telemetryFixture('tel-b1', 'B', '2000'),
             telemetryFixture('tel-b2', 'B', '2000'),
             telemetryFixture('tel-b3', 'B', '2000')
@@ -390,5 +447,29 @@ describe('LearningEngine E2E: historyczne KB od B + allowlista [A]', () => {
         expect(new Set(fresh.map((k) => k.dn))).toEqual(new Set(['1000']));
         expect(summary.patternsDetected).toBeGreaterThan(0);
         expect(summary.error).toBeUndefined();
+    });
+
+    it('nie zapisuje wzorców, gdy allowlista zmieni się podczas zbierania telemetrii', async () => {
+        store.settings.set('ai_training_user_ids', JSON.stringify(['A']));
+        store.telemetry = [
+            telemetryFixture('tel-a1', 'A', '1000'),
+            telemetryFixture('tel-a2', 'A', '1000'),
+            telemetryFixture('tel-a3', 'A', '1000')
+        ];
+        store.kb = [];
+        const findMany = mockTelemetryFindMany.getMockImplementation();
+        mockTelemetryFindMany.mockImplementationOnce(async (args: any = {}) => {
+            const rows = await findMany!(args);
+            store.settings.set('ai_training_user_ids', JSON.stringify(['B']));
+            return rows;
+        });
+        const { LearningEngine } =
+            await import('../../src/services/telemetry/learning/LearningEngine');
+
+        const summary = await new LearningEngine().runFullCycle();
+
+        expect(summary.error).toBe('training_users_changed');
+        expect(summary.persistedToKb).toBe(0);
+        expect(store.kb).toHaveLength(0);
     });
 });

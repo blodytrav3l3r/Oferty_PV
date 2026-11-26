@@ -35,7 +35,11 @@ jest.mock('../../src/prismaClient', () => ({
                 const [query] = args;
                 if (query?.where?.id?.in) {
                     return Promise.resolve(
-                        query.where.id.in.map((id: string) => ({ id, userId: 'userA' }))
+                        query.where.id.in.map((id: string) => ({
+                            id,
+                            userId: 'userA',
+                            trainingEligible: true
+                        }))
                     );
                 }
                 return mockFindMany(...args);
@@ -853,7 +857,8 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             const ids: string[] = args?.where?.id?.in || [];
             return ids.map((id) => ({
                 id,
-                userId: id.startsWith('tel-a-') ? 'userA' : 'userB'
+                userId: id.startsWith('tel-a-') ? 'userA' : 'userB',
+                trainingEligible: true
             }));
         });
         try {

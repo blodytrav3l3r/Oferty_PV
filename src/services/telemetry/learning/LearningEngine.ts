@@ -12,12 +12,19 @@
  */
 
 import prisma from '../../../prismaClient';
+import { Prisma } from '../../../../generated/prisma-postgres/client';
 import { logger } from '../../../utils/logger';
 
 import { PatternDetector } from './PatternDetector';
 import { PreferenceEngine } from './PreferenceEngine';
 import { ML_CONSTANTS } from '../../../config/mlConstants';
 import type { KnowledgePattern } from './KnowledgeBase';
+import {
+    getTrainingUserIds,
+    hasSameTrainingUsers,
+    parseTrainingUserIds,
+    TRAINING_USERS_KEY
+} from '../../ml/trainingUsers';
 
 export interface LearningRunSummary {
     processed: number;
@@ -65,17 +72,19 @@ export class LearningEngine {
         this.lastRunAt = ts;
     }
 
-    private async fetchTelemetryRecords(since: string | null): Promise<{
+    private async fetchTelemetryRecords(
+        since: string | null,
+        trainingUserIds: readonly string[]
+    ): Promise<{
         records: Array<Record<string, unknown>>;
         transitionsByConfig: Map<string, Array<Record<string, unknown>>>;
     }> {
         // Invariant allowlisty: LearningEngine (jedyna ścieżka zasilania KB)
-        // czyta wyłącznie rekordy dozwolonych użytkowników.
-        const { getTrainingUserIds } = await import('../../ml/trainingUsers');
-        const trainingUserIds = await getTrainingUserIds();
+        // czyta wyłącznie kwalifikującą się telemetrię dozwolonych użytkowników.
         const where: Record<string, unknown> = {
             dn: { not: null },
-            userId: { in: trainingUserIds }
+            userId: { in: [...trainingUserIds] },
+            trainingEligible: true
         };
         if (since) {
             where.createdAt = { gt: since };
@@ -237,10 +246,14 @@ export class LearningEngine {
 
         try {
             const since = await this.loadLastRun();
+            const trainingUserIds = await getTrainingUserIds();
 
             await this.patterns.archiveStale(ML_CONSTANTS.LEARNING_ARCHIVE_DAYS);
 
-            const { records, transitionsByConfig } = await this.fetchTelemetryRecords(since);
+            const { records, transitionsByConfig } = await this.fetchTelemetryRecords(
+                since,
+                trainingUserIds
+            );
 
             processed = records.length;
             if (records.length === 0) {
@@ -256,7 +269,33 @@ export class LearningEngine {
 
             const allPatterns = this.detectAllPatterns(records, transitionsByConfig, corrections);
 
-            persisted = await this.patterns.persist(allPatterns);
+            const persistedInScope = await prisma.$transaction(async (tx) => {
+                const settings = await tx.$queryRaw<Array<{ value: string | null }>>(
+                    Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
+                );
+                const lockedTrainingUsers = settings[0]
+                    ? parseTrainingUserIds(settings[0].value)
+                    : [];
+                if (
+                    !lockedTrainingUsers ||
+                    !hasSameTrainingUsers(trainingUserIds, lockedTrainingUsers)
+                ) {
+                    return null;
+                }
+                return this.patterns.persist(allPatterns, tx);
+            });
+
+            if (persistedInScope === null) {
+                return {
+                    processed,
+                    patternsDetected: 0,
+                    persistedToKb: 0,
+                    durationMs: Date.now() - startedAt,
+                    error: 'training_users_changed'
+                };
+            }
+
+            persisted = persistedInScope;
 
             await this.saveLastRun(new Date().toISOString());
             this.initialized = true;

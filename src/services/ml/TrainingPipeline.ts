@@ -33,6 +33,7 @@ import { buildFeatureDistributions } from './featureDistributions';
 import {
     countEligibleNewFeatures,
     filterFeaturesByTrainingUsers,
+    hasSameTrainingUsers,
     getTrainingUserIds
 } from './trainingUsers';
 
@@ -110,15 +111,6 @@ export function computeDatasetFingerprint(
 ): string {
     const lines = records.map((r) => `${r.id}|${r.timestamp}|${r.label}|${featureVersion}`).sort();
     return crypto.createHash('sha256').update(lines.join('\n'), 'utf8').digest('hex');
-}
-
-function sameTrainingUsers(left: readonly string[], right: readonly string[]): boolean {
-    const sortedLeft = [...left].sort();
-    const sortedRight = [...right].sort();
-    return (
-        sortedLeft.length === sortedRight.length &&
-        sortedLeft.every((userId, index) => userId === sortedRight[index])
-    );
 }
 
 function applyForgetting(exampleAgeDays: number): number {
@@ -530,7 +522,7 @@ export class TrainingPipeline {
             // cechy (ringCount/connectionCount/bottomType) — przelicz je w miejscu.
             await featureExtractor.resyncFeatures(allowlist);
 
-            if (!sameTrainingUsers(allowlist, await getTrainingUserIds())) {
+            if (!hasSameTrainingUsers(allowlist, await getTrainingUserIds())) {
                 return finish(TRAINING_STATUS.SKIPPED, 'training_users_changed');
             }
 
@@ -677,7 +669,7 @@ export class TrainingPipeline {
             baselineAccuracy = Math.max(positiveRateValue, 1 - positiveRateValue);
             positiveRate = positiveRateValue;
 
-            if (!sameTrainingUsers(allowlist, await getTrainingUserIds())) {
+            if (!hasSameTrainingUsers(allowlist, await getTrainingUserIds())) {
                 return finish(TRAINING_STATUS.SKIPPED, 'training_users_changed');
             }
 

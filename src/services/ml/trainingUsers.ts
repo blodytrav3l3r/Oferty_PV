@@ -11,6 +11,23 @@ export interface TrainingUsersConfig {
     legacyMigrated: boolean;
 }
 
+export function parseTrainingUserIds(value: unknown): string[] | null {
+    if (typeof value !== 'string') return null;
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(value);
+    } catch {
+        return null;
+    }
+    if (
+        !Array.isArray(parsed) ||
+        parsed.some((id) => typeof id !== 'string' || id.trim().length === 0)
+    ) {
+        return null;
+    }
+    return [...new Set(parsed)];
+}
+
 /**
  * Allowlista użytkowników zasilających ML/KB.
  * Brak konfiguracji, wartość błędna i błąd bazy nie dopuszczają treningu.
@@ -30,22 +47,11 @@ export async function getTrainingUsersConfig(): Promise<TrainingUsersConfig> {
 
     const legacyMigrated = migratedRow?.value === '1';
     if (!row) return { status: 'UNCONFIGURED', userIds: [], legacyMigrated: false };
-    if (typeof row.value !== 'string') {
+    const userIds = parseTrainingUserIds(row.value);
+    if (!userIds) {
         return { status: 'INVALID', userIds: [], legacyMigrated: false };
     }
-    let parsed: unknown;
-    try {
-        parsed = JSON.parse(row.value);
-    } catch {
-        return { status: 'INVALID', userIds: [], legacyMigrated: false };
-    }
-    if (
-        !Array.isArray(parsed) ||
-        parsed.some((id) => typeof id !== 'string' || id.trim().length === 0)
-    ) {
-        return { status: 'INVALID', userIds: [], legacyMigrated: false };
-    }
-    return { status: 'CONFIGURED', userIds: [...new Set(parsed)], legacyMigrated };
+    return { status: 'CONFIGURED', userIds, legacyMigrated };
 }
 
 export async function getTrainingUserIds(): Promise<string[]> {
@@ -67,10 +73,19 @@ export function isTelemetryAllowed(
     return allow.includes(userId);
 }
 
+export function hasSameTrainingUsers(left: readonly string[], right: readonly string[]): boolean {
+    const sortedLeft = [...left].sort();
+    const sortedRight = [...right].sort();
+    return (
+        sortedLeft.length === sortedRight.length &&
+        sortedLeft.every((userId, index) => userId === sortedRight[index])
+    );
+}
+
 /**
- * Filtruje wiersze AiFeature (bez kolumny userId, tylko telemetryId) do
- * podzbioru pochodzącego od dozwolonych użytkowników. Jeden join per batch,
- * bez arbitralnego limitu na lookup (ids z batcha kandydującego).
+ * Filtruje wiersze AiFeature do rekordów kwalifikujących się do przyszłego
+ * treningu: istniejąca telemetria, owner z allowlisty i trainingEligible=true.
+ * Jeden join per batch, bez arbitralnego limitu na lookup.
  */
 export async function filterFeaturesByTrainingUsers<T extends { telemetryId?: string | null }>(
     features: T[],
@@ -82,17 +97,19 @@ export async function filterFeaturesByTrainingUsers<T extends { telemetryId?: st
     if (ids.length === 0) return [];
     const owners = await prisma.ai_telemetry_logs.findMany({
         where: { id: { in: ids } },
-        select: { id: true, userId: true }
+        select: { id: true, userId: true, trainingEligible: true }
     });
     const allowedIds = new Set(
-        owners.filter((o) => isTelemetryAllowed(o.userId, allowlist)).map((o) => o.id)
+        owners
+            .filter((o) => o.trainingEligible === true && isTelemetryAllowed(o.userId, allowlist))
+            .map((o) => o.id)
     );
     return features.filter((f) => f.telemetryId && allowedIds.has(f.telemetryId));
 }
 
 /**
  * SSoT definicji „kwalifikujących się" danych treningowych (bramka F1):
- * AiFeature.createdAt > since + filtr allowlisty. Ten sam predykat dla
+ * AiFeature.createdAt > since + owner allowlisty + trainingEligible. Ten sam predykat dla
  * shouldTrain() i TrainingPipeline.run() — gate i pipeline nigdy się nie rozjadą.
  * Semantyka labeli bez zmian: NO_FEEDBACK odpada dopiero w loadAndNormalizeFeatures().
  */
