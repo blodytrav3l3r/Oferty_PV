@@ -281,10 +281,29 @@ body.pv-cennik-host #partial-pricelist {
 body.pv-cennik-host #section-pricelist {
     flex: 1 1 auto;
     min-height: 0;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: scroll;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+body.pv-cennik-host #section-pricelist::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+body.pv-cennik-host #section-pricelist::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+body.pv-cennik-host #section-pricelist::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: var(--radius-2xs);
+}
+
+body.pv-cennik-host #section-pricelist::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 body.pv-cennik-host #section-pricelist .table-wrap,

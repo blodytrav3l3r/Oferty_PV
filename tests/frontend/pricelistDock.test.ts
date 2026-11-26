@@ -66,6 +66,15 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('.pv-vcard__meta > div:last-child');
     });
 
+    it('osadzony cennik zawsze pokazuje pionowy pasek przewijania listy', () => {
+        const sectionRules = [
+            ...css.matchAll(/body\.pv-cennik-host #section-pricelist \{([^}]*)\}/g)
+        ];
+        expect(sectionRules.some((rule) => /overflow-y:\s*scroll/.test(rule[1]))).toBe(true);
+        expect(css).toContain('body.pv-cennik-host #section-pricelist::-webkit-scrollbar');
+        expect(css).toContain('body.pv-cennik-host #section-pricelist::-webkit-scrollbar-thumb');
+    });
+
     it('akcje działają od razu po otwarciu — canManage czytany po fetchu, nie z otwarcia', () => {
         expect(panel).toContain('manageable = canManage[type] === true;');
     });
