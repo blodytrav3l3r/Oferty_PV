@@ -9,6 +9,7 @@ window.decDiagramWellQty = async function (idx) {
 
 window.svgDragStartIndex = -1;
 let svgConfigReordered = false;
+let _svgDropTargetIndex = -1;
 
 window.svgPointerDown = function (ev, idx) {
     if (ev.ctrlKey || ev.metaKey) return;
@@ -57,6 +58,7 @@ window.svgPointerDown = function (ev, idx) {
 
     startWellDragListeners();
     window.svgDragStartIndex = idx;
+    _svgDropTargetIndex = idx;
     svgConfigReordered = false;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
@@ -115,6 +117,7 @@ window.svgTouchStart = function (ev, idx) {
     }
     startWellDragListeners();
     window.svgDragStartIndex = idx;
+    _svgDropTargetIndex = idx;
     svgConfigReordered = false;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
@@ -148,6 +151,7 @@ function handleLiveSvgDrag(clientY) {
         let insertIdx = targetIdx;
         if (window.svgDragStartIndex < targetIdx) insertIdx -= 1;
         insertIdx = Math.max(0, Math.min(well.config.length, insertIdx));
+        _svgDropTargetIndex = insertIdx;
 
         if (window.svgDragStartIndex !== insertIdx) {
             const draggedItem = well.config.splice(window.svgDragStartIndex, 1)[0];
@@ -176,6 +180,7 @@ const _wellDragHandlers = {
         if (window.svgDragStartIndex >= 0) {
             const sourceIdx = window.svgDragStartIndex;
             window.svgDragStartIndex = -1;
+            _svgDropTargetIndex = -1;
             const configWasReordered = svgConfigReordered;
             svgConfigReordered = false;
 
@@ -260,6 +265,7 @@ function startWellDragListeners() {
 window.cleanupWellDragListeners = function cleanupWellDragListeners() {
     if (!_wellDragActive) return;
     _wellDragActive = false;
+    _svgDropTargetIndex = -1;
     document.removeEventListener('mousemove', _wellDragHandlers.mousemove);
     document.removeEventListener('touchmove', _wellDragHandlers.touchmove);
     document.removeEventListener('mouseup', _wellDragHandlers.mouseup);
