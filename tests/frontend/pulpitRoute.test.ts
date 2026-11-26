@@ -35,6 +35,35 @@ function loadSrcHelpers() {
     return context;
 }
 
+function loadIframeReadinessHelpers() {
+    const src = read('public/js/spa/router.js');
+    const start = src.indexOf('function inspectIframeDocument');
+    const end = src.indexOf('function waitForFunction', start);
+    const timeoutStart = src.lastIndexOf('const IFRAME_READY_TIMEOUT_MS', start);
+    if (timeoutStart === -1 || start === -1 || end <= start)
+        throw new Error('brak helperów gotowości iframe');
+
+    const context: any = {
+        URL,
+        URLSearchParams,
+        MODULES: { pulpit: { sections: [] } },
+        window: {
+            location: {
+                href: 'http://localhost:3001/app.html',
+                origin: 'http://localhost:3001'
+            },
+            setTimeout,
+            clearTimeout
+        }
+    };
+    vm.createContext(context);
+    vm.runInContext(
+        src.slice(timeoutStart, start) + src.slice(start, end) + '\n;({ waitForIframeReady });',
+        context
+    );
+    return context;
+}
+
 function loadRouterInitHarness(meProbe: jest.Mock) {
     const src = read('public/js/spa/router.js');
     const listeners: Record<string, () => unknown> = {};
@@ -102,6 +131,42 @@ describe('router: scalanie query modułu', () => {
         expect(ctx._buildModuleSrc('rury', {})).toBe('rury.html?v=2.0');
         expect(ctx._logicalSrcKey('pulpit', {})).toBe('index.html?host=pulpit');
         expect(ctx._logicalSrcKey('rury', { tab: 'a' })).toBe('rury.html?tab=a');
+    });
+});
+
+describe('router: oczekiwanie na zimny pulpit', () => {
+    afterEach(() => jest.useRealTimers());
+
+    it('nie zgłasza timeoutu, gdy pulpit osiąga gotowość po ponad 4,5 s', async () => {
+        jest.useFakeTimers();
+        let isLoaded = false;
+        const frameWindow = {
+            location: { href: 'http://localhost:3001/index.html?host=pulpit&v=2.0' }
+        };
+        const frameDocument = {
+            readyState: 'complete',
+            body: {},
+            documentElement: {
+                classList: { contains: (name: string) => name === 'is-loaded' && isLoaded }
+            }
+        };
+        const iframe = {
+            id: 'spa-iframe-pulpit',
+            src: 'index.html?host=pulpit&v=2.0',
+            contentWindow: frameWindow,
+            contentDocument: frameDocument,
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn()
+        };
+        const { waitForIframeReady } = loadIframeReadinessHelpers();
+        const ready = waitForIframeReady(iframe);
+
+        setTimeout(() => {
+            isLoaded = true;
+        }, 5000);
+        await jest.advanceTimersByTimeAsync(5000);
+
+        await expect(ready).resolves.toEqual({ ok: true, reason: '' });
     });
 });
 

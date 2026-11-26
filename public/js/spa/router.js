@@ -19,6 +19,7 @@
     /** @type {Record<string, HTMLIFrameElement>} */
     const iframes = {};
     let transitionToken = 0;
+    const IFRAME_READY_TIMEOUT_MS = 12000;
     let transitionTimer = null;
 
     // ── Ochrona niezapisanych zmian przy zmianie modułu (popup aplikacji) ──
@@ -595,7 +596,7 @@
         });
     }
 
-    function waitForIframeReady(iframe, timeout = 4500) {
+    function waitForIframeReady(iframe, timeout = IFRAME_READY_TIMEOUT_MS) {
         return waitForIframeDocument(iframe, iframe.src, timeout, false);
     }
 
@@ -619,7 +620,11 @@
         });
     }
 
-    function waitForNextIframeLoad(iframe, timeout = 4500, expectedSrc = iframe.src) {
+    function waitForNextIframeLoad(
+        iframe,
+        timeout = IFRAME_READY_TIMEOUT_MS,
+        expectedSrc = iframe.src
+    ) {
         return waitForIframeDocument(iframe, expectedSrc, timeout, true);
     }
 
@@ -1177,7 +1182,7 @@
         if (needsReload || isRestoringIframe || isRetryingIframe) {
             const newSrc = _buildModuleSrc(module, params) + '&_ts=' + Date.now();
             const expectedSrc = needsReload ? newSrc : iframe.src;
-            readyPromise = waitForNextIframeLoad(iframe, 4500, expectedSrc);
+            readyPromise = waitForNextIframeLoad(iframe, IFRAME_READY_TIMEOUT_MS, expectedSrc);
             if (needsReload) iframe.src = newSrc;
         } else {
             readyPromise = waitForIframeReady(iframe);
