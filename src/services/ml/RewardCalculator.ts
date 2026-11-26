@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import prisma from '../../prismaClient';
+import type { Prisma } from '../../../generated/prisma-postgres/client';
 import { logger } from '../../utils/logger';
 
 export interface RewardEvent {
@@ -13,6 +14,8 @@ export interface RewardEvent {
     configSnapshot?: Record<string, unknown>;
 }
 
+export type RewardActionTransactionWork = (transaction: Prisma.TransactionClient) => Promise<void>;
+
 export class RewardCalculator {
     /**
      * Zapisuje nagrodę atomowo. Dedup per (wellId, action) wymusza unikalny
@@ -22,7 +25,10 @@ export class RewardCalculator {
      * (P2002 w catch zostaje jako backstop wyscigu).
      * @returns {Promise<{ applied: boolean }>} applied=false = duplikat
      */
-    async processAction(event: RewardEvent): Promise<{ applied: boolean }> {
+    async processAction(
+        event: RewardEvent,
+        onApplied?: RewardActionTransactionWork
+    ): Promise<{ applied: boolean }> {
         let reward = 0;
 
         switch (event.action) {
@@ -95,6 +101,7 @@ export class RewardCalculator {
                     where: { id: event.userId },
                     data: { totalReward: { increment: reward } }
                 });
+                if (onApplied) await onApplied(tx);
             });
 
             logger.info(

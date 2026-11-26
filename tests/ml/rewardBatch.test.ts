@@ -18,6 +18,16 @@ jest.mock('../../src/middleware/rateLimiters', () => ({
 }));
 
 const mockProcessAction = jest.fn<any>().mockResolvedValue({ applied: true });
+const mockRewardTelemetryUpdate = jest.fn<any>().mockResolvedValue({ id: 'updated' });
+const mockRewardTransaction = {
+    ai_telemetry_logs: { update: (...args: any[]) => mockRewardTelemetryUpdate(...args) },
+    aiFeature: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) }
+};
+
+async function applyRewardTransaction(_event: unknown, onApplied?: (tx: unknown) => Promise<void>) {
+    if (onApplied) await onApplied(mockRewardTransaction);
+    return { applied: true };
+}
 
 jest.mock('../../src/services/ml/RewardCalculator', () => ({
     rewardCalculator: {
@@ -75,7 +85,7 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
         jest.clearAllMocks();
         mockLogsFindMany.mockResolvedValue([]);
         mockLogsFindFirst.mockResolvedValue(null);
-        mockProcessAction.mockResolvedValue({ applied: true });
+        mockProcessAction.mockImplementation(applyRewardTransaction);
         const { default: router } = await import('../../src/routes/telemetryAiMl');
         app = express();
         app.use(express.json({ limit: '50mb' }));
@@ -192,10 +202,10 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
         // Zapis tylko dla nie-odrzuconych: FORBIDDEN gate PRZED processAction.
         expect(mockProcessAction).toHaveBeenCalledTimes(3);
         // MODIFY etykietuje sugestię z prefetchu (fallback, brak parentConfigId).
-        const prismaMock = (await import('../../src/prismaClient')).default as any;
-        expect(prismaMock.ai_telemetry_logs.update).toHaveBeenCalledWith(
-            expect.objectContaining({ where: { id: 'sug-3' } })
-        );
-        expect(mockUpdateLabel).toHaveBeenCalledWith('sug-3', 'MODIFIED');
+        expect(mockRewardTelemetryUpdate).toHaveBeenCalledWith({
+            where: { id: 'sug-3' },
+            data: { wasModified: true }
+        });
+        expect(mockUpdateLabel).toHaveBeenCalledWith('sug-3', 'MODIFIED', mockRewardTransaction);
     });
 });

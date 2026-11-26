@@ -2,7 +2,6 @@ import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import { setWellScore, clearPredictionCache } from '../../src/services/ml/predictionCache';
-import prisma from '../../src/prismaClient';
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -79,6 +78,17 @@ jest.mock('../../src/services/ml/RewardCalculator', () => ({
 }));
 
 const mockUpdateLabelByTelemetry = jest.fn<any>().mockResolvedValue(undefined);
+const mockRewardTelemetryUpdate = jest.fn<any>().mockResolvedValue({ id: 'updated' });
+const mockRewardFeatureUpdate = jest.fn<any>().mockResolvedValue({ count: 1 });
+const mockRewardTransaction = {
+    ai_telemetry_logs: { update: (...args: any[]) => mockRewardTelemetryUpdate(...args) },
+    aiFeature: { updateMany: (...args: any[]) => mockRewardFeatureUpdate(...args) }
+};
+
+async function applyRewardTransaction(_event: unknown, onApplied?: (tx: unknown) => Promise<void>) {
+    if (onApplied) await onApplied(mockRewardTransaction);
+    return { applied: true };
+}
 
 jest.mock('../../src/services/ml/FeatureExtractor', () => ({
     featureExtractor: {
@@ -417,6 +427,7 @@ describe('POST /api/telemetry/ai/reward', () => {
 
     beforeEach(async () => {
         jest.clearAllMocks();
+        mockProcessAction.mockImplementation(applyRewardTransaction);
         const { default: router } = await import('../../src/routes/telemetryAiMl');
         app = express();
         app.use(express.json());
@@ -494,7 +505,6 @@ describe('POST /api/telemetry/ai/reward', () => {
 
     it('ACCEPT z wasAiRanked zapisuje nagrode i rejestruje predykcje (1, serwerowy score)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
-        mockProcessAction.mockResolvedValue({ applied: true });
         clearPredictionCache();
         setWellScore('well-1', 0.9);
 
@@ -513,7 +523,8 @@ describe('POST /api/telemetry/ai/reward', () => {
                 wellId: 'well-1',
                 scoreBefore: 0.9,
                 wasAiRanked: true
-            })
+            }),
+            expect.any(Function)
         );
         expect(mockRecordPredictionResult).toHaveBeenCalledWith(1, 0.9);
     });
@@ -553,7 +564,6 @@ describe('POST /api/telemetry/ai/reward', () => {
         mockTelemetryLogsFindFirst
             .mockResolvedValueOnce({ id: 'log-1' }) // telemetryWell
             .mockResolvedValueOnce({ id: 'latest-log' }); // najnowszy rekord studni
-        mockProcessAction.mockResolvedValue({ applied: true });
         clearPredictionCache();
         setWellScore('well-1', 0.8);
 
@@ -566,7 +576,15 @@ describe('POST /api/telemetry/ai/reward', () => {
         });
 
         expect(res.status).toBe(200);
-        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('latest-log', 'MODIFIED');
+        expect(mockRewardTelemetryUpdate).toHaveBeenCalledWith({
+            where: { id: 'latest-log' },
+            data: { wasModified: true }
+        });
+        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith(
+            'latest-log',
+            'MODIFIED',
+            mockRewardTransaction
+        );
         expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.8);
     });
 
@@ -579,7 +597,6 @@ describe('POST /api/telemetry/ai/reward', () => {
             }
             return { id: 'log-1' };
         });
-        mockProcessAction.mockResolvedValue({ applied: true });
         clearPredictionCache();
         setWellScore('well-1', 0.95);
 
@@ -594,7 +611,15 @@ describe('POST /api/telemetry/ai/reward', () => {
             });
 
         expect(res.status).toBe(200);
-        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('latest-log', 'REJECTED');
+        expect(mockRewardTelemetryUpdate).toHaveBeenCalledWith({
+            where: { id: 'latest-log' },
+            data: { wasRejected: true }
+        });
+        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith(
+            'latest-log',
+            'REJECTED',
+            mockRewardTransaction
+        );
         expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.95);
     });
 
@@ -689,7 +714,7 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
 
     beforeEach(async () => {
         jest.clearAllMocks();
-        mockProcessAction.mockResolvedValue({ applied: true });
+        mockProcessAction.mockImplementation(applyRewardTransaction);
         const { default: router } = await import('../../src/routes/telemetryAiMl');
         app = express();
         app.use(express.json());
@@ -708,8 +733,6 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
         });
     }
 
-    const telemetryUpdate = () => (prisma.ai_telemetry_logs as any).update as jest.Mock;
-
     it('obcy REJECT na cudza sugestie → 403 FORBIDDEN, zero zapisow', async () => {
         mockTarget({ id: 'tel-b', userId: 'userB' });
 
@@ -721,7 +744,7 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
         expect(res.status).toBe(403);
         expect(res.body).toEqual({ error: 'FORBIDDEN' });
         expect(mockProcessAction).not.toHaveBeenCalled();
-        expect(telemetryUpdate()).not.toHaveBeenCalled();
+        expect(mockRewardTelemetryUpdate).not.toHaveBeenCalled();
         expect(mockUpdateLabelByTelemetry).not.toHaveBeenCalled();
     });
 
@@ -735,7 +758,7 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
             .send({ action: 'REJECT', wellId: 'well-mixed', parentConfigId: 'tel-b' });
 
         expect(res.status).toBe(403);
-        expect(telemetryUpdate()).not.toHaveBeenCalled();
+        expect(mockRewardTelemetryUpdate).not.toHaveBeenCalled();
         expect(mockUpdateLabelByTelemetry).not.toHaveBeenCalled();
     });
 
@@ -750,10 +773,15 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ status: 'ok' });
         expect(mockProcessAction).toHaveBeenCalled();
-        expect(telemetryUpdate()).toHaveBeenCalledWith(
-            expect.objectContaining({ where: { id: 'tel-a' } })
+        expect(mockRewardTelemetryUpdate).toHaveBeenCalledWith({
+            where: { id: 'tel-a' },
+            data: { wasRejected: true }
+        });
+        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith(
+            'tel-a',
+            'REJECTED',
+            mockRewardTransaction
         );
-        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('tel-a', 'REJECTED');
     });
 
     it('obcy MODIFY cudzej sugestii → 403 FORBIDDEN, zero zapisow (P1.1)', async () => {

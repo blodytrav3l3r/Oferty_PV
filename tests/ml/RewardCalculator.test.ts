@@ -14,6 +14,10 @@ const mockCreate = jest.fn<any>();
 const mockFindUnique = jest.fn<any>();
 const mockUpdateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
 const mockTransaction = jest.fn<any>();
+const transactionClient = {
+    aiRewardLog: { create: (...args: any[]) => mockCreate(...args) },
+    users: { updateMany: (...args: any[]) => mockUpdateMany(...args) }
+};
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -34,7 +38,7 @@ beforeEach(() => {
     mockCreate.mockResolvedValue({ id: 'reward' });
     mockFindUnique.mockResolvedValue(null);
     mockTransaction.mockImplementation((fn: (tx: unknown) => Promise<void>) =>
-        fn({ aiRewardLog: { create: mockCreate }, users: { updateMany: mockUpdateMany } })
+        fn(transactionClient)
     );
 });
 
@@ -150,5 +154,33 @@ describe('RewardCalculator.processAction — pre-check dedup (koniec prisma:erro
         expect(result).toEqual({ applied: true });
         expect(mockFindUnique).toHaveBeenCalledTimes(1);
         expect(mockTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('wykonuje dodatkową pracę na tym samym kliencie transakcji', async () => {
+        const onApplied = jest.fn(async (tx: unknown) => {
+            expect(tx).toBe(transactionClient);
+        });
+
+        const result = await rewardCalculator.processAction(
+            { userId: 'u1', wellId: 'w1', action: 'REJECT' },
+            onApplied
+        );
+
+        expect(result).toEqual({ applied: true });
+        expect(onApplied).toHaveBeenCalledWith(transactionClient);
+    });
+
+    it('propaguje błąd dodatkowej pracy, aby baza wycofała reward', async () => {
+        const onApplied = jest.fn(async () => {
+            throw new Error('feedback write failed');
+        });
+
+        await expect(
+            rewardCalculator.processAction(
+                { userId: 'u1', wellId: 'w1', action: 'REJECT' },
+                onApplied
+            )
+        ).rejects.toThrow('feedback write failed');
+        expect(onApplied).toHaveBeenCalledTimes(1);
     });
 });

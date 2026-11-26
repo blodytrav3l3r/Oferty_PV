@@ -377,35 +377,28 @@ async function applyRewardItem(
         }
     }
 
-    // P2 dedup: unikalny indeks uq_reward_well_action + P2002 (atomowo).
-    const applied = await rewardCalculator.processAction({
-        userId: user?.id || 'unknown',
-        action: data.action,
-        wellId: data.wellId,
-        dn: data.dn,
-        scoreBefore: data.scoreBefore,
-        scoreAfter: data.scoreAfter,
-        wasAiRanked: data.wasAiRanked,
-        configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
-    });
+    const targetId = target?.id ?? null;
+    const flags = data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
+    const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
+    const applied = await rewardCalculator.processAction(
+        {
+            userId: user?.id || 'unknown',
+            action: data.action,
+            wellId: data.wellId,
+            dn: data.dn,
+            scoreBefore: data.scoreBefore,
+            scoreAfter: data.scoreAfter,
+            wasAiRanked: data.wasAiRanked,
+            configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
+        },
+        async (tx) => {
+            if (!targetId || (data.action !== 'MODIFY' && data.action !== 'REJECT')) return;
+            await tx.ai_telemetry_logs.update({ where: { id: targetId }, data: flags });
+            await featureExtractor.updateLabelByTelemetry(targetId, label, tx);
+        }
+    );
     if (!applied.applied) {
         return { status: 'duplicate' };
-    }
-
-    if (data.action === 'MODIFY' || data.action === 'REJECT') {
-        const flags = data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
-        const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
-
-        // REJECT: target już wyznaczony wyżej (gate). MODIFY: leniwie albo z prefetchu.
-        if (target === undefined) target = await resolveRewardTarget(data);
-        const targetId = target?.id ?? null;
-        if (targetId) {
-            await prisma.ai_telemetry_logs.update({
-                where: { id: targetId },
-                data: flags
-            });
-            await featureExtractor.updateLabelByTelemetry(targetId, label);
-        }
     }
 
     if (data.wasAiRanked && data.scoreBefore !== undefined) {

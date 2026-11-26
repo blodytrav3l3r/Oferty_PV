@@ -16,11 +16,15 @@ const events: EventRow[] = [];
 
 function matchWhere(row: LogRow, where: any): boolean {
     if (!where) return true;
+    if (where.OR && !(where.OR as any[]).some((condition) => matchWhere(row, condition)))
+        return false;
     if (where.id !== undefined && row.id !== where.id) return false;
     if (where.wellId !== undefined && row.wellId !== where.wellId) return false;
     if (where.solverSource !== undefined && row.solverSource !== where.solverSource) return false;
     const notAcc = where.wasAccepted?.not;
     if (notAcc !== undefined && row.wasAccepted === notAcc) return false;
+    const notRejected = where.wasRejected?.not;
+    if (notRejected !== undefined && row.wasRejected === notRejected) return false;
     return true;
 }
 
@@ -99,6 +103,19 @@ jest.mock('../src/prismaClient', () => ({
             if (typeof fn === 'function') {
                 const tx = {
                     ai_telemetry_logs: {
+                        findFirst: jest.fn(async ({ where }: any) => {
+                            const row = logs.find((entry) => matchWhere(entry, where));
+                            return row ? { id: row.id } : null;
+                        }),
+                        updateMany: jest.fn(async ({ where, data }: any) => {
+                            let count = 0;
+                            for (const row of logs) {
+                                if (!matchWhere(row, where)) continue;
+                                applyData(row, data);
+                                count++;
+                            }
+                            return { count };
+                        }),
                         create: jest.fn(async ({ data }: any) => {
                             logs.push({
                                 usageCount: 1,
@@ -112,6 +129,13 @@ jest.mock('../src/prismaClient', () => ({
                     ai_config_history: { create: jest.fn(async ({ data }: any) => data) },
                     ai_transition_snapshots: {
                         createMany: jest.fn(async () => ({ count: 0 }))
+                    },
+                    aiFeature: { updateMany: jest.fn(async () => ({ count: 1 })) },
+                    ai_telemetry_events: {
+                        create: jest.fn(async ({ data }: any) => {
+                            events.push({ ...data });
+                            return data;
+                        })
                     }
                 };
                 return fn(tx);
@@ -178,6 +202,23 @@ describe('D-FIX-3 acceptance idempotentne', () => {
         await telemetryService.recordAcceptance('t1', false, 'w1');
         await telemetryService.recordAcceptance('t1', true, 'w1');
         expect(logs.find((r) => r.id === 't1')!.usageCount).toBe(3);
+    });
+
+    test('pierwsze odrzucenie zapisuje wasRejected mimo domyślnego wasAccepted=false', async () => {
+        logs.push({
+            id: 't1',
+            wellId: 'w1',
+            wasAccepted: false,
+            wasRejected: false,
+            usageCount: 0,
+            createdAt: '2026-01-01'
+        });
+
+        await telemetryService.recordAcceptance('t1', false, 'w1');
+
+        expect(logs.find((r) => r.id === 't1')).toEqual(
+            expect.objectContaining({ wasAccepted: false, wasRejected: true, usageCount: 1 })
+        );
     });
 
     test('równoległy double-POST acceptance-full: 1× MANUAL, 1× increment', async () => {

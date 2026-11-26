@@ -34,6 +34,8 @@ import { RecommendationEngine } from '../src/services/telemetry/learning/Recomme
 import { PreferenceEngine } from '../src/services/telemetry/learning/PreferenceEngine';
 import { LearningEngine } from '../src/services/telemetry/learning/LearningEngine';
 import { cronService } from '../src/utils/cronService';
+import { RewardCalculator } from '../src/services/ml/RewardCalculator';
+import { featureExtractor } from '../src/services/ml/FeatureExtractor';
 
 /* ===== Pomocnicy ===== */
 
@@ -135,6 +137,193 @@ describe('Telemetry wysokopoziomowe', () => {
             transitions: undefined
         });
         expect(r.success).toBe(true);
+    });
+});
+
+describe('Reward feedback transaction — PostgreSQL', () => {
+    it('wycofuje reward, flagę telemetrii i etykietę feature po błędzie feedbacku', async () => {
+        const suffix = crypto.randomUUID();
+        const userId = `reward-atomic-user-${suffix}`;
+        const telemetryId = `reward-atomic-telemetry-${suffix}`;
+        const wellId = `reward-atomic-well-${suffix}`;
+
+        await prisma.users.create({
+            data: { id: userId, username: userId, password: 'test-hash', role: 'user' }
+        });
+        await prisma.ai_telemetry_logs.create({ data: { id: telemetryId, wellId } });
+        await prisma.aiFeature.create({
+            data: {
+                id: `reward-atomic-feature-${suffix}`,
+                telemetryId,
+                dn: 1000,
+                heightMm: 1000,
+                warehouse: 'KLB',
+                wellType: 'standard',
+                bottomType: 'dennica',
+                topType: 'wlaz',
+                season: 'winter',
+                label: 'NO_FEEDBACK',
+                createdAt: new Date().toISOString()
+            }
+        });
+
+        try {
+            await expect(
+                new RewardCalculator().processAction(
+                    { userId, wellId, action: 'REJECT' },
+                    async (tx) => {
+                        await tx.ai_telemetry_logs.update({
+                            where: { id: telemetryId },
+                            data: { wasRejected: true }
+                        });
+                        await featureExtractor.updateLabelByTelemetry(telemetryId, 'REJECTED', tx);
+                        // Stały, celowo nieistniejący target wymusza realny błąd PostgreSQL
+                        // po wykonaniu zapisów feedbacku i dowodzi rollbacku DB.
+                        await tx.$executeRawUnsafe(
+                            'INSERT INTO sok_phase3_missing_table (id) VALUES (1)'
+                        );
+                    }
+                )
+            ).rejects.toThrow();
+
+            expect(
+                await prisma.aiRewardLog.findUnique({
+                    where: { wellId_action: { wellId, action: 'REJECT' } }
+                })
+            ).toBeNull();
+            expect((await prisma.users.findUnique({ where: { id: userId } }))?.totalReward).toBe(0);
+            expect(
+                (await prisma.ai_telemetry_logs.findUnique({ where: { id: telemetryId } }))
+                    ?.wasRejected
+            ).toBe(false);
+            expect((await prisma.aiFeature.findFirst({ where: { telemetryId } }))?.label).toBe(
+                'NO_FEEDBACK'
+            );
+        } finally {
+            await prisma.aiRewardLog.deleteMany({ where: { wellId } });
+            await prisma.aiFeature.deleteMany({ where: { telemetryId } });
+            await prisma.ai_telemetry_logs.deleteMany({ where: { id: telemetryId } });
+            await prisma.users.deleteMany({ where: { id: userId } });
+        }
+    });
+
+    it('równoległy identyczny REJECT zapisuje jeden reward i jeden feedback', async () => {
+        const suffix = crypto.randomUUID();
+        const userId = `reward-race-user-${suffix}`;
+        const telemetryId = `reward-race-telemetry-${suffix}`;
+        const featureId = `reward-race-feature-${suffix}`;
+        const wellId = `reward-race-well-${suffix}`;
+        await prisma.users.create({
+            data: { id: userId, username: userId, password: 'test-hash', role: 'user' }
+        });
+        await prisma.ai_telemetry_logs.create({ data: { id: telemetryId, wellId } });
+        await prisma.aiFeature.create({
+            data: {
+                id: featureId,
+                telemetryId,
+                dn: 1000,
+                heightMm: 1000,
+                warehouse: 'KLB',
+                wellType: 'standard',
+                bottomType: 'dennica',
+                topType: 'wlaz',
+                season: 'winter',
+                label: 'NO_FEEDBACK',
+                createdAt: new Date().toISOString()
+            }
+        });
+
+        try {
+            const calculator = new RewardCalculator();
+            let feedbackWrites = 0;
+            const applyReject = () =>
+                calculator.processAction({ userId, wellId, action: 'REJECT' }, async (tx) => {
+                    feedbackWrites++;
+                    await tx.ai_telemetry_logs.update({
+                        where: { id: telemetryId },
+                        data: { wasRejected: true }
+                    });
+                    await featureExtractor.updateLabelByTelemetry(telemetryId, 'REJECTED', tx);
+                });
+
+            const results = await Promise.all([applyReject(), applyReject()]);
+            const retry = await applyReject();
+
+            expect(results.filter((result) => result.applied)).toHaveLength(1);
+            expect(results.filter((result) => !result.applied)).toHaveLength(1);
+            expect(retry).toEqual({ applied: false });
+            expect(feedbackWrites).toBe(1);
+            expect(await prisma.aiRewardLog.count({ where: { wellId, action: 'REJECT' } })).toBe(1);
+            expect((await prisma.users.findUnique({ where: { id: userId } }))?.totalReward).toBe(
+                -1
+            );
+            expect(
+                (await prisma.ai_telemetry_logs.findUnique({ where: { id: telemetryId } }))
+                    ?.wasRejected
+            ).toBe(true);
+            expect((await prisma.aiFeature.findUnique({ where: { id: featureId } }))?.label).toBe(
+                'REJECTED'
+            );
+        } finally {
+            await prisma.aiRewardLog.deleteMany({ where: { wellId } });
+            await prisma.aiFeature.deleteMany({ where: { id: featureId } });
+            await prisma.ai_telemetry_logs.deleteMany({ where: { id: telemetryId } });
+            await prisma.users.deleteMany({ where: { id: userId } });
+        }
+    });
+
+    it('zapisuje pojedynczą decyzję acceptance razem z eventem', async () => {
+        const suffix = crypto.randomUUID();
+        const telemetryId = `acceptance-atomic-telemetry-${suffix}`;
+        const wellId = `acceptance-atomic-well-${suffix}`;
+        const userId = `acceptance-atomic-user-${suffix}`;
+        const featureId = `acceptance-atomic-feature-${suffix}`;
+        const event = {
+            eventType: 'reject' as const,
+            telemetryId,
+            wellId,
+            changeReason: 'offer_rejected'
+        };
+
+        await prisma.ai_telemetry_logs.create({ data: { id: telemetryId, wellId } });
+        await prisma.aiFeature.create({
+            data: {
+                id: featureId,
+                telemetryId,
+                dn: 1000,
+                heightMm: 1000,
+                warehouse: 'KLB',
+                wellType: 'standard',
+                bottomType: 'dennica',
+                topType: 'wlaz',
+                season: 'winter',
+                label: 'NO_FEEDBACK',
+                createdAt: new Date().toISOString()
+            }
+        });
+
+        try {
+            await telemetryService.recordAcceptance(telemetryId, false, wellId, { event, userId });
+
+            expect(
+                await prisma.ai_telemetry_logs.findUnique({ where: { id: telemetryId } })
+            ).toEqual(expect.objectContaining({ wasAccepted: false, wasRejected: true }));
+            expect(await prisma.ai_telemetry_events.findMany({ where: { telemetryId } })).toEqual([
+                expect.objectContaining({
+                    eventType: 'reject',
+                    userId,
+                    wellId,
+                    changeReason: 'offer_rejected'
+                })
+            ]);
+            expect((await prisma.aiFeature.findUnique({ where: { id: featureId } }))?.label).toBe(
+                'REJECTED'
+            );
+        } finally {
+            await prisma.ai_telemetry_events.deleteMany({ where: { telemetryId } });
+            await prisma.aiFeature.deleteMany({ where: { id: featureId } });
+            await prisma.ai_telemetry_logs.deleteMany({ where: { id: telemetryId } });
+        }
     });
 });
 

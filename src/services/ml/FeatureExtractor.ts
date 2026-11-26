@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import prisma from '../../prismaClient';
+import type { Prisma } from '../../../generated/prisma-postgres/client';
 import { logger } from '../../utils/logger';
 import { parseFeatureSnapshot } from './parseFeatureSnapshot';
 import { getTrainingUserIds, isTelemetryAllowed } from './trainingUsers';
@@ -378,11 +379,13 @@ export class FeatureExtractor {
      */
     async updateLabelByTelemetry(
         telemetryId: string | null | undefined,
-        label: FeatureLabel
+        label: FeatureLabel,
+        transaction?: Prisma.TransactionClient
     ): Promise<void> {
         if (!telemetryId) return;
         const reward = labelToReward(label);
-        const result = await prisma.aiFeature.updateMany({
+        const client = transaction ?? prisma;
+        const result = await client.aiFeature.updateMany({
             where: { telemetryId },
             data: { label, reward }
         });

@@ -35,6 +35,24 @@ class TelemetryService {
     // tamten jest niereentrantny, a recordManualIfAbsent woła recordConfig).
     private readonly manualLock = createModuleLock();
 
+    private _buildEventRow(event: TelemetryEventInput, userId: string | undefined, now: string) {
+        return {
+            id: crypto.randomUUID(),
+            telemetryId: event.telemetryId || null,
+            eventType: event.eventType,
+            userId: userId || null,
+            wellId: event.wellId || null,
+            componentId: event.componentId || null,
+            previousValue: event.previousValue || null,
+            newValue: event.newValue || null,
+            changeReason: event.changeReason || null,
+            msSinceConfig: event.msSinceConfig ?? null,
+            orderInSession: event.orderInSession ?? null,
+            sequenceNo: event.sequenceNo ?? 0,
+            createdAt: now
+        };
+    }
+
     /**
      * Czysty konstruktor wiersza ai_telemetry_logs (bez I/O).
      * Jedna definicja kolumn dla recordConfig i recordConfigs.
@@ -511,28 +529,14 @@ class TelemetryService {
         event: TelemetryEventInput,
         userId?: string
     ): Promise<{ success: boolean; eventId: string }> {
-        const eventId = crypto.randomUUID();
         const now = new Date().toISOString();
+        const eventRow = this._buildEventRow(event, userId, now);
 
         try {
             await prisma.ai_telemetry_events.create({
-                data: {
-                    id: eventId,
-                    telemetryId: event.telemetryId || null,
-                    eventType: event.eventType,
-                    userId: userId || null,
-                    wellId: event.wellId || null,
-                    componentId: event.componentId || null,
-                    previousValue: event.previousValue || null,
-                    newValue: event.newValue || null,
-                    changeReason: event.changeReason || null,
-                    msSinceConfig: event.msSinceConfig ?? null,
-                    orderInSession: event.orderInSession ?? null,
-                    sequenceNo: event.sequenceNo ?? 0,
-                    createdAt: now
-                }
+                data: eventRow
             });
-            return { success: true, eventId };
+            return { success: true, eventId: eventRow.id };
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
             logger.error('Telemetry', `Błąd zapisu eventu: ${message}`);
@@ -584,7 +588,12 @@ class TelemetryService {
      * etykiety OFFER_SAVE cicho ginęły. Gdy `telemetryId` nie jest UUID rekordu,
      * oznaczamy najnowszy rekord danej studni (wellId).
      */
-    async recordAcceptance(telemetryId: string, accepted: boolean, wellId?: string): Promise<void> {
+    async recordAcceptance(
+        telemetryId: string,
+        accepted: boolean,
+        wellId?: string,
+        eventContext?: { event: TelemetryEventInput; userId?: string }
+    ): Promise<void> {
         try {
             const now = new Date().toISOString();
             const updates = {
@@ -595,70 +604,48 @@ class TelemetryService {
                 usageCount: { increment: 1 },
                 lastUsedAt: now
             };
-
-            // updateMany zamiast update: brak rekordu (np. gdy /config nie dotarł
-            // wcześniej) nie może rzucić P2025 — telemetria jest pasywna,
-            // brak rekordu nie jest błędem.
-            // D-FIX-3: warunek `wasAccepted: { not: accepted }` czyni acceptance
-            // idempotentnym na poziomie DB (działa między procesami/restartami):
-            // powtórzony identyczny acceptance nie inkrementuje usageCount ani
-            // nie odtwarza efektów; legalna zmiana stanu (accept→reject i
-            // odwrotnie) nadal przechodzi, bo predykat dotyczy tylko repetycji.
-            const result = await prisma.ai_telemetry_logs.updateMany({
-                where: { id: telemetryId, wasAccepted: { not: accepted } },
-                data: updates
-            });
-
-            // Fallback: telemetryId to ID studni (wellId) — oznacz najnowszy
-            // rekord konfiguracji tej studni. D-FIX-3: fallback TYLKO gdy
-            // wiersz o danym id nie istnieje; przy repetycji (wiersz istnieje,
-            // stan już zgodny) nie wolno mutować innego (nowszego) wiersza.
-            let resolvedId: string | null = result.count > 0 ? telemetryId : null;
-            if (!resolvedId) {
-                const exists = await prisma.ai_telemetry_logs.findFirst({
+            const { featureExtractor } = await import('../ml/FeatureExtractor');
+            await prisma.$transaction(async (tx) => {
+                // Exact ID wins. Legacy callers may send wellId instead; only
+                // then resolve the newest row, within the same transaction.
+                const exact = await tx.ai_telemetry_logs.findFirst({
                     where: { id: telemetryId },
                     select: { id: true }
                 });
-                if (exists) {
-                    // Repetycja: stan już zgodny, inkrement pominięty wyżej;
-                    // etykieta wskazuje ten sam wiersz (sync idempotentny).
-                    resolvedId = exists.id;
-                } else if (wellId) {
-                    const latest = await prisma.ai_telemetry_logs.findFirst({
-                        where: { wellId },
-                        orderBy: { createdAt: 'desc' },
-                        select: { id: true }
+                const target =
+                    exact ??
+                    (wellId
+                        ? await tx.ai_telemetry_logs.findFirst({
+                              where: { wellId },
+                              orderBy: { createdAt: 'desc' },
+                              select: { id: true }
+                          })
+                        : null);
+                if (target) {
+                    // Compare both flags. A first reject starts from false/false,
+                    // so checking wasAccepted alone would silently drop it.
+                    await tx.ai_telemetry_logs.updateMany({
+                        where: {
+                            id: target.id,
+                            OR: [
+                                { wasAccepted: { not: accepted } },
+                                { wasRejected: { not: !accepted } }
+                            ]
+                        },
+                        data: updates
                     });
-                    if (latest) {
-                        await prisma.ai_telemetry_logs.updateMany({
-                            where: { id: latest.id, wasAccepted: { not: accepted } },
-                            data: updates
-                        });
-                        resolvedId = latest.id;
-                    }
-                }
-            }
-
-            // Feedback nadszedł PO ekstrakcji cech — zsynchronizuj etykietę w
-            // aiFeature, żeby klasa negatywna (REJECTED) trafiła do treningu.
-            // updateLabelByTelemetry musi dostać UUID rekordu telemetrii (nie wellId),
-            // inaczej updateMany po telemetryId nie znajdzie wiersza aiFeature.
-            if (resolvedId) {
-                try {
-                    const { featureExtractor } = await import('../ml/FeatureExtractor');
                     await featureExtractor.updateLabelByTelemetry(
-                        resolvedId,
-                        accepted ? 'ACCEPTED' : 'REJECTED'
-                    );
-                } catch (labelErr) {
-                    // Sync etykiety to krok wtórny — acceptance już zapisany.
-                    // Błąd nie może zamienić sukcesu w 500 (klient fire-and-forget).
-                    logger.error(
-                        'Telemetry',
-                        `Nie udało się zsynchronizować etykiety dla ${resolvedId}: ${labelErr}`
+                        target.id,
+                        accepted ? 'ACCEPTED' : 'REJECTED',
+                        tx
                     );
                 }
-            }
+                if (eventContext) {
+                    await tx.ai_telemetry_events.create({
+                        data: this._buildEventRow(eventContext.event, eventContext.userId, now)
+                    });
+                }
+            });
         } catch (e) {
             logger.error(
                 'Telemetry',
@@ -747,7 +734,7 @@ class TelemetryService {
      * Batchowy acceptance: 1 lock + 1 transakcja (updateMany grupowane po fladze
      * z predykatem idempotentnym + createMany eventów) zamiast N× ścieżki single.
      * Semantyka identyczna: resolve id → repetycja → latest per well; MANUAL-capture
-     * dla nowych studni; etykiety poza tx. MANUAL-e przez recordManualIfAbsent
+     * dla nowych studni; etykiety feedbacku w tej samej tx. MANUAL-e przez recordManualIfAbsent
      * PO zwolnieniu locka (D-FIX-3: manualLock → recordConfig → this.lock).
      * Pozycje w odpowiedzi odnoszą się do indeksów wejściowych `items`.
      */
@@ -785,37 +772,48 @@ class TelemetryService {
             const [byIdRows, latestRows] = await Promise.all([
                 prisma.ai_telemetry_logs.findMany({
                     where: { id: { in: ids } },
-                    select: { id: true, wasAccepted: true }
+                    select: { id: true, wasAccepted: true, wasRejected: true }
                 }),
                 wellIds.length > 0
                     ? prisma.ai_telemetry_logs.findMany({
                           where: { wellId: { in: wellIds } },
                           orderBy: { createdAt: 'desc' },
-                          select: { id: true, wellId: true, wasAccepted: true }
+                          select: { id: true, wellId: true, wasAccepted: true, wasRejected: true }
                       })
                     : []
             ]);
             const byId = new Map(byIdRows.map((r) => [r.id, r]));
-            const latestByWell = new Map<string, { id: string; wasAccepted: boolean }>();
+            const latestByWell = new Map<
+                string,
+                { id: string; wasAccepted: boolean; wasRejected: boolean }
+            >();
             for (const r of latestRows) {
                 if (r.wellId && !latestByWell.has(r.wellId))
-                    latestByWell.set(r.wellId, { id: r.id, wasAccepted: r.wasAccepted });
+                    latestByWell.set(r.wellId, {
+                        id: r.id,
+                        wasAccepted: r.wasAccepted,
+                        wasRejected: r.wasRejected
+                    });
             }
             const seenManual = new Set<string>();
 
             items.forEach((data, index) => {
                 const accepted = data.accepted;
                 // Resolve jak single: id → repetycja → latest per well.
-                let target: { id: string; wasAccepted: boolean } | undefined;
+                let target: { id: string; wasAccepted: boolean; wasRejected: boolean } | undefined;
                 const row = byId.get(data.telemetryId);
                 if (row) {
-                    target = { id: row.id, wasAccepted: row.wasAccepted };
+                    target = {
+                        id: row.id,
+                        wasAccepted: row.wasAccepted,
+                        wasRejected: row.wasRejected
+                    };
                 } else if (data.wellId) {
                     const latest = latestByWell.get(data.wellId);
                     if (latest) target = latest;
                 }
                 if (target) {
-                    if (target.wasAccepted !== accepted) {
+                    if (target.wasAccepted !== accepted || target.wasRejected !== !accepted) {
                         updates.push({ id: target.id, accepted });
                         updated.push({ index, telemetryId: target.id });
                     } else {
@@ -852,7 +850,10 @@ class TelemetryService {
                     const accIds = updates.filter((u) => u.accepted === acc).map((u) => u.id);
                     if (accIds.length === 0) continue;
                     await tx.ai_telemetry_logs.updateMany({
-                        where: { id: { in: accIds }, wasAccepted: { not: acc } },
+                        where: {
+                            id: { in: accIds },
+                            OR: [{ wasAccepted: { not: acc } }, { wasRejected: { not: !acc } }]
+                        },
                         data: {
                             wasAccepted: acc,
                             wasRejected: !acc,
@@ -876,6 +877,15 @@ class TelemetryService {
                         }))
                     });
                 }
+                for (const label of labelSync) {
+                    await tx.aiFeature.updateMany({
+                        where: { telemetryId: label.id },
+                        data: {
+                            label: label.accepted ? 'ACCEPTED' : 'REJECTED',
+                            reward: label.accepted ? 1 : -1
+                        }
+                    });
+                }
             });
 
             logger.info(
@@ -884,22 +894,6 @@ class TelemetryService {
                     `${duplicates.length} duplikatów, ${eventRows.length} eventów, ` +
                     `${manualPlans.length} MANUAL do capture`
             );
-
-            // Etykiety poza tx (jak single — błąd nie psuje sukcesu).
-            for (const l of labelSync) {
-                try {
-                    const { featureExtractor } = await import('../ml/FeatureExtractor');
-                    await featureExtractor.updateLabelByTelemetry(
-                        l.id,
-                        l.accepted ? 'ACCEPTED' : 'REJECTED'
-                    );
-                } catch (labelErr) {
-                    logger.error(
-                        'Telemetry',
-                        `Nie udało się zsynchronizować etykiety dla ${l.id}: ${labelErr}`
-                    );
-                }
-            }
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
             logger.error('Telemetry', `Błąd zapisu batch acceptance: ${message}`);

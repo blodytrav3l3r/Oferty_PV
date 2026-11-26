@@ -37,6 +37,7 @@ let latestRows: any[] = [];
 let manualExists: any = null;
 const mockUpdateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
 const mockEventsCreateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
+const mockFeatureUpdateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
 const mockLogsCreateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
 const mockHistoryCreateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
 const mockTransitionsCreateMany = jest.fn<any>().mockResolvedValue({ count: 0 });
@@ -59,7 +60,8 @@ const mockTransaction = jest.fn<any>().mockImplementation(async (fn: any) =>
         },
         ai_transition_snapshots: {
             createMany: (...args: any[]) => (mockTransitionsCreateMany as any)(...args)
-        }
+        },
+        aiFeature: { updateMany: (...args: any[]) => (mockFeatureUpdateMany as any)(...args) }
     })
 );
 
@@ -116,8 +118,8 @@ describe('POST /api/telemetry/ai/acceptance-batch', () => {
 
     it('2 itemy ze zmiana stanu → 1 updateMany grupowy + 1 createMany eventów', async () => {
         byIdRows = [
-            { id: 't1', wasAccepted: false },
-            { id: 't2', wasAccepted: false }
+            { id: 't1', wasAccepted: false, wasRejected: false },
+            { id: 't2', wasAccepted: false, wasRejected: false }
         ];
         const res = await request(app)
             .post('/api/telemetry/ai/acceptance-batch')
@@ -131,19 +133,22 @@ describe('POST /api/telemetry/ai/acceptance-batch', () => {
         expect(mockUpdateMany).toHaveBeenCalledTimes(1);
         expect(mockUpdateMany.mock.calls[0][0]).toEqual(
             expect.objectContaining({
-                where: { id: { in: ['t1', 't2'] }, wasAccepted: { not: true } }
+                where: {
+                    id: { in: ['t1', 't2'] },
+                    OR: [{ wasAccepted: { not: true } }, { wasRejected: { not: false } }]
+                }
             })
         );
         expect(mockEventsCreateMany).toHaveBeenCalledTimes(1);
         expect((mockEventsCreateMany.mock.calls[0][0] as any).data).toHaveLength(2);
-        expect(mockUpdateLabel).toHaveBeenCalledTimes(2);
+        expect(mockFeatureUpdateMany).toHaveBeenCalledTimes(2);
         expect(res.body.eventsCreated).toBe(2);
     });
 
     it('powtórka tego samego stanu → duplicates, eventy i etykiety dalej lecą', async () => {
         byIdRows = [
-            { id: 't1', wasAccepted: true },
-            { id: 't2', wasAccepted: true }
+            { id: 't1', wasAccepted: true, wasRejected: false },
+            { id: 't2', wasAccepted: true, wasRejected: false }
         ];
         const res = await request(app)
             .post('/api/telemetry/ai/acceptance-batch')
@@ -153,7 +158,27 @@ describe('POST /api/telemetry/ai/acceptance-batch', () => {
         expect(res.body.duplicates).toHaveLength(2);
         expect(mockUpdateMany).not.toHaveBeenCalled();
         expect(mockEventsCreateMany).toHaveBeenCalledTimes(1);
-        expect(mockUpdateLabel).toHaveBeenCalledTimes(2);
+        expect(mockFeatureUpdateMany).toHaveBeenCalledTimes(2);
+    });
+
+    it('pierwsze odrzucenie true-writes rejection flag gdy acceptance jest już false', async () => {
+        byIdRows = [{ id: 't1', wasAccepted: false, wasRejected: false }];
+        const res = await request(app)
+            .post('/api/telemetry/ai/acceptance-batch')
+            .send({ items: [item('t1', 'w1', { accepted: false })] });
+
+        expect(res.status).toBe(200);
+        expect(res.body.updated).toEqual([{ index: 0, telemetryId: 't1' }]);
+        expect(res.body.duplicates).toEqual([]);
+        expect(mockUpdateMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: {
+                    id: { in: ['t1'] },
+                    OR: [{ wasAccepted: { not: false } }, { wasRejected: { not: true } }]
+                },
+                data: expect.objectContaining({ wasAccepted: false, wasRejected: true })
+            })
+        );
     });
 
     it('brak rekordu + snapshot → MANUAL capture przez recordConfigs', async () => {

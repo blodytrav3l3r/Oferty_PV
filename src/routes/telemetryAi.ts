@@ -305,7 +305,16 @@ router.post('/ai/acceptance-full', requireAuth, TELEMETRY_WRITE_LIMITER, async (
         await telemetryService.recordAcceptance(
             data.telemetryId,
             data.accepted,
-            data.wellId || undefined
+            data.wellId || undefined,
+            {
+                event: {
+                    eventType: data.accepted ? 'accept' : 'reject',
+                    wellId: data.wellId,
+                    telemetryId: data.telemetryId,
+                    changeReason: data.accepted ? 'offer_saved_user_accept' : 'offer_rejected'
+                },
+                userId
+            }
         );
 
         if (data.accepted && data.configSnapshot && data.wellId) {
@@ -363,16 +372,6 @@ router.post('/ai/acceptance-full', requireAuth, TELEMETRY_WRITE_LIMITER, async (
                 userId
             );
         }
-
-        await telemetryService.recordEvent(
-            {
-                eventType: data.accepted ? 'accept' : 'reject',
-                wellId: data.wellId,
-                telemetryId: data.telemetryId,
-                changeReason: data.accepted ? 'offer_saved_user_accept' : 'offer_rejected'
-            },
-            userId
-        );
 
         return res.json({ success: true });
     } catch (e) {
