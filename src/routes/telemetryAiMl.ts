@@ -28,7 +28,7 @@ import {
     clearPredictionCache,
     predictionCacheSize,
     setWellScore,
-    getWellScore
+    getWellPrediction
 } from '../services/ml/predictionCache';
 
 const router = Router();
@@ -183,7 +183,7 @@ router.post(
             const scores = resolved.map((r) => {
                 // Zapamiętaj serwerowy score dla wellId — reward nie ufa klienckiemu
                 // scoreBefore (poisoning sliding AUC przez sfałszowany payload).
-                if (r.c.wellId) setWellScore(r.c.wellId, r.score);
+                if (r.c.wellId) setWellScore(r.c.wellId, r.score, r.version);
                 if (!r.cached) {
                     setCache(r.key, {
                         result: [{ score: r.score, version: r.version }],
@@ -402,9 +402,16 @@ async function applyRewardItem(
     }
 
     if (data.wasAiRanked && data.scoreBefore !== undefined) {
-        const serverScore = getWellScore(data.wellId);
-        if (serverScore !== undefined && Math.abs(serverScore - data.scoreBefore) <= 0.01) {
-            selfEvaluation.recordPredictionResult(data.action === 'ACCEPT' ? 1 : 0, serverScore);
+        const serverPrediction = getWellPrediction(data.wellId);
+        if (
+            serverPrediction !== undefined &&
+            Math.abs(serverPrediction.score - data.scoreBefore) <= 0.01
+        ) {
+            selfEvaluation.recordPredictionResult(
+                data.action === 'ACCEPT' ? 1 : 0,
+                serverPrediction.score,
+                serverPrediction.version
+            );
         }
     }
 
@@ -1100,7 +1107,6 @@ router.post(
                 }
             }
             const result = await trainingPipeline.run(true);
-            clearPredictionCache();
             await logAudit('ai_model', 'train', authReq.user?.id || '', 'trigger', {
                 trained: result?.trained ?? false
             });

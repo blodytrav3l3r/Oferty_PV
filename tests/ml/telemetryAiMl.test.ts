@@ -1,7 +1,11 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
-import { setWellScore, clearPredictionCache } from '../../src/services/ml/predictionCache';
+import {
+    setWellScore,
+    getWellScore,
+    clearPredictionCache
+} from '../../src/services/ml/predictionCache';
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -49,6 +53,7 @@ jest.mock('../../src/services/ml/ModelRegistry', () => ({
 }));
 
 const mockGetStatus = jest.fn<any>().mockReturnValue({ running: false });
+const mockTrainingRun = jest.fn<any>().mockResolvedValue({ trained: false });
 const mockCheckAndRollback = jest
     .fn<any>()
     .mockResolvedValue({ rolledBack: false, slidingAuc: null });
@@ -56,11 +61,31 @@ const mockRecordPredictionResult = jest.fn<any>();
 
 jest.mock('../../src/services/ml/TrainingPipeline', () => ({
     trainingPipeline: {
-        run: jest.fn<any>().mockResolvedValue({ trained: false }),
+        run: (...args: any[]) => mockTrainingRun(...args),
         getStatus: (...args: any[]) => mockGetStatus(...args),
         gateStatus: jest.fn<any>().mockResolvedValue(null)
     }
 }));
+
+describe('POST /api/telemetry/ai/train', () => {
+    it('busy result does not clear scores for the active model', async () => {
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        const app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+        clearPredictionCache();
+        setWellScore('well-busy', 0.8, 'model-active');
+        mockTrainingRun.mockResolvedValue({ trained: false, reason: 'already_running' });
+
+        const response = await request(app)
+            .post('/api/telemetry/ai/train')
+            .set({ 'x-test-userid': 'admin', 'x-test-role': 'admin' });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ trained: false, reason: 'already_running' });
+        expect(getWellScore('well-busy')).toBe(0.8);
+    });
+});
 
 jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     selfEvaluation: {
@@ -506,7 +531,7 @@ describe('POST /api/telemetry/ai/reward', () => {
     it('ACCEPT z wasAiRanked zapisuje nagrode i rejestruje predykcje (1, serwerowy score)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
         clearPredictionCache();
-        setWellScore('well-1', 0.9);
+        setWellScore('well-1', 0.9, 'model-v1');
 
         const res = await request(app).post('/api/telemetry/ai/reward').send({
             action: 'ACCEPT',
@@ -526,7 +551,7 @@ describe('POST /api/telemetry/ai/reward', () => {
             }),
             expect.any(Function)
         );
-        expect(mockRecordPredictionResult).toHaveBeenCalledWith(1, 0.9);
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(1, 0.9, 'model-v1');
     });
 
     it('nie rejestruje predykcji gdy kliencki scoreBefore nie zgadza sie z serwerowym (anti-poisoning)', async () => {
@@ -585,7 +610,7 @@ describe('POST /api/telemetry/ai/reward', () => {
             'MODIFIED',
             mockRewardTransaction
         );
-        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.8);
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.8, 'unknown');
     });
 
     it('REJECT synchronizuje etykiete REJECTED i rejestruje predykcje negatywna', async () => {
@@ -620,7 +645,7 @@ describe('POST /api/telemetry/ai/reward', () => {
             'REJECTED',
             mockRewardTransaction
         );
-        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.95);
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.95, 'unknown');
     });
 
     it('ACCEPT bez wasAiRanked nie rejestruje predykcji (sliding AUC)', async () => {

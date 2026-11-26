@@ -674,7 +674,7 @@ model AiTrainingRun {
   id                     String  @id
   startedAt              String
   finishedAt             String?
-  status                 String // RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR
+  status                 String // RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR | FAILED_INTERRUPTED
   datasetSize            Int
   trainSize              Int
   validationSize         Int

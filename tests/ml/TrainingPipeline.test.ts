@@ -17,6 +17,7 @@ const mockUpdateMany = jest.fn<any>();
 const mockTransitionFindMany = jest.fn<any>().mockResolvedValue([]);
 const mockRunCreate = jest.fn<any>();
 const mockRunUpdate = jest.fn<any>();
+const mockRunUpdateMany = jest.fn<any>();
 const mockRunFindFirst = jest.fn<any>();
 const mockRunDeleteMany = jest.fn<any>().mockResolvedValue({ count: 0 });
 const mockSettingsFindUnique = jest.fn<any>();
@@ -73,6 +74,7 @@ jest.mock('../../src/prismaClient', () => ({
             findFirst: (...args: any[]) => mockRunFindFirst(...args),
             create: (...args: any[]) => mockRunCreate(...args),
             update: (...args: any[]) => mockRunUpdate(...args),
+            updateMany: (...args: any[]) => mockRunUpdateMany(...args),
             deleteMany: (...args: any[]) => mockRunDeleteMany(...args)
         },
         aiRewardLog: { count: jest.fn<any>().mockResolvedValue(0) },
@@ -102,6 +104,7 @@ jest.mock('../../src/utils/logger', () => ({
 describe('FeatureExtractor', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockRunUpdateMany.mockResolvedValue({ count: 0 });
         mockSettingsFindUnique.mockResolvedValue({
             key: 'ai_training_user_ids',
             value: JSON.stringify(['userA'])
@@ -718,6 +721,7 @@ describe('ModelRegistry', () => {
 describe('TrainingPipeline.run() — guardy (K6)', () => {
     beforeEach(async () => {
         jest.clearAllMocks();
+        mockRunUpdateMany.mockResolvedValue({ count: 0 });
         // Bramka czyta trwały stan z DB (AiTrainingRun SUCCESS), nie z RAM —
         // domyślnie: brak poprzedniego SUCCESS + 500 kwalifikujących (gate przepuszcza).
         mockSettingsFindUnique.mockResolvedValue({
@@ -818,6 +822,36 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         expect(res.reason).not.toMatch(/insufficient_new_data/);
     });
 
+    it('force podczas aktywnego runu odrzuca drugiego wywołującego bez kolejki', async () => {
+        const { trainingPipeline } = await setupRun();
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        let announceStarted: () => void = () => undefined;
+        let releaseExtraction: () => void = () => undefined;
+        const started = new Promise<void>((resolve) => {
+            announceStarted = resolve;
+        });
+        const extraction = new Promise<void>((resolve) => {
+            releaseExtraction = resolve;
+        });
+        jest.spyOn(featureExtractor, 'extractAndStore').mockImplementation(async () => {
+            announceStarted();
+            await extraction;
+            return 0;
+        });
+
+        const first = trainingPipeline.run(true);
+        await started;
+        const [forced, scheduled] = await Promise.all([
+            trainingPipeline.run(true),
+            trainingPipeline.run(false)
+        ]);
+
+        expect(forced).toEqual({ trained: false, reason: 'already_running' });
+        expect(scheduled).toEqual({ trained: false, reason: 'already_running' });
+        releaseExtraction();
+        await first;
+    });
+
     it('jedna klasa w treningu/val (same ACCEPTED) → insufficient_label_diversity', async () => {
         const { trainingPipeline } = await setupRun();
         // 400 rekordów: train/val (0..339) same ACCEPTED, test (340..399) z balansem
@@ -913,10 +947,84 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             const [, , , featureMins, featureMaxs] = saveSpy.mock.calls[0];
 
             expect(result.trained).toBe(true);
+            expect(saveSpy.mock.calls[0][10]).toMatchObject({
+                id: expect.any(String),
+                data: expect.objectContaining({ status: 'SUCCESS', deployed: true })
+            });
+            expect(saveSpy.mock.calls[0][11]).toBeNull();
+            expect(mockRunUpdate).not.toHaveBeenCalled();
             expect(featureMins[totalPriceIndex]).toBe(2500);
             expect(featureMaxs[totalPriceIndex]).toBe(2779);
             const evaluatedTestSet = evaluateSpy.mock.calls[0][2] as Array<{ vec: number[] }>;
             expect(evaluatedTestSet[59].vec[totalPriceIndex]).toBeGreaterThan(1);
+        } finally {
+            saveSpy.mockRestore();
+            trainSpy.mockRestore();
+            evaluateSpy.mockRestore();
+        }
+    });
+
+    it('przy zmianie produkcji zapisuje model jako nieaktywnego kandydata i kończy run', async () => {
+        const { trainingPipeline } = await setupRun();
+        const { modelRegistry, ProductionModelChangedError } =
+            await import('../../src/services/ml/ModelRegistry');
+        const saveSpy = jest
+            .spyOn(modelRegistry, 'saveModel')
+            .mockRejectedValueOnce(new ProductionModelChangedError())
+            .mockResolvedValue('fallback-candidate');
+        const trainSpy = jest
+            .spyOn(AcceptanceModel.prototype, 'train')
+            .mockImplementation(() => {});
+        const metrics = {
+            accuracy: 0.9,
+            precision: 0.9,
+            recall: 0.9,
+            f1: 0.9,
+            rocAuc: 0.9,
+            prAuc: 0.9,
+            logLoss: 0.2,
+            brierScore: 0.1,
+            ece: 0.02,
+            confusion: { tp: 1, fp: 1, fn: 1, tn: 1 },
+            trainSize: 280,
+            valSize: 60,
+            testRocAuc: 0.9
+        };
+        const evaluateSpy = jest
+            .spyOn(trainingPipeline as any, 'evaluateModel')
+            .mockReturnValue(metrics);
+        jest.spyOn(modelRegistry, 'getProductionModel').mockResolvedValue({
+            id: 'production-model',
+            version: 'production-v1',
+            metrics: { rocAuc: 0.7, logLoss: 0.2, ece: 0.02 }
+        } as any);
+        mockFindMany.mockResolvedValue(
+            [
+                ...Array.from({ length: 400 }, (_, i) =>
+                    makeFeature(i % 2 ? 'ACCEPTED' : 'REJECTED', i)
+                )
+            ].reverse()
+        );
+
+        try {
+            const result = await trainingPipeline.run();
+
+            expect(result).toEqual({
+                trained: false,
+                reason: 'production_model_changed_during_training'
+            });
+            expect(saveSpy).toHaveBeenCalledTimes(2);
+            expect(saveSpy.mock.calls[0][5]).toBe(true);
+            expect(saveSpy.mock.calls[0][11]).toBe('production-v1');
+            expect(saveSpy.mock.calls[1][5]).toBe(false);
+            expect(saveSpy.mock.calls[1][7]).toBe('CANDIDATE');
+            expect(saveSpy.mock.calls[1][10]).toMatchObject({
+                data: expect.objectContaining({
+                    status: 'SKIPPED',
+                    deployed: false,
+                    error: 'production_model_changed_during_training'
+                })
+            });
         } finally {
             saveSpy.mockRestore();
             trainSpy.mockRestore();
@@ -978,6 +1086,7 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
 describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockRunUpdateMany.mockResolvedValue({ count: 0 });
         mockSettingsFindUnique.mockResolvedValue({
             key: 'ai_training_user_ids',
             value: JSON.stringify(['userA'])
@@ -1054,9 +1163,9 @@ describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
     it('run() kończy FAILED_ERROR przy wyjątku z ekstrakcji cech', async () => {
         const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
         const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
-        jest.spyOn(featureExtractor, 'extractAndStore').mockRejectedValue(
-            new Error('extract crash')
-        );
+        jest.spyOn(featureExtractor, 'extractAndStore')
+            .mockRejectedValueOnce(new Error('extract crash'))
+            .mockResolvedValue(0);
 
         const res = await trainingPipeline.run();
 
@@ -1070,6 +1179,24 @@ describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
                 })
             })
         );
+        jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
+        mockFindMany.mockResolvedValue([]);
+        const retried = await trainingPipeline.run();
+        expect(retried.reason).not.toBe('already_running');
+    });
+
+    it('błąd zapisu terminalnego statusu nie może zwrócić sukcesu ani próbować ukryć błędu', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        jest.spyOn(featureExtractor, 'extractAndStore').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
+        mockFindMany.mockResolvedValue([]);
+        mockRunUpdate.mockRejectedValueOnce(new Error('database unavailable'));
+
+        await expect(trainingPipeline.run()).rejects.toThrow('database unavailable');
+        expect(mockRunUpdate).toHaveBeenCalledTimes(1);
     });
 
     it('run() kończy FAILED_VALIDATION gdy kandydat nie przechodzi gate AUC', async () => {

@@ -17,6 +17,13 @@ export class TrainingUsersChangedError extends Error {
     }
 }
 
+export class ProductionModelChangedError extends Error {
+    constructor() {
+        super('production_model_changed_during_training');
+        this.name = 'ProductionModelChangedError';
+    }
+}
+
 function hasSameUsers(value: string | null, expected: readonly string[]): boolean {
     if (!value) return false;
     let parsed: unknown;
@@ -87,6 +94,11 @@ export interface ModelListItem {
     state?: string | null;
 }
 
+export interface TrainingRunCompletion {
+    id: string;
+    data: Prisma.AiTrainingRunUpdateInput;
+}
+
 // Wyciąga rocAUC z zapisanych metryk; uszkodzony JSON lub brak pola rocAuc traktujemy jak -1.
 // Używany przez getBestAuc, promoteBestModel i pruneOldModels.
 function getRocAuc(metricsJson: string): number {
@@ -99,6 +111,22 @@ function getRocAuc(metricsJson: string): number {
 }
 
 export class ModelRegistry {
+    private productionMutation: Promise<void> = Promise.resolve();
+
+    private async withProductionMutation<T>(operation: () => Promise<T>): Promise<T> {
+        const previous = this.productionMutation;
+        let release: () => void = () => undefined;
+        this.productionMutation = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        await previous;
+        try {
+            return await operation();
+        } finally {
+            release();
+        }
+    }
+
     async saveModel(
         model: AcceptanceModel,
         metrics: ModelMetrics,
@@ -109,7 +137,9 @@ export class ModelRegistry {
         notes?: string,
         state?: AiModelStateValue,
         featureDistributions?: string | null,
-        expectedTrainingUsers?: readonly string[]
+        expectedTrainingUsers?: readonly string[],
+        trainingRunCompletion?: TrainingRunCompletion,
+        expectedProductionVersion?: string | null
     ): Promise<string> {
         const now = new Date();
         // wersja musi być unikalna (kolumna @unique) — suffix zapobiega
@@ -122,50 +152,65 @@ export class ModelRegistry {
 
         // Transakcja gwarantuje atomowość: dezaktywacja starych + utworzenie nowego
         // — zapobiega race condition z dwoma aktywnymi modelami jednocześnie.
-        await prisma.$transaction(async (tx) => {
-            if (shouldActivate && expectedTrainingUsers !== undefined) {
-                const rows = await tx.$queryRaw<Array<{ value: string | null }>>(
-                    Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
-                );
-                if (!hasSameUsers(rows[0]?.value ?? null, expectedTrainingUsers)) {
-                    throw new TrainingUsersChangedError();
-                }
-            }
-            if (shouldActivate) {
-                const existing = await tx.aiModel.findFirst({ where: { active: true } });
-                if (existing) {
-                    await tx.aiModel.update({
-                        where: { id: existing.id },
-                        data: { active: false, state: AiModelState.ROLLED_BACK }
-                    });
-                    logger.info(
-                        'ModelRegistry',
-                        `Dezaktywowano poprzedni model ${existing.version}`
+        await this.withProductionMutation(() =>
+            prisma.$transaction(async (tx) => {
+                if (shouldActivate && expectedTrainingUsers !== undefined) {
+                    const rows = await tx.$queryRaw<Array<{ value: string | null }>>(
+                        Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
                     );
+                    if (!hasSameUsers(rows[0]?.value ?? null, expectedTrainingUsers)) {
+                        throw new TrainingUsersChangedError();
+                    }
                 }
-            }
+                if (shouldActivate) {
+                    const existing = await tx.aiModel.findFirst({ where: { active: true } });
+                    if (
+                        expectedProductionVersion !== undefined &&
+                        (existing?.version ?? null) !== expectedProductionVersion
+                    ) {
+                        throw new ProductionModelChangedError();
+                    }
+                    if (existing) {
+                        await tx.aiModel.update({
+                            where: { id: existing.id },
+                            data: { active: false, state: AiModelState.ROLLED_BACK }
+                        });
+                        logger.info(
+                            'ModelRegistry',
+                            `Dezaktywowano poprzedni model ${existing.version}`
+                        );
+                    }
+                }
 
-            await tx.aiModel.create({
-                data: {
-                    id,
-                    version,
-                    weights: JSON.stringify(model.getWeights()),
-                    bias: model.getBias(),
-                    metrics: JSON.stringify(metrics),
-                    features: JSON.stringify(features),
-                    featureMins: JSON.stringify(featureMins),
-                    featureMaxs: JSON.stringify(featureMaxs),
-                    trainingRows: metrics.trainSize,
-                    active: shouldActivate,
-                    notes: notes || null,
-                    featureVersion: ML_CONSTANTS.FEATURE_VERSION,
-                    state:
-                        state || (shouldActivate ? AiModelState.APPROVED : AiModelState.CANDIDATE),
-                    featureDistributions: featureDistributions ?? null,
-                    createdAt: now.toISOString()
+                await tx.aiModel.create({
+                    data: {
+                        id,
+                        version,
+                        weights: JSON.stringify(model.getWeights()),
+                        bias: model.getBias(),
+                        metrics: JSON.stringify(metrics),
+                        features: JSON.stringify(features),
+                        featureMins: JSON.stringify(featureMins),
+                        featureMaxs: JSON.stringify(featureMaxs),
+                        trainingRows: metrics.trainSize,
+                        active: shouldActivate,
+                        notes: notes || null,
+                        featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+                        state:
+                            state ||
+                            (shouldActivate ? AiModelState.APPROVED : AiModelState.CANDIDATE),
+                        featureDistributions: featureDistributions ?? null,
+                        createdAt: now.toISOString()
+                    }
+                });
+                if (trainingRunCompletion) {
+                    await tx.aiTrainingRun.update({
+                        where: { id: trainingRunCompletion.id },
+                        data: { ...trainingRunCompletion.data, candidateModelVersion: version }
+                    });
                 }
-            });
-        });
+            })
+        );
 
         // Retencja: po zapisie nowego modelu przycinamy stary rejestr (metoda nigdy nie rzuca)
         await this.pruneOldModels();
@@ -251,73 +296,80 @@ export class ModelRegistry {
         });
     }
 
-    async rollbackToPrevious(): Promise<StoredModel | null> {
-        const active = await prisma.aiModel.findFirst({
-            where: { active: true, featureVersion: ML_CONSTANTS.FEATURE_VERSION }
-        });
-        const previous = await prisma.aiModel.findFirst({
-            where: { active: false, featureVersion: ML_CONSTANTS.FEATURE_VERSION },
-            orderBy: { createdAt: 'desc' }
-        });
-        if (active && previous) {
-            // Transakcja: dezaktywacja+aktywacja atomowo — bez niej dwa równoległe
-            // rollbacki (SelfEvaluation flapping) mogły dać 2 aktywne modele.
-            await prisma.$transaction(async (tx) => {
-                await tx.aiModel.update({
-                    where: { id: active.id },
-                    data: { active: false, state: AiModelState.ROLLED_BACK }
-                });
-                await tx.aiModel.update({
-                    where: { id: previous.id },
-                    data: { active: true, state: AiModelState.PRODUCTION }
-                });
+    async rollbackToPrevious(expectedActiveVersion?: string): Promise<StoredModel | null> {
+        return this.withProductionMutation(async () => {
+            const active = await prisma.aiModel.findFirst({
+                where: { active: true, featureVersion: ML_CONSTANTS.FEATURE_VERSION }
             });
-            logger.info('ModelRegistry', `Rollback do modelu ${previous.version}`);
-            clearPredictionCache();
-            return this.recordToModel(previous);
-        }
-        if (active && !previous) {
-            logger.warn('ModelRegistry', 'Brak poprzedniego modelu — rollback niemozliwy');
+            if (expectedActiveVersion !== undefined && active?.version !== expectedActiveVersion) {
+                return null;
+            }
+            const previous = await prisma.aiModel.findFirst({
+                where: { active: false, featureVersion: ML_CONSTANTS.FEATURE_VERSION },
+                orderBy: { createdAt: 'desc' }
+            });
+            if (active && previous) {
+                // Transakcja: dezaktywacja+aktywacja atomowo — bez niej dwa równoległe
+                // rollbacki (SelfEvaluation flapping) mogły dać 2 aktywne modele.
+                await prisma.$transaction(async (tx) => {
+                    await tx.aiModel.update({
+                        where: { id: active.id },
+                        data: { active: false, state: AiModelState.ROLLED_BACK }
+                    });
+                    await tx.aiModel.update({
+                        where: { id: previous.id },
+                        data: { active: true, state: AiModelState.PRODUCTION }
+                    });
+                });
+                logger.info('ModelRegistry', `Rollback do modelu ${previous.version}`);
+                clearPredictionCache();
+                return this.recordToModel(previous);
+            }
+            if (active && !previous) {
+                logger.warn('ModelRegistry', 'Brak poprzedniego modelu — rollback niemozliwy');
+                return null;
+            }
             return null;
-        }
-        return null;
+        });
     }
 
     async activateModel(id: string): Promise<StoredModel | null> {
-        const target = await prisma.aiModel.findUnique({ where: { id } });
-        if (!target) return null;
-        if (target.active) return this.recordToModel(target);
+        return this.withProductionMutation(async () => {
+            const target = await prisma.aiModel.findUnique({ where: { id } });
+            if (!target) return null;
+            if (target.active) return this.recordToModel(target);
 
-        // Model spoza bieżącej wersji cech nie może być aktywny — inna liczba
-        // cech dałaby FEATURE_COUNT_MISMATCH na predict (a getActiveModel i tak
-        // go nie zwróci, więc status "active" byłby mylący).
-        if (target.featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
-            logger.warn(
-                'ModelRegistry',
-                `Odrzucono aktywację modelu ${target.version} (featureVersion=${target.featureVersion ?? 'null'} != ${ML_CONSTANTS.FEATURE_VERSION})`
-            );
-            throw new Error(
-                `Nie można aktywować modelu spoza bieżącej wersji cech (${target.featureVersion ?? 'stara'} != ${ML_CONSTANTS.FEATURE_VERSION})`
-            );
-        }
-
-        // Transakcja jak w saveModel — dezaktywacja+aktywacja atomowo.
-        await prisma.$transaction(async (tx) => {
-            const active = await tx.aiModel.findFirst({ where: { active: true } });
-            if (active) {
-                await tx.aiModel.update({
-                    where: { id: active.id },
-                    data: { active: false, state: AiModelState.ROLLED_BACK }
-                });
+            // Model spoza bieżącej wersji cech nie może być aktywny — inna liczba
+            // cech dałaby FEATURE_COUNT_MISMATCH na predict (a getActiveModel i tak
+            // go nie zwróci, więc status "active" byłby mylący).
+            if (target.featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
+                logger.warn(
+                    'ModelRegistry',
+                    `Odrzucono aktywację modelu ${target.version} (featureVersion=${target.featureVersion ?? 'null'} != ${ML_CONSTANTS.FEATURE_VERSION})`
+                );
+                throw new Error(
+                    `Nie można aktywować modelu spoza bieżącej wersji cech (${target.featureVersion ?? 'stara'} != ${ML_CONSTANTS.FEATURE_VERSION})`
+                );
             }
-            await tx.aiModel.update({
-                where: { id: target.id },
-                data: { active: true, state: AiModelState.PRODUCTION }
+
+            // Transakcja jak w saveModel — dezaktywacja+aktywacja atomowo.
+            await prisma.$transaction(async (tx) => {
+                const active = await tx.aiModel.findFirst({ where: { active: true } });
+                if (active) {
+                    await tx.aiModel.update({
+                        where: { id: active.id },
+                        data: { active: false, state: AiModelState.ROLLED_BACK }
+                    });
+                }
+                await tx.aiModel.update({
+                    where: { id: target.id },
+                    data: { active: true, state: AiModelState.PRODUCTION }
+                });
             });
+            logger.info('ModelRegistry', `Ręcznie wybrano model ${target.version}`);
+            clearPredictionCache();
+            return this.recordToModel(target);
         });
-        logger.info('ModelRegistry', `Ręcznie wybrano model ${target.version}`);
-        clearPredictionCache();
-        return this.recordToModel(target);
     }
 
     /**
@@ -328,45 +380,47 @@ export class ModelRegistry {
      * Jedyna droga dojścia do PRODUCTION dla modeli spoza auto-deploy.
      */
     async promoteModel(id: string): Promise<StoredModel | null> {
-        const target = await prisma.aiModel.findUnique({ where: { id } });
-        if (!target) return null;
-        const state = assertValidAiModelState(target.state) || AiModelState.CANDIDATE;
-        if (state === AiModelState.REJECTED) {
-            throw new Error(
-                'Model REJECTED nie może być promowany — najpierw ręczny approve (POST /ai/models/:id/approve)'
-            );
-        }
-        if (state === AiModelState.PRODUCTION) {
-            return this.recordToModel(target);
-        }
-        if (target.featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
-            throw new Error(
-                `Nie można promować modelu spoza bieżącej wersji cech (${target.featureVersion ?? 'stara'} != ${ML_CONSTANTS.FEATURE_VERSION})`
-            );
-        }
-
-        await prisma.$transaction(async (tx) => {
-            const active = await tx.aiModel.findFirst({ where: { active: true } });
-            if (active) {
-                await tx.aiModel.update({
-                    where: { id: active.id },
-                    data: { active: false, state: AiModelState.ROLLED_BACK }
-                });
+        return this.withProductionMutation(async () => {
+            const target = await prisma.aiModel.findUnique({ where: { id } });
+            if (!target) return null;
+            const state = assertValidAiModelState(target.state) || AiModelState.CANDIDATE;
+            if (state === AiModelState.REJECTED) {
+                throw new Error(
+                    'Model REJECTED nie może być promowany — najpierw ręczny approve (POST /ai/models/:id/approve)'
+                );
             }
-            await tx.aiModel.update({
-                where: { id: target.id },
-                data: { active: true, state: AiModelState.PRODUCTION }
+            if (state === AiModelState.PRODUCTION) {
+                return this.recordToModel(target);
+            }
+            if (target.featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
+                throw new Error(
+                    `Nie można promować modelu spoza bieżącej wersji cech (${target.featureVersion ?? 'stara'} != ${ML_CONSTANTS.FEATURE_VERSION})`
+                );
+            }
+
+            await prisma.$transaction(async (tx) => {
+                const active = await tx.aiModel.findFirst({ where: { active: true } });
+                if (active) {
+                    await tx.aiModel.update({
+                        where: { id: active.id },
+                        data: { active: false, state: AiModelState.ROLLED_BACK }
+                    });
+                }
+                await tx.aiModel.update({
+                    where: { id: target.id },
+                    data: { active: true, state: AiModelState.PRODUCTION }
+                });
+                // Synchronizacja: żaden inny model nie może zostać aktywny
+                // (invariant COUNT(active=true) <= 1).
+                await tx.aiModel.updateMany({
+                    where: { active: true, id: { not: target.id } },
+                    data: { active: false }
+                });
             });
-            // Synchronizacja: żaden inny model nie może zostać aktywny
-            // (invariant COUNT(active=true) <= 1).
-            await tx.aiModel.updateMany({
-                where: { active: true, id: { not: target.id } },
-                data: { active: false }
-            });
+            logger.info('ModelRegistry', `Promowano model ${target.version} do PRODUCTION`);
+            clearPredictionCache();
+            return this.recordToModel(target);
         });
-        logger.info('ModelRegistry', `Promowano model ${target.version} do PRODUCTION`);
-        clearPredictionCache();
-        return this.recordToModel(target);
     }
 
     /**
@@ -392,57 +446,64 @@ export class ModelRegistry {
     }
 
     async promoteBestModel(): Promise<StoredModel | null> {
-        const records = await prisma.aiModel.findMany({
-            where: { featureVersion: ML_CONSTANTS.FEATURE_VERSION }
-        });
-        if (records.length === 0) return null;
-        let best = records[0];
-        let bestAuc = -1;
-        for (const r of records) {
-            const auc = getRocAuc(r.metrics);
-            // N4: getRocAuc zwraca -1 dla braku metryk (model nie trenowany).
-            // Takie modele NIE mogą być promowane — wcześniej starter (auc=-1)
-            // mógł zostać "najlepszym" i zdegradować wytrenowany model.
-            if (auc > bestAuc) {
-                bestAuc = auc;
-                best = r;
-            }
-        }
-        if (bestAuc < 0) {
-            logger.warn('ModelRegistry', 'Brak modelu z metrykami AUC>=0 — promocja pominięta');
-            return null;
-        }
-        const active = await prisma.aiModel.findFirst({ where: { active: true } });
-        if (active && active.id === best.id) {
-            return this.recordToModel(active);
-        }
-        // Transakcja — atomowa zamiana aktywnego modelu na najlepszy.
-        await prisma.$transaction(async (tx) => {
-            if (active) {
-                await tx.aiModel.update({
-                    where: { id: active.id },
-                    data: { active: false, state: AiModelState.ROLLED_BACK }
-                });
-            }
-            await tx.aiModel.update({
-                where: { id: best.id },
-                data: { active: true, state: AiModelState.PRODUCTION }
+        return this.withProductionMutation(async () => {
+            const records = await prisma.aiModel.findMany({
+                where: { featureVersion: ML_CONSTANTS.FEATURE_VERSION }
             });
+            if (records.length === 0) return null;
+            let best = records[0];
+            let bestAuc = -1;
+            for (const r of records) {
+                const auc = getRocAuc(r.metrics);
+                // N4: getRocAuc zwraca -1 dla braku metryk (model nie trenowany).
+                // Takie modele NIE mogą być promowane — wcześniej starter (auc=-1)
+                // mógł zostać "najlepszym" i zdegradować wytrenowany model.
+                if (auc > bestAuc) {
+                    bestAuc = auc;
+                    best = r;
+                }
+            }
+            if (bestAuc < 0) {
+                logger.warn('ModelRegistry', 'Brak modelu z metrykami AUC>=0 — promocja pominięta');
+                return null;
+            }
+            const active = await prisma.aiModel.findFirst({ where: { active: true } });
+            if (active && active.id === best.id) {
+                return this.recordToModel(active);
+            }
+            // Transakcja — atomowa zamiana aktywnego modelu na najlepszy.
+            await prisma.$transaction(async (tx) => {
+                if (active) {
+                    await tx.aiModel.update({
+                        where: { id: active.id },
+                        data: { active: false, state: AiModelState.ROLLED_BACK }
+                    });
+                }
+                await tx.aiModel.update({
+                    where: { id: best.id },
+                    data: { active: true, state: AiModelState.PRODUCTION }
+                });
+            });
+            logger.info(
+                'ModelRegistry',
+                `Promowano najlepszy model ${best.version} (auc=${bestAuc})`
+            );
+            clearPredictionCache();
+            return this.recordToModel(best);
         });
-        logger.info('ModelRegistry', `Promowano najlepszy model ${best.version} (auc=${bestAuc})`);
-        clearPredictionCache();
-        return this.recordToModel(best);
     }
 
     async deleteModel(id: string): Promise<StoredModel | null> {
-        const record = await prisma.aiModel.findUnique({ where: { id } });
-        if (!record) return null;
-        if (record.active) {
-            throw new Error('Nie można usunąć aktywnego modelu');
-        }
-        await prisma.aiModel.delete({ where: { id } });
-        logger.info('ModelRegistry', `Usunięto model ${record.version}`);
-        return this.recordToModel(record);
+        return this.withProductionMutation(async () => {
+            const record = await prisma.aiModel.findUnique({ where: { id } });
+            if (!record) return null;
+            if (record.active) {
+                throw new Error('Nie można usunąć aktywnego modelu');
+            }
+            await prisma.aiModel.delete({ where: { id } });
+            logger.info('ModelRegistry', `Usunięto model ${record.version}`);
+            return this.recordToModel(record);
+        });
     }
 
     async getModelCount(): Promise<number> {
@@ -513,67 +574,69 @@ export class ModelRegistry {
      */
     async pruneOldModels(): Promise<{ deletedCount: number; deletedVersions: string[] }> {
         try {
-            return await prisma.$transaction(async (tx) => {
-                // Select bez ciężkich pól (weights, bias, features, featureMins, featureMaxs)
-                const records = await tx.aiModel.findMany({
-                    select: {
-                        id: true,
-                        version: true,
-                        active: true,
-                        metrics: true,
-                        featureVersion: true,
-                        createdAt: true
-                    }
-                });
-
-                const keep = new Set<string>();
-
-                // 1. Wszystkie aktywne modele — pas bezpieczeństwa przed usunięciem aktywnego modelu
-                for (const r of records) {
-                    if (r.active) keep.add(r.id);
-                }
-
-                // Polityka retencji dotyczy wyłącznie bieżącej wersji cech — stare wersje
-                // (inna liczba cech) nie nadają się ani do rollbacku, ani do promote.
-                const current = records.filter(
-                    (r) => r.featureVersion === ML_CONSTANTS.FEATURE_VERSION
-                );
-
-                // 2. Najlepsze wg rocAUC (sort na kopii — nie mutujemy tablicy Prisma)
-                const byAuc = [...current].sort(
-                    (a, b) => getRocAuc(b.metrics) - getRocAuc(a.metrics)
-                );
-                for (const r of byAuc.slice(0, ML_CONFIG.retention.keepBest)) keep.add(r.id);
-
-                // 3. Najnowsze wg createdAt (zapas dla rollbackToPrevious)
-                const byDate = [...current].sort((a, b) =>
-                    a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
-                );
-                for (const r of byDate.slice(0, ML_CONFIG.retention.keepLast)) keep.add(r.id);
-
-                const candidates = records.filter((r) => !keep.has(r.id));
-                const deletedVersions: string[] = [];
-                let deletedCount = 0;
-
-                // Usuwanie partiami po 500 — guard active:false to pas bezpieczeństwa
-                // (kandydaci z definicji nie są aktywni, ale deleteMany nie dotknie aktywnego)
-                for (let i = 0; i < candidates.length; i += 500) {
-                    const chunk = candidates.slice(i, i + 500);
-                    const result = await tx.aiModel.deleteMany({
-                        where: { id: { in: chunk.map((c) => c.id) }, active: false }
+            return await this.withProductionMutation(() =>
+                prisma.$transaction(async (tx) => {
+                    // Select bez ciężkich pól (weights, bias, features, featureMins, featureMaxs)
+                    const records = await tx.aiModel.findMany({
+                        select: {
+                            id: true,
+                            version: true,
+                            active: true,
+                            metrics: true,
+                            featureVersion: true,
+                            createdAt: true
+                        }
                     });
-                    deletedCount += result.count;
-                    deletedVersions.push(...chunk.map((c) => c.version));
-                }
 
-                if (deletedCount > 0) {
-                    logger.info(
-                        'ModelRegistry',
-                        `Przycięto rejestr modeli: usunięto ${deletedCount} (${deletedVersions.join(', ')})`
+                    const keep = new Set<string>();
+
+                    // 1. Wszystkie aktywne modele — pas bezpieczeństwa przed usunięciem aktywnego modelu
+                    for (const r of records) {
+                        if (r.active) keep.add(r.id);
+                    }
+
+                    // Polityka retencji dotyczy wyłącznie bieżącej wersji cech — stare wersje
+                    // (inna liczba cech) nie nadają się ani do rollbacku, ani do promote.
+                    const current = records.filter(
+                        (r) => r.featureVersion === ML_CONSTANTS.FEATURE_VERSION
                     );
-                }
-                return { deletedCount, deletedVersions };
-            });
+
+                    // 2. Najlepsze wg rocAUC (sort na kopii — nie mutujemy tablicy Prisma)
+                    const byAuc = [...current].sort(
+                        (a, b) => getRocAuc(b.metrics) - getRocAuc(a.metrics)
+                    );
+                    for (const r of byAuc.slice(0, ML_CONFIG.retention.keepBest)) keep.add(r.id);
+
+                    // 3. Najnowsze wg createdAt (zapas dla rollbackToPrevious)
+                    const byDate = [...current].sort((a, b) =>
+                        a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
+                    );
+                    for (const r of byDate.slice(0, ML_CONFIG.retention.keepLast)) keep.add(r.id);
+
+                    const candidates = records.filter((r) => !keep.has(r.id));
+                    const deletedVersions: string[] = [];
+                    let deletedCount = 0;
+
+                    // Usuwanie partiami po 500 — guard active:false to pas bezpieczeństwa
+                    // (kandydaci z definicji nie są aktywni, ale deleteMany nie dotknie aktywnego)
+                    for (let i = 0; i < candidates.length; i += 500) {
+                        const chunk = candidates.slice(i, i + 500);
+                        const result = await tx.aiModel.deleteMany({
+                            where: { id: { in: chunk.map((c) => c.id) }, active: false }
+                        });
+                        deletedCount += result.count;
+                        deletedVersions.push(...chunk.map((c) => c.version));
+                    }
+
+                    if (deletedCount > 0) {
+                        logger.info(
+                            'ModelRegistry',
+                            `Przycięto rejestr modeli: usunięto ${deletedCount} (${deletedVersions.join(', ')})`
+                        );
+                    }
+                    return { deletedCount, deletedVersions };
+                })
+            );
         } catch (e) {
             logger.error(
                 'ModelRegistry',

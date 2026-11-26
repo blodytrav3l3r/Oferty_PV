@@ -8,6 +8,7 @@ import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 const mockRunFindFirst = jest.fn<any>();
 const mockRunCreate = jest.fn<any>();
 const mockRunUpdate = jest.fn<any>();
+const mockRunUpdateMany = jest.fn<any>();
 const mockRunFindMany = jest.fn<any>();
 const mockRunDeleteMany = jest.fn<any>();
 const mockFeatureCount = jest.fn<any>();
@@ -23,6 +24,7 @@ jest.mock('../../src/prismaClient', () => ({
             findMany: (...args: any[]) => mockRunFindMany(...args),
             create: (...args: any[]) => mockRunCreate(...args),
             update: (...args: any[]) => mockRunUpdate(...args),
+            updateMany: (...args: any[]) => mockRunUpdateMany(...args),
             deleteMany: (...args: any[]) => mockRunDeleteMany(...args)
         },
         aiFeature: {
@@ -361,5 +363,36 @@ describe('pruneTrainingRuns — retencja 100', () => {
 
         expect(mockRunDeleteMany).not.toHaveBeenCalled();
         expect(res).toEqual({ deleted: 0 });
+    });
+});
+
+describe('recoverInterruptedRuns — startup recovery', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockRunUpdateMany.mockResolvedValue({ count: 2 });
+    });
+
+    it('oznacza każdy pozostawiony RUNNING jako INTERRUPTED z jawną przyczyną', async () => {
+        const { TrainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const pipeline = new TrainingPipeline();
+
+        await expect(pipeline.recoverInterruptedRuns()).resolves.toBe(2);
+
+        expect(mockRunUpdateMany).toHaveBeenCalledWith({
+            where: { status: 'RUNNING' },
+            data: {
+                status: 'FAILED_INTERRUPTED',
+                finishedAt: expect.any(String),
+                error: 'interrupted_by_process_restart'
+            }
+        });
+    });
+
+    it('propaguje błąd DB, aby aplikacja nie wystartowała bez recovery', async () => {
+        const { TrainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const pipeline = new TrainingPipeline();
+        mockRunUpdateMany.mockRejectedValue(new Error('database unavailable'));
+
+        await expect(pipeline.recoverInterruptedRuns()).rejects.toThrow('database unavailable');
     });
 });

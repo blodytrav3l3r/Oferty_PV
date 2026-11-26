@@ -9,9 +9,11 @@ import {
 } from './AcceptanceModel';
 import {
     modelRegistry,
+    ProductionModelChangedError,
     TrainingUsersChangedError,
     type ModelMetrics,
-    type StoredModel
+    type StoredModel,
+    type TrainingRunCompletion
 } from './ModelRegistry';
 import { AiModelState } from './aiModelState';
 import {
@@ -38,7 +40,7 @@ import {
 } from './trainingUsers';
 
 // Semantyka statusów treningu (plan MLOps):
-// RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR
+// RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR | INTERRUPTED
 // - SKIPPED: normalny wynik (za mało danych/klas/testu) — to NIE jest błąd.
 // - FAILED_VALIDATION: trening się udał, model POWSTAŁ, ale nie przeszedł guardraili deploy.
 // - FAILED_TIMEOUT: cooperative cancellation (deadline sprawdzany co epokę).
@@ -49,7 +51,8 @@ export const TRAINING_STATUS = {
     FAILED_NUMERICAL: 'FAILED_NUMERICAL',
     FAILED_VALIDATION: 'FAILED_VALIDATION',
     FAILED_TIMEOUT: 'FAILED_TIMEOUT',
-    FAILED_ERROR: 'FAILED_ERROR'
+    FAILED_ERROR: 'FAILED_ERROR',
+    FAILED_INTERRUPTED: 'FAILED_INTERRUPTED'
 } as const;
 
 export const SEED = 42;
@@ -277,21 +280,28 @@ export function computeRocAuc(scores: number[], labels: number[]): number {
 
 export class TrainingPipeline {
     private running = false;
-    private mutex: Promise<void> | null = null;
 
-    private async acquire(): Promise<() => void> {
-        let release: () => void;
-        const prev = this.mutex;
-        this.mutex = new Promise<void>((resolve) => {
-            release = resolve;
+    private acquire(): (() => void) | null {
+        if (this.running) return null;
+        this.running = true;
+        return () => {
+            this.running = false;
+        };
+    }
+
+    async recoverInterruptedRuns(): Promise<number> {
+        const result = await prisma.aiTrainingRun.updateMany({
+            where: { status: TRAINING_STATUS.RUNNING },
+            data: {
+                status: TRAINING_STATUS.FAILED_INTERRUPTED,
+                finishedAt: new Date().toISOString(),
+                error: 'interrupted_by_process_restart'
+            }
         });
-        const timer = setTimeout(() => {
-            logger.error('TrainingPipeline', 'Mutex timeout 5min — wymuszam zwolnienie');
-            release!();
-        }, 300_000);
-        await prev;
-        clearTimeout(timer);
-        return release!;
+        if (result.count > 0) {
+            logger.warn('TrainingPipeline', `Oznaczono ${result.count} przerwanych runów`);
+        }
+        return result.count;
     }
 
     /**
@@ -419,11 +429,8 @@ export class TrainingPipeline {
     async run(
         force = false
     ): Promise<{ trained: boolean; version?: string; metrics?: ModelMetrics; reason?: string }> {
-        if (this.running && !force) {
-            return { trained: false, reason: 'already_running' };
-        }
-        const release = await this.acquire();
-        this.running = true;
+        const release = this.acquire();
+        if (!release) return { trained: false, reason: 'already_running' };
 
         // Run audit — jeden wiersz AiTrainingRun na każdą RZECZYWISTĄ próbę treningu
         // (split guard, brak klas, FAILED_*). Pre-flight skippidy wiersza nie tworzą.
@@ -445,6 +452,20 @@ export class TrainingPipeline {
         let datasetStartAt: string | null = null;
         let datasetEndAt: string | null = null;
         let status: string = TRAINING_STATUS.RUNNING;
+        let finishFailed = false;
+        let terminalSaved = false;
+        let stageDurations: Record<string, number> = {};
+        const measureStage = async <T>(
+            name: string,
+            operation: () => T | Promise<T>
+        ): Promise<T> => {
+            const stageStartedAt = Date.now();
+            try {
+                return await operation();
+            } finally {
+                stageDurations = { ...stageDurations, [name]: Date.now() - stageStartedAt };
+            }
+        };
 
         const finish = async (
             s: string,
@@ -452,6 +473,11 @@ export class TrainingPipeline {
         ): Promise<{ trained: boolean; reason: string }> => {
             status = s;
             if (reason) errorMsg = reason;
+            logger.info(
+                'TrainingPipeline',
+                `Czasy runu: ${JSON.stringify({ status: s, totalMs: Date.now() - new Date(startedAt).getTime(), stagesMs: stageDurations })}`
+            );
+            if (terminalSaved) return { trained: false, reason: errorMsg || s };
             try {
                 await prisma.aiTrainingRun.update({
                     where: { id: runId },
@@ -476,13 +502,41 @@ export class TrainingPipeline {
                     }
                 });
             } catch (e) {
+                finishFailed = true;
                 logger.error(
                     'TrainingPipeline',
                     `Błąd zapisu AiTrainingRun ${runId}: ${e instanceof Error ? e.message : String(e)}`
                 );
+                throw e;
             }
             return { trained: false, reason: errorMsg || s };
         };
+
+        const buildRunCompletion = (
+            completionStatus: string,
+            error: string | null
+        ): TrainingRunCompletion => ({
+            id: runId,
+            data: {
+                status: completionStatus,
+                finishedAt: new Date().toISOString(),
+                datasetSize,
+                trainSize,
+                validationSize: valSize,
+                testSize,
+                candidateModelVersion: null,
+                comparedAgainstVersion,
+                datasetStartAt,
+                datasetEndAt,
+                datasetFingerprint: fingerprint,
+                metrics: metricsJson,
+                baselineAccuracy,
+                positiveRate,
+                deployed,
+                deploymentReason,
+                error
+            }
+        });
 
         try {
             // Pre-flight gate (F1/F2): tania decyzja PRZED ciężką pracą (extract/resync)
@@ -513,14 +567,16 @@ export class TrainingPipeline {
                 }
             });
 
-            await featureExtractor.extractAndStore(allowlist);
+            await measureStage('extract', () => featureExtractor.extractAndStore(allowlist));
             // Feedback (accept/reject/modify) często nadchodzi PO ekstrakcji cech.
             // Re-synchronizuj etykiety, żeby trening miał klasę negatywną (bez niej
             // model jest zdegenerowany — stała predykcja ~1.0 dla wszystkich kandydatów).
-            await featureExtractor.resyncLabels(2000, allowlist);
+            await measureStage('resyncLabels', () =>
+                featureExtractor.resyncLabels(2000, allowlist)
+            );
             // Historyczne wektory policzone przez stare wersje ekstraktora mają puste
             // cechy (ringCount/connectionCount/bottomType) — przelicz je w miejscu.
-            await featureExtractor.resyncFeatures(allowlist);
+            await measureStage('resyncFeatures', () => featureExtractor.resyncFeatures(allowlist));
 
             if (!hasSameTrainingUsers(allowlist, await getTrainingUserIds())) {
                 return finish(TRAINING_STATUS.SKIPPED, 'training_users_changed');
@@ -644,17 +700,23 @@ export class TrainingPipeline {
             }
 
             const model = new AcceptanceModel(dim);
-            model.train(
-                trainSet.map((ex) => ({ features: ex.vec, label: ex.label, weight: ex.weight })),
-                0.01,
-                5000,
-                0.01,
-                {
-                    // Timeout: cooperative cancellation — deadline sprawdzany co epokę
-                    deadline: Date.now() + ML_CONFIG.maxTrainingDurationMs,
-                    divergenceThreshold: ML_CONFIG.divergenceThreshold,
-                    divergenceEpochs: ML_CONFIG.divergenceEpochs
-                }
+            await measureStage('fit', () =>
+                model.train(
+                    trainSet.map((ex) => ({
+                        features: ex.vec,
+                        label: ex.label,
+                        weight: ex.weight
+                    })),
+                    0.01,
+                    5000,
+                    0.01,
+                    {
+                        // Timeout: cooperative cancellation — deadline sprawdzany co epokę
+                        deadline: Date.now() + ML_CONFIG.maxTrainingDurationMs,
+                        divergenceThreshold: ML_CONFIG.divergenceThreshold,
+                        divergenceEpochs: ML_CONFIG.divergenceEpochs
+                    }
+                )
             );
 
             // TEST — wyłącznie końcowa, niezależna ocena. NIE wpływa na tuning,
@@ -688,38 +750,76 @@ export class TrainingPipeline {
                 );
                 // Model POWSTAŁ (trening się udał) — zapisujemy go jako REJECTED,
                 // żeby miał ślad w rejestrze i nie wpływał na ranking (active=false).
-                const rejectedVersion = await modelRegistry.saveModel(
-                    model,
-                    metrics,
-                    FEATURE_NAMES,
-                    mins,
-                    maxs,
-                    false,
-                    `REJECTED przez guardrail: ${gate.reason}`,
-                    AiModelState.REJECTED,
-                    this.buildFeatureDistributionsJson(trainSet)
+                const rejectedVersion = await measureStage('saveAndFinalize', () =>
+                    modelRegistry.saveModel(
+                        model,
+                        metrics,
+                        FEATURE_NAMES,
+                        mins,
+                        maxs,
+                        false,
+                        `REJECTED przez guardrail: ${gate.reason}`,
+                        AiModelState.REJECTED,
+                        this.buildFeatureDistributionsJson(trainSet),
+                        undefined,
+                        buildRunCompletion(
+                            TRAINING_STATUS.FAILED_VALIDATION,
+                            `${gate.code}:${gate.reason}`
+                        )
+                    )
                 );
                 candidateModelVersion = rejectedVersion;
                 deployed = false;
                 deploymentReason = gate.reason;
+                terminalSaved = true;
                 return finish(TRAINING_STATUS.FAILED_VALIDATION, `${gate.code}:${gate.reason}`);
             }
 
-            const version = await modelRegistry.saveModel(
-                model,
-                metrics,
-                FEATURE_NAMES,
-                mins,
-                maxs,
-                true,
-                undefined,
-                AiModelState.PRODUCTION,
-                this.buildFeatureDistributionsJson(trainSet),
-                allowlist
-            );
-            candidateModelVersion = version;
+            let version: string;
             deployed = true;
             deploymentReason = gate.reason;
+            try {
+                version = await measureStage('saveAndFinalize', () =>
+                    modelRegistry.saveModel(
+                        model,
+                        metrics,
+                        FEATURE_NAMES,
+                        mins,
+                        maxs,
+                        true,
+                        undefined,
+                        AiModelState.PRODUCTION,
+                        this.buildFeatureDistributionsJson(trainSet),
+                        allowlist,
+                        buildRunCompletion(TRAINING_STATUS.SUCCESS, null),
+                        comparedAgainstVersion
+                    )
+                );
+            } catch (e) {
+                if (!(e instanceof ProductionModelChangedError)) throw e;
+                deployed = false;
+                deploymentReason = 'production_model_changed_during_training';
+                version = await measureStage('saveAndFinalize', () =>
+                    modelRegistry.saveModel(
+                        model,
+                        metrics,
+                        FEATURE_NAMES,
+                        mins,
+                        maxs,
+                        false,
+                        'Kandydat wymaga ponownej oceny względem aktualnej produkcji',
+                        AiModelState.CANDIDATE,
+                        this.buildFeatureDistributionsJson(trainSet),
+                        undefined,
+                        buildRunCompletion(TRAINING_STATUS.SKIPPED, deploymentReason)
+                    )
+                );
+                candidateModelVersion = version;
+                terminalSaved = true;
+                return finish(TRAINING_STATUS.SKIPPED, deploymentReason);
+            }
+            candidateModelVersion = version;
+            terminalSaved = true;
             logger.info(
                 'TrainingPipeline',
                 `Wytrenowano i wdrożono ${version} (auc=${metrics.rocAuc})`
@@ -730,6 +830,7 @@ export class TrainingPipeline {
                 metrics
             }));
         } catch (e) {
+            if (finishFailed) throw e;
             if (e instanceof TrainingUsersChangedError) {
                 await finish(TRAINING_STATUS.SKIPPED, e.message);
                 return { trained: false, reason: e.message };
@@ -745,7 +846,6 @@ export class TrainingPipeline {
             await finish(status, `${status.toLowerCase()}:${msg}`);
             return { trained: false, reason: `${status.toLowerCase()}:${msg}` };
         } finally {
-            this.running = false;
             release();
         }
     }

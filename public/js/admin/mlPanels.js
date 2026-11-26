@@ -240,6 +240,10 @@
             }
             const rows = runs
                 .map(function (r) {
+                    const statusLabel =
+                        r.status === 'FAILED_INTERRUPTED'
+                            ? 'Przerwane po restarcie'
+                            : r.status || '—';
                     const statusCls =
                         r.status === 'SUCCESS'
                             ? 'class="fs-xl-success-bold"'
@@ -261,7 +265,7 @@
                         '<td ' +
                         statusCls +
                         '>' +
-                        window.escapeHtml(r.status || '—') +
+                        window.escapeHtml(statusLabel) +
                         '</td>' +
                         '<td>' +
                         (r.datasetSize || 0) +
@@ -294,7 +298,7 @@
                 '<table class="ai-table">' +
                 '<thead><tr>' +
                 '<th scope="col" title="Data rozpoczęcia przebiegu">Start</th>' +
-                '<th scope="col" title="Status przebiegu (SUCCESS/SKIPPED/FAILED_*)">Status</th>' +
+                '<th scope="col" title="Status przebiegu (w tym przerwanie przy restarcie)">Status</th>' +
                 '<th scope="col" title="Rozmiar zbioru: dataset (train/validation/test)">Zbiór</th>' +
                 '<th scope="col" title="Wersja modelu wyprodukowanego przez przebieg">Model</th>' +
                 '<th scope="col" title="Czy model został wdrożony do produkcji">Wdrożony</th>' +

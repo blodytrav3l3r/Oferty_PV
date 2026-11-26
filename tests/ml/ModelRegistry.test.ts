@@ -349,6 +349,18 @@ describe('ModelRegistry.getBestAuc / listModels / getModelCount', () => {
 });
 
 describe('ModelRegistry.rollbackToPrevious', () => {
+    it('pomija rollback, jeśli aktywny model zmienił się od oceny AUC', async () => {
+        findFirst.mockResolvedValueOnce(
+            record({ id: 'new-active', version: 'v-new', active: true })
+        );
+
+        await expect(registry.rollbackToPrevious('v-evaluated')).resolves.toBeNull();
+
+        expect(findFirst).toHaveBeenCalledTimes(1);
+        expect(update).not.toHaveBeenCalled();
+        expect(transaction).not.toHaveBeenCalled();
+    });
+
     it('przywraca poprzedni model atomowo i czyści cache', async () => {
         const active = record({ id: 'current', active: true });
         const previous = record({ id: 'prev', version: 'v-prev', active: false });

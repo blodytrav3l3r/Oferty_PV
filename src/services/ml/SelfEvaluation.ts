@@ -7,25 +7,38 @@ import { ML_CONFIG } from './trainingConfig';
 import { ML_CONSTANTS } from '../../config/mlConstants';
 
 export class SelfEvaluation {
-    private slidingWindow: Array<{ label: number; score: number }> = [];
+    private slidingWindow: Array<{ label: number; score: number; modelVersion: string }> = [];
     private readonly SLIDING_WINDOW_SIZE = 200;
     private featureVersion: string = ML_CONSTANTS.FEATURE_VERSION;
+    private windowModelVersion: string | null = null;
     // Mutex + agregacja: równoległe wywołania checkAndRollbackIfNeeded
     // (predict/batch fire-and-forget) współdzielą jedno wykonywanie — bez tego
     // dwa jednoczesne rollbacki przesuwałyby model o 2 pozycje wstecz (flapping).
     private rollbackPromise: Promise<{ rolledBack: boolean; slidingAuc: number | null }> | null =
         null;
 
-    recordPredictionResult(actualLabel: number, predictedScore: number): void {
+    recordPredictionResult(
+        actualLabel: number,
+        predictedScore: number,
+        modelVersion = 'unknown'
+    ): void {
         // Zmiana wersji cech (FEATURE_VERSION) unieważnia historyczne predykcje —
         // okno czyścimy, by sliding AUC nie mieszał wektorów z różnych wersji cech.
         if (ML_CONSTANTS.FEATURE_VERSION !== this.featureVersion) {
             this.slidingWindow = [];
+            this.windowModelVersion = null;
             this.featureVersion = ML_CONSTANTS.FEATURE_VERSION;
         }
-        this.slidingWindow.push({ label: actualLabel, score: predictedScore });
+        if (this.windowModelVersion !== modelVersion) {
+            this.slidingWindow = [];
+            this.windowModelVersion = modelVersion;
+        }
+        this.slidingWindow = [
+            ...this.slidingWindow,
+            { label: actualLabel, score: predictedScore, modelVersion }
+        ];
         if (this.slidingWindow.length > this.SLIDING_WINDOW_SIZE) {
-            this.slidingWindow.shift();
+            this.slidingWindow = this.slidingWindow.slice(-this.SLIDING_WINDOW_SIZE);
         }
     }
 
@@ -40,6 +53,13 @@ export class SelfEvaluation {
     private async _runCheck(): Promise<{ rolledBack: boolean; slidingAuc: number | null }> {
         const window = this.slidingWindow;
         if (window.length < 10) {
+            return { rolledBack: false, slidingAuc: null };
+        }
+
+        const activeModel = await modelRegistry.getActiveModel();
+        if (!activeModel || this.windowModelVersion !== activeModel.version) {
+            this.slidingWindow = [];
+            this.windowModelVersion = activeModel?.version ?? null;
             return { rolledBack: false, slidingAuc: null };
         }
 
@@ -59,10 +79,11 @@ export class SelfEvaluation {
                 'SelfEvaluation',
                 `Sliding AUC=${slidingAuc.toFixed(4)} < ${ML_CONFIG.rollbackAucThreshold} — auto-rollback`
             );
-            const previous = await modelRegistry.rollbackToPrevious();
+            const previous = await modelRegistry.rollbackToPrevious(activeModel.version);
             if (previous) {
                 logger.info('SelfEvaluation', `Auto-rollback do ${previous.version}`);
                 this.slidingWindow = [];
+                this.windowModelVersion = null;
                 return { rolledBack: true, slidingAuc };
             }
         }
@@ -81,8 +102,13 @@ export class SelfEvaluation {
         // Bramka SSoT z TrainingPipeline (trwałe lastSuccessAt z DB zamiast
         // in-memory lastRunAt — przetrwa restart; decyzja spójna z cronem).
         const gate = await trainingPipeline.shouldTrain();
+        if (!gate.ok && gate.reason === 'already_running') {
+            logger.info('SelfEvaluation', 'Trening już trwa — pomijam samoocenę');
+            return { rolledBack: false };
+        }
         if (gate.ok) {
             const result = await trainingPipeline.run();
+            if (result.reason === 'already_running') return { rolledBack: false };
             if (result.trained && result.metrics) {
                 await prisma.aiEvaluation.create({
                     data: {

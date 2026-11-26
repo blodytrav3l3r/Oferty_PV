@@ -60,19 +60,25 @@ export function predictionCacheSize(): number {
  * wellId w candidate, serwer zapamiętuje zwrócony score — reward używa
  * serwerowego score, nie deklarowanego przez klienta.
  */
-const wellScores = new Map<string, { score: number; timestamp: number }>();
+const wellScores = new Map<string, { score: number; version: string; timestamp: number }>();
 const WELL_SCORE_TTL_MS = 15 * 60 * 1000;
 
-export function setWellScore(wellId: string, score: number): void {
+export function setWellScore(wellId: string, score: number, version = 'unknown'): void {
     if (wellScores.size >= CACHE_MAX_SIZE) {
         const oldest = wellScores.keys().next().value;
         if (oldest !== undefined) wellScores.delete(oldest);
     }
-    wellScores.set(wellId, { score, timestamp: Date.now() });
+    wellScores.set(wellId, { score, version, timestamp: Date.now() });
 }
 
 export function getWellScore(wellId: string): number | undefined {
     const entry = wellScores.get(wellId);
     if (entry && Date.now() - entry.timestamp < WELL_SCORE_TTL_MS) return entry.score;
     return undefined;
+}
+
+export function getWellPrediction(wellId: string): { score: number; version: string } | undefined {
+    const entry = wellScores.get(wellId);
+    if (!entry || Date.now() - entry.timestamp >= WELL_SCORE_TTL_MS) return undefined;
+    return { score: entry.score, version: entry.version };
 }

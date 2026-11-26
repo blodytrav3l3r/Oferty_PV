@@ -472,6 +472,10 @@ export async function initApp(): Promise<void> {
     }
 
     // Model ML — auto-heal: upewnij się, że w bazie istnieje aktywny model ML dla bieżącej wersji cech
+    // Recovery musi zakończyć się przed wystawieniem API i uruchomieniem cronów.
+    const { trainingPipeline } = await import('./services/ml/TrainingPipeline');
+    await trainingPipeline.recoverInterruptedRuns();
+
     try {
         await modelRegistry.ensureStarterModelExists();
     } catch (err) {
