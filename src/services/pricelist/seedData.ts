@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { ZAKRESY_TYPES } from '../../constants/precoSizes';
 import { resolveDataDir } from '../../utils/paths';
+import { productsStudnieRowSchema } from '../../validators/priceDefaultsSchemas';
 
 export type SeedRow = Record<string, unknown>;
 
@@ -25,15 +26,41 @@ function readJson(fileName: string): unknown {
     return JSON.parse(fs.readFileSync(path.join(resolveDataDir(), fileName), 'utf-8'));
 }
 
+function assertKinetaSeedRows(rows: SeedRow[]): void {
+    for (const row of rows) {
+        if (row.componentType !== 'kineta') continue;
+        const result = productsStudnieRowSchema.safeParse({
+            id: row.id,
+            name: row.name,
+            category: row.category,
+            componentType: row.componentType,
+            hMin1: row.hMin1,
+            hMax1: row.hMax1,
+            cena1: row.cena1,
+            hMin2: row.hMin2,
+            hMax2: row.hMax2,
+            cena2: row.cena2,
+            hMin3: row.hMin3,
+            hMax3: row.hMax3,
+            cena3: row.cena3
+        });
+        if (!result.success) {
+            throw new Error(`Niepoprawne pasma cen kinety w seedzie: ${String(row.id)}`);
+        }
+    }
+}
+
 function load(): NonNullable<typeof cache> {
     if (cache) return cache;
     const precoRaw = readJson('seed_preco.json');
+    const studnie = readJson('seed_studnie.json') as SeedRow[];
+    assertKinetaSeedRows(studnie);
     const preco = Array.isArray(precoRaw)
         ? ((precoRaw[0] ?? {}) as Record<string, SeedRow>)
         : (precoRaw as Record<string, SeedRow>);
     cache = {
         rury: readJson('seed_rury.json') as SeedRow[],
-        studnie: readJson('seed_studnie.json') as SeedRow[],
+        studnie,
         preco
     };
     return cache;

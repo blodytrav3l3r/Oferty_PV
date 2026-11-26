@@ -18,43 +18,80 @@ export const productsRuryRowSchema = z.object({
     area: z.number().nullable().optional()
 });
 
-export const productsStudnieRowSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    category: z.string(),
-    componentType: z.string(),
-    dn: z.string().nullable().optional(),
-    height: z.number().int().nullable().optional(),
-    weight: z.number().nullable().optional(),
-    price: z.number().finite().nonnegative().optional(),
-    area: z.number().nullable().optional(),
-    areaExt: z.number().nullable().optional(),
-    transport: z.number().nullable().optional(),
-    magazynWL: z.boolean().optional(),
-    magazynKLB: z.boolean().optional(),
-    formaStandardowa: z.boolean().optional(),
-    formaStandardowaKLB: z.boolean().optional(),
-    active: z.boolean().optional(),
-    zapasDol: z.number().int().nullable().optional(),
-    zapasGora: z.number().int().nullable().optional(),
-    zapasDolMin: z.number().int().nullable().optional(),
-    zapasGoraMin: z.number().int().nullable().optional(),
-    spocznikH: z.string().nullable().optional(),
-    hMin1: z.number().int().nullable().optional(),
-    hMax1: z.number().int().nullable().optional(),
-    cena1: z.number().finite().nonnegative().nullable().optional(),
-    hMin2: z.number().int().nullable().optional(),
-    hMax2: z.number().int().nullable().optional(),
-    cena2: z.number().finite().nonnegative().nullable().optional(),
-    hMin3: z.number().int().nullable().optional(),
-    hMax3: z.number().int().nullable().optional(),
-    cena3: z.number().finite().nonnegative().nullable().optional(),
-    doplataPEHD: z.number().nullable().optional(),
-    doplataZelbet: z.number().nullable().optional(),
-    doplataDrabNierdzewna: z.number().nullable().optional(),
-    malowanieWewnetrzne: z.number().nullable().optional(),
-    malowanieZewnetrzne: z.number().nullable().optional()
-});
+export const productsStudnieRowSchema = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+        category: z.string(),
+        componentType: z.string(),
+        dn: z.string().nullable().optional(),
+        height: z.number().int().nullable().optional(),
+        weight: z.number().nullable().optional(),
+        price: z.number().finite().nonnegative().optional(),
+        area: z.number().nullable().optional(),
+        areaExt: z.number().nullable().optional(),
+        transport: z.number().nullable().optional(),
+        magazynWL: z.boolean().optional(),
+        magazynKLB: z.boolean().optional(),
+        formaStandardowa: z.boolean().optional(),
+        formaStandardowaKLB: z.boolean().optional(),
+        active: z.boolean().optional(),
+        zapasDol: z.number().int().nullable().optional(),
+        zapasGora: z.number().int().nullable().optional(),
+        zapasDolMin: z.number().int().nullable().optional(),
+        zapasGoraMin: z.number().int().nullable().optional(),
+        spocznikH: z.string().nullable().optional(),
+        hMin1: z.number().int().nullable().optional(),
+        hMax1: z.number().int().nullable().optional(),
+        cena1: z.number().finite().nonnegative().nullable().optional(),
+        hMin2: z.number().int().nullable().optional(),
+        hMax2: z.number().int().nullable().optional(),
+        cena2: z.number().finite().nonnegative().nullable().optional(),
+        hMin3: z.number().int().nullable().optional(),
+        hMax3: z.number().int().nullable().optional(),
+        cena3: z.number().finite().nonnegative().nullable().optional(),
+        doplataPEHD: z.number().nullable().optional(),
+        doplataZelbet: z.number().nullable().optional(),
+        doplataDrabNierdzewna: z.number().nullable().optional(),
+        malowanieWewnetrzne: z.number().nullable().optional(),
+        malowanieZewnetrzne: z.number().nullable().optional()
+    })
+    .superRefine((row, context) => {
+        if (row.componentType !== 'kineta') return;
+
+        const bands = [
+            { min: row.hMin1, max: row.hMax1, price: row.cena1, field: 'cena1' },
+            { min: row.hMin2, max: row.hMax2, price: row.cena2, field: 'cena2' },
+            { min: row.hMin3, max: row.hMax3, price: row.cena3, field: 'cena3' }
+        ];
+        const usableBands = bands.filter(
+            (band) =>
+                band.min != null && band.max != null && band.price != null && band.min <= band.max
+        );
+
+        if (usableBands.length === 0) {
+            context.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['cena1'],
+                message: 'Kineta musi mieć co najmniej jeden poprawny zakres Hmin/Hmax z ceną'
+            });
+        }
+
+        for (const band of bands) {
+            const hasBounds = band.min != null || band.max != null;
+            if (
+                hasBounds &&
+                (band.min == null || band.max == null || band.min > band.max || band.price == null)
+            ) {
+                context.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: [band.field],
+                    message:
+                        'Zakres kinety wymaga Hmin, Hmax i ceny; Hmax nie może być mniejsze od Hmin'
+                });
+            }
+        }
+    });
 
 export const precoKonfigRowSchema = z.object({
     id: z.string(),

@@ -128,7 +128,7 @@ function renderStudniePriceList() {
     const isPrzejscia = currentCennikTab === 'przejscia';
     const isKinety = currentCennikTab === 'kinety';
     // Kontrakt: nagłówek grupy obejmuje wszystkie kolumny (regresja błędu #7).
-    const colCount = isPrzejscia ? 11 : isKinety ? 16 : 18;
+    const colCount = isPrzejscia ? 11 : isKinety ? 15 : 18;
 
     if (isPrzejscia || isKinety) {
         groupOrder = Array.from(dynamicGroups).sort();
@@ -220,7 +220,7 @@ function renderStudniePriceList() {
           <th scope="col" class="text-center w-4pct"  title="Forma Standardowa: Kluczbork (1=Tak, 0=Nie)">FS.KLB</th>
           `
           }
-          <th scope="col" class="text-right ui-col-6${isKinety ? ' pricelist-kineta-catalog-price' : ''}"${isKinety ? ' title="Cena bazowa — używana tylko wtedy, gdy wysokość dolnej dennicy nie mieści się w żadnym zakresie Hmin/Hmax 1–3"' : ''}>Cena PLN</th>
+          ${!isKinety ? '<th scope="col" class="text-right ui-col-6">Cena PLN</th>' : ''}
           <th scope="col" class="text-center ui-col-6">Akcje</th>
         </tr>
       </thead>`;
@@ -254,13 +254,13 @@ function renderStudniePriceList() {
 
         html += `<tbody>
       <tr>
-        <td colspan="${colCount - 2 - categoryFields.length}" style="padding:0; border-bottom:1px solid var(--border);">
+        <td colspan="${colCount - (isKinety ? 1 : 2) - categoryFields.length}" style="padding:0; border-bottom:1px solid var(--border);">
           <div class="cat-header">
             <span>${label} <span class="cat-count">(${items.length})</span></span>
           </div>
         </td>
         ${categoryFlagCells}
-        <td class="text-right"></td>
+        ${isKinety ? '' : '<td class="text-right"></td>'}
         <td class="cat-header-actions-cell">
           <span class="pricelist-actions">
             <button class="btn-icon fs-base-025" title="Dodaj element do tej kategorii" aria-label="Dodaj element" data-action="addStudnieElement" data-group="${escapeHtmlAttr(groupKey)}"
@@ -330,7 +330,7 @@ function renderStudniePriceList() {
             }
 
             html += `
-        <td class="text-right${isKinety ? ' pricelist-kineta-catalog-price' : ''}" data-action="editStudnieCell" data-field="price" data-id="${escapeHtmlAttr(p.id)}"${isKinety ? '' : ' style="cursor:pointer; font-weight: var(--fw-bold); color:var(--success);"'}${isKinety ? ' title="Cena bazowa — używana tylko wtedy, gdy wysokość dolnej dennicy nie mieści się w żadnym zakresie Hmin/Hmax 1–3"' : ''}>${fmt(p.price)}</td>
+        ${!isKinety ? `<td class="text-right" data-action="editStudnieCell" data-field="price" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:var(--success);">${fmt(p.price)}</td>` : ''}
         <td class="text-center text-nowrap">
           <span class="pricelist-actions">
           <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyStudnieProduct" data-id="${escapeHtmlAttr(p.id)}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>

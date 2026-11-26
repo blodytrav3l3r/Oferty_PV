@@ -170,8 +170,40 @@ function getKinetaPricingDennicaHeight(well) {
     return 0;
 }
 
+function getKinetaBandPrice(product, height) {
+    const bands = [1, 2, 3]
+        .map((number) => {
+            const minValue = product[`hMin${number}`];
+            const maxValue = product[`hMax${number}`];
+            const priceValue = product[`cena${number}`];
+            if (minValue == null || maxValue == null || priceValue == null) return null;
+            const min = Number(minValue);
+            const max = Number(maxValue);
+            const price = Number(priceValue);
+            if (!Number.isFinite(min) || !Number.isFinite(max) || min > max) return null;
+            if (!Number.isFinite(price) || price < 0) return null;
+            return { number, min, max, price };
+        })
+        .filter(Boolean);
+
+    if (bands.length === 0) {
+        throw new Error(`${product.name || product.id} nie ma poprawnego zakresu ceny`);
+    }
+
+    const matchingBand = bands.find((band) => height >= band.min && height <= band.max);
+    if (matchingBand) return matchingBand.price;
+
+    return bands
+        .map((band) => ({
+            ...band,
+            distance: height < band.min ? band.min - height : height - band.max
+        }))
+        .sort((left, right) => left.distance - right.distance || left.number - right.number)[0]
+        .price;
+}
+
 function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
-    let itemPrice = p.price || 0;
+    let itemPrice = p.componentType === 'kineta' ? 0 : p.price || 0;
 
     let discountPct = 0;
     if (applyDiscount && well.dn) {
@@ -185,24 +217,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
 
     if (p.componentType === 'kineta') {
         const dennicaHeight = getKinetaPricingDennicaHeight(well);
-
-        const h1m = parseFloat(p.hMin1);
-        const h1x = parseFloat(p.hMax1);
-        const h2m = parseFloat(p.hMin2);
-        const h2x = parseFloat(p.hMax2);
-        const h3m = parseFloat(p.hMin3);
-        const h3x = parseFloat(p.hMax3);
-
-        let kinetaBase = itemPrice;
-        if (!isNaN(h1m) && !isNaN(h1x) && dennicaHeight >= h1m && dennicaHeight <= h1x) {
-            kinetaBase = parseFloat(p.cena1) || 0;
-        } else if (!isNaN(h2m) && !isNaN(h2x) && dennicaHeight >= h2m && dennicaHeight <= h2x) {
-            kinetaBase = parseFloat(p.cena2) || 0;
-        } else if (!isNaN(h3m) && !isNaN(h3x) && dennicaHeight >= h3m && dennicaHeight <= h3x) {
-            kinetaBase = parseFloat(p.cena3) || 0;
-        }
-
-        itemPrice = kinetaBase * mult;
+        itemPrice = getKinetaBandPrice(p, dennicaHeight) * mult;
 
         if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
             if (
@@ -306,7 +321,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
 }
 
 function getItemPriceBreakdown(well, p, applyDiscount, item) {
-    let base = p.price || 0;
+    let base = p.componentType === 'kineta' ? 0 : p.price || 0;
     let pehd = 0;
     let malowanieW = 0;
     let malowanieZ = 0;
@@ -324,24 +339,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
 
     if (p.componentType === 'kineta') {
         const dennicaHeight = getKinetaPricingDennicaHeight(well);
-
-        const h1m = parseFloat(p.hMin1);
-        const h1x = parseFloat(p.hMax1);
-        const h2m = parseFloat(p.hMin2);
-        const h2x = parseFloat(p.hMax2);
-        const h3m = parseFloat(p.hMin3);
-        const h3x = parseFloat(p.hMax3);
-
-        let kinetaBase = base;
-        if (!isNaN(h1m) && !isNaN(h1x) && dennicaHeight >= h1m && dennicaHeight <= h1x) {
-            kinetaBase = parseFloat(p.cena1) || 0;
-        } else if (!isNaN(h2m) && !isNaN(h2x) && dennicaHeight >= h2m && dennicaHeight <= h2x) {
-            kinetaBase = parseFloat(p.cena2) || 0;
-        } else if (!isNaN(h3m) && !isNaN(h3x) && dennicaHeight >= h3m && dennicaHeight <= h3x) {
-            kinetaBase = parseFloat(p.cena3) || 0;
-        }
-
-        base = kinetaBase * mult;
+        base = getKinetaBandPrice(p, dennicaHeight) * mult;
 
         if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
             if (

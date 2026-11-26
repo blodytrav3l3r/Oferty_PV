@@ -10,7 +10,9 @@ const studnieCss = fs.readFileSync(path.join(process.cwd(), 'public/css/studnie.
 
 describe('frontend: kontrakt colspan nagłówków grup (błąd #7)', () => {
     it('studnie: nagłówek grupy używa labelki (colspan - 1) plus komórka akcji', () => {
-        expect(studnie).toMatch('colspan="${colCount - 2 - categoryFields.length}"');
+        expect(studnie).toMatch(
+            'colspan="${colCount - (isKinety ? 1 : 2) - categoryFields.length}"'
+        );
         expect(studnie).toContain('cat-header-actions-cell');
         expect(studnie).toContain('class="pricelist-flag-cell">${categoryFlag(');
         expect(studnie).toContain('wlaz: \'<i data-lucide="circle-dot"></i> Właz\'');
@@ -24,17 +26,21 @@ describe('frontend: kontrakt colspan nagłówków grup (błąd #7)', () => {
 });
 
 describe('frontend: oznaczenia cen kinet', () => {
-    it('wyróżnia trzy zakresy cen i opisuje cenę bazową', () => {
+    it('wyróżnia trzy zakresy cen i ukrywa cenę PLN wyłącznie dla kinet', () => {
         expect(studnie).toContain('pricelist-kineta-band--1');
         expect(studnie).toContain('pricelist-kineta-band--2');
         expect(studnie).toContain('pricelist-kineta-band--3');
         expect(studnie).toContain('Cena do wyceny dla wysokości dennicy w zakresie Hmin1–Hmax1');
         expect(studnie).toContain('Cena do wyceny dla wysokości dennicy w zakresie Hmin2–Hmax2');
         expect(studnie).toContain('Cena do wyceny dla wysokości dennicy w zakresie Hmin3–Hmax3');
-        expect(studnie).toContain('pricelist-kineta-catalog-price');
         expect(studnie).toContain(
-            'Cena bazowa — używana tylko wtedy, gdy wysokość dolnej dennicy nie mieści się'
+            '${!isKinety ? \'<th scope="col" class="text-right ui-col-6">Cena PLN</th>\' : \'\'}'
         );
+        expect(studnie).toContain(
+            '${!isKinety ? `<td class="text-right" data-action="editStudnieCell" data-field="price"'
+        );
+        expect(studnie).toContain('const colCount = isPrzejscia ? 11 : isKinety ? 15 : 18;');
+        expect(studnie).not.toContain('pricelist-kineta-catalog-price');
         expect(studnie).toContain('pricelist-kineta-price');
         expect(studnieCss).toContain('color: var(--success-hover);');
         expect(studnieCss).toContain('color: var(--warn-hover);');

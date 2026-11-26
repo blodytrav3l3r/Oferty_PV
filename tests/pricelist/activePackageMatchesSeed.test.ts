@@ -39,4 +39,27 @@ describe('pakiet aktywnych cenników', () => {
             expect(artifact.counts[`${type}.${key}`]).toBe((expected as unknown[]).length);
         }
     });
+
+    it('pakiet świeżej instalacji ma poprawne pasma cen wszystkich kinet', () => {
+        const rows = artifact.items.studnie.pricelist_item_studnie as Array<
+            Record<string, unknown>
+        >;
+        const kinety = rows.filter((row) => row.componentType === 'kineta');
+
+        expect(kinety.length).toBeGreaterThan(0);
+        for (const kineta of kinety) {
+            const hasUsableBand = [1, 2, 3].some((number) => {
+                const min = kineta[`hMin${number}`];
+                const max = kineta[`hMax${number}`];
+                const price = kineta[`cena${number}`];
+                return (
+                    typeof min === 'number' &&
+                    typeof max === 'number' &&
+                    typeof price === 'number' &&
+                    min <= max
+                );
+            });
+            expect(hasUsableBand).toBe(true);
+        }
+    });
 });

@@ -40,6 +40,27 @@ describe('Ceny kinety według rzeczywistej wysokości dennicy', () => {
             name: 'Dennica DN1000 H=650/500'
         },
         {
+            id: 'dennica-1800',
+            componentType: 'dennica',
+            dn: '1000',
+            height: 1800,
+            name: 'Dennica DN1000 H=1800'
+        },
+        {
+            id: 'dennica-600',
+            componentType: 'dennica',
+            dn: '1000',
+            height: 600,
+            name: 'Dennica DN1000 H=600'
+        },
+        {
+            id: 'dennica-50',
+            componentType: 'dennica',
+            dn: '1000',
+            height: 50,
+            name: 'Dennica DN1000 H=50'
+        },
+        {
             id: 'kineta-dn1000-11',
             componentType: 'kineta',
             dn: '1000',
@@ -118,5 +139,87 @@ describe('Ceny kinety według rzeczywistej wysokości dennicy', () => {
         expect(
             pricingForConfig(['dennica-650-500', 'dennica-1500-1350', 'kineta-dn1000-11']).assessed
         ).toBe(280);
+    });
+
+    test('wysokość powyżej ostatniego zakresu wybiera cenę najbliższego zakresu', () => {
+        expect(priceFor('dennica-1800')).toBe(280);
+    });
+
+    test('wysokość poniżej pierwszego zakresu wybiera CENA1', () => {
+        const kineta = products.find((product) => product.id === 'kineta-dn1000-11');
+        if (!kineta) throw new Error('Brak produktu kinety w fixture');
+        const changedKineta = { ...kineta, price: 999, hMin1: 100, hMax1: 300 };
+        const well = {
+            dn: '1000',
+            malowanieW: 'brak',
+            malowanieZ: 'brak',
+            config: [
+                { productId: 'dennica-50', quantity: 1 },
+                { productId: kineta.id, quantity: 1 }
+            ]
+        };
+
+        expect(context.getItemAssessedPrice(well, changedKineta, false, well.config[1])).toBe(220);
+    });
+
+    test('przy remisie odległości wybiera wcześniejszy zakres i ignoruje cenę bazową', () => {
+        const kineta = products.find((product) => product.id === 'kineta-dn1000-11');
+        if (!kineta) throw new Error('Brak produktu kinety w fixture');
+        const changedKineta = {
+            ...kineta,
+            price: 999,
+            hMax1: 500,
+            hMin2: 700,
+            hMax2: 949,
+            hMin3: 950,
+            hMax3: 1600
+        };
+        const well = {
+            dn: '1000',
+            malowanieW: 'brak',
+            malowanieZ: 'brak',
+            config: [
+                { productId: 'dennica-600', quantity: 1 },
+                { productId: changedKineta.id, quantity: 1 }
+            ]
+        };
+        const item = well.config[1];
+
+        expect(context.getItemAssessedPrice(well, changedKineta, false, item)).toBe(220);
+        expect(context.getItemPriceBreakdown(well, changedKineta, false, item).base).toBe(220);
+    });
+
+    test('brak użytecznych zakresów zgłasza błąd zamiast używać ceny bazowej', () => {
+        const kineta = products.find((product) => product.id === 'kineta-dn1000-11');
+        if (!kineta) throw new Error('Brak produktu kinety w fixture');
+        const withoutBands = {
+            ...kineta,
+            price: 999,
+            hMin1: null,
+            hMax1: null,
+            cena1: null,
+            hMin2: null,
+            hMax2: null,
+            cena2: null,
+            hMin3: null,
+            hMax3: null,
+            cena3: null
+        };
+        const well = {
+            dn: '1000',
+            malowanieW: 'brak',
+            malowanieZ: 'brak',
+            config: [
+                { productId: 'dennica-700-550', quantity: 1 },
+                { productId: withoutBands.id, quantity: 1 }
+            ]
+        };
+
+        expect(() =>
+            context.getItemAssessedPrice(well, withoutBands, false, well.config[1])
+        ).toThrow('Kineta DN1000 wys. 1/1 nie ma poprawnego zakresu ceny');
+        expect(() =>
+            context.getItemPriceBreakdown(well, withoutBands, false, well.config[1])
+        ).toThrow('Kineta DN1000 wys. 1/1 nie ma poprawnego zakresu ceny');
     });
 });

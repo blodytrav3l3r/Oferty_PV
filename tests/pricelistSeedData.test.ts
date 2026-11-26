@@ -10,6 +10,7 @@ import {
     getSeedStudnie,
     getSeedStudnieItems
 } from '../src/services/pricelist/seedData';
+import { validateRows } from '../src/services/pricelist/validation';
 
 const VERSION_ID = 'test-v1';
 
@@ -60,6 +61,56 @@ describe('seed studnie', () => {
         for (const row of getSeedStudnieItems(VERSION_ID)) {
             expect(Number.isFinite(row.price as number)).toBe(true);
         }
+    });
+
+    it('seed i wersja bazowa zawierają kinety z co najmniej jednym poprawnym pasmem ceny', () => {
+        const rows = getSeedStudnieItems(VERSION_ID);
+        const validatedRows = validateRows('studnie', rows) as unknown as Array<
+            Record<string, unknown>
+        >;
+        const kinety = validatedRows.filter((row) => row.componentType === 'kineta');
+
+        expect(kinety.length).toBeGreaterThan(0);
+        for (const kineta of kinety) {
+            const hasUsableBand = [1, 2, 3].some((number) => {
+                const min = kineta[`hMin${number}`];
+                const max = kineta[`hMax${number}`];
+                const price = kineta[`cena${number}`];
+                return (
+                    typeof min === 'number' &&
+                    typeof max === 'number' &&
+                    typeof price === 'number' &&
+                    min <= max
+                );
+            });
+            expect(hasUsableBand).toBe(true);
+        }
+    });
+
+    it('odrzuca kinetę bez poprawnego pasma przy walidacji cennika domyślnego', () => {
+        const rows = getSeedStudnieItems(VERSION_ID) as Array<Record<string, unknown>>;
+        const targetIndex = rows.findIndex((row) => row.componentType === 'kineta');
+        expect(targetIndex).toBeGreaterThanOrEqual(0);
+        const invalidRows = rows.map((row, index) =>
+            index === targetIndex
+                ? {
+                      ...row,
+                      hMin1: null,
+                      hMax1: null,
+                      cena1: null,
+                      hMin2: null,
+                      hMax2: null,
+                      cena2: null,
+                      hMin3: null,
+                      hMax3: null,
+                      cena3: null
+                  }
+                : row
+        );
+
+        expect(() => validateRows('studnie', invalidRows)).toThrow(
+            'Kineta musi mieć co najmniej jeden poprawny zakres Hmin/Hmax z ceną'
+        );
     });
 });
 

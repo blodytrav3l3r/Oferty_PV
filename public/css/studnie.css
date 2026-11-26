@@ -27,18 +27,8 @@ body {
     color: var(--danger-hover);
 }
 
-.pricelist-components-table th.pricelist-kineta-catalog-price,
-.pricelist-components-table td.pricelist-kineta-catalog-price {
-    color: var(--accent-text);
-}
-
 .pricelist-components-table th.pricelist-kineta-price,
 .pricelist-components-table td.pricelist-kineta-price {
-    font-weight: var(--fw-bold);
-}
-
-.pricelist-components-table td.pricelist-kineta-catalog-price {
-    cursor: pointer;
     font-weight: var(--fw-bold);
 }
 
