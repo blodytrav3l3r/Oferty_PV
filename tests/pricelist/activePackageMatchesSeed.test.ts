@@ -49,14 +49,20 @@ describe('pakiet aktywnych cenników', () => {
         expect(kinety.length).toBeGreaterThan(0);
         for (const kineta of kinety) {
             const hasUsableBand = [1, 2, 3].some((number) => {
-                const min = kineta[`hMin${number}`];
-                const max = kineta[`hMax${number}`];
-                const price = kineta[`cena${number}`];
+                const values = [
+                    kineta[`hMin${number}`],
+                    kineta[`hMax${number}`],
+                    kineta[`cena${number}`]
+                ];
+                if (values.some((value) => value == null || String(value).trim() === ''))
+                    return false;
+                const [min, max, price] = values.map(Number);
                 return (
-                    typeof min === 'number' &&
-                    typeof max === 'number' &&
-                    typeof price === 'number' &&
-                    min <= max
+                    Number.isFinite(min) &&
+                    Number.isFinite(max) &&
+                    Number.isFinite(price) &&
+                    min <= max &&
+                    price >= 0
                 );
             });
             expect(hasUsableBand).toBe(true);

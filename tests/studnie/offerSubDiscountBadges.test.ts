@@ -39,6 +39,9 @@ describe('Badge rabatów podpozycji oferty (offerWellComponents)', () => {
             category: 'Kinety',
             dn: '1000',
             price: 120,
+            hMin1: 0,
+            hMax1: 300,
+            cena1: 120,
             name: 'Kineta DN1000 wys. 1/1'
         }
     ];
