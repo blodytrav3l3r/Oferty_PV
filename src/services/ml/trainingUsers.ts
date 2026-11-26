@@ -3,31 +3,53 @@ import { logger } from '../../utils/logger';
 
 export const TRAINING_USERS_KEY = 'ai_training_user_ids';
 
+export type TrainingUsersStatus = 'UNCONFIGURED' | 'CONFIGURED' | 'INVALID' | 'UNAVAILABLE';
+
+export interface TrainingUsersConfig {
+    status: TrainingUsersStatus;
+    userIds: string[];
+    legacyMigrated: boolean;
+}
+
 /**
  * Allowlista użytkowników zasilających ML/KB.
- * - `null` (brak klucza lub uszkodzona wartość) = wszyscy (backward compat).
- * - `[]` (jawnie zapisana pusta lista) = nikt, model nie uczy się.
+ * Brak konfiguracji, wartość błędna i błąd bazy nie dopuszczają treningu.
  */
-export async function getTrainingUserIds(): Promise<string[] | null> {
-    // Fail-open: błąd odczytu (DB niedostępna, brak tabeli w starym moku)
-    // = brak konfiguracji = stare zachowanie (wszyscy). Telemetria/ML
-    // nigdy nie mogą paść przez sam odczyt flagi.
+export async function getTrainingUsersConfig(): Promise<TrainingUsersConfig> {
+    let row: Awaited<ReturnType<typeof prisma.settings.findUnique>>;
+    let migratedRow: Awaited<ReturnType<typeof prisma.settings.findUnique>>;
     try {
-        const row = await prisma.settings.findUnique({ where: { key: TRAINING_USERS_KEY } });
-        if (!row?.value) return null;
-        const parsed: unknown = JSON.parse(row.value);
-        if (!Array.isArray(parsed)) return null;
-        return parsed.filter((x): x is string => typeof x === 'string' && x.length > 0);
-    } catch (e) {
-        // Fail-open (świadomy, patrz komentarz wyżej), ale nie cicho —
-        // brak logu maskowałby np. brak tabeli settings po migracji.
-        logger.warn(
-            'ML',
-            'getTrainingUserIds: błąd odczytu allowlisty — fail-open (wszyscy)',
-            String(e)
-        );
-        return null;
+        [row, migratedRow] = await Promise.all([
+            prisma.settings.findUnique({ where: { key: TRAINING_USERS_KEY } }),
+            prisma.settings.findUnique({ where: { key: `${TRAINING_USERS_KEY}_migrated` } })
+        ]);
+    } catch {
+        logger.warn('ML', 'Nie można odczytać allowlisty treningowej — trening zablokowany');
+        return { status: 'UNAVAILABLE', userIds: [], legacyMigrated: false };
     }
+
+    const legacyMigrated = migratedRow?.value === '1';
+    if (!row) return { status: 'UNCONFIGURED', userIds: [], legacyMigrated: false };
+    if (typeof row.value !== 'string') {
+        return { status: 'INVALID', userIds: [], legacyMigrated: false };
+    }
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(row.value);
+    } catch {
+        return { status: 'INVALID', userIds: [], legacyMigrated: false };
+    }
+    if (
+        !Array.isArray(parsed) ||
+        parsed.some((id) => typeof id !== 'string' || id.trim().length === 0)
+    ) {
+        return { status: 'INVALID', userIds: [], legacyMigrated: false };
+    }
+    return { status: 'CONFIGURED', userIds: [...new Set(parsed)], legacyMigrated };
+}
+
+export async function getTrainingUserIds(): Promise<string[]> {
+    return (await getTrainingUsersConfig()).userIds;
 }
 
 /**
@@ -39,9 +61,8 @@ export async function getTrainingUserIds(): Promise<string[] | null> {
  */
 export function isTelemetryAllowed(
     userId: string | null | undefined,
-    allow: string[] | null
+    allow: readonly string[]
 ): boolean {
-    if (allow === null) return true;
     if (!userId) return false;
     return allow.includes(userId);
 }
@@ -53,10 +74,10 @@ export function isTelemetryAllowed(
  */
 export async function filterFeaturesByTrainingUsers<T extends { telemetryId?: string | null }>(
     features: T[],
-    allow?: string[] | null
+    allow?: readonly string[]
 ): Promise<T[]> {
     const allowlist = allow !== undefined ? allow : await getTrainingUserIds();
-    if (allowlist === null) return features;
+    if (allowlist.length === 0) return [];
     const ids = [...new Set(features.map((f) => f.telemetryId).filter((id): id is string => !!id))];
     if (ids.length === 0) return [];
     const owners = await prisma.ai_telemetry_logs.findMany({
@@ -77,10 +98,8 @@ export async function filterFeaturesByTrainingUsers<T extends { telemetryId?: st
  */
 export async function countEligibleNewFeatures(since: string | null): Promise<number> {
     const allow = await getTrainingUserIds();
+    if (allow.length === 0) return 0;
     const where = since ? { createdAt: { gt: since } } : {};
-    if (allow === null) {
-        return prisma.aiFeature.count({ where });
-    }
     const rows = await prisma.aiFeature.findMany({ where, select: { telemetryId: true } });
     return (await filterFeaturesByTrainingUsers(rows, allow)).length;
 }

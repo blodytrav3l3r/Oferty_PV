@@ -668,9 +668,14 @@ router.post(
 
 router.get('/ai/training-users', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {
-        const { getTrainingUserIds } = await import('../services/ml/trainingUsers');
-        const userIds = await getTrainingUserIds();
-        res.json({ configured: userIds !== null, userIds });
+        const { getTrainingUsersConfig } = await import('../services/ml/trainingUsers');
+        const config = await getTrainingUsersConfig();
+        res.json({
+            status: config.status,
+            configured: config.status === 'CONFIGURED',
+            userIds: config.userIds,
+            legacyMigrated: config.legacyMigrated
+        });
     } catch (e) {
         sendInternalError(res, 'AiMlRoute', e);
     }
@@ -686,7 +691,7 @@ router.put(
         const authReq = req as AuthenticatedRequest;
         try {
             const { TRAINING_USERS_KEY } = await import('../services/ml/trainingUsers');
-            const schema = z.object({ userIds: z.array(z.string().min(1)).max(500) });
+            const schema = z.object({ userIds: z.array(z.string().min(1).max(128)).max(10000) });
             const parsed = schema.safeParse(req.body);
             if (!parsed.success) {
                 res.status(400).json({
@@ -701,10 +706,15 @@ router.put(
                 update: { value: JSON.stringify(userIds) },
                 create: { key: TRAINING_USERS_KEY, value: JSON.stringify(userIds) }
             });
+            await prisma.settings.upsert({
+                where: { key: `${TRAINING_USERS_KEY}_migrated` },
+                update: { value: '0' },
+                create: { key: `${TRAINING_USERS_KEY}_migrated`, value: '0' }
+            });
             await logAudit('settings', 'update', authReq.user?.id || '', TRAINING_USERS_KEY, {
                 count: userIds.length
             });
-            res.json({ configured: true, userIds });
+            res.json({ status: 'CONFIGURED', configured: true, userIds, legacyMigrated: false });
         } catch (e) {
             sendInternalError(res, 'AiMlRoute', e);
         }

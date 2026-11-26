@@ -73,10 +73,10 @@ export class LearningEngine {
         // czyta wyłącznie rekordy dozwolonych użytkowników.
         const { getTrainingUserIds } = await import('../../ml/trainingUsers');
         const trainingUserIds = await getTrainingUserIds();
-        const where: Record<string, unknown> = { dn: { not: null } };
-        if (trainingUserIds !== null) {
-            where.userId = { in: trainingUserIds };
-        }
+        const where: Record<string, unknown> = {
+            dn: { not: null },
+            userId: { in: trainingUserIds }
+        };
         if (since) {
             where.createdAt = { gt: since };
         }

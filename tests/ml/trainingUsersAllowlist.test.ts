@@ -198,21 +198,51 @@ beforeEach(() => {
 });
 
 describe('getTrainingUserIds', () => {
-    it('brak klucza = null (wszyscy, backward compat)', async () => {
-        const { getTrainingUserIds } = await import('../../src/services/ml/trainingUsers');
-        expect(await getTrainingUserIds()).toBeNull();
+    it('brak klucza = UNCONFIGURED i brak treningu', async () => {
+        const { getTrainingUserIds, getTrainingUsersConfig } =
+            await import('../../src/services/ml/trainingUsers');
+        expect(await getTrainingUsersConfig()).toEqual({
+            status: 'UNCONFIGURED',
+            userIds: [],
+            legacyMigrated: false
+        });
+        expect(await getTrainingUserIds()).toEqual([]);
     });
 
     it('jawnie pusta lista = [] (nikt)', async () => {
         store.settings.set('ai_training_user_ids', '[]');
-        const { getTrainingUserIds } = await import('../../src/services/ml/trainingUsers');
+        const { getTrainingUserIds, getTrainingUsersConfig } =
+            await import('../../src/services/ml/trainingUsers');
+        expect(await getTrainingUserIds()).toEqual([]);
+        expect(await getTrainingUsersConfig()).toEqual({
+            status: 'CONFIGURED',
+            userIds: [],
+            legacyMigrated: false
+        });
+    });
+
+    it('uszkodzona wartość = UNAVAILABLE i brak treningu', async () => {
+        store.settings.set('ai_training_user_ids', 'nie-json');
+        const { getTrainingUserIds, getTrainingUsersConfig } =
+            await import('../../src/services/ml/trainingUsers');
+        expect(await getTrainingUsersConfig()).toEqual({
+            status: 'INVALID',
+            userIds: [],
+            legacyMigrated: false
+        });
         expect(await getTrainingUserIds()).toEqual([]);
     });
 
-    it('uszkodzona wartość = null (bezpieczny fallback)', async () => {
-        store.settings.set('ai_training_user_ids', 'nie-json');
-        const { getTrainingUserIds } = await import('../../src/services/ml/trainingUsers');
-        expect(await getTrainingUserIds()).toBeNull();
+    it('błąd bazy = UNAVAILABLE i brak treningu', async () => {
+        jest.spyOn(fakePrisma.settings, 'findUnique').mockRejectedValueOnce(new Error('db down'));
+        const { getTrainingUserIds, getTrainingUsersConfig } =
+            await import('../../src/services/ml/trainingUsers');
+        expect(await getTrainingUsersConfig()).toEqual({
+            status: 'UNAVAILABLE',
+            userIds: [],
+            legacyMigrated: false
+        });
+        expect(await getTrainingUserIds()).toEqual([]);
     });
 });
 
@@ -240,15 +270,14 @@ describe('extractAndStore z allowlistą', () => {
         expect(store.features).toHaveLength(0);
     });
 
-    it('brak klucza: wszyscy trafiają (backward compat, brak filtra userId)', async () => {
+    it('brak klucza: ekstrakcja jest zablokowana', async () => {
         store.telemetry = [
             telemetryFixture('tel-a1', 'A', '1000'),
             telemetryFixture('tel-b1', 'B', '1000')
         ];
         const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
-        expect(await featureExtractor.extractAndStore()).toBe(2);
-        const where = (mockTelemetryFindMany.mock.calls[0][0] as any).where;
-        expect(where.userId).toBeUndefined();
+        expect(await featureExtractor.extractAndStore()).toBe(0);
+        expect(mockTelemetryFindMany).not.toHaveBeenCalled();
     });
 });
 
@@ -289,7 +318,7 @@ describe('resync z allowlistą (P0)', () => {
 });
 
 describe('filterFeaturesByTrainingUsers (join AiFeature→telemetry)', () => {
-    it('zostawia tylko A; null-allow = wszystko', async () => {
+    it('zostawia tylko A; niezainicjowana allowlista nie przepuszcza rekordów', async () => {
         const { filterFeaturesByTrainingUsers } =
             await import('../../src/services/ml/trainingUsers');
         store.telemetry = [
@@ -300,7 +329,23 @@ describe('filterFeaturesByTrainingUsers (join AiFeature→telemetry)', () => {
         store.settings.set('ai_training_user_ids', JSON.stringify(['A']));
         expect(await filterFeaturesByTrainingUsers(feats)).toEqual([{ telemetryId: 'tel-a1' }]);
         store.settings.clear();
-        expect(await filterFeaturesByTrainingUsers(feats)).toEqual(feats);
+        expect(await filterFeaturesByTrainingUsers(feats)).toEqual([]);
+    });
+
+    it('jawny snapshot allowlisty nie odczytuje ponownie zmienionej konfiguracji', async () => {
+        store.settings.set('ai_training_user_ids', JSON.stringify(['B']));
+        store.telemetry = [
+            telemetryFixture('tel-a1', 'A', '1000'),
+            telemetryFixture('tel-b1', 'B', '1000')
+        ];
+        const { filterFeaturesByTrainingUsers } =
+            await import('../../src/services/ml/trainingUsers');
+        const features = [{ telemetryId: 'tel-a1' }, { telemetryId: 'tel-b1' }];
+
+        expect(await filterFeaturesByTrainingUsers(features, ['A'])).toEqual([
+            { telemetryId: 'tel-a1' }
+        ]);
+        expect(fakePrisma.settings.findUnique).not.toHaveBeenCalled();
     });
 });
 

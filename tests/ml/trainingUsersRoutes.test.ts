@@ -59,17 +59,46 @@ beforeEach(async () => {
 });
 
 describe('GET /ai/training-users', () => {
-    it('brak klucza → configured:false, userIds:null', async () => {
+    it('brak klucza → UNCONFIGURED i pusta lista', async () => {
         const res = await request(app).get('/api/telemetry/ai/training-users');
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ configured: false, userIds: null });
+        expect(res.body).toEqual({
+            status: 'UNCONFIGURED',
+            configured: false,
+            userIds: [],
+            legacyMigrated: false
+        });
     });
 
     it('ustawiona lista → configured:true + ids', async () => {
         settingsStore.set('ai_training_user_ids', JSON.stringify(['A', 'B']));
         const res = await request(app).get('/api/telemetry/ai/training-users');
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ configured: true, userIds: ['A', 'B'] });
+        expect(res.body).toEqual({
+            status: 'CONFIGURED',
+            configured: true,
+            userIds: ['A', 'B'],
+            legacyMigrated: false
+        });
+    });
+
+    it('oznacza listę odziedziczoną migracją do sprawdzenia przez admina', async () => {
+        settingsStore.set('ai_training_user_ids', JSON.stringify(['A']));
+        settingsStore.set('ai_training_user_ids_migrated', '1');
+        const res = await request(app).get('/api/telemetry/ai/training-users');
+        expect(res.body.legacyMigrated).toBe(true);
+    });
+
+    it('uszkodzona konfiguracja → UNAVAILABLE i bez autorów', async () => {
+        settingsStore.set('ai_training_user_ids', 'not-json');
+        const res = await request(app).get('/api/telemetry/ai/training-users');
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({
+            status: 'INVALID',
+            configured: false,
+            userIds: [],
+            legacyMigrated: false
+        });
     });
 });
 
@@ -79,8 +108,14 @@ describe('PUT /ai/training-users', () => {
             .put('/api/telemetry/ai/training-users')
             .send({ userIds: ['A', 'B', 'A'] });
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ configured: true, userIds: ['A', 'B'] });
+        expect(res.body).toEqual({
+            status: 'CONFIGURED',
+            configured: true,
+            userIds: ['A', 'B'],
+            legacyMigrated: false
+        });
         expect(settingsStore.get('ai_training_user_ids')).toBe(JSON.stringify(['A', 'B']));
+        expect(settingsStore.get('ai_training_user_ids_migrated')).toBe('0');
     });
 
     it('pusta lista = tryb nikt', async () => {
@@ -88,7 +123,12 @@ describe('PUT /ai/training-users', () => {
             .put('/api/telemetry/ai/training-users')
             .send({ userIds: [] });
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ configured: true, userIds: [] });
+        expect(res.body).toEqual({
+            status: 'CONFIGURED',
+            configured: true,
+            userIds: [],
+            legacyMigrated: false
+        });
     });
 
     it('nie-tablica → 400', async () => {

@@ -26,22 +26,38 @@
                     host.innerHTML = window.aiApiErrorHtml(sources.error);
                     return;
                 }
+                const status =
+                    sources.status || (sources.configured === true ? 'CONFIGURED' : 'UNCONFIGURED');
+                if (status === 'UNAVAILABLE') {
+                    host.innerHTML =
+                        '<div class="card-note card-note--with-icon"><i data-lucide="alert-triangle"></i>' +
+                        '<span><strong>Źródła treningu niedostępne</strong> — trening jest zablokowany. Sprawdź połączenie z bazą lub konfigurację allowlisty.</span></div>';
+                    return;
+                }
                 const users = Array.isArray(usersResp.data)
                     ? usersResp.data
                     : Array.isArray(usersResp)
                       ? usersResp
                       : [];
-                const configured = sources.configured === true;
+                const configured = status === 'CONFIGURED';
                 const selected = Array.isArray(sources.userIds) ? sources.userIds : [];
                 const selectedSet = {};
                 selected.forEach(function (id) {
                     selectedSet[id] = true;
                 });
                 let banner;
-                if (!configured) {
+                if (status === 'INVALID') {
                     banner =
                         '<div class="card-note card-note--with-icon"><i data-lucide="alert-triangle"></i>' +
-                        '<span><strong>Tryb: wszyscy użytkownicy</strong> (allowlista nieskonfigurowana) — model uczy się na danych wszystkich.</span></div>';
+                        '<span><strong>Konfiguracja źródeł jest uszkodzona</strong> — wybierz użytkowników i zapisz, aby ją zastąpić.</span></div>';
+                } else if (sources.legacyMigrated === true) {
+                    banner =
+                        '<div class="card-note card-note--with-icon"><i data-lucide="alert-triangle"></i>' +
+                        '<span><strong>Sprawdź odziedziczoną listę</strong> — migracja zachowała dotychczasowych użytkowników. Zmień wybór i zapisz, aby zatwierdzić aktualny zakres.</span></div>';
+                } else if (!configured) {
+                    banner =
+                        '<div class="card-note card-note--with-icon"><i data-lucide="alert-triangle"></i>' +
+                        '<span><strong>Trening wstrzymany</strong> — wybierz użytkowników, aby dopuścić ich dane do uczenia modelu.</span></div>';
                 } else if (selected.length === 0) {
                     banner =
                         '<div class="card-note card-note--with-icon"><i data-lucide="pause-circle"></i>' +

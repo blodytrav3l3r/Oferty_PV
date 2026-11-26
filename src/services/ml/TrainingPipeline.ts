@@ -7,7 +7,12 @@ import {
     TrainingNumericalError,
     TrainingTimeoutError
 } from './AcceptanceModel';
-import { modelRegistry, type ModelMetrics, type StoredModel } from './ModelRegistry';
+import {
+    modelRegistry,
+    TrainingUsersChangedError,
+    type ModelMetrics,
+    type StoredModel
+} from './ModelRegistry';
 import { AiModelState } from './aiModelState';
 import {
     featureExtractor,
@@ -105,6 +110,15 @@ export function computeDatasetFingerprint(
 ): string {
     const lines = records.map((r) => `${r.id}|${r.timestamp}|${r.label}|${featureVersion}`).sort();
     return crypto.createHash('sha256').update(lines.join('\n'), 'utf8').digest('hex');
+}
+
+function sameTrainingUsers(left: readonly string[], right: readonly string[]): boolean {
+    const sortedLeft = [...left].sort();
+    const sortedRight = [...right].sort();
+    return (
+        sortedLeft.length === sortedRight.length &&
+        sortedLeft.every((userId, index) => userId === sortedRight[index])
+    );
 }
 
 function applyForgetting(exampleAgeDays: number): number {
@@ -463,6 +477,8 @@ export class TrainingPipeline {
                 if (!gate.ok) return { trained: false, reason: gate.reason };
             }
 
+            const allowlist = await getTrainingUserIds();
+
             await prisma.aiTrainingRun.create({
                 data: {
                     id: runId,
@@ -478,14 +494,18 @@ export class TrainingPipeline {
                 }
             });
 
-            await featureExtractor.extractAndStore();
+            await featureExtractor.extractAndStore(allowlist);
             // Feedback (accept/reject/modify) często nadchodzi PO ekstrakcji cech.
             // Re-synchronizuj etykiety, żeby trening miał klasę negatywną (bez niej
             // model jest zdegenerowany — stała predykcja ~1.0 dla wszystkich kandydatów).
-            await featureExtractor.resyncLabels();
+            await featureExtractor.resyncLabels(2000, allowlist);
             // Historyczne wektory policzone przez stare wersje ekstraktora mają puste
             // cechy (ringCount/connectionCount/bottomType) — przelicz je w miejscu.
-            await featureExtractor.resyncFeatures();
+            await featureExtractor.resyncFeatures(allowlist);
+
+            if (!sameTrainingUsers(allowlist, await getTrainingUserIds())) {
+                return finish(TRAINING_STATUS.SKIPPED, 'training_users_changed');
+            }
 
             // Okno treningowe: najnowsze TRAINING_BATCH_SIZE wektorów (sliding window).
             // Kolejność desc + reverse, by split train/val pozostał chronologiczny
@@ -494,14 +514,8 @@ export class TrainingPipeline {
             // z telemetry per batch. Gdy filtr wycina rekordy, dobieramy starsze
             // batche kursorem (createdAt, id), aż okno się wypełni lub dane się
             // skończą. Guard insufficient_data liczony PO filtrze.
-            const allowlist = await getTrainingUserIds();
             let features: Awaited<ReturnType<typeof prisma.aiFeature.findMany>> = [];
-            if (allowlist === null) {
-                features = await prisma.aiFeature.findMany({
-                    orderBy: { createdAt: 'desc' },
-                    take: ML_CONSTANTS.TRAINING_BATCH_SIZE
-                });
-            } else {
+            if (allowlist.length > 0) {
                 let cursor: { createdAt: string; id: string } | undefined;
                 const seen = new Set<string>();
                 while (features.length < ML_CONSTANTS.TRAINING_BATCH_SIZE) {
@@ -521,7 +535,7 @@ export class TrainingPipeline {
                     const fresh = batch.filter((b) => !seen.has(b.id));
                     if (fresh.length === 0) break;
                     fresh.forEach((b) => seen.add(b.id));
-                    const allowed = await filterFeaturesByTrainingUsers(fresh);
+                    const allowed = await filterFeaturesByTrainingUsers(fresh, allowlist);
                     features.push(...allowed);
                     const last = batch[batch.length - 1];
                     cursor = { createdAt: last.createdAt, id: last.id };
@@ -630,6 +644,10 @@ export class TrainingPipeline {
             baselineAccuracy = Math.max(positiveRateValue, 1 - positiveRateValue);
             positiveRate = positiveRateValue;
 
+            if (!sameTrainingUsers(allowlist, await getTrainingUserIds())) {
+                return finish(TRAINING_STATUS.SKIPPED, 'training_users_changed');
+            }
+
             // Guardrail deploy (ETAP 5): porównanie z aktualnym PRODUCTION,
             // NIE z historycznym best. Pierwszy model (brak PRODUCTION) → tylko
             // absolutne progi; kolejne → absolutne + relatywne (brak regresji).
@@ -671,7 +689,8 @@ export class TrainingPipeline {
                 true,
                 undefined,
                 AiModelState.PRODUCTION,
-                this.buildFeatureDistributionsJson(trainSet)
+                this.buildFeatureDistributionsJson(trainSet),
+                allowlist
             );
             candidateModelVersion = version;
             deployed = true;
@@ -686,6 +705,10 @@ export class TrainingPipeline {
                 metrics
             }));
         } catch (e) {
+            if (e instanceof TrainingUsersChangedError) {
+                await finish(TRAINING_STATUS.SKIPPED, e.message);
+                return { trained: false, reason: e.message };
+            }
             const msg = e instanceof Error ? e.message : String(e);
             // Guardraile numeryczne (ETAP 3) — specyficzne statusy zamiast FAILED_ERROR.
             let status: string = TRAINING_STATUS.FAILED_ERROR;

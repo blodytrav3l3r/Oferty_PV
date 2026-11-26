@@ -212,15 +212,16 @@ export function labelToTrainingWeight(label: FeatureLabel): number {
 }
 
 export class FeatureExtractor {
-    async extractAndStore(): Promise<number> {
+    async extractAndStore(allowlist?: readonly string[]): Promise<number> {
         // Invariant allowlisty: ekstrakcja tylko z rekordów dozwolonych użytkowników.
-        const trainingUserIds = await getTrainingUserIds();
+        const trainingUserIds = allowlist ?? (await getTrainingUserIds());
+        if (trainingUserIds.length === 0) return 0;
         const telemetryRecords = await prisma.ai_telemetry_logs.findMany({
             where: {
                 dn: { not: null },
                 wellType: { not: null },
                 trainingEligible: true,
-                ...(trainingUserIds !== null ? { userId: { in: trainingUserIds } } : {})
+                userId: { in: [...trainingUserIds] }
             },
             orderBy: { createdAt: 'desc' },
             take: 500
@@ -400,7 +401,7 @@ export class FeatureExtractor {
      * wyprzedzała akceptację/odrzucenie. Wołane przed każdym treningiem oraz przez
      * recordAcceptance. Nie tworzy nowych wierszy — tylko koryguje etykiety.
      */
-    async resyncLabels(limit = 2000): Promise<number> {
+    async resyncLabels(limit = 2000, allowlist?: readonly string[]): Promise<number> {
         // N7: kursor zamiast jednorazowego take — przy bazie >limit rekordów
         // starsze nigdy nie dostałyby skorygowanej etykiety (cichy stale label).
         const BATCH = 2000;
@@ -419,12 +420,13 @@ export class FeatureExtractor {
 
         // Invariant allowlisty: resync etykiet tylko dla dozwolonych
         // użytkowników — kursor paginuje już przefiltrowany zbiór.
-        const trainingUserIds = await getTrainingUserIds();
+        const trainingUserIds = allowlist ?? (await getTrainingUserIds());
+        if (trainingUserIds.length === 0) return 0;
         do {
             const records = await prisma.ai_telemetry_logs.findMany({
                 where: {
                     trainingEligible: true,
-                    ...(trainingUserIds !== null ? { userId: { in: trainingUserIds } } : {}),
+                    userId: { in: [...trainingUserIds] },
                     ...(cursor
                         ? {
                               OR: [
@@ -498,7 +500,10 @@ export class FeatureExtractor {
      * connectionCount / bottomType / dennicaHeight), a extractAndStore pomija
      * rekordy już istniejące. Wołane przed każdym treningiem.
      */
-    async resyncFeatures(): Promise<number> {
+    async resyncFeatures(allowlist?: readonly string[]): Promise<number> {
+        // Fail closed before selecting historical feature rows.
+        const trainingUserIds = allowlist ?? (await getTrainingUserIds());
+        if (trainingUserIds.length === 0) return 0;
         const features = await prisma.aiFeature.findMany({
             where: {
                 OR: [
@@ -518,7 +523,6 @@ export class FeatureExtractor {
         // Invariant allowlisty: przeliczaj tylko wektory dozwolonych
         // użytkowników. Lookup userId po stronie telemetry (ids z batcha
         // kandydującego — bez arbitralnego limitu na zbiór dozwolonych).
-        const trainingUserIds = await getTrainingUserIds();
         const telemetry = await prisma.ai_telemetry_logs.findMany({
             where: { id: { in: telemetryIds } },
             select: {
@@ -551,8 +555,7 @@ export class FeatureExtractor {
         for (const f of features) {
             const t = f.telemetryId ? byId.get(f.telemetryId) : undefined;
             if (!t) continue;
-            if (trainingUserIds !== null && !isTelemetryAllowed(t.userId, trainingUserIds))
-                continue;
+            if (!isTelemetryAllowed(t.userId, trainingUserIds)) continue;
             const fv = this.extract(t as TelemetryRecordWithDetails);
             // Selektywny UPDATE (K5): pomiń wiersze, których cechy się nie zmieniły
             // (np. legalnie 0 kręgów / 0 uszczelek) — bez tego resyncFeatures

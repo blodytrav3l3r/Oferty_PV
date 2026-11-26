@@ -12,6 +12,7 @@ const updateMany = jest.fn();
 const deleteRecord = jest.fn();
 const count = jest.fn();
 const transaction = jest.fn();
+const queryRaw = jest.fn();
 const clearPredictionCache = jest.fn();
 
 jest.mock('../../src/prismaClient', () => {
@@ -31,6 +32,7 @@ jest.mock('../../src/prismaClient', () => {
         transaction(cb);
         return cb(prisma);
     };
+    prisma.$queryRaw = (...args: unknown[]) => queryRaw(...args);
     return { __esModule: true, default: prisma };
 });
 
@@ -44,6 +46,7 @@ jest.mock('../../src/utils/logger', () => ({
 
 import {
     ModelRegistry,
+    TrainingUsersChangedError,
     type ModelMetrics,
     type StoredModel
 } from '../../src/services/ml/ModelRegistry';
@@ -188,6 +191,41 @@ describe('ModelRegistry.saveModel', () => {
                 featureDistributions: '{"f1":1}'
             })
         });
+    });
+
+    it('blokuje promocję, jeśli allowlista zmieniła się przed transakcją zapisu', async () => {
+        queryRaw.mockResolvedValueOnce([{ value: '["user-b"]' }]);
+
+        await expect(
+            registry.saveModel(model, metrics, ['f1'], [0], [1], true, undefined, undefined, null, [
+                'user-a'
+            ])
+        ).rejects.toBeInstanceOf(TrainingUsersChangedError);
+
+        expect(update).not.toHaveBeenCalled();
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    it('porównuje allowlistę pod blokadą rekordu ustawień przed promocją', async () => {
+        queryRaw.mockResolvedValueOnce([{ value: '["user-b", "user-a"]' }]);
+
+        await registry.saveModel(
+            model,
+            metrics,
+            ['f1'],
+            [0],
+            [1],
+            true,
+            undefined,
+            undefined,
+            null,
+            ['user-a', 'user-b']
+        );
+
+        expect(queryRaw).toHaveBeenCalledWith(
+            expect.objectContaining({ sql: expect.stringContaining('FOR SHARE') })
+        );
+        expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ active: true }) });
     });
 
     it('kandydat bez jawnego stanu dostaje CANDIDATE', async () => {

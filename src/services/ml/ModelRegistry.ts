@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import prisma from '../../prismaClient';
+import { Prisma } from '../../../generated/prisma-postgres/client';
 import { logger } from '../../utils/logger';
 import type { AcceptanceModel } from './AcceptanceModel';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../../config/mlConstants';
@@ -7,6 +8,30 @@ import { ML_CONFIG } from './trainingConfig';
 import { clearPredictionCache } from './predictionCache';
 import type { ConfusionMatrix } from './metrics';
 import { AiModelState, assertValidAiModelState, type AiModelStateValue } from './aiModelState';
+import { TRAINING_USERS_KEY } from './trainingUsers';
+
+export class TrainingUsersChangedError extends Error {
+    constructor() {
+        super('training_users_changed');
+        this.name = 'TrainingUsersChangedError';
+    }
+}
+
+function hasSameUsers(value: string | null, expected: readonly string[]): boolean {
+    if (!value) return false;
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(value);
+    } catch {
+        return false;
+    }
+    if (!Array.isArray(parsed) || parsed.some((id) => typeof id !== 'string')) return false;
+    const current = [...new Set(parsed)].sort();
+    const snapshot = [...expected].sort();
+    return (
+        current.length === snapshot.length && current.every((id, index) => id === snapshot[index])
+    );
+}
 
 export interface ModelMetrics {
     accuracy: number;
@@ -83,7 +108,8 @@ export class ModelRegistry {
         shouldActivate: boolean,
         notes?: string,
         state?: AiModelStateValue,
-        featureDistributions?: string | null
+        featureDistributions?: string | null,
+        expectedTrainingUsers?: readonly string[]
     ): Promise<string> {
         const now = new Date();
         // wersja musi być unikalna (kolumna @unique) — suffix zapobiega
@@ -97,6 +123,14 @@ export class ModelRegistry {
         // Transakcja gwarantuje atomowość: dezaktywacja starych + utworzenie nowego
         // — zapobiega race condition z dwoma aktywnymi modelami jednocześnie.
         await prisma.$transaction(async (tx) => {
+            if (shouldActivate && expectedTrainingUsers !== undefined) {
+                const rows = await tx.$queryRaw<Array<{ value: string | null }>>(
+                    Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
+                );
+                if (!hasSameUsers(rows[0]?.value ?? null, expectedTrainingUsers)) {
+                    throw new TrainingUsersChangedError();
+                }
+            }
             if (shouldActivate) {
                 const existing = await tx.aiModel.findFirst({ where: { active: true } });
                 if (existing) {

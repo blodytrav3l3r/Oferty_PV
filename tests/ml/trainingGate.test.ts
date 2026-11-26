@@ -52,6 +52,14 @@ jest.mock('../../src/utils/logger', () => ({
 
 const HOUR = 1000 * 60 * 60;
 
+function setEligibleRows(count: number): void {
+    const rows = Array.from({ length: count }, (_, index) => ({ telemetryId: `tel-${index}` }));
+    mockFeatureFindMany.mockResolvedValue(rows);
+    mockTelemetryFindMany.mockResolvedValue(
+        rows.map((row) => ({ id: row.telemetryId, userId: 'u1' }))
+    );
+}
+
 function successRow(finishedAgoMs: number): any {
     return {
         id: 'run-prev',
@@ -64,9 +72,13 @@ function successRow(finishedAgoMs: number): any {
 describe('shouldTrain() — pre-flight gate', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        // Domyślnie: allowlista nieskonfigurowana (fail-open → wszyscy).
-        mockSettingsFindUnique.mockResolvedValue(null);
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['u1'])
+        });
         mockRunFindFirst.mockResolvedValue(null);
+        mockFeatureFindMany.mockResolvedValue([]);
+        mockTelemetryFindMany.mockResolvedValue([]);
     });
 
     it('already_running gdy trening w toku', async () => {
@@ -82,7 +94,7 @@ describe('shouldTrain() — pre-flight gate', () => {
 
     it('too_soon przy 3h59 od SUCCESS; OK przy 4h00', async () => {
         const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
-        mockFeatureCount.mockResolvedValue(500);
+        setEligibleRows(500);
 
         mockRunFindFirst.mockResolvedValue(successRow(3 * HOUR + 59 * 60 * 1000));
         const tooSoon = await trainingPipeline.shouldTrain();
@@ -98,11 +110,11 @@ describe('shouldTrain() — pre-flight gate', () => {
         const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
         mockRunFindFirst.mockResolvedValue(null);
 
-        mockFeatureCount.mockResolvedValue(49);
+        setEligibleRows(49);
         const under = await trainingPipeline.shouldTrain();
         expect(under).toEqual({ ok: false, reason: 'insufficient_new_data:49' });
 
-        mockFeatureCount.mockResolvedValue(50);
+        setEligibleRows(50);
         const exact = await trainingPipeline.shouldTrain();
         expect(exact).toEqual({ ok: true });
     });
@@ -133,7 +145,12 @@ describe('shouldTrain() — pre-flight gate', () => {
 describe('run() — pre-flight bez wiersza, force omija bramkę', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mockSettingsFindUnique.mockResolvedValue(null);
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['u1'])
+        });
+        mockFeatureFindMany.mockResolvedValue([]);
+        mockTelemetryFindMany.mockResolvedValue([]);
         mockRunCreate.mockResolvedValue({ id: 'run-1' });
         mockRunUpdate.mockResolvedValue({ id: 'run-1' });
     });
@@ -184,8 +201,11 @@ describe('run() — pre-flight bez wiersza, force omija bramkę', () => {
 describe('restart persistence — lastSuccessAt z DB, nie z RAM', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mockSettingsFindUnique.mockResolvedValue(null);
-        mockFeatureCount.mockResolvedValue(500);
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['u1'])
+        });
+        setEligibleRows(500);
     });
 
     it('nowa instancja TrainingPipeline widzi SUCCESS sprzed restartu', async () => {
@@ -203,7 +223,12 @@ describe('restart persistence — lastSuccessAt z DB, nie z RAM', () => {
 describe('gateStatus() — strukturalny status dla dashboardu (F3)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mockSettingsFindUnique.mockResolvedValue(null);
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['u1'])
+        });
+        mockFeatureFindMany.mockResolvedValue([]);
+        mockTelemetryFindMany.mockResolvedValue([]);
         mockRunFindFirst.mockReset();
     });
 
@@ -219,7 +244,7 @@ describe('gateStatus() — strukturalny status dla dashboardu (F3)', () => {
     it('kształt OK przy braku SUCCESS: eligible, progi, lastAttempt null', async () => {
         const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
         mockGateReads(null, null);
-        mockFeatureCount.mockResolvedValue(60);
+        setEligibleRows(60);
 
         const s = await trainingPipeline.gateStatus();
 
@@ -248,7 +273,7 @@ describe('gateStatus() — strukturalny status dla dashboardu (F3)', () => {
                 finishedAt: '2026-09-11T19:20:30.000Z'
             }
         );
-        mockFeatureCount.mockResolvedValue(500);
+        setEligibleRows(500);
 
         const s = await trainingPipeline.gateStatus();
 
@@ -270,7 +295,7 @@ describe('gateStatus() — strukturalny status dla dashboardu (F3)', () => {
     it('already_running → eligible false bez liczenia na nowo', async () => {
         const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
         mockGateReads(null, null);
-        mockFeatureCount.mockResolvedValue(60);
+        setEligibleRows(60);
         (trainingPipeline as any).running = true;
         try {
             const s = await trainingPipeline.gateStatus();

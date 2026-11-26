@@ -8,7 +8,9 @@ import { AcceptanceModel, TrainingNumericalError } from '../../src/services/ml/A
 const mockFindMany = jest.fn<any>();
 const mockFindFirst = jest.fn<any>();
 const mockCreate = jest.fn<any>();
+const mockModelCreate = jest.fn<any>();
 const mockCount = jest.fn<any>();
+const mockEligibleFeatures = jest.fn<any>();
 const mockUpdate = jest.fn<any>();
 const mockUpdateMany = jest.fn<any>();
 const mockTransitionFindMany = jest.fn<any>().mockResolvedValue([]);
@@ -16,17 +18,37 @@ const mockRunCreate = jest.fn<any>();
 const mockRunUpdate = jest.fn<any>();
 const mockRunFindFirst = jest.fn<any>();
 const mockRunDeleteMany = jest.fn<any>().mockResolvedValue({ count: 0 });
+const mockSettingsFindUnique = jest.fn<any>();
+
+function setEligibleFeatures(count: number): void {
+    mockEligibleFeatures.mockResolvedValue(
+        Array.from({ length: count }, (_, index) => ({ telemetryId: `eligible-${index}` }))
+    );
+}
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
-        ai_telemetry_logs: { findMany: (...args: any[]) => mockFindMany(...args) },
+        ai_telemetry_logs: {
+            findMany: (...args: any[]) => {
+                const [query] = args;
+                if (query?.where?.id?.in) {
+                    return Promise.resolve(
+                        query.where.id.in.map((id: string) => ({ id, userId: 'userA' }))
+                    );
+                }
+                return mockFindMany(...args);
+            }
+        },
         ai_transition_snapshots: {
             findMany: (...args: any[]) => mockTransitionFindMany(...args)
         },
         aiFeature: {
             findFirst: (...args: any[]) => mockFindFirst(...args),
-            findMany: (...args: any[]) => mockFindMany(...args),
+            findMany: (...args: any[]) =>
+                args[0]?.select?.telemetryId && Object.keys(args[0].select).length === 1
+                    ? mockEligibleFeatures(...args)
+                    : mockFindMany(...args),
             create: (...args: any[]) => mockCreate(...args),
             update: (...args: any[]) => mockUpdate(...args),
             updateMany: (...args: any[]) => mockUpdateMany(...args),
@@ -37,7 +59,7 @@ jest.mock('../../src/prismaClient', () => ({
             findUnique: jest.fn<any>(),
             // saveModel woła pruneOldModels — findMany/deleteMany muszą mieć sensowne odpowiedzi
             findMany: jest.fn<any>().mockResolvedValue([]),
-            create: jest.fn<any>(),
+            create: (...args: any[]) => mockModelCreate(...args),
             update: jest.fn<any>(),
             count: jest.fn<any>(),
             deleteMany: jest.fn<any>().mockResolvedValue({ count: 0 })
@@ -49,7 +71,18 @@ jest.mock('../../src/prismaClient', () => ({
             deleteMany: (...args: any[]) => mockRunDeleteMany(...args)
         },
         aiRewardLog: { count: jest.fn<any>().mockResolvedValue(0) },
-        users: { update: jest.fn<any>() }
+        users: { update: jest.fn<any>() },
+        settings: {
+            findUnique: (...args: any[]) => mockSettingsFindUnique(...args)
+        },
+        $transaction: async (callback: any) =>
+            callback({
+                aiModel: {
+                    findFirst: (...args: any[]) => mockFindFirst(...args),
+                    update: (...args: any[]) => mockUpdate(...args),
+                    create: (...args: any[]) => mockModelCreate(...args)
+                }
+            })
     }
 }));
 
@@ -64,6 +97,11 @@ jest.mock('../../src/utils/logger', () => ({
 describe('FeatureExtractor', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['userA'])
+        });
+        setEligibleFeatures(500);
     });
 
     it('extract() tworzy poprawny FeatureVector z rekordu telemetry', async () => {
@@ -151,8 +189,8 @@ describe('FeatureExtractor', () => {
         mockFindMany
             // 1. ai_telemetry_logs.findMany — rekordy źródłowe z feedbackiem
             .mockResolvedValueOnce([
-                { id: 'log-1', createdAt: '2026-07-01T12:00:00Z' },
-                { id: 'log-2', createdAt: '2026-07-01T12:00:00Z' }
+                { id: 'log-1', userId: 'userA', createdAt: '2026-07-01T12:00:00Z' },
+                { id: 'log-2', userId: 'userA', createdAt: '2026-07-01T12:00:00Z' }
             ])
             // 2. aiFeature.findMany — bez istniejących (brak aktualizacji)
             .mockResolvedValueOnce([])
@@ -193,7 +231,13 @@ describe('FeatureExtractor', () => {
         mockFindMany
             // 1. ai_telemetry_logs.findMany — rekordy źródłowe z feedbackiem
             .mockResolvedValueOnce([
-                { id: 'log-1', wasRejected: false, wasModified: true, modificationCount: 2 }
+                {
+                    id: 'log-1',
+                    userId: 'userA',
+                    wasRejected: false,
+                    wasModified: true,
+                    modificationCount: 2
+                }
             ])
             // 2. aiFeature.findMany — już wyekstrahowane (stara etykieta ACCEPTED)
             .mockResolvedValueOnce([{ id: 'feat-1', telemetryId: 'log-1', label: 'ACCEPTED' }])
@@ -533,6 +577,11 @@ describe('Determinizm treningu (ETAP 2)', () => {
 describe('Split 70/15/15 (ETAP 2)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['userA'])
+        });
+        setEligibleFeatures(500);
     });
 
     it('guard rozmiaru → SKIPPED przy zbyt małym teście (n=250)', async () => {
@@ -666,6 +715,11 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         jest.clearAllMocks();
         // Bramka czyta trwały stan z DB (AiTrainingRun SUCCESS), nie z RAM —
         // domyślnie: brak poprzedniego SUCCESS + 500 kwalifikujących (gate przepuszcza).
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['userA'])
+        });
+        setEligibleFeatures(500);
         mockRunFindFirst.mockResolvedValue(null);
         mockCount.mockResolvedValue(500);
     });
@@ -699,6 +753,11 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
     }
 
     async function setupRun(): Promise<any> {
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['userA'])
+        });
+        setEligibleFeatures(500);
         const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
         const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
         const { default: prisma } = await import('../../src/prismaClient');
@@ -726,6 +785,7 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
 
     it('za mało NOWYCH danych (A-14) → insufficient_new_data przy force=false, bez wiersza', async () => {
         const { trainingPipeline } = await setupRun();
+        setEligibleFeatures(0);
         mockFindMany.mockResolvedValue(
             Array.from({ length: 400 }, (_, i) => makeFeature('ACCEPTED', i))
         );
@@ -773,6 +833,9 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
 
     it('P0 run-level: okno treningowe zawiera tylko A (B odcięte join-filtrem)', async () => {
         const { trainingPipeline, prisma } = await setupRun();
+        mockEligibleFeatures.mockResolvedValue(
+            Array.from({ length: 500 }, (_, i) => ({ telemetryId: `tel-a-${i}` }))
+        );
         // Allowlista [userA]: połowa rekordów należy do B.
         (prisma as any).settings = {
             findUnique: jest.fn<any>().mockResolvedValue({ value: JSON.stringify(['userA']) })
@@ -784,6 +847,7 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         });
         mockFindMany.mockResolvedValue([...mixed].reverse());
         const origTelemetryFindMany = (prisma.ai_telemetry_logs as any).findMany;
+        const origSettings = (prisma as any).settings;
         (prisma.ai_telemetry_logs as any).findMany = jest.fn<any>(async (args: any) => {
             const ids: string[] = args?.where?.id?.in || [];
             return ids.map((id) => ({
@@ -800,7 +864,32 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             expect(res.reason).toMatch(/split_guard:dataset=200,/);
         } finally {
             (prisma.ai_telemetry_logs as any).findMany = origTelemetryFindMany;
-            delete (prisma as any).settings;
+            (prisma as any).settings = origSettings;
+        }
+    });
+
+    it('zmiana allowlisty w trakcie runu blokuje trening na nieaktualnym snapshotcie', async () => {
+        const { trainingPipeline, prisma, spies } = await setupRun();
+        let allowlistReads = 0;
+        const settings = prisma.settings as any;
+        const originalFindUnique = settings.findUnique;
+        settings.findUnique = jest.fn(({ where }: any) => {
+            if (where.key === 'ai_training_user_ids_migrated') return Promise.resolve(null);
+            allowlistReads += 1;
+            const userIds = allowlistReads === 1 ? ['userA'] : ['userB'];
+            return Promise.resolve({ value: JSON.stringify(userIds) });
+        });
+        try {
+            const res = await trainingPipeline.run(true);
+
+            expect(spies[0]).toHaveBeenCalledWith(['userA']);
+            expect(spies[1]).toHaveBeenCalledWith(2000, ['userA']);
+            expect(spies[2]).toHaveBeenCalledWith(['userA']);
+            expect(allowlistReads).toBe(2);
+            expect(res).toEqual({ trained: false, reason: 'training_users_changed' });
+            expect(mockModelCreate).not.toHaveBeenCalled();
+        } finally {
+            settings.findUnique = originalFindUnique;
         }
     });
 
@@ -833,6 +922,11 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
 describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSettingsFindUnique.mockResolvedValue({
+            key: 'ai_training_user_ids',
+            value: JSON.stringify(['userA'])
+        });
+        setEligibleFeatures(500);
         mockRunCreate.mockResolvedValue({ id: 'run-1' });
         mockRunUpdate.mockResolvedValue({ id: 'run-1' });
         // Pre-flight gate przepuszcza (brak SUCCESS + 500 kwalifikujących),
