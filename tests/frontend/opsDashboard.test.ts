@@ -276,6 +276,7 @@ describe('P6 ops dashboard', () => {
                               n: 20,
                               errors: 6,
                               p95: 120,
+                              p99: 240,
                               recent: { n: 10, errors: 3 }
                           }
                       },
@@ -291,7 +292,7 @@ describe('P6 ops dashboard', () => {
         expect(size?.querySelector('.ops-unknown')).not.toBeNull();
         expect(
             rows.find((el) => el.textContent.includes('/api/offers/:id'))?.textContent
-        ).toContain('6/20 od startu · 3/10 (30.0%) · p95 120 ms');
+        ).toContain('6/20 od startu · 3/10 (30.0%) · p95 120 ms · p99 240 ms');
     });
 
     test('zdrowy backend -> 4 sekcje z OK', async () => {

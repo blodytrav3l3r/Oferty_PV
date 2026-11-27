@@ -67,6 +67,22 @@ describe('dbQueryCounter (Faza 5.2)', () => {
         expect(message).toMatch(/^\[[0-9a-f]{8}\] /);
     });
 
+    test('requestLogger zapisuje szablon trasy zamiast identyfikatora oferty', async () => {
+        const infoMock = logger.info as unknown as jest.Mock;
+        infoMock.mockClear();
+        const app = express();
+        app.use(requestLogger);
+        app.get('/api/offers/:id', (_req, res) => res.json({ ok: true }));
+
+        await request(app)
+            .get('/api/offers/offer_studnie_sensitive-12345678901234567890')
+            .expect(200);
+
+        const message = infoMock.mock.calls[0][1] as string;
+        expect(message).toContain('/api/offers/:id 200');
+        expect(message).not.toContain('offer_studnie_sensitive');
+    });
+
     test('requestLogger ustawia nagłówek X-Request-Id', async () => {
         const app = express();
         app.use(requestLogger);

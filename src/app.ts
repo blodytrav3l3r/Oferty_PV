@@ -223,7 +223,7 @@ app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
  * /metrics:
  *   get:
  *     tags: [System]
- *     summary: Metryki in-process (admin) — P50/P95 per endpoint, DB, loop-lag, PDF
+ *     summary: Metryki in-process (admin) — P50/P95/P99 per endpoint, DB, loop-lag, PDF
  *     responses:
  *       200:
  *         description: Snapshot metryk JSON

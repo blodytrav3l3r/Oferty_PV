@@ -1,6 +1,6 @@
 /**
  * M: metryki in-process (bez Prometheusa na początek).
- * - request duration per endpoint (ring buffer 512, p50/p95 na odczyt)
+ * - request duration per endpoint (ring buffer 512, p50/p95/p99 na odczyt)
  * - DB query count + czas (zasilane z prisma $on query)
  * - DB contention counter (z errorHandler)
  * - event-loop lag (sampler 1 s), RSS
@@ -150,6 +150,7 @@ export interface MetricsSnapshot {
             n: number;
             p50: number;
             p95: number;
+            p99: number;
             errors: number;
             lastMs: number;
             recent: { n: number; errors: number };
@@ -170,6 +171,7 @@ export function getMetricsSnapshot(
             n: st.count,
             p50: +pct(sorted, 50).toFixed(1),
             p95: +pct(sorted, 95).toFixed(1),
+            p99: +pct(sorted, 99).toFixed(1),
             errors: st.errors,
             lastMs: +st.lastMs.toFixed(1),
             recent: {

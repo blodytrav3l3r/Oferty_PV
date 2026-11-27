@@ -567,16 +567,13 @@ router.post(
                     else duplicates.push(item.wellId);
                 } catch (e: unknown) {
                     // P1.7 observability: odpowiedź bez zmian (reason ERROR),
-                    // diagnostyka w logu — wellId + klasa/kod błędu, bez payloadu.
+                    // diagnostyka bez identyfikatora oferty ani payloadu.
                     const errName = e instanceof Error ? e.name : 'Error';
                     const errCode =
                         typeof e === 'object' && e !== null && 'code' in e
                             ? String((e as { code: unknown }).code)
                             : 'unknown';
-                    logger.error(
-                        'AiRewardBatchRoute',
-                        `Reward item failed wellId=${item.wellId} ${errName}:${errCode}`
-                    );
+                    logger.error('AiRewardBatchRoute', `Reward item failed ${errName}:${errCode}`);
                     rejected.push({ wellId: item.wellId, reason: 'ERROR' });
                 }
             }

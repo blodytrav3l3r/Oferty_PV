@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger';
 import { runWithDbCounter, getDbCount } from '../utils/dbQueryCounter';
-import { recordRequest } from '../utils/metrics';
+import { normalizePath, recordRequest } from '../utils/metrics';
 import { runWithRequestId } from '../utils/requestContext';
 
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
@@ -19,7 +19,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
             recordRequest(req.method, req.path, res.statusCode, ms, routeTemplate);
             const dbQueries = getDbCount();
             const dbPart = dbQueries >= 0 ? `, db=${dbQueries}` : '';
-            const requestPath = req.originalUrl.split('?', 1)[0];
+            const requestPath =
+                typeof routePath === 'string'
+                    ? normalizePath(req.baseUrl + routePath)
+                    : '(unmatched route)';
             logger.info(
                 'Request',
                 `[${requestId}] ${req.method} ${requestPath} ${res.statusCode} ${ms}ms${dbPart}`

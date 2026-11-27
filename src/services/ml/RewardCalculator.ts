@@ -63,10 +63,7 @@ export class RewardCalculator {
                 select: { id: true }
             });
             if (dupe) {
-                logger.info(
-                    'RewardCalculator',
-                    `Duplikat reward ${event.action} dla well ${event.wellId} — pomijam`
-                );
+                logger.info('RewardCalculator', `Duplikat reward ${event.action} — pomijam`);
                 return { applied: false };
             }
         } catch (e) {
@@ -104,10 +101,7 @@ export class RewardCalculator {
                 if (onApplied) await onApplied(tx);
             });
 
-            logger.info(
-                'RewardCalculator',
-                `Reward ${event.action}: ${reward.toFixed(3)} dla well ${event.wellId}`
-            );
+            logger.info('RewardCalculator', `Reward ${event.action}: ${reward.toFixed(3)}`);
             return { applied: true };
         } catch (e) {
             // P2002 = duplikat (wellId, action) — unikalny indeks, nie błąd.
@@ -117,10 +111,7 @@ export class RewardCalculator {
                 'code' in e &&
                 (e as { code?: string }).code === 'P2002'
             ) {
-                logger.info(
-                    'RewardCalculator',
-                    `Duplikat reward ${event.action} dla well ${event.wellId} — pomijam`
-                );
+                logger.info('RewardCalculator', `Duplikat reward ${event.action} — pomijam`);
                 return { applied: false };
             }
             throw e;

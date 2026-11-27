@@ -409,13 +409,15 @@
                             ((recent.errors / recent.n) * 100).toFixed(1) +
                             '%) · p95 ' +
                             stats.p95 +
+                            ' ms · p99 ' +
+                            stats.p99 +
                             ' ms';
                     }
                     return row(
                         entry[0],
                         esc(details),
                         recent ? (recent.errors ? 'WARNING' : 'OK') : 'UNKNOWN',
-                        'Błędy / żądania od startu oraz w ostatnich próbkach i ich czas p95.'
+                        'Błędy / żądania od startu oraz w ostatnich próbkach i ich czas p95/p99.'
                     );
                 })
                 .join('')

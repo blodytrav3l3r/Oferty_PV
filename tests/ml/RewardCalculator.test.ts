@@ -1,5 +1,6 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { RewardCalculator } from '../../src/services/ml/RewardCalculator';
+import { logger } from '../../src/utils/logger';
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -67,6 +68,8 @@ describe('RewardCalculator.processAction — A-19', () => {
             where: { id: 'u1' },
             data: { totalReward: { increment: 1.0 } }
         });
+        expect(logger.info).toHaveBeenCalledWith('RewardCalculator', 'Reward ACCEPT: 1.000');
+        expect(JSON.stringify((logger.info as jest.Mock).mock.calls)).not.toContain('w1');
     });
 
     it('duplikat (P2002) zwraca applied:false bez rzucania (anti-poisoning)', async () => {

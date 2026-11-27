@@ -34,13 +34,14 @@ describe('M metrics', () => {
         expect(shouldSkip('/api/offers/search')).toBe(false);
     });
 
-    test('recordRequest liczy p50/p95 i błędy 5xx', () => {
+    test('recordRequest liczy p50/p95/p99 i błędy 5xx', () => {
         for (let i = 1; i <= 100; i++) recordRequest('GET', '/api/a', 200, i);
         recordRequest('GET', '/api/a', 500, 5);
         const snap = getMetricsSnapshot();
         expect(snap.endpoints['GET /api/a'].n).toBe(101);
         expect(snap.endpoints['GET /api/a'].p50).toBe(50);
         expect(snap.endpoints['GET /api/a'].p95).toBe(95);
+        expect(snap.endpoints['GET /api/a'].p99).toBe(99);
         expect(snap.endpoints['GET /api/a'].errors).toBe(1);
     });
 
