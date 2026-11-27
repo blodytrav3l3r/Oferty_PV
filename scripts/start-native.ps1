@@ -281,6 +281,12 @@ try {
         throw 'The local database is not ready. No migrations or seed were run.'
     }
 
+    Write-Host 'Applying pending PostgreSQL migrations before starting S.O.K.'
+    & npx.cmd prisma migrate deploy
+    if ($LASTEXITCODE -ne 0) {
+        throw 'PostgreSQL migrations failed. S.O.K. was not started.'
+    }
+
     Write-Host "Starting S.O.K. at http://localhost:$appPort. Press Ctrl+C to stop."
     if ($Watch) {
         & npm.cmd run dev

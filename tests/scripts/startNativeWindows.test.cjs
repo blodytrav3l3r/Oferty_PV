@@ -358,12 +358,13 @@ describe('native Windows launcher contract', () => {
         assert.match(ensureDatabase, /prisma migrate deploy/i);
         assert.match(ensureDatabase, /prisma[\\/]seed\.ts/i);
         assert.match(native, /scripts[\/]check-db\.js/);
-        assert.doesNotMatch(native, /migrate\s+deploy|prisma[\\/]seed/i);
+        assert.match(native, /prisma migrate deploy/i);
+        assert.doesNotMatch(native, /prisma[\\/]seed/i);
         assert.match(
             readme,
             /`start\.bat` jest osobnym, r[eę]cznym trybem: u[zż]ywa `DATABASE_URL` z `\.env`, a `ensure-db\.bat` mo[zż]e wykona[cć] migracje lub seed\./i
         );
-        assert.match(readme, /start-native\.bat.*przygotowanej lokalnej bazie/is);
+        assert.match(readme, /start-native\.bat.*stosuje oczekuj[aą]ce migracje/is);
         assert.match(readme, /start-dev\.bat.*testow.*baz/is);
         assert.match(readme, /Kolejny start z Dockerem.*`start-docker\.bat`/);
         assert.match(
@@ -393,6 +394,12 @@ describe('native Windows launcher contract', () => {
 
         assert.match(startupScript, /127\.0\.0\.1:55432\/sok_dev/);
         assert.match(startupScript, /scripts[\\/]check-db\.js/);
+        const databaseCheck = startupScript.indexOf('scripts/check-db.js');
+        const migrationDeploy = startupScript.indexOf('prisma migrate deploy');
+        const serverStart = startupScript.indexOf('& node.exe -r ts-node/register/transpile-only server.ts');
+        const watchStart = startupScript.indexOf('& npm.cmd run dev');
+        assert.ok(databaseCheck >= 0 && migrationDeploy > databaseCheck);
+        assert.ok(serverStart > migrationDeploy && watchStart > migrationDeploy);
         assert.match(
             startupScript,
             /if \(\$Watch\) \{\s+& npm\.cmd run dev\s+\} else \{\s+& node\.exe -r ts-node\/register\/transpile-only server\.ts/
@@ -511,13 +518,11 @@ describe('native Windows launcher contract', () => {
         );
     });
 
-    it('does not migrate, seed, or terminate unrelated processes', () => {
+    it('migrates before startup without seeding or terminating unrelated processes', () => {
         const startupScript = fs.readFileSync(startupScriptPath, 'utf8');
 
-        assert.doesNotMatch(
-            startupScript,
-            /migrate\s+deploy|prisma\s+migrate|prisma[\\/]seed|npm\s+run\s+prisma:seed/i
-        );
+        assert.match(startupScript, /prisma migrate deploy/i);
+        assert.doesNotMatch(startupScript, /prisma[\\/]seed|npm\s+run\s+prisma:seed/i);
         assert.doesNotMatch(startupScript, /Stop-Process|taskkill/i);
     });
 });

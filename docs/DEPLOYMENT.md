@@ -64,8 +64,10 @@ Po zatwierdzeniu wdrożenia release przebiega w następującej kolejności:
    połączenia/pool limits oraz role runtime, migration i backup.
 2. Utwórz pustą bazę i zweryfikuj endpoint, wersję serwera, TLS oraz uprawnienia
    przez izolowany preflight. Nie używaj produkcyjnych danych w CI.
-3. Zatwierdzony release job wykonuje PostgreSQL migration deploy jeden raz.
-   Migracje są odtwarzalne od pustej bazy; po nich sprawdź status i brak driftu.
+3. Zatwierdzony release job wykonuje PostgreSQL migration deploy jako osobny,
+   jednorazowy krok przed uruchomieniem aplikacji. Compose blokuje start serwera
+   na ukończenie migratora; migracje są odtwarzalne od pustej bazy. Po nich
+   sprawdź status i brak driftu.
 4. Po migracjach wykonaj granty dla runtime/backup, następnie seeduj tylko
    brakujące dane startowe i bezpieczne konto administratora rolą runtime.
    W osobnym, audytowalnym kroku importuj tylko aktywne cenniki z artefaktu

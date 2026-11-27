@@ -288,7 +288,7 @@ log INFO 'Importuję do PostgreSQL aktywne cenniki dołączone do S.O.K.'
 compose run --rm --no-deps --entrypoint sh app -ec "npx ts-node scripts/import-active-pricelists.ts '$pricelist_package' --apply"
 
 log INFO 'Uruchamiam S.O.K. i czekam na gotowość PostgreSQL oraz aplikacji.'
-compose up --detach --wait --wait-timeout 300 app
+compose up --no-deps --detach --wait --wait-timeout 300 app
 compose ps
 MARKER_TEMP="$(mktemp "$ROOT/.sok-postgres-installed.XXXXXX")"
 printf 'PostgreSQL 18; active pricelists imported; app readiness passed\n' > "$MARKER_TEMP"

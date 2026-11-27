@@ -47,10 +47,12 @@ operacyjne i nie wynikają z lokalnej walidacji.
    wymagają zweryfikowanego TLS.
 2. Migrator odtwarza schemat wyłącznie z zatwierdzonej historii PostgreSQL.
    `migrate dev` jest przeznaczone do izolowanej bazy developerskiej i review
-   wygenerowanego SQL; release używa `migrate deploy` dokładnie raz na release,
-   poza startem każdej repliki.
+   wygenerowanego SQL; release używa `migrate deploy` jako kontrolowanego,
+   jednorazowego kroku przed startem aplikacji, poza procesem każdej repliki.
 3. Seed twórz tylko dla pustej bazy i bez przenoszenia haseł, sesji ani sekretów.
-   Nie uruchamiaj automatycznego DDL przy starcie aplikacji.
+   Nie uruchamiaj automatycznego DDL wewnątrz procesu aplikacji. Launchery
+   lokalne i Compose mogą uruchomić migrator przed serwerem; błąd migracji
+   blokuje start aplikacji.
 4. Nowe instalacje importują zatwierdzone aktywne cenniki z
    `data/pricelists/active-pricelists.json`. Pakiet allowlistuje jedną wersję
    każdego typu i jej pozycje; zawiera liczniki oraz SHA-256 wersji i całości.

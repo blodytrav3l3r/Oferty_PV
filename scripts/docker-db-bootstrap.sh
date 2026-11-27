@@ -2,6 +2,12 @@
 set -eu
 
 export NODE_ENV=production
+BOOTSTRAP_MODE="${1:-bootstrap}"
+
+if [ "$BOOTSTRAP_MODE" != 'bootstrap' ] && [ "$BOOTSTRAP_MODE" != 'migrate-only' ]; then
+    echo '[ERROR] Unsupported PostgreSQL bootstrap mode.' >&2
+    exit 1
+fi
 
 validate_database_url() {
     value="$1"
@@ -17,13 +23,15 @@ try {
 ' "$value"
 }
 
-if [ -z "${DATABASE_URL:-}" ] || [ -z "${MIGRATION_DATABASE_URL:-}" ] || [ -z "${DEFAULT_ADMIN_PASSWORD:-}" ]; then
-    echo '[ERROR] DATABASE_URL, MIGRATION_DATABASE_URL and DEFAULT_ADMIN_PASSWORD are required for PostgreSQL bootstrap.' >&2
+if [ -z "${MIGRATION_DATABASE_URL:-}" ] || \
+    { [ "$BOOTSTRAP_MODE" = 'bootstrap' ] && { [ -z "${DATABASE_URL:-}" ] || [ -z "${DEFAULT_ADMIN_PASSWORD:-}" ]; }; }; then
+    echo '[ERROR] MIGRATION_DATABASE_URL is required; bootstrap mode also requires DATABASE_URL and DEFAULT_ADMIN_PASSWORD.' >&2
     exit 1
 fi
 
-if ! validate_database_url "$DATABASE_URL" || ! validate_database_url "$MIGRATION_DATABASE_URL"; then
-    echo '[ERROR] Bootstrap URLs must be valid PostgreSQL URLs with a host and database.' >&2
+if ! validate_database_url "$MIGRATION_DATABASE_URL" || \
+    { [ "$BOOTSTRAP_MODE" = 'bootstrap' ] && ! validate_database_url "$DATABASE_URL"; }; then
+    echo '[ERROR] PostgreSQL URLs must be valid and include a host and database.' >&2
     exit 1
 fi
 
@@ -49,6 +57,11 @@ echo '[INFO] Applying PostgreSQL migrations with the migration role.'
 if ! run_database_command env DATABASE_URL="$MIGRATION_DATABASE_URL" npx prisma migrate deploy; then
     echo '[ERROR] PostgreSQL migrations failed; see redacted details above.' >&2
     exit 1
+fi
+
+if [ "$BOOTSTRAP_MODE" = 'migrate-only' ]; then
+    echo '[INFO] PostgreSQL migrations completed; bootstrap data steps were skipped.'
+    exit 0
 fi
 
 echo '[INFO] Applying least-privilege PostgreSQL grants.'

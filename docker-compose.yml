@@ -36,6 +36,8 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+            db-migrate:
+                condition: service_completed_successfully
         ports:
             - '127.0.0.1:3000:10000'
         environment:
@@ -70,6 +72,20 @@ services:
             timeout: 10s
             retries: 3
             start_period: 60s
+
+    db-migrate:
+        image: sok-app:latest
+        restart: 'no'
+        depends_on:
+            postgres:
+                condition: service_healthy
+        entrypoint: ['/bin/sh', '/app/scripts/docker-db-bootstrap.sh']
+        command: ['migrate-only']
+        environment:
+            NODE_ENV: production
+            MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:?Set MIGRATION_DATABASE_URL in .env}
+        networks:
+            - sok-network
 
     db-bootstrap:
         image: sok-app:latest

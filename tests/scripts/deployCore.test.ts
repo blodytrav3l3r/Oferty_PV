@@ -91,7 +91,7 @@ describe('deploy-core', () => {
                 core.resolveSteps(t, 'v1.16.0').find((s: any) => /Uruchomienie/.test(s.name)).cmd;
             expect(startOf('windows')).toBe('start "" start.bat --prod');
             expect(startOf('linux')).toBe(core.linuxStartCmd());
-            expect(startOf('docker')).toBe('docker compose up -d app');
+            expect(startOf('docker')).toBe('docker compose up -d --no-deps app');
         });
 
         it('docker applies migrations through a one-shot Compose bootstrap before app start', () => {

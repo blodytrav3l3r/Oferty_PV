@@ -17,7 +17,7 @@ PostgreSQL 18 jest jedynym wspieranym silnikiem danych runtime i aktywnych test�
 
 ## Migracje i cykl życia
 
-- Zmiany schematu wyłącznie przez wersjonowane migracje PostgreSQL. `migrate dev` służy do generowania/review SQL na izolowanej bazie deweloperskiej; instalacja i release używają `migrate deploy`. Runtime nie wykonuje DDL, auto-heal, `db push` ani równoległego deployu migracji przez wiele replik.
+- Zmiany schematu wyłącznie przez wersjonowane migracje PostgreSQL. `migrate dev` służy do generowania/review SQL na izolowanej bazie deweloperskiej; launchery i release używają kontrolowanego `migrate deploy` przed startem serwera. Proces HTTP nie wykonuje DDL ani auto-heal; Compose blokuje start aplikacji do ukończenia jednorazowego migratora, bez uruchamiania go w każdej replice.
 - Każda migracja ma sprawdzenie SQL, ograniczeń, indeksów, locków, statusu i driftu na PostgreSQL. Najpierw fixture/czysta baza; upgrade danych produkcyjnych i live cutover wymagają odrębnej bramy GO.
 - Świeża baza otrzymuje migracje, bezpieczny seed startowy oraz aktywne cenniki przez osobny allowlistowany i audytowany import. Zachowuj tylko aktualnie aktywne wersje zgodne z lifecycle; nie importuj draftów ani historii ofert/użytkowników.
 - Nigdy nie maskuj błędu aktywnego cennika seedem fabrycznym ani fallbackiem do innego źródła.

@@ -515,7 +515,7 @@ function Invoke-DatabaseSetup {
     Invoke-Compose -Arguments @('run', '--rm', '--no-deps', '--entrypoint', 'sh', 'app', '-ec', $apply)
 
     Write-Step 'Starting S.O.K. and waiting for its database readiness check.'
-    Invoke-Compose -Arguments @('up', '--detach', '--wait', '--wait-timeout', '300', 'app')
+    Invoke-Compose -Arguments @('up', '--no-deps', '--detach', '--wait', '--wait-timeout', '300', 'app')
     Invoke-Compose -Arguments @('ps')
 }
 

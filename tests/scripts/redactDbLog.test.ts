@@ -30,4 +30,29 @@ describe('redact-db-log.mjs', () => {
             fs.rmSync(directory, { recursive: true, force: true });
         }
     });
+
+    it('redacts credentials when only the migration URL is available', () => {
+        const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-db-log-'));
+        const logPath = path.join(directory, 'command.log');
+        const migrationUrl =
+            'postgresql://sok_migrator:migration-secret@postgres:5432/sok?schema=public';
+        fs.writeFileSync(
+            logPath,
+            `User sok_migrator failed; password migration-secret; URL ${migrationUrl}\n`,
+            'utf8'
+        );
+
+        try {
+            const output = execFileSync(process.execPath, [REDACTOR, logPath], {
+                env: { ...process.env, DATABASE_URL: '', MIGRATION_DATABASE_URL: migrationUrl },
+                encoding: 'utf8'
+            });
+
+            expect(output).toContain('[REDACTED]');
+            expect(output).not.toContain('sok_migrator');
+            expect(output).not.toContain('migration-secret');
+        } finally {
+            fs.rmSync(directory, { recursive: true, force: true });
+        }
+    });
 });

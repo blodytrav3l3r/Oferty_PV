@@ -109,18 +109,42 @@ describe('PostgreSQL Docker startup and bootstrap', () => {
         );
     });
 
-    it('exposes migration and initial-admin credentials only to the one-shot bootstrap service', () => {
+    it('keeps database credentials scoped to their one-shot Compose jobs', () => {
         const compose = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');
-        const app = compose.split('    app:\n')[1].split('    db-bootstrap:\n')[0];
-        const bootstrap = compose.split('    db-bootstrap:\n')[1].split('\nnetworks:')[0];
+        const app = compose.split('\n    app:\n')[1].split('\n    db-migrate:\n')[0];
+        const migrate = compose.split('\n    db-migrate:\n')[1].split('\n    db-bootstrap:\n')[0];
+        const bootstrap = compose.split('\n    db-bootstrap:\n')[1].split('\nnetworks:\n')[0];
 
         expect(app).not.toContain('MIGRATION_DATABASE_URL');
         expect(app).not.toContain('DEFAULT_ADMIN_PASSWORD');
         expect(app).not.toContain('RESET_ADMIN_PASSWORD_ON_BOOTSTRAP');
+        expect(migrate).toContain('MIGRATION_DATABASE_URL');
+        expect(migrate).not.toMatch(/^\s+DATABASE_URL:/m);
+        expect(migrate).not.toContain('DEFAULT_ADMIN_PASSWORD');
         expect(bootstrap).toContain('MIGRATION_DATABASE_URL');
         expect(bootstrap).toContain('DEFAULT_ADMIN_PASSWORD');
         expect(bootstrap).toContain('RESET_ADMIN_PASSWORD_ON_BOOTSTRAP');
         expect(compose).toContain("profiles: ['ops']");
+    });
+
+    it('blocks Docker app startup until a migration-only job succeeds', () => {
+        const compose = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');
+        const app = compose.split('\n    app:\n')[1].split('\n    db-migrate:\n')[0];
+        const migrate = compose.split('\n    db-migrate:\n')[1].split('\n    db-bootstrap:\n')[0];
+        const bootstrapScript = fs.readFileSync(
+            path.join(ROOT, 'scripts', 'docker-db-bootstrap.sh'),
+            'utf8'
+        );
+
+        expect(app).toContain('db-migrate:');
+        expect(app).toContain('condition: service_completed_successfully');
+        expect(migrate).toContain('MIGRATION_DATABASE_URL');
+        expect(migrate).not.toContain('DEFAULT_ADMIN_PASSWORD');
+        expect(migrate).toContain('docker-db-bootstrap.sh');
+        expect(bootstrapScript).toContain('migrate-only');
+        expect(bootstrapScript.indexOf('migrate-only')).toBeLessThan(
+            bootstrapScript.indexOf('grant-postgres-roles.mjs')
+        );
     });
 
     it('checks the initial admin through the existing idempotent helper and disconnects Prisma', () => {

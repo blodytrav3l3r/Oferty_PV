@@ -49,7 +49,8 @@ function startCmd(target) {
         case 'linux':
             return linuxStartCmd();
         case 'docker':
-            return 'docker compose up -d app';
+            // The one-shot db-bootstrap step has already migrated PostgreSQL.
+            return 'docker compose up -d --no-deps app';
         default:
             throw new Error(`Brak komendy start dla targetu: ${target}`);
     }

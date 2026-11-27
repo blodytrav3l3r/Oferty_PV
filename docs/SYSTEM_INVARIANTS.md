@@ -54,9 +54,10 @@
 - **Invariant:** `prisma migrate deploy` na pustej bazie PostgreSQL
     - seed daje schemat bez driftu; `db push` nie jest ścieżką wdrożeniową.
 - **Owner:** backend/CI.
-- **Enforcement:** kanoniczna historia `prisma/migrations-postgresql/`; runtime
-  nie wykonuje DDL. Lokalna walidacja PG18.6 przeszła; produkcyjny rollout nadal
-  wymaga zatwierdzenia środowiska.
+- **Enforcement:** kanoniczna historia `prisma/migrations-postgresql/`; backend
+  HTTP nie wykonuje DDL. Launchery i Compose uruchamiają wersjonowany migrator
+  przed startem aplikacji i blokują start przy błędzie. Lokalna walidacja PG18.6
+  przeszła; produkcyjny rollout nadal wymaga zatwierdzenia środowiska.
 - **Tests:** testy migracji, driftu i integracji PostgreSQL 18; status:
   [DEPLOYMENT.md](DEPLOYMENT.md).
 

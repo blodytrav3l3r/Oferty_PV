@@ -205,7 +205,7 @@ const windowsImportIndex = windowsInstaller.indexOf(
 );
 const windowsMarkerIndex = windowsInstaller.lastIndexOf('Write-PostgresInstallMarker');
 const windowsReadinessIndex = windowsInstaller.indexOf(
-    "Invoke-Compose -Arguments @('up', '--detach', '--wait', '--wait-timeout', '300', 'app')"
+    "Invoke-Compose -Arguments @('up', '--no-deps', '--detach', '--wait', '--wait-timeout', '300', 'app')"
 );
 const windowsMarkerClearIndex = windowsInstaller.indexOf(
     'Remove-Item -LiteralPath $markerPath -Force'
@@ -227,7 +227,7 @@ assert.ok(
 const linuxImportIndex = linuxInstaller.indexOf("'$pricelist_package' --apply");
 const linuxMarkerIndex = linuxInstaller.indexOf('mv -T -- "$MARKER_TEMP" "$INSTALL_MARKER"');
 const linuxReadinessIndex = linuxInstaller.indexOf(
-    'compose up --detach --wait --wait-timeout 300 app'
+    'compose up --no-deps --detach --wait --wait-timeout 300 app'
 );
 const linuxMarkerClearIndex = linuxInstaller.indexOf('rm -f -- "$INSTALL_MARKER"');
 const linuxBuildIndex = linuxInstaller.indexOf('compose build app');

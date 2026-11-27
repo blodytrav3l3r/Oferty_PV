@@ -2,7 +2,7 @@
 REM  Wersja: 1.65.0
 REM Rola: Pomocnicza implementacja startu Docker Compose dla start-docker.bat.
 REM Uzycie: start-postgres.bat
-REM Uruchamia: docker compose up --detach --build dla postgres i app.
+REM Uruchamia: docker compose up --detach --build dla postgres i app; Compose migruje schemat przed app.
 REM Wplyw: Buduje aplikacje z lokalnego folderu, bez pobierania kodu z GitHub; zachowuje wolumen PostgreSQL.
 setlocal
 cd /d "%~dp0"

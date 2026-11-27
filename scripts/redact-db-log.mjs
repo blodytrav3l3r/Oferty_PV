@@ -15,8 +15,8 @@ try {
 }
 
 const secrets = new Set();
-const rawUrl = process.env.DATABASE_URL;
-if (rawUrl) {
+for (const rawUrl of [process.env.DATABASE_URL, process.env.MIGRATION_DATABASE_URL]) {
+    if (!rawUrl) continue;
     secrets.add(rawUrl);
     try {
         const databaseUrl = new URL(rawUrl);
@@ -26,7 +26,7 @@ if (rawUrl) {
             secrets.add(decodeURIComponent(secret));
         }
     } catch {
-        // The entrypoint validates DATABASE_URL before invoking database commands.
+        // The entrypoint validates database URLs before invoking database commands.
     }
 }
 
