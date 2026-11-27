@@ -1097,7 +1097,7 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             const res = await trainingPipeline.run(true);
 
             expect(spies[0]).toHaveBeenCalledWith(['userA']);
-            expect(spies[1]).toHaveBeenCalledWith(2000, ['userA']);
+            expect(spies[1]).toHaveBeenCalledWith(undefined, ['userA']);
             expect(spies[2]).toHaveBeenCalledWith(['userA']);
             expect(allowlistReads).toBe(2);
             expect(res).toEqual({ trained: false, reason: 'training_users_changed' });

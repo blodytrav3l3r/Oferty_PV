@@ -60,7 +60,9 @@ function sortDesc(rows: Row[]): Row[] {
 
 const mockTelemetryFindMany = jest.fn<any>(async (args: any = {}) => {
     let rows = store.telemetry.filter((r) => matchTelemetry(r, args.where));
-    rows = sortDesc(rows);
+    rows = args.orderBy?.id
+        ? [...rows].sort((a, b) => (b.id < a.id ? -1 : b.id > a.id ? 1 : 0))
+        : sortDesc(rows);
     if (args.take) rows = rows.slice(0, args.take);
     return rows.map((r) => applySelect(r, args.select));
 });
@@ -69,6 +71,7 @@ const mockFeatureFindMany = jest.fn<any>(async (args: any = {}) => {
     let rows = [...store.features];
     const w = args.where || {};
     if (w.telemetryId?.in) rows = rows.filter((f) => w.telemetryId.in.includes(f.telemetryId));
+    if (w.id?.lt) rows = rows.filter((f) => f.id < w.id.lt);
     if (w.OR)
         rows = rows.filter((f) =>
             (w.OR as any[]).some((c) => {
@@ -80,7 +83,9 @@ const mockFeatureFindMany = jest.fn<any>(async (args: any = {}) => {
             })
         );
     if (w.createdAt?.gt) rows = rows.filter((f) => (f.createdAt || '') > w.createdAt.gt);
-    rows = sortDesc(rows);
+    rows = args.orderBy?.id
+        ? [...rows].sort((a, b) => (b.id < a.id ? -1 : b.id > a.id ? 1 : 0))
+        : sortDesc(rows);
     if (args.take) rows = rows.slice(0, args.take);
     return rows.map((f) => applySelect(f, args.select));
 });
@@ -316,6 +321,21 @@ describe('extractAndStore z allowlistą', () => {
         expect(await featureExtractor.extractAndStore()).toBe(0);
         expect(mockTelemetryFindMany).not.toHaveBeenCalled();
     });
+
+    it('przechodzi poza pierwsze 500 rekordów i ekstrahuje starszy brakujący wektor', async () => {
+        store.settings.set('ai_training_user_ids', '["A"]');
+        store.telemetry = Array.from({ length: 501 }, (_, index) =>
+            telemetryFixture(`tel-${String(index + 1).padStart(4, '0')}`, 'A', '1000')
+        );
+        store.features = store.telemetry.slice(1).map((record) => ({ telemetryId: record.id }));
+
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const count = await featureExtractor.extractAndStore();
+
+        expect(count).toBe(1);
+        expect(store.features.some((feature) => feature.telemetryId === 'tel-0001')).toBe(true);
+        expect(mockTelemetryFindMany).toHaveBeenCalledTimes(2);
+    });
 });
 
 describe('resync z allowlistą (P0)', () => {
@@ -368,6 +388,54 @@ describe('resync z allowlistą (P0)', () => {
 
         expect(n).toBe(0);
         expect(store.features[0].bottomType).toBe('unknown');
+    });
+
+    it('resyncFeatures dociera do starszej dozwolonej cechy po 1000 nowszych niedozwolonych', async () => {
+        store.settings.set('ai_training_user_ids', '["A"]');
+        store.telemetry = [
+            telemetryFixture('tel-old', 'A', '1000', {
+                allComponentIds: JSON.stringify([{ productId: 'DDD-1000-250' }])
+            }),
+            ...Array.from({ length: 1000 }, (_, index) =>
+                telemetryFixture(`tel-new-${String(index).padStart(4, '0')}`, 'B', '1000')
+            )
+        ];
+        store.features = store.telemetry.map((record, index) => ({
+            id: `feature-${String(index + 1).padStart(4, '0')}`,
+            telemetryId: record.id,
+            bottomType: 'unknown',
+            ringCount: 0,
+            connectionCount: 0,
+            dennicaHeight: null
+        }));
+
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const count = await featureExtractor.resyncFeatures();
+
+        expect(count).toBe(1);
+        expect(
+            store.features.find((feature) => feature.telemetryId === 'tel-old')?.bottomType
+        ).not.toBe('unknown');
+    });
+
+    it('resyncLabels przechodzi ponad 2000 rekordów i synchronizuje starszą etykietę', async () => {
+        store.settings.set('ai_training_user_ids', '["A"]');
+        store.telemetry = Array.from({ length: 2001 }, (_, index) =>
+            telemetryFixture(`tel-${String(index + 1).padStart(4, '0')}`, 'A', '1000', {
+                wasAccepted: false,
+                solverSource: 'AUTO_JS'
+            })
+        );
+        store.features = [
+            { id: 'feature-old', telemetryId: 'tel-0001', label: 'NO_FEEDBACK', reward: 0 }
+        ];
+
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const count = await featureExtractor.resyncLabels();
+
+        expect(count).toBe(1);
+        expect(store.features[0].label).toBe('MODIFIED');
+        expect(mockTelemetryFindMany.mock.calls.length).toBeGreaterThan(1);
     });
 });
 

@@ -70,10 +70,7 @@ jest.mock('../src/services/ml/predictionCache', () => ({
     setCache: jest.fn(),
     getCached: jest.fn(),
     clearPredictionCache: jest.fn(),
-    predictionCacheSize: jest.fn<any>().mockReturnValue(0),
-    setWellScore: jest.fn(),
-    getWellScore: jest.fn<any>().mockReturnValue(undefined),
-    getWellPrediction: jest.fn<any>().mockReturnValue(undefined)
+    predictionCacheSize: jest.fn<any>().mockReturnValue(0)
 }));
 
 jest.mock('../src/services/auditService', () => ({

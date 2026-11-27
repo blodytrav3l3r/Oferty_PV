@@ -1,8 +1,14 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
+import { clearPredictionCache, issuePredictionProof } from '../../src/services/ml/predictionCache';
 
 const mockUser: any = { id: 'userA', username: 'userA', role: 'user', subUsers: [] };
+const mockGetTrainingUserIds = jest.fn<any>().mockResolvedValue(['userA']);
+
+jest.mock('../../src/services/ml/trainingUsers', () => ({
+    getTrainingUserIds: (...args: any[]) => mockGetTrainingUserIds(...args)
+}));
 
 jest.mock('../../src/utils/logger', () => ({
     logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
@@ -47,6 +53,8 @@ jest.mock('../../src/services/ml/FeatureExtractor', () => ({
 let mockLogsFindMany = jest.fn<any>().mockResolvedValue([]);
 const mockOffersRelFindMany = jest.fn<any>().mockResolvedValue([]);
 const mockOffersStudnieFindMany = jest.fn<any>().mockResolvedValue([]);
+const mockOffersRelFindUnique = jest.fn<any>().mockResolvedValue(null);
+const mockOffersStudnieFindUnique = jest.fn<any>().mockResolvedValue(null);
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -63,9 +71,13 @@ jest.mock('../../src/prismaClient', () => ({
             findFirst: jest.fn<any>().mockResolvedValue(null),
             update: jest.fn<any>().mockResolvedValue({})
         },
-        offers_rel: { findMany: (...args: any[]) => mockOffersRelFindMany(...args) },
+        offers_rel: {
+            findMany: (...args: any[]) => mockOffersRelFindMany(...args),
+            findUnique: (...args: any[]) => mockOffersRelFindUnique(...args)
+        },
         offers_studnie_rel: {
-            findMany: (...args: any[]) => mockOffersStudnieFindMany(...args)
+            findMany: (...args: any[]) => mockOffersStudnieFindMany(...args),
+            findUnique: (...args: any[]) => mockOffersStudnieFindUnique(...args)
         }
     }
 }));
@@ -87,9 +99,14 @@ describe('D-011 reward-batch ownership', () => {
         mockUser.id = 'userA';
         mockUser.role = 'user';
         mockUser.subUsers = [];
+        clearPredictionCache();
+        mockGetTrainingUserIds.mockClear();
+        mockGetTrainingUserIds.mockResolvedValue(['userA']);
         mockLogsFindMany.mockResolvedValue([]);
         mockOffersRelFindMany.mockResolvedValue([]);
         mockOffersStudnieFindMany.mockResolvedValue([]);
+        mockOffersRelFindUnique.mockResolvedValue(null);
+        mockOffersStudnieFindUnique.mockResolvedValue(null);
         mockProcessAction.mockResolvedValue({ applied: true });
         const { default: router } = await import('../../src/routes/telemetryAiMl');
         app = express();
@@ -115,6 +132,93 @@ describe('D-011 reward-batch ownership', () => {
         expect(res.body.applied).toEqual(['w-moja']);
         expect(res.body.rejected).toEqual([]);
         expect(mockProcessAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('legacy target z oferta innego wlasciciela -> FORBIDDEN bez mutacji', async () => {
+        mockLogsFindMany.mockImplementation(async (args: any) => {
+            if (args?.where?.wellId?.in) return [{ wellId: 'w-own', userId: 'userA' }];
+            if (args?.where?.id?.in) {
+                return [
+                    { id: 'tel-legacy-target', wellId: 'w-own', userId: null, offerId: 'off-b' }
+                ];
+            }
+            if (args?.where?.solverSource) return [];
+            return [];
+        });
+        mockOffersStudnieFindMany.mockResolvedValue([{ id: 'off-b', userId: 'userB' }]);
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward-batch')
+            .send({
+                items: [{ action: 'REJECT', wellId: 'w-own', parentConfigId: 'tel-legacy-target' }]
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.applied).toEqual([]);
+        expect(res.body.rejected).toEqual([{ wellId: 'w-own', reason: 'FORBIDDEN' }]);
+        expect(mockProcessAction).not.toHaveBeenCalled();
+    });
+
+    it('admin może obsłużyć osierocony legacy target', async () => {
+        mockUser.role = 'admin';
+        mockLogsFindMany.mockImplementation(async (args: any) => {
+            if (args?.where?.wellId?.in) return [{ wellId: 'w-own', userId: 'userA' }];
+            if (args?.where?.id?.in) {
+                return [
+                    { id: 'tel-orphan', wellId: 'w-own', userId: null, offerId: 'off-missing' }
+                ];
+            }
+            if (args?.where?.solverSource) return [];
+            return [];
+        });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward-batch')
+            .send({ items: [{ action: 'REJECT', wellId: 'w-own', parentConfigId: 'tel-orphan' }] });
+
+        expect(res.status).toBe(200);
+        expect(res.body.applied).toEqual(['w-own']);
+        expect(res.body.rejected).toEqual([]);
+        expect(mockProcessAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('batch odczytuje allowlistę treningową raz dla wielu nagród', async () => {
+        const firstToken = issuePredictionProof('userA', 'w-1', 0.9, 'model-v1');
+        const secondToken = issuePredictionProof('userA', 'w-2', 0.8, 'model-v1');
+        mockLogsFindMany.mockImplementation(async (args: any) => {
+            if (args?.where?.wellId?.in) {
+                return [
+                    { wellId: 'w-1', userId: 'userA', trainingEligible: true },
+                    { wellId: 'w-2', userId: 'userA', trainingEligible: true }
+                ];
+            }
+            return [];
+        });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward-batch')
+            .send({
+                items: [
+                    {
+                        action: 'ACCEPT',
+                        wellId: 'w-1',
+                        wasAiRanked: true,
+                        scoreBefore: 0.9,
+                        predictionToken: firstToken
+                    },
+                    {
+                        action: 'ACCEPT',
+                        wellId: 'w-2',
+                        wasAiRanked: true,
+                        scoreBefore: 0.8,
+                        predictionToken: secondToken
+                    }
+                ]
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.applied).toEqual(['w-1', 'w-2']);
+        expect(mockGetTrainingUserIds).toHaveBeenCalledTimes(1);
     });
 
     it('cudza studnia (ACCEPT) -> FORBIDDEN, brak zapisu i brak leaku', async () => {

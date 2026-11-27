@@ -179,7 +179,7 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
         // findMany routowane po where: existence vs parents (where.id.in) vs sugestie.
         mockLogsFindMany.mockImplementation(async (args: any) => {
             if (args?.where?.id?.in) return [{ id: 'tel-x', wellId: 'w4', userId: 'someone-else' }];
-            // P1.1: sugestia legacy bez właściciela — MODIFY przechodzi (brak atrybucji).
+            // Legacy target bez właściciela i oferty musi być odrzucony fail-closed.
             if (args?.where?.solverSource) return [{ id: 'sug-3', wellId: 'w3', userId: null }];
             return [{ wellId: 'w1' }, { wellId: 'w2' }, { wellId: 'w3' }, { wellId: 'w4' }];
         });
@@ -194,19 +194,18 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
                 ]
             });
         expect(res.status).toBe(200);
-        // ACCEPT×2 + MODIFY applied; REJECT cudzy (brak usera w tym harnessie) → FORBIDDEN.
-        expect(res.body.applied).toEqual(['w1', 'w2', 'w3']);
-        expect(res.body.rejected).toEqual([{ wellId: 'w4', reason: 'FORBIDDEN' }]);
+        // ACCEPT×2 applied; MODIFY bez właściciela i REJECT cudzy → FORBIDDEN.
+        expect(res.body.applied).toEqual(['w1', 'w2']);
+        expect(res.body.rejected).toEqual([
+            { wellId: 'w3', reason: 'FORBIDDEN' },
+            { wellId: 'w4', reason: 'FORBIDDEN' }
+        ]);
         // Odczyty zgrupowane: existence + parents + sugestie; zero per-item findFirst.
         expect(mockLogsFindMany).toHaveBeenCalledTimes(3);
         expect(mockLogsFindFirst).not.toHaveBeenCalled();
         // Zapis tylko dla nie-odrzuconych: FORBIDDEN gate PRZED processAction.
-        expect(mockProcessAction).toHaveBeenCalledTimes(3);
-        // MODIFY etykietuje sugestię z prefetchu (fallback, brak parentConfigId).
-        expect(mockRewardTelemetryUpdate).toHaveBeenCalledWith({
-            where: { id: 'sug-3' },
-            data: { wasModified: true }
-        });
-        expect(mockUpdateLabel).toHaveBeenCalledWith('sug-3', 'MODIFIED', mockRewardTransaction);
+        expect(mockProcessAction).toHaveBeenCalledTimes(2);
+        expect(mockRewardTelemetryUpdate).not.toHaveBeenCalled();
+        expect(mockUpdateLabel).not.toHaveBeenCalled();
     });
 });

@@ -1,4 +1,5 @@
 import { ML_CONSTANTS } from '../../config/mlConstants';
+import { randomUUID } from 'node:crypto';
 
 /**
  * Cache predykcji /ai/predict i /ai/predict/batch.
@@ -18,6 +19,7 @@ export interface CacheEntry {
 const predictionCache = new Map<string, CacheEntry>();
 const CACHE_TTL = ML_CONSTANTS.PREDICTION_CACHE_TTL_MS;
 const CACHE_MAX_SIZE = 1000;
+const PREDICTION_PROOF_TTL_MS = ML_CONSTANTS.PREDICTION_CACHE_TTL_MS;
 
 export function setCache(key: string, entry: CacheEntry): void {
     if (predictionCache.size >= CACHE_MAX_SIZE) {
@@ -45,40 +47,54 @@ export function cacheKey(
 
 export function clearPredictionCache(): void {
     predictionCache.clear();
-    wellScores.clear();
+    predictionProofs.clear();
 }
 
 export function predictionCacheSize(): number {
     return predictionCache.size;
 }
 
-/**
- * Ostatni score predykcji per wellId (z /ai/predict/batch).
- *
- * Serwerowa weryfikacja scoreBefore w /ai/reward: sliding AUC nie może ufać
- * klienckiemu score (poisoning przez sfałszowany payload). Frontend wysyła
- * wellId w candidate, serwer zapamiętuje zwrócony score — reward używa
- * serwerowego score, nie deklarowanego przez klienta.
- */
-const wellScores = new Map<string, { score: number; version: string; timestamp: number }>();
-const WELL_SCORE_TTL_MS = 15 * 60 * 1000;
+/** One-time server proof linking a model score to its user, well and version. */
+const predictionProofs = new Map<
+    string,
+    { userId: string; wellId: string; score: number; version: string; expiresAt: number }
+>();
 
-export function setWellScore(wellId: string, score: number, version = 'unknown'): void {
-    if (wellScores.size >= CACHE_MAX_SIZE) {
-        const oldest = wellScores.keys().next().value;
-        if (oldest !== undefined) wellScores.delete(oldest);
+export function issuePredictionProof(
+    userId: string,
+    wellId: string,
+    score: number,
+    version: string
+): string {
+    const now = Date.now();
+    for (const [token, proof] of predictionProofs) {
+        if (proof.expiresAt <= now) predictionProofs.delete(token);
     }
-    wellScores.set(wellId, { score, version, timestamp: Date.now() });
+    if (predictionProofs.size >= CACHE_MAX_SIZE) {
+        const oldest = predictionProofs.keys().next().value;
+        if (oldest !== undefined) predictionProofs.delete(oldest);
+    }
+    const token = randomUUID();
+    predictionProofs.set(token, {
+        userId,
+        wellId,
+        score,
+        version,
+        expiresAt: now + PREDICTION_PROOF_TTL_MS
+    });
+    return token;
 }
 
-export function getWellScore(wellId: string): number | undefined {
-    const entry = wellScores.get(wellId);
-    if (entry && Date.now() - entry.timestamp < WELL_SCORE_TTL_MS) return entry.score;
-    return undefined;
-}
-
-export function getWellPrediction(wellId: string): { score: number; version: string } | undefined {
-    const entry = wellScores.get(wellId);
-    if (!entry || Date.now() - entry.timestamp >= WELL_SCORE_TTL_MS) return undefined;
-    return { score: entry.score, version: entry.version };
+export function consumePredictionProof(
+    token: string,
+    userId: string,
+    wellId: string,
+    score: number
+): { score: number; version: string } | null {
+    const proof = predictionProofs.get(token);
+    predictionProofs.delete(token);
+    if (!proof || proof.expiresAt <= Date.now()) return null;
+    if (proof.userId !== userId || proof.wellId !== wellId) return null;
+    if (Math.abs(proof.score - score) > 0.01) return null;
+    return { score: proof.score, version: proof.version };
 }

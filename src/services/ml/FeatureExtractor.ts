@@ -214,68 +214,74 @@ export function labelToTrainingWeight(label: FeatureLabel): number {
 
 export class FeatureExtractor {
     async extractAndStore(allowlist?: readonly string[]): Promise<number> {
-        // Invariant allowlisty: ekstrakcja tylko z rekordów dozwolonych użytkowników.
         const trainingUserIds = allowlist ?? (await getTrainingUserIds());
         if (trainingUserIds.length === 0) return 0;
-        const telemetryRecords = await prisma.ai_telemetry_logs.findMany({
-            where: {
-                dn: { not: null },
-                wellType: { not: null },
-                trainingEligible: true,
-                userId: { in: [...trainingUserIds] }
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 500
-        });
+        const batchSize = 500;
+        let cursorId: string | undefined;
+        let inserted = 0;
+        while (true) {
+            const records = await prisma.ai_telemetry_logs.findMany({
+                where: {
+                    dn: { not: null },
+                    wellType: { not: null },
+                    trainingEligible: true,
+                    userId: { in: [...trainingUserIds] },
+                    ...(cursorId ? { id: { lt: cursorId } } : {})
+                },
+                orderBy: { id: 'desc' },
+                take: batchSize
+            });
+            if (records.length === 0) break;
 
-        const existingIds = await prisma.aiFeature.findMany({
-            select: { telemetryId: true }
-        });
-        const existingSet = new Set(existingIds.map((r) => r.telemetryId).filter(Boolean));
+            const existing = await prisma.aiFeature.findMany({
+                where: { telemetryId: { in: records.map((record) => record.id) } },
+                select: { telemetryId: true }
+            });
+            const existingIds = new Set(existing.map((row) => row.telemetryId).filter(Boolean));
+            const data = records
+                .filter((record) => !existingIds.has(record.id))
+                .map((record) => this.toFeatureRecord(record));
+            if (data.length > 0) {
+                await prisma.aiFeature.createMany({ data });
+                inserted += data.length;
+            }
 
-        const newRecords = telemetryRecords.filter((r) => !existingSet.has(r.id));
-
-        if (newRecords.length === 0) {
-            logger.info('FeatureExtractor', 'Brak nowych rekordow do ekstrakcji');
-            return 0;
+            cursorId = records[records.length - 1].id;
+            if (records.length < batchSize) break;
         }
+        if (inserted === 0) logger.info('FeatureExtractor', 'Brak nowych rekordow do ekstrakcji');
+        else logger.info('FeatureExtractor', `Wyodrebniono ${inserted} wektorow cech`);
+        return inserted;
+    }
 
-        const data = newRecords.map((record) => {
-            const fv = this.extract(record);
-            return {
-                id: crypto.randomUUID(),
-                telemetryId: record.id,
-                dn: fv.dn,
-                heightMm: fv.heightMm,
-                warehouse: fv.warehouse,
-                wellType: fv.wellType,
-                hasReduction: fv.hasReduction,
-                hasPsiaBuda: fv.hasPsiaBuda,
-                hasStyczna: fv.hasStyczna,
-                ringCount: fv.ringCount,
-                bottomType: fv.bottomType,
-                topType: fv.topType,
-                connectionCount: fv.connectionCount,
-                transitionsAboveDennica: fv.transitionsAboveDennica,
-                totalPrice: fv.totalPrice,
-                totalWeight: fv.totalWeight,
-                ringVariety: fv.ringVariety,
-                season: fv.season,
-                kinetaType: fv.kinetaType,
-                dennicaHeight: fv.dennicaHeight > 0 ? fv.dennicaHeight : null,
-                label: fv.label,
-                reward: fv.reward,
-                decisionMs: fv.decisionMs > 0 ? fv.decisionMs : null,
-                createdAt: record.createdAt || new Date().toISOString()
-            };
-        });
-
-        await prisma.aiFeature.createMany({ data });
-        logger.info(
-            'FeatureExtractor',
-            `Wyodrebniono ${data.length} feature vectors z ${telemetryRecords.length} rekordow`
-        );
-        return data.length;
+    private toFeatureRecord(record: TelemetryRecordWithDetails) {
+        const fv = this.extract(record);
+        return {
+            id: crypto.randomUUID(),
+            telemetryId: record.id,
+            dn: fv.dn,
+            heightMm: fv.heightMm,
+            warehouse: fv.warehouse,
+            wellType: fv.wellType,
+            hasReduction: fv.hasReduction,
+            hasPsiaBuda: fv.hasPsiaBuda,
+            hasStyczna: fv.hasStyczna,
+            ringCount: fv.ringCount,
+            bottomType: fv.bottomType,
+            topType: fv.topType,
+            connectionCount: fv.connectionCount,
+            transitionsAboveDennica: fv.transitionsAboveDennica,
+            totalPrice: fv.totalPrice,
+            totalWeight: fv.totalWeight,
+            ringVariety: fv.ringVariety,
+            season: fv.season,
+            kinetaType: fv.kinetaType,
+            dennicaHeight: fv.dennicaHeight > 0 ? fv.dennicaHeight : null,
+            label: fv.label,
+            reward: fv.reward,
+            decisionMs: fv.decisionMs > 0 ? fv.decisionMs : null,
+            createdAt: record.createdAt || new Date().toISOString()
+        };
     }
 
     extract(record: TelemetryRecordWithDetails): FeatureVector {
@@ -404,9 +410,10 @@ export class FeatureExtractor {
      * wyprzedzała akceptację/odrzucenie. Wołane przed każdym treningiem oraz przez
      * recordAcceptance. Nie tworzy nowych wierszy — tylko koryguje etykiety.
      */
-    async resyncLabels(limit = 2000, allowlist?: readonly string[]): Promise<number> {
-        // N7: kursor zamiast jednorazowego take — przy bazie >limit rekordów
-        // starsze nigdy nie dostałyby skorygowanej etykiety (cichy stale label).
+    async resyncLabels(
+        limit = Number.POSITIVE_INFINITY,
+        allowlist?: readonly string[]
+    ): Promise<number> {
         const BATCH = 2000;
         let updated = 0;
         let cursor: { createdAt: string; id: string } | undefined;
@@ -507,112 +514,119 @@ export class FeatureExtractor {
         // Fail closed before selecting historical feature rows.
         const trainingUserIds = allowlist ?? (await getTrainingUserIds());
         if (trainingUserIds.length === 0) return 0;
-        const features = await prisma.aiFeature.findMany({
-            where: {
-                OR: [
-                    { ringCount: 0, connectionCount: 0 },
-                    { bottomType: 'unknown' },
-                    { dennicaHeight: null }
-                ]
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 1000
-        });
-        const telemetryIds = features
-            .map((f) => f.telemetryId)
-            .filter((id): id is string => Boolean(id));
-        if (telemetryIds.length === 0) return 0;
-
-        // Invariant allowlisty: przeliczaj tylko wektory dozwolonych
-        // użytkowników. Lookup userId po stronie telemetry (ids z batcha
-        // kandydującego — bez arbitralnego limitu na zbiór dozwolonych).
-        const telemetry = await prisma.ai_telemetry_logs.findMany({
-            where: { id: { in: telemetryIds } },
-            select: {
-                id: true,
-                userId: true,
-                trainingEligible: true,
-                dn: true,
-                warehouse: true,
-                wellType: true,
-                wellHeight: true,
-                ringCount: true,
-                wasAccepted: true,
-                wasRejected: true,
-                wasModified: true,
-                modificationCount: true,
-                allComponentIds: true,
-                appliedReductions: true,
-                appliedKonus: true,
-                appliedSeals: true,
-                createdAt: true,
-                solverSource: true,
-                featureSnapshot: true,
-                kineta: true,
-                dennicaHeight: true,
-                computationMs: true
-            }
-        });
-        const byId = new Map(telemetry.map((t) => [t.id, t]));
-
+        const batchSize = 500;
+        let cursorId: string | undefined;
         let updated = 0;
-        for (const f of features) {
-            const t = f.telemetryId ? byId.get(f.telemetryId) : undefined;
-            if (!t) continue;
-            if (t.trainingEligible !== true) continue;
-            if (!isTelemetryAllowed(t.userId, trainingUserIds)) continue;
-            const fv = this.extract(t as TelemetryRecordWithDetails);
-            // Selektywny UPDATE (K5): pomiń wiersze, których cechy się nie zmieniły
-            // (np. legalnie 0 kręgów / 0 uszczelek) — bez tego resyncFeatures
-            // przepisywał te same wartości co trening (N+1, niekończący się filtr).
-            const same =
-                f.dn === fv.dn &&
-                f.heightMm === fv.heightMm &&
-                f.warehouse === fv.warehouse &&
-                f.wellType === fv.wellType &&
-                f.hasReduction === fv.hasReduction &&
-                f.hasPsiaBuda === fv.hasPsiaBuda &&
-                f.hasStyczna === fv.hasStyczna &&
-                f.ringCount === fv.ringCount &&
-                f.bottomType === fv.bottomType &&
-                f.topType === fv.topType &&
-                f.connectionCount === fv.connectionCount &&
-                f.transitionsAboveDennica === fv.transitionsAboveDennica &&
-                f.totalPrice === fv.totalPrice &&
-                f.totalWeight === fv.totalWeight &&
-                f.ringVariety === fv.ringVariety &&
-                f.season === fv.season &&
-                (f.kinetaType ?? null) === fv.kinetaType &&
-                (f.dennicaHeight ?? null) === (fv.dennicaHeight > 0 ? fv.dennicaHeight : null) &&
-                f.label === fv.label &&
-                f.reward === fv.reward;
-            if (same) continue;
-            await prisma.aiFeature.update({
-                where: { id: f.id },
-                data: {
-                    dn: fv.dn,
-                    heightMm: fv.heightMm,
-                    warehouse: fv.warehouse,
-                    wellType: fv.wellType,
-                    hasReduction: fv.hasReduction,
-                    hasPsiaBuda: fv.hasPsiaBuda,
-                    hasStyczna: fv.hasStyczna,
-                    ringCount: fv.ringCount,
-                    bottomType: fv.bottomType,
-                    topType: fv.topType,
-                    connectionCount: fv.connectionCount,
-                    transitionsAboveDennica: fv.transitionsAboveDennica,
-                    totalPrice: fv.totalPrice,
-                    totalWeight: fv.totalWeight,
-                    ringVariety: fv.ringVariety,
-                    season: fv.season,
-                    kinetaType: fv.kinetaType,
-                    dennicaHeight: fv.dennicaHeight > 0 ? fv.dennicaHeight : null,
-                    label: fv.label,
-                    reward: fv.reward
-                }
+        while (true) {
+            const features = await prisma.aiFeature.findMany({
+                where: {
+                    OR: [
+                        { ringCount: 0, connectionCount: 0 },
+                        { bottomType: 'unknown' },
+                        { dennicaHeight: null }
+                    ],
+                    ...(cursorId ? { id: { lt: cursorId } } : {})
+                },
+                orderBy: { id: 'desc' },
+                take: batchSize
             });
-            updated++;
+            if (features.length === 0) break;
+
+            const telemetryIds = features
+                .map((feature) => feature.telemetryId)
+                .filter((id): id is string => Boolean(id));
+            const telemetry = telemetryIds.length
+                ? await prisma.ai_telemetry_logs.findMany({
+                      where: { id: { in: telemetryIds } },
+                      select: {
+                          id: true,
+                          userId: true,
+                          trainingEligible: true,
+                          dn: true,
+                          warehouse: true,
+                          wellType: true,
+                          wellHeight: true,
+                          ringCount: true,
+                          wasAccepted: true,
+                          wasRejected: true,
+                          wasModified: true,
+                          modificationCount: true,
+                          allComponentIds: true,
+                          appliedReductions: true,
+                          appliedKonus: true,
+                          appliedSeals: true,
+                          createdAt: true,
+                          solverSource: true,
+                          featureSnapshot: true,
+                          kineta: true,
+                          dennicaHeight: true,
+                          computationMs: true
+                      }
+                  })
+                : [];
+            const byId = new Map(telemetry.map((record) => [record.id, record]));
+
+            for (const f of features) {
+                const t = f.telemetryId ? byId.get(f.telemetryId) : undefined;
+                if (!t) continue;
+                if (t.trainingEligible !== true) continue;
+                if (!isTelemetryAllowed(t.userId, trainingUserIds)) continue;
+                const fv = this.extract(t as TelemetryRecordWithDetails);
+                // Selektywny UPDATE (K5): pomiń wiersze, których cechy się nie zmieniły
+                // (np. legalnie 0 kręgów / 0 uszczelek) — bez tego resyncFeatures
+                // przepisywał te same wartości co trening (N+1, niekończący się filtr).
+                const same =
+                    f.dn === fv.dn &&
+                    f.heightMm === fv.heightMm &&
+                    f.warehouse === fv.warehouse &&
+                    f.wellType === fv.wellType &&
+                    f.hasReduction === fv.hasReduction &&
+                    f.hasPsiaBuda === fv.hasPsiaBuda &&
+                    f.hasStyczna === fv.hasStyczna &&
+                    f.ringCount === fv.ringCount &&
+                    f.bottomType === fv.bottomType &&
+                    f.topType === fv.topType &&
+                    f.connectionCount === fv.connectionCount &&
+                    f.transitionsAboveDennica === fv.transitionsAboveDennica &&
+                    f.totalPrice === fv.totalPrice &&
+                    f.totalWeight === fv.totalWeight &&
+                    f.ringVariety === fv.ringVariety &&
+                    f.season === fv.season &&
+                    (f.kinetaType ?? null) === fv.kinetaType &&
+                    (f.dennicaHeight ?? null) ===
+                        (fv.dennicaHeight > 0 ? fv.dennicaHeight : null) &&
+                    f.label === fv.label &&
+                    f.reward === fv.reward;
+                if (same) continue;
+                await prisma.aiFeature.update({
+                    where: { id: f.id },
+                    data: {
+                        dn: fv.dn,
+                        heightMm: fv.heightMm,
+                        warehouse: fv.warehouse,
+                        wellType: fv.wellType,
+                        hasReduction: fv.hasReduction,
+                        hasPsiaBuda: fv.hasPsiaBuda,
+                        hasStyczna: fv.hasStyczna,
+                        ringCount: fv.ringCount,
+                        bottomType: fv.bottomType,
+                        topType: fv.topType,
+                        connectionCount: fv.connectionCount,
+                        transitionsAboveDennica: fv.transitionsAboveDennica,
+                        totalPrice: fv.totalPrice,
+                        totalWeight: fv.totalWeight,
+                        ringVariety: fv.ringVariety,
+                        season: fv.season,
+                        kinetaType: fv.kinetaType,
+                        dennicaHeight: fv.dennicaHeight > 0 ? fv.dennicaHeight : null,
+                        label: fv.label,
+                        reward: fv.reward
+                    }
+                });
+                updated++;
+            }
+            cursorId = features[features.length - 1].id;
+            if (features.length < batchSize) break;
         }
         logger.info('FeatureExtractor', `ResyncFeatures: przeliczone cechy ${updated} wektorów`);
         return updated;

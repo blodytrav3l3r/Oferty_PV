@@ -532,10 +532,11 @@
      * @param {Array<{id:number, solution:Object, technicalScore:number}>} candidates
      * @param {Object} well
      * @param {boolean} [retried] - wewn. flaga ponownej próby po FEATURE_VERSION_MISMATCH
-     * @returns {Promise<Map<number, number>>} mapa candidateId → aiScore
+     * @returns {Promise<{scores:Map<number, number>, predictionTokens:Map<number, string>}>}
      */
     async function fetchAiScoresBatch(candidates, well, retried) {
         const resultMap = new Map();
+        const predictionTokens = new Map();
         const toFetch = [];
         await resolveFeatureVersion(retried);
 
@@ -546,7 +547,10 @@
             const key = FEATURE_VERSION + '|' + features.join(',');
 
             const cached = scoreCache.get(key);
-            if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+            // Prediction proof is one-time and bound to a server inference.
+            // For persisted wells refresh the server result even on a local
+            // score-cache hit so feedback can carry a fresh proof token.
+            if (cached && Date.now() - cached.timestamp < CACHE_TTL && !well.id) {
                 resultMap.set(c.id, cached.score);
             } else {
                 toFetch.push({
@@ -564,7 +568,7 @@
 
         if (toFetch.length === 0) {
             mlOnline = true;
-            return resultMap;
+            return { scores: resultMap, predictionTokens: predictionTokens };
         }
 
         try {
@@ -605,7 +609,7 @@
                 for (let j = 0; j < toFetch.length; j++) {
                     resultMap.set(toFetch[j].id, -1);
                 }
-                return resultMap;
+                return { scores: resultMap, predictionTokens: predictionTokens };
             }
 
             const data = await res.json();
@@ -615,6 +619,9 @@
                     const s = data.scores[k];
                     activeModelVersion = s.version;
                     resultMap.set(s.id, s.score);
+                    if (typeof s.predictionToken === 'string') {
+                        predictionTokens.set(s.id, s.predictionToken);
+                    }
                     // Update cache
                     const featKey = toFetch.find(function (t) {
                         return t.id === s.id;
@@ -648,7 +655,7 @@
             }
         }
 
-        return resultMap;
+        return { scores: resultMap, predictionTokens: predictionTokens };
     }
 
     /* ===== NORMALIZACJA TECHNICAL SCORE ===== */
@@ -704,7 +711,8 @@
      *   technicalWinner: Object,
      *   aiInfluencePct: number,
      *   rankingVersion: string,
-     *   featureVersion: string
+     *   featureVersion: string,
+     *   predictionTokens?: Map<number, string>
      * }>}
      */
     async function rankCandidates(opts) {
@@ -749,8 +757,8 @@
             const versionPromise = resolveFeatureVersion(false);
             const pct = await pctPromise;
             await versionPromise;
-            const aiScoreMap = await fetchAiScoresBatch(pool, well);
-            return { influencePct: pct, aiScoreMap: aiScoreMap };
+            const aiResult = await fetchAiScoresBatch(pool, well);
+            return { influencePct: pct, aiResult: aiResult };
         })();
         // Jednolity kształt wyniku (TS2339: unii bez wspólnych pól nie zawęża).
         const aiSettled = aiPath.then(
@@ -779,7 +787,7 @@
                 if (!late.ok) return;
                 const lateRanked = computeRanked(
                     normalized,
-                    late.res.aiScoreMap,
+                    late.res.aiResult.scores,
                     late.res.influencePct
                 );
                 recordAiRankDecision({
@@ -816,7 +824,7 @@
 
         // AI zdążyło w budżecie — normalna ścieżka (jak dotychczas).
         const wonInfluencePct = winner.res.influencePct;
-        const aiScoreMap = winner.res.aiScoreMap;
+        const aiScoreMap = winner.res.aiResult.scores;
 
         // 5. Oblicz final score
         const ranked = computeRanked(normalized, aiScoreMap, wonInfluencePct);
@@ -828,7 +836,8 @@
             technicalWinner: technicalWinner,
             aiInfluencePct: wonInfluencePct,
             rankingVersion: RANKING_VERSION,
-            featureVersion: FEATURE_VERSION
+            featureVersion: FEATURE_VERSION,
+            predictionTokens: winner.res.aiResult.predictionTokens
         };
     }
 

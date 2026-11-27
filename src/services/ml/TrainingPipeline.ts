@@ -624,7 +624,7 @@ export class TrainingPipeline {
             // Re-synchronizuj etykiety, żeby trening miał klasę negatywną (bez niej
             // model jest zdegenerowany — stała predykcja ~1.0 dla wszystkich kandydatów).
             await measureStage('resyncLabels', () =>
-                featureExtractor.resyncLabels(2000, allowlist)
+                featureExtractor.resyncLabels(undefined, allowlist)
             );
             // Historyczne wektory policzone przez stare wersje ekstraktora mają puste
             // cechy (ringCount/connectionCount/bottomType) — przelicz je w miejscu.

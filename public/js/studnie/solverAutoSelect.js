@@ -1467,6 +1467,10 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                         winnerEntry.aiScore >= 0
                             ? winnerEntry.aiScore
                             : undefined,
+                    predictionToken:
+                        winnerEntry && rankResult.predictionTokens instanceof Map
+                            ? rankResult.predictionTokens.get(winnerEntry.id)
+                            : undefined,
                     modelVersion: rankResult.modelVersion,
                     aiInfluencePct: rankResult.aiInfluencePct,
                     explorationTriggered: explored.explorationTriggered,

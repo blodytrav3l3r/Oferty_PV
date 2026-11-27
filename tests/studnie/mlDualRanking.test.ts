@@ -184,6 +184,85 @@ describe('mlDualRanking.rankCandidates (min-max normalizacja aiCost)', () => {
         expect(result.ranked[0].solution).not.toBe(result.technicalWinner);
     });
 
+    test('zwraca token serwerowy dla zwyciezcy do uzycia przy feedbacku', async () => {
+        sandbox.fetch = (url: string, opts: any) => {
+            if (url.includes('/feature-schema')) {
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: () => Promise.resolve({ version: FEATURE_VERSION })
+                });
+            }
+            const body = JSON.parse(opts.body);
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () =>
+                    Promise.resolve({
+                        scores: body.candidates.map((candidate: any) => ({
+                            id: candidate.id,
+                            score: [0.3, 0.8, 0.9][candidate.id],
+                            version: 'v1',
+                            predictionToken: `server-token-${candidate.id}`
+                        }))
+                    })
+            });
+        };
+
+        const result = await rankCandidates({
+            candidates: makeCandidates(),
+            well: makeWell(),
+            aiInfluencePct: 80
+        });
+
+        expect(result.ranked[0].id).toBe(2);
+        expect(result.predictionTokens.get(result.ranked[0].id)).toBe('server-token-2');
+    });
+
+    test('odświeża dowód predykcji mimo lokalnego cache wyniku dla studni', async () => {
+        let predictionRequests = 0;
+        sandbox.fetch = (url: string, opts: any) => {
+            if (url.includes('/feature-schema')) {
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: () => Promise.resolve({ version: FEATURE_VERSION })
+                });
+            }
+            predictionRequests += 1;
+            const body = JSON.parse(opts.body);
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () =>
+                    Promise.resolve({
+                        scores: body.candidates.map((candidate: any) => ({
+                            id: candidate.id,
+                            score: 0.9,
+                            version: 'v1',
+                            predictionToken: `fresh-${predictionRequests}-${candidate.id}`
+                        }))
+                    })
+            });
+        };
+        const well = { ...makeWell(), id: 'well-1' };
+
+        const first = await rankCandidates({
+            candidates: makeCandidates(),
+            well,
+            aiInfluencePct: 80
+        });
+        const second = await rankCandidates({
+            candidates: makeCandidates(),
+            well,
+            aiInfluencePct: 80
+        });
+
+        expect(predictionRequests).toBe(2);
+        expect(second.predictionTokens.get(second.ranked[0].id)).toMatch(/^fresh-2-/);
+        expect(first.predictionTokens.get(first.ranked[0].id)).toMatch(/^fresh-1-/);
+    });
+
     test('ML całkowicie offline (wszystkie aiScore=-1) → technicalNormalized, porządek techniczny', async () => {
         mockBatchScores({ 0: -1, 1: -1, 2: -1 });
         const result = await rankCandidates({

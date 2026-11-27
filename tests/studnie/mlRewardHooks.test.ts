@@ -125,6 +125,23 @@ describe('mlRewardHooks — reward ACCEPT per studnia (A1)', () => {
         expect(captured[0].body.wasAiRanked).toBe(false);
     });
 
+    it('przekazuje token serwerowy z ostatniego rankingu do rewardu', async () => {
+        const captured: any[] = [];
+        const rankedWell = {
+            ...well('w-token'),
+            _aiRankInfo: { scoreBefore: 0.8, predictionToken: 'server-proof' }
+        };
+        const sandbox = makeSandbox(captured, rankedWell);
+        sandbox.wellRef = rankedWell;
+        vm.runInContext(readFile('studnie/mlRewardHooks.js'), sandbox);
+
+        vm.runInContext('window.mlRewardHooks.onWellAccepted({ well: wellRef })', sandbox);
+        await flush();
+
+        expect(captured).toHaveLength(1);
+        expect(captured[0].body.predictionToken).toBe('server-proof');
+    });
+
     it('bez params.well → fallback do getCurrentWell (regresja)', async () => {
         const captured: any[] = [];
         const sandbox = makeSandbox(captured, well('wB'));

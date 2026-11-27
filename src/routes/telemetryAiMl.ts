@@ -34,9 +34,10 @@ import {
     getCached,
     clearPredictionCache,
     predictionCacheSize,
-    setWellScore,
-    getWellPrediction
+    issuePredictionProof,
+    consumePredictionProof
 } from '../services/ml/predictionCache';
+import { getTrainingUserIds } from '../services/ml/trainingUsers';
 
 const router = Router();
 type FallbackOutcomeReason = z.infer<typeof fallbackOutcomeReasonSchema>;
@@ -139,6 +140,7 @@ export const rewardSchema = z.object({
     scoreBefore: z.number().min(0).max(1).finite().optional(),
     scoreAfter: z.number().min(0).max(1).finite().optional(),
     wasAiRanked: z.boolean().optional(),
+    predictionToken: z.string().uuid().optional(),
     configSnapshot: z.record(z.string(), z.unknown()).optional(),
     // Łańcuch sugestia→decyzja: ID rekordu sugestii AUTO (frontend przechwytuje
     // je z odpowiedzi /ai/config). MODIFY/REJECT etykietują SUGESTIĘ, nie finalny config.
@@ -215,7 +217,7 @@ router.post(
 
             // Faza 1 (bez efektów ubocznych): odczyt cache albo predykcja.
             // Non-finite score (NaN/Inf z modelu) → 422 ZANIM cokolwiek
-            // trafi do predictionCache / wellScores / rankingu.
+            // trafi do predictionCache / rankingu.
             const resolved: Array<{
                 c: (typeof candidates)[number];
                 key: string;
@@ -264,11 +266,13 @@ router.post(
             }
 
             // Faza 2: wszystkie score'y skończone — dopiero tu zapisy
-            // (wellScores = ranking serwerowy, predictionCache).
+            // (serwerowy cache predykcji i ranking).
             const scores = resolved.map((r) => {
-                // Zapamiętaj serwerowy score dla wellId — reward nie ufa klienckiemu
-                // scoreBefore (poisoning sliding AUC przez sfałszowany payload).
-                if (r.c.wellId) setWellScore(r.c.wellId, r.score, r.version);
+                const userId = (req as AuthenticatedRequest).user?.id;
+                const predictionToken =
+                    userId && r.c.wellId
+                        ? issuePredictionProof(userId, r.c.wellId, r.score, r.version)
+                        : undefined;
                 if (!r.cached) {
                     setCache(r.key, {
                         result: [{ score: r.score, version: r.version }],
@@ -280,6 +284,7 @@ router.post(
                     score: r.score,
                     version: r.version,
                     featureVersion: featureVersion || 'unknown',
+                    ...(predictionToken ? { predictionToken } : {}),
                     ...(r.cached ? { cached: true } : {})
                 };
             });
@@ -386,7 +391,7 @@ async function processRewardItem(
     // P1.1: i tylko dla własnej studni (wiersz cudzego właściciela → FORBIDDEN).
     const telemetryWell = await prisma.ai_telemetry_logs.findFirst({
         where: { wellId: data.wellId },
-        select: { id: true, userId: true, offerId: true }
+        select: { id: true, userId: true, offerId: true, trainingEligible: true }
     });
     if (!telemetryWell) {
         return { status: 'well-not-found' };
@@ -411,7 +416,11 @@ async function processRewardItem(
         }
     }
 
-    return applyRewardItem(data, user);
+    const result = await applyRewardItem(data, user);
+    if (result.status === 'applied') {
+        await recordTrustedPredictionResult(data, user, telemetryWell);
+    }
+    return result;
 }
 
 /**
@@ -420,11 +429,11 @@ async function processRewardItem(
  */
 async function resolveRewardTarget(
     data: RewardItemInput
-): Promise<{ id: string; userId: string | null } | null> {
+): Promise<{ id: string; userId: string | null; offerId: string | null } | null> {
     if (data.parentConfigId) {
         const parent = await prisma.ai_telemetry_logs.findFirst({
             where: { id: data.parentConfigId, wellId: data.wellId },
-            select: { id: true, userId: true }
+            select: { id: true, userId: true, offerId: true }
         });
         if (parent) return parent;
     }
@@ -434,7 +443,7 @@ async function resolveRewardTarget(
             solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
         },
         orderBy: { createdAt: 'asc' },
-        select: { id: true, userId: true }
+        select: { id: true, userId: true, offerId: true }
     });
     return suggestion;
 }
@@ -448,11 +457,76 @@ async function resolveRewardTarget(
  *   Ten sam obiekt służy gate'owi REJECT i etykietowaniu — invariant:
  *   owner sprawdzany = owner rekordu modyfikowanego (bez podwójnego odczytu).
  */
-type RewardTarget = { id: string; userId: string | null } | null;
+type RewardTarget = { id: string; userId: string | null; offerId: string | null } | null;
+type RewardTelemetryOwner = { userId: string | null; trainingEligible: boolean };
+
+async function canWriteRewardTarget(
+    user: AuthenticatedRequest['user'],
+    target: RewardTarget,
+    knownOfferOwners?: ReadonlyMap<string, string | null>
+): Promise<boolean> {
+    if (!target) return true;
+    if (target.userId) return canWriteDoc(user, target.userId);
+    if (!target.offerId) return user?.role === 'admin';
+    if (knownOfferOwners) {
+        if (!knownOfferOwners.has(target.offerId)) return user?.role === 'admin';
+        return canWriteDoc(user, knownOfferOwners.get(target.offerId));
+    }
+
+    const [rury, studnie] = await Promise.all([
+        prisma.offers_rel.findUnique({
+            where: { id: target.offerId },
+            select: { userId: true }
+        }),
+        prisma.offers_studnie_rel.findUnique({
+            where: { id: target.offerId },
+            select: { userId: true }
+        })
+    ]);
+    const offer = rury ?? studnie;
+    return offer ? canWriteDoc(user, offer.userId) : user?.role === 'admin';
+}
+
+async function recordTrustedPredictionResult(
+    data: RewardItemInput,
+    user: AuthenticatedRequest['user'],
+    owner: RewardTelemetryOwner | undefined,
+    trainingAllowlist?: readonly string[]
+): Promise<void> {
+    if (
+        !user?.id ||
+        !data.predictionToken ||
+        !data.wasAiRanked ||
+        data.scoreBefore === undefined ||
+        !owner?.userId ||
+        owner.trainingEligible !== true ||
+        owner.userId !== user.id
+    ) {
+        return;
+    }
+    const allowlist = trainingAllowlist ?? (await getTrainingUserIds());
+    if (!allowlist.includes(owner.userId)) return;
+    if (data.action !== 'ACCEPT' && data.action !== 'REJECT' && data.action !== 'MODIFY') return;
+
+    const prediction = consumePredictionProof(
+        data.predictionToken,
+        user.id,
+        data.wellId,
+        data.scoreBefore
+    );
+    if (!prediction) return;
+    selfEvaluation.recordPredictionResult(
+        data.action === 'ACCEPT' ? 1 : 0,
+        prediction.score,
+        prediction.version
+    );
+}
+
 async function applyRewardItem(
     data: RewardItemInput,
     user: AuthenticatedRequest['user'],
-    preTarget?: RewardTarget
+    preTarget?: RewardTarget,
+    knownOfferOwners?: ReadonlyMap<string, string | null>
 ): Promise<{ status: 'duplicate' } | { status: 'applied' } | { status: 'forbidden' }> {
     // P1 reward ownership: silny negatyw (REJECT, −1.0) i korekta etykiety
     // (MODIFY) tylko z prawem zapisu do właściciela ETYKIETOWANEJ sugestii.
@@ -465,8 +539,7 @@ async function applyRewardItem(
     let target: RewardTarget | undefined = preTarget;
     if (data.action === 'REJECT' || data.action === 'MODIFY') {
         if (target === undefined) target = await resolveRewardTarget(data);
-        // Tylko gdy sugestia ma właściciela; legacy bez userId — brak atrybucji.
-        if (target?.userId && !canWriteDoc(user, target.userId)) {
+        if (!(await canWriteRewardTarget(user, target, knownOfferOwners))) {
             return { status: 'forbidden' };
         }
     }
@@ -493,20 +566,6 @@ async function applyRewardItem(
     );
     if (!applied.applied) {
         return { status: 'duplicate' };
-    }
-
-    if (data.wasAiRanked && data.scoreBefore !== undefined) {
-        const serverPrediction = getWellPrediction(data.wellId);
-        if (
-            serverPrediction !== undefined &&
-            Math.abs(serverPrediction.score - data.scoreBefore) <= 0.01
-        ) {
-            selfEvaluation.recordPredictionResult(
-                data.action === 'ACCEPT' ? 1 : 0,
-                serverPrediction.score,
-                serverPrediction.version
-            );
-        }
     }
 
     return { status: 'applied' };
@@ -538,14 +597,18 @@ router.post(
             const wellIds = [...new Set(items.map((i) => i.wellId))];
             const rows = await prisma.ai_telemetry_logs.findMany({
                 where: { wellId: { in: wellIds } },
-                select: { wellId: true, userId: true, offerId: true }
+                select: { wellId: true, userId: true, offerId: true, trainingEligible: true }
             });
             const rowByWell = new Map(
                 rows
                     .filter((r) => r.wellId)
                     .map((r) => [
                         r.wellId as string,
-                        { userId: r.userId ?? null, offerId: r.offerId ?? null }
+                        {
+                            userId: r.userId ?? null,
+                            offerId: r.offerId ?? null,
+                            trainingEligible: r.trainingEligible === true
+                        }
                     ])
             );
             const withTelemetry = new Set(rowByWell.keys());
@@ -589,12 +652,17 @@ router.post(
                 ];
                 const parentsById = new Map<
                     string,
-                    { id: string; wellId: string | null; userId: string | null }
+                    {
+                        id: string;
+                        wellId: string | null;
+                        userId: string | null;
+                        offerId: string | null;
+                    }
                 >();
                 if (parentIds.length > 0) {
                     const parentRows = await prisma.ai_telemetry_logs.findMany({
                         where: { id: { in: parentIds } },
-                        select: { id: true, wellId: true, userId: true }
+                        select: { id: true, wellId: true, userId: true, offerId: true }
                     });
                     for (const p of parentRows) parentsById.set(p.id, p);
                 }
@@ -604,15 +672,19 @@ router.post(
                         solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
                     },
                     orderBy: { createdAt: 'asc' },
-                    select: { id: true, wellId: true, userId: true }
+                    select: { id: true, wellId: true, userId: true, offerId: true }
                 });
                 const firstSuggestionByWell = new Map<
                     string,
-                    { id: string; userId: string | null }
+                    { id: string; userId: string | null; offerId: string | null }
                 >();
                 for (const s of suggestionRows) {
                     if (!s.wellId || firstSuggestionByWell.has(s.wellId)) continue;
-                    firstSuggestionByWell.set(s.wellId, { id: s.id, userId: s.userId });
+                    firstSuggestionByWell.set(s.wellId, {
+                        id: s.id,
+                        userId: s.userId,
+                        offerId: s.offerId
+                    });
                 }
                 items.forEach((item, idx) => {
                     if (item.action !== 'MODIFY' && item.action !== 'REJECT') return;
@@ -620,12 +692,60 @@ router.post(
                         ? parentsById.get(item.parentConfigId)
                         : undefined;
                     if (parent && parent.wellId === item.wellId) {
-                        targetByIndex.set(idx, { id: parent.id, userId: parent.userId });
+                        targetByIndex.set(idx, {
+                            id: parent.id,
+                            userId: parent.userId,
+                            offerId: parent.offerId
+                        });
                     } else {
                         targetByIndex.set(idx, firstSuggestionByWell.get(item.wellId) ?? null);
                     }
                 });
+
+                const targetOfferIds = [
+                    ...new Set(
+                        [...targetByIndex.values()]
+                            .map((target) => target?.offerId)
+                            .filter((offerId): offerId is string => Boolean(offerId))
+                    )
+                ];
+                const missingOfferIds = targetOfferIds.filter((id) => !offerOwner.has(id));
+                if (missingOfferIds.length > 0) {
+                    const [rury, studnie] = await Promise.all([
+                        prisma.offers_rel.findMany({
+                            where: { id: { in: missingOfferIds } },
+                            select: { id: true, userId: true }
+                        }),
+                        prisma.offers_studnie_rel.findMany({
+                            where: { id: { in: missingOfferIds } },
+                            select: { id: true, userId: true }
+                        })
+                    ]);
+                    for (const offer of rury) offerOwner.set(offer.id, offer.userId ?? null);
+                    for (const offer of studnie) {
+                        if (!offerOwner.has(offer.id))
+                            offerOwner.set(offer.id, offer.userId ?? null);
+                    }
+                }
             }
+
+            const hasTrustedFeedbackCandidate = Boolean(
+                user?.id &&
+                items.some((item) => {
+                    const owner = rowByWell.get(item.wellId);
+                    return (
+                        Boolean(item.predictionToken) &&
+                        item.wasAiRanked === true &&
+                        item.scoreBefore !== undefined &&
+                        (item.action === 'ACCEPT' ||
+                            item.action === 'REJECT' ||
+                            item.action === 'MODIFY') &&
+                        owner?.trainingEligible === true &&
+                        owner.userId === user.id
+                    );
+                })
+            );
+            const trainingAllowlist = hasTrustedFeedbackCandidate ? await getTrainingUserIds() : [];
 
             const applied: string[] = [];
             const duplicates: string[] = [];
@@ -658,8 +778,14 @@ router.post(
                             continue;
                         }
                     }
-                    const result = await applyRewardItem(item, user, targetByIndex.get(idx));
+                    const result = await applyRewardItem(
+                        item,
+                        user,
+                        targetByIndex.get(idx),
+                        offerOwner
+                    );
                     if (result.status === 'applied') {
+                        await recordTrustedPredictionResult(item, user, wellRow, trainingAllowlist);
                         recordAiRewardOutcome('applied');
                         applied.push(item.wellId);
                     } else if (result.status === 'forbidden') {

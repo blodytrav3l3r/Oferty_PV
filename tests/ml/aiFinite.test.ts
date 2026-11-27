@@ -1,11 +1,7 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
-import {
-    clearPredictionCache,
-    predictionCacheSize,
-    getWellScore
-} from '../../src/services/ml/predictionCache';
+import { clearPredictionCache, predictionCacheSize } from '../../src/services/ml/predictionCache';
 import {
     offerItemSchema,
     wellComponentSchema,
@@ -156,7 +152,6 @@ describe('aiFinite: NaN/Inf nie wchodzi ani nie wychodzi z /ai/predict/batch', (
         expect(res.status).toBe(400);
         expect(mockPredict).not.toHaveBeenCalled();
         expect(predictionCacheSize()).toBe(0);
-        expect(getWellScore('well-finite-1')).toBeUndefined();
     });
 
     it('model zwraca NaN → 422, zero wpisu cache, ranking nietknięty', async () => {
@@ -171,7 +166,6 @@ describe('aiFinite: NaN/Inf nie wchodzi ani nie wychodzi z /ai/predict/batch', (
         expect(res.body).toMatchObject({ error: 'NON_FINITE_SCORE', candidateId: 1 });
         expect(res.body).not.toHaveProperty('scores');
         expect(predictionCacheSize()).toBe(0);
-        expect(getWellScore('well-nan-1')).toBeUndefined();
     });
 
     it('model zwraca Infinity → 422, zero wpisu cache', async () => {
@@ -200,8 +194,6 @@ describe('aiFinite: NaN/Inf nie wchodzi ani nie wychodzi z /ai/predict/batch', (
             });
         expect(res.status).toBe(422);
         expect(predictionCacheSize()).toBe(0);
-        expect(getWellScore('well-atom-1')).toBeUndefined();
-        expect(getWellScore('well-atom-2')).toBeUndefined();
     });
 
     it('valid bez zmian: 200, score, cache i ranking działają', async () => {
@@ -215,7 +207,6 @@ describe('aiFinite: NaN/Inf nie wchodzi ani nie wychodzi z /ai/predict/batch', (
         expect(res.status).toBe(200);
         expect(res.body.scores[0]).toMatchObject({ id: 1, score: 0.7 });
         expect(predictionCacheSize()).toBe(1);
-        expect(getWellScore('well-ok-1')).toBe(0.7);
     });
 });
 

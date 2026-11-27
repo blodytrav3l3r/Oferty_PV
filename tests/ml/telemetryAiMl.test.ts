@@ -2,9 +2,9 @@ import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import {
-    setWellScore,
-    getWellScore,
-    clearPredictionCache
+    clearPredictionCache,
+    issuePredictionProof,
+    consumePredictionProof
 } from '../../src/services/ml/predictionCache';
 import { getMetricsSnapshot, resetMetrics } from '../../src/utils/metrics';
 
@@ -69,13 +69,13 @@ jest.mock('../../src/services/ml/TrainingPipeline', () => ({
 }));
 
 describe('POST /api/telemetry/ai/train', () => {
-    it('busy result does not clear scores for the active model', async () => {
+    it('busy result does not clear outstanding prediction proofs', async () => {
         const { default: router } = await import('../../src/routes/telemetryAiMl');
         const app = express();
         app.use(express.json());
         app.use('/api/telemetry', router);
         clearPredictionCache();
-        setWellScore('well-busy', 0.8, 'model-active');
+        const proof = issuePredictionProof('userA', 'well-busy', 0.8, 'model-active');
         mockTrainingRun.mockResolvedValue({ trained: false, reason: 'already_running' });
 
         const response = await request(app)
@@ -84,7 +84,10 @@ describe('POST /api/telemetry/ai/train', () => {
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual({ trained: false, reason: 'already_running' });
-        expect(getWellScore('well-busy')).toBe(0.8);
+        expect(consumePredictionProof(proof, 'userA', 'well-busy', 0.8)).toEqual({
+            score: 0.8,
+            version: 'model-active'
+        });
     });
 });
 
@@ -180,10 +183,20 @@ jest.mock('../../src/prismaClient', () => ({
     default: {
         // P0.5 fail-closed: guard czyta settings; testy logiki pracuja przy fladze ON ('"1"').
         settings: {
-            findUnique: jest.fn<any>().mockResolvedValue({
-                key: 'feature_ai_ml_enabled',
-                value: '"1"'
-            })
+            findUnique: jest
+                .fn<any>()
+                .mockImplementation(async ({ where }: any) =>
+                    where?.key === 'ai_training_user_ids'
+                        ? { key: where.key, value: '["userA"]' }
+                        : { key: 'feature_ai_ml_enabled', value: '"1"' }
+                )
+        },
+        users: {
+            findMany: jest
+                .fn<any>()
+                .mockImplementation(async ({ where }: any) =>
+                    (where?.id?.in || []).map((id: string) => ({ id }))
+                )
         },
         aiFeature: {
             findMany: jest.fn<any>().mockResolvedValue([]),
@@ -202,6 +215,8 @@ jest.mock('../../src/prismaClient', () => ({
             findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args),
             update: jest.fn<any>().mockResolvedValue({})
         },
+        offers_rel: { findUnique: jest.fn<any>().mockResolvedValue(null) },
+        offers_studnie_rel: { findUnique: jest.fn<any>().mockResolvedValue(null) },
         ai_telemetry_events: {
             groupBy: jest.fn<any>().mockResolvedValue([])
         },
@@ -237,13 +252,16 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
             featureMaxs: new Array(29).fill(1)
         });
         mockPredict.mockReturnValue(0.5);
+        clearPredictionCache();
 
         const res = await request(app)
             .post('/api/telemetry/ai/predict/batch')
+            .set({ 'x-test-userid': 'userA' })
             .send({
                 candidates: [
                     {
                         id: 1,
+                        wellId: 'well-1',
                         features: [
                             1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000,
                             1, 0, 0, 1, 0, 2, 630, 0, 1800, 900
@@ -264,6 +282,9 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         expect(Array.isArray(res.body.scores)).toBe(true);
         expect(res.body.scores).toHaveLength(2);
         expect(res.body.scores[0]).toHaveProperty('score', 0.5);
+        expect(res.body.scores[0].predictionToken).toMatch(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        );
     });
 
     it('batch predict z cache: drugi identyczny request dostaje cached: true', async () => {
@@ -693,17 +714,25 @@ describe('POST /api/telemetry/ai/reward', () => {
         expect(getMetricsSnapshot().ai.rewards.byOutcome.duplicate).toBe(1);
     });
 
-    it('ACCEPT z wasAiRanked zapisuje nagrode i rejestruje predykcje (1, serwerowy score)', async () => {
-        mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
-        clearPredictionCache();
-        setWellScore('well-1', 0.9, 'model-v1');
-
-        const res = await request(app).post('/api/telemetry/ai/reward').send({
-            action: 'ACCEPT',
-            wellId: 'well-1',
-            scoreBefore: 0.9,
-            wasAiRanked: true
+    it('ACCEPT z tokenem serwerowym i wlascicielem allowlisty rejestruje AUC', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({
+            id: 'log-1',
+            userId: 'userA',
+            trainingEligible: true
         });
+        clearPredictionCache();
+        const predictionToken = issuePredictionProof('userA', 'well-1', 0.9, 'model-v1');
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send({
+                action: 'ACCEPT',
+                wellId: 'well-1',
+                scoreBefore: 0.9,
+                wasAiRanked: true,
+                predictionToken
+            });
 
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ status: 'ok' });
@@ -719,23 +748,55 @@ describe('POST /api/telemetry/ai/reward', () => {
         expect(mockRecordPredictionResult).toHaveBeenCalledWith(1, 0.9, 'model-v1');
     });
 
-    it('nie rejestruje predykcji gdy kliencki scoreBefore nie zgadza sie z serwerowym (anti-poisoning)', async () => {
-        mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
-        clearPredictionCache();
-        setWellScore('well-1', 0.9);
-
-        const res = await request(app).post('/api/telemetry/ai/reward').send({
-            action: 'ACCEPT',
-            wellId: 'well-1',
-            scoreBefore: 0.01,
-            wasAiRanked: true
+    it('nie rejestruje predykcji z tokenem wydanym innemu uzytkownikowi', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({
+            id: 'log-1',
+            userId: 'userA',
+            trainingEligible: true
         });
+        clearPredictionCache();
+        const predictionToken = issuePredictionProof('userB', 'well-1', 0.9, 'model-v1');
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send({
+                action: 'ACCEPT',
+                wellId: 'well-1',
+                scoreBefore: 0.9,
+                wasAiRanked: true,
+                predictionToken
+            });
 
         expect(res.status).toBe(200);
         expect(mockRecordPredictionResult).not.toHaveBeenCalled();
     });
 
-    it('nie rejestruje predykcji gdy brak serwerowego score dla wellId (studnia nie przeszla przez AI)', async () => {
+    it('nie rejestruje predykcji dla wlasciciela spoza allowlisty treningowej', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({
+            id: 'log-1',
+            userId: 'userB',
+            trainingEligible: true
+        });
+        clearPredictionCache();
+        const predictionToken = issuePredictionProof('userB', 'well-1', 0.9, 'model-v1');
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userB' })
+            .send({
+                action: 'ACCEPT',
+                wellId: 'well-1',
+                scoreBefore: 0.9,
+                wasAiRanked: true,
+                predictionToken
+            });
+
+        expect(res.status).toBe(200);
+        expect(mockRecordPredictionResult).not.toHaveBeenCalled();
+    });
+
+    it('nie rejestruje predykcji gdy brak tokenu serwerowego', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
         clearPredictionCache();
 
@@ -752,18 +813,22 @@ describe('POST /api/telemetry/ai/reward', () => {
 
     it('MODIFY synchronizuje etykiete MODIFIED na najnowszym rekordzie telemetrii', async () => {
         mockTelemetryLogsFindFirst
-            .mockResolvedValueOnce({ id: 'log-1' }) // telemetryWell
-            .mockResolvedValueOnce({ id: 'latest-log' }); // najnowszy rekord studni
+            .mockResolvedValueOnce({ id: 'log-1', userId: 'userA', trainingEligible: true })
+            .mockResolvedValueOnce({ id: 'latest-log', userId: 'userA', offerId: null });
         clearPredictionCache();
-        setWellScore('well-1', 0.8);
+        const predictionToken = issuePredictionProof('userA', 'well-1', 0.8, 'model-v1');
 
-        const res = await request(app).post('/api/telemetry/ai/reward').send({
-            action: 'MODIFY',
-            wellId: 'well-1',
-            scoreBefore: 0.8,
-            scoreAfter: 0.6,
-            wasAiRanked: true
-        });
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send({
+                action: 'MODIFY',
+                wellId: 'well-1',
+                scoreBefore: 0.8,
+                scoreAfter: 0.6,
+                wasAiRanked: true,
+                predictionToken
+            });
 
         expect(res.status).toBe(200);
         expect(mockRewardTelemetryUpdate).toHaveBeenCalledWith({
@@ -775,7 +840,7 @@ describe('POST /api/telemetry/ai/reward', () => {
             'MODIFIED',
             mockRewardTransaction
         );
-        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.8, 'unknown');
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.8, 'model-v1');
     });
 
     it('REJECT synchronizuje etykiete REJECTED i rejestruje predykcje negatywna', async () => {
@@ -783,12 +848,12 @@ describe('POST /api/telemetry/ai/reward', () => {
         // mockResolvedValue z wcześniejszych testów — Once by się rozjechał).
         mockTelemetryLogsFindFirst.mockImplementation(async (args: any) => {
             if (args?.where?.id || args?.where?.solverSource) {
-                return { id: 'latest-log', userId: 'userA' };
+                return { id: 'latest-log', userId: 'userA', offerId: null };
             }
-            return { id: 'log-1' };
+            return { id: 'log-1', userId: 'userA', trainingEligible: true };
         });
         clearPredictionCache();
-        setWellScore('well-1', 0.95);
+        const predictionToken = issuePredictionProof('userA', 'well-1', 0.95, 'model-v1');
 
         const res = await request(app)
             .post('/api/telemetry/ai/reward')
@@ -797,7 +862,8 @@ describe('POST /api/telemetry/ai/reward', () => {
                 action: 'REJECT',
                 wellId: 'well-1',
                 scoreBefore: 0.95,
-                wasAiRanked: true
+                wasAiRanked: true,
+                predictionToken
             });
 
         expect(res.status).toBe(200);
@@ -810,7 +876,7 @@ describe('POST /api/telemetry/ai/reward', () => {
             'REJECTED',
             mockRewardTransaction
         );
-        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.95, 'unknown');
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.95, 'model-v1');
     });
 
     it('ACCEPT bez wasAiRanked nie rejestruje predykcji (sliding AUC)', async () => {
@@ -916,7 +982,9 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
     }
 
     // well-exists (where.wellId bez where.id/solverSource) vs target — routing jak w route.
-    function mockTarget(target: { id: string; userId: string | null } | null) {
+    function mockTarget(
+        target: { id: string; userId: string | null; offerId?: string | null } | null
+    ) {
         mockTelemetryLogsFindFirst.mockImplementation(async (args: any) => {
             if (args?.where?.id || args?.where?.solverSource) return target;
             return { id: 'log-w' };
@@ -985,6 +1053,22 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
         expect(res.status).toBe(403);
         expect(res.body).toEqual({ error: 'FORBIDDEN' });
         expect(mockProcessAction).not.toHaveBeenCalled();
+        expect(mockUpdateLabelByTelemetry).not.toHaveBeenCalled();
+    });
+
+    it('legacy target z oferta innego wlasciciela → 403 przed zapisem', async () => {
+        mockTarget({ id: 'tel-legacy', userId: null, offerId: 'offer-b' });
+        const prisma = (await import('../../src/prismaClient')).default as any;
+        prisma.offers_studnie_rel.findUnique.mockResolvedValue({ userId: 'userB' });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set(asUser('userA'))
+            .send({ action: 'REJECT', wellId: 'well-1' });
+
+        expect(res.status).toBe(403);
+        expect(mockProcessAction).not.toHaveBeenCalled();
+        expect(mockRewardTelemetryUpdate).not.toHaveBeenCalled();
         expect(mockUpdateLabelByTelemetry).not.toHaveBeenCalled();
     });
 

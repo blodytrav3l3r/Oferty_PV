@@ -86,6 +86,10 @@
             params.scoreBefore !== undefined ? params.scoreBefore : rankInfo.scoreBefore;
         const scoreAfter =
             params.scoreAfter !== undefined ? params.scoreAfter : rankInfo.scoreAfter;
+        const predictionToken =
+            params.predictionToken !== undefined
+                ? params.predictionToken
+                : rankInfo.predictionToken;
 
         // Domyślna wartość wasAiRanked wyprowadzana z configSource studni (AUTO_AI = dobór
         // z rankingiem AI). Jawna wartość z callera ma priorytet — flaga jest wtedy spójna
@@ -100,6 +104,7 @@
             scoreBefore: scoreBefore,
             scoreAfter: scoreAfter,
             wasAiRanked: wasAiRanked,
+            predictionToken: predictionToken,
             configSnapshot: snap,
             // MODIFY/REJECT odnoszą się do sugestii AUTO — backend etykietuje
             // wiersz sugestii (parentConfigId), nie najnowszy finalny config.
