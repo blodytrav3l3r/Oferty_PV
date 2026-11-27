@@ -243,9 +243,16 @@ router.post('/ai/event', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) 
         ) {
             return res.status(403).json({ error: 'Brak dostępu do telemetrii' });
         }
+        const isFallbackOutcome = parse.data.eventType === 'fallback_triggered';
+        const eventInput: TelemetryEventInputType = isFallbackOutcome
+            ? {
+                  eventType: 'fallback_triggered',
+                  changeReason: parse.data.changeReason
+              }
+            : (parse.data as TelemetryEventInputType);
         const result = await telemetryService.recordEvent(
-            parse.data as TelemetryEventInputType,
-            userId
+            eventInput,
+            isFallbackOutcome ? undefined : userId
         );
         return res.json(result);
     } catch (e) {

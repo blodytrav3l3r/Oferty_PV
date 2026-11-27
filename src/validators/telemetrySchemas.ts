@@ -162,34 +162,77 @@ export type TelemetryConfigBatchInput = z.infer<typeof telemetryConfigBatchSchem
 // Event telemetry
 // =============================================================================
 
-export const telemetryEventSchema = z.object({
-    telemetryId: z.string().optional(),
-    eventType: z.enum([
-        'auto_run',
-        'user_change',
-        'accept',
-        'reject',
-        'save_offer',
-        'create_order',
-        'telemetry_reason',
-        'rule_violation',
-        'fallback_triggered',
-        'component_add',
-        'component_remove',
-        'component_qty_change',
-        'ai_rank_decision',
-        'reduction_swap',
-        'well_deleted'
-    ]),
-    wellId: z.string().optional(),
-    componentId: z.string().optional(),
-    previousValue: z.string().optional(),
-    newValue: z.string().optional(),
-    changeReason: z.string().optional(),
-    msSinceConfig: z.number().int().optional(),
-    orderInSession: z.number().int().optional(),
-    sequenceNo: z.number().int().optional()
-});
+export const fallbackOutcomeReasonSchema = z.enum([
+    'timeout',
+    'http_error',
+    'empty_response',
+    'partial_response',
+    'network_error',
+    'unspecified'
+]);
+
+export const telemetryEventSchema = z
+    .object({
+        telemetryId: z.string().optional(),
+        eventType: z.enum([
+            'auto_run',
+            'user_change',
+            'accept',
+            'reject',
+            'save_offer',
+            'create_order',
+            'telemetry_reason',
+            'rule_violation',
+            'fallback_triggered',
+            'component_add',
+            'component_remove',
+            'component_qty_change',
+            'ai_rank_decision',
+            'reduction_swap',
+            'well_deleted'
+        ]),
+        wellId: z.string().optional(),
+        componentId: z.string().optional(),
+        previousValue: z.string().optional(),
+        newValue: z.string().optional(),
+        changeReason: z.string().optional(),
+        msSinceConfig: z.number().int().optional(),
+        orderInSession: z.number().int().optional(),
+        sequenceNo: z.number().int().optional()
+    })
+    .superRefine((event, context) => {
+        if (event.eventType !== 'fallback_triggered') return;
+
+        if (
+            event.changeReason !== undefined &&
+            !fallbackOutcomeReasonSchema.safeParse(event.changeReason).success
+        ) {
+            context.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['changeReason'],
+                message: 'Nieprawidłowa kategoria fallbacku'
+            });
+        }
+
+        const privateFields = [
+            'telemetryId',
+            'wellId',
+            'componentId',
+            'previousValue',
+            'newValue',
+            'msSinceConfig',
+            'orderInSession'
+        ] as const;
+        for (const field of privateFields) {
+            if (event[field] !== undefined) {
+                context.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: [field],
+                    message: 'Fallback nie może zawierać identyfikatorów ani kontekstu konfiguracji'
+                });
+            }
+        }
+    });
 
 export type TelemetryEventInputType = z.infer<typeof telemetryEventSchema>;
 

@@ -186,6 +186,7 @@ jest.mock('../../src/prismaClient', () => ({
         },
         aiFeature: {
             findMany: jest.fn<any>().mockResolvedValue([]),
+            findFirst: jest.fn<any>().mockResolvedValue(null),
             count: jest.fn<any>().mockResolvedValue(0)
         },
         aiModel: {
@@ -200,9 +201,13 @@ jest.mock('../../src/prismaClient', () => ({
             findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args),
             update: jest.fn<any>().mockResolvedValue({})
         },
+        ai_telemetry_events: {
+            groupBy: jest.fn<any>().mockResolvedValue([])
+        },
         aiRewardLog: {
             count: jest.fn<any>().mockResolvedValue(0)
-        }
+        },
+        audit_logs: { findMany: jest.fn<any>().mockResolvedValue([]) }
     }
 }));
 
@@ -395,6 +400,101 @@ describe('GET /api/telemetry/ai/health', () => {
         expect(res.body.dataQuality).toHaveProperty('totalLogs', 10);
     });
 
+    it('zwraca świeżość z DB i zagregowane kategorie fallback z ostatnich 24h', async () => {
+        const latestTelemetryAt = '2026-11-27T10:00:00.000Z';
+        const latestFeatureAt = '2026-11-27T09:30:00.000Z';
+        const prisma = (await import('../../src/prismaClient')).default as any;
+        mockTelemetryLogsFindFirst.mockResolvedValue({ createdAt: latestTelemetryAt });
+        prisma.aiFeature.findFirst.mockResolvedValue({ createdAt: latestFeatureAt });
+        prisma.ai_telemetry_events.groupBy.mockResolvedValue([
+            { changeReason: 'timeout', _count: { _all: 2 } },
+            { changeReason: 'network_error', _count: { _all: 1 } },
+            { changeReason: 'private-unexpected', _count: { _all: 99 } }
+        ]);
+        prisma.audit_logs.findMany.mockResolvedValue([
+            { newData: JSON.stringify({ result: 'compatible', packageFingerprint: 'private-a' }) },
+            { newData: JSON.stringify({ result: 'warning', modelVersion: 'private-v1' }) },
+            { newData: JSON.stringify({ result: 'blocked' }) },
+            { newData: '{invalid' }
+        ]);
+
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        const app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+        const res = await request(app).get('/api/telemetry/ai/health').expect(200);
+
+        expect(res.body.dataFreshness).toEqual({
+            lastTelemetryAt: latestTelemetryAt,
+            lastFeatureAt: latestFeatureAt
+        });
+        expect(res.body.fallbacks24h).toEqual({
+            total: 102,
+            byReason: {
+                timeout: 2,
+                http_error: 0,
+                empty_response: 0,
+                partial_response: 0,
+                network_error: 1,
+                unspecified: 99
+            }
+        });
+        expect(res.body.compatibility24h).toEqual({
+            total: 4,
+            truncated: false,
+            byStatus: { compatible: 1, warning: 1, blocked: 1, unknown: 1 }
+        });
+        expect(JSON.stringify(res.body.compatibility24h)).not.toContain('private-');
+        expect(prisma.audit_logs.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    entityType: 'ai_transfer',
+                    action: 'TRANSFER_DRY_RUN',
+                    createdAt: { gte: expect.any(String) }
+                }),
+                take: 501,
+                select: { newData: true }
+            })
+        );
+        expect(prisma.ai_telemetry_events.groupBy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                by: ['changeReason'],
+                where: expect.objectContaining({
+                    eventType: 'fallback_triggered',
+                    createdAt: { gte: expect.any(String) },
+                    OR: expect.arrayContaining([
+                        { changeReason: { in: expect.any(Array) } },
+                        { changeReason: null }
+                    ])
+                })
+            })
+        );
+        expect(mockTelemetryLogsFindFirst).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { createdAt: { not: null } } })
+        );
+    });
+
+    it('nie psuje health gdy opcjonalne agregaty operacyjne są niedostępne', async () => {
+        const prisma = (await import('../../src/prismaClient')).default as any;
+        mockGetActiveModel.mockResolvedValue(null);
+        mockTelemetryLogsCount.mockResolvedValue(0);
+        mockTelemetryLogsFindFirst.mockResolvedValue(null);
+        prisma.aiFeature.findFirst.mockResolvedValue(null);
+        prisma.ai_telemetry_events.groupBy.mockRejectedValue(new Error('private-db-detail'));
+        prisma.audit_logs.findMany.mockRejectedValue(new Error('private-audit-detail'));
+
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        const app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+        const res = await request(app).get('/api/telemetry/ai/health').expect(200);
+
+        expect(res.body.fallbacks24h).toBeNull();
+        expect(res.body.compatibility24h).toBeNull();
+        expect(JSON.stringify(res.body)).not.toContain('private-db-detail');
+        expect(JSON.stringify(res.body)).not.toContain('private-audit-detail');
+    });
+
     it('zwraca driftPct=null gdy brak aktywnego modelu', async () => {
         mockGetActiveModel.mockResolvedValue(null);
 
@@ -406,6 +506,11 @@ describe('GET /api/telemetry/ai/health', () => {
     });
 
     it('model startowy bez próbek nie ma daty treningu ani pomiaru driftu', async () => {
+        const prisma = (await import('../../src/prismaClient')).default as any;
+        mockTelemetryLogsFindFirst.mockResolvedValue(null);
+        prisma.aiFeature.findFirst.mockResolvedValue(null);
+        prisma.ai_telemetry_events.groupBy.mockResolvedValue([]);
+        prisma.audit_logs.findMany.mockResolvedValue([]);
         mockGetActiveModel.mockResolvedValue({
             version: 'v0.1.0-starter',
             trainingRows: 0,
@@ -417,7 +522,24 @@ describe('GET /api/telemetry/ai/health', () => {
             mlOnline: true,
             modelTrained: false,
             lastTrainingAt: null,
-            driftPct: null
+            driftPct: null,
+            dataFreshness: { lastTelemetryAt: null, lastFeatureAt: null },
+            fallbacks24h: {
+                total: 0,
+                byReason: {
+                    timeout: 0,
+                    http_error: 0,
+                    empty_response: 0,
+                    partial_response: 0,
+                    network_error: 0,
+                    unspecified: 0
+                }
+            },
+            compatibility24h: {
+                total: 0,
+                truncated: false,
+                byStatus: { compatible: 0, warning: 0, blocked: 0, unknown: 0 }
+            }
         });
     });
 

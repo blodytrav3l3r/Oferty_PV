@@ -671,6 +671,19 @@ Wymaga autoryzacji.
 | GET    | `/api/telemetry/ai/predictions/stats`   | admin | Statystyki predykcji                                 |
 | POST   | `/api/telemetry/ai/rollback`            | admin | Rollback do poprzedniego modelu                      |
 
+`GET /api/telemetry/ai/health` zawiera `dataFreshness.lastTelemetryAt` i
+`dataFreshness.lastFeatureAt` (czas ostatniego rekordu z PostgreSQL lub `null`)
+oraz `fallbacks24h` z liczbą zgłoszonych przez klienta fallbacków i kategoriami
+`timeout`, `http_error`, `empty_response`, `partial_response`, `network_error`
+i `unspecified`. Outcome fallback jest zapisywany bez identyfikatora użytkownika,
+studni ani rekordu telemetry; starsze eventy bez kategorii trafiają do
+`unspecified`. Kategorie są wskaźnikiem operacyjnym, nie serwerowym dowodem błędu.
+`compatibility24h` agreguje wyniki `TRANSFER_DRY_RUN` z audytu, zwracając wyłącznie
+statusy kompatybilności; `truncated: true` oznacza limit 500 najnowszych wpisów.
+P95/P99 czasu całego HTTP API predykcji i błędy HTTP 5xx endpointów reward pochodzą
+z `/metrics` (próbki procesu, do 512 na endpoint, reset po restarcie); nie są
+czystym czasem inferencji ani kompletną liczbą walidacyjnych/pozycyjnych odrzuceń.
+
 `mlOnline` oznacza obecność aktywnego modelu. `modelTrained` informuje, czy zapisano dla niego dodatnią liczbę próbek treningowych. `aiMlEnabled` określa stan przełącznika wykonywania AI. W `/ml-status` `baselineAccuracy`, `lastTrainingRun` i `lastDatasetFingerprint` dotyczą udanego lokalnego treningu aktywnego modelu. Mogą być `null`, np. dla modelu startowego lub importowanego.
 
 Ręczny `POST /api/telemetry/ai/learning/run` wymaga administratora i włączonego AI. Limit to jedno żądanie na minutę na proces. Odpowiedź `429` zawiera `Retry-After`.

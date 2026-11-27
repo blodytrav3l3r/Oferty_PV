@@ -21,6 +21,7 @@ import {
 import { z } from 'zod';
 import prisma from '../prismaClient';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../config/mlConstants';
+import { fallbackOutcomeReasonSchema } from '../validators/telemetrySchemas';
 import {
     cacheKey,
     setCache,
@@ -32,6 +33,70 @@ import {
 } from '../services/ml/predictionCache';
 
 const router = Router();
+type FallbackOutcomeReason = z.infer<typeof fallbackOutcomeReasonSchema>;
+const COMPATIBILITY_SAMPLE_LIMIT = 500;
+
+type CompatibilityOutcome = 'compatible' | 'warning' | 'blocked' | 'unknown';
+
+function countCompatibilityOutcomes(
+    rows: Array<{ newData: string | null }> | null
+): { total: number; truncated: boolean; byStatus: Record<CompatibilityOutcome, number> } | null {
+    if (!rows) return null;
+
+    const sampledRows = rows.slice(0, COMPATIBILITY_SAMPLE_LIMIT);
+    const byStatus: Record<CompatibilityOutcome, number> = {
+        compatible: 0,
+        warning: 0,
+        blocked: 0,
+        unknown: 0
+    };
+
+    for (const row of sampledRows) {
+        let status: unknown;
+        try {
+            status = row.newData ? JSON.parse(row.newData).result : null;
+        } catch {
+            status = null;
+        }
+        if (status === 'compatible' || status === 'warning' || status === 'blocked') {
+            byStatus[status] += 1;
+        } else {
+            byStatus.unknown += 1;
+        }
+    }
+
+    return {
+        total: sampledRows.length,
+        truncated: rows.length > COMPATIBILITY_SAMPLE_LIMIT,
+        byStatus
+    };
+}
+
+function countFallbackOutcomes(
+    rows: Array<{ changeReason: string | null; _count: { _all: number } }> | null
+): { total: number; byReason: Record<FallbackOutcomeReason, number> } | null {
+    if (!rows) return null;
+
+    const byReason: Record<FallbackOutcomeReason, number> = {
+        timeout: 0,
+        http_error: 0,
+        empty_response: 0,
+        partial_response: 0,
+        network_error: 0,
+        unspecified: 0
+    };
+
+    for (const row of rows) {
+        const reason = row.changeReason ?? 'unspecified';
+        if (reason && Object.prototype.hasOwnProperty.call(byReason, reason)) {
+            byReason[reason as FallbackOutcomeReason] += row._count._all;
+        } else {
+            byReason.unspecified += row._count._all;
+        }
+    }
+
+    return { total: Object.values(byReason).reduce((total, count) => total + count, 0), byReason };
+}
 
 /**
  * #2 audyt MLOps: generyczny komunikat 500, pełny szczegół błędu tylko w logu —
@@ -854,6 +919,59 @@ router.get(
             const pipelineStatus = trainingPipeline.getStatus();
             const rewardLogs = await prisma.aiRewardLog.count();
 
+            const freshnessSince = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const [lastTelemetry, lastFeature, fallbackGroups, compatibilityRows] =
+                await Promise.all([
+                    prisma.ai_telemetry_logs.findFirst({
+                        where: { createdAt: { not: null } },
+                        orderBy: { createdAt: 'desc' },
+                        select: { createdAt: true }
+                    }),
+                    prisma.aiFeature.findFirst({
+                        orderBy: { createdAt: 'desc' },
+                        select: { createdAt: true }
+                    }),
+                    prisma.ai_telemetry_events
+                        .groupBy({
+                            by: ['changeReason'],
+                            where: {
+                                eventType: 'fallback_triggered',
+                                createdAt: { gte: freshnessSince },
+                                OR: [
+                                    {
+                                        changeReason: {
+                                            in: [...fallbackOutcomeReasonSchema.options]
+                                        }
+                                    },
+                                    { changeReason: null }
+                                ]
+                            },
+                            _count: { _all: true }
+                        })
+                        .catch(() => {
+                            logger.warn('AiMlStatus', 'Nie udało się odczytać agregatu fallbacków');
+                            return null;
+                        }),
+                    prisma.audit_logs
+                        .findMany({
+                            where: {
+                                entityType: 'ai_transfer',
+                                action: 'TRANSFER_DRY_RUN',
+                                createdAt: { gte: freshnessSince }
+                            },
+                            orderBy: { createdAt: 'desc' },
+                            take: COMPATIBILITY_SAMPLE_LIMIT + 1,
+                            select: { newData: true }
+                        })
+                        .catch(() => {
+                            logger.warn(
+                                'AiMlStatus',
+                                'Nie udało się odczytać agregatu kompatybilności'
+                            );
+                            return null;
+                        })
+                ]);
+
             const lastRun = await prisma.aiTrainingRun.findFirst({
                 where: { status: 'SUCCESS', finishedAt: { not: null } },
                 orderBy: { finishedAt: 'desc' },
@@ -931,6 +1049,12 @@ router.get(
                 trainingRunning: pipelineStatus.running,
                 totalRewards: rewardLogs,
                 driftPct,
+                dataFreshness: {
+                    lastTelemetryAt: lastTelemetry?.createdAt ?? null,
+                    lastFeatureAt: lastFeature?.createdAt ?? null
+                },
+                fallbacks24h: countFallbackOutcomes(fallbackGroups),
+                compatibility24h: countCompatibilityOutcomes(compatibilityRows),
                 dataQuality: {
                     totalLogs: telemetryCount,
                     withFeatureSnapshotPct:

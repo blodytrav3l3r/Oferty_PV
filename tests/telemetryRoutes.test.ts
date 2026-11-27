@@ -75,8 +75,12 @@ describe('telemetryRoutes E2E - schema walidacja', () => {
             'fallback_triggered',
             'well_deleted'
         ];
-        types.forEach((t) => {
-            expect(telemetryEventSchema.safeParse({ eventType: t }).success).toBe(true);
+        types.forEach((eventType) => {
+            const payload =
+                eventType === 'fallback_triggered'
+                    ? { eventType, changeReason: 'timeout' }
+                    : { eventType };
+            expect(telemetryEventSchema.safeParse(payload).success).toBe(true);
         });
     });
 
@@ -1360,6 +1364,35 @@ describe('Integralność danych', () => {
         expect(feat).toHaveLength(0);
         await prisma.ai_telemetry_events.deleteMany({ where: { id: res.eventId } });
         await prisma.ai_telemetry_logs.deleteMany({ where: { id: telId } });
+    });
+
+    it('fallback outcome: utrwala tylko kategorię anonimowo i pozwala agregować ją po czasie', async () => {
+        const res = await telemetryService.recordEvent({
+            eventType: 'fallback_triggered',
+            changeReason: 'timeout'
+        });
+
+        expect(res.success).toBe(true);
+        const row = await prisma.ai_telemetry_events.findUnique({ where: { id: res.eventId } });
+        expect(row).toMatchObject({
+            eventType: 'fallback_triggered',
+            changeReason: 'timeout',
+            userId: null,
+            wellId: null,
+            telemetryId: null,
+            componentId: null
+        });
+
+        const groups = await prisma.ai_telemetry_events.groupBy({
+            by: ['changeReason'],
+            where: {
+                eventType: 'fallback_triggered',
+                createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }
+            },
+            _count: { _all: true }
+        });
+        expect(groups).toContainEqual({ changeReason: 'timeout', _count: { _all: 1 } });
+        await prisma.ai_telemetry_events.deleteMany({ where: { id: res.eventId } });
     });
 
     it('JSON deserializacja w records eventów', async () => {

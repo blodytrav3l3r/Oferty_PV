@@ -195,9 +195,38 @@ describe('telemetryEventSchema', () => {
             'rule_violation',
             'fallback_triggered'
         ];
-        events.forEach(function (e) {
-            expect(telemetryEventSchema.safeParse({ eventType: e }).success).toBe(true);
+        events.forEach(function (eventType) {
+            const payload =
+                eventType === 'fallback_triggered'
+                    ? { eventType, changeReason: 'timeout' }
+                    : { eventType };
+            expect(telemetryEventSchema.safeParse(payload).success).toBe(true);
         });
+    });
+
+    it('fallback_triggered wymaga ograniczonej przyczyny i nie przyjmuje identyfikatorów', () => {
+        expect(telemetryEventSchema.safeParse({ eventType: 'fallback_triggered' }).success).toBe(
+            true
+        );
+        expect(
+            telemetryEventSchema.safeParse({
+                eventType: 'fallback_triggered',
+                changeReason: 'timeout'
+            }).success
+        ).toBe(true);
+        expect(
+            telemetryEventSchema.safeParse({
+                eventType: 'fallback_triggered',
+                changeReason: 'timeout:well-123'
+            }).success
+        ).toBe(false);
+        expect(
+            telemetryEventSchema.safeParse({
+                eventType: 'fallback_triggered',
+                changeReason: 'timeout',
+                wellId: 'private-well'
+            }).success
+        ).toBe(false);
     });
 });
 

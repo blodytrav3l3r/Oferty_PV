@@ -195,6 +195,33 @@ describe('mlDualRanking.rankCandidates (min-max normalizacja aiCost)', () => {
         expect(result.mlOnline).toBe(false);
     });
 
+    test('zapisuje anonimowy outcome fallback po timeout bez zmiany rankingu technicznego', async () => {
+        const events: any[] = [];
+        sandbox.window.telemetryRecordEvent = (event: any) => events.push(event);
+        sandbox.fetch = (url: string) => {
+            if (url.includes('/feature-schema')) {
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: () => Promise.resolve({ version: FEATURE_VERSION })
+                });
+            }
+            return Promise.reject(
+                Object.assign(new Error('private-well-123'), { name: 'AbortError' })
+            );
+        };
+
+        const result = await rankCandidates({
+            candidates: makeCandidates(),
+            well: { ...makeWell(), id: 'private-well-123' },
+            aiInfluencePct: 80
+        });
+
+        expect(result.ranked[0].id).toBe(0);
+        expect(result.mlOnline).toBe(false);
+        expect(events).toEqual([{ eventType: 'fallback_triggered', changeReason: 'timeout' }]);
+    });
+
     test('aiInfluencePct=0 (shadow) → niezależnie od rozrzutu porządek techniczny', async () => {
         mockBatchScores({ 0: 0.3, 1: 0.8, 2: 0.9 });
         const result = await rankCandidates({

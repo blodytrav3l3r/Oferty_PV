@@ -55,6 +55,18 @@
     const CACHE_TTL = 15 * 60 * 1000;
     const CACHE_MAX_SIZE = 200;
 
+    function recordAiFallback(reason) {
+        if (typeof window.telemetryRecordEvent !== 'function') return;
+        try {
+            window.telemetryRecordEvent({
+                eventType: 'fallback_triggered',
+                changeReason: reason
+            });
+        } catch (_e) {
+            // Telemetria nie może zmienić rankingu ani blokować fallbacku.
+        }
+    }
+
     function setScoreCache(key, value) {
         if (scoreCache.size >= CACHE_MAX_SIZE) {
             const oldest = scoreCache.keys().next().value;
@@ -589,6 +601,7 @@
                     }
                 }
                 // Fill uncached with -1
+                recordAiFallback('http_error');
                 for (let j = 0; j < toFetch.length; j++) {
                     resultMap.set(toFetch[j].id, -1);
                 }
@@ -612,19 +625,24 @@
                     }
                 }
                 // Fill any missing with -1
+                let hasMissingScore = false;
                 for (let l = 0; l < toFetch.length; l++) {
                     if (!resultMap.has(toFetch[l].id)) {
+                        hasMissingScore = true;
                         resultMap.set(toFetch[l].id, -1);
                     }
                 }
+                if (hasMissingScore) recordAiFallback('partial_response');
             } else {
                 mlOnline = false;
+                recordAiFallback('empty_response');
                 for (let m = 0; m < toFetch.length; m++) {
                     resultMap.set(toFetch[m].id, -1);
                 }
             }
         } catch (_e) {
             mlOnline = false;
+            recordAiFallback(_e && _e.name === 'AbortError' ? 'timeout' : 'network_error');
             for (let n = 0; n < toFetch.length; n++) {
                 resultMap.set(toFetch[n].id, -1);
             }

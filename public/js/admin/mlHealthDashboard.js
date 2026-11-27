@@ -96,108 +96,235 @@
                     return;
                 }
 
-                const modelOk = d.mlOnline && d.modelTrained === true;
-                const accuracy =
-                    modelOk && Number.isFinite(d.modelAccuracy) ? d.modelAccuracy : null;
-                // Kotwica SEC-03: modelTooltip jest SUROWY celowo — escape atrybutu następuje w callerze
-                // healthCard('Model', ..., window.escapeHtmlAttr(modelTooltip)) poniżej. Nie escapować tutaj.
-                const modelTooltip = d.modelVersion
-                    ? d.modelVersion + (accuracy !== null ? ' (acc: ' + accuracy + ')' : '')
-                    : 'Brak';
+                const renderHealth = function (runtimeMetrics, metricsLoaded) {
+                    if (d.aiMlEnabled === false) {
+                        renderDisabled();
+                        return;
+                    }
 
-                const html =
-                    /* Naglowek */
-                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-                    '<h4 class="ai-ml-header" style="margin:0"><i data-lucide="heart-pulse"></i> Stan pipeline ML</h4>' +
-                    '<span style="font-size: var(--fs-sm);color:var(--text-secondary)">' +
-                    new Date().toLocaleString('pl-PL') +
-                    '</span>' +
-                    '</div>' +
-                    /* Siatka kart */
-                    '<div class="ai-health-grid">' +
-                    healthCard('Telemetria', d.telemetryCount, d.telemetryCount > 0) +
-                    healthCard(
-                        'FeatureExtractor',
-                        d.featureCount,
-                        d.featureCount > 0,
-                        d.featureCount + ' rekordów'
-                    ) +
-                    healthCard(
-                        'Trening',
-                        d.lastTrainingAt ? timeAgo(d.lastTrainingAt) : 'Nigdy',
-                        !!d.lastTrainingAt,
-                        d.trainingRunning ? 'W trakcie...' : '—'
-                    ) +
-                    healthCard(
-                        'Model',
-                        window.escapeHtml(modelTooltip),
-                        modelOk,
-                        d.mlOnline && !modelOk ? 'Bez treningu' : null,
-                        window.escapeHtmlAttr(modelTooltip)
-                    ) +
-                    healthCard(
-                        'Predict',
-                        modelOk ? 'Online' : d.mlOnline ? 'Model bez treningu' : 'Offline',
-                        modelOk,
-                        d.mlOnline ? 'model ' + window.escapeHtml(d.modelVersion) : 'brak modelu'
-                    ) +
-                    healthCard(
-                        'Zdarzenia reward',
-                        d.totalRewards,
-                        true,
-                        'wszystkie zapisane rekordy aiRewardLog',
-                        'Źródło: /ai/health · zakres: liczba rekordów reward, nie suma wartości nagrody · odczyt: ' +
-                            new Date().toLocaleString('pl-PL')
-                    ) +
-                    /* Drift danych: % ostatnich telemetrii poza zakresem modelu (niski = OK) */
-                    healthCard(
-                        'Drift danych',
-                        d.driftPct === null || d.driftPct === undefined ? '—' : d.driftPct + '%',
-                        d.driftPct !== null && d.driftPct !== undefined && d.driftPct < 20,
-                        d.driftPct === null || d.driftPct === undefined
-                            ? 'brak danych'
-                            : 'odsetek wartości poza zakresem modelu'
-                    ) +
-                    '</div>' +
-                    /* Jakosc danych */
-                    '<div class="ai-dq-section">' +
-                    '<div class="ai-dq-title"><i data-lucide="gauge"></i> Jakość danych</div>' +
-                    '<div class="ai-dq-bars">' +
-                    qualityBar(
-                        d.dataQuality ? d.dataQuality.withFeatureSnapshotPct || 0 : 0,
-                        'FeatureSnapshot'
-                    ) +
-                    qualityBar(
-                        d.dataQuality ? d.dataQuality.withSolverSourcePct || 0 : 0,
-                        'SolverSource'
-                    ) +
-                    qualityBar(d.dataQuality ? d.dataQuality.withWellTypePct || 0 : 0, 'WellType') +
-                    '</div>' +
-                    '</div>' +
-                    /* Ostrzezenia */
-                    '<div class="ai-dq-warnings">' +
-                    (d.dataQuality && d.dataQuality.manualOverrideCount > 0
-                        ? '<span class="ai-warning-tag warn"><i data-lucide="alert-triangle"></i> Ręczne nadpisania: ' +
-                          d.dataQuality.manualOverrideCount +
-                          '</span>'
-                        : '') +
-                    (d.telemetryCount > 0 &&
-                    d.dataQuality &&
-                    d.dataQuality.withFeatureSnapshotPct < 95
-                        ? '<span class="ai-warning-tag danger"><i data-lucide="alert-triangle"></i> Niska jakosc featureSnapshot</span>'
-                        : '') +
-                    '</div>';
+                    const endpoints =
+                        runtimeMetrics && runtimeMetrics.endpoints ? runtimeMetrics.endpoints : {};
+                    const predictionApi = endpoints['POST /api/telemetry/ai/predict/batch'] || null;
+                    const rewardApi = endpoints['POST /api/telemetry/ai/reward'] || null;
+                    const rewardBatchApi = endpoints['POST /api/telemetry/ai/reward-batch'] || null;
+                    const rewardSamples = [rewardApi, rewardBatchApi].filter(function (stats) {
+                        return stats && stats.recent && stats.recent.n > 0;
+                    });
+                    const rewardRequestCount = rewardSamples.reduce(function (total, stats) {
+                        return total + stats.recent.n;
+                    }, 0);
+                    const rewardServerErrors = rewardSamples.reduce(function (total, stats) {
+                        return total + stats.recent.errors;
+                    }, 0);
 
-                if (d && d.aiMlEnabled === false) {
-                    renderDisabled();
-                    return;
-                }
+                    const modelOk = d.mlOnline && d.modelTrained === true;
+                    const accuracy =
+                        modelOk && Number.isFinite(d.modelAccuracy) ? d.modelAccuracy : null;
+                    // Kotwica SEC-03: modelTooltip jest SUROWY celowo — escape atrybutu następuje w callerze
+                    // healthCard('Model', ..., window.escapeHtmlAttr(modelTooltip)) poniżej. Nie escapować tutaj.
+                    const modelTooltip = d.modelVersion
+                        ? d.modelVersion + (accuracy !== null ? ' (acc: ' + accuracy + ')' : '')
+                        : 'Brak';
 
-                container.innerHTML = html;
+                    const html =
+                        /* Naglowek */
+                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+                        '<h4 class="ai-ml-header" style="margin:0"><i data-lucide="heart-pulse"></i> Stan pipeline ML</h4>' +
+                        '<span style="font-size: var(--fs-sm);color:var(--text-secondary)">' +
+                        new Date().toLocaleString('pl-PL') +
+                        '</span>' +
+                        '</div>' +
+                        /* Siatka kart */
+                        '<div class="ai-health-grid">' +
+                        healthCard('Telemetria', d.telemetryCount, d.telemetryCount > 0) +
+                        healthCard(
+                            'FeatureExtractor',
+                            d.featureCount,
+                            d.featureCount > 0,
+                            d.featureCount + ' rekordów'
+                        ) +
+                        healthCard(
+                            'Trening',
+                            d.lastTrainingAt ? timeAgo(d.lastTrainingAt) : 'Nigdy',
+                            !!d.lastTrainingAt,
+                            d.trainingRunning ? 'W trakcie...' : '—'
+                        ) +
+                        healthCard(
+                            'Ostatnia telemetria',
+                            d.dataFreshness && d.dataFreshness.lastTelemetryAt
+                                ? timeAgo(d.dataFreshness.lastTelemetryAt)
+                                : 'Nigdy',
+                            !!(d.dataFreshness && d.dataFreshness.lastTelemetryAt),
+                            'czas ostatniego rekordu w PostgreSQL'
+                        ) +
+                        healthCard(
+                            'Ostatni feature',
+                            d.dataFreshness && d.dataFreshness.lastFeatureAt
+                                ? timeAgo(d.dataFreshness.lastFeatureAt)
+                                : 'Nigdy',
+                            !!(d.dataFreshness && d.dataFreshness.lastFeatureAt),
+                            'czas ostatniego wektora w PostgreSQL'
+                        ) +
+                        healthCard(
+                            'API predykcji p95 / p99',
+                            predictionApi && predictionApi.recent && predictionApi.recent.n > 0
+                                ? predictionApi.p95 + ' / ' + predictionApi.p99 + ' ms'
+                                : '—',
+                            !!(
+                                predictionApi &&
+                                predictionApi.recent &&
+                                predictionApi.recent.errors === 0
+                            ),
+                            predictionApi && predictionApi.recent
+                                ? 'próby: ' +
+                                      predictionApi.recent.n +
+                                      ' · błędy 5xx: ' +
+                                      predictionApi.recent.errors
+                                : metricsLoaded
+                                  ? 'brak próbek procesu'
+                                  : 'ładowanie metryk procesu',
+                            'Czas całego endpointu HTTP z ostatnich próbek procesu, nie czysty czas modelu; próbki resetują się po restarcie.'
+                        ) +
+                        healthCard(
+                            'Błędy API reward',
+                            rewardRequestCount > 0 ? rewardServerErrors : '—',
+                            rewardRequestCount > 0 && rewardServerErrors === 0,
+                            rewardRequestCount > 0
+                                ? '5xx / ' +
+                                      rewardRequestCount +
+                                      ' ostatnich żądań; bez 4xx i odrzuceń pozycji batch'
+                                : metricsLoaded
+                                  ? 'brak próbek procesu'
+                                  : 'ładowanie metryk procesu',
+                            'Licznik błędów HTTP 5xx dla POST /ai/reward i POST /ai/reward-batch z ostatnich próbek procesu.'
+                        ) +
+                        healthCard(
+                            'Model',
+                            window.escapeHtml(modelTooltip),
+                            modelOk,
+                            d.mlOnline && !modelOk ? 'Bez treningu' : null,
+                            window.escapeHtmlAttr(modelTooltip)
+                        ) +
+                        healthCard(
+                            'Predict',
+                            modelOk ? 'Online' : d.mlOnline ? 'Model bez treningu' : 'Offline',
+                            modelOk,
+                            d.mlOnline
+                                ? 'model ' + window.escapeHtml(d.modelVersion)
+                                : 'brak modelu'
+                        ) +
+                        healthCard(
+                            'Zdarzenia reward',
+                            d.totalRewards,
+                            true,
+                            'wszystkie zapisane rekordy aiRewardLog',
+                            'Źródło: /ai/health · zakres: liczba rekordów reward, nie suma wartości nagrody · odczyt: ' +
+                                new Date().toLocaleString('pl-PL')
+                        ) +
+                        healthCard(
+                            'Fallback zgłoszony klientem · 24 h',
+                            d.fallbacks24h && Number.isFinite(d.fallbacks24h.total)
+                                ? d.fallbacks24h.total
+                                : '—',
+                            !!(d.fallbacks24h && d.fallbacks24h.total === 0),
+                            d.fallbacks24h && d.fallbacks24h.byReason
+                                ? 'timeout: ' +
+                                      d.fallbacks24h.byReason.timeout +
+                                      ' · HTTP: ' +
+                                      d.fallbacks24h.byReason.http_error +
+                                      ' · puste: ' +
+                                      d.fallbacks24h.byReason.empty_response +
+                                      ' · częściowe: ' +
+                                      d.fallbacks24h.byReason.partial_response +
+                                      ' · sieć: ' +
+                                      d.fallbacks24h.byReason.network_error +
+                                      ' · inne: ' +
+                                      d.fallbacks24h.byReason.unspecified
+                                : 'brak danych'
+                        ) +
+                        healthCard(
+                            'Dry-run kompatybilności · 24 h',
+                            d.compatibility24h
+                                ? d.compatibility24h.total +
+                                      (d.compatibility24h.truncated ? '+' : '')
+                                : '—',
+                            !!(
+                                d.compatibility24h &&
+                                d.compatibility24h.byStatus.blocked === 0 &&
+                                d.compatibility24h.byStatus.unknown === 0
+                            ),
+                            d.compatibility24h
+                                ? 'zgodne: ' +
+                                      d.compatibility24h.byStatus.compatible +
+                                      ' · ostrzeżenia: ' +
+                                      d.compatibility24h.byStatus.warning +
+                                      ' · blokady: ' +
+                                      d.compatibility24h.byStatus.blocked +
+                                      (d.compatibility24h.byStatus.unknown > 0
+                                          ? ' · nieznane: ' + d.compatibility24h.byStatus.unknown
+                                          : '')
+                                : 'brak danych z audytu'
+                        ) +
+                        /* Drift danych: % ostatnich telemetrii poza zakresem modelu (niski = OK) */
+                        healthCard(
+                            'Drift danych',
+                            d.driftPct === null || d.driftPct === undefined
+                                ? '—'
+                                : d.driftPct + '%',
+                            d.driftPct !== null && d.driftPct !== undefined && d.driftPct < 20,
+                            d.driftPct === null || d.driftPct === undefined
+                                ? 'brak danych'
+                                : 'odsetek wartości poza zakresem modelu'
+                        ) +
+                        '</div>' +
+                        /* Jakosc danych */
+                        '<div class="ai-dq-section">' +
+                        '<div class="ai-dq-title"><i data-lucide="gauge"></i> Jakość danych</div>' +
+                        '<div class="ai-dq-bars">' +
+                        qualityBar(
+                            d.dataQuality ? d.dataQuality.withFeatureSnapshotPct || 0 : 0,
+                            'FeatureSnapshot'
+                        ) +
+                        qualityBar(
+                            d.dataQuality ? d.dataQuality.withSolverSourcePct || 0 : 0,
+                            'SolverSource'
+                        ) +
+                        qualityBar(
+                            d.dataQuality ? d.dataQuality.withWellTypePct || 0 : 0,
+                            'WellType'
+                        ) +
+                        '</div>' +
+                        '</div>' +
+                        /* Ostrzezenia */
+                        '<div class="ai-dq-warnings">' +
+                        (d.dataQuality && d.dataQuality.manualOverrideCount > 0
+                            ? '<span class="ai-warning-tag warn"><i data-lucide="alert-triangle"></i> Ręczne nadpisania: ' +
+                              d.dataQuality.manualOverrideCount +
+                              '</span>'
+                            : '') +
+                        (d.telemetryCount > 0 &&
+                        d.dataQuality &&
+                        d.dataQuality.withFeatureSnapshotPct < 95
+                            ? '<span class="ai-warning-tag danger"><i data-lucide="alert-triangle"></i> Niska jakosc featureSnapshot</span>'
+                            : '') +
+                        '</div>';
 
-                if (window.lucide && typeof lucide.createIcons === 'function') {
-                    lucide.createIcons({ root: container });
-                }
+                    container.innerHTML = html;
+
+                    if (window.lucide && typeof lucide.createIcons === 'function') {
+                        lucide.createIcons({ root: container });
+                    }
+                };
+
+                renderHealth(null, false);
+                window
+                    .fetchJson('/metrics')
+                    .then(function (runtimeMetrics) {
+                        renderHealth(runtimeMetrics, true);
+                    })
+                    .catch(function () {
+                        renderHealth(null, true);
+                    });
             });
         };
 

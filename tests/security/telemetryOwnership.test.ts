@@ -119,6 +119,20 @@ describe('P1.1 telemetry ownership', () => {
         expect(telemetryServiceMock.recordEvent).not.toHaveBeenCalled();
     });
 
+    it('ai/event fallback: zapisuje wyłącznie anonimową kategorię bez właściciela', async () => {
+        const res = await request(app).post('/api/telemetry/ai/event').send({
+            eventType: 'fallback_triggered',
+            changeReason: 'timeout',
+            sequenceNo: 9
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(telemetryServiceMock.recordEvent).toHaveBeenCalledWith(
+            { eventType: 'fallback_triggered', changeReason: 'timeout' },
+            undefined
+        );
+    });
+
     it('acceptance-full: cudza studnia → 403, brak acceptance i eventu', async () => {
         prismaMock.ai_telemetry_logs.findUnique.mockResolvedValue({
             userId: 'u2',
