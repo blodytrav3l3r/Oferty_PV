@@ -2305,6 +2305,43 @@ a.admin-stat-card {
     grid-template-columns: repeat(3, 1fr);
 }
 
+.ai-prediction-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.ai-prediction-action-breakdown {
+    grid-column: 1 / -1;
+    padding: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.ai-prediction-action-breakdown ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+    gap: 4px 16px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ai-prediction-action-breakdown li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.ai-prediction-action-breakdown li strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 768px) {
     .ai-ml-col-5 {
         grid-template-columns: repeat(2, 1fr);

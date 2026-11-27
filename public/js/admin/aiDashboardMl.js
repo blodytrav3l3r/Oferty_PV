@@ -31,6 +31,74 @@
         if (button) button.disabled = Boolean(isBusy);
     }
 
+    function renderPredictionStats(container) {
+        const host = container.querySelector('.ai-prediction-stats-host');
+        if (!host) return;
+        host.innerHTML = window.aiLoadingHtml();
+        const endpoint = getEndpoints().predictionsStats;
+        const request = endpoint && window.fetchJson(endpoint);
+        if (!request) {
+            host.innerHTML = window.aiApiErrorHtml('unavailable');
+            return;
+        }
+        request
+            .then(function (stats) {
+                if (!stats || stats.error) {
+                    host.innerHTML = window.aiApiErrorHtml(
+                        stats && stats.error ? stats.error : 'server'
+                    );
+                    return;
+                }
+                const actionCounts =
+                    stats.actions && typeof stats.actions === 'object'
+                        ? Object.keys(stats.actions)
+                              .sort()
+                              .map(function (action) {
+                                  return (
+                                      '<li><span>' +
+                                      window.escapeHtml(action) +
+                                      '</span><strong>' +
+                                      countLabel(stats.actions[action]) +
+                                      '</strong></li>'
+                                  );
+                              })
+                        : [];
+                const refreshedAt = new Date().toLocaleString('pl-PL');
+                host.innerHTML =
+                    '<div class="ai-section-title"><i data-lucide="bar-chart-3" aria-hidden="true"></i> Akcje i próbki predykcji</div>' +
+                    '<div class="ai-ml-source-note">Źródło: /ai/predictions/stats · zakres: historyczne zdarzenia reward; score z ostatnich max. 100 rekordów · odczyt: ' +
+                    window.escapeHtml(refreshedAt) +
+                    '</div>' +
+                    '<div class="ai-prediction-stats-grid">' +
+                    window.aiStatCard(
+                        'Zdarzenia reward',
+                        countLabel(stats.total),
+                        'var(--cyan)',
+                        'Łączna liczba rekordów aiRewardLog; nie jest to suma wartości reward.'
+                    ) +
+                    window.aiStatCard(
+                        'Próbki ze score',
+                        countLabel(stats.recentCount),
+                        'var(--accent2)',
+                        'Liczba rekordów scoreBefore w próbce ostatnich maksymalnie 100 zdarzeń.'
+                    ) +
+                    '<div class="ai-prediction-action-breakdown"><strong>Rozkład zdarzeń</strong>' +
+                    (actionCounts.length
+                        ? '<ul>' + actionCounts.join('') + '</ul>'
+                        : '<div class="ai-model-empty">Brak rozkładu akcji.</div>') +
+                    '</div></div>' +
+                    (Number(stats.total) === 0
+                        ? '<div class="ai-model-empty">Brak zdarzeń reward (0).</div>'
+                        : '');
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ root: host });
+                }
+            })
+            .catch(function () {
+                host.innerHTML = window.aiApiErrorHtml('server');
+            });
+    }
+
     // F3: czysta prezentacja strukturalnego statusu bramki z backendu
     // (trainingGate z /ai/ml-status). Zero logiki decyzyjnej po stronie UI.
     function gateCards(gate) {
@@ -502,6 +570,7 @@
                 html +=
                     '<div class="ai-training-sources-host" style="margin-bottom:28px"></div>' +
                     '<div class="ai-training-runs-host" style="margin-bottom:28px"></div>' +
+                    '<div class="ai-prediction-stats-host"></div>' +
                     '<div class="ai-drift-host"></div>';
                 container.innerHTML = html;
                 const refreshButton = container.querySelector('.ai-ml-refresh-btn');
@@ -515,6 +584,7 @@
                 }
                 window.aiRenderTrainingSources(container);
                 window.aiRenderTrainingRuns(container);
+                renderPredictionStats(container);
                 window.aiRenderDrift(container);
                 const aiSlider = document.getElementById('ai-influence-slider');
                 const aiValueLabel = document.getElementById('ai-influence-value');

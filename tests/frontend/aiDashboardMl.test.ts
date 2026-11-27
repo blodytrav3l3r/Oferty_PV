@@ -60,7 +60,8 @@ function loadMl() {
                 mlStatus: '/ml-status',
                 models: '/models',
                 train: '/train',
-                rollback: '/rollback'
+                rollback: '/rollback',
+                predictionsStats: '/prediction-stats'
             },
             fetchJson: (url, options) => fetchJson(url, options),
             aiLoadingHtml: () => '<div>loading</div>',
@@ -320,5 +321,61 @@ describe('aiDashboardMl metryki', () => {
             expectedPreviousVersion: 'rollback-v1'
         });
         finishRollback({ rolledBack: false });
+    });
+
+    it('pokazuje rozkład akcji i świeżość z istniejącego endpointu predictions/stats', async () => {
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) => {
+            if (url === '/ml-status') return Promise.resolve(STATUS);
+            if (url === '/prediction-stats') {
+                return Promise.resolve({
+                    total: 5,
+                    actions: { ACCEPT: 3, REJECT: 2 },
+                    recentScores: [0.7, 0.2],
+                    recentCount: 2
+                });
+            }
+            return Promise.resolve({ models: [] });
+        });
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        const stats = host.querySelector('.ai-prediction-stats-host');
+        expect(stats.textContent).toContain('/ai/predictions/stats');
+        expect(stats.textContent).toContain('ACCEPT');
+        expect(stats.textContent).toContain('3');
+        expect(stats.textContent).toContain('REJECT');
+        expect(stats.textContent).toContain('2');
+        expect(stats.textContent).toContain('Próbki ze score');
+        expect(stats.textContent).not.toContain('suma wartości reward');
+    });
+
+    it('rozróżnia pusty licznik predictions/stats od błędu endpointu', async () => {
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) => {
+            if (url === '/ml-status') return Promise.resolve(STATUS);
+            if (url === '/prediction-stats') {
+                return Promise.resolve({ total: 0, actions: {}, recentScores: [], recentCount: 0 });
+            }
+            return Promise.resolve({ models: [] });
+        });
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+        expect(host.querySelector('.ai-prediction-stats-host').textContent).toContain(
+            'Brak zdarzeń reward (0)'
+        );
+
+        setFetchJson((url) =>
+            Promise.resolve(url === '/prediction-stats' ? { error: 'unavailable' } : STATUS)
+        );
+        win.aiRenderMlStatus(host);
+        await tick();
+        expect(host.querySelector('.ai-prediction-stats-host').textContent).toContain(
+            'error:unavailable'
+        );
     });
 });
