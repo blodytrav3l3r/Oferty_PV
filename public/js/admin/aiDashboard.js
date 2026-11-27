@@ -153,7 +153,7 @@
 
     function renderDashboard(container) {
         container.innerHTML =
-            '<div style="display:grid;grid-template-columns:1fr;gap:var(--tile-gap-md)">' +
+            '<div class="ai-dashboard-layout">' +
             '<div id="ai-learning-section">' +
             '<h4 class="ai-section-title"><i data-lucide="brain"></i> Learning Engine (baza wiedzy)</h4>' +
             '<div id="ai-stats"></div>' +

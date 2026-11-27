@@ -346,6 +346,31 @@ test.describe('a11y axe', () => {
         });
     }
 
+    test('AI dashboard nie powoduje poziomego overflow przy 320 px', async ({ page }) => {
+        await page.setViewportSize({ width: 320, height: 844 });
+        const login = await page.request.post('/api/auth/login', {
+            data: {
+                username: 'admin',
+                password: process.env.TEST_ADMIN_PASSWORD || 'anim123456'
+            }
+        });
+        expect(login.ok(), `login failed: ${login.status()}`).toBe(true);
+
+        await page.goto('/app.html#/pulpit');
+        const frame = await waitForModuleFrame(page, 'index.html?host=pulpit');
+        expect(frame, 'brak iframe pulpitu').not.toBeNull();
+        await frame!.locator('#ai-ml-status .ai-ml-refresh-btn').waitFor({ timeout: 15000 });
+
+        const overflow = await frame!.locator('#ai-dashboard-content').evaluate((content) => ({
+            clientWidth: content.clientWidth,
+            scrollWidth: content.scrollWidth
+        }));
+        expect(
+            overflow.scrollWidth - overflow.clientWidth,
+            JSON.stringify(overflow, null, 2)
+        ).toBeLessThanOrEqual(1);
+    });
+
     test('Pulpit użytkownika bez ofert ma dostępny stan pustej kolejki', async ({ page }) => {
         const adminPassword = process.env.TEST_ADMIN_PASSWORD;
         if (!adminPassword) throw new Error('TEST_ADMIN_PASSWORD jest wymagane.');

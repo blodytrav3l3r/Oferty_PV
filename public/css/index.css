@@ -1861,6 +1861,17 @@ a.admin-stat-card {
    AI / ML Dashboard — style dla dynamicznie generowanego HTML
    ══════════════════════════════════════════════════════════ */
 
+.ai-dashboard-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--tile-gap-md);
+    min-width: 0;
+}
+
+.ai-dashboard-layout > * {
+    min-width: 0;
+}
+
 /* ── Karta health ── */
 .ai-health-card {
     background: var(--bg-card);
@@ -1897,13 +1908,15 @@ a.admin-stat-card {
 }
 
 @media (max-width: 768px) {
-    .ai-health-grid .ai-health-card {
+    .ai-health-grid .ai-health-card:nth-child(-n + 3),
+    .ai-health-grid .ai-health-card:nth-child(n + 4) {
         grid-column: span 6;
     }
 }
 
 @media (max-width: 480px) {
-    .ai-health-grid .ai-health-card {
+    .ai-health-grid .ai-health-card:nth-child(-n + 3),
+    .ai-health-grid .ai-health-card:nth-child(n + 4) {
         grid-column: span 12;
     }
 }
@@ -2417,14 +2430,15 @@ a.admin-stat-card {
 /* ── Centrum transferu (.sokml) ── */
 .ai-transfer-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--tile-gap-md, 1rem);
     margin-bottom: 16px;
+    min-width: 0;
 }
 
 @media (max-width: 768px) {
     .ai-transfer-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -2436,6 +2450,7 @@ a.admin-stat-card {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    min-width: 0;
     transition:
         border-color 0.2s,
         box-shadow 0.2s;
