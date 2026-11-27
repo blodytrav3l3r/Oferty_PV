@@ -176,12 +176,12 @@ describe('Reward feedback transaction — PostgreSQL', () => {
                             where: { id: telemetryId },
                             data: { wasRejected: true }
                         });
-                        await featureExtractor.updateLabelByTelemetry(telemetryId, 'REJECTED', tx);
                         // Stały, celowo nieistniejący target wymusza realny błąd PostgreSQL
-                        // po wykonaniu zapisów feedbacku i dowodzi rollbacku DB.
+                        // między flagą telemetrii a zapisem etykiety cechy.
                         await tx.$executeRawUnsafe(
                             'INSERT INTO sok_phase3_missing_table (id) VALUES (1)'
                         );
+                        await featureExtractor.updateLabelByTelemetry(telemetryId, 'REJECTED', tx);
                     }
                 )
             ).rejects.toThrow();
@@ -204,6 +204,50 @@ describe('Reward feedback transaction — PostgreSQL', () => {
             await prisma.aiFeature.deleteMany({ where: { telemetryId } });
             await prisma.ai_telemetry_logs.deleteMany({ where: { id: telemetryId } });
             await prisma.users.deleteMany({ where: { id: userId } });
+        }
+    });
+
+    it('resyncLabels naprawia nieaktualną etykietę PostgreSQL idempotentnie', async () => {
+        const suffix = crypto.randomUUID();
+        const userId = `resync-recovery-user-${suffix}`;
+        const telemetryId = `resync-recovery-telemetry-${suffix}`;
+        const featureId = `resync-recovery-feature-${suffix}`;
+        try {
+            await prisma.ai_telemetry_logs.create({
+                data: {
+                    id: telemetryId,
+                    userId,
+                    trainingEligible: true,
+                    wasAccepted: false,
+                    wasRejected: true,
+                    wasModified: false,
+                    createdAt: new Date().toISOString()
+                }
+            });
+            await prisma.aiFeature.create({
+                data: {
+                    id: featureId,
+                    telemetryId,
+                    dn: 1000,
+                    heightMm: 1000,
+                    warehouse: 'KLB',
+                    wellType: 'standard',
+                    bottomType: 'dennica',
+                    topType: 'wlaz',
+                    season: 'winter',
+                    label: 'ACCEPTED',
+                    reward: 1,
+                    createdAt: new Date().toISOString()
+                }
+            });
+            expect(await featureExtractor.resyncLabels(10, [userId])).toBe(1);
+            expect(await prisma.aiFeature.findUnique({ where: { id: featureId } })).toEqual(
+                expect.objectContaining({ label: 'REJECTED', reward: -1 })
+            );
+            expect(await featureExtractor.resyncLabels(10, [userId])).toBe(0);
+        } finally {
+            await prisma.aiFeature.deleteMany({ where: { id: featureId } });
+            await prisma.ai_telemetry_logs.deleteMany({ where: { id: telemetryId } });
         }
     });
 
