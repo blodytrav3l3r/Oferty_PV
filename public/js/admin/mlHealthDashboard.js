@@ -104,6 +104,8 @@
 
                     const endpoints =
                         runtimeMetrics && runtimeMetrics.endpoints ? runtimeMetrics.endpoints : {};
+                    const aiMetrics =
+                        runtimeMetrics && runtimeMetrics.ai ? runtimeMetrics.ai : null;
                     const predictionApi = endpoints['POST /api/telemetry/ai/predict/batch'] || null;
                     const rewardApi = endpoints['POST /api/telemetry/ai/reward'] || null;
                     const rewardBatchApi = endpoints['POST /api/telemetry/ai/reward-batch'] || null;
@@ -186,17 +188,73 @@
                             'Czas całego endpointu HTTP z ostatnich próbek procesu, nie czysty czas modelu; próbki resetują się po restarcie.'
                         ) +
                         healthCard(
+                            'Inferencja modelu p95 / p99',
+                            aiMetrics && aiMetrics.inference.recent.n > 0
+                                ? aiMetrics.inference.p95 + ' / ' + aiMetrics.inference.p99 + ' ms'
+                                : '—',
+                            !!(aiMetrics && aiMetrics.inference.recent.n > 0),
+                            aiMetrics
+                                ? 'próbki model.predict: ' + aiMetrics.inference.recent.n
+                                : metricsLoaded
+                                  ? 'brak próbek procesu'
+                                  : 'ładowanie metryk procesu',
+                            'Czas samego synchronicznego model.predict; bez normalizacji, cache i reszty endpointu. Ostatnie maksymalnie 512 próbek; reset po restarcie procesu.'
+                        ) +
+                        healthCard(
+                            'Wyniki predykcji · od restartu',
+                            aiMetrics ? aiMetrics.predictions.total : '—',
+                            !!(aiMetrics && aiMetrics.predictions.byOutcome.server_error === 0),
+                            aiMetrics
+                                ? 'OK: ' +
+                                      aiMetrics.predictions.byOutcome.success +
+                                      ' · walidacja: ' +
+                                      aiMetrics.predictions.byOutcome.validation_rejected +
+                                      ' · brak modelu: ' +
+                                      aiMetrics.predictions.byOutcome.model_unavailable +
+                                      ' · błędne score: ' +
+                                      aiMetrics.predictions.byOutcome.invalid_score +
+                                      ' · 5xx: ' +
+                                      aiMetrics.predictions.byOutcome.server_error
+                                : metricsLoaded
+                                  ? 'brak próbek procesu'
+                                  : 'ładowanie metryk procesu',
+                            'Licznik outcome route batch prediction od startu procesu; fixed categories, bez identyfikatorów. Reset po restarcie.'
+                        ) +
+                        healthCard(
                             'Błędy API reward',
                             rewardRequestCount > 0 ? rewardServerErrors : '—',
                             rewardRequestCount > 0 && rewardServerErrors === 0,
                             rewardRequestCount > 0
-                                ? '5xx / ' +
-                                      rewardRequestCount +
-                                      ' ostatnich żądań; bez 4xx i odrzuceń pozycji batch'
+                                ? '5xx / ' + rewardRequestCount + ' ostatnich żądań'
                                 : metricsLoaded
                                   ? 'brak próbek procesu'
                                   : 'ładowanie metryk procesu',
                             'Licznik błędów HTTP 5xx dla POST /ai/reward i POST /ai/reward-batch z ostatnich próbek procesu.'
+                        ) +
+                        healthCard(
+                            'Wyniki feedbacku · od restartu',
+                            aiMetrics ? aiMetrics.rewards.total : '—',
+                            !!(
+                                aiMetrics &&
+                                aiMetrics.rewards.byOutcome.item_error === 0 &&
+                                aiMetrics.rewards.byOutcome.request_error === 0
+                            ),
+                            aiMetrics
+                                ? 'zapis: ' +
+                                      aiMetrics.rewards.byOutcome.applied +
+                                      ' · duplikat: ' +
+                                      aiMetrics.rewards.byOutcome.duplicate +
+                                      ' · odrzucone: ' +
+                                      (aiMetrics.rewards.byOutcome.invalid +
+                                          aiMetrics.rewards.byOutcome.not_found +
+                                          aiMetrics.rewards.byOutcome.forbidden) +
+                                      ' · błędy pozycji/żądania: ' +
+                                      (aiMetrics.rewards.byOutcome.item_error +
+                                          aiMetrics.rewards.byOutcome.request_error)
+                                : metricsLoaded
+                                  ? 'brak próbek procesu'
+                                  : 'ładowanie metryk procesu',
+                            'Licznik single request i outcome pozycji batch reward od startu procesu. Stałe kategorie bez wellId; reset po restarcie.'
                         ) +
                         healthCard(
                             'Model',

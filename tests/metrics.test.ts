@@ -9,6 +9,9 @@ import {
     recordDbBusy,
     recordAuditFailure,
     recordDraftFailure,
+    recordAiInference,
+    recordAiPredictionOutcome,
+    recordAiRewardOutcome,
     getMetricsSnapshot,
     getStorageSnapshot,
     resetMetrics
@@ -103,5 +106,73 @@ describe('M metrics', () => {
         expect(snap.drafts.byReason).toEqual({ quota: 2, storage: 1 });
         resetMetrics();
         expect(getMetricsSnapshot().drafts).toEqual({ failures: 0, byReason: {} });
+    });
+
+    test('AI: ograniczone percentyle czystej inferencji i stałe outcome’y resetują się', () => {
+        for (let ms = 1; ms <= 100; ms++) recordAiInference(ms);
+        recordAiPredictionOutcome('success');
+        recordAiPredictionOutcome('validation_rejected');
+        recordAiRewardOutcome('applied');
+        recordAiRewardOutcome('forbidden');
+
+        const snapshot = getMetricsSnapshot().ai;
+        expect(snapshot.inference).toMatchObject({
+            n: 100,
+            p50: 50,
+            p95: 95,
+            p99: 99,
+            lastMs: 100,
+            recent: { n: 100 }
+        });
+        expect(snapshot.predictions).toEqual({
+            total: 2,
+            byOutcome: {
+                success: 1,
+                validation_rejected: 1,
+                model_unavailable: 0,
+                invalid_score: 0,
+                server_error: 0
+            }
+        });
+        expect(snapshot.rewards).toEqual({
+            total: 2,
+            byOutcome: {
+                applied: 1,
+                duplicate: 0,
+                invalid: 0,
+                not_found: 0,
+                forbidden: 1,
+                item_error: 0,
+                request_error: 0
+            }
+        });
+
+        resetMetrics();
+        expect(getMetricsSnapshot().ai.predictions.total).toBe(0);
+        expect(getMetricsSnapshot().ai.rewards.total).toBe(0);
+        expect(getMetricsSnapshot().ai.inference.recent.n).toBe(0);
+    });
+
+    test('AI: bufor inferencji ma stały limit i nie przyjmuje wartości niefinitywnych', () => {
+        for (let ms = 1; ms <= 513; ms++) recordAiInference(ms);
+        recordAiInference(Number.POSITIVE_INFINITY);
+
+        expect(getMetricsSnapshot().ai.inference).toMatchObject({
+            n: 513,
+            p50: 257,
+            p95: 488,
+            p99: 508,
+            lastMs: 513,
+            recent: { n: 512 }
+        });
+
+        recordAiPredictionOutcome('not_an_outcome' as never);
+        expect(Object.keys(getMetricsSnapshot().ai.predictions.byOutcome)).toEqual([
+            'success',
+            'validation_rejected',
+            'model_unavailable',
+            'invalid_score',
+            'server_error'
+        ]);
     });
 });

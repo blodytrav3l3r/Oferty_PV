@@ -57,11 +57,12 @@ Z `?smoke=1` (wyłącznie sesja admina: 401 anon, 403 non-admin) renderuje jedn�
 
 ### `GET /metrics`
 
-Metryki in-process (tylko admin: 401 anon / 403 non-admin) — P50/P95 per endpoint, DB, loop-lag, PDF.
+Metryki in-process (tylko admin: 401 anon / 403 non-admin) — P50/P95/P99 per endpoint, DB, loop-lag, PDF i ograniczone metryki AI.
 
 - `endpoints.*.n` i `errors` to liczby żądań i odpowiedzi 5xx od startu procesu. `recent.n`, `recent.errors` oraz P50/P95 opisują do 512 ostatnich odpowiedzi danej trasy. Próbka ma stały limit liczby odpowiedzi i nie reprezentuje przedziału czasowego. Nierozpoznane trasy trafiają do wspólnego klucza danej metody HTTP.
 - `storage.dbBytes` oznacza miejsce zajęte przez bieżącą bazę PostgreSQL w bajtach. Pomiar z [`pg_database_size`](https://www.postgresql.org/docs/18/functions-admin.html#FUNCTIONS-ADMIN-DBSIZE) jest współdzielony i odświeżany najwyżej raz na minutę. Brak pomiaru daje `dbBytes: null` i `dbSizeStatus: "unavailable"`. `walBytes` pozostaje `null`.
 - `storage.backups` i `storage.lastBackupAt` opisują lokalne pliki. Świeżość ostatniej zweryfikowanej kopii pochodzi z `/health/backup` (`200` świeża, `503` brak kopii lub przekroczenie `maxAgeHours`).
+- `ai.inference` mierzy wyłącznie synchroniczne `model.predict` po normalizacji i ominięciu cache. P50/P95/P99 bazują na maksymalnie 512 ostatnich wywołaniach; `n` jest liczbą wywołań od startu procesu, a `recent.n` liczebnością bufora. `ai.predictions.byOutcome` ma klucze `success`, `validation_rejected`, `model_unavailable`, `invalid_score`, `server_error`; `ai.rewards.byOutcome`: `applied`, `duplicate`, `invalid`, `not_found`, `forbidden`, `item_error`, `request_error`. Są to stałe kategorie bez identyfikatorów. Feedback single liczy outcome żądania, batch liczy outcome każdej pozycji (błędny body batch to jeden outcome `invalid`). Wszystkie te metryki resetują się po restarcie i nie są trwałą historią.
 
 ### `GET /api/admin/system-info`
 
@@ -680,9 +681,10 @@ studni ani rekordu telemetry; starsze eventy bez kategorii trafiają do
 `unspecified`. Kategorie są wskaźnikiem operacyjnym, nie serwerowym dowodem błędu.
 `compatibility24h` agreguje wyniki `TRANSFER_DRY_RUN` z audytu, zwracając wyłącznie
 statusy kompatybilności; `truncated: true` oznacza limit 500 najnowszych wpisów.
-P95/P99 czasu całego HTTP API predykcji i błędy HTTP 5xx endpointów reward pochodzą
-z `/metrics` (próbki procesu, do 512 na endpoint, reset po restarcie); nie są
-czystym czasem inferencji ani kompletną liczbą walidacyjnych/pozycyjnych odrzuceń.
+P95/P99 całego HTTP API predykcji i błędy HTTP 5xx endpointów reward pochodzą
+z `/metrics` (próbki procesu, do 512 na endpoint, reset po restarcie). Oddzielne
+`/metrics.ai.inference` mierzy czyste `model.predict`, a outcome predictions/rewards
+mają stałe kategorie; te liczniki są procesowe i nie są trwałą historią.
 
 `mlOnline` oznacza obecność aktywnego modelu. `modelTrained` informuje, czy zapisano dla niego dodatnią liczbę próbek treningowych. `aiMlEnabled` określa stan przełącznika wykonywania AI. W `/ml-status` `baselineAccuracy`, `lastTrainingRun` i `lastDatasetFingerprint` dotyczą udanego lokalnego treningu aktywnego modelu. Mogą być `null`, np. dla modelu startowego lub importowanego.
 

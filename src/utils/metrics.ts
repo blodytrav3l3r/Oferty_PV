@@ -34,6 +34,41 @@ let samplerStarted = false;
 let draftFailures = 0;
 const draftFailuresByReason = new Map<string, number>();
 
+export type AiPredictionOutcome =
+    'success' | 'validation_rejected' | 'model_unavailable' | 'invalid_score' | 'server_error';
+export type AiRewardOutcome =
+    | 'applied'
+    | 'duplicate'
+    | 'invalid'
+    | 'not_found'
+    | 'forbidden'
+    | 'item_error'
+    | 'request_error';
+
+type AiOutcomeCounts<T extends string> = Record<T, number>;
+
+const createAiPredictionCounts = (): AiOutcomeCounts<AiPredictionOutcome> => ({
+    success: 0,
+    validation_rejected: 0,
+    model_unavailable: 0,
+    invalid_score: 0,
+    server_error: 0
+});
+const createAiRewardCounts = (): AiOutcomeCounts<AiRewardOutcome> => ({
+    applied: 0,
+    duplicate: 0,
+    invalid: 0,
+    not_found: 0,
+    forbidden: 0,
+    item_error: 0,
+    request_error: 0
+});
+
+let aiInferenceSamples: number[] = [];
+let aiInferenceCount = 0;
+let aiPredictionOutcomes = createAiPredictionCounts();
+let aiRewardOutcomes = createAiRewardCounts();
+
 function pct(sorted: number[], p: number): number {
     if (sorted.length === 0) return 0;
     const idx = Math.max(0, Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1));
@@ -127,6 +162,32 @@ export function recordDraftFailure(reason: string): void {
     draftFailuresByReason.set(reason, (draftFailuresByReason.get(reason) ?? 0) + 1);
 }
 
+/**
+ * Pure model.predict duration in ms. Only the last RING observations are kept;
+ * aggregate endpoints/outcomes use bounded, compile-time category keys.
+ */
+export function recordAiInference(ms: number): void {
+    if (!Number.isFinite(ms) || ms < 0) return;
+    aiInferenceSamples = [...aiInferenceSamples, ms].slice(-RING);
+    aiInferenceCount = Math.min(Number.MAX_SAFE_INTEGER, aiInferenceCount + 1);
+}
+
+function incrementAiOutcome<T extends string>(
+    counts: AiOutcomeCounts<T>,
+    outcome: T
+): AiOutcomeCounts<T> {
+    if (!Object.prototype.hasOwnProperty.call(counts, outcome)) return counts;
+    return { ...counts, [outcome]: Math.min(Number.MAX_SAFE_INTEGER, counts[outcome] + 1) };
+}
+
+export function recordAiPredictionOutcome(outcome: AiPredictionOutcome): void {
+    aiPredictionOutcomes = incrementAiOutcome(aiPredictionOutcomes, outcome);
+}
+
+export function recordAiRewardOutcome(outcome: AiRewardOutcome): void {
+    aiRewardOutcomes = incrementAiOutcome(aiRewardOutcomes, outcome);
+}
+
 export interface StorageSnapshot {
     dbBytes: number | null;
     walBytes: number | null;
@@ -144,6 +205,18 @@ export interface MetricsSnapshot {
     ratelimit: { rejected: number; byName: Record<string, number> };
     storage: StorageSnapshot;
     drafts: { failures: number; byReason: Record<string, number> };
+    ai: {
+        inference: {
+            n: number;
+            p50: number;
+            p95: number;
+            p99: number;
+            lastMs: number;
+            recent: { n: number };
+        };
+        predictions: { total: number; byOutcome: AiOutcomeCounts<AiPredictionOutcome> };
+        rewards: { total: number; byOutcome: AiOutcomeCounts<AiRewardOutcome> };
+    };
     endpoints: Record<
         string,
         {
@@ -180,6 +253,9 @@ export function getMetricsSnapshot(
             }
         };
     }
+    const sortedAiInference = [...aiInferenceSamples].sort((a, b) => a - b);
+    const predictionOutcomes = { ...aiPredictionOutcomes };
+    const rewardOutcomes = { ...aiRewardOutcomes };
     return {
         uptimeSec: Math.round(process.uptime()),
         rssMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
@@ -200,6 +276,24 @@ export function getMetricsSnapshot(
         drafts: {
             failures: draftFailures,
             byReason: Object.fromEntries(draftFailuresByReason)
+        },
+        ai: {
+            inference: {
+                n: aiInferenceCount,
+                p50: +pct(sortedAiInference, 50).toFixed(1),
+                p95: +pct(sortedAiInference, 95).toFixed(1),
+                p99: +pct(sortedAiInference, 99).toFixed(1),
+                lastMs: +(aiInferenceSamples[aiInferenceSamples.length - 1] ?? 0).toFixed(1),
+                recent: { n: aiInferenceSamples.length }
+            },
+            predictions: {
+                total: Object.values(predictionOutcomes).reduce((sum, count) => sum + count, 0),
+                byOutcome: predictionOutcomes
+            },
+            rewards: {
+                total: Object.values(rewardOutcomes).reduce((sum, count) => sum + count, 0),
+                byOutcome: rewardOutcomes
+            }
         },
         endpoints: eps,
         pdf,
@@ -267,4 +361,8 @@ export function resetMetrics(): void {
     loopLagMax = 0;
     draftFailures = 0;
     draftFailuresByReason.clear();
+    aiInferenceSamples = [];
+    aiInferenceCount = 0;
+    aiPredictionOutcomes = createAiPredictionCounts();
+    aiRewardOutcomes = createAiRewardCounts();
 }

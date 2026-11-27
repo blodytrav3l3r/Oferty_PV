@@ -56,6 +56,27 @@ describe('P0.2 information disclosure', () => {
         expect(metrics.body.storage.dbSizeStatus).toBe('ok');
         expect(Number.isSafeInteger(metrics.body.storage.dbBytes)).toBe(true);
         expect(metrics.body.storage.dbBytes).toBeGreaterThan(0);
+        expect(metrics.body.ai).toEqual(
+            expect.objectContaining({
+                inference: expect.objectContaining({
+                    p50: expect.any(Number),
+                    p95: expect.any(Number),
+                    p99: expect.any(Number)
+                }),
+                predictions: expect.objectContaining({
+                    byOutcome: expect.objectContaining({
+                        success: expect.any(Number),
+                        server_error: expect.any(Number)
+                    })
+                }),
+                rewards: expect.objectContaining({
+                    byOutcome: expect.objectContaining({
+                        applied: expect.any(Number),
+                        request_error: expect.any(Number)
+                    })
+                })
+            })
+        );
     });
     it('/health nie ujawnia diagnostyki', async () => {
         const res = await request(app).get('/health');

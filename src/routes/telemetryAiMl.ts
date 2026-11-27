@@ -22,6 +22,12 @@ import { z } from 'zod';
 import prisma from '../prismaClient';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../config/mlConstants';
 import { fallbackOutcomeReasonSchema } from '../validators/telemetrySchemas';
+import { performance } from 'node:perf_hooks';
+import {
+    recordAiInference,
+    recordAiPredictionOutcome,
+    recordAiRewardOutcome
+} from '../utils/metrics';
 import {
     cacheKey,
     setCache,
@@ -165,6 +171,7 @@ router.post(
         try {
             const parsed = batchPredictSchema.safeParse(req.body);
             if (!parsed.success) {
+                recordAiPredictionOutcome('validation_rejected');
                 res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
                 return;
             }
@@ -173,12 +180,14 @@ router.post(
 
             // P5: analogicznie jak w /ai/predict — odrzuć requesty ze starą wersją cech
             if (featureVersion !== undefined && featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
+                recordAiPredictionOutcome('validation_rejected');
                 res.status(400).json({ error: 'FEATURE_VERSION_MISMATCH' });
                 return;
             }
 
             const activeModel = await modelRegistry.getActiveModel();
             if (!activeModel) {
+                recordAiPredictionOutcome('model_unavailable');
                 res.status(503).json({ error: 'No active model', scores: [] });
                 return;
             }
@@ -186,6 +195,7 @@ router.post(
             const expectedDim = activeModel.featureMins.length;
             for (const c of candidates) {
                 if (c.features.length !== expectedDim) {
+                    recordAiPredictionOutcome('validation_rejected');
                     res.status(400).json({
                         error: 'FEATURE_COUNT_MISMATCH',
                         candidateId: c.id,
@@ -227,10 +237,20 @@ router.post(
                     });
                     continue;
                 }
-                const score = model.predict(
-                    normalizeFeatures(c.features, activeModel.featureMins, activeModel.featureMaxs)
+                const normalizedFeatures = normalizeFeatures(
+                    c.features,
+                    activeModel.featureMins,
+                    activeModel.featureMaxs
                 );
+                const inferenceStartedAt = performance.now();
+                let score: number;
+                try {
+                    score = model.predict(normalizedFeatures);
+                } finally {
+                    recordAiInference(performance.now() - inferenceStartedAt);
+                }
                 if (!Number.isFinite(score)) {
+                    recordAiPredictionOutcome('invalid_score');
                     res.status(422).json({ error: 'NON_FINITE_SCORE', candidateId: c.id });
                     return;
                 }
@@ -264,6 +284,7 @@ router.post(
                 };
             });
 
+            recordAiPredictionOutcome('success');
             res.json({ scores });
             // Fire-and-forget — nie blokuje odpowiedzi; pomija, gdy trwa trening
             if (!trainingPipeline.getStatus().running) {
@@ -275,6 +296,7 @@ router.post(
                 });
             }
         } catch (e) {
+            recordAiPredictionOutcome('server_error');
             const msg = e instanceof Error ? e.message : String(e);
             logger.error('AiPredictBatchRoute', `Blad predykcji batch: ${msg}`);
             res.status(500).json({ error: 'Batch prediction failed' });
@@ -291,6 +313,7 @@ router.post(
         try {
             const parsed = rewardSchema.safeParse(req.body);
             if (!parsed.success) {
+                recordAiRewardOutcome('invalid');
                 res.status(400).json({
                     error: 'Invalid reward payload',
                     details: parsed.error.issues
@@ -300,6 +323,7 @@ router.post(
 
             const result = await processRewardItem(parsed.data, req.user);
             if (result.status === 'invalid') {
+                recordAiRewardOutcome('invalid');
                 res.status(400).json({
                     error: 'Invalid reward payload',
                     details: result.details
@@ -307,20 +331,25 @@ router.post(
                 return;
             }
             if (result.status === 'well-not-found') {
+                recordAiRewardOutcome('not_found');
                 res.status(404).json({ error: 'WELL_NOT_FOUND' });
                 return;
             }
             if (result.status === 'forbidden') {
+                recordAiRewardOutcome('forbidden');
                 res.status(403).json({ error: 'FORBIDDEN' });
                 return;
             }
             if (result.status === 'duplicate') {
+                recordAiRewardOutcome('duplicate');
                 res.json({ status: 'ok', duplicate: true });
                 return;
             }
 
+            recordAiRewardOutcome('applied');
             res.json({ status: 'ok' });
         } catch (e) {
+            recordAiRewardOutcome('request_error');
             const msg = e instanceof Error ? e.message : String(e);
             logger.error('AiRewardRoute', `Blad nagrody: ${msg}`);
             res.status(500).json({ error: 'Reward failed' });
@@ -492,6 +521,7 @@ router.post(
         try {
             const parsed = rewardBatchSchema.safeParse(req.body);
             if (!parsed.success) {
+                recordAiRewardOutcome('invalid');
                 res.status(400).json({
                     error: 'Invalid reward batch (1-500 items)',
                     details: parsed.error.issues
@@ -605,6 +635,7 @@ router.post(
                 const item = items[idx];
                 try {
                     if (!withTelemetry.has(item.wellId)) {
+                        recordAiRewardOutcome('not_found');
                         rejected.push({ wellId: item.wellId, reason: 'WELL_NOT_FOUND' });
                         continue;
                     }
@@ -612,6 +643,7 @@ router.post(
                     // cudza studnia → FORBIDDEN przed jakimkolwiek zapisem.
                     const wellRow = rowByWell.get(item.wellId);
                     if (wellRow?.userId && !canWriteDoc(user, wellRow.userId)) {
+                        recordAiRewardOutcome('forbidden');
                         rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
                         continue;
                     }
@@ -621,16 +653,24 @@ router.post(
                             : null;
                         // Nieznane offerId (draft) → pass, jak assertOfferReadable.
                         if (offerOwner.has(wellRow.offerId) && !canWriteDoc(user, owner)) {
+                            recordAiRewardOutcome('forbidden');
                             rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
                             continue;
                         }
                     }
                     const result = await applyRewardItem(item, user, targetByIndex.get(idx));
-                    if (result.status === 'applied') applied.push(item.wellId);
-                    else if (result.status === 'forbidden')
+                    if (result.status === 'applied') {
+                        recordAiRewardOutcome('applied');
+                        applied.push(item.wellId);
+                    } else if (result.status === 'forbidden') {
+                        recordAiRewardOutcome('forbidden');
                         rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
-                    else duplicates.push(item.wellId);
+                    } else {
+                        recordAiRewardOutcome('duplicate');
+                        duplicates.push(item.wellId);
+                    }
                 } catch (e: unknown) {
+                    recordAiRewardOutcome('item_error');
                     // P1.7 observability: odpowiedź bez zmian (reason ERROR),
                     // diagnostyka bez identyfikatora oferty ani payloadu.
                     const errName = e instanceof Error ? e.name : 'Error';
@@ -645,6 +685,7 @@ router.post(
 
             res.json({ applied, duplicates, rejected });
         } catch (e) {
+            recordAiRewardOutcome('request_error');
             const msg = e instanceof Error ? e.message : String(e);
             logger.error('AiRewardBatchRoute', `Blad nagrod batch: ${msg}`);
             res.status(500).json({ error: 'Reward batch failed' });

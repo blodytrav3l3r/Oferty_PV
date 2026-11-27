@@ -6,6 +6,7 @@ import {
     getWellScore,
     clearPredictionCache
 } from '../../src/services/ml/predictionCache';
+import { getMetricsSnapshot, resetMetrics } from '../../src/utils/metrics';
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -266,6 +267,7 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
     });
 
     it('batch predict z cache: drugi identyczny request dostaje cached: true', async () => {
+        resetMetrics();
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
@@ -297,6 +299,8 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         expect(second.status).toBe(200);
         expect(second.body.scores[0]).toHaveProperty('cached', true);
         expect(second.body.scores[0].score).toBe(0.42);
+        expect(getMetricsSnapshot().ai.predictions.byOutcome.success).toBe(2);
+        expect(getMetricsSnapshot().ai.inference.n).toBe(1);
     });
 
     it('P0.5 guard: brak flagi (null) → 503 OFF fail-closed', async () => {
@@ -672,6 +676,7 @@ describe('POST /api/telemetry/ai/reward', () => {
     });
 
     it('ignoruje duplikat reward dla tej samej pary (wellId, action) — anti-poisoning', async () => {
+        resetMetrics();
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
         mockProcessAction.mockResolvedValue({ applied: false });
 
@@ -685,6 +690,7 @@ describe('POST /api/telemetry/ai/reward', () => {
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ status: 'ok', duplicate: true });
         expect(mockRecordPredictionResult).not.toHaveBeenCalled();
+        expect(getMetricsSnapshot().ai.rewards.byOutcome.duplicate).toBe(1);
     });
 
     it('ACCEPT z wasAiRanked zapisuje nagrode i rejestruje predykcje (1, serwerowy score)', async () => {

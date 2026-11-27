@@ -31,6 +31,38 @@ function loadDashboard(metricsPromise?: Promise<unknown>) {
                                         'POST /api/telemetry/ai/reward-batch': {
                                             recent: { n: 3, errors: 0 }
                                         }
+                                    },
+                                    ai: {
+                                        inference: {
+                                            n: 4,
+                                            p50: 0.1,
+                                            p95: 0.2,
+                                            p99: 0.3,
+                                            lastMs: 0.2,
+                                            recent: { n: 4 }
+                                        },
+                                        predictions: {
+                                            total: 5,
+                                            byOutcome: {
+                                                success: 3,
+                                                validation_rejected: 1,
+                                                model_unavailable: 0,
+                                                invalid_score: 0,
+                                                server_error: 1
+                                            }
+                                        },
+                                        rewards: {
+                                            total: 4,
+                                            byOutcome: {
+                                                applied: 2,
+                                                duplicate: 1,
+                                                invalid: 0,
+                                                not_found: 0,
+                                                forbidden: 1,
+                                                item_error: 0,
+                                                request_error: 0
+                                            }
+                                        }
                                     }
                                 }
                               : {
@@ -109,6 +141,12 @@ describe('mlHealthDashboard data freshness', () => {
         expect(host?.textContent).toContain('sieć: 1');
         expect(host?.textContent).toContain('API predykcji p95 / p99');
         expect(host?.textContent).toContain('42 / 84 ms');
+        expect(host?.textContent).toContain('Inferencja modelu p95 / p99');
+        expect(host?.textContent).toContain('0.2 / 0.3 ms');
+        expect(host?.textContent).toContain('Wyniki predykcji · od restartu');
+        expect(host?.textContent).toContain('walidacja: 1');
+        expect(host?.textContent).toContain('Wyniki feedbacku · od restartu');
+        expect(host?.textContent).toContain('duplikat: 1');
         expect(host?.textContent).toContain('Błędy API reward');
         expect(host?.textContent).toContain('5xx / 5 ostatnich żądań');
         expect(host?.textContent).toContain('Dry-run kompatybilności · 24 h');
