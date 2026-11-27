@@ -545,7 +545,7 @@ describe('computeShadowStats', () => {
             featureMaxs: JSON.stringify(production.featureMaxs),
             state: 'APPROVED',
             active: false,
-            featureVersion: 'v8',
+            featureVersion: 'v7',
             createdAt: new Date().toISOString()
         };
         const trainingRun = (finishedAt: string) => ({
