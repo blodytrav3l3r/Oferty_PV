@@ -120,7 +120,9 @@
                     })
                     .join('');
                 host.innerHTML =
-                    '<div class="ai-section-title"><i data-lucide="users"></i> Źródła danych treningowych</div>' +
+                    '<section class="ai-training-users-section" aria-labelledby="ai-training-users-title">' +
+                    '<h4 id="ai-training-users-title" class="ai-section-title ai-training-users-title"><i data-lucide="users"></i> Użytkownicy uwzględniani w uczeniu AI</h4>' +
+                    '<p class="ai-training-users-help">Zaznaczone konta określają, czyje zapisane konfiguracje studni i reakcje na podpowiedzi AI są używane do treningu modelu oraz wykrywania wzorców. Niezaznaczone konta są pomijane.</p>' +
                     banner +
                     '<div class="ai-training-sources-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:10px;max-height:280px;overflow-y:auto;margin-top:10px;padding:2px">' +
                     (tiles || '<div class="card-note">Brak użytkowników do wyboru.</div>') +
@@ -133,7 +135,8 @@
                     '<div class="ai-sources-hint" style="display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--text-secondary);background:var(--bg-subtle);padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);margin-left:auto">' +
                     '<i data-lucide="check-circle-2" class="icon-xs" style="color:var(--success)"></i> <span style="font-weight:500">Zmiana zapisuje się automatycznie</span>' +
                     '</div>' +
-                    '</div>';
+                    '</div>' +
+                    '</section>';
                 if (typeof lucide !== 'undefined') {
                     lucide.createIcons({ root: host });
                 }

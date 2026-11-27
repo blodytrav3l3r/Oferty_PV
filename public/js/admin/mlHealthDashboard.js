@@ -20,21 +20,17 @@
         const icon = ok
             ? '<i data-lucide="check-circle" class="icon-md" style="color:var(--success)"></i>'
             : '<i data-lucide="alert-circle" class="icon-md" style="color:var(--warn)"></i>';
-        const sub = subtitle
-            ? '<div style="font-size: var(--fs-sm);color:var(--text-secondary);margin-top:2px">' +
-              subtitle +
-              '</div>'
-            : '';
+        const sub = subtitle ? '<div class="ai-health-subtitle">' + subtitle + '</div>' : '';
         return (
             '<div class="ai-health-card"' +
             (tooltip ? ' title="' + tooltip + '"' : '') +
             '>' +
             icon +
             '<div style="flex:1;min-width:0">' +
-            '<div style="font-size: var(--fs-base);color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.03em">' +
+            '<div class="ai-health-label">' +
             title +
             '</div>' +
-            '<div style="font-size: var(--fs-3xl);font-weight: var(--fw-semibold);color:var(--text-primary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+            '<div class="ai-health-value">' +
             value +
             '</div>' +
             sub +

@@ -156,13 +156,19 @@
             '<div class="ai-dashboard-layout">' +
             '<div id="ai-learning-section">' +
             '<h4 class="ai-section-title"><i data-lucide="brain"></i> Learning Engine (baza wiedzy)</h4>' +
+            '<section class="ai-learning-subsection" aria-labelledby="ai-knowledge-summary-title">' +
+            '<h5 id="ai-knowledge-summary-title" class="ai-section-title">Podsumowanie bazy wiedzy</h5>' +
             '<div id="ai-stats"></div>' +
-            '<div class="ai-toolbar">' +
-            '<input type="text" id="ai-dn-filter" class="ai-filter-input" placeholder="DN (np. 1200)">' +
+            '</section>' +
+            '<section class="ai-learning-subsection" aria-labelledby="ai-learning-patterns-title">' +
+            '<h5 id="ai-learning-patterns-title" class="ai-section-title"><i data-lucide="sparkles"></i> Uczenie i wykrywanie wzorców</h5>' +
+            '<div class="ai-toolbar ai-learning-toolbar">' +
+            '<input type="text" id="ai-dn-filter" class="ai-filter-input" placeholder="DN (np. 1200)" aria-label="Średnica nominalna DN">' +
             '<button id="ai-filter-btn" class="ai-btn" title="Filtruj wzorce po \u015brednicy nominalnej (DN)"><i data-lucide="filter"></i> Filtruj</button>' +
             '<button id="ai-run-cycle" class="ai-btn ai-btn-primary" title="Uruchamia cykl uczenia — analizuje dane telemetryczne i wykrywa nowe wzorce"><i data-lucide="refresh-cw"></i> Uruchom Learning Cycle</button>' +
             '</div>' +
             '<div id="ai-patterns"></div>' +
+            '</section>' +
             '</div>' +
             '<div class="ai-divider" role="separator"></div>' +
             '<div id="ai-ml-section"><div id="ai-ml-status"></div><div id="ai-feature-importance"></div></div>' +

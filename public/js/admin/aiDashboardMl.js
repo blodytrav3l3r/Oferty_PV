@@ -65,8 +65,8 @@
                         : [];
                 const refreshedAt = new Date().toLocaleString('pl-PL');
                 host.innerHTML =
-                    '<div class="ai-section-title"><i data-lucide="bar-chart-3" aria-hidden="true"></i> Akcje i próbki predykcji</div>' +
-                    '<div class="ai-ml-source-note">Źródło: /ai/predictions/stats · zakres: historyczne zdarzenia reward; score z ostatnich max. 100 rekordów · odczyt: ' +
+                    '<div class="ai-section-title ai-prediction-section-title"><i data-lucide="bar-chart-3" aria-hidden="true"></i> Akcje i próbki predykcji</div>' +
+                    '<div class="ai-ml-source-note ai-prediction-source-note">Źródło: /ai/predictions/stats · zakres: historyczne zdarzenia reward; score z ostatnich max. 100 rekordów · odczyt: ' +
                     window.escapeHtml(refreshedAt) +
                     '</div>' +
                     '<div class="ai-prediction-stats-grid">' +
@@ -294,7 +294,7 @@
                             'Czy w tej chwili trwa trenowanie modelu'
                         )
                     ]) +
-                    mlGroup('Jakość predykcji', 'ai-ml-col-5', [
+                    mlGroup('Jakość predykcji', 'ai-ml-col-3', [
                         window.aiStatCard(
                             'ROC-AUC modelu',
                             untrained ? '—' : fmt(status.activeModelAuc),
@@ -568,10 +568,10 @@
                         '<div class="ai-model-empty">Brak wytrenowanych modeli. Uruchom trening ML.</div>';
                 }
                 html +=
-                    '<div class="ai-training-sources-host" style="margin-bottom:28px"></div>' +
-                    '<div class="ai-training-runs-host" style="margin-bottom:28px"></div>' +
-                    '<div class="ai-prediction-stats-host"></div>' +
-                    '<div class="ai-drift-host"></div>';
+                    '<div class="ai-training-sources-host ai-ml-subsection-host"></div>' +
+                    '<div class="ai-training-runs-host ai-ml-subsection-host"></div>' +
+                    '<div class="ai-prediction-stats-host ai-ml-subsection-host"></div>' +
+                    '<div class="ai-drift-host ai-ml-subsection-host"></div>';
                 container.innerHTML = html;
                 const refreshButton = container.querySelector('.ai-ml-refresh-btn');
                 if (refreshButton) {

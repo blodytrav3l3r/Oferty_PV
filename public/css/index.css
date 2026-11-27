@@ -1819,7 +1819,7 @@ a.admin-stat-card {
     border-bottom: none;
 }
 .ops-name {
-    min-width: 11rem;
+    min-width: 0;
     color: var(--text-muted);
 }
 .ops-name[title],
@@ -1872,6 +1872,14 @@ a.admin-stat-card {
     min-width: 0;
 }
 
+.ai-learning-subsection {
+    margin-top: var(--tile-gap-sm-plus);
+    padding: var(--tile-gap-sm-plus);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
 /* ── Karta health ── */
 .ai-health-card {
     background: var(--bg-card);
@@ -1891,38 +1899,53 @@ a.admin-stat-card {
     box-shadow: var(--shadow-sm);
 }
 
-/* ── Grid health (2 rzędy: 3 + 4 kafelki) ── */
+/* ── Grid health ── */
 .ai-health-grid {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 16px;
 }
 
-.ai-health-grid .ai-health-card:nth-child(-n + 3) {
-    grid-column: span 4;
-}
-
-.ai-health-grid .ai-health-card:nth-child(n + 4) {
-    grid-column: span 3;
-}
-
 @media (max-width: 768px) {
-    .ai-health-grid .ai-health-card:nth-child(-n + 3),
-    .ai-health-grid .ai-health-card:nth-child(n + 4) {
-        grid-column: span 6;
+    .ai-health-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 480px) {
-    .ai-health-grid .ai-health-card:nth-child(-n + 3),
-    .ai-health-grid .ai-health-card:nth-child(n + 4) {
-        grid-column: span 12;
+    .ai-health-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
 .ai-health-card > svg {
     flex-shrink: 0;
+}
+
+.ai-health-label {
+    color: var(--text-secondary);
+    font-size: var(--fs-sm);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.ai-health-value {
+    margin-top: 1px;
+    color: var(--text-primary);
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-semibold);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ai-health-subtitle {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: var(--fs-sm);
+    line-height: 1.35;
 }
 
 /* ── Karta statystyk AI ── */
@@ -1994,6 +2017,41 @@ a.admin-stat-card {
     gap: 6px;
 }
 
+.ai-training-users-section {
+    margin-top: 0;
+    padding: var(--tile-gap-sm-plus);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.ai-training-users-title {
+    margin: 0 0 var(--tile-gap-xs-plus);
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.ai-training-users-help {
+    margin: 0 0 var(--tile-gap-sm);
+    color: var(--text-secondary);
+    font-size: var(--fs-md);
+    line-height: 1.5;
+}
+
+.ai-prediction-section-title {
+    margin-bottom: var(--tile-gap-xs-plus);
+    font-size: var(--fs-2xl);
+}
+
+.ai-prediction-source-note {
+    margin-bottom: var(--tile-gap-sm);
+    color: var(--text-secondary);
+    font-size: var(--fs-xl);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
 .ai-section-title i,
 .ai-section-title svg {
     width: 14px;
@@ -2008,6 +2066,32 @@ a.admin-stat-card {
     align-items: center;
     margin-bottom: 16px;
     flex-wrap: wrap;
+}
+
+.ai-learning-toolbar {
+    gap: var(--tile-gap-xs-plus);
+    padding: var(--tile-gap-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.ai-learning-toolbar .ai-filter-input {
+    flex: 0 1 190px;
+    width: auto;
+    min-height: 36px;
+}
+
+.ai-learning-toolbar .ai-btn {
+    min-height: 36px;
+    padding: var(--tile-gap-xs-plus) var(--tile-gap-sm-plus);
+    font-size: var(--fs-md);
+}
+
+@media (max-width: 600px) {
+    .ai-learning-toolbar .ai-filter-input {
+        flex: 1 1 100%;
+    }
 }
 
 .ai-filter-input {
@@ -2310,6 +2394,23 @@ a.admin-stat-card {
     --stat-val-size: 1.1rem;
 }
 
+.ai-ml-group + .ai-ml-group {
+    margin-top: var(--tile-gap-md);
+    padding-top: var(--tile-gap-sm-plus);
+    border-top: 1px solid var(--border);
+}
+
+.ai-ml-subsection-host {
+    margin-top: var(--tile-gap-md);
+}
+
+.ai-ml-subsection-host:not(.ai-training-sources-host) {
+    padding: var(--tile-gap-sm-plus);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
 .ai-ml-col-5 {
     grid-template-columns: repeat(5, 1fr);
 }
@@ -2320,25 +2421,40 @@ a.admin-stat-card {
 
 .ai-prediction-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: var(--tile-gap-sm);
     margin-bottom: 16px;
+}
+
+.ai-prediction-stats-grid .ai-stat-card > div:last-child {
+    font-size: var(--fs-xl);
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .ai-prediction-action-breakdown {
     grid-column: 1 / -1;
-    padding: 12px;
+    padding: var(--tile-gap-sm-plus);
     color: var(--text-secondary);
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
 }
 
+.ai-prediction-action-breakdown > strong {
+    display: block;
+    margin-bottom: var(--tile-gap-xs-plus);
+    color: var(--text-primary);
+    font-size: var(--fs-lg);
+}
+
 .ai-prediction-action-breakdown ul {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
-    gap: 4px 16px;
-    margin: 8px 0 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: var(--tile-gap-xs-plus);
+    margin: 0;
     padding: 0;
     list-style: none;
 }
@@ -2346,8 +2462,14 @@ a.admin-stat-card {
 .ai-prediction-action-breakdown li {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
+    align-items: center;
+    gap: var(--tile-gap-sm);
     min-width: 0;
+    padding: var(--tile-gap-xs-plus) var(--tile-gap-sm);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-md);
 }
 
 .ai-prediction-action-breakdown li strong {
@@ -2369,6 +2491,10 @@ a.admin-stat-card {
     .ai-ml-col-5,
     .ai-ml-col-3 {
         grid-template-columns: 1fr;
+    }
+
+    .ai-prediction-stats-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -2656,21 +2782,9 @@ a.admin-stat-card {
 /* ── Ops Dashboard Grid ── */
 .ops-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
     gap: var(--tile-gap-md, 1rem);
     margin-bottom: 16px;
-}
-
-@media (max-width: 1024px) {
-    .ops-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .ops-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .ops-card {
@@ -2723,18 +2837,22 @@ a.admin-stat-card {
 }
 
 .ops-name {
+    flex: 1 1 auto;
+    min-width: 0;
     color: var(--text-muted);
     font-weight: var(--fw-medium);
+    overflow-wrap: anywhere;
 }
 
 .ops-value {
+    flex: 0 1 45%;
+    min-width: 0;
+    max-width: 45%;
     color: var(--text-primary);
     font-family: 'JetBrains Mono', monospace;
-    font-size: var(--fs-xs);
+    font-size: var(--fs-sm);
     text-align: right;
-    margin-left: auto;
-    margin-right: 6px;
-    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .ops-pill {
@@ -2743,11 +2861,12 @@ a.admin-stat-card {
     gap: 4px;
     padding: 2px 6px;
     border-radius: var(--radius-2xs);
-    font-size: var(--fs-2xs);
+    font-size: var(--fs-xs);
     font-weight: var(--fw-bold);
     letter-spacing: 0.3px;
     text-transform: uppercase;
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .ops-pill i,
