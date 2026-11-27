@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+import { describe, expect, it, beforeEach } from '@jest/globals';
 
 const STATUS = {
     mlOnline: true,
@@ -24,6 +24,15 @@ const STATUS = {
     featureCount: 200,
     labelCounts: { accepted: 10, rejected: 2, modified: 3, noFeedback: 5 },
     totalRewards: 5,
+    trainingRows: 80,
+    rollbackTargetVersion: 'rollback-v1',
+    lastTrainingSnapshot: {
+        datasetSize: 115,
+        trainSize: 80,
+        validationSize: 17,
+        testSize: 18,
+        candidateModelVersion: 'v1'
+    },
     cacheSize: 6,
     trainingGate: {
         eligible: true,
@@ -42,10 +51,18 @@ function loadMl() {
         path.resolve(__dirname, '../../public/js/admin/aiDashboardMl.js'),
         'utf8'
     );
+    let fetchJson = (url) => Promise.resolve(url === '/ml-status' ? STATUS : { models: [] });
+    let confirmMessage = '';
+    let rollbackRequestBody = null;
     const sandbox = {
         window: {
-            AI_ENDPOINTS: { mlStatus: '/ml-status', models: '/models' },
-            fetchJson: (url) => Promise.resolve(url === '/ml-status' ? STATUS : { models: [] }),
+            AI_ENDPOINTS: {
+                mlStatus: '/ml-status',
+                models: '/models',
+                train: '/train',
+                rollback: '/rollback'
+            },
+            fetchJson: (url, options) => fetchJson(url, options),
             aiLoadingHtml: () => '<div>loading</div>',
             aiApiErrorHtml: (e) => '<div>error:' + e + '</div>',
             aiStatCard: (title, value) =>
@@ -60,6 +77,11 @@ function loadMl() {
                     return null;
                 }
             },
+            aiUiConfirm: (message) => {
+                confirmMessage = message;
+                return Promise.resolve(true);
+            },
+            aiUiAlert: () => Promise.resolve(),
             // Panele z mlPanels.js — poza zakresem tego testu.
             aiRenderTrainingSources: () => {},
             aiRenderTrainingRuns: () => {},
@@ -72,7 +94,17 @@ function loadMl() {
     };
     vm.createContext(sandbox);
     vm.runInContext(code, sandbox, { filename: 'aiDashboardMl.js' });
-    return sandbox.window;
+    return {
+        win: sandbox.window,
+        getConfirmMessage: () => confirmMessage,
+        getRollbackRequestBody: () => rollbackRequestBody,
+        setRollbackRequestBody: (body) => {
+            rollbackRequestBody = body;
+        },
+        setFetchJson: (nextFetchJson) => {
+            fetchJson = nextFetchJson;
+        }
+    };
 }
 
 function tick(ms = 20) {
@@ -85,7 +117,7 @@ describe('aiDashboardMl metryki', () => {
     });
 
     it('ROC-AUC i baseline jako osobne karty, bez odejmowania i bez pp', async () => {
-        const win = loadMl();
+        const { win } = loadMl();
         const host = document.createElement('div');
         document.body.appendChild(host);
         win.aiRenderMlStatus(host);
@@ -97,5 +129,196 @@ describe('aiDashboardMl metryki', () => {
         expect(html).toContain('0.7310');
         expect(html).not.toContain('Baseline vs Model');
         expect(html).not.toContain(' pp');
+    });
+
+    it('distingue historię, nowe dane kwalifikujące się i ostatni snapshot oraz opisuje reward jako licznik', async () => {
+        const { win } = loadMl();
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+        expect(host.textContent).toContain('Wszystkie wektory historyczne');
+        expect(host.textContent).toContain('Nowe kwalifikujące się od SUCCESS');
+        expect(host.textContent).toContain('Próbki ostatniego snapshotu');
+        expect(host.textContent).toContain('115');
+        expect(host.textContent).toContain('Zdarzenia reward');
+        expect(host.textContent).not.toContain('Suma nagród');
+    });
+
+    it('odświeża ręcznie i zachowuje ostatnie dane jako stale po błędzie', async () => {
+        const { win, setFetchJson } = loadMl();
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+        expect(host.textContent).toContain('Ostatnia aktualizacja');
+        const previousUpdate = host.querySelector('.ai-ml-updated-at').textContent;
+        const refreshButton = host.querySelector('.ai-ml-refresh-btn');
+        expect(refreshButton.tagName).toBe('BUTTON');
+        expect(refreshButton.type).toBe('button');
+        expect(refreshButton.getAttribute('aria-label')).toBe('Odśwież status AI/ML');
+        expect(refreshButton.tabIndex).toBe(0);
+
+        setFetchJson(() => Promise.reject(new Error('offline')));
+        refreshButton.click();
+        await tick();
+
+        expect(host.textContent).toContain('Dane nieaktualne');
+        expect(host.textContent).toContain('ROC-AUC modelu');
+        expect(host.querySelector('.ai-ml-updated-at').textContent).toBe(previousUpdate);
+        expect(host.querySelector('.ai-ml-refresh-btn').disabled).toBe(false);
+    });
+
+    it('identyfikuje model w akcjach i blokuje cały wiersz podczas żądania', async () => {
+        let finishActivation;
+        const activation = new Promise((resolve) => {
+            finishActivation = resolve;
+        });
+        const model = {
+            id: 'model-id',
+            version: 'candidate-v2',
+            active: false,
+            trainingRows: 12,
+            features: [],
+            metrics: '{}',
+            featureVersion: 'v1'
+        };
+        const { win, setFetchJson, getConfirmMessage } = loadMl();
+        setFetchJson((url) => {
+            if (url === '/ml-status') return Promise.resolve(STATUS);
+            if (url === '/models') return Promise.resolve({ models: [model] });
+            if (url === '/models/model-id/activate') return activation;
+            return Promise.resolve({});
+        });
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        const activate = host.querySelector('.ai-model-activate-btn');
+        const promote = host.querySelector('.ai-model-promote-btn');
+        expect(activate.getAttribute('aria-label')).toContain('candidate-v2');
+        activate.click();
+        await tick(0);
+        expect(getConfirmMessage()).toContain('candidate-v2');
+        expect(activate.disabled).toBe(true);
+        expect(promote.disabled).toBe(true);
+        expect(host.querySelector('.ai-model-actions-cell').getAttribute('aria-busy')).toBe('true');
+
+        finishActivation({ activated: false });
+        await tick();
+        expect(activate.disabled).toBe(false);
+        expect(promote.disabled).toBe(false);
+    });
+
+    it('pokazuje zero danych jako zero i brak snapshotu jako brak wartości', async () => {
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) =>
+            Promise.resolve(
+                url === '/ml-status'
+                    ? {
+                          ...STATUS,
+                          featureCount: 0,
+                          labeledCount: 0,
+                          totalRewards: 0,
+                          trainingRows: null,
+                          rollbackTargetVersion: null,
+                          trainingGate: { ...STATUS.trainingGate, newSinceLastTrain: 0 },
+                          lastTrainingSnapshot: null
+                      }
+                    : { models: [] }
+            )
+        );
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        const rewards = Array.from(host.querySelectorAll('.ai-stat-card')).find((card) =>
+            card.textContent.includes('Zdarzenia reward')
+        );
+        const snapshot = Array.from(host.querySelectorAll('.ai-stat-card')).find((card) =>
+            card.textContent.includes('Próbki ostatniego snapshotu')
+        );
+        expect(rewards.querySelector('div').textContent).toBe('0');
+        expect(snapshot.querySelector('div').textContent).toBe('—');
+        expect(host.querySelector('#ai-ml-rollback-btn').disabled).toBe(true);
+    });
+
+    it('ignoruje odpowiedź starszego odświeżenia po nowszym renderze', async () => {
+        let resolveOldStatus;
+        const oldStatus = new Promise((resolve) => {
+            resolveOldStatus = resolve;
+        });
+        let statusRequests = 0;
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) => {
+            if (url !== '/ml-status') return Promise.resolve({ models: [] });
+            statusRequests += 1;
+            if (statusRequests === 2) return oldStatus;
+            return Promise.resolve({ ...STATUS, activeModelAuc: 0.999 });
+        });
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+        host.querySelector('.ai-ml-refresh-btn').click();
+        win.aiRenderMlStatus(host);
+        await tick();
+        resolveOldStatus({ ...STATUS, activeModelAuc: 0.111 });
+        await tick();
+
+        expect(host.textContent).toContain('0.9990');
+        expect(host.textContent).not.toContain('0.1110');
+    });
+
+    it('potwierdza zakres treningu i wersję celu rollbacku przed akcją', async () => {
+        let finishTraining;
+        let finishRollback;
+        const training = new Promise((resolve) => {
+            finishTraining = resolve;
+        });
+        const rollback = new Promise((resolve) => {
+            finishRollback = resolve;
+        });
+        const {
+            win,
+            setFetchJson,
+            getConfirmMessage,
+            getRollbackRequestBody,
+            setRollbackRequestBody
+        } = loadMl();
+        setFetchJson((url, options) => {
+            if (url === '/ml-status') return Promise.resolve(STATUS);
+            if (url === '/models') return Promise.resolve({ models: [] });
+            if (url === '/train') return training;
+            if (url === '/rollback') {
+                setRollbackRequestBody(JSON.parse(options.body));
+                return rollback;
+            }
+            return Promise.resolve({});
+        });
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        host.querySelector('#ai-ml-train-btn').click();
+        await tick(0);
+        expect(getConfirmMessage()).toContain('10 nowych kwalifikujących się próbkach');
+        expect(getConfirmMessage()).toContain('v1');
+        expect(host.querySelector('#ai-ml-train-btn').disabled).toBe(true);
+
+        finishTraining({ trained: false, reason: 'insufficient_new_data' });
+        await tick();
+        host.querySelector('#ai-ml-rollback-btn').click();
+        await tick(0);
+        expect(getConfirmMessage()).toContain('rollback-v1');
+        expect(host.querySelector('#ai-ml-rollback-btn').disabled).toBe(true);
+        expect(getRollbackRequestBody()).toEqual({
+            expectedActiveVersion: 'v1',
+            expectedPreviousVersion: 'rollback-v1'
+        });
+        finishRollback({ rolledBack: false });
     });
 });

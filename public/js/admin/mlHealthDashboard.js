@@ -141,7 +141,14 @@
                         modelOk,
                         d.mlOnline ? 'model ' + window.escapeHtml(d.modelVersion) : 'brak modelu'
                     ) +
-                    healthCard('Nagrody', d.totalRewards, true) +
+                    healthCard(
+                        'Zdarzenia reward',
+                        d.totalRewards,
+                        true,
+                        'wszystkie zapisane rekordy aiRewardLog',
+                        'Źródło: /ai/health · zakres: liczba rekordów reward, nie suma wartości nagrody · odczyt: ' +
+                            new Date().toLocaleString('pl-PL')
+                    ) +
                     /* Drift danych: % ostatnich telemetrii poza zakresem modelu (niski = OK) */
                     healthCard(
                         'Drift danych',

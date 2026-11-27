@@ -772,6 +772,13 @@ router.get('/ai/ml-status', requireAuth, requireAdmin, READ_LIMITER, async (_req
                   orderBy: { startedAt: 'desc' }
               })
             : null;
+        const rollbackTarget = activeModel
+            ? await prisma.aiModel.findFirst({
+                  where: { active: false, featureVersion: ML_CONSTANTS.FEATURE_VERSION },
+                  orderBy: { createdAt: 'desc' },
+                  select: { version: true }
+              })
+            : null;
         const baselineAccuracy = lastSuccessRun?.baselineAccuracy ?? null;
 
         res.json({
@@ -785,6 +792,16 @@ router.get('/ai/ml-status', requireAuth, requireAdmin, READ_LIMITER, async (_req
             lastTrainingRun: lastSuccessRun
                 ? { id: lastSuccessRun.id, startedAt: lastSuccessRun.startedAt }
                 : null,
+            lastTrainingSnapshot: lastSuccessRun
+                ? {
+                      datasetSize: lastSuccessRun.datasetSize,
+                      trainSize: lastSuccessRun.trainSize,
+                      validationSize: lastSuccessRun.validationSize,
+                      testSize: lastSuccessRun.testSize,
+                      candidateModelVersion: lastSuccessRun.candidateModelVersion
+                  }
+                : null,
+            rollbackTargetVersion: rollbackTarget?.version ?? null,
             // P5.2: lineage treningu — fingerprint datasetu + wersja kandydata
             // (kolumny AiTrainingRun, bez zmiany schematu).
             lastDatasetFingerprint: lastSuccessRun?.datasetFingerprint ?? null,
@@ -1163,11 +1180,35 @@ router.post(
     async (req, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
-            const previous = await modelRegistry.rollbackToPrevious();
+            const rollbackInput = z
+                .object({
+                    expectedActiveVersion: z.string().min(1).max(128).optional(),
+                    expectedPreviousVersion: z.string().min(1).max(128).optional()
+                })
+                .strict()
+                .safeParse(req.body ?? {});
+            if (!rollbackInput.success) {
+                res.status(400).json({ error: 'Invalid rollback target' });
+                return;
+            }
+            const { expectedActiveVersion, expectedPreviousVersion } = rollbackInput.data;
+            const previous = await modelRegistry.rollbackToPrevious(
+                expectedActiveVersion,
+                expectedPreviousVersion
+            );
+            if (
+                (expectedActiveVersion !== undefined || expectedPreviousVersion !== undefined) &&
+                !previous
+            ) {
+                res.status(409).json({ error: 'ROLLBACK_TARGET_CHANGED', rolledBack: false });
+                return;
+            }
             clearPredictionCache();
             await logAudit('ai_model', 'rollback', authReq.user?.id || '', 'trigger', {
                 rolledBack: !!previous,
-                modelId: previous?.id || null
+                modelId: previous?.id || null,
+                expectedActiveVersion: expectedActiveVersion ?? null,
+                expectedPreviousVersion: expectedPreviousVersion ?? null
             });
             res.json({ rolledBack: !!previous, model: previous });
         } catch (e) {

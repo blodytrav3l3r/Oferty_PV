@@ -1,8 +1,34 @@
 (function () {
     'use strict';
 
+    const renderRequestTokens = new WeakMap();
+
+    function setModelRowBusy(button, isBusy) {
+        const actionCell = button.closest('.ai-model-actions-cell');
+        if (!actionCell) return;
+        actionCell.setAttribute('aria-busy', String(isBusy));
+        actionCell.querySelectorAll('button').forEach(function (actionButton) {
+            actionButton.disabled = isBusy;
+            if (isBusy) actionButton.setAttribute('aria-busy', 'true');
+            else actionButton.removeAttribute('aria-busy');
+        });
+    }
+
     function getEndpoints() {
         return window.AI_ENDPOINTS || {};
+    }
+
+    function countLabel(value) {
+        return value == null || !Number.isFinite(Number(value))
+            ? '—'
+            : new Intl.NumberFormat('pl-PL').format(Number(value));
+    }
+
+    function setRefreshState(container, text, isBusy) {
+        const state = container.querySelector('.ai-ml-refresh-state');
+        const button = container.querySelector('.ai-ml-refresh-btn');
+        if (state) state.textContent = text;
+        if (button) button.disabled = Boolean(isBusy);
     }
 
     // F3: czysta prezentacja strukturalnego statusu bramki z backendu
@@ -76,32 +102,49 @@
     }
 
     function renderMlStatus(container) {
-        container.innerHTML = window.aiLoadingHtml();
+        const requestToken = (renderRequestTokens.get(container) || 0) + 1;
+        renderRequestTokens.set(container, requestToken);
+        const isRefresh = Boolean(container.querySelector('.ai-ml-refresh-btn'));
+        if (isRefresh) {
+            setRefreshState(container, 'Odświeżanie…', true);
+        } else {
+            container.innerHTML = window.aiLoadingHtml();
+        }
+        const renderError = function (errorCode) {
+            if (isRefresh && errorCode !== 'forbidden' && errorCode !== 'unauthorized') {
+                setRefreshState(container, 'Dane nieaktualne — nie udało się odświeżyć.', false);
+                return;
+            }
+            container.innerHTML = window.aiApiErrorHtml(errorCode);
+        };
         const ENDPOINTS = getEndpoints();
         const pStatus = window.fetchJson(ENDPOINTS.mlStatus);
         const pModels = window.fetchJson(ENDPOINTS.models);
         if (!pStatus) {
-            container.innerHTML = '<div class="ai-ml-unavailable">Brak dostępu do ML status</div>';
+            renderError('unavailable');
             return;
         }
         Promise.all([pStatus, pModels])
             .then(function (results) {
+                if (renderRequestTokens.get(container) !== requestToken) return;
                 const status = results[0];
                 const modelsData = results[1];
                 if (!status || status.error) {
-                    container.innerHTML = window.aiApiErrorHtml(
-                        status && status.error ? status.error : 'server'
-                    );
+                    renderError(status && status.error ? status.error : 'server');
                     return;
                 }
                 if (modelsData && modelsData.error) {
-                    container.innerHTML = window.aiApiErrorHtml(modelsData.error);
+                    renderError(modelsData.error);
                     return;
                 }
                 const online = status.mlOnline;
                 const untrained = online && status.modelTrained === false;
                 const inf = status.aiInfluencePct || 0;
                 const activeVer = status.modelVersion || '—';
+                const rollbackTargetVersion = status.rollbackTargetVersion || null;
+                const rollbackTargetLabel = rollbackTargetVersion
+                    ? ' (' + window.escapeHtml(rollbackTargetVersion) + ')'
+                    : '';
                 const activeAuc =
                     !untrained &&
                     status.activeModelAuc != null &&
@@ -135,8 +178,12 @@
                         '</div>'
                     );
                 };
+                const refreshedAt = new Date().toLocaleString('pl-PL');
                 let html =
-                    '<h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
+                    '<div class="ai-ml-toolbar"><h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
+                    '<div class="ai-ml-refresh-controls"><span class="ai-ml-source-note">Źródło: /ai/ml-status i /ai/models</span><span class="ai-ml-updated-at">Ostatnia aktualizacja: ' +
+                    window.escapeHtml(refreshedAt) +
+                    '</span><span class="ai-ml-refresh-state" role="status" aria-live="polite"></span><button type="button" class="ai-btn ai-ml-refresh-btn" aria-label="Odśwież status AI/ML" title="Pobierz aktualne dane"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button></div></div>' +
                     mlGroup('Status i model', 'ai-ml-col-5', [
                         window.aiStatCard(
                             'Status',
@@ -226,26 +273,79 @@
                     ]) +
                     mlGroup('Dane i operacje', 'ai-ml-col-3', [
                         window.aiStatCard(
-                            'Dane treningowe (oznaczone)',
-                            status.labeledCount + ' / ' + status.featureCount,
-                            status.labeledCount >= 100 ? 'var(--success)' : 'var(--warn)',
-                            'Wektory z sygnałem użytkownika (ACCEPTED/ACCEPTED_AFTER_MODIFICATION/REJECTED/MODIFIED) na tle wszystkich. ' +
-                                'NO_FEEDBACK jest odrzucane przy treningu — sam surowy licznik może mylić.',
-                            'ACCEPTED: ' +
-                                status.labelCounts.accepted +
-                                ', REJECTED: ' +
-                                status.labelCounts.rejected +
-                                ', MODIFIED: ' +
-                                status.labelCounts.modified +
-                                ', NO_FEEDBACK: ' +
-                                status.labelCounts.noFeedback +
-                                '. Próg treningu: min. 100 oznaczonych.'
+                            'Wszystkie wektory historyczne',
+                            countLabel(status.featureCount),
+                            'var(--accent)',
+                            'Wszystkie rekordy AiFeature w bazie, niezależnie od aktualnej kwalifikacji do treningu.',
+                            'Źródło: /ai/ml-status · Zakres: pełna historia AiFeature · Ostatni odczyt: ' +
+                                refreshedAt
                         ),
                         window.aiStatCard(
-                            'Nagrody (reward)',
-                            status.totalRewards || 0,
+                            'Historyczne z etykietą',
+                            countLabel(status.labeledCount),
+                            'var(--text-secondary)',
+                            'Wektory historyczne z etykietą ACCEPTED, ACCEPTED_AFTER_MODIFICATION, REJECTED lub MODIFIED.',
+                            'Źródło: /ai/ml-status · Zakres: pełna historia AiFeature · ACCEPTED: ' +
+                                ((status.labelCounts && status.labelCounts.accepted) || 0) +
+                                ', REJECTED: ' +
+                                ((status.labelCounts && status.labelCounts.rejected) || 0) +
+                                ', MODIFIED: ' +
+                                ((status.labelCounts && status.labelCounts.modified) || 0) +
+                                ', NO_FEEDBACK: ' +
+                                ((status.labelCounts && status.labelCounts.noFeedback) || 0) +
+                                ' · Odczyt: ' +
+                                refreshedAt
+                        ),
+                        window.aiStatCard(
+                            'Nowe kwalifikujące się od SUCCESS',
+                            countLabel(
+                                status.trainingGate && status.trainingGate.newSinceLastTrain
+                            ),
+                            status.trainingGate && status.trainingGate.eligible
+                                ? 'var(--success)'
+                                : 'var(--warn)',
+                            'Nowe próbki spełniające aktualne warunki treningu od ostatniego udanego przebiegu; nie jest to suma całego zbioru.',
+                            'Źródło: trainingGate z /ai/ml-status · Zakres: od ostatniego SUCCESS · Ostatni odczyt: ' +
+                                refreshedAt
+                        ),
+                        window.aiStatCard(
+                            'Próbki ostatniego snapshotu',
+                            countLabel(
+                                status.lastTrainingSnapshot &&
+                                    status.lastTrainingSnapshot.datasetSize
+                            ),
+                            'var(--accent2)',
+                            'Liczba wszystkich próbek wykorzystanych w ostatnim udanym przebiegu aktywnego modelu.',
+                            'Źródło: AiTrainingRun w /ai/ml-status · Dataset: ' +
+                                countLabel(
+                                    status.lastTrainingSnapshot &&
+                                        status.lastTrainingSnapshot.datasetSize
+                                ) +
+                                ' (train: ' +
+                                countLabel(
+                                    status.lastTrainingSnapshot &&
+                                        status.lastTrainingSnapshot.trainSize
+                                ) +
+                                ', validation: ' +
+                                countLabel(
+                                    status.lastTrainingSnapshot &&
+                                        status.lastTrainingSnapshot.validationSize
+                                ) +
+                                ', test: ' +
+                                countLabel(
+                                    status.lastTrainingSnapshot &&
+                                        status.lastTrainingSnapshot.testSize
+                                ) +
+                                ') · Odczyt: ' +
+                                refreshedAt
+                        ),
+                        window.aiStatCard(
+                            'Zdarzenia reward',
+                            countLabel(status.totalRewards),
                             'var(--cyan)',
-                            'Suma nagród (reward) zebranych przez model za trafne predykcje'
+                            'Liczba rekordów aiRewardLog wszystkich akcji. To licznik zdarzeń, nie suma wartości reward.',
+                            'Źródło: /ai/ml-status · Zakres: wszystkie historyczne rekordy aiRewardLog · Ostatni odczyt: ' +
+                                refreshedAt
                         ),
                         window.aiStatCard(
                             'Cache predykcji',
@@ -269,7 +369,15 @@
                 html +=
                     '<div class="ai-ml-actions">' +
                     '<button id="ai-ml-train-btn" class="ai-ml-train-btn" title="Uruchamia trenowanie modelu ML na zebranych danych telemetrycznych"><i data-lucide="play"></i> Uruchom trening ML</button>' +
-                    '<button id="ai-ml-rollback-btn" class="ai-ml-rollback-btn" title="Przywraca poprzedni\u0105 wersj\u0119 modelu ML (cofa ostatni trening)"><i data-lucide="undo-2"></i> Rollback modelu</button>' +
+                    '<button id="ai-ml-rollback-btn" class="ai-ml-rollback-btn" ' +
+                    (rollbackTargetVersion ? '' : 'disabled ') +
+                    'title="' +
+                    (rollbackTargetVersion
+                        ? 'Cofnij do modelu ' + window.aiEscapeHtmlAttr(rollbackTargetVersion)
+                        : 'Brak poprzedniego modelu do rollbacku') +
+                    '"><i data-lucide="undo-2"></i> Rollback modelu' +
+                    rollbackTargetLabel +
+                    '</button>' +
                     '</div>';
                 let modelRows = '';
                 if (modelsData && modelsData.models && modelsData.models.length > 0) {
@@ -284,13 +392,31 @@
                                 : '<div class="ai-model-actions-cell">' +
                                   '<button class="ai-model-promote-btn" data-id="' +
                                   window.aiEscapeHtmlAttr(mm.id || '') +
-                                  '" title="Promuj do produkcji (state machine: APPROVED/CANDIDATE → PRODUCTION)" aria-label="Promuj do produkcji"><i data-lucide="rocket"></i></button>' +
+                                  '" data-version="' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  '" title="Promuj model ' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  ' do produkcji" aria-label="Promuj model ' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  '"><i data-lucide="rocket"></i></button>' +
                                   '<button class="ai-model-activate-btn" data-id="' +
                                   window.aiEscapeHtmlAttr(mm.id || '') +
-                                  '" title="Ustaw ten model jako aktywny" aria-label="Ustaw ten model jako aktywny"><i data-lucide="check-circle"></i></button>' +
+                                  '" data-version="' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  '" title="Ustaw model ' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  ' jako aktywny" aria-label="Ustaw model ' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  ' jako aktywny"><i data-lucide="check-circle"></i></button>' +
                                   '<button class="ai-model-delete-btn" data-id="' +
                                   window.aiEscapeHtmlAttr(mm.id || '') +
-                                  '" title="Usuń ten model" aria-label="Usuń ten model"><i data-lucide="trash-2"></i></button>' +
+                                  '" data-version="' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  '" title="Usuń model ' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  '" aria-label="Usuń model ' +
+                                  window.aiEscapeHtmlAttr(mm.version || '—') +
+                                  '"><i data-lucide="trash-2"></i></button>' +
                                   '</div>';
                             const metrics =
                                 mm.trainingRows > 0 ? window.aiSafeJson(mm.metrics) : null;
@@ -378,6 +504,12 @@
                     '<div class="ai-training-runs-host" style="margin-bottom:28px"></div>' +
                     '<div class="ai-drift-host"></div>';
                 container.innerHTML = html;
+                const refreshButton = container.querySelector('.ai-ml-refresh-btn');
+                if (refreshButton) {
+                    refreshButton.addEventListener('click', function () {
+                        renderMlStatus(container);
+                    });
+                }
                 if (typeof lucide !== 'undefined') {
                     lucide.createIcons({ root: container });
                 }
@@ -436,12 +568,15 @@
                             ev.preventDefault();
                             window
                                 .aiUiConfirm(
-                                    'Promować ten model do produkcji? Obecnie produkcyjny model zostanie zastąpiony (rollback możliwy).',
+                                    'Promować model ' +
+                                        (promoteBtn.getAttribute('data-version') || '—') +
+                                        ' do produkcji? Obecnie produkcyjny model zostanie zastąpiony (rollback możliwy).',
                                     { title: 'Promocja modelu', okText: 'Promuj', type: 'info' }
                                 )
                                 .then(function (confirmed) {
                                     if (!confirmed) return;
                                     const id = promoteBtn.getAttribute('data-id');
+                                    setModelRowBusy(promoteBtn, true);
                                     const pp = window.fetchJson(
                                         getEndpoints().promote +
                                             encodeURIComponent(id) +
@@ -466,12 +601,20 @@
                                                     { title: 'Błąd promocji', type: 'warning' }
                                                 );
                                             }
-                                        }).catch(function () {
-                                            window.aiUiAlert('Błąd promocji modelu ML.', {
-                                                title: 'Błąd promocji',
-                                                type: 'warning'
+                                        })
+                                            .catch(function () {
+                                                window.aiUiAlert('Błąd promocji modelu ML.', {
+                                                    title: 'Błąd promocji',
+                                                    type: 'warning'
+                                                });
+                                            })
+                                            .finally(function () {
+                                                if (promoteBtn.isConnected) {
+                                                    setModelRowBusy(promoteBtn, false);
+                                                }
                                             });
-                                        });
+                                    } else {
+                                        setModelRowBusy(promoteBtn, false);
                                     }
                                 });
                             return;
@@ -479,14 +622,20 @@
                         if (deleteBtn) {
                             ev.preventDefault();
                             window
-                                .aiUiConfirm('Na pewno usunąć ten model ML?', {
-                                    title: 'Usuwanie modelu ML',
-                                    okText: 'Usuń',
-                                    type: 'danger'
-                                })
+                                .aiUiConfirm(
+                                    'Na pewno usunąć model ' +
+                                        (deleteBtn.getAttribute('data-version') || '—') +
+                                        '?',
+                                    {
+                                        title: 'Usuwanie modelu ML',
+                                        okText: 'Usuń',
+                                        type: 'danger'
+                                    }
+                                )
                                 .then(function (confirmed) {
                                     if (!confirmed) return;
                                     const id = deleteBtn.getAttribute('data-id');
+                                    setModelRowBusy(deleteBtn, true);
                                     const pp = window.fetchJson(
                                         getEndpoints().models + '/' + encodeURIComponent(id),
                                         { method: 'DELETE' }
@@ -506,13 +655,20 @@
                                                     { title: 'Błąd usuwania', type: 'warning' }
                                                 );
                                             }
-                                        }).catch(function () {
-                                            window.aiUiAlert('Błąd usuwania modelu ML.', {
-                                                title: 'Błąd usuwania',
-                                                type: 'warning'
+                                        })
+                                            .catch(function () {
+                                                window.aiUiAlert('Błąd usuwania modelu ML.', {
+                                                    title: 'Błąd usuwania',
+                                                    type: 'warning'
+                                                });
+                                            })
+                                            .finally(function () {
+                                                if (deleteBtn.isConnected) {
+                                                    setModelRowBusy(deleteBtn, false);
+                                                }
                                             });
-                                        });
                                     } else {
+                                        setModelRowBusy(deleteBtn, false);
                                         window.aiUiAlert('Brak dostępu do usuwania modeli ML.', {
                                             title: 'Błąd usuwania',
                                             type: 'warning'
@@ -525,7 +681,9 @@
                             ev.preventDefault();
                             window
                                 .aiUiConfirm(
-                                    'Ustawić ten model jako aktywny? Obecnie aktywny model zostanie zastąpiony.',
+                                    'Ustawić model ' +
+                                        (activateBtn.getAttribute('data-version') || '—') +
+                                        ' jako aktywny? Obecnie aktywny model zostanie zastąpiony.',
                                     {
                                         title: 'Zmiana aktywnego modelu',
                                         okText: 'Użyj',
@@ -535,6 +693,7 @@
                                 .then(function (confirmed) {
                                     if (!confirmed) return;
                                     const id = activateBtn.getAttribute('data-id');
+                                    setModelRowBusy(activateBtn, true);
                                     const pp = window.fetchJson(
                                         getEndpoints().models +
                                             '/' +
@@ -557,13 +716,20 @@
                                                     { title: 'Błąd zmiany', type: 'warning' }
                                                 );
                                             }
-                                        }).catch(function () {
-                                            window.aiUiAlert('Błąd zmiany aktywnego modelu.', {
-                                                title: 'Błąd zmiany',
-                                                type: 'warning'
+                                        })
+                                            .catch(function () {
+                                                window.aiUiAlert('Błąd zmiany aktywnego modelu.', {
+                                                    title: 'Błąd zmiany',
+                                                    type: 'warning'
+                                                });
+                                            })
+                                            .finally(function () {
+                                                if (activateBtn.isConnected) {
+                                                    setModelRowBusy(activateBtn, false);
+                                                }
                                             });
-                                        });
                                     } else {
+                                        setModelRowBusy(activateBtn, false);
                                         window.aiUiAlert('Brak dostępu do zmiany modelu ML.', {
                                             title: 'Błąd zmiany',
                                             type: 'warning'
@@ -575,50 +741,80 @@
                 }
                 if (trainBtn) {
                     trainBtn.addEventListener('click', function () {
-                        trainBtn.disabled = true;
-                        trainBtn.innerHTML =
-                            '<i data-lucide="loader" class="lucide-spin"></i> Trenowanie...';
-                        const pp = window.fetchJson(getEndpoints().train, { method: 'POST' });
-                        if (pp) {
-                            pp.then(function (result) {
-                                trainBtn.disabled = false;
-                                trainBtn.innerHTML =
-                                    '<i data-lucide="play"></i> Uruchom trening ML';
-                                if (result && !result.error) {
-                                    window.aiUiAlert(
-                                        'Trening ML zakończony:\n' +
-                                            'Wytrenowany: ' +
-                                            (result.trained ? 'Tak' : 'Nie') +
-                                            (result.reason ? '\nPowód: ' + result.reason : ''),
-                                        { title: 'Trening ML', type: 'info' }
-                                    );
-                                    window.aiRenderMlStatus(mlContainer);
-                                } else {
-                                    window.aiUiAlert('Nie udało się uruchomić treningu ML.', {
-                                        title: 'Trening ML',
-                                        type: 'warning'
-                                    });
-                                }
-                            }).catch(function () {
-                                trainBtn.disabled = false;
-                                trainBtn.innerHTML =
-                                    '<i data-lucide="play"></i> Uruchom trening ML';
-                                window.aiUiAlert('Błąd uruchamiania treningu ML.', {
-                                    title: 'Trening ML',
+                        window
+                            .aiUiConfirm(
+                                'Uruchomić trening na ' +
+                                    countLabel(
+                                        status.trainingGate && status.trainingGate.newSinceLastTrain
+                                    ) +
+                                    ' nowych kwalifikujących się próbkach? Po walidacji system może wdrożyć nowy model. Aktualny model produkcyjny: ' +
+                                    activeVer +
+                                    '.',
+                                {
+                                    title: 'Trening modelu ML',
+                                    okText: 'Uruchom trening',
                                     type: 'warning'
+                                }
+                            )
+                            .then(function (confirmed) {
+                                if (!confirmed) return;
+                                trainBtn.disabled = true;
+                                trainBtn.innerHTML =
+                                    '<i data-lucide="loader" class="lucide-spin"></i> Trenowanie...';
+                                const pp = window.fetchJson(getEndpoints().train, {
+                                    method: 'POST'
                                 });
+                                if (pp) {
+                                    pp.then(function (result) {
+                                        trainBtn.disabled = false;
+                                        trainBtn.innerHTML =
+                                            '<i data-lucide="play"></i> Uruchom trening ML';
+                                        if (result && !result.error) {
+                                            window.aiUiAlert(
+                                                'Trening ML zakończony:\n' +
+                                                    'Wytrenowany: ' +
+                                                    (result.trained ? 'Tak' : 'Nie') +
+                                                    (result.reason
+                                                        ? '\nPowód: ' + result.reason
+                                                        : ''),
+                                                { title: 'Trening ML', type: 'info' }
+                                            );
+                                            window.aiRenderMlStatus(mlContainer);
+                                        } else {
+                                            window.aiUiAlert(
+                                                'Nie udało się uruchomić treningu ML.',
+                                                {
+                                                    title: 'Trening ML',
+                                                    type: 'warning'
+                                                }
+                                            );
+                                        }
+                                    }).catch(function () {
+                                        trainBtn.disabled = false;
+                                        trainBtn.innerHTML =
+                                            '<i data-lucide="play"></i> Uruchom trening ML';
+                                        window.aiUiAlert('Błąd uruchamiania treningu ML.', {
+                                            title: 'Trening ML',
+                                            type: 'warning'
+                                        });
+                                    });
+                                } else {
+                                    trainBtn.disabled = false;
+                                    trainBtn.innerHTML =
+                                        '<i data-lucide="play"></i> Uruchom trening ML';
+                                }
                             });
-                        } else {
-                            trainBtn.disabled = false;
-                            trainBtn.innerHTML = '<i data-lucide="play"></i> Uruchom trening ML';
-                        }
                     });
                 }
                 if (rollbackBtn) {
                     rollbackBtn.addEventListener('click', function () {
                         window
                             .aiUiConfirm(
-                                'Rollback do poprzedniego modelu? Obecny model zostanie zdezaktywowany.',
+                                'Cofnąć do modelu ' +
+                                    rollbackTargetVersion +
+                                    '? Obecny model ' +
+                                    activeVer +
+                                    ' zostanie zdezaktywowany.',
                                 { title: 'Rollback modelu', okText: 'Rollback', type: 'warning' }
                             )
                             .then(function (confirmed) {
@@ -626,13 +822,19 @@
                                 rollbackBtn.disabled = true;
                                 rollbackBtn.textContent = 'Rollback...';
                                 const pp = window.fetchJson(getEndpoints().rollback, {
-                                    method: 'POST'
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        expectedActiveVersion: activeVer,
+                                        expectedPreviousVersion: rollbackTargetVersion
+                                    })
                                 });
                                 if (pp) {
                                     pp.then(function (result) {
                                         rollbackBtn.disabled = false;
                                         rollbackBtn.innerHTML =
-                                            '<i data-lucide="undo-2"></i> Rollback modelu';
+                                            '<i data-lucide="undo-2"></i> Rollback modelu' +
+                                            rollbackTargetLabel;
                                         if (result && !result.error && result.rolledBack) {
                                             window.aiUiAlert(
                                                 'Rollback wykonany. Poprzedni model: ' +
@@ -642,14 +844,17 @@
                                             window.aiRenderMlStatus(mlContainer);
                                         } else {
                                             window.aiUiAlert(
-                                                'Brak poprzedniego modelu do rollbacku.',
+                                                result && result.error === 'ROLLBACK_TARGET_CHANGED'
+                                                    ? 'Modele zmieniły się od potwierdzenia. Odśwież dane i potwierdź ponownie.'
+                                                    : 'Brak poprzedniego modelu do rollbacku.',
                                                 { title: 'Rollback modelu', type: 'warning' }
                                             );
                                         }
                                     }).catch(function () {
                                         rollbackBtn.disabled = false;
                                         rollbackBtn.innerHTML =
-                                            '<i data-lucide="undo-2"></i> Rollback modelu';
+                                            '<i data-lucide="undo-2"></i> Rollback modelu' +
+                                            rollbackTargetLabel;
                                         window.aiUiAlert('Błąd rollbacku modelu ML.', {
                                             title: 'Rollback modelu',
                                             type: 'warning'
@@ -658,7 +863,8 @@
                                 } else {
                                     rollbackBtn.disabled = false;
                                     rollbackBtn.innerHTML =
-                                        '<i data-lucide="undo-2"></i> Rollback modelu';
+                                        '<i data-lucide="undo-2"></i> Rollback modelu' +
+                                        rollbackTargetLabel;
                                     window.aiUiAlert('Brak dostępu do rollbacku modelu ML.', {
                                         title: 'Rollback modelu',
                                         type: 'warning'
@@ -669,7 +875,8 @@
                 }
             })
             .catch(function () {
-                container.innerHTML = window.aiApiErrorHtml('server');
+                if (renderRequestTokens.get(container) !== requestToken) return;
+                renderError('server');
             });
     }
     window.aiRenderMlStatus = renderMlStatus;

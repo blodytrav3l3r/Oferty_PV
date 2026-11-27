@@ -361,6 +361,22 @@ describe('ModelRegistry.rollbackToPrevious', () => {
         expect(transaction).not.toHaveBeenCalled();
     });
 
+    it('pomija rollback, jeśli cel zmienił się po potwierdzeniu administratora', async () => {
+        findFirst
+            .mockResolvedValueOnce(record({ id: 'current', version: 'v-current', active: true }))
+            .mockResolvedValueOnce(
+                record({ id: 'new-target', version: 'v-new-target', active: false })
+            );
+
+        await expect(
+            registry.rollbackToPrevious('v-current', 'v-confirmed-target')
+        ).resolves.toBeNull();
+
+        expect(findFirst).toHaveBeenCalledTimes(2);
+        expect(update).not.toHaveBeenCalled();
+        expect(transaction).not.toHaveBeenCalled();
+    });
+
     it('przywraca poprzedni model atomowo i czyści cache', async () => {
         const active = record({ id: 'current', active: true });
         const previous = record({ id: 'prev', version: 'v-prev', active: false });

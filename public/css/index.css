@@ -2323,6 +2323,43 @@ a.admin-stat-card {
 }
 
 /* ── ML status header ── */
+.ai-ml-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.ai-ml-refresh-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    min-width: 0;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+}
+
+.ai-ml-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    white-space: nowrap;
+}
+
+.ai-ml-refresh-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.ai-ml-refresh-btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .ai-ml-header {
     margin: 0 0 8px;
     font-size: var(--fs-xl);
@@ -2379,6 +2416,16 @@ a.admin-stat-card {
     font-size: var(--fs-md);
     font-weight: var(--fw-bold);
     color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+    .ai-ml-toolbar {
+        flex-direction: column;
+    }
+
+    .ai-ml-refresh-controls {
+        justify-content: flex-start;
+    }
 }
 
 .ai-transfer-card-header i,

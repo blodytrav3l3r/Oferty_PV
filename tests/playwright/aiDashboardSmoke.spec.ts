@@ -30,6 +30,25 @@ test.describe('e2e: AI dashboard smoke (read-only)', () => {
     test('ml-status niesie PRAWDZIWY CSP enforce (script-src + nonce)', async ({ request }) => {
         const resp = await request.get('/api/telemetry/ai/ml-status');
         expect(resp.status(), 'ml-status nie odpowiada 200').toBe(200);
+        const body = await resp.json();
+        expect(
+            Number.isInteger(body.featureCount),
+            'featureCount nie jest licznikiem historii'
+        ).toBe(true);
+        expect(
+            Number.isInteger(body.trainingGate?.newSinceLastTrain) ||
+                body.trainingGate?.newSinceLastTrain === null,
+            'brak bieżącego licznika kwalifikujących danych'
+        ).toBe(true);
+        expect(
+            body.lastTrainingSnapshot === null ||
+                Number.isInteger(body.lastTrainingSnapshot?.datasetSize),
+            'ostatni snapshot nie ma jawnego rozmiaru datasetu'
+        ).toBe(true);
+        expect(
+            typeof body.rollbackTargetVersion === 'string' || body.rollbackTargetVersion === null,
+            'brak jawnej wersji celu rollbacku'
+        ).toBe(true);
         const csp = resp.headers()['content-security-policy'] || '';
         expect(csp, 'brak nagłówka CSP enforce').toContain('script-src');
         expect(csp, 'brak nonce w CSP enforce').toMatch(/nonce-[A-Za-z0-9+/=]+/);

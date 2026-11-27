@@ -45,11 +45,13 @@
 
     function apiErrorHtml(errorCode) {
         const msg =
-            errorCode === 'forbidden'
-                ? 'Brak dostępu (wymagana rola admin)'
-                : errorCode === 'unauthorized'
-                  ? 'Nieautoryzowany — zaloguj się ponownie'
-                  : 'Błąd serwera — nie udało się pobrać danych';
+            errorCode === 'unavailable'
+                ? 'Usługa niedostępna — dane nie zostały pobrane'
+                : errorCode === 'forbidden'
+                  ? 'Brak dostępu (wymagana rola admin)'
+                  : errorCode === 'unauthorized'
+                    ? 'Nieautoryzowany — zaloguj się ponownie'
+                    : 'Błąd serwera — nie udało się pobrać danych';
         return '<div class="ai-ml-error">' + msg + '</div>';
     }
     window.aiApiErrorHtml = apiErrorHtml;

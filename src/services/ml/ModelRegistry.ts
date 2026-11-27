@@ -320,7 +320,10 @@ export class ModelRegistry {
         });
     }
 
-    async rollbackToPrevious(expectedActiveVersion?: string): Promise<StoredModel | null> {
+    async rollbackToPrevious(
+        expectedActiveVersion?: string,
+        expectedPreviousVersion?: string
+    ): Promise<StoredModel | null> {
         return this.withProductionMutation(async () => {
             const active = await prisma.aiModel.findFirst({
                 where: { active: true, featureVersion: ML_CONSTANTS.FEATURE_VERSION }
@@ -332,6 +335,12 @@ export class ModelRegistry {
                 where: { active: false, featureVersion: ML_CONSTANTS.FEATURE_VERSION },
                 orderBy: { createdAt: 'desc' }
             });
+            if (
+                expectedPreviousVersion !== undefined &&
+                previous?.version !== expectedPreviousVersion
+            ) {
+                return null;
+            }
             if (active && previous) {
                 // Transakcja: dezaktywacja+aktywacja atomowo — bez niej dwa równoległe
                 // rollbacki (SelfEvaluation flapping) mogły dać 2 aktywne modele.

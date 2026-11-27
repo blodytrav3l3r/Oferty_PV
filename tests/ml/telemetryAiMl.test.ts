@@ -87,6 +87,43 @@ describe('POST /api/telemetry/ai/train', () => {
     });
 });
 
+describe('POST /api/telemetry/ai/rollback', () => {
+    let app: express.Application;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+    });
+
+    it('przekazuje potwierdzone wersje do atomowej operacji rollbacku', async () => {
+        mockRollbackToPrevious.mockResolvedValue({ id: 'restored', version: 'v-previous' });
+
+        const response = await request(app)
+            .post('/api/telemetry/ai/rollback')
+            .set({ 'x-test-userid': 'admin', 'x-test-role': 'admin' })
+            .send({ expectedActiveVersion: 'v-active', expectedPreviousVersion: 'v-previous' });
+
+        expect(response.status).toBe(200);
+        expect(mockRollbackToPrevious).toHaveBeenCalledWith('v-active', 'v-previous');
+        expect(response.body).toMatchObject({ rolledBack: true, model: { version: 'v-previous' } });
+    });
+
+    it('zwraca 409, jeśli target zmienił się od odczytu przed potwierdzeniem', async () => {
+        mockRollbackToPrevious.mockResolvedValue(null);
+
+        const response = await request(app)
+            .post('/api/telemetry/ai/rollback')
+            .set({ 'x-test-userid': 'admin', 'x-test-role': 'admin' })
+            .send({ expectedActiveVersion: 'v-active', expectedPreviousVersion: 'v-confirmed' });
+
+        expect(response.status).toBe(409);
+        expect(response.body).toEqual({ error: 'ROLLBACK_TARGET_CHANGED', rolledBack: false });
+    });
+});
+
 jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     selfEvaluation: {
         checkAndRollbackIfNeeded: (...args: any[]) => mockCheckAndRollback(...args),
