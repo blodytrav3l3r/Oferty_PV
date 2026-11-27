@@ -32,6 +32,28 @@ export interface ImportResult {
     report: CompatReport;
 }
 
+function alreadyImportedResult(
+    transfer: { transferId: string; modelVersion: string | null },
+    report: CompatReport
+): ImportResult {
+    return {
+        status: 'ALREADY_IMPORTED',
+        modelId: transfer.modelVersion ?? '',
+        version: transfer.modelVersion ?? '',
+        transferId: transfer.transferId,
+        report
+    };
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: unknown }).code === 'P2002'
+    );
+}
+
 function newTransferId(): string {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     return `trf_${date}_${crypto.randomBytes(3).toString('hex')}`;
@@ -138,13 +160,7 @@ export async function importPackage(
         }
     });
     if (prior) {
-        return {
-            status: 'ALREADY_IMPORTED',
-            modelId: prior.modelVersion ?? '',
-            version: prior.modelVersion ?? '',
-            transferId: prior.transferId,
-            report: dryRun.report
-        };
+        return alreadyImportedResult(prior, dryRun.report);
     }
     // Wersja istnieje, ale pakiet jest nowy (inny fingerprint): kolizja wersji,
     // nie duplikat transferu. Fałszywe ALREADY_IMPORTED ukrywałoby problem —
@@ -231,71 +247,85 @@ export async function importPackage(
         trainingRows = 0;
     }
     const modelFp = manifest.artifacts.find((a) => a.path === modelPath)?.sha256 ?? '';
-    const created = await prisma.$transaction(async (tx) => {
-        const model = await tx.aiModel.create({
-            data: {
-                id: crypto.randomUUID(),
-                version: manifest.model.version,
-                weights: JSON.stringify(shape.weights),
-                bias: shape.bias,
-                metrics: shape.metricsJson,
-                features: JSON.stringify(shape.features),
-                featureMins: JSON.stringify(shape.featureMins),
-                featureMaxs: JSON.stringify(shape.featureMaxs),
-                trainingRows,
-                featureVersion: manifest.model.featureVersion,
-                state: AiModelState.CANDIDATE,
-                seed: null,
-                lineageSnapshot: manifest.lineage.snapshot
-                    ? JSON.stringify(manifest.lineage.snapshot)
-                    : null,
-                featureDistributions: null,
-                active: false,
-                notes: `Import transfer ${transferId} (${manifest.transferPackageId})`,
-                createdAt: now
+    let created: Awaited<ReturnType<typeof prisma.aiModel.create>>;
+    try {
+        created = await prisma.$transaction(async (tx) => {
+            const model = await tx.aiModel.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    version: manifest.model.version,
+                    weights: JSON.stringify(shape.weights),
+                    bias: shape.bias,
+                    metrics: shape.metricsJson,
+                    features: JSON.stringify(shape.features),
+                    featureMins: JSON.stringify(shape.featureMins),
+                    featureMaxs: JSON.stringify(shape.featureMaxs),
+                    trainingRows,
+                    featureVersion: manifest.model.featureVersion,
+                    state: AiModelState.CANDIDATE,
+                    seed: null,
+                    lineageSnapshot: manifest.lineage.snapshot
+                        ? JSON.stringify(manifest.lineage.snapshot)
+                        : null,
+                    featureDistributions: null,
+                    active: false,
+                    notes: `Import transfer ${transferId} (${manifest.transferPackageId})`,
+                    createdAt: now
+                }
+            });
+            if (datasetRows) {
+                const ds = await importDatasetRows(datasetRows, tx);
+                extendedSummary.datasetInserted = ds.inserted;
+                extendedSummary.datasetSkipped = ds.skipped;
             }
-        });
-        if (datasetRows) {
-            const ds = await importDatasetRows(datasetRows, tx);
-            extendedSummary.datasetInserted = ds.inserted;
-            extendedSummary.datasetSkipped = ds.skipped;
-        }
-        await tx.aiTransfer.create({
-            data: {
-                id: crypto.randomUUID(),
+            await tx.aiTransfer.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    transferId,
+                    direction: 'IMPORT',
+                    packageFingerprint: manifest.packageFingerprint,
+                    manifestFingerprint: dryRun.manifestFingerprint,
+                    modelVersion: model.version,
+                    modelFingerprint: 'sha256:' + modelFp,
+                    datasetFingerprint: manifest.lineage.datasetFingerprint,
+                    sourceSokVersion: manifest.sourceSokVersion,
+                    targetSokVersion: target.sokVersion,
+                    status: 'COMPLETED',
+                    result: 'CANDIDATE',
+                    userId,
+                    createdAt: now
+                }
+            });
+            await logAudit(
+                'ai_transfer',
                 transferId,
-                direction: 'IMPORT',
-                packageFingerprint: manifest.packageFingerprint,
-                manifestFingerprint: dryRun.manifestFingerprint,
-                modelVersion: model.version,
-                modelFingerprint: 'sha256:' + modelFp,
-                datasetFingerprint: manifest.lineage.datasetFingerprint,
-                sourceSokVersion: manifest.sourceSokVersion,
-                targetSokVersion: target.sokVersion,
-                status: 'COMPLETED',
-                result: 'CANDIDATE',
                 userId,
-                createdAt: now
+                'TRANSFER_IMPORT_COMPLETED',
+                {
+                    packageFingerprint: manifest.packageFingerprint,
+                    modelVersion: model.version,
+                    sourceSokVersion: manifest.sourceSokVersion,
+                    targetSokVersion: target.sokVersion,
+                    result: 'CANDIDATE',
+                    ...extendedSummary
+                },
+                null,
+                tx
+            );
+            return model;
+        });
+    } catch (error) {
+        if (!isUniqueConstraintError(error)) throw error;
+        const concurrentImport = await prisma.aiTransfer.findFirst({
+            where: {
+                packageFingerprint: manifest.packageFingerprint,
+                direction: 'IMPORT',
+                status: 'COMPLETED'
             }
         });
-        await logAudit(
-            'ai_transfer',
-            transferId,
-            userId,
-            'TRANSFER_IMPORT_COMPLETED',
-            {
-                packageFingerprint: manifest.packageFingerprint,
-                modelVersion: model.version,
-                sourceSokVersion: manifest.sourceSokVersion,
-                targetSokVersion: target.sokVersion,
-                result: 'CANDIDATE',
-                ...extendedSummary
-            },
-            null,
-            tx
-        );
-        return model;
-    });
+        if (!concurrentImport) throw error;
+        return alreadyImportedResult(concurrentImport, report);
+    }
     return {
         status: 'IMPORTED',
         modelId: created.id,

@@ -680,6 +680,11 @@ Ręczny `POST /api/telemetry/ai/learning/run` wymaga administratora i włączone
 Wymaga `requireAuth` + `requireAdmin` + `requireAiMlEnabled` (AI OFF → `503 {error: "disabled"}`).
 Upload binarny przez `express.raw` (`application/octet-stream`, limit `SOKML_LIMITS`).
 Przepływ: export → dry-run (binding `dryRunId` + `userId`, TTL) → import (zawsze `CANDIDATE`).
+Podgląd, export, dry-run i import współdzielą limit jednej aktywnej operacji transferu
+na proces; równoległe żądanie otrzymuje `429 TRANSFER_BUSY`. Dry-run jest przechowywany
+wyłącznie w pamięci procesu, więc po restarcie import wymaga ponownego dry-run.
+SHA-256/checksum i fingerprint potwierdzają spójność bajtów/danych, nie tożsamość
+wydawcy pakietu; podpisy wydawcy nie są częścią kontraktu.
 
 | Metoda | Ścieżka                                              | Opis                                                                                                                                  |
 | ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |

@@ -3,6 +3,11 @@ import { z } from 'zod';
 import { logger } from '../utils/logger';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth';
 import { requireAiMlEnabled } from '../middleware/aiMlGuard';
+import {
+    AI_TRANSFER_IN_FLIGHT_LIMITER,
+    releaseTransferSlot,
+    releaseTransferSlotOnError
+} from '../middleware/inFlightLimiter';
 import { READ_LIMITER, WRITE_LIMITER, EXPORT_LIMITER } from '../middleware/rateLimiters';
 import { SOKML_LIMITS } from '../services/ml/transfer/transferConstants';
 import { TransferError } from '../services/ml/transfer/transferErrors';
@@ -79,6 +84,7 @@ router.get(
     requireAdmin,
     READ_LIMITER,
     requireAiMlEnabled,
+    AI_TRANSFER_IN_FLIGHT_LIMITER,
     async (req: Request, res: Response) => {
         try {
             const modelId = String(req.query.modelId ?? '');
@@ -90,6 +96,8 @@ router.get(
         } catch (e) {
             if (e instanceof TransferError) sendTransferError(res, e);
             else sendInternalError(res, 'AiTransferRoute', e);
+        } finally {
+            releaseTransferSlot(req);
         }
     }
 );
@@ -101,6 +109,7 @@ router.post(
     requireAdmin,
     EXPORT_LIMITER,
     requireAiMlEnabled,
+    AI_TRANSFER_IN_FLIGHT_LIMITER,
     async (req: Request, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
@@ -133,6 +142,8 @@ router.post(
         } catch (e) {
             if (e instanceof TransferError) sendTransferError(res, e);
             else sendInternalError(res, 'AiTransferRoute', e);
+        } finally {
+            releaseTransferSlot(req);
         }
     }
 );
@@ -144,7 +155,9 @@ router.post(
     requireAdmin,
     WRITE_LIMITER,
     requireAiMlEnabled,
+    AI_TRANSFER_IN_FLIGHT_LIMITER,
     sokmlRaw,
+    releaseTransferSlotOnError,
     async (req: Request, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
@@ -163,6 +176,8 @@ router.post(
         } catch (e) {
             if (e instanceof TransferError) sendTransferError(res, e);
             else sendInternalError(res, 'AiTransferRoute', e);
+        } finally {
+            releaseTransferSlot(req);
         }
     }
 );
@@ -174,7 +189,9 @@ router.post(
     requireAdmin,
     WRITE_LIMITER,
     requireAiMlEnabled,
+    AI_TRANSFER_IN_FLIGHT_LIMITER,
     sokmlRaw,
+    releaseTransferSlotOnError,
     async (req: Request, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
@@ -195,6 +212,8 @@ router.post(
         } catch (e) {
             if (e instanceof TransferError) sendTransferError(res, e);
             else sendInternalError(res, 'AiTransferRoute', e);
+        } finally {
+            releaseTransferSlot(req);
         }
     }
 );

@@ -240,6 +240,50 @@ describe('P7 round-trip', () => {
         expect(await prisma.aiModel.count()).toBe(countBefore + 1);
     }, 30000);
 
+    it('równoległy import tego samego pakietu kończy się jednym IMPORTED i jednym ALREADY_IMPORTED', async () => {
+        const freshVersion = uniqVersion();
+        const freshId = await seedModel(freshVersion);
+        const pkg = await buildModelPackage(freshId, UID);
+        createdTransferIds.push(pkg.transferId);
+        await prisma.aiModel.delete({ where: { id: freshId } });
+        const { record } = await runDryRun(pkg.buffer, UID);
+
+        const results = await Promise.allSettled([
+            importPackage(pkg.buffer, record.id, UID),
+            importPackage(pkg.buffer, record.id, UID)
+        ]);
+        const fulfilled = results.flatMap((result) =>
+            result.status === 'fulfilled' ? [result.value] : []
+        );
+        for (const result of fulfilled) {
+            if (result.status === 'IMPORTED') createdModelIds.push(result.modelId);
+            createdTransferIds.push(result.transferId);
+        }
+        const statuses = results
+            .map((result) => (result.status === 'fulfilled' ? result.value.status : 'REJECTED'))
+            .sort();
+
+        expect(statuses).toEqual(['ALREADY_IMPORTED', 'IMPORTED']);
+        expect(await prisma.aiModel.count({ where: { version: freshVersion } })).toBe(1);
+        expect(
+            await prisma.aiTransfer.count({
+                where: { packageFingerprint: pkg.packageFingerprint, direction: 'IMPORT' }
+            })
+        ).toBe(1);
+    }, 30000);
+
+    it('po restarcie magazynu dry-run import wymaga ponownej analizy pakietu', async () => {
+        const pkg = await buildModelPackage(modelId, UID);
+        createdTransferIds.push(pkg.transferId);
+        const { record } = await runDryRun(pkg.buffer, UID);
+
+        clearDryRuns(); // odtworzenie procesu: magazyn jest celowo tylko w pamięci
+
+        await expect(importPackage(pkg.buffer, record.id, UID)).rejects.toMatchObject({
+            code: 'DRY_RUN_NOT_FOUND'
+        });
+    });
+
     it('import cudzego pakietu na starym dryRunId → DRY_RUN_PACKAGE_MISMATCH', async () => {
         const pkgA = await buildModelPackage(modelId, UID);
         createdTransferIds.push(pkgA.transferId);
