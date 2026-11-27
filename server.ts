@@ -12,6 +12,10 @@ import { cronService } from './src/utils/cronService';
 import { APP_NAME } from './src/constants/appMeta';
 import { shouldWarnPublicBind } from './src/utils/bindGuard';
 import prisma from './src/prismaClient';
+import {
+    startAiOperationalMetricsPersistence,
+    stopAiOperationalMetricsPersistence
+} from './src/services/ml/aiOperationalMetrics';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 // W produkcji domyślnie bind do loopback — HTTPS terminuje reverse proxy (Caddy/Nginx).
@@ -75,6 +79,8 @@ process.on('uncaughtException', (err: Error) => {
         process.exit(1);
     }
 
+    startAiOperationalMetricsPersistence();
+
     const server = app.listen(PORT, HOST, () => {
         logger.info('Server', `${APP_NAME} — serwer działa na: http://localhost:${PORT}`);
         logger.info('Server', `Tryb: ${NODE_ENV === 'production' ? 'PRODUKCJA' : 'DEVELOPMENT'}`);
@@ -126,6 +132,11 @@ process.on('uncaughtException', (err: Error) => {
                 'Błąd przy zamykaniu CronService:',
                 err instanceof Error ? err.message : String(err)
             );
+        }
+        try {
+            await stopAiOperationalMetricsPersistence();
+        } catch {
+            logger.warn('Server', 'Nie udało się zapisać końcowego agregatu metryk AI.');
         }
         try {
             await prisma.$disconnect();

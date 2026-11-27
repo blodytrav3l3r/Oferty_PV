@@ -62,6 +62,44 @@ function loadDashboard(metricsPromise?: Promise<unknown>) {
                                                 item_error: 0,
                                                 request_error: 0
                                             }
+                                        },
+                                        history: {
+                                            status: 'ready',
+                                            windowDays: 30,
+                                            truncated: false,
+                                            updatedAt: '2026-11-27T10:30:00.000Z',
+                                            inference: {
+                                                n: 8,
+                                                p50Ms: 5,
+                                                p95Ms: 10,
+                                                p99Ms: 25,
+                                                p50Overflow: false,
+                                                p95Overflow: false,
+                                                p99Overflow: false,
+                                                overflowSamples: 0
+                                            },
+                                            predictions: {
+                                                total: 5,
+                                                byOutcome: {
+                                                    success: 3,
+                                                    validation_rejected: 1,
+                                                    model_unavailable: 0,
+                                                    invalid_score: 0,
+                                                    server_error: 1
+                                                }
+                                            },
+                                            rewards: {
+                                                total: 4,
+                                                byOutcome: {
+                                                    applied: 2,
+                                                    duplicate: 1,
+                                                    invalid: 0,
+                                                    not_found: 0,
+                                                    forbidden: 1,
+                                                    item_error: 0,
+                                                    request_error: 0
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -141,11 +179,11 @@ describe('mlHealthDashboard data freshness', () => {
         expect(host?.textContent).toContain('sieć: 1');
         expect(host?.textContent).toContain('API predykcji p95 / p99');
         expect(host?.textContent).toContain('42 / 84 ms');
-        expect(host?.textContent).toContain('Inferencja modelu p95 / p99');
-        expect(host?.textContent).toContain('0.2 / 0.3 ms');
-        expect(host?.textContent).toContain('Wyniki predykcji · od restartu');
+        expect(host?.textContent).toContain('Inferencja globalnie · 30 dni');
+        expect(host?.textContent).toContain('≤ 10 / ≤ 25 ms');
+        expect(host?.textContent).toContain('Predykcje globalnie · 30 dni');
         expect(host?.textContent).toContain('walidacja: 1');
-        expect(host?.textContent).toContain('Wyniki feedbacku · od restartu');
+        expect(host?.textContent).toContain('Feedback globalnie · 30 dni');
         expect(host?.textContent).toContain('duplikat: 1');
         expect(host?.textContent).toContain('Błędy API reward');
         expect(host?.textContent).toContain('5xx / 5 ostatnich żądań');
@@ -165,7 +203,10 @@ describe('mlHealthDashboard data freshness', () => {
         const host = document.getElementById('health');
         expect(host?.textContent).toContain('Ostatnia telemetria');
         expect(host?.textContent).toContain('ładowanie metryk procesu');
+        expect(host?.textContent).toContain('ładowanie historii metryk');
+        expect(host?.textContent).not.toContain('brak utrwalonych próbek');
         expect(host?.textContent).not.toContain('42 / 84 ms');
+        expect(host?.querySelectorAll('[data-lucide="clock"]').length).toBeGreaterThan(0);
 
         resolveMetrics({
             endpoints: {
@@ -178,5 +219,72 @@ describe('mlHealthDashboard data freshness', () => {
         });
         await new Promise((resolve) => setTimeout(resolve, 0));
         expect(host?.textContent).toContain('42 / 84 ms');
+    });
+
+    it('distinguishes a failed history request from an empty history', async () => {
+        document.body.innerHTML = '<div id="health"></div>';
+        loadDashboard(Promise.reject(new Error('metrics unavailable'))).mlHealthRender('health');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        const host = document.getElementById('health');
+        expect(host?.textContent).toContain('historia PostgreSQL niedostępna');
+        expect(host?.textContent).not.toContain('brak utrwalonych zdarzeń');
+    });
+
+    it('marks truncated totals as partial and stale history as stale', async () => {
+        document.body.innerHTML = '<div id="health"></div>';
+        const staleUpdatedAt = new Date(Date.now() - 10 * 60_000).toISOString();
+        const metrics = {
+            ai: {
+                history: {
+                    status: 'ready',
+                    windowDays: 30,
+                    truncated: true,
+                    updatedAt: staleUpdatedAt,
+                    inference: {
+                        n: 100,
+                        p50Ms: 10,
+                        p95Ms: 50,
+                        p99Ms: 100,
+                        p50Overflow: false,
+                        p95Overflow: false,
+                        p99Overflow: false,
+                        overflowSamples: 0
+                    },
+                    predictions: {
+                        total: 60,
+                        byOutcome: {
+                            success: 60,
+                            validation_rejected: 0,
+                            model_unavailable: 0,
+                            invalid_score: 0,
+                            server_error: 0
+                        }
+                    },
+                    rewards: {
+                        total: 40,
+                        byOutcome: {
+                            applied: 40,
+                            duplicate: 0,
+                            invalid: 0,
+                            not_found: 0,
+                            forbidden: 0,
+                            item_error: 0,
+                            request_error: 0
+                        }
+                    }
+                }
+            }
+        };
+        loadDashboard(Promise.resolve(metrics)).mlHealthRender('health');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        const host = document.getElementById('health');
+        expect(host?.textContent).toContain('≥ 60');
+        expect(host?.textContent).toContain('≥ 40');
+        expect(host?.textContent).toContain('częściowy odczyt');
+        expect(host?.textContent).toContain('ostatni zapis');
+        expect(host?.textContent).toContain('nieaktualne');
+        expect(host?.textContent).toContain('Predykcje globalnie · 30 dni');
     });
 });

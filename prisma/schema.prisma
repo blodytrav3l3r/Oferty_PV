@@ -740,6 +740,20 @@ model AiEvaluation {
   @@index([triggeredAt], map: "idx_aieval_triggered")
 }
 
+// Privacy-safe, bounded operational rollups; processId is never exposed by the API.
+model AiOperationalMetricBucket {
+  processId        String
+  bucketDay        DateTime @db.Timestamptz(3)
+  inferenceCount   Int
+  latencyHistogram Int[]
+  predictionOutcomes Int[]
+  rewardOutcomes   Int[]
+  updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+
+  @@id([processId, bucketDay])
+  @@index([bucketDay], map: "idx_ai_operational_metrics_day")
+}
+
 // =============================================================================
 // FAZA 6: Reward Log — logi nagród i kar za decyzje użytkownika
 // =============================================================================

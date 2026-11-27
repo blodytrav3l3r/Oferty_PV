@@ -18,6 +18,7 @@ import swaggerSpec from './swagger';
 import { ensureAdminExists } from './middleware/auth';
 import { requireAuth, requireAdmin } from './middleware/auth';
 import { getMetricsSnapshot } from './utils/metrics';
+import { getAiOperationalMetricsHistory } from './services/ml/aiOperationalMetrics';
 import { getDatabaseSize } from './services/databaseSize';
 import { getPdfMetrics } from './services/pdf/pdfEngine';
 import healthPdfRouter from './routes/healthPdf';
@@ -223,7 +224,7 @@ app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
  * /metrics:
  *   get:
  *     tags: [System]
- *     summary: Metryki in-process (admin) — P50/P95/P99 per endpoint, DB, loop-lag, PDF
+ *     summary: Metryki admina — process-local oraz 30-dniowa historia AI z PostgreSQL
  *     responses:
  *       200:
  *         description: Snapshot metryk JSON
@@ -233,9 +234,16 @@ app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
  *         description: Wymagana rola admin
  */
 app.get('/metrics', requireAuth, requireAdmin, async (_req, res) => {
-    const databaseSize = await getDatabaseSize();
+    const [databaseSize, aiHistory] = await Promise.all([
+        getDatabaseSize(),
+        getAiOperationalMetricsHistory()
+    ]);
     const metrics = getMetricsSnapshot(getPdfMetrics());
-    res.json({ ...metrics, storage: { ...metrics.storage, ...databaseSize } });
+    res.json({
+        ...metrics,
+        ai: { ...metrics.ai, history: aiHistory },
+        storage: { ...metrics.storage, ...databaseSize }
+    });
 });
 
 /* ===== DOKUMENTACJA API (Swagger) ===== */

@@ -34,16 +34,29 @@ let samplerStarted = false;
 let draftFailures = 0;
 const draftFailuresByReason = new Map<string, number>();
 
-export type AiPredictionOutcome =
-    'success' | 'validation_rejected' | 'model_unavailable' | 'invalid_score' | 'server_error';
-export type AiRewardOutcome =
-    | 'applied'
-    | 'duplicate'
-    | 'invalid'
-    | 'not_found'
-    | 'forbidden'
-    | 'item_error'
-    | 'request_error';
+export const AI_PREDICTION_OUTCOMES = [
+    'success',
+    'validation_rejected',
+    'model_unavailable',
+    'invalid_score',
+    'server_error'
+] as const;
+export const AI_REWARD_OUTCOMES = [
+    'applied',
+    'duplicate',
+    'invalid',
+    'not_found',
+    'forbidden',
+    'item_error',
+    'request_error'
+] as const;
+export const AI_LATENCY_BUCKET_UPPER_BOUNDS_MS = [
+    1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000
+] as const;
+const MAX_AI_METRIC_DAYS_IN_MEMORY = 31;
+
+export type AiPredictionOutcome = (typeof AI_PREDICTION_OUTCOMES)[number];
+export type AiRewardOutcome = (typeof AI_REWARD_OUTCOMES)[number];
 
 type AiOutcomeCounts<T extends string> = Record<T, number>;
 
@@ -68,6 +81,94 @@ let aiInferenceSamples: number[] = [];
 let aiInferenceCount = 0;
 let aiPredictionOutcomes = createAiPredictionCounts();
 let aiRewardOutcomes = createAiRewardCounts();
+export interface AiOperationalMetricBucketSnapshot {
+    bucketDay: Date;
+    inferenceCount: number;
+    latencyHistogram: number[];
+    predictionOutcomes: number[];
+    rewardOutcomes: number[];
+}
+
+const aiOperationalMetricBuckets = new Map<string, AiOperationalMetricBucketSnapshot>();
+
+function getUtcDayStart(date = new Date()): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function getCurrentAiOperationalMetricBucket(): AiOperationalMetricBucketSnapshot {
+    const bucketDay = getUtcDayStart();
+    const key = bucketDay.toISOString();
+    const existing = aiOperationalMetricBuckets.get(key);
+    if (existing) return existing;
+
+    const created: AiOperationalMetricBucketSnapshot = {
+        bucketDay,
+        inferenceCount: 0,
+        latencyHistogram: Array(AI_LATENCY_BUCKET_UPPER_BOUNDS_MS.length + 1).fill(0),
+        predictionOutcomes: Array(AI_PREDICTION_OUTCOMES.length).fill(0),
+        rewardOutcomes: Array(AI_REWARD_OUTCOMES.length).fill(0)
+    };
+    aiOperationalMetricBuckets.set(key, created);
+    while (aiOperationalMetricBuckets.size > MAX_AI_METRIC_DAYS_IN_MEMORY) {
+        const oldestKey = [...aiOperationalMetricBuckets.keys()].sort()[0];
+        if (!oldestKey || oldestKey === key) break;
+        aiOperationalMetricBuckets.delete(oldestKey);
+    }
+    return created;
+}
+
+function incrementArrayAt(values: number[], index: number): number[] {
+    if (index < 0 || index >= values.length) return values;
+    return values.map((value, itemIndex) =>
+        itemIndex === index ? Math.min(Number.MAX_SAFE_INTEGER, value + 1) : value
+    );
+}
+
+function recordAiLatencyBucket(ms: number): void {
+    const daily = getCurrentAiOperationalMetricBucket();
+    const bucketIndex = AI_LATENCY_BUCKET_UPPER_BOUNDS_MS.findIndex(
+        (upperBound) => ms <= upperBound
+    );
+    const index = bucketIndex < 0 ? AI_LATENCY_BUCKET_UPPER_BOUNDS_MS.length : bucketIndex;
+    aiOperationalMetricBuckets.set(daily.bucketDay.toISOString(), {
+        ...daily,
+        inferenceCount: Math.min(Number.MAX_SAFE_INTEGER, daily.inferenceCount + 1),
+        latencyHistogram: incrementArrayAt(daily.latencyHistogram, index)
+    });
+}
+
+function recordAiOutcomeBucket(kind: 'prediction' | 'reward', outcome: string): void {
+    const outcomes = kind === 'prediction' ? AI_PREDICTION_OUTCOMES : AI_REWARD_OUTCOMES;
+    const index = outcomes.indexOf(outcome as never);
+    if (index < 0) return;
+    const daily = getCurrentAiOperationalMetricBucket();
+    aiOperationalMetricBuckets.set(daily.bucketDay.toISOString(), {
+        ...daily,
+        [kind === 'prediction' ? 'predictionOutcomes' : 'rewardOutcomes']: incrementArrayAt(
+            kind === 'prediction' ? daily.predictionOutcomes : daily.rewardOutcomes,
+            index
+        )
+    });
+}
+
+export function getAiOperationalMetricBuckets(): AiOperationalMetricBucketSnapshot[] {
+    return [...aiOperationalMetricBuckets.values()]
+        .sort((a, b) => a.bucketDay.getTime() - b.bucketDay.getTime())
+        .map((bucket) => ({
+            ...bucket,
+            bucketDay: new Date(bucket.bucketDay),
+            latencyHistogram: [...bucket.latencyHistogram],
+            predictionOutcomes: [...bucket.predictionOutcomes],
+            rewardOutcomes: [...bucket.rewardOutcomes]
+        }));
+}
+
+export function acknowledgeAiOperationalMetricBuckets(bucketDays: string[]): void {
+    const currentDay = getUtcDayStart().toISOString();
+    for (const bucketDay of bucketDays) {
+        if (bucketDay !== currentDay) aiOperationalMetricBuckets.delete(bucketDay);
+    }
+}
 
 function pct(sorted: number[], p: number): number {
     if (sorted.length === 0) return 0;
@@ -170,6 +271,7 @@ export function recordAiInference(ms: number): void {
     if (!Number.isFinite(ms) || ms < 0) return;
     aiInferenceSamples = [...aiInferenceSamples, ms].slice(-RING);
     aiInferenceCount = Math.min(Number.MAX_SAFE_INTEGER, aiInferenceCount + 1);
+    recordAiLatencyBucket(ms);
 }
 
 function incrementAiOutcome<T extends string>(
@@ -182,10 +284,12 @@ function incrementAiOutcome<T extends string>(
 
 export function recordAiPredictionOutcome(outcome: AiPredictionOutcome): void {
     aiPredictionOutcomes = incrementAiOutcome(aiPredictionOutcomes, outcome);
+    recordAiOutcomeBucket('prediction', outcome);
 }
 
 export function recordAiRewardOutcome(outcome: AiRewardOutcome): void {
     aiRewardOutcomes = incrementAiOutcome(aiRewardOutcomes, outcome);
+    recordAiOutcomeBucket('reward', outcome);
 }
 
 export interface StorageSnapshot {
@@ -365,4 +469,5 @@ export function resetMetrics(): void {
     aiInferenceCount = 0;
     aiPredictionOutcomes = createAiPredictionCounts();
     aiRewardOutcomes = createAiRewardCounts();
+    aiOperationalMetricBuckets.clear();
 }

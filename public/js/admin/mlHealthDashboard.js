@@ -17,9 +17,12 @@
     }
 
     function healthCard(title, value, ok, subtitle, tooltip) {
-        const icon = ok
-            ? '<i data-lucide="check-circle" class="icon-md" style="color:var(--success)"></i>'
-            : '<i data-lucide="alert-circle" class="icon-md" style="color:var(--warn)"></i>';
+        const icon =
+            ok === null
+                ? '<i data-lucide="clock" class="icon-md" style="color:var(--muted)"></i>'
+                : ok
+                  ? '<i data-lucide="check-circle" class="icon-md" style="color:var(--success)"></i>'
+                  : '<i data-lucide="alert-circle" class="icon-md" style="color:var(--warn)"></i>';
         const sub = subtitle ? '<div class="ai-health-subtitle">' + subtitle + '</div>' : '';
         return (
             '<div class="ai-health-card"' +
@@ -36,6 +39,32 @@
             sub +
             '</div>' +
             '</div>'
+        );
+    }
+
+    function aiHistoryState(history, metricsLoaded) {
+        if (!metricsLoaded) return 'ładowanie historii metryk';
+        if (!history || history.status !== 'ready') return 'historia PostgreSQL niedostępna';
+        if (!history.updatedAt) return 'brak utrwalonej historii';
+
+        const updatedAt = Date.parse(history.updatedAt);
+        if (!Number.isFinite(updatedAt)) return 'czas zapisu historii nieznany';
+        const prefix = Date.now() - updatedAt > 5 * 60_000 ? 'nieaktualne · ' : '';
+        return prefix + 'ostatni zapis: ' + timeAgo(history.updatedAt);
+    }
+
+    function aiHistoryTotal(total, isTruncated) {
+        return isTruncated ? '≥ ' + total : total;
+    }
+
+    function aiHistoryDetail(history, metricsLoaded, emptyText) {
+        if (!metricsLoaded || !history || history.status !== 'ready') {
+            return aiHistoryState(history, metricsLoaded);
+        }
+        if (!history.updatedAt) return emptyText;
+        return (
+            aiHistoryState(history, metricsLoaded) +
+            (history.truncated ? ' · częściowy odczyt' : '')
         );
     }
 
@@ -102,6 +131,17 @@
                         runtimeMetrics && runtimeMetrics.endpoints ? runtimeMetrics.endpoints : {};
                     const aiMetrics =
                         runtimeMetrics && runtimeMetrics.ai ? runtimeMetrics.ai : null;
+                    const aiHistory = aiMetrics && aiMetrics.history ? aiMetrics.history : null;
+                    const hasAiHistory = aiHistory && aiHistory.status === 'ready';
+                    const aiHistoryStale =
+                        hasAiHistory &&
+                        !!aiHistory.updatedAt &&
+                        Number.isFinite(Date.parse(aiHistory.updatedAt)) &&
+                        Date.now() - Date.parse(aiHistory.updatedAt) > 5 * 60_000;
+                    const formatAiQuantile = function (value, overflow) {
+                        if (overflow) return '> 5000';
+                        return Number.isFinite(value) ? '≤ ' + value : '—';
+                    };
                     const predictionApi = endpoints['POST /api/telemetry/ai/predict/batch'] || null;
                     const rewardApi = endpoints['POST /api/telemetry/ai/reward'] || null;
                     const rewardBatchApi = endpoints['POST /api/telemetry/ai/reward-batch'] || null;
@@ -184,37 +224,78 @@
                             'Czas całego endpointu HTTP z ostatnich próbek procesu, nie czysty czas modelu; próbki resetują się po restarcie.'
                         ) +
                         healthCard(
-                            'Inferencja modelu p95 / p99',
-                            aiMetrics && aiMetrics.inference.recent.n > 0
-                                ? aiMetrics.inference.p95 + ' / ' + aiMetrics.inference.p99 + ' ms'
+                            'Inferencja globalnie · 30 dni',
+                            hasAiHistory && aiHistory.inference.n > 0
+                                ? formatAiQuantile(
+                                      aiHistory.inference.p95Ms,
+                                      aiHistory.inference.p95Overflow
+                                  ) +
+                                      ' / ' +
+                                      formatAiQuantile(
+                                          aiHistory.inference.p99Ms,
+                                          aiHistory.inference.p99Overflow
+                                      ) +
+                                      ' ms'
                                 : '—',
-                            !!(aiMetrics && aiMetrics.inference.recent.n > 0),
-                            aiMetrics
-                                ? 'próbki model.predict: ' + aiMetrics.inference.recent.n
-                                : metricsLoaded
-                                  ? 'brak próbek procesu'
-                                  : 'ładowanie metryk procesu',
-                            'Czas samego synchronicznego model.predict; bez normalizacji, cache i reszty endpointu. Ostatnie maksymalnie 512 próbek; reset po restarcie procesu.'
+                            !metricsLoaded
+                                ? null
+                                : !!(
+                                      hasAiHistory &&
+                                      aiHistory.inference.n > 0 &&
+                                      !aiHistory.truncated &&
+                                      !aiHistoryStale
+                                  ),
+                            hasAiHistory
+                                ? aiHistoryTotal(aiHistory.inference.n, aiHistory.truncated) +
+                                      ' próbek · ' +
+                                      aiHistoryDetail(
+                                          aiHistory,
+                                          metricsLoaded,
+                                          'brak utrwalonych próbek'
+                                      )
+                                : aiHistoryDetail(
+                                      aiHistory,
+                                      metricsLoaded,
+                                      'brak utrwalonych próbek'
+                                  ),
+                            'Globalne czasy wszystkich wersji modelu. Szacowane percentyle z histogramu synchronicznego model.predict, bez normalizacji i cache. Historia z PostgreSQL za 30 dni; granice kubełków są przybliżeniem, próbki powyżej 5000 ms są oznaczane osobno.'
                         ) +
                         healthCard(
-                            'Wyniki predykcji · od restartu',
-                            aiMetrics ? aiMetrics.predictions.total : '—',
-                            !!(aiMetrics && aiMetrics.predictions.byOutcome.server_error === 0),
-                            aiMetrics
+                            'Predykcje globalnie · 30 dni',
+                            hasAiHistory
+                                ? aiHistoryTotal(aiHistory.predictions.total, aiHistory.truncated)
+                                : '—',
+                            !metricsLoaded
+                                ? null
+                                : !!(
+                                      hasAiHistory &&
+                                      !aiHistory.truncated &&
+                                      !aiHistoryStale &&
+                                      aiHistory.predictions.byOutcome.server_error === 0
+                                  ),
+                            hasAiHistory
                                 ? 'OK: ' +
-                                      aiMetrics.predictions.byOutcome.success +
+                                      aiHistory.predictions.byOutcome.success +
                                       ' · walidacja: ' +
-                                      aiMetrics.predictions.byOutcome.validation_rejected +
+                                      aiHistory.predictions.byOutcome.validation_rejected +
                                       ' · brak modelu: ' +
-                                      aiMetrics.predictions.byOutcome.model_unavailable +
+                                      aiHistory.predictions.byOutcome.model_unavailable +
                                       ' · błędne score: ' +
-                                      aiMetrics.predictions.byOutcome.invalid_score +
+                                      aiHistory.predictions.byOutcome.invalid_score +
                                       ' · 5xx: ' +
-                                      aiMetrics.predictions.byOutcome.server_error
-                                : metricsLoaded
-                                  ? 'brak próbek procesu'
-                                  : 'ładowanie metryk procesu',
-                            'Licznik outcome route batch prediction od startu procesu; fixed categories, bez identyfikatorów. Reset po restarcie.'
+                                      aiHistory.predictions.byOutcome.server_error +
+                                      ' · ' +
+                                      aiHistoryDetail(
+                                          aiHistory,
+                                          metricsLoaded,
+                                          'brak utrwalonych zdarzeń'
+                                      )
+                                : aiHistoryDetail(
+                                      aiHistory,
+                                      metricsLoaded,
+                                      'brak utrwalonych zdarzeń'
+                                  ),
+                            'Globalne wyniki wszystkich wersji modelu: predykcje batch z ostatnich 30 dni. Stałe kategorie, bez identyfikatorów użytkowników ani ofert; źródło: PostgreSQL. Przy ograniczonym odczycie suma jest dolną granicą.'
                         ) +
                         healthCard(
                             'Błędy API reward',
@@ -228,29 +309,43 @@
                             'Licznik błędów HTTP 5xx dla POST /ai/reward i POST /ai/reward-batch z ostatnich próbek procesu.'
                         ) +
                         healthCard(
-                            'Wyniki feedbacku · od restartu',
-                            aiMetrics ? aiMetrics.rewards.total : '—',
-                            !!(
-                                aiMetrics &&
-                                aiMetrics.rewards.byOutcome.item_error === 0 &&
-                                aiMetrics.rewards.byOutcome.request_error === 0
-                            ),
-                            aiMetrics
+                            'Feedback globalnie · 30 dni',
+                            hasAiHistory
+                                ? aiHistoryTotal(aiHistory.rewards.total, aiHistory.truncated)
+                                : '—',
+                            !metricsLoaded
+                                ? null
+                                : !!(
+                                      hasAiHistory &&
+                                      !aiHistory.truncated &&
+                                      !aiHistoryStale &&
+                                      aiHistory.rewards.byOutcome.item_error === 0 &&
+                                      aiHistory.rewards.byOutcome.request_error === 0
+                                  ),
+                            hasAiHistory
                                 ? 'zapis: ' +
-                                      aiMetrics.rewards.byOutcome.applied +
+                                      aiHistory.rewards.byOutcome.applied +
                                       ' · duplikat: ' +
-                                      aiMetrics.rewards.byOutcome.duplicate +
+                                      aiHistory.rewards.byOutcome.duplicate +
                                       ' · odrzucone: ' +
-                                      (aiMetrics.rewards.byOutcome.invalid +
-                                          aiMetrics.rewards.byOutcome.not_found +
-                                          aiMetrics.rewards.byOutcome.forbidden) +
+                                      (aiHistory.rewards.byOutcome.invalid +
+                                          aiHistory.rewards.byOutcome.not_found +
+                                          aiHistory.rewards.byOutcome.forbidden) +
                                       ' · błędy pozycji/żądania: ' +
-                                      (aiMetrics.rewards.byOutcome.item_error +
-                                          aiMetrics.rewards.byOutcome.request_error)
-                                : metricsLoaded
-                                  ? 'brak próbek procesu'
-                                  : 'ładowanie metryk procesu',
-                            'Licznik single request i outcome pozycji batch reward od startu procesu. Stałe kategorie bez wellId; reset po restarcie.'
+                                      (aiHistory.rewards.byOutcome.item_error +
+                                          aiHistory.rewards.byOutcome.request_error) +
+                                      ' · ' +
+                                      aiHistoryDetail(
+                                          aiHistory,
+                                          metricsLoaded,
+                                          'brak utrwalonych zdarzeń'
+                                      )
+                                : aiHistoryDetail(
+                                      aiHistory,
+                                      metricsLoaded,
+                                      'brak utrwalonych zdarzeń'
+                                  ),
+                            'Globalne wyniki wszystkich wersji modelu: pojedynczy reward i pozycje batch za ostatnie 30 dni. Stałe kategorie, bez wellId; źródło: PostgreSQL. Przy ograniczonym odczycie suma jest dolną granicą.'
                         ) +
                         healthCard(
                             'Model',
