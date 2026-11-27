@@ -338,4 +338,18 @@ describe('mlDualRanking.buildFeatureVector (realne cechy kandydatów)', () => {
         expect(fv[12]).toBe(420); // totalPrice
         expect(fv[13]).toBe(210); // totalWeight
     });
+
+    test('uzupełnia brakującą cenę lub wagę bez podwajania obecnej wartości', () => {
+        const well = makeWell();
+        const priceOnly = { ...makeSolution(['KDB-1000-500', 'KDZ-1000-500']), totalPrice: 999 };
+        const weightOnly = { ...makeSolution(['KDB-1000-500', 'KDZ-1000-500']), totalWeight: 777 };
+
+        const priceFeatures = buildFeatureVector(priceOnly, well);
+        const weightFeatures = buildFeatureVector(weightOnly, well);
+
+        expect(priceFeatures[12]).toBe(999);
+        expect(priceFeatures[13]).toBe(210);
+        expect(weightFeatures[12]).toBe(420);
+        expect(weightFeatures[13]).toBe(777);
+    });
 });

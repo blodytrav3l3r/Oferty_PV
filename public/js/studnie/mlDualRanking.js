@@ -409,9 +409,16 @@
         // totalPrice/totalWeight: kandydaci z solve() nie mają layout.totalPrice/Weight —
         // licz z komponentów rozwiązania (wzór jak telemetryBridge.js), żeby model widział
         // koszty przy rankingowaniu (wcześniej zawsze 0 → cechy martwe na serve).
+        const hasLayoutTotalPrice = Boolean(layout.totalPrice);
+        const hasLayoutTotalWeight = Boolean(layout.totalWeight);
         let totalPrice = layout.totalPrice || 0;
         let totalWeight = layout.totalWeight || 0;
-        if ((!totalPrice || !totalWeight) && typeof window.studnieProducts !== 'undefined') {
+        if (
+            (!hasLayoutTotalPrice || !hasLayoutTotalWeight) &&
+            typeof window.studnieProducts !== 'undefined'
+        ) {
+            let componentPrice = 0;
+            let componentWeight = 0;
             const itemLists = [
                 ...(layout.kregItems || []),
                 ...(layout.topItems || []),
@@ -425,10 +432,12 @@
                         ? getStudnieProductById(it.productId)
                         : window.studnieProducts.find((p) => p.id === it.productId);
                 if (prod) {
-                    totalPrice += (parseFloat(prod.price) || 0) * (it.quantity || 1);
-                    totalWeight += (parseFloat(prod.weight) || 0) * (it.quantity || 1);
+                    componentPrice += (parseFloat(prod.price) || 0) * (it.quantity || 1);
+                    componentWeight += (parseFloat(prod.weight) || 0) * (it.quantity || 1);
                 }
             }
+            if (!hasLayoutTotalPrice) totalPrice = componentPrice;
+            if (!hasLayoutTotalWeight) totalWeight = componentWeight;
             // GAP D (K3): recalcGaskets dokłada uszczelki do well.config, więc trening
             // (telemetryBridge sumuje configItems Z uszczelkami) ma wyższą totalPrice/
             // totalWeight niż serve (layout nie zawiera uszczelek). Dodaj koszt uszczelek
@@ -443,8 +452,12 @@
                     );
                     if (gasketProd) {
                         const qty = sealQtyByDn[dnStr];
-                        totalPrice += (parseFloat(gasketProd.price) || 0) * qty;
-                        totalWeight += (parseFloat(gasketProd.weight) || 0) * qty;
+                        if (!hasLayoutTotalPrice) {
+                            totalPrice += (parseFloat(gasketProd.price) || 0) * qty;
+                        }
+                        if (!hasLayoutTotalWeight) {
+                            totalWeight += (parseFloat(gasketProd.weight) || 0) * qty;
+                        }
                     }
                 }
             }
