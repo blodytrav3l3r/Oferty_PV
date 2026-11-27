@@ -27,22 +27,28 @@ export interface ExtendedMetrics {
  * Gdy brak pozytywów (tp+fn=0) — AUC nieokreślone → null.
  */
 export function computePrAuc(predictions: number[], labels: number[]): number | null {
+    if (predictions.length === 0 || predictions.length !== labels.length) return null;
+    if (predictions.some((prediction) => !Number.isFinite(prediction))) return null;
+
     const positives = labels.reduce((acc, l) => acc + (l === 1 ? 1 : 0), 0);
-    if (positives === 0 || labels.length === 0) return null;
+    if (positives === 0) return null;
 
     const pairs = predictions.map((p, i) => ({ p, l: labels[i] })).sort((a, b) => b.p - a.p);
 
     let tp = 0;
     let fp = 0;
-    let prevP = -1;
     const points: Array<{ r: number; pr: number }> = [];
-    for (const { p, l } of pairs) {
-        if (l === 1) tp++;
-        else fp++;
-        if (p !== prevP) {
-            points.push({ r: tp / positives, pr: tp / (tp + fp || 1) });
-            prevP = p;
+
+    for (let index = 0; index < pairs.length;) {
+        const score = pairs[index].p;
+        let nextIndex = index;
+        while (nextIndex < pairs.length && pairs[nextIndex].p === score) {
+            if (pairs[nextIndex].l === 1) tp++;
+            else fp++;
+            nextIndex++;
         }
+        points.push({ r: tp / positives, pr: tp / (tp + fp || 1) });
+        index = nextIndex;
     }
 
     // Trapez między kolejnymi punktami krzywej, startując z (0, 1).

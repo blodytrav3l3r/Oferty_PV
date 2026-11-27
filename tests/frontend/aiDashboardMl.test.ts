@@ -130,6 +130,7 @@ describe('aiDashboardMl metryki', () => {
         expect(html).toContain('0.7310');
         expect(html).toContain('ROC-AUC testowy');
         expect(html).toContain('0.7600');
+        expect(host.querySelectorAll('h5.ai-ml-group-label')).toHaveLength(4);
         expect(html).not.toContain('Baseline vs Model');
         expect(html).not.toContain(' pp');
     });
@@ -177,9 +178,13 @@ describe('aiDashboardMl metryki', () => {
         win.aiRenderMlStatus(host);
 
         expect(host.textContent).toContain('loading');
+        expect(host.querySelector('[role="status"][aria-live="polite"]')).not.toBeNull();
         resolveStatus(STATUS);
         await tick();
         expect(host.textContent).toContain('ML Pipeline');
+        expect(host.querySelector('[role="status"][aria-live="polite"]')?.textContent).toContain(
+            'wczytane'
+        );
     });
 
     it('pokazuje jawny błąd, gdy początkowe pobranie statusu jest niedostępne', async () => {
@@ -194,6 +199,7 @@ describe('aiDashboardMl metryki', () => {
         await tick();
 
         expect(host.textContent).toContain('error:unavailable');
+        expect(host.querySelector('[role="alert"]')).not.toBeNull();
         expect(host.querySelector('.ai-ml-refresh-btn')).toBeNull();
     });
 

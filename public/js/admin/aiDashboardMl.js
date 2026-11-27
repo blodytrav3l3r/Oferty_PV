@@ -178,14 +178,20 @@
         if (isRefresh) {
             setRefreshState(container, 'Odświeżanie…', true);
         } else {
-            container.innerHTML = window.aiLoadingHtml();
+            container.innerHTML =
+                '<div role="status" aria-live="polite" aria-atomic="true">' +
+                window.aiLoadingHtml() +
+                '</div>';
         }
         const renderError = function (errorCode) {
             if (isRefresh && errorCode !== 'forbidden' && errorCode !== 'unauthorized') {
                 setRefreshState(container, 'Dane nieaktualne — nie udało się odświeżyć.', false);
                 return;
             }
-            container.innerHTML = window.aiApiErrorHtml(errorCode);
+            container.innerHTML =
+                '<div role="alert" aria-atomic="true">' +
+                window.aiApiErrorHtml(errorCode) +
+                '</div>';
         };
         const ENDPOINTS = getEndpoints();
         const pStatus = window.fetchJson(ENDPOINTS.mlStatus);
@@ -250,24 +256,26 @@
                     : 'Pochodzenie metryk dla aktywnego modelu jest niedostępne.';
                 const mlGroup = function (label, gridClass, cards) {
                     return (
-                        '<div class="ai-ml-group">' +
-                        '<div class="ai-ml-group-label"><i data-lucide="circle" style="width:6px;height:6px;fill:currentColor"></i>' +
+                        '<section class="ai-ml-group">' +
+                        '<h5 class="ai-ml-group-label"><i data-lucide="circle" style="width:6px;height:6px;fill:currentColor" aria-hidden="true"></i>' +
                         window.escapeHtml(label) +
-                        '</div>' +
+                        '</h5>' +
                         '<div class="ai-ml-group-grid ' +
                         gridClass +
                         '">' +
                         cards.join('') +
                         '</div>' +
-                        '</div>'
+                        '</section>'
                     );
                 };
                 const refreshedAt = new Date().toLocaleString('pl-PL');
                 let html =
-                    '<div class="ai-ml-toolbar"><h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
+                    '<div class="ai-ml-toolbar"><h4 class="ai-ml-header"><i data-lucide="activity" aria-hidden="true"></i> ML Pipeline</h4>' +
                     '<div class="ai-ml-refresh-controls"><span class="ai-ml-source-note">Źródło: /ai/ml-status i /ai/models</span><span class="ai-ml-updated-at">Ostatnia aktualizacja: ' +
                     window.escapeHtml(refreshedAt) +
-                    '</span><span class="ai-ml-refresh-state" role="status" aria-live="polite"></span><button type="button" class="ai-btn ai-ml-refresh-btn" aria-label="Odśwież status AI/ML" title="Pobierz aktualne dane"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button></div></div>' +
+                    '</span><span class="ai-ml-refresh-state" role="status" aria-live="polite" aria-atomic="true">' +
+                    (isRefresh ? 'Dane ML odświeżone.' : 'Dane ML wczytane.') +
+                    '</span><button type="button" class="ai-btn ai-ml-refresh-btn" aria-label="Odśwież status AI/ML" title="Pobierz aktualne dane"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button></div></div>' +
                     mlGroup('Status i model', 'ai-ml-col-5', [
                         window.aiStatCard(
                             'Status',

@@ -30,12 +30,29 @@ describe('computePrAuc', () => {
         expect(auc!).toBeLessThan(0.3);
     });
 
+    it('remisowe score liczy jako jedną grupę niezależnie od kolejności etykiet', () => {
+        const predictions = [0.9, 0.5, 0.5, 0.1];
+        const positiveFirst = computePrAuc(predictions, [1, 1, 0, 0]);
+        const negativeFirst = computePrAuc(predictions, [1, 0, 1, 0]);
+
+        expect(positiveFirst).toBeCloseTo(11 / 12, 10);
+        expect(negativeFirst).toBeCloseTo(11 / 12, 10);
+    });
+
     it('brak pozytywów → null (nieokreślone)', () => {
         expect(computePrAuc([0.5, 0.6], [0, 0])).toBeNull();
     });
 
     it('pusty zbiór → null', () => {
         expect(computePrAuc([], [])).toBeNull();
+    });
+
+    it('różne długości wejściowych tablic → null', () => {
+        expect(computePrAuc([0.8, 0.2], [1])).toBeNull();
+    });
+
+    it('niefinitywny score → null bez zawieszenia', () => {
+        expect(computePrAuc([0.8, Number.NaN, 0.2], [1, 0, 0])).toBeNull();
     });
 });
 
