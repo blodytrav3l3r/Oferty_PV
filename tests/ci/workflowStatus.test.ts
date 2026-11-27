@@ -118,6 +118,14 @@ describe('P2.3 e2e classification', () => {
         }
     });
 
+    it('AI dashboard smoke jest blokującym gate, nie testem advisory', () => {
+        const smokeStart = CI.indexOf('    e2e-smoke:');
+        const extendedStart = CI.indexOf('    e2e-extended:', smokeStart);
+        const blockingSection = CI.slice(smokeStart, extendedStart);
+        expect(blockingSection).toMatch(/aiDashboardSmoke\.spec\.ts/);
+        expect(CI.slice(extendedStart)).not.toMatch(/aiDashboardSmoke\.spec\.ts/);
+    });
+
     it('brak pr-gate: pokrycie version/prisma/prices jest w jobach push-only', () => {
         expect(CI).not.toMatch(/^\s{4}pr-gate:/m);
         const versionCheck = CI.slice(

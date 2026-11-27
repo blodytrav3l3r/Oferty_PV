@@ -601,8 +601,12 @@ jobs:
             - name: Setup Chromium (Playwright)
               run: npx playwright install --with-deps chromium
 
-            - name: Run smoke E2E (playwright.config webServer)
-              run: npx playwright test tests/playwright/smokeOfferFlow.spec.ts --project=chromium
+            - name: Run blocking smoke E2E (oferta + AI dashboard)
+              run: >-
+                  npx playwright test
+                  tests/playwright/smokeOfferFlow.spec.ts
+                  tests/playwright/aiDashboardSmoke.spec.ts
+                  --project=chromium
 
     e2e-extended:
         name: E2E — extended regressions (raport, nie blokuje)
@@ -681,7 +685,7 @@ jobs:
                   BASE_URL: 'http://localhost:3198'
               run: node tests/playwright/spa-guard.cjs
 
-            - name: E2E spec — care + AI dashboard (reuse :3198)
+            - name: E2E spec — care panel (reuse :3198)
               env:
                   PLAYWRIGHT_PORT: '3198'
                   PLAYWRIGHT_BASE_URL: 'http://localhost:3198'
@@ -691,7 +695,6 @@ jobs:
                     tests/playwright/carePanel.spec.ts \
                     tests/playwright/carePanelContact.spec.ts \
                     tests/playwright/carePanelR2R3.spec.ts \
-                    tests/playwright/aiDashboardSmoke.spec.ts \
                     --project=chromium
 
             - name: Stop serwera
