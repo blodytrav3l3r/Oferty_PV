@@ -1,4 +1,5 @@
 const queryRawUnsafe = jest.fn();
+const recoverInterruptedRuns = jest.fn();
 const settingsUpsert = jest.fn();
 const ensureAdminExists = jest.fn();
 const ensureBaselineVersionsAtStartup = jest.fn();
@@ -11,7 +12,10 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         $queryRawUnsafe: (...args: unknown[]) => queryRawUnsafe(...args),
-        settings: { upsert: (...args: unknown[]) => settingsUpsert(...args) }
+        settings: { upsert: (...args: unknown[]) => settingsUpsert(...args) },
+        aiTrainingRun: {
+            updateMany: (...args: unknown[]) => recoverInterruptedRuns(...args)
+        }
     },
     Prisma: { empty: '', sql: () => '', raw: (s: string) => s, join: () => '' }
 }));
@@ -52,6 +56,7 @@ import { logger } from '../src/utils/logger';
 beforeEach(() => {
     jest.clearAllMocks();
     queryRawUnsafe.mockResolvedValue([{ '?column?': 1 }]);
+    recoverInterruptedRuns.mockResolvedValue({ count: 0 });
     ensureAdminExists.mockResolvedValue(undefined);
     ensureBaselineVersionsAtStartup.mockResolvedValue(undefined);
     ensureSlaConfigRow.mockResolvedValue({
@@ -83,6 +88,7 @@ describe('initApp', () => {
         await initApp();
 
         expect(ensureAdminExists).toHaveBeenCalledTimes(1);
+        expect(recoverInterruptedRuns).toHaveBeenCalledTimes(1);
         expect(ensureBaselineVersionsAtStartup).toHaveBeenCalledTimes(1);
         expect(ensureSlaConfigRow).toHaveBeenCalledTimes(1);
         expect(ensureStarterModelExists).toHaveBeenCalledTimes(1);

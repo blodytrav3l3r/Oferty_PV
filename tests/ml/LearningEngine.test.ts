@@ -26,7 +26,8 @@ jest.mock('../../src/prismaClient', () => {
             ai_knowledge_base: mockAiKnowledgeBase,
             $transaction: jest.fn<any>((fn: (tx: any) => Promise<any>) =>
                 fn({
-                    ai_knowledge_base: mockAiKnowledgeBase
+                    ai_knowledge_base: mockAiKnowledgeBase,
+                    $queryRaw: jest.fn<any>().mockResolvedValue([{ value: '["learning-user"]' }])
                 })
             )
         }
@@ -44,6 +45,7 @@ jest.mock('../../src/utils/logger', () => ({
 function makeRecord(dn: string, overrides: Record<string, unknown> = {}) {
     return {
         id: 'test-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        userId: 'learning-user',
         dn,
         warehouse: 'KLB',
         wellType: 'standard',
@@ -83,7 +85,9 @@ function makeRecord(dn: string, overrides: Record<string, unknown> = {}) {
 describe('LearningEngine', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mockFindUnique.mockResolvedValue(null);
+        mockFindUnique.mockImplementation(async ({ where }: any) =>
+            where.key === 'ai_training_user_ids' ? { value: '["learning-user"]' } : null
+        );
         mockFindMany.mockResolvedValue([]);
         mockFindFirstKb.mockResolvedValue(null);
         mockCreateKb.mockResolvedValue({ id: 'kb-id' });

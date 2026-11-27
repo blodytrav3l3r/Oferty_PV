@@ -35,13 +35,11 @@ const mockRecordAcceptance = jest.fn<any>().mockResolvedValue(undefined);
 // D-FIX-3: route woła recordManualIfAbsent (check+insert pod lockiem serwisu)
 // zamiast findFirst + recordConfig wprost.
 const mockRecordManualIfAbsent = jest.fn<any>().mockResolvedValue({ created: false });
-const mockRecordEvent = jest.fn<any>().mockResolvedValue(undefined);
 
 jest.mock('../src/services/telemetry', () => ({
     telemetryService: {
         recordAcceptance: (...args: any[]) => mockRecordAcceptance(...args),
-        recordManualIfAbsent: (...args: any[]) => mockRecordManualIfAbsent(...args),
-        recordEvent: (...args: any[]) => mockRecordEvent(...args)
+        recordManualIfAbsent: (...args: any[]) => mockRecordManualIfAbsent(...args)
     }
 }));
 
@@ -69,7 +67,6 @@ describe('POST /api/telemetry/ai/acceptance-full (A3)', () => {
     beforeEach(() => {
         mockRecordAcceptance.mockClear();
         mockRecordManualIfAbsent.mockClear();
-        mockRecordEvent.mockClear();
     });
 
     async function postAcceptanceFull(body: any) {
@@ -102,6 +99,18 @@ describe('POST /api/telemetry/ai/acceptance-full (A3)', () => {
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ success: true });
         expect(mockRecordAcceptance).toHaveBeenCalledTimes(1);
+        expect(mockRecordAcceptance.mock.calls[0]).toEqual([
+            'well-w1',
+            true,
+            'well-w1',
+            expect.objectContaining({
+                event: expect.objectContaining({
+                    eventType: 'accept',
+                    wellId: 'well-w1',
+                    telemetryId: 'well-w1'
+                })
+            })
+        ]);
         expect(mockRecordManualIfAbsent).toHaveBeenCalledTimes(1);
         const [wellId, config, userId] = mockRecordManualIfAbsent.mock.calls[0] as any[];
         expect(wellId).toBe('well-w1');
@@ -109,7 +118,6 @@ describe('POST /api/telemetry/ai/acceptance-full (A3)', () => {
         expect(config.solverSource).toBe('MANUAL');
         expect(config.selectionReason).toBe('user_accepted_post_solver');
         expect(userId).toBeUndefined();
-        expect(mockRecordEvent).toHaveBeenCalledTimes(1);
     });
 
     it('wellId undefined → brak capture (guard wellId, brak wołania serwisu)', async () => {
