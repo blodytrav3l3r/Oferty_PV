@@ -66,7 +66,9 @@
                 const refreshedAt = new Date().toLocaleString('pl-PL');
                 host.innerHTML =
                     '<div class="ai-section-title ai-prediction-section-title"><i data-lucide="bar-chart-3" aria-hidden="true"></i> Akcje i próbki predykcji</div>' +
-                    '<div class="ai-ml-source-note ai-prediction-source-note">Źródło: /ai/predictions/stats · zakres: historyczne zdarzenia reward; score z ostatnich max. 100 rekordów · odczyt: ' +
+                    '<div class="ai-ml-source-note ai-prediction-source-note">Źródło: /ai/predictions/stats · score: zweryfikowane przez serwer, jedna wersja modelu (' +
+                    window.escapeHtml(stats.scoreModelVersion || 'brak danych') +
+                    '), maks. 100 rekordów · odczyt: ' +
                     window.escapeHtml(refreshedAt) +
                     '</div>' +
                     '<div class="ai-prediction-stats-grid">' +
@@ -77,10 +79,10 @@
                         'Łączna liczba rekordów aiRewardLog; nie jest to suma wartości reward.'
                     ) +
                     window.aiStatCard(
-                        'Próbki ze score',
+                        'Zweryfikowane próbki score',
                         countLabel(stats.recentCount),
                         'var(--accent2)',
-                        'Liczba rekordów scoreBefore w próbce ostatnich maksymalnie 100 zdarzeń.'
+                        'Liczba zapisanych przez serwer wyników predykcji przypisanych do jednej wersji modelu; nie obejmuje starych ani niezweryfikowanych score.'
                     ) +
                     '<div class="ai-prediction-action-breakdown"><strong>Rozkład zdarzeń</strong>' +
                     (actionCounts.length

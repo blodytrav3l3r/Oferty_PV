@@ -417,7 +417,7 @@ describe('aiDashboardMl metryki', () => {
         expect(stats.textContent).toContain('3');
         expect(stats.textContent).toContain('REJECT');
         expect(stats.textContent).toContain('2');
-        expect(stats.textContent).toContain('Próbki ze score');
+        expect(stats.textContent).toContain('Zweryfikowane próbki score');
         expect(stats.textContent).not.toContain('suma wartości reward');
     });
 

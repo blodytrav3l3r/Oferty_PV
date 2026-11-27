@@ -60,6 +60,7 @@ import {
     buildDriftReport
 } from '../../src/services/ml/driftService';
 import { computeTrainingUserScopeFingerprint } from '../../src/services/ml/trainingLineage';
+import { addVerifiedPredictionProvenance } from '../../src/services/ml/predictionProvenance';
 import type { StoredModel } from '../../src/services/ml/ModelRegistry';
 import type { TransitionAggregates } from '../../src/services/ml/TrainingPipeline';
 
@@ -334,36 +335,75 @@ describe('rawFeatureValue (transition*)', () => {
 });
 
 describe('computePredictionDrift', () => {
-    it('null gdy za mało próbek (poniżej 2 okien)', async () => {
-        mockFindMany.mockResolvedValueOnce([{ scoreBefore: 0.5 }, { scoreBefore: 0.6 }]);
-        const r = await computePredictionDrift();
+    let rewardSequence = 0;
+    const rewardRow = (score: number, modelVersion = 'model-v1') => {
+        const id = `reward-${rewardSequence++}`;
+        return {
+            id,
+            configSnapshot: JSON.stringify(
+                addVerifiedPredictionProvenance(
+                    undefined,
+                    {
+                        score,
+                        modelVersion,
+                        verifiedAt: '2026-11-27T12:00:00.000Z'
+                    },
+                    id
+                )
+            )
+        };
+    };
+
+    it('zwraca brak metryki gdy nie ma wystarczającej liczby zweryfikowanych próbek', async () => {
+        mockFindMany.mockResolvedValueOnce([rewardRow(0.5), rewardRow(0.6)]);
+        const r = await computePredictionDrift('model-v1');
         expect(r.psi).toBeNull();
         expect(r.currentSamples).toBe(0);
-        expect(r.reliability).toBe('UNVERIFIED');
-        expect(r.reason).toBe('client_score_unverified');
+        expect(r.reliability).toBe('UNAVAILABLE');
+        expect(r.reason).toBe('insufficient_verified_samples');
     });
 
-    it('PSI ~0 gdy score stabilne', async () => {
-        const rows = Array.from({ length: 200 }, (_, i) => ({
-            scoreBefore: 0.5 + (i % 5) * 0.01
-        }));
+    it('liczy PSI tylko dla serwerowo zweryfikowanych wyników aktywnej wersji', async () => {
+        const rows = Array.from({ length: 200 }, (_, i) => rewardRow(0.5 + (i % 5) * 0.01));
         mockFindMany.mockResolvedValueOnce(rows);
-        const r = await computePredictionDrift();
+        const r = await computePredictionDrift('model-v1');
         expect(r.psi).not.toBeNull();
         expect(r.psi!).toBeLessThan(0.2);
         expect(r.currentSamples).toBe(100);
         expect(r.baselineSamples).toBe(100);
-        expect(r.reliability).toBe('UNVERIFIED');
+        expect(r.reliability).toBe('VERIFIED');
+        expect(mockFindMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { scoreBefore: { not: null } },
+                orderBy: { createdAt: 'desc' },
+                take: expect.any(Number),
+                select: { id: true, configSnapshot: true }
+            })
+        );
     });
 
     it('wysoki PSI gdy bieżące score przesunięte względem historycznych', async () => {
         const rows = [
-            ...Array.from({ length: 100 }, () => ({ scoreBefore: 0.1 })),
-            ...Array.from({ length: 100 }, () => ({ scoreBefore: 0.9 }))
+            ...Array.from({ length: 100 }, () => rewardRow(0.1)),
+            ...Array.from({ length: 100 }, () => rewardRow(0.9))
         ];
         mockFindMany.mockResolvedValueOnce(rows);
-        const r = await computePredictionDrift();
+        const r = await computePredictionDrift('model-v1');
         expect(r.psi!).toBeGreaterThan(0.5);
+    });
+
+    it('nie miesza wyników różnych wersji i odrzuca dawne niezaufane score', async () => {
+        mockFindMany.mockResolvedValueOnce([
+            ...Array.from({ length: 20 }, () => rewardRow(0.1, 'old-model')),
+            ...Array.from({ length: 20 }, (_, index) => ({
+                id: `legacy-${index}`,
+                configSnapshot: '{"dn":"1000"}'
+            }))
+        ]);
+        const r = await computePredictionDrift('model-v1');
+        expect(r.psi).toBeNull();
+        expect(r.baselineSamples).toBe(0);
+        expect(r.reliability).toBe('UNAVAILABLE');
     });
 });
 

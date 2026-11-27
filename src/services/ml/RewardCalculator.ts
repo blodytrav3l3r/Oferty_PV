@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import prisma from '../../prismaClient';
 import type { Prisma } from '../../../generated/prisma-postgres/client';
 import { logger } from '../../utils/logger';
+import { addVerifiedPredictionProvenance, type VerifiedPrediction } from './predictionProvenance';
 
 export interface RewardEvent {
     userId: string;
@@ -12,6 +13,7 @@ export interface RewardEvent {
     scoreAfter?: number;
     wasAiRanked?: boolean;
     configSnapshot?: Record<string, unknown>;
+    verifiedPrediction?: VerifiedPrediction;
 }
 
 export type RewardActionTransactionWork = (transaction: Prisma.TransactionClient) => Promise<void>;
@@ -74,22 +76,32 @@ export class RewardCalculator {
             );
         }
 
+        const rewardId = crypto.randomUUID();
+        const rewardSnapshot =
+            event.configSnapshot || event.verifiedPrediction
+                ? JSON.stringify(
+                      addVerifiedPredictionProvenance(
+                          event.configSnapshot,
+                          event.verifiedPrediction ?? null,
+                          rewardId
+                      )
+                  )
+                : null;
+
         try {
             await prisma.$transaction(async (tx) => {
                 await tx.aiRewardLog.create({
                     data: {
-                        id: crypto.randomUUID(),
+                        id: rewardId,
                         userId: event.userId,
                         wellId,
                         dn: event.dn ?? 0,
                         action: event.action,
                         reward,
-                        scoreBefore: event.scoreBefore ?? null,
+                        scoreBefore: event.verifiedPrediction?.score ?? event.scoreBefore ?? null,
                         scoreAfter: event.scoreAfter ?? null,
                         wasAiRanked: event.wasAiRanked ?? false,
-                        configSnapshot: event.configSnapshot
-                            ? JSON.stringify(event.configSnapshot)
-                            : null,
+                        configSnapshot: rewardSnapshot,
                         createdAt: new Date().toISOString()
                     }
                 });

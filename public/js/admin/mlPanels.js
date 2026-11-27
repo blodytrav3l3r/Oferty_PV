@@ -463,13 +463,25 @@
                         (pred.baselineSamples || 0) +
                         ')'
                       : 'brak próbek — min. 20 score';
+            const predictionDriftNote =
+                pred.reliability === 'VERIFIED'
+                    ? 'Zweryfikowane próbki serwera dla modelu ' +
+                      window.escapeHtml(pred.modelVersion || '—') +
+                      '; porównanie obejmuje wyłącznie tę wersję.'
+                    : pred.reason === 'active_model_unavailable'
+                      ? 'Metryka niedostępna: brak aktywnego modelu.'
+                      : pred.reason === 'insufficient_verified_samples'
+                        ? 'Metryka niedostępna: potrzeba co najmniej 20 zweryfikowanych próbek tej wersji modelu.'
+                        : 'Metryka niedostępna: nie można potwierdzić pochodzenia próbek.';
             const predCard =
                 '<div class="ai-drift-card"><strong>Prediction drift</strong><br>' +
                 psiBadge(pred.psi != null ? pred.psi : null) +
                 '<div class="fs-sm-muted-2px">PSI rozkładu score</div>' +
                 '<div class="fs-sm-muted-2px--compact">' +
                 window.escapeHtml(predSamplesTxt) +
-                '</div><div class="ai-drift-provenance">Niewiarygodny sygnał: zapis score pochodzi z żądania klienta bez zweryfikowanego dowodu i bez wersji modelu; okna mogą łączyć fałszywe wyniki oraz różne wersje.</div></div>';
+                '</div><div class="ai-drift-provenance">' +
+                predictionDriftNote +
+                '</div></div>';
             const featureCount = Array.isArray(data.feature) ? data.feature.length : 0;
             const trainingScope = data.trainingScope || {};
             const scopeUnavailable = trainingScope.status === 'UNAVAILABLE';

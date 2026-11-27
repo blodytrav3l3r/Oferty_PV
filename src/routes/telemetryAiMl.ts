@@ -35,15 +35,40 @@ import {
     clearPredictionCache,
     predictionCacheSize,
     issuePredictionProof,
-    consumePredictionProof
+    claimPredictionProof,
+    commitPredictionProof,
+    isPredictionProofClaimed,
+    releasePredictionProof
 } from '../services/ml/predictionCache';
 import { getTrainingUserIds } from '../services/ml/trainingUsers';
+import type { VerifiedPrediction } from '../services/ml/predictionProvenance';
 
 const router = Router();
 type FallbackOutcomeReason = z.infer<typeof fallbackOutcomeReasonSchema>;
 const COMPATIBILITY_SAMPLE_LIMIT = 500;
 const ONLINE_AUC_ERROR_LOG_INTERVAL_MS = 5 * 60 * 1000;
 let lastOnlineAucErrorLogAt: number | null = null;
+let lastRewardAucErrorLogAt: number | null = null;
+
+class PredictionProofInProgressError extends Error {
+    constructor() {
+        super('Prediction proof is being processed');
+        this.name = 'PredictionProofInProgressError';
+    }
+}
+
+function logRewardAucDiagnosticFailure(error: unknown): void {
+    const now = Date.now();
+    if (
+        lastRewardAucErrorLogAt !== null &&
+        now - lastRewardAucErrorLogAt < ONLINE_AUC_ERROR_LOG_INTERVAL_MS
+    ) {
+        return;
+    }
+    lastRewardAucErrorLogAt = now;
+    const errorName = error instanceof Error ? error.name : 'UnknownError';
+    logger.error('AiRewardRoute', `Online AUC feedback diagnostic failed (${errorName})`);
+}
 
 function logOnlineAucDiagnosticFailure(error: unknown): void {
     const now = Date.now();
@@ -432,11 +457,11 @@ async function processRewardItem(
         }
     }
 
-    const result = await applyRewardItem(data, user);
-    if (result.status === 'applied') {
-        await recordTrustedPredictionResult(data, user, telemetryWell);
+    const result = await applyRewardItem(data, user, undefined, undefined, telemetryWell);
+    if (result.status === 'applied' && result.trustedPrediction) {
+        recordTrustedPredictionResult(data, result.trustedPrediction);
     }
-    return result;
+    return { status: result.status };
 }
 
 /**
@@ -503,12 +528,12 @@ async function canWriteRewardTarget(
     return offer ? canWriteDoc(user, offer.userId) : user?.role === 'admin';
 }
 
-async function recordTrustedPredictionResult(
+async function resolveTrustedPrediction(
     data: RewardItemInput,
     user: AuthenticatedRequest['user'],
     owner: RewardTelemetryOwner | undefined,
     trainingAllowlist?: readonly string[]
-): Promise<void> {
+): Promise<{ prediction: VerifiedPrediction; claimId: string; token: string } | null> {
     if (
         !user?.id ||
         !data.predictionToken ||
@@ -518,32 +543,71 @@ async function recordTrustedPredictionResult(
         owner.trainingEligible !== true ||
         owner.userId !== user.id
     ) {
-        return;
+        return null;
     }
-    const allowlist = trainingAllowlist ?? (await getTrainingUserIds());
-    if (!allowlist.includes(owner.userId)) return;
-    if (data.action !== 'ACCEPT' && data.action !== 'REJECT' && data.action !== 'MODIFY') return;
+    let allowlist = trainingAllowlist;
+    if (!allowlist) {
+        try {
+            allowlist = await getTrainingUserIds();
+        } catch (error: unknown) {
+            logRewardAucDiagnosticFailure(error);
+            return null;
+        }
+    }
+    if (!allowlist.includes(owner.userId)) return null;
+    if (data.action !== 'ACCEPT' && data.action !== 'REJECT' && data.action !== 'MODIFY')
+        return null;
 
-    const prediction = consumePredictionProof(
+    const claim = claimPredictionProof(
         data.predictionToken,
         user.id,
         data.wellId,
         data.scoreBefore
     );
-    if (!prediction) return;
-    selfEvaluation.recordPredictionResult(
-        data.action === 'ACCEPT' ? 1 : 0,
-        prediction.score,
-        prediction.version
-    );
+    if (!claim) {
+        if (isPredictionProofClaimed(data.predictionToken)) {
+            throw new PredictionProofInProgressError();
+        }
+        return null;
+    }
+    return {
+        prediction: {
+            score: claim.score,
+            modelVersion: claim.version,
+            verifiedAt: new Date().toISOString()
+        },
+        claimId: claim.claimId,
+        token: data.predictionToken
+    };
+}
+
+function recordTrustedPredictionResult(
+    data: RewardItemInput,
+    prediction: VerifiedPrediction
+): void {
+    try {
+        selfEvaluation.recordPredictionResult(
+            data.action === 'ACCEPT' ? 1 : 0,
+            prediction.score,
+            prediction.modelVersion
+        );
+    } catch (error: unknown) {
+        logRewardAucDiagnosticFailure(error);
+    }
 }
 
 async function applyRewardItem(
     data: RewardItemInput,
     user: AuthenticatedRequest['user'],
     preTarget?: RewardTarget,
-    knownOfferOwners?: ReadonlyMap<string, string | null>
-): Promise<{ status: 'duplicate' } | { status: 'applied' } | { status: 'forbidden' }> {
+    knownOfferOwners?: ReadonlyMap<string, string | null>,
+    owner?: RewardTelemetryOwner,
+    trainingAllowlist?: readonly string[]
+): Promise<
+    | { status: 'duplicate' }
+    | { status: 'applied'; trustedPrediction: VerifiedPrediction | null }
+    | { status: 'forbidden' }
+> {
     // P1 reward ownership: silny negatyw (REJECT, −1.0) i korekta etykiety
     // (MODIFY) tylko z prawem zapisu do właściciela ETYKIETOWANEJ sugestii.
     // Gate PRZED jakimkolwiek zapisem (także przed aiRewardLog).
@@ -560,31 +624,43 @@ async function applyRewardItem(
         }
     }
 
+    const predictionClaim = await resolveTrustedPrediction(data, user, owner, trainingAllowlist);
+    const trustedPrediction = predictionClaim?.prediction ?? null;
     const targetId = target?.id ?? null;
     const flags = data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
     const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
-    const applied = await rewardCalculator.processAction(
-        {
-            userId: user?.id || 'unknown',
-            action: data.action,
-            wellId: data.wellId,
-            dn: data.dn,
-            scoreBefore: data.scoreBefore,
-            scoreAfter: data.scoreAfter,
-            wasAiRanked: data.wasAiRanked,
-            configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
-        },
-        async (tx) => {
-            if (!targetId || (data.action !== 'MODIFY' && data.action !== 'REJECT')) return;
-            await tx.ai_telemetry_logs.update({ where: { id: targetId }, data: flags });
-            await featureExtractor.updateLabelByTelemetry(targetId, label, tx);
+    let shouldConsumeProof = false;
+    try {
+        const applied = await rewardCalculator.processAction(
+            {
+                userId: user?.id || 'unknown',
+                action: data.action,
+                wellId: data.wellId,
+                dn: data.dn,
+                scoreBefore: trustedPrediction?.score ?? data.scoreBefore,
+                scoreAfter: data.scoreAfter,
+                wasAiRanked: data.wasAiRanked,
+                configSnapshot: data.configSnapshot as Record<string, unknown> | undefined,
+                verifiedPrediction: trustedPrediction ?? undefined
+            },
+            async (tx) => {
+                if (!targetId || (data.action !== 'MODIFY' && data.action !== 'REJECT')) return;
+                await tx.ai_telemetry_logs.update({ where: { id: targetId }, data: flags });
+                await featureExtractor.updateLabelByTelemetry(targetId, label, tx);
+            }
+        );
+        shouldConsumeProof = true;
+        if (!applied.applied) return { status: 'duplicate' };
+        return { status: 'applied', trustedPrediction };
+    } finally {
+        if (predictionClaim) {
+            if (shouldConsumeProof) {
+                commitPredictionProof(predictionClaim.token, predictionClaim.claimId);
+            } else {
+                releasePredictionProof(predictionClaim.token, predictionClaim.claimId);
+            }
         }
-    );
-    if (!applied.applied) {
-        return { status: 'duplicate' };
     }
-
-    return { status: 'applied' };
 }
 
 router.post(
@@ -761,7 +837,14 @@ router.post(
                     );
                 })
             );
-            const trainingAllowlist = hasTrustedFeedbackCandidate ? await getTrainingUserIds() : [];
+            let trainingAllowlist: readonly string[] = [];
+            if (hasTrustedFeedbackCandidate) {
+                try {
+                    trainingAllowlist = await getTrainingUserIds();
+                } catch (error: unknown) {
+                    logRewardAucDiagnosticFailure(error);
+                }
+            }
 
             const applied: string[] = [];
             const duplicates: string[] = [];
@@ -798,10 +881,14 @@ router.post(
                         item,
                         user,
                         targetByIndex.get(idx),
-                        offerOwner
+                        offerOwner,
+                        wellRow,
+                        trainingAllowlist
                     );
                     if (result.status === 'applied') {
-                        await recordTrustedPredictionResult(item, user, wellRow, trainingAllowlist);
+                        if (result.trustedPrediction) {
+                            recordTrustedPredictionResult(item, result.trustedPrediction);
+                        }
                         recordAiRewardOutcome('applied');
                         applied.push(item.wellId);
                     } else if (result.status === 'forbidden') {

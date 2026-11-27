@@ -125,6 +125,40 @@ describe('RewardCalculator.processAction — A-19', () => {
         expect(createArgs.data.scoreBefore).toBe(0.5);
         expect(createArgs.data.scoreAfter).toBe(0.9);
     });
+
+    it('zapisuje proof serwera w transakcji i nadpisuje niezaufany score klienta', async () => {
+        await rewardCalculator.processAction({
+            userId: 'u1',
+            wellId: 'w1',
+            action: 'ACCEPT',
+            scoreBefore: 0.1,
+            wasAiRanked: true,
+            configSnapshot: {
+                dn: '1000',
+                _sokAiPredictionProof: { score: 0.1, modelVersion: 'forged' }
+            },
+            verifiedPrediction: {
+                score: 0.82,
+                modelVersion: 'model-v3',
+                verifiedAt: '2026-11-27T12:00:00.000Z'
+            }
+        });
+
+        const createArgs = mockCreate.mock.calls[0][0] as {
+            data: { id: string; scoreBefore: number; configSnapshot: string };
+        };
+        expect(createArgs.data.scoreBefore).toBe(0.82);
+        expect(JSON.parse(createArgs.data.configSnapshot)).toEqual({
+            dn: '1000',
+            _sokAiPredictionProof: {
+                schemaVersion: 1,
+                rewardId: createArgs.data.id,
+                score: 0.82,
+                modelVersion: 'model-v3',
+                verifiedAt: '2026-11-27T12:00:00.000Z'
+            }
+        });
+    });
 });
 
 describe('RewardCalculator.processAction — pre-check dedup (koniec prisma:error)', () => {

@@ -49,7 +49,14 @@ describe('AI dashboard telemetry quality labels', () => {
                 reason: 'allowlist_scope_changed',
                 modelVersion: 'v1'
             },
-            prediction: { psi: null, baselineSamples: 0, currentSamples: 0 },
+            prediction: {
+                psi: null,
+                baselineSamples: 0,
+                currentSamples: 0,
+                reliability: 'UNAVAILABLE',
+                reason: 'insufficient_verified_samples',
+                modelVersion: 'v1'
+            },
             label: { currentPositiveRate: null, trainingPositiveRate: null, delta: null },
             shadow: {}
         });
@@ -59,7 +66,7 @@ describe('AI dashboard telemetry quality labels', () => {
         expect(html).toContain(
             'Zakres użytkowników różni się od zakresu użytego przy trenowaniu modelu v1'
         );
-        expect(html).toContain('score pochodzi z żądania klienta');
+        expect(html).toContain('potrzeba co najmniej 20 zweryfikowanych próbek tej wersji modelu');
         expect(html).not.toContain('Uruchom trening aby ustalić rozkłady referencyjne');
     });
 

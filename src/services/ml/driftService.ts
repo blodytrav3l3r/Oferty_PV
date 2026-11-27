@@ -28,6 +28,7 @@ import { ML_CONSTANTS } from '../../config/mlConstants';
 import type { StoredModel } from './ModelRegistry';
 import { computeTrainingUserScopeFingerprint } from './trainingLineage';
 import { findEligibleLabeledFeatures, getTrainingUsersConfig } from './trainingUsers';
+import { parseVerifiedPredictionProvenance } from './predictionProvenance';
 
 export interface FeatureDriftEntry {
     feature: string;
@@ -45,8 +46,8 @@ export interface DriftReport {
         psi: number | null;
         baselineSamples: number;
         currentSamples: number;
-        reliability: 'UNAVAILABLE' | 'UNVERIFIED';
-        reason: string;
+        reliability: 'UNAVAILABLE' | 'VERIFIED';
+        reason: string | null;
     };
     label: {
         currentPositiveRate: number | null;
@@ -196,31 +197,45 @@ export async function computeFeatureDrift(
 }
 
 /**
- * Prediction drift: PSI rozkładu score produkcyjnych (aiRewardLog.scoreBefore,
- * serwerowe score) między bieżącym oknem a wcześniejszym.
+ * Prediction drift: PSI serwerowo potwierdzonych score dla aktywnej wersji modelu.
  */
-export async function computePredictionDrift(): Promise<{
+export async function computePredictionDrift(modelVersion: string | null): Promise<{
     psi: number | null;
     baselineSamples: number;
     currentSamples: number;
-    reliability: 'UNVERIFIED';
-    reason: 'client_score_unverified';
+    modelVersion: string | null;
+    reliability: 'UNAVAILABLE' | 'VERIFIED';
+    reason: string | null;
 }> {
+    if (!modelVersion) {
+        return {
+            psi: null,
+            baselineSamples: 0,
+            currentSamples: 0,
+            modelVersion: null,
+            reliability: 'UNAVAILABLE',
+            reason: 'active_model_unavailable'
+        };
+    }
+
     const recent = await prisma.aiRewardLog.findMany({
         where: { scoreBefore: { not: null } },
         orderBy: { createdAt: 'desc' },
-        take: WINDOW * 2
+        take: WINDOW * 2,
+        select: { id: true, configSnapshot: true }
     });
-    const scores = recent
-        .map((r) => r.scoreBefore)
-        .filter((s): s is number => typeof s === 'number');
+    const scores = recent.flatMap((row) => {
+        const proof = parseVerifiedPredictionProvenance(row.configSnapshot, row.id);
+        return proof?.modelVersion === modelVersion ? [proof.score] : [];
+    });
     if (scores.length < 2 * 10) {
         return {
             psi: null,
             baselineSamples: scores.length,
             currentSamples: 0,
-            reliability: 'UNVERIFIED',
-            reason: 'client_score_unverified'
+            modelVersion,
+            reliability: 'UNAVAILABLE',
+            reason: 'insufficient_verified_samples'
         };
     }
     // Dzielimy dostępne próbki na pół (current = nowsze, baseline = starsze) —
@@ -237,8 +252,9 @@ export async function computePredictionDrift(): Promise<{
         psi,
         baselineSamples: baseline.length,
         currentSamples: current.length,
-        reliability: 'UNVERIFIED',
-        reason: 'client_score_unverified'
+        modelVersion,
+        reliability: 'VERIFIED',
+        reason: null
     };
 }
 

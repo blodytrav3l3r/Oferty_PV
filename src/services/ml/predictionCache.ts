@@ -57,8 +57,21 @@ export function predictionCacheSize(): number {
 /** One-time server proof linking a model score to its user, well and version. */
 const predictionProofs = new Map<
     string,
-    { userId: string; wellId: string; score: number; version: string; expiresAt: number }
+    {
+        userId: string;
+        wellId: string;
+        score: number;
+        version: string;
+        expiresAt: number;
+        claimId: string | null;
+    }
 >();
+
+export interface PredictionProofClaim {
+    score: number;
+    version: string;
+    claimId: string;
+}
 
 export function issuePredictionProof(
     userId: string,
@@ -80,9 +93,44 @@ export function issuePredictionProof(
         wellId,
         score,
         version,
-        expiresAt: now + PREDICTION_PROOF_TTL_MS
+        expiresAt: now + PREDICTION_PROOF_TTL_MS,
+        claimId: null
     });
     return token;
+}
+
+export function claimPredictionProof(
+    token: string,
+    userId: string,
+    wellId: string,
+    score: number
+): PredictionProofClaim | null {
+    const proof = predictionProofs.get(token);
+    if (!proof || proof.expiresAt <= Date.now() || proof.claimId !== null) return null;
+    if (proof.userId !== userId || proof.wellId !== wellId) return null;
+    if (Math.abs(proof.score - score) > 0.01) return null;
+
+    const claimId = randomUUID();
+    predictionProofs.set(token, { ...proof, claimId });
+    return { score: proof.score, version: proof.version, claimId };
+}
+
+export function commitPredictionProof(token: string, claimId: string): boolean {
+    if (predictionProofs.get(token)?.claimId !== claimId) return false;
+    predictionProofs.delete(token);
+    return true;
+}
+
+export function isPredictionProofClaimed(token: string): boolean {
+    const proof = predictionProofs.get(token);
+    return Boolean(proof && proof.expiresAt > Date.now() && proof.claimId !== null);
+}
+
+export function releasePredictionProof(token: string, claimId: string): boolean {
+    const proof = predictionProofs.get(token);
+    if (!proof || proof.claimId !== claimId) return false;
+    predictionProofs.set(token, { ...proof, claimId: null });
+    return true;
 }
 
 export function consumePredictionProof(
@@ -93,7 +141,7 @@ export function consumePredictionProof(
 ): { score: number; version: string } | null {
     const proof = predictionProofs.get(token);
     predictionProofs.delete(token);
-    if (!proof || proof.expiresAt <= Date.now()) return null;
+    if (!proof || proof.expiresAt <= Date.now() || proof.claimId !== null) return null;
     if (proof.userId !== userId || proof.wellId !== wellId) return null;
     if (Math.abs(proof.score - score) > 0.01) return null;
     return { score: proof.score, version: proof.version };

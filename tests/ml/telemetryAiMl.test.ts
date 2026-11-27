@@ -4,7 +4,9 @@ import express from 'express';
 import {
     clearPredictionCache,
     issuePredictionProof,
-    consumePredictionProof
+    consumePredictionProof,
+    claimPredictionProof,
+    releasePredictionProof
 } from '../../src/services/ml/predictionCache';
 import { getMetricsSnapshot, resetMetrics } from '../../src/utils/metrics';
 
@@ -888,11 +890,145 @@ describe('POST /api/telemetry/ai/reward', () => {
                 action: 'ACCEPT',
                 wellId: 'well-1',
                 scoreBefore: 0.9,
-                wasAiRanked: true
+                wasAiRanked: true,
+                verifiedPrediction: expect.objectContaining({
+                    score: 0.9,
+                    modelVersion: 'model-v1',
+                    verifiedAt: expect.any(String)
+                })
             }),
             expect.any(Function)
         );
         expect(mockRecordPredictionResult).toHaveBeenCalledWith(1, 0.9, 'model-v1');
+    });
+
+    it('nie zapisuje feedbacku bez pochodzenia, gdy proof jest już przetwarzany', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({
+            id: 'log-1',
+            userId: 'userA',
+            trainingEligible: true
+        });
+        clearPredictionCache();
+        const predictionToken = issuePredictionProof('userA', 'well-busy-proof', 0.7, 'model-v1');
+        const claim = claimPredictionProof(predictionToken, 'userA', 'well-busy-proof', 0.7);
+        const response = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send({
+                action: 'ACCEPT',
+                wellId: 'well-busy-proof',
+                scoreBefore: 0.7,
+                wasAiRanked: true,
+                predictionToken
+            });
+
+        expect(claim).not.toBeNull();
+        expect(response.status).toBe(500);
+        expect(mockProcessAction).not.toHaveBeenCalled();
+        expect(releasePredictionProof(predictionToken, claim!.claimId)).toBe(true);
+    });
+
+    it('zużywa proof także przy duplikacie, aby nie mógł zasilać innej akcji', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({
+            id: 'log-1',
+            userId: 'userA',
+            trainingEligible: true
+        });
+        mockProcessAction.mockResolvedValue({ applied: false });
+        clearPredictionCache();
+        const predictionToken = issuePredictionProof(
+            'userA',
+            'well-duplicate-proof',
+            0.7,
+            'model-v1'
+        );
+
+        const response = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send({
+                action: 'ACCEPT',
+                wellId: 'well-duplicate-proof',
+                scoreBefore: 0.7,
+                wasAiRanked: true,
+                predictionToken
+            });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ status: 'ok', duplicate: true });
+        expect(
+            claimPredictionProof(predictionToken, 'userA', 'well-duplicate-proof', 0.7)
+        ).toBeNull();
+    });
+
+    it('błąd diagnostyki AUC po zapisie feedbacku nie blokuje odpowiedzi sukcesu', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({
+            id: 'log-1',
+            userId: 'userA',
+            trainingEligible: true
+        });
+        mockRecordPredictionResult.mockImplementationOnce(() => {
+            throw new Error('diagnostic unavailable');
+        });
+        clearPredictionCache();
+        const predictionToken = issuePredictionProof('userA', 'well-auc-error', 0.7, 'model-v1');
+
+        const response = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send({
+                action: 'ACCEPT',
+                wellId: 'well-auc-error',
+                scoreBefore: 0.7,
+                wasAiRanked: true,
+                predictionToken
+            });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ status: 'ok' });
+        expect(mockProcessAction).toHaveBeenCalled();
+    });
+
+    it('po błędzie zapisu feedbacku pozwala ponowić ten sam proof bez utraty pochodzenia', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({
+            id: 'log-1',
+            userId: 'userA',
+            trainingEligible: true
+        });
+        mockProcessAction
+            .mockRejectedValueOnce(new Error('database unavailable'))
+            .mockResolvedValueOnce({ applied: true });
+        clearPredictionCache();
+        const predictionToken = issuePredictionProof('userA', 'well-retry', 0.7, 'model-v1');
+        const payload = {
+            action: 'ACCEPT',
+            wellId: 'well-retry',
+            scoreBefore: 0.7,
+            wasAiRanked: true,
+            predictionToken
+        };
+
+        const failedResponse = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send(payload);
+        const retryResponse = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send(payload);
+
+        expect(failedResponse.status).toBe(500);
+        expect(retryResponse.status).toBe(200);
+        expect(mockProcessAction).toHaveBeenNthCalledWith(
+            2,
+            expect.objectContaining({
+                verifiedPrediction: expect.objectContaining({
+                    score: 0.7,
+                    modelVersion: 'model-v1'
+                })
+            }),
+            expect.any(Function)
+        );
     });
 
     it('nie rejestruje predykcji z tokenem wydanym innemu uzytkownikowi', async () => {

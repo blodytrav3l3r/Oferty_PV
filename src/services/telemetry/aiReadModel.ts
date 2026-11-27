@@ -1,4 +1,5 @@
 import prisma from '../../prismaClient';
+import { parseVerifiedPredictionProvenance } from '../ml/predictionProvenance';
 
 export interface WellSelectionItem {
     wellId: string;
@@ -77,6 +78,7 @@ export interface PredictionStats {
     actions: Record<string, number>;
     recentScores: number[];
     recentCount: number;
+    scoreModelVersion: string | null;
 }
 
 export async function getPredictionStats(recentLimit = 100): Promise<PredictionStats> {
@@ -92,12 +94,18 @@ export async function getPredictionStats(recentLimit = 100): Promise<PredictionS
     const recent = await prisma.aiRewardLog.findMany({
         where: { scoreBefore: { not: null } },
         orderBy: { createdAt: 'desc' },
-        take: recentLimit
+        take: recentLimit,
+        select: { id: true, configSnapshot: true }
     });
-    const scores = recent
-        .map((r) => r.scoreBefore)
-        .filter((s): s is number => typeof s === 'number');
-    return { total, actions, recentScores: scores, recentCount: scores.length };
+    const verifiedRows = recent.flatMap((row) => {
+        const proof = parseVerifiedPredictionProvenance(row.configSnapshot, row.id);
+        return proof ? [proof] : [];
+    });
+    const scoreModelVersion = verifiedRows[0]?.modelVersion ?? null;
+    const scores = verifiedRows
+        .filter((proof) => proof.modelVersion === scoreModelVersion)
+        .map((proof) => proof.score);
+    return { total, actions, recentScores: scores, recentCount: scores.length, scoreModelVersion };
 }
 
 export async function getTrainingRuns(limit = 20) {
