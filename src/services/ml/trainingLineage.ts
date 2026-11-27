@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import type { TrainingGroupDiagnostics } from './trainingGroupDiagnostics';
 
 export type TrainingSplit = 'train' | 'validation' | 'test';
 
@@ -48,6 +49,7 @@ export interface TrainingLineageSnapshot {
     };
     splitPolicyVersion: string;
     splitFingerprints: Record<TrainingSplit, TrainingPartitionFingerprint>;
+    groupOverlapDiagnostics?: TrainingGroupDiagnostics;
     solverVersion: null;
     rulesVersion: null;
     unavailableFields: string[];

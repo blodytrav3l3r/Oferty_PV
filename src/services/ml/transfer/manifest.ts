@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { SOKML_FORMAT, SOKML_FORMAT_VERSION, SOKML_MANIFEST_VERSION } from './transferConstants';
 import { TransferError } from './transferErrors';
 import type { GatedEntry } from './archiveGate';
+import { trainingGroupDiagnosticsSchema } from '../trainingGroupDiagnostics';
 
 /**
  * P7.1 — Manifest .sokml + checksumy + kanoniczny packageFingerprint.
@@ -69,6 +70,7 @@ export const trainingSnapshotSchema = z.object({
         validation: partitionFingerprintSchema,
         test: partitionFingerprintSchema
     }),
+    groupOverlapDiagnostics: trainingGroupDiagnosticsSchema.optional(),
     solverVersion: z.string().min(1).nullable(),
     rulesVersion: z.string().min(1).nullable(),
     unavailableFields: z.array(z.string().min(1)),

@@ -228,6 +228,24 @@
                         ? ' AUC ' + Number(status.activeModelAuc).toFixed(4)
                         : '';
                 const m = untrained ? {} : status.activeModelMetrics || {};
+                const trainingSnapshot = status.lastTrainingSnapshot;
+                const groupOverlapDiagnostics =
+                    trainingSnapshot && trainingSnapshot.groupOverlapDiagnostics;
+                const groupOverlapValue =
+                    groupOverlapDiagnostics && groupOverlapDiagnostics.status !== 'unavailable'
+                        ? groupOverlapDiagnostics.well.groupsAcrossSplits +
+                          ' / ' +
+                          groupOverlapDiagnostics.offer.groupsAcrossSplits
+                        : '—';
+                const hasGroupOverlap =
+                    groupOverlapDiagnostics &&
+                    (groupOverlapDiagnostics.well.groupsAcrossSplits > 0 ||
+                        groupOverlapDiagnostics.offer.groupsAcrossSplits > 0);
+                const groupOverlapColor = !groupOverlapDiagnostics
+                    ? 'var(--text-muted)'
+                    : hasGroupOverlap || groupOverlapDiagnostics.status === 'partial'
+                      ? 'var(--warn)'
+                      : 'var(--success)';
                 const fmt = function (v, d) {
                     return v != null && Number.isFinite(Number(v))
                         ? Number(v).toFixed(d == null ? 4 : d)
@@ -240,7 +258,6 @@
                     Number.isFinite(Number(status.baselineAccuracy))
                         ? Number(status.baselineAccuracy)
                         : null;
-                const trainingSnapshot = status.lastTrainingSnapshot;
                 const hasActiveTrainingSnapshot =
                     trainingSnapshot && trainingSnapshot.candidateModelVersion === activeVer;
                 const metricProvenance = hasActiveTrainingSnapshot
@@ -438,6 +455,16 @@
                                         status.lastTrainingSnapshot.testSize
                                 ) +
                                 ') · Odczyt: ' +
+                                refreshedAt
+                        ),
+                        window.aiStatCard(
+                            'Grupy w wielu zbiorach',
+                            groupOverlapValue,
+                            groupOverlapColor,
+                            'Liczba tych samych studni / ofert występujących w więcej niż jednym zbiorze: treningowym, walidacyjnym lub testowym. To diagnostyka przecieku danych; nie zmienia oceny ani decyzji o wdrożeniu modelu.',
+                            'Kolejność: studnie / oferty. 0 oznacza brak wykrytego przecięcia; — oznacza brak danych. Stan: ' +
+                                (groupOverlapDiagnostics?.status || 'niedostępny') +
+                                ' · Źródło: AiTrainingRun.lineageSnapshot · Odczyt: ' +
                                 refreshedAt
                         ),
                         window.aiStatCard(

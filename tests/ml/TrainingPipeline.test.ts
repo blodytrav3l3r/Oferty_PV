@@ -35,6 +35,15 @@ jest.mock('../../src/prismaClient', () => ({
         ai_telemetry_logs: {
             findMany: (...args: any[]) => {
                 const [query] = args;
+                if (query?.select?.offerId) {
+                    return Promise.resolve(
+                        query.where.id.in.map((id: string) => ({
+                            id,
+                            offerId: 'shared-offer',
+                            wellId: 'shared-well'
+                        }))
+                    );
+                }
                 if (query?.where?.id?.in) {
                     return Promise.resolve(
                         query.where.id.in.map((id: string) => ({
@@ -998,6 +1007,11 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
                     validation: { count: 60 },
                     test: { count: 60 }
                 },
+                groupOverlapDiagnostics: {
+                    status: 'available',
+                    well: { groupsAcrossSplits: 1 },
+                    offer: { groupsAcrossSplits: 1 }
+                },
                 solverVersion: null,
                 rulesVersion: null,
                 decision: { deployed: true }
@@ -1008,6 +1022,65 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             const evaluatedTestSet = evaluateSpy.mock.calls[0][2] as Array<{ vec: number[] }>;
             expect(evaluatedTestSet[59].vec[totalPriceIndex]).toBeGreaterThan(1);
         } finally {
+            saveSpy.mockRestore();
+            trainSpy.mockRestore();
+            evaluateSpy.mockRestore();
+        }
+    });
+
+    it('nie blokuje treningu, gdy diagnostyczny odczyt grup nie działa', async () => {
+        const { trainingPipeline } = await setupRun();
+        const { modelRegistry } = await import('../../src/services/ml/ModelRegistry');
+        const { default: prisma } = await import('../../src/prismaClient');
+        const saveSpy = jest.spyOn(modelRegistry, 'saveModel').mockResolvedValue('candidate-v');
+        const trainSpy = jest
+            .spyOn(AcceptanceModel.prototype, 'train')
+            .mockImplementation(() => {});
+        const evaluateSpy = jest.spyOn(trainingPipeline as any, 'evaluateModel').mockReturnValue({
+            accuracy: 0.8,
+            precision: 0.8,
+            recall: 0.8,
+            f1: 0.8,
+            rocAuc: 0.9,
+            prAuc: 0.85,
+            logLoss: 0.3,
+            brierScore: 0.1,
+            ece: 0.05,
+            confusion: { tp: 1, fp: 1, fn: 1, tn: 1 },
+            trainSize: 280,
+            valSize: 60,
+            testRocAuc: 0.9
+        });
+        const originalTelemetryFindMany = (prisma.ai_telemetry_logs as any).findMany;
+        const features = Array.from({ length: 400 }, (_, i) =>
+            makeFeature(i % 2 === 0 ? 'ACCEPTED' : 'REJECTED', i)
+        );
+        mockFindMany.mockResolvedValue([...features].reverse());
+        (prisma.ai_telemetry_logs as any).findMany = jest.fn<any>((query: any) =>
+            query?.select?.offerId
+                ? Promise.reject(new Error('diagnostic lookup failed'))
+                : Promise.resolve(
+                      query.where.id.in.map((id: string) => ({
+                          id,
+                          userId: 'userA',
+                          trainingEligible: true
+                      }))
+                  )
+        );
+
+        try {
+            const result = await trainingPipeline.run();
+            const lineageSnapshot = JSON.parse(saveSpy.mock.calls[0][12] as string);
+
+            expect(result.trained).toBe(true);
+            expect(lineageSnapshot.groupOverlapDiagnostics).toMatchObject({
+                status: 'unavailable',
+                reason: 'lookup_failed',
+                totalRows: 400
+            });
+            expect(evaluateSpy).toHaveBeenCalledTimes(1);
+        } finally {
+            (prisma.ai_telemetry_logs as any).findMany = originalTelemetryFindMany;
             saveSpy.mockRestore();
             trainSpy.mockRestore();
             evaluateSpy.mockRestore();

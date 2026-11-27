@@ -41,6 +41,12 @@ import {
     computeTrainingUserScopeFingerprint,
     type TrainingLineageSnapshot
 } from './trainingLineage';
+import {
+    computeTrainingGroupDiagnostics,
+    unavailableTrainingGroupDiagnostics,
+    type TrainingGroupDiagnostics,
+    type TrainingGroupRow
+} from './trainingGroupDiagnostics';
 import { getVersion } from '../../version';
 import {
     countEligibleNewFeatures,
@@ -725,6 +731,10 @@ export class TrainingPipeline {
                 );
             }
 
+            const groupOverlapDiagnostics = await measureStage('groupOverlapDiagnostics', () =>
+                this.loadTrainingGroupDiagnostics(records, trainIdx, valIdx)
+            );
+
             // Fingerprint bazuje na dokładnych znormalizowanych wektorach,
             // efektywnych wagach i przypisaniu do splitu; nie zawiera ID użytkownika ani rekordu.
             if (records.length > 0) {
@@ -798,6 +808,7 @@ export class TrainingPipeline {
                     trainingConfig,
                     splitPolicyVersion,
                     splitFingerprints: fingerprints.splitFingerprints,
+                    groupOverlapDiagnostics,
                     solverVersion: null,
                     rulesVersion: null,
                     unavailableFields: [
@@ -1125,7 +1136,7 @@ export class TrainingPipeline {
     ): Promise<{
         examples: Array<{ vec: number[]; label: number; weight: number }>;
         dim: number;
-        records: Array<{ id: string; createdAt: string; label: string }>;
+        records: Array<{ telemetryId: string | null; createdAt: string }>;
     }> {
         // Cechy przejść: agregaty z ai_transition_snapshots (configId == telemetryId).
         const transIds = features.map((f) => f.telemetryId).filter(Boolean) as string[];
@@ -1192,9 +1203,51 @@ export class TrainingPipeline {
 
         const records = features
             .filter((f) => f.label !== 'NO_FEEDBACK')
-            .map((f) => ({ id: f.id, createdAt: f.createdAt, label: f.label }));
+            .map((f) => ({
+                telemetryId: f.telemetryId,
+                createdAt: f.createdAt
+            }));
 
         return { examples: trainingExamples, dim, records };
+    }
+
+    private async loadTrainingGroupDiagnostics(
+        records: readonly { telemetryId: string | null }[],
+        trainIdx: number,
+        valIdx: number
+    ): Promise<TrainingGroupDiagnostics> {
+        const telemetryIds = [
+            ...new Set(
+                records
+                    .map((record) => record.telemetryId)
+                    .filter((id): id is string => Boolean(id))
+            )
+        ];
+        if (telemetryIds.length === 0) {
+            return unavailableTrainingGroupDiagnostics(records.length, 'no_telemetry_links');
+        }
+
+        try {
+            const telemetryRows = await prisma.ai_telemetry_logs.findMany({
+                where: { id: { in: telemetryIds } },
+                select: { id: true, offerId: true, wellId: true }
+            });
+            const telemetryById = new Map(telemetryRows.map((row) => [row.id, row]));
+            const diagnosticRows: TrainingGroupRow[] = records.map((record, index) => {
+                const telemetry = record.telemetryId
+                    ? telemetryById.get(record.telemetryId)
+                    : undefined;
+                return {
+                    split: index < trainIdx ? 'train' : index < valIdx ? 'validation' : 'test',
+                    hasTelemetry: Boolean(telemetry),
+                    offerId: telemetry?.offerId ?? null,
+                    wellId: telemetry?.wellId ?? null
+                };
+            });
+            return computeTrainingGroupDiagnostics(diagnosticRows);
+        } catch {
+            return unavailableTrainingGroupDiagnostics(records.length, 'lookup_failed');
+        }
     }
 
     private evaluateModel(

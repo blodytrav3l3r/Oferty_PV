@@ -78,6 +78,24 @@ async function seedModel(version: string): Promise<string> {
             validation: { count: 18, fingerprint: 'sha256:' + 'e'.repeat(64) },
             test: { count: 18, fingerprint: 'sha256:' + 'f'.repeat(64) }
         },
+        groupOverlapDiagnostics: {
+            version: 1,
+            status: 'available',
+            totalRows: 120,
+            rowsWithTelemetry: 120,
+            well: {
+                uniqueGroups: { train: 70, validation: 15, test: 15 },
+                groupsAcrossSplits: 2,
+                pairwiseOverlap: { trainValidation: 1, trainTest: 1, validationTest: 0 },
+                rowsWithoutGroup: 0
+            },
+            offer: {
+                uniqueGroups: { train: 60, validation: 10, test: 10 },
+                groupsAcrossSplits: 1,
+                pairwiseOverlap: { trainValidation: 1, trainTest: 0, validationTest: 0 },
+                rowsWithoutGroup: 0
+            }
+        },
         solverVersion: null,
         rulesVersion: null,
         unavailableFields: ['solverVersion: unavailable', 'rulesVersion: unavailable'],
@@ -170,6 +188,10 @@ describe('P7 round-trip', () => {
         expect(manifest.packageFingerprint).toBe(pkg.packageFingerprint);
         expect(manifest.lineageSchemaVersion).toBe('2');
         expect(manifest.lineage.snapshot?.datasetFingerprint).toBe(SEED_DATASET_FINGERPRINT);
+        expect(manifest.lineage.snapshot?.groupOverlapDiagnostics).toMatchObject({
+            well: { groupsAcrossSplits: 2 },
+            offer: { groupsAcrossSplits: 1 }
+        });
     });
 
     it('dry-run nie tworzy modeli ani transferów', async () => {

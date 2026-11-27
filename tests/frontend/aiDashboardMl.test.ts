@@ -31,7 +31,15 @@ const STATUS = {
         trainSize: 80,
         validationSize: 17,
         testSize: 18,
-        candidateModelVersion: 'v1'
+        candidateModelVersion: 'v1',
+        groupOverlapDiagnostics: {
+            version: 1,
+            status: 'available',
+            totalRows: 115,
+            rowsWithTelemetry: 115,
+            well: { groupsAcrossSplits: 2 },
+            offer: { groupsAcrossSplits: 1 }
+        }
     },
     cacheSize: 6,
     trainingGate: {
@@ -158,6 +166,8 @@ describe('aiDashboardMl metryki', () => {
         expect(host.textContent).toContain('Wszystkie wektory historyczne');
         expect(host.textContent).toContain('Nowe kwalifikujące się od SUCCESS');
         expect(host.textContent).toContain('Próbki ostatniego snapshotu');
+        expect(host.textContent).toContain('Grupy w wielu zbiorach');
+        expect(host.textContent).toContain('2 / 1');
         expect(host.textContent).toContain('115');
         expect(host.textContent).toContain('Zdarzenia reward');
         expect(host.textContent).not.toContain('Suma nagród');

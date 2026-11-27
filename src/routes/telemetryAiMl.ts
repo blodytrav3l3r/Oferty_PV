@@ -42,6 +42,7 @@ import {
 } from '../services/ml/predictionCache';
 import { getTrainingUserIds } from '../services/ml/trainingUsers';
 import type { VerifiedPrediction } from '../services/ml/predictionProvenance';
+import { parseTrainingGroupDiagnosticsFromSnapshot } from '../services/ml/trainingGroupDiagnostics';
 
 const router = Router();
 type FallbackOutcomeReason = z.infer<typeof fallbackOutcomeReasonSchema>;
@@ -1130,7 +1131,10 @@ router.get('/ai/ml-status', requireAuth, requireAdmin, READ_LIMITER, async (_req
                       trainSize: lastSuccessRun.trainSize,
                       validationSize: lastSuccessRun.validationSize,
                       testSize: lastSuccessRun.testSize,
-                      candidateModelVersion: lastSuccessRun.candidateModelVersion
+                      candidateModelVersion: lastSuccessRun.candidateModelVersion,
+                      groupOverlapDiagnostics: parseTrainingGroupDiagnosticsFromSnapshot(
+                          lastSuccessRun.lineageSnapshot
+                      )
                   }
                 : null,
             rollbackTargetVersion: rollbackTarget?.version ?? null,
