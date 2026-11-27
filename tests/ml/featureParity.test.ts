@@ -139,6 +139,96 @@ function loadFrontendModule() {
     return sandbox;
 }
 
+function buildTelemetryPayload(layout: any, well: any) {
+    const configItems = [
+        ...(layout.kregItems || []),
+        ...(layout.topItems || []),
+        ...(layout.avrItems || []),
+        ...(layout.dennica ? [layout.dennica] : [])
+    ];
+    const gasketQtyByDn = new Map<string, number>();
+    if (well.uszczelka && well.uszczelka !== 'brak') {
+        for (const item of configItems) {
+            const product = PRODUCTS.find((candidate) => candidate.id === item.productId);
+            const componentType = String(product?.componentType || '').toLowerCase();
+            if (
+                product?.dn &&
+                ['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus'].includes(
+                    componentType
+                )
+            ) {
+                const dn = String(product.dn);
+                gasketQtyByDn.set(dn, (gasketQtyByDn.get(dn) || 0) + (item.quantity || 1));
+            }
+        }
+        for (const [dn, quantity] of gasketQtyByDn) {
+            const name = 'Uszczelka ' + String(well.uszczelka).toUpperCase() + ' DN' + dn;
+            const gasket = PRODUCTS.find(
+                (product) => product.componentType === 'uszczelka' && product.name === name
+            );
+            if (gasket) configItems.push({ productId: gasket.id, quantity });
+        }
+    }
+
+    let payload: any;
+    const fetch = (_url: string, options: any) => {
+        payload = JSON.parse(options.body);
+        return Promise.resolve({ status: 200, json: () => Promise.resolve({}) });
+    };
+    const sandbox: any = {
+        window: {
+            studnieProducts: PRODUCTS,
+            fetch,
+            location: { hostname: 'localhost' }
+        },
+        fetch,
+        AbortController,
+        setTimeout: () => 0,
+        clearTimeout: () => undefined,
+        console: { warn: () => {}, error: () => {}, log: () => {} },
+        JSON,
+        Promise
+    };
+    const code = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/telemetryBridge.js'),
+        'utf8'
+    );
+    vm.createContext(sandbox);
+    vm.runInContext(code, sandbox);
+    const wellWithLevels = {
+        ...well,
+        rzednaWlazu: Number(well.rzednaDna || 0) + Number(well.wellHeight || 0) / 1000
+    };
+    sandbox.window.telemetryRecordConfig({
+        well: wellWithLevels,
+        configItems,
+        solverSource: 'MANUAL'
+    });
+    if (!payload) throw new Error('telemetryBridge did not emit a config payload');
+    return payload;
+}
+
+async function extractTrainingFeatures(payload: any) {
+    const { FeatureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+    return new FeatureExtractor().extract({
+        id: 'feature-parity-test',
+        dn: payload.dn,
+        warehouse: payload.warehouse,
+        wellType: payload.wellType,
+        wellHeight: payload.wellHeight,
+        ringCount: payload.ringCount,
+        wasAccepted: true,
+        allComponentIds: JSON.stringify(payload.allComponentIds),
+        appliedReductions: JSON.stringify(payload.appliedReductions),
+        appliedKonus: JSON.stringify(payload.appliedKonus),
+        appliedSeals: JSON.stringify(payload.appliedSeals),
+        featureSnapshot: JSON.stringify(payload.featureSnapshot),
+        kineta: payload.kineta,
+        dennicaHeight: payload.dennicaHeight,
+        createdAt: new Date().toISOString()
+    } as any);
+}
+
 // Entropia Shannona znormalizowana (identyczny wzór jak FeatureExtractor.ts
 // i mlDualRanking.js shannonEntropy) — nad unikalnymi ID kregów w kregItems.
 function shannonEntropy(items: string[]): number {
@@ -326,6 +416,19 @@ describe('parytet cech train/serve (buildFeatureVector vs oneHotEncode)', () => 
         expect(front[12]).toBe(550);
         // waga: (50+60+50)+100=260 + 2*3=6 → 266
         expect(front[13]).toBe(266);
+    });
+
+    it('cena i waga train pochodzą z rzeczywistego telemetryBridge i FeatureExtractor', async () => {
+        const layout = makeLayout();
+        const well = makeWell({ uszczelka: 'GSG' });
+        const front = buildFeatureVector(layout, well);
+        const telemetry = buildTelemetryPayload(layout, well);
+        const trainingFeatures = await extractTrainingFeatures(telemetry);
+
+        expect(telemetry.featureSnapshot.totalPrice).toBe(550);
+        expect(telemetry.featureSnapshot.totalWeight).toBe(266);
+        expect(front[12]).toBe(trainingFeatures.totalPrice);
+        expect(front[13]).toBe(trainingFeatures.totalWeight);
     });
 
     it('psia buda: bit wellType i hasPsiaBuda zgadzają się po obu stronach', () => {
