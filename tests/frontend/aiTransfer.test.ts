@@ -65,6 +65,15 @@ describe('aiTransfer', () => {
         expect(host.querySelector('#ai-tr-file').getAttribute('accept')).toBe('.sokml');
         expect(host.querySelector('#ai-tr-import-btn').disabled).toBe(true);
         expect(host.textContent).toContain('Centrum transferu');
+
+        const dryRunButton = host.querySelector('#ai-tr-dryrun-btn');
+        const importButton = host.querySelector('#ai-tr-import-btn');
+        expect(dryRunButton.tagName).toBe('BUTTON');
+        expect(dryRunButton.tabIndex).toBe(0);
+        expect(dryRunButton.textContent).toContain('Wykonaj próbę');
+        expect(importButton.tagName).toBe('BUTTON');
+        expect(importButton.tabIndex).toBe(0);
+        expect(importButton.textContent).toContain('Zatwierdź import');
     });
 
     it('escapuje złośliwą wersję modelu na liście', async () => {

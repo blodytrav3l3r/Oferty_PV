@@ -346,7 +346,9 @@ test.describe('a11y axe', () => {
         });
     }
 
-    test('AI dashboard nie powoduje poziomego overflow przy 320 px', async ({ page }) => {
+    test('AI dashboard nie powoduje poziomego overflow przy 320 px ani na desktopie', async ({
+        page
+    }) => {
         await page.setViewportSize({ width: 320, height: 844 });
         const login = await page.request.post('/api/auth/login', {
             data: {
@@ -368,6 +370,18 @@ test.describe('a11y axe', () => {
         expect(
             overflow.scrollWidth - overflow.clientWidth,
             JSON.stringify(overflow, null, 2)
+        ).toBeLessThanOrEqual(1);
+
+        await page.setViewportSize({ width: 1440, height: 900 });
+        const desktopOverflow = await frame!
+            .locator('#ai-dashboard-content')
+            .evaluate((content) => ({
+                clientWidth: content.clientWidth,
+                scrollWidth: content.scrollWidth
+            }));
+        expect(
+            desktopOverflow.scrollWidth - desktopOverflow.clientWidth,
+            JSON.stringify(desktopOverflow, null, 2)
         ).toBeLessThanOrEqual(1);
     });
 

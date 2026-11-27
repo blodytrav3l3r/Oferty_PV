@@ -146,6 +146,56 @@ describe('aiDashboardMl metryki', () => {
         expect(host.textContent).not.toContain('Suma nagród');
     });
 
+    it('utrzymuje stan ładowania do odpowiedzi wolnego endpointu statusu', async () => {
+        let resolveStatus;
+        const statusRequest = new Promise((resolve) => {
+            resolveStatus = resolve;
+        });
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) =>
+            url === '/ml-status' ? statusRequest : Promise.resolve({ models: [] })
+        );
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+
+        win.aiRenderMlStatus(host);
+
+        expect(host.textContent).toContain('loading');
+        resolveStatus(STATUS);
+        await tick();
+        expect(host.textContent).toContain('ML Pipeline');
+    });
+
+    it('pokazuje jawny błąd, gdy początkowe pobranie statusu jest niedostępne', async () => {
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) =>
+            Promise.resolve(url === '/ml-status' ? { error: 'unavailable' } : { models: [] })
+        );
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        expect(host.textContent).toContain('error:unavailable');
+        expect(host.querySelector('.ai-ml-refresh-btn')).toBeNull();
+    });
+
+    it('pokazuje pusty stan modeli bez ukrywania dostępnych akcji admina', async () => {
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) => Promise.resolve(url === '/ml-status' ? STATUS : { models: [] }));
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        expect(host.querySelector('.ai-model-empty').textContent).toContain(
+            'Brak wytrenowanych modeli'
+        );
+        expect(host.querySelector('#ai-ml-train-btn').textContent).toContain('Uruchom trening ML');
+    });
+
     it('odświeża ręcznie i zachowuje ostatnie dane jako stale po błędzie', async () => {
         const { win, setFetchJson } = loadMl();
         const host = document.createElement('div');
@@ -198,6 +248,9 @@ describe('aiDashboardMl metryki', () => {
 
         const activate = host.querySelector('.ai-model-activate-btn');
         const promote = host.querySelector('.ai-model-promote-btn');
+        expect(promote.tagName).toBe('BUTTON');
+        expect(promote.tabIndex).toBe(0);
+        expect(promote.getAttribute('aria-label')).toContain('candidate-v2');
         expect(activate.getAttribute('aria-label')).toContain('candidate-v2');
         activate.click();
         await tick(0);
