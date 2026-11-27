@@ -1,5 +1,5 @@
 import prisma from '../../prismaClient';
-import { Prisma } from '../../../generated/prisma-postgres/client';
+import { Prisma, type AiFeature } from '../../../generated/prisma-postgres/client';
 import { logger } from '../../utils/logger';
 
 export const TRAINING_USERS_KEY = 'ai_training_user_ids';
@@ -144,6 +144,32 @@ export async function filterFeaturesByTrainingUsers<T extends { telemetryId?: st
             .map((o) => o.id)
     );
     return features.filter((f) => f.telemetryId && allowedIds.has(f.telemetryId));
+}
+
+/**
+ * Zwraca najnowsze oznaczone próbki z dokładnie tej samej allowlisty,
+ * stosując kwalifikację właściciela w bazie przed limitem okna.
+ */
+export async function findEligibleLabeledFeatures(
+    since: string,
+    allow: readonly string[],
+    limit: number
+): Promise<AiFeature[]> {
+    const userIds = [...new Set(allow)];
+    if (userIds.length === 0 || !Number.isSafeInteger(limit) || limit < 1) return [];
+
+    return prisma.$queryRaw<AiFeature[]>`
+        SELECT feature.*
+        FROM "AiFeature" AS feature
+        INNER JOIN "ai_telemetry_logs" AS telemetry
+            ON telemetry."id" = feature."telemetryId"
+        WHERE feature."label" <> 'NO_FEEDBACK'
+            AND feature."createdAt" > ${since}
+            AND telemetry."trainingEligible" = TRUE
+            AND telemetry."userId" IN (${Prisma.join(userIds)})
+        ORDER BY feature."createdAt" DESC, feature."id" DESC
+        LIMIT ${limit}
+    `;
 }
 
 /**

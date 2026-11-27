@@ -688,6 +688,10 @@ mają stałe kategorie; te liczniki są procesowe i nie są trwałą historią.
 
 `mlOnline` oznacza obecność aktywnego modelu. `modelTrained` informuje, czy zapisano dla niego dodatnią liczbę próbek treningowych. `aiMlEnabled` określa stan przełącznika wykonywania AI. W `/ml-status` `baselineAccuracy`, `lastTrainingRun` i `lastDatasetFingerprint` dotyczą udanego lokalnego treningu aktywnego modelu. Mogą być `null`, np. dla modelu startowego lub importowanego.
 
+Karty jakości w dashboardzie podają pochodzenie metryk: ROC-AUC, PR-AUC, F1, LogLoss i ECE są liczone na zbiorze walidacyjnym, `testRocAuc` na niezależnym zbiorze testowym, a baseline accuracy na zbiorze treningowym. Liczebności i wersja są prezentowane tylko dla snapshotu przypisanego do aktywnego modelu. Feature importance zwraca `503 {error: "model_untrained"}` dla modelu startowego, aby zerowe wagi nie wyglądały jak wynik wytrenowanego modelu.
+
+Raport `/ai/drift` porównuje bieżące cechy i etykiety wyłącznie dla aktywnego modelu, zgodnego fingerprintu listy treningowej i rekordów utworzonych po zakończeniu tego treningu. Shadow AUC porównuje produkcję i kandydata na wspólnym zakresie użytkowników oraz próbkach zapisanych po zakończeniu obu treningów; bez potwierdzonego lineage nie zwraca AUC. Przy braku lub niezgodności lineage zwraca pusty drift cech, wartości `null` i `trainingScope.status: "UNAVAILABLE"` z przyczyną; dashboard wyświetla tę przyczynę. Prediction drift jest niewiarygodny: `AiRewardLog` zapisuje `scoreBefore` z żądania klienta bez dowodu predykcji ani wersji modelu, więc PSI może łączyć sfałszowane wyniki i różne wersje. Pole `prediction.reliability` w `/ai/drift` ma wtedy wartość `UNVERIFIED`, a `reason` wskazuje `client_score_unverified`. Nie używać tej metryki do decyzji modelowych.
+
 Ręczny `POST /api/telemetry/ai/learning/run` wymaga administratora i włączonego AI. Limit to jedno żądanie na minutę na proces. Odpowiedź `429` zawiera `Retry-After`.
 
 ## Transfer Center P7 (`/api/telemetry/ai/transfer`)

@@ -76,6 +76,19 @@ describe('GET /api/telemetry/ai/knowledge/stats', () => {
         expect(res.body).toHaveProperty('rejectedRecommendations');
         expect(res.body).toHaveProperty('byPatternType');
         expect(res.body).toHaveProperty('recentDetected');
+        expect(res.body.avgConfidence).toBeNull();
+    });
+
+    it('zwraca błąd zamiast zerować statystyki, gdy baza wiedzy jest niedostępna', async () => {
+        const { default: prisma } = await import('../../src/prismaClient');
+        jest.mocked(prisma.ai_knowledge_base.count).mockRejectedValueOnce(
+            new Error('database unavailable')
+        );
+
+        const res = await request(app).get('/api/telemetry/ai/knowledge/stats');
+
+        expect(res.status).toBe(500);
+        expect(res.body).toEqual({ error: 'Błąd' });
     });
 });
 

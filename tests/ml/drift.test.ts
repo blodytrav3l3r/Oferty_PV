@@ -9,6 +9,9 @@ import { buildFeatureDistributions } from '../../src/services/ml/featureDistribu
 
 const mockFindMany = jest.fn<any>();
 const mockFindFirst = jest.fn<any>();
+const mockGetTrainingUsersConfig = jest.fn<any>();
+const mockFindEligibleLabeledFeatures = jest.fn<any>();
+const mockGetProductionModel = jest.fn<any>();
 
 jest.mock('../../src/prismaClient', () => {
     const prisma = {
@@ -39,13 +42,24 @@ jest.mock('../../src/utils/logger', () => ({
     }
 }));
 
+jest.mock('../../src/services/ml/trainingUsers', () => ({
+    getTrainingUsersConfig: (...args: any[]) => mockGetTrainingUsersConfig(...args),
+    findEligibleLabeledFeatures: (...args: any[]) => mockFindEligibleLabeledFeatures(...args)
+}));
+
+jest.mock('../../src/services/ml/ModelRegistry', () => ({
+    modelRegistry: { getProductionModel: (...args: any[]) => mockGetProductionModel(...args) }
+}));
+
 import {
     computeFeatureDrift,
     computePredictionDrift,
     computeLabelDrift,
     computeShadowStats,
-    rawFeatureValue
+    rawFeatureValue,
+    buildDriftReport
 } from '../../src/services/ml/driftService';
+import { computeTrainingUserScopeFingerprint } from '../../src/services/ml/trainingLineage';
 import type { StoredModel } from '../../src/services/ml/ModelRegistry';
 import type { TransitionAggregates } from '../../src/services/ml/TrainingPipeline';
 
@@ -141,8 +155,22 @@ function makeBaselineModel(): StoredModel {
 beforeEach(() => {
     mockFindMany.mockReset();
     mockFindFirst.mockReset();
+    mockFindEligibleLabeledFeatures.mockReset();
     // Domyślny fallback: dodatkowe zapytania (ai_transition_snapshots) zwracają [].
     mockFindMany.mockResolvedValue([]);
+    mockGetTrainingUsersConfig.mockResolvedValue({
+        status: 'CONFIGURED',
+        userIds: ['user-1'],
+        legacyMigrated: false
+    });
+    mockFindEligibleLabeledFeatures.mockResolvedValue([]);
+    mockFindFirst.mockResolvedValue({
+        positiveRate: 0.5,
+        finishedAt: '2026-11-27T10:00:00.000Z',
+        lineageSnapshot: JSON.stringify({
+            trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(['user-1'])
+        })
+    });
 });
 
 describe('computeFeatureDrift', () => {
@@ -158,7 +186,7 @@ describe('computeFeatureDrift', () => {
 
     it('PSI ~0 gdy bieżące dane identyczne z baseline', async () => {
         const model = makeBaselineModel();
-        mockFindMany.mockResolvedValueOnce(
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(
             Array.from({ length: 100 }, (_, i) =>
                 makeFeature({ dn: 500 + i * 30, warehouse: 'KLB' })
             )
@@ -173,7 +201,7 @@ describe('computeFeatureDrift', () => {
     it('wysoki PSI dla cechy z przesunięciem rozkładu, sortuje po PSI desc', async () => {
         const model = makeBaselineModel();
         // dn poza zakresem baseline (wyżej niż 3500) — silny drift
-        mockFindMany.mockResolvedValueOnce(
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(
             Array.from({ length: 50 }, (_, i) => makeFeature({ dn: 5000 + i }))
         );
         const report = await computeFeatureDrift(model);
@@ -192,7 +220,7 @@ describe('computeFeatureDrift', () => {
             { configId: 't-1', dn: '1200', heightFromBottomMm: 300 },
             { configId: 't-1', dn: '800', heightFromBottomMm: 500 }
         ];
-        mockFindMany.mockResolvedValueOnce(features); // aiFeature
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(features);
         mockFindMany.mockResolvedValueOnce(snaps); // ai_transition_snapshots
         const report = await computeFeatureDrift(model);
         const byName = new Map(report.map((e) => [e.feature, e.psi]));
@@ -212,7 +240,7 @@ describe('computeFeatureDrift', () => {
     it('transition* zwracają 0 (nie null) gdy brak snapshotów dla telemetryId', async () => {
         const model = makeBaselineModel();
         const features = [makeFeature({ id: 'f-1', telemetryId: 't-1' })];
-        mockFindMany.mockResolvedValueOnce(features); // aiFeature
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(features);
         mockFindMany.mockResolvedValueOnce([]); // brak snapshotów
         const report = await computeFeatureDrift(model);
         const byName = new Map(report.map((e) => [e.feature, e.psi]));
@@ -226,6 +254,54 @@ describe('computeFeatureDrift', () => {
             expect(byName.has(name)).toBe(true);
             expect(byName.get(name)).not.toBeNull();
         }
+    });
+
+    it('pomija drift gdy aktualna allowlista różni się od zakresu treningu', async () => {
+        mockGetTrainingUsersConfig.mockResolvedValue({
+            status: 'CONFIGURED',
+            userIds: ['different-user'],
+            legacyMigrated: false
+        });
+        expect(await computeFeatureDrift(makeBaselineModel())).toEqual([]);
+        expect(mockFindEligibleLabeledFeatures).not.toHaveBeenCalled();
+    });
+
+    it('pomija drift dla historycznego snapshotu bez fingerprintu', async () => {
+        mockFindFirst.mockResolvedValueOnce({ positiveRate: 0.5, lineageSnapshot: '{}' });
+        expect(await computeFeatureDrift(makeBaselineModel())).toEqual([]);
+        expect(mockFindEligibleLabeledFeatures).not.toHaveBeenCalled();
+    });
+
+    it('filtruje feature drift przez allowlistę zgodną z modelem', async () => {
+        const features = [makeFeature({ telemetryId: 'telemetry-1' })];
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(features);
+        mockFindMany.mockResolvedValueOnce([]);
+        await computeFeatureDrift(makeBaselineModel());
+        expect(mockFindEligibleLabeledFeatures).toHaveBeenCalledWith(
+            '2026-11-27T10:00:00.000Z',
+            ['user-1'],
+            500
+        );
+    });
+
+    it('ocenia feature drift wyłącznie na danych zapisanych po zakończeniu treningu modelu', async () => {
+        await computeFeatureDrift(makeBaselineModel());
+
+        expect(mockFindEligibleLabeledFeatures).toHaveBeenCalledWith(
+            '2026-11-27T10:00:00.000Z',
+            ['user-1'],
+            500
+        );
+    });
+
+    it('pobiera okno próbek kwalifikując właściciela przed limitem bazy', async () => {
+        await computeFeatureDrift(makeBaselineModel());
+
+        expect(mockFindEligibleLabeledFeatures).toHaveBeenCalledWith(
+            '2026-11-27T10:00:00.000Z',
+            ['user-1'],
+            500
+        );
     });
 });
 
@@ -263,6 +339,8 @@ describe('computePredictionDrift', () => {
         const r = await computePredictionDrift();
         expect(r.psi).toBeNull();
         expect(r.currentSamples).toBe(0);
+        expect(r.reliability).toBe('UNVERIFIED');
+        expect(r.reason).toBe('client_score_unverified');
     });
 
     it('PSI ~0 gdy score stabilne', async () => {
@@ -275,6 +353,7 @@ describe('computePredictionDrift', () => {
         expect(r.psi!).toBeLessThan(0.2);
         expect(r.currentSamples).toBe(100);
         expect(r.baselineSamples).toBe(100);
+        expect(r.reliability).toBe('UNVERIFIED');
     });
 
     it('wysoki PSI gdy bieżące score przesunięte względem historycznych', async () => {
@@ -290,22 +369,34 @@ describe('computePredictionDrift', () => {
 
 describe('computeLabelDrift', () => {
     it('delta 0 przy takim samym positiveRate', async () => {
-        mockFindMany.mockResolvedValueOnce(
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(
             Array.from({ length: 40 }, () => makeFeature({ label: 'ACCEPTED' }))
         );
-        mockFindFirst.mockResolvedValueOnce({ status: 'SUCCESS', positiveRate: 1.0 });
-        const r = await computeLabelDrift();
+        mockFindFirst.mockResolvedValueOnce({
+            positiveRate: 1.0,
+            finishedAt: '2026-11-27T10:00:00.000Z',
+            lineageSnapshot: JSON.stringify({
+                trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(['user-1'])
+            })
+        });
+        const r = await computeLabelDrift(makeBaselineModel());
         expect(r.currentPositiveRate).toBe(1);
         expect(r.trainingPositiveRate).toBe(1);
         expect(r.delta).toBe(0);
     });
 
     it('delta ujemna przy spadku akceptacji', async () => {
-        mockFindMany.mockResolvedValueOnce(
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(
             Array.from({ length: 40 }, () => makeFeature({ label: 'REJECTED' }))
         );
-        mockFindFirst.mockResolvedValueOnce({ status: 'SUCCESS', positiveRate: 0.6 });
-        const r = await computeLabelDrift();
+        mockFindFirst.mockResolvedValueOnce({
+            positiveRate: 0.6,
+            finishedAt: '2026-11-27T10:00:00.000Z',
+            lineageSnapshot: JSON.stringify({
+                trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(['user-1'])
+            })
+        });
+        const r = await computeLabelDrift(makeBaselineModel());
         expect(r.currentPositiveRate).toBe(0);
         expect(r.delta).toBe(-0.6);
     });
@@ -313,10 +404,46 @@ describe('computeLabelDrift', () => {
     it('null przy braku etykiet lub braku udanego treningu', async () => {
         mockFindMany.mockResolvedValueOnce([]);
         mockFindFirst.mockResolvedValueOnce(null);
-        const r = await computeLabelDrift();
+        const r = await computeLabelDrift(makeBaselineModel());
         expect(r.currentPositiveRate).toBeNull();
         expect(r.trainingPositiveRate).toBeNull();
         expect(r.delta).toBeNull();
+    });
+});
+
+describe('buildDriftReport training cohort status', () => {
+    it('reports an unavailable matching training scope without mixing cohorts', async () => {
+        mockGetProductionModel.mockResolvedValue(makeBaselineModel());
+        mockFindFirst.mockResolvedValue(null);
+        const report = await buildDriftReport();
+        expect(report.trainingScope).toEqual({
+            status: 'UNAVAILABLE',
+            reason: 'no_matching_training_run',
+            modelVersion: 'v1.0.0-m-1'
+        });
+        expect(report.feature).toEqual([]);
+        expect(report.label.currentPositiveRate).toBeNull();
+        expect(report.label.reason).toBe('no_matching_training_run');
+    });
+
+    it('marks legacy runs without finish time unavailable instead of evaluating old samples', async () => {
+        mockGetProductionModel.mockResolvedValue(makeBaselineModel());
+        mockFindFirst.mockResolvedValue({
+            positiveRate: 0.5,
+            finishedAt: null,
+            lineageSnapshot: JSON.stringify({
+                trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(['user-1'])
+            })
+        });
+
+        const report = await buildDriftReport();
+
+        expect(report.trainingScope).toMatchObject({
+            status: 'UNAVAILABLE',
+            reason: 'missing_training_completion_time'
+        });
+        expect(report.feature).toEqual([]);
+        expect(report.label.reason).toBe('missing_training_completion_time');
     });
 });
 
@@ -328,10 +455,32 @@ describe('computeShadowStats', () => {
     });
 
     it('null gdy brak kandydata APPROVED', async () => {
-        mockFindFirst.mockResolvedValueOnce(null);
+        mockFindFirst
+            .mockResolvedValueOnce({
+                positiveRate: 0.5,
+                finishedAt: '2026-11-27T10:00:00.000Z',
+                lineageSnapshot: JSON.stringify({
+                    trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(['user-1'])
+                })
+            })
+            .mockResolvedValueOnce(null);
         const r = await computeShadowStats(makeBaselineModel());
         expect(r.candidateVersion).toBeNull();
         expect(r.productionAuc).toBeNull();
+    });
+
+    it('wyłącza Shadow AUC, gdy aktywnego zakresu treningowego nie można potwierdzić', async () => {
+        mockGetTrainingUsersConfig.mockResolvedValueOnce({
+            status: 'CONFIGURED',
+            userIds: ['different-user'],
+            legacyMigrated: false
+        });
+
+        const r = await computeShadowStats(makeBaselineModel());
+
+        expect(r.shadowAuc).toBeNull();
+        expect(r.reason).toBe('allowlist_scope_changed');
+        expect(mockFindEligibleLabeledFeatures).not.toHaveBeenCalled();
     });
 
     it('liczy shadowAuc i productionAuc na wspólnych danych', async () => {
@@ -342,7 +491,7 @@ describe('computeShadowStats', () => {
         production.bias = 0;
 
         // kandydat: ciężar ujemny dla dn (odwrotny ranking)
-        mockFindFirst.mockResolvedValueOnce({
+        const candidate = {
             id: 'cand',
             version: 'v1.1.0-cand',
             weights: JSON.stringify(FEATURE_NAMES.map((name) => (name === 'dn' ? -1 : 0))),
@@ -353,13 +502,24 @@ describe('computeShadowStats', () => {
             active: false,
             featureVersion: 'v7',
             createdAt: new Date().toISOString()
-        });
+        };
+        const trainingRun = {
+            positiveRate: 0.5,
+            finishedAt: '2026-11-27T10:00:00.000Z',
+            lineageSnapshot: JSON.stringify({
+                trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(['user-1'])
+            })
+        };
+        mockFindFirst
+            .mockResolvedValueOnce(trainingRun)
+            .mockResolvedValueOnce(candidate)
+            .mockResolvedValueOnce(trainingRun);
 
         // 20 studni: mały dn → REJECTED, duży dn → ACCEPTED (pozytywna korelacja z wagą produkcji)
         const rows = Array.from({ length: 20 }, (_, i) =>
             makeFeature({ dn: 1000 + i * 100, label: i >= 10 ? 'ACCEPTED' : 'REJECTED' })
         );
-        mockFindMany.mockResolvedValueOnce(rows);
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(rows);
 
         const r = await computeShadowStats(production);
         expect(r.candidateVersion).toBe('v1.1.0-cand');
@@ -367,5 +527,54 @@ describe('computeShadowStats', () => {
         expect(r.productionAuc).not.toBeNull();
         // production (pozytywna waga dn) > kandydat (negatywna waga dn)
         expect(r.productionAuc!).toBeGreaterThan(r.shadowAuc!);
+        expect(mockFindEligibleLabeledFeatures).toHaveBeenCalledWith(
+            '2026-11-27T10:00:00.000Z',
+            ['user-1'],
+            500
+        );
+    });
+
+    it('porównuje modele dopiero na próbkach po późniejszym z ich treningów', async () => {
+        const production = makeBaselineModel();
+        const candidate = {
+            id: 'cand-later',
+            version: 'v1.1.0-cand-later',
+            weights: JSON.stringify(FEATURE_NAMES.map(() => 0)),
+            bias: 0,
+            featureMins: JSON.stringify(production.featureMins),
+            featureMaxs: JSON.stringify(production.featureMaxs),
+            state: 'APPROVED',
+            active: false,
+            featureVersion: 'v8',
+            createdAt: new Date().toISOString()
+        };
+        const trainingRun = (finishedAt: string) => ({
+            positiveRate: 0.5,
+            finishedAt,
+            lineageSnapshot: JSON.stringify({
+                trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(['user-1'])
+            })
+        });
+        mockFindFirst
+            .mockResolvedValueOnce(trainingRun('2026-11-27T10:00:00.000Z'))
+            .mockResolvedValueOnce(candidate)
+            .mockResolvedValueOnce(trainingRun('2026-11-27T12:00:00.000Z'));
+        mockFindEligibleLabeledFeatures.mockResolvedValueOnce(
+            Array.from({ length: 20 }, (_, index) =>
+                makeFeature({
+                    id: `later-${index}`,
+                    dn: 1000 + index * 100,
+                    label: index >= 10 ? 'ACCEPTED' : 'REJECTED'
+                })
+            )
+        );
+
+        await computeShadowStats(production);
+
+        expect(mockFindEligibleLabeledFeatures).toHaveBeenCalledWith(
+            '2026-11-27T12:00:00.000Z',
+            ['user-1'],
+            500
+        );
     });
 });

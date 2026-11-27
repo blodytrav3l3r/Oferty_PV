@@ -18,7 +18,7 @@ const STATUS = {
     modelVersion: 'v1',
     activeModelAuc: 0.8421,
     baselineAccuracy: 0.731,
-    activeModelMetrics: { prAuc: 0.7, f1: 0.6, logLoss: 0.5, ece: 0.1 },
+    activeModelMetrics: { testRocAuc: 0.76, prAuc: 0.7, f1: 0.6, logLoss: 0.5, ece: 0.1 },
     trainingRunning: false,
     labeledCount: 120,
     featureCount: 200,
@@ -128,8 +128,24 @@ describe('aiDashboardMl metryki', () => {
         expect(html).toContain('0.8421');
         expect(html).toContain('Baseline accuracy');
         expect(html).toContain('0.7310');
+        expect(html).toContain('ROC-AUC testowy');
+        expect(html).toContain('0.7600');
         expect(html).not.toContain('Baseline vs Model');
         expect(html).not.toContain(' pp');
+    });
+
+    it('ujawnia pochodzenie metryk: walidacja modelu i baseline na danych treningowych', async () => {
+        const { win } = loadMl();
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        expect(host.textContent).toContain('ROC-AUC, PR-AUC, F1, LogLoss i ECE: walidacja n=17');
+        expect(host.textContent).toContain('ROC-AUC testowy: niezależny zbiór testowy n=18');
+        expect(host.textContent).toContain('Baseline accuracy: zbiór treningowy n=80');
+        expect(host.textContent).toContain('model v1');
     });
 
     it('distingue historię, nowe dane kwalifikujące się i ostatni snapshot oraz opisuje reward jako licznik', async () => {

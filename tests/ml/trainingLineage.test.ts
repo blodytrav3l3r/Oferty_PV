@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
     computeTrainingConfigFingerprint,
     computeTrainingFingerprints,
+    computeTrainingUserScopeFingerprint,
     type FingerprintTrainingRow
 } from '../../src/services/ml/trainingLineage';
 
@@ -12,6 +13,22 @@ const rows: FingerprintTrainingRow[] = [
 ];
 
 describe('training lineage fingerprints', () => {
+    it('creates a deterministic user-scope fingerprint without storing raw identifiers', () => {
+        const userIds = ['user-uuid-a', 'user-uuid-b'];
+        const fingerprint = computeTrainingUserScopeFingerprint(userIds);
+
+        expect(fingerprint).toMatch(/^sok-ml-user-scope-v1:sha256:[a-f0-9]{64}$/);
+        expect(computeTrainingUserScopeFingerprint(['user-uuid-b', 'user-uuid-a'])).toBe(
+            fingerprint
+        );
+        expect(
+            computeTrainingUserScopeFingerprint(['user-uuid-a', 'user-uuid-a', 'user-uuid-b'])
+        ).toBe(fingerprint);
+        expect(fingerprint).not.toContain('user-uuid-a');
+        expect(fingerprint).not.toContain('user-uuid-b');
+        expect(computeTrainingUserScopeFingerprint(['user-uuid-a'])).not.toBe(fingerprint);
+    });
+
     it('daje stabilny fingerprint dla tych samych wejść, schematu i splitu', () => {
         expect(computeTrainingFingerprints(rows, 'v7', 'chronological-70-15-15-v1')).toEqual(
             computeTrainingFingerprints(rows, 'v7', 'chronological-70-15-15-v1')

@@ -461,6 +461,19 @@ describe('ModelRegistry.activateModel', () => {
         );
     });
 
+    it('wymaga jawnego approve przed aktywacją modelu REJECTED', async () => {
+        findUnique.mockResolvedValueOnce(
+            record({ id: 'rejected', active: false, state: AiModelState.REJECTED })
+        );
+
+        await expect(registry.activateModel('rejected')).rejects.toThrow(
+            'Model REJECTED nie może być aktywowany — najpierw ręczny approve'
+        );
+
+        expect(transaction).not.toHaveBeenCalled();
+        expect(update).not.toHaveBeenCalled();
+    });
+
     it('dezaktywuje poprzedni i aktywuje wybrany model', async () => {
         findUnique.mockResolvedValueOnce(record({ id: 'target', active: false }));
         findFirst.mockResolvedValueOnce({ id: 'old', version: 'v-old' });
@@ -633,9 +646,19 @@ describe('ModelRegistry.promoteBestModel', () => {
     });
 
     it('promuje model o najwyższym AUC', async () => {
-        const best = record({ id: 'best', metrics: JSON.stringify({ rocAuc: 0.99 }) });
+        const best = record({
+            id: 'best',
+            active: false,
+            state: AiModelState.APPROVED,
+            metrics: JSON.stringify({ rocAuc: 0.99 })
+        });
         findMany.mockResolvedValueOnce([
-            record({ id: 'slaby', metrics: JSON.stringify({ rocAuc: 0.5 }) }),
+            record({
+                id: 'slaby',
+                active: false,
+                state: AiModelState.APPROVED,
+                metrics: JSON.stringify({ rocAuc: 0.5 })
+            }),
             best
         ]);
         findFirst.mockResolvedValueOnce({ id: 'old' });
@@ -658,13 +681,100 @@ describe('ModelRegistry.promoteBestModel', () => {
     });
 
     it('promuje najlepszy model, gdy nie ma aktywnego', async () => {
-        findMany.mockResolvedValueOnce([record({ id: 'best' })]);
+        findMany.mockResolvedValueOnce([
+            record({ id: 'best', active: false, state: AiModelState.APPROVED })
+        ]);
         findFirst.mockResolvedValueOnce(null);
 
         await registry.promoteBestModel();
 
         expect(update).toHaveBeenCalledTimes(1);
         expect(clearPredictionCache).toHaveBeenCalledTimes(1);
+    });
+
+    it('pozwala przywrócić wcześniej produkcyjny model ROLLED_BACK', async () => {
+        findMany.mockResolvedValueOnce([
+            record({
+                id: 'previous-production',
+                active: false,
+                state: AiModelState.ROLLED_BACK,
+                metrics: JSON.stringify({ rocAuc: 0.81 })
+            }),
+            record({
+                id: 'candidate',
+                active: false,
+                state: AiModelState.CANDIDATE,
+                metrics: JSON.stringify({ rocAuc: 0.99 })
+            })
+        ]);
+        findFirst.mockResolvedValueOnce(null);
+
+        const promoted = await registry.promoteBestModel();
+
+        expect(promoted).toMatchObject({ id: 'previous-production' });
+        expect(update).toHaveBeenCalledWith({
+            where: { id: 'previous-production' },
+            data: { active: true, state: AiModelState.PRODUCTION }
+        });
+    });
+
+    it('wybiera zatwierdzony model zamiast kandydata lub odrzuconego z wyższym AUC', async () => {
+        findMany.mockResolvedValueOnce([
+            record({
+                id: 'candidate',
+                active: false,
+                state: AiModelState.CANDIDATE,
+                metrics: JSON.stringify({ rocAuc: 0.99 })
+            }),
+            record({
+                id: 'rejected',
+                active: false,
+                state: AiModelState.REJECTED,
+                metrics: JSON.stringify({ rocAuc: 0.98 })
+            }),
+            record({
+                id: 'approved',
+                active: false,
+                state: AiModelState.APPROVED,
+                metrics: JSON.stringify({ rocAuc: 0.8 })
+            })
+        ]);
+        findFirst.mockResolvedValueOnce(null);
+
+        const promoted = await registry.promoteBestModel();
+
+        expect(promoted).toMatchObject({ id: 'approved' });
+        expect(update).toHaveBeenCalledWith({
+            where: { id: 'approved' },
+            data: { active: true, state: AiModelState.PRODUCTION }
+        });
+        expect(update).not.toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: 'candidate' } })
+        );
+        expect(update).not.toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: 'rejected' } })
+        );
+    });
+
+    it('nie aktywuje automatycznie wyłącznie kandydatów i modeli odrzuconych', async () => {
+        findMany.mockResolvedValueOnce([
+            record({
+                id: 'candidate',
+                active: false,
+                state: AiModelState.CANDIDATE,
+                metrics: JSON.stringify({ rocAuc: 0.99 })
+            }),
+            record({
+                id: 'rejected',
+                active: false,
+                state: AiModelState.REJECTED,
+                metrics: JSON.stringify({ rocAuc: 0.98 })
+            })
+        ]);
+
+        await expect(registry.promoteBestModel()).resolves.toBeNull();
+        expect(findFirst).not.toHaveBeenCalled();
+        expect(transaction).not.toHaveBeenCalled();
     });
 });
 
@@ -694,6 +804,24 @@ describe('ModelRegistry.deleteModel', () => {
 });
 
 describe('ModelRegistry.ensureStarterModelExists', () => {
+    it('dezaktywuje starą aktywną wersję cech, zachowując jej rekord historyczny', async () => {
+        findFirst.mockResolvedValueOnce(null);
+        count.mockResolvedValueOnce(0);
+
+        await registry.ensureStarterModelExists();
+
+        expect(updateMany).toHaveBeenCalledWith({
+            where: {
+                active: true,
+                OR: [{ featureVersion: { not: CURRENT_FV } }, { featureVersion: null }]
+            },
+            data: { active: false, state: AiModelState.ROLLED_BACK }
+        });
+        expect(create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ active: true, featureVersion: CURRENT_FV })
+        });
+    });
+
     it('zwraca istniejący aktywny model', async () => {
         findFirst.mockResolvedValueOnce(record());
 

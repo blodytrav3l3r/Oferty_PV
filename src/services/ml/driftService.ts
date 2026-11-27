@@ -26,6 +26,8 @@ import {
 } from './TrainingPipeline';
 import { ML_CONSTANTS } from '../../config/mlConstants';
 import type { StoredModel } from './ModelRegistry';
+import { computeTrainingUserScopeFingerprint } from './trainingLineage';
+import { findEligibleLabeledFeatures, getTrainingUsersConfig } from './trainingUsers';
 
 export interface FeatureDriftEntry {
     feature: string;
@@ -34,11 +36,23 @@ export interface FeatureDriftEntry {
 
 export interface DriftReport {
     feature: FeatureDriftEntry[];
-    prediction: { psi: number | null; baselineSamples: number; currentSamples: number };
+    trainingScope: {
+        status: 'AVAILABLE' | 'UNAVAILABLE';
+        reason: string | null;
+        modelVersion: string | null;
+    };
+    prediction: {
+        psi: number | null;
+        baselineSamples: number;
+        currentSamples: number;
+        reliability: 'UNAVAILABLE' | 'UNVERIFIED';
+        reason: string;
+    };
     label: {
         currentPositiveRate: number | null;
         trainingPositiveRate: number | null;
         delta: number | null;
+        reason: string | null;
     };
     shadow: {
         candidateVersion: string | null;
@@ -46,11 +60,79 @@ export interface DriftReport {
         shadowAuc: number | null;
         productionAuc: number | null;
         samples: number;
+        reason: string | null;
     };
     generatedAt: string;
 }
 
 const WINDOW = 500; // rekordów do bieżącego okna driftu
+
+interface ResolvedTrainingScope {
+    status: 'AVAILABLE' | 'UNAVAILABLE';
+    reason: string | null;
+    modelVersion: string | null;
+    userIds: string[];
+    positiveRate: number | null;
+    trainedAt: string | null;
+}
+
+async function resolveTrainingScope(
+    production: StoredModel | string | null
+): Promise<ResolvedTrainingScope> {
+    const modelVersion =
+        typeof production === 'string' ? production : (production?.version ?? null);
+    const unavailable = (reason: string): ResolvedTrainingScope => ({
+        status: 'UNAVAILABLE',
+        reason,
+        modelVersion,
+        userIds: [],
+        positiveRate: null,
+        trainedAt: null
+    });
+    if (!production) return unavailable('no_production_model');
+
+    const config = await getTrainingUsersConfig();
+    if (config.status !== 'CONFIGURED' || config.userIds.length === 0) {
+        return unavailable(`allowlist_${config.status.toLowerCase()}`);
+    }
+    const run = await prisma.aiTrainingRun.findFirst({
+        where: { status: 'SUCCESS', candidateModelVersion: modelVersion },
+        select: { positiveRate: true, lineageSnapshot: true, finishedAt: true },
+        orderBy: { startedAt: 'desc' }
+    });
+    if (!run) return unavailable('no_matching_training_run');
+    if (!run.finishedAt) return unavailable('missing_training_completion_time');
+
+    let lineage: unknown;
+    try {
+        lineage = JSON.parse(run.lineageSnapshot ?? 'null');
+    } catch {
+        return unavailable('invalid_training_lineage');
+    }
+    if (!lineage || typeof lineage !== 'object' || !('trainingUserScopeFingerprint' in lineage)) {
+        return unavailable('legacy_training_lineage');
+    }
+    const storedFingerprint = (lineage as { trainingUserScopeFingerprint?: unknown })
+        .trainingUserScopeFingerprint;
+    if (typeof storedFingerprint !== 'string')
+        return unavailable('invalid_training_scope_fingerprint');
+    if (storedFingerprint !== computeTrainingUserScopeFingerprint(config.userIds)) {
+        return unavailable('allowlist_scope_changed');
+    }
+    return {
+        status: 'AVAILABLE',
+        reason: null,
+        modelVersion,
+        userIds: config.userIds,
+        positiveRate: run.positiveRate ?? null,
+        trainedAt: run.finishedAt
+    };
+}
+
+async function getEligibleLabeledFeatures(scope: ResolvedTrainingScope) {
+    if (scope.status !== 'AVAILABLE' || !scope.trainedAt) return [];
+    return findEligibleLabeledFeatures(scope.trainedAt, scope.userIds, WINDOW);
+}
 
 /**
  * Feature drift: PSI każdej cechy z baseline między rozkładem treningowym
@@ -58,17 +140,15 @@ const WINDOW = 500; // rekordów do bieżącego okna driftu
  * przez featureMins/featureMaxs modelu — ten sam wymiar co wektory treningowe.
  */
 export async function computeFeatureDrift(
-    production: StoredModel | null
+    production: StoredModel | null,
+    resolvedScope?: ResolvedTrainingScope
 ): Promise<FeatureDriftEntry[]> {
-    if (!production) return [];
+    const scope = resolvedScope ?? (await resolveTrainingScope(production));
+    if (!production || scope.status !== 'AVAILABLE') return [];
     const baseline = parseFeatureDistributions(production.featureDistributions ?? null);
     if (!baseline) return [];
 
-    const features = await prisma.aiFeature.findMany({
-        where: { label: { not: 'NO_FEEDBACK' } },
-        orderBy: { createdAt: 'desc' },
-        take: WINDOW
-    });
+    const features = await getEligibleLabeledFeatures(scope);
 
     // Agregaty przejść (transition*) — ten sam join co trening: ai_transition_snapshots
     // gdzie configId == aiFeature.telemetryId (TrainingPipeline.loadAndNormalizeFeatures).
@@ -123,6 +203,8 @@ export async function computePredictionDrift(): Promise<{
     psi: number | null;
     baselineSamples: number;
     currentSamples: number;
+    reliability: 'UNVERIFIED';
+    reason: 'client_score_unverified';
 }> {
     const recent = await prisma.aiRewardLog.findMany({
         where: { scoreBefore: { not: null } },
@@ -133,7 +215,13 @@ export async function computePredictionDrift(): Promise<{
         .map((r) => r.scoreBefore)
         .filter((s): s is number => typeof s === 'number');
     if (scores.length < 2 * 10) {
-        return { psi: null, baselineSamples: scores.length, currentSamples: 0 };
+        return {
+            psi: null,
+            baselineSamples: scores.length,
+            currentSamples: 0,
+            reliability: 'UNVERIFIED',
+            reason: 'client_score_unverified'
+        };
     }
     // Dzielimy dostępne próbki na pół (current = nowsze, baseline = starsze) —
     // przy małej liczbie próbek okno nie może być szersze niż połowa danych.
@@ -145,7 +233,13 @@ export async function computePredictionDrift(): Promise<{
     // fałszywego PSI=0 przy przesunięciu rozkładu.
     const baselineHist = fixedScoreHistogram(baseline, 10);
     const psi = computePsi(baselineHist, current);
-    return { psi, baselineSamples: baseline.length, currentSamples: current.length };
+    return {
+        psi,
+        baselineSamples: baseline.length,
+        currentSamples: current.length,
+        reliability: 'UNVERIFIED',
+        reason: 'client_score_unverified'
+    };
 }
 
 function fixedScoreHistogram(values: number[], binCount: number): FeatureDistribution {
@@ -165,16 +259,25 @@ function fixedScoreHistogram(values: number[], binCount: number): FeatureDistrib
  * Label drift: positiveRate bieżący (ostatnie N etykiet) vs positiveRate
  * z ostatniego udanego treningu (AiTrainingRun.status = SUCCESS).
  */
-export async function computeLabelDrift(): Promise<{
+export async function computeLabelDrift(
+    production: StoredModel | null,
+    resolvedScope?: ResolvedTrainingScope
+): Promise<{
     currentPositiveRate: number | null;
     trainingPositiveRate: number | null;
     delta: number | null;
+    reason: string | null;
 }> {
-    const features = await prisma.aiFeature.findMany({
-        where: { label: { not: 'NO_FEEDBACK' } },
-        orderBy: { createdAt: 'desc' },
-        take: WINDOW
-    });
+    const scope = resolvedScope ?? (await resolveTrainingScope(production));
+    if (scope.status !== 'AVAILABLE') {
+        return {
+            currentPositiveRate: null,
+            trainingPositiveRate: null,
+            delta: null,
+            reason: scope.reason
+        };
+    }
+    const features = await getEligibleLabeledFeatures(scope);
     let currentPositiveRate: number | null = null;
     if (features.length > 0) {
         const positives = features.filter(
@@ -183,16 +286,12 @@ export async function computeLabelDrift(): Promise<{
         currentPositiveRate = positives / features.length;
     }
 
-    const lastRun = await prisma.aiTrainingRun.findFirst({
-        where: { status: 'SUCCESS' },
-        orderBy: { startedAt: 'desc' }
-    });
-    const trainingPositiveRate = lastRun?.positiveRate ?? null;
+    const trainingPositiveRate = scope.positiveRate;
     const delta =
         currentPositiveRate != null && trainingPositiveRate != null
             ? currentPositiveRate - trainingPositiveRate
             : null;
-    return { currentPositiveRate, trainingPositiveRate, delta };
+    return { currentPositiveRate, trainingPositiveRate, delta, reason: null };
 }
 
 /**
@@ -202,21 +301,31 @@ export async function computeLabelDrift(): Promise<{
  * Minimalna wersja wg planu (wells_ai_influence=0 działa jako shadow;
  * pełny tracker YAGNI — dopiero gdy pojawią się dane).
  */
-export async function computeShadowStats(production: StoredModel | null): Promise<{
+export async function computeShadowStats(
+    production: StoredModel | null,
+    resolvedScope?: ResolvedTrainingScope
+): Promise<{
     candidateVersion: string | null;
     productionVersion: string | null;
     shadowAuc: number | null;
     productionAuc: number | null;
     samples: number;
+    reason: string | null;
 }> {
     const base = {
         candidateVersion: null,
         productionVersion: production?.version ?? null,
         shadowAuc: null,
         productionAuc: null,
-        samples: 0
+        samples: 0,
+        reason: null
     };
     if (!production) return base;
+
+    const productionScope = resolvedScope ?? (await resolveTrainingScope(production));
+    if (productionScope.status !== 'AVAILABLE') {
+        return { ...base, reason: productionScope.reason };
+    }
 
     const candidate = await prisma.aiModel.findFirst({
         where: {
@@ -226,14 +335,42 @@ export async function computeShadowStats(production: StoredModel | null): Promis
         },
         orderBy: { createdAt: 'desc' }
     });
-    if (!candidate) return { ...base, productionVersion: production.version };
+    if (!candidate) {
+        return { ...base, productionVersion: production.version, reason: 'no_approved_candidate' };
+    }
 
-    const features = await prisma.aiFeature.findMany({
-        where: { label: { not: 'NO_FEEDBACK' } },
-        orderBy: { createdAt: 'desc' },
-        take: WINDOW
-    });
-    if (features.length < 10) return { ...base, productionVersion: production.version };
+    const candidateScope = await resolveTrainingScope(candidate.version);
+    if (candidateScope.status !== 'AVAILABLE') {
+        return {
+            ...base,
+            candidateVersion: candidate.version,
+            reason: candidateScope.reason
+        };
+    }
+    if (!candidateScope.trainedAt || !productionScope.trainedAt) {
+        return {
+            ...base,
+            candidateVersion: candidate.version,
+            reason: 'missing_training_completion_time'
+        };
+    }
+
+    const comparisonScope: ResolvedTrainingScope = {
+        ...candidateScope,
+        trainedAt:
+            candidateScope.trainedAt > productionScope.trainedAt
+                ? candidateScope.trainedAt
+                : productionScope.trainedAt
+    };
+
+    const features = await getEligibleLabeledFeatures(comparisonScope);
+    if (features.length < 10) {
+        return {
+            ...base,
+            candidateVersion: candidate.version,
+            reason: 'insufficient_post_training_samples'
+        };
+    }
 
     // Wektor cech dla obu modeli (one-hot — ten sam wymiar co trening).
     const labels: number[] = [];
@@ -252,7 +389,13 @@ export async function computeShadowStats(production: StoredModel | null): Promis
             )
         );
     }
-    if (labels.length < 10) return { ...base, productionVersion: production.version };
+    if (labels.length < 10) {
+        return {
+            ...base,
+            candidateVersion: candidate.version,
+            reason: 'insufficient_post_training_samples'
+        };
+    }
 
     const prodModel = new AcceptanceModel(
         production.weights.length,
@@ -277,7 +420,8 @@ export async function computeShadowStats(production: StoredModel | null): Promis
         productionVersion: production.version,
         shadowAuc,
         productionAuc,
-        samples: labels.length
+        samples: labels.length,
+        reason: null
     };
 }
 
@@ -288,13 +432,25 @@ export async function buildDriftReport(): Promise<DriftReport> {
     try {
         const { modelRegistry } = await import('./ModelRegistry');
         const production = await modelRegistry.getProductionModel();
+        const trainingScope = await resolveTrainingScope(production);
         const [feature, prediction, label, shadow] = await Promise.all([
-            computeFeatureDrift(production),
+            computeFeatureDrift(production, trainingScope),
             computePredictionDrift(),
-            computeLabelDrift(),
-            computeShadowStats(production)
+            computeLabelDrift(production, trainingScope),
+            computeShadowStats(production, trainingScope)
         ]);
-        return { feature, prediction, label, shadow, generatedAt: new Date().toISOString() };
+        return {
+            feature,
+            trainingScope: {
+                status: trainingScope.status,
+                reason: trainingScope.reason,
+                modelVersion: trainingScope.modelVersion
+            },
+            prediction,
+            label,
+            shadow,
+            generatedAt: new Date().toISOString()
+        };
     } catch (e) {
         logger.error(
             'DriftService',
@@ -302,14 +458,31 @@ export async function buildDriftReport(): Promise<DriftReport> {
         );
         return {
             feature: [],
-            prediction: { psi: null, baselineSamples: 0, currentSamples: 0 },
-            label: { currentPositiveRate: null, trainingPositiveRate: null, delta: null },
+            trainingScope: {
+                status: 'UNAVAILABLE',
+                reason: 'drift_report_error',
+                modelVersion: null
+            },
+            prediction: {
+                psi: null,
+                baselineSamples: 0,
+                currentSamples: 0,
+                reliability: 'UNAVAILABLE',
+                reason: 'drift_report_error'
+            },
+            label: {
+                currentPositiveRate: null,
+                trainingPositiveRate: null,
+                delta: null,
+                reason: 'drift_report_error'
+            },
             shadow: {
                 candidateVersion: null,
                 productionVersion: null,
                 shadowAuc: null,
                 productionAuc: null,
-                samples: 0
+                samples: 0,
+                reason: 'drift_report_error'
             },
             generatedAt: new Date().toISOString()
         };

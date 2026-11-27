@@ -30,6 +30,7 @@ export interface TrainingLineageSnapshot {
     featureSchemaFingerprint: string;
     datasetFingerprint: string;
     trainingConfigFingerprint: string;
+    trainingUserScopeFingerprint?: string;
     trainingConfig: {
         algorithm: string;
         learningRate: number;
@@ -78,6 +79,19 @@ function canonicalJson(value: unknown): string {
 
 function sha256(value: unknown): string {
     return crypto.createHash('sha256').update(canonicalJson(value), 'utf8').digest('hex');
+}
+
+/**
+ * Privacy-minimal identity of a training allowlist. Raw user IDs stay in memory
+ * and are never copied into the persisted training lineage snapshot.
+ */
+export function computeTrainingUserScopeFingerprint(userIds: readonly string[]): string {
+    const canonicalUserIds = [...new Set(userIds)].sort();
+    return `sok-ml-user-scope-v1:sha256:${sha256({
+        algorithm: 'sok-ml-user-scope',
+        version: 1,
+        userIds: canonicalUserIds
+    })}`;
 }
 
 function fingerprintPartition(

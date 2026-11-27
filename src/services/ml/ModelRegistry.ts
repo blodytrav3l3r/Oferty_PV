@@ -349,6 +349,11 @@ export class ModelRegistry {
         return this.withProductionMutation(async () => {
             const target = await prisma.aiModel.findUnique({ where: { id } });
             if (!target) return null;
+            if (target.state === AiModelState.REJECTED) {
+                throw new Error(
+                    'Model REJECTED nie może być aktywowany — najpierw ręczny approve (POST /ai/models/:id/approve)'
+                );
+            }
             if (target.active) return this.recordToModel(target);
 
             // Model spoza bieżącej wersji cech nie może być aktywny — inna liczba
@@ -459,10 +464,25 @@ export class ModelRegistry {
             const records = await prisma.aiModel.findMany({
                 where: { featureVersion: ML_CONSTANTS.FEATURE_VERSION }
             });
-            if (records.length === 0) return null;
-            let best = records[0];
+            const eligibleRecords = records.filter(
+                (record) =>
+                    record.state === AiModelState.APPROVED ||
+                    record.state === AiModelState.ROLLED_BACK ||
+                    (record.active &&
+                        (record.state === AiModelState.PRODUCTION || record.state == null))
+            );
+            if (eligibleRecords.length === 0) {
+                if (records.length > 0) {
+                    logger.warn(
+                        'ModelRegistry',
+                        'Brak zatwierdzonego modelu do automatycznej promocji'
+                    );
+                }
+                return null;
+            }
+            let best = eligibleRecords[0];
             let bestAuc = -1;
-            for (const r of records) {
+            for (const r of eligibleRecords) {
                 const auc = getRocAuc(r.metrics);
                 // N4: getRocAuc zwraca -1 dla braku metryk (model nie trenowany).
                 // Takie modele NIE mogą być promowane — wcześniej starter (auc=-1)
@@ -519,9 +539,27 @@ export class ModelRegistry {
     /**
      * Zapewnia istnienie aktywnego modelu ML (samoleczenie przy starcie serwera/diagnostyce).
      * Jeśli brak aktywnego modelu dla bieżącej wersji cech, promuje najlepszy istniejący lub
-     * automatycznie tworzy domyślny model startowy v0.1.0-starter.
+     * automatycznie tworzy domyślny model startowy v0.1.0-starter. Niekompatybilne aktywne
+     * rekordy zachowuje w rejestrze jako ROLLED_BACK, ale nie pozwala im pozostać aktywnymi.
      */
     async ensureStarterModelExists(): Promise<StoredModel> {
+        const staleActiveModels = await prisma.aiModel.updateMany({
+            where: {
+                active: true,
+                OR: [
+                    { featureVersion: { not: ML_CONSTANTS.FEATURE_VERSION } },
+                    { featureVersion: null }
+                ]
+            },
+            data: { active: false, state: AiModelState.ROLLED_BACK }
+        });
+        if (staleActiveModels.count > 0) {
+            logger.info(
+                'ModelRegistry',
+                `Dezaktywowano niekompatybilne modele ML (${staleActiveModels.count})`
+            );
+        }
+
         const active = await this.getActiveModel();
         if (active) return active;
 

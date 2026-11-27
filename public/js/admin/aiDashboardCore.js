@@ -186,7 +186,9 @@
                 ) +
                 statCard(
                     'Średnie confidence',
-                    Math.round((stats.avgConfidence || 0) * 100) + '%',
+                    stats.avgConfidence != null && Number.isFinite(Number(stats.avgConfidence))
+                        ? Math.round(Number(stats.avgConfidence) * 100) + '%'
+                        : '—',
                     'var(--warn)',
                     'Średni poziom ufności dla wszystkich wzorców (0-100%)'
                 ) +

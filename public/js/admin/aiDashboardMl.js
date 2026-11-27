@@ -232,6 +232,20 @@
                     Number.isFinite(Number(status.baselineAccuracy))
                         ? Number(status.baselineAccuracy)
                         : null;
+                const trainingSnapshot = status.lastTrainingSnapshot;
+                const hasActiveTrainingSnapshot =
+                    trainingSnapshot && trainingSnapshot.candidateModelVersion === activeVer;
+                const metricProvenance = hasActiveTrainingSnapshot
+                    ? 'ROC-AUC, PR-AUC, F1, LogLoss i ECE: walidacja n=' +
+                      countLabel(trainingSnapshot.validationSize) +
+                      '. ROC-AUC testowy: niezależny zbiór testowy n=' +
+                      countLabel(trainingSnapshot.testSize) +
+                      '. Baseline accuracy: zbiór treningowy n=' +
+                      countLabel(trainingSnapshot.trainSize) +
+                      ' · model ' +
+                      window.escapeHtml(activeVer) +
+                      '.'
+                    : 'Pochodzenie metryk dla aktywnego modelu jest niedostępne.';
                 const mlGroup = function (label, gridClass, cards) {
                     return (
                         '<div class="ai-ml-group">' +
@@ -303,6 +317,12 @@
                             activeAuc ? 'ROC-' + activeAuc.trim() : 'Brak modelu z metryką ROC-AUC'
                         ),
                         window.aiStatCard(
+                            'ROC-AUC testowy',
+                            fmt(m.testRocAuc),
+                            m.testRocAuc != null ? 'var(--accent2)' : 'var(--text-muted)',
+                            'ROC-AUC na niezależnym zbiorze testowym, niewykorzystywanym do treningu ani wyboru modelu.'
+                        ),
+                        window.aiStatCard(
                             'Baseline accuracy',
                             baselineAccuracy != null ? baselineAccuracy.toFixed(4) : '—',
                             baselineAccuracy != null
@@ -339,6 +359,9 @@
                             'Expected Calibration Error — odchylenie predykcji od rzeczywistych proporcji (≤0.25 zalecane)'
                         )
                     ]) +
+                    '<p class="ai-ml-metric-provenance" role="note">' +
+                    metricProvenance +
+                    '</p>' +
                     mlGroup('Dane i operacje', 'ai-ml-col-3', [
                         window.aiStatCard(
                             'Wszystkie wektory historyczne',

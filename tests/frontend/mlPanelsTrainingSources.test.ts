@@ -8,9 +8,14 @@ function loadMlPanels(sources: unknown, users: unknown): any {
         path.resolve(__dirname, '../../public/js/admin/mlPanels.js'),
         'utf8'
     );
+    const requests: Array<{ url: string; options?: { method?: string } }> = [];
     const window: any = {
         AI_ENDPOINTS: { trainingUsers: '/training-users', users: '/users' },
-        fetchJson: (url: string) => Promise.resolve(url === '/training-users' ? sources : users),
+        fetchJson: (url: string, options?: { method?: string }) => {
+            requests.push({ url, options });
+            return Promise.resolve(url === '/training-users' ? sources : users);
+        },
+        requests,
         aiLoadingHtml: () => '<div>loading</div>',
         aiApiErrorHtml: (error: string) => '<div>error:' + error + '</div>',
         escapeHtml: (value: unknown) => String(value),
@@ -82,5 +87,28 @@ describe('AI training source status', () => {
 
         expect(html).toContain('Konfiguracja źródeł jest uszkodzona');
         expect(html).toContain('ai-source-user');
+    });
+
+    it.each([
+        ['network failure', null],
+        ['API error response', { error: 'server' }],
+        ['malformed response', { data: 'not-an-array' }]
+    ])('does not enable allowlist edits after users endpoint %s', async (_label, usersResponse) => {
+        const window = loadMlPanels(
+            { status: 'CONFIGURED', configured: true, userIds: ['u1'] },
+            usersResponse
+        );
+
+        const html = await renderTrainingSources(window);
+
+        expect(html).toContain('Nie udało się pobrać listy użytkowników');
+        expect(html).not.toContain('ai-source-user');
+        expect(html).not.toContain('ai-sources-select-all');
+        expect(html).not.toContain('ai-sources-select-none');
+        expect(
+            window.requests.some(
+                (request: { options?: { method?: string } }) => request.options?.method === 'PUT'
+            )
+        ).toBe(false);
     });
 });

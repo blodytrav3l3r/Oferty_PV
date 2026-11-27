@@ -41,6 +41,7 @@ jest.mock('../../src/middleware/rateLimiters', () => ({
 
 const mockGetActiveModel = jest.fn<any>();
 const mockGetModelCount = jest.fn<any>().mockResolvedValue(0);
+const mockActivateModel = jest.fn<any>();
 const mockComputeFeatureImportance = jest.fn<any>().mockResolvedValue([]);
 const mockRollbackToPrevious = jest.fn<any>().mockResolvedValue(null);
 
@@ -48,6 +49,7 @@ jest.mock('../../src/services/ml/ModelRegistry', () => ({
     modelRegistry: {
         getActiveModel: (...args: any[]) => mockGetActiveModel(...args),
         getModelCount: (...args: any[]) => mockGetModelCount(...args),
+        activateModel: (...args: any[]) => mockActivateModel(...args),
         computeFeatureImportance: (...args: any[]) => mockComputeFeatureImportance(...args),
         rollbackToPrevious: (...args: any[]) => mockRollbackToPrevious(...args)
     }
@@ -126,6 +128,62 @@ describe('POST /api/telemetry/ai/rollback', () => {
     });
 });
 
+describe('POST /api/telemetry/ai/models/:id/activate', () => {
+    let app: express.Application;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+    });
+
+    it('zwraca 400 dla odrzuconego modelu zamiast błędu serwera', async () => {
+        mockActivateModel.mockRejectedValueOnce(
+            new Error('Model REJECTED nie może być aktywowany — najpierw ręczny approve')
+        );
+
+        const response = await request(app)
+            .post('/api/telemetry/ai/models/rejected/activate')
+            .set({ 'x-test-userid': 'admin', 'x-test-role': 'admin' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toContain('Model REJECTED');
+    });
+});
+
+describe('GET /api/telemetry/ai/feature-importance', () => {
+    let app: express.Application;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+    });
+
+    it('does not present zero starter weights as trained feature importance', async () => {
+        mockGetActiveModel.mockResolvedValueOnce({
+            id: 'starter',
+            version: 'v0.1.0-starter',
+            trainingRows: 0,
+            weights: [0, 0],
+            featureMins: [0, 0],
+            featureMaxs: [1, 1]
+        });
+
+        const response = await request(app)
+            .get('/api/telemetry/ai/feature-importance')
+            .set({ 'x-test-userid': 'admin', 'x-test-role': 'admin' });
+
+        expect(response.status).toBe(503);
+        expect(response.body).toEqual({ error: 'model_untrained' });
+        expect(mockComputeFeatureImportance).not.toHaveBeenCalled();
+    });
+});
+
 jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     selfEvaluation: {
         evaluateOnlineAuc: (...args: any[]) => mockEvaluateOnlineAuc(...args),
@@ -199,6 +257,7 @@ jest.mock('../../src/prismaClient', () => ({
         aiFeature: {
             findMany: jest.fn<any>().mockResolvedValue([]),
             findFirst: jest.fn<any>().mockResolvedValue(null),
+            groupBy: jest.fn<any>().mockResolvedValue([]),
             count: jest.fn<any>().mockResolvedValue(0)
         },
         aiModel: {
@@ -228,6 +287,34 @@ jest.mock('../../src/prismaClient', () => ({
 jest.mock('../../src/services/auditService', () => ({
     logAudit: jest.fn()
 }));
+
+describe('GET /api/telemetry/ai/ml-status', () => {
+    it('exposes independent test ROC-AUC for the trained active model', async () => {
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        const app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+        mockGetActiveModel.mockResolvedValueOnce({
+            id: 'trained',
+            version: 'v1-trained',
+            trainingRows: 80,
+            metrics: { rocAuc: 0.81, testRocAuc: 0.77 },
+            featureMins: [],
+            featureMaxs: []
+        });
+        mockGetModelCount.mockResolvedValueOnce(1);
+
+        const response = await request(app)
+            .get('/api/telemetry/ai/ml-status')
+            .set({ 'x-test-userid': 'admin', 'x-test-role': 'admin' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.activeModelMetrics).toMatchObject({
+            rocAuc: 0.81,
+            testRocAuc: 0.77
+        });
+    });
+});
 
 describe('POST /api/telemetry/ai/predict/batch', () => {
     let app: express.Application;
@@ -414,7 +501,8 @@ describe('GET /api/telemetry/ai/feature-importance', () => {
             bias: 0,
             features: ['a', 'b', 'c', 'd', 'e'],
             featureMins: [0, 0, 0, 0, 0],
-            featureMaxs: [10, 10, 10, 10, 10]
+            featureMaxs: [10, 10, 10, 10, 10],
+            trainingRows: 20
         });
         mockComputeFeatureImportance.mockReturnValue([
             { featureName: 'd', importance: 9 },

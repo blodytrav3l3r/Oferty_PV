@@ -1053,6 +1053,7 @@ router.get('/ai/ml-status', requireAuth, requireAdmin, READ_LIMITER, async (_req
             lastCandidateVersion: lastSuccessRun?.candidateModelVersion ?? null,
             activeModelMetrics: {
                 rocAuc: activeMetrics?.rocAuc ?? null,
+                testRocAuc: activeMetrics?.testRocAuc ?? null,
                 prAuc: activeMetrics?.prAuc ?? null,
                 f1: activeMetrics?.f1 ?? null,
                 logLoss: activeMetrics?.logLoss ?? null,
@@ -1322,7 +1323,7 @@ router.post(
             res.json({ activated: true, model });
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
-            if (msg.includes('wersji cech')) {
+            if (msg.includes('wersji cech') || msg.includes('Model REJECTED')) {
                 res.status(400).json({ error: msg });
                 return;
             }
@@ -1449,6 +1450,10 @@ router.get(
             const activeModel = await modelRegistry.getActiveModel();
             if (!activeModel) {
                 res.status(503).json({ error: 'No active model' });
+                return;
+            }
+            if ((activeModel.trainingRows ?? 0) <= 0) {
+                res.status(503).json({ error: 'model_untrained' });
                 return;
             }
             const importances = modelRegistry.computeFeatureImportance(activeModel);

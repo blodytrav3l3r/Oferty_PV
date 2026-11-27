@@ -270,7 +270,7 @@ export class KnowledgeBase {
         total: number;
         active: number;
         archived: number;
-        avgConfidence: number;
+        avgConfidence: number | null;
         totalRecommendations: number;
         acceptedRecommendations: number;
         rejectedRecommendations: number;
@@ -310,7 +310,7 @@ export class KnowledgeBase {
             const avgConfidence =
                 allActive.length > 0
                     ? allActive.reduce((acc, p) => acc + p.confidence, 0) / allActive.length
-                    : 0;
+                    : null;
 
             const byPatternType: Record<string, number> = {};
             allActive.forEach((p) => {
@@ -331,17 +331,7 @@ export class KnowledgeBase {
             };
         } catch (e) {
             logger.error('KnowledgeBase', `Błąd getStats: ${e}`);
-            return {
-                total: 0,
-                active: 0,
-                archived: 0,
-                avgConfidence: 0,
-                totalRecommendations: 0,
-                acceptedRecommendations: 0,
-                rejectedRecommendations: 0,
-                byPatternType: {},
-                recentDetected: 0
-            };
+            throw e;
         }
     }
 

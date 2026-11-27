@@ -2394,6 +2394,17 @@ a.admin-stat-card {
     --stat-val-size: 1.1rem;
 }
 
+.ai-ml-metric-provenance {
+    margin: -8px 0 16px;
+    padding: 8px 10px;
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    font-size: var(--fs-sm);
+    line-height: 1.45;
+}
+
 .ai-ml-group + .ai-ml-group {
     margin-top: var(--tile-gap-md);
     padding-top: var(--tile-gap-sm-plus);
@@ -2952,6 +2963,13 @@ a.admin-stat-card {
     color: var(--text-muted);
     margin-top: 4px;
     line-height: 1.3;
+}
+
+.ai-drift-provenance {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    line-height: 1.4;
 }
 
 .ai-drift-label {

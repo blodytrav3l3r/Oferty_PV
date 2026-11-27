@@ -38,6 +38,7 @@ import {
     computeModelFingerprint,
     computeTrainingConfigFingerprint,
     computeTrainingFingerprints,
+    computeTrainingUserScopeFingerprint,
     type TrainingLineageSnapshot
 } from './trainingLineage';
 import { getVersion } from '../../version';
@@ -793,6 +794,7 @@ export class TrainingPipeline {
                     ),
                     datasetFingerprint: fingerprint,
                     trainingConfigFingerprint: configFingerprint,
+                    trainingUserScopeFingerprint: computeTrainingUserScopeFingerprint(allowlist),
                     trainingConfig,
                     splitPolicyVersion,
                     splitFingerprints: fingerprints.splitFingerprints,

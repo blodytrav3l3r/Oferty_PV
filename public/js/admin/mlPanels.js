@@ -38,7 +38,27 @@
                     ? usersResp.data
                     : Array.isArray(usersResp)
                       ? usersResp
-                      : [];
+                      : null;
+                if (
+                    !users ||
+                    usersResp.error ||
+                    !users.every(function (user) {
+                        return (
+                            user &&
+                            typeof user === 'object' &&
+                            typeof user.id === 'string' &&
+                            user.id.length > 0
+                        );
+                    })
+                ) {
+                    host.innerHTML =
+                        '<div class="card-note card-note--with-icon"><i data-lucide="alert-triangle"></i>' +
+                        '<span><strong>Nie udało się pobrać listy użytkowników</strong> — konfiguracja źródeł treningu nie została zmieniona. Odśwież panel i spróbuj ponownie.</span></div>';
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons({ root: host });
+                    }
+                    return;
+                }
                 const configured = status === 'CONFIGURED';
                 const selected = Array.isArray(sources.userIds) ? sources.userIds : [];
                 const selectedSet = {};
@@ -404,7 +424,21 @@
             }
             let shadowHtml = '';
             const sh = data.shadow || {};
-            if (sh.candidateVersion) {
+            if (sh.candidateVersion && sh.reason) {
+                const shadowReason =
+                    {
+                        allowlist_scope_changed:
+                            'zakres użytkowników różni się od zakresu trenowania',
+                        legacy_training_lineage: 'brak zapisanego zakresu trenowania kandydata',
+                        no_matching_training_run: 'brak treningu przypisanego do kandydata',
+                        insufficient_post_training_samples: 'za mało nowych próbek po treningu',
+                        missing_training_completion_time: 'brak czasu zakończenia treningu'
+                    }[sh.reason] || 'nie można potwierdzić zgodności danych';
+                shadowHtml =
+                    '<div class="ai-drift-label"><span><strong>Shadow (A/B):</strong> wynik niedostępny — ' +
+                    shadowReason +
+                    '.</span></div>';
+            } else if (sh.candidateVersion) {
                 shadowHtml =
                     '<div class="ai-drift-label">' +
                     '<span><strong>Shadow (A/B):</strong> kandydat ' +
@@ -435,8 +469,40 @@
                 '<div class="fs-sm-muted-2px">PSI rozkładu score</div>' +
                 '<div class="fs-sm-muted-2px--compact">' +
                 window.escapeHtml(predSamplesTxt) +
-                '</div></div>';
+                '</div><div class="ai-drift-provenance">Niewiarygodny sygnał: zapis score pochodzi z żądania klienta bez zweryfikowanego dowodu i bez wersji modelu; okna mogą łączyć fałszywe wyniki oraz różne wersje.</div></div>';
             const featureCount = Array.isArray(data.feature) ? data.feature.length : 0;
+            const trainingScope = data.trainingScope || {};
+            const scopeUnavailable = trainingScope.status === 'UNAVAILABLE';
+            const scopeReason =
+                {
+                    allowlist_scope_changed:
+                        'Zakres użytkowników różni się od zakresu użytego przy trenowaniu',
+                    legacy_training_lineage:
+                        'Trening modelu nie zawiera zapisanego zakresu użytkowników',
+                    no_matching_training_run:
+                        'Brak udanego treningu przypisanego do aktywnego modelu',
+                    no_production_model: 'Brak aktywnego modelu produkcyjnego',
+                    allowlist_unconfigured:
+                        'Lista użytkowników treningowych nie jest skonfigurowana',
+                    allowlist_invalid: 'Lista użytkowników treningowych jest nieprawidłowa',
+                    allowlist_unavailable: 'Nie można odczytać listy użytkowników treningowych',
+                    invalid_training_lineage: 'Zapis pochodzenia treningu jest uszkodzony',
+                    invalid_training_scope_fingerprint: 'Zapis zakresu treningu jest nieprawidłowy',
+                    missing_training_completion_time:
+                        'Brak czasu zakończenia treningu, więc nie da się wybrać nowych próbek po treningu'
+                }[trainingScope.reason] ||
+                'Nie można potwierdzić zgodności danych z aktywnym modelem';
+            const modelLabel = trainingScope.modelVersion
+                ? ' modelu ' + window.escapeHtml(trainingScope.modelVersion)
+                : '';
+            if (
+                scopeUnavailable &&
+                lab.currentPositiveRate == null &&
+                lab.trainingPositiveRate == null
+            ) {
+                labelHtml =
+                    '<div class="ai-drift-label"><span><strong>Label drift:</strong> niedostępny dla tego modelu (szczegóły powyżej).</span><span class="text-muted">Δ —</span></div>';
+            }
             const featureCard =
                 '<div class="ai-drift-card"><strong>Feature drift</strong><br>' +
                 '<span style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:' +
@@ -449,9 +515,17 @@
                 ? '<div class="ai-table-wrap"><table class="ai-table"><thead><tr><th scope="col">#</th><th scope="col">Cecha</th><th scope="col">PSI</th></tr></thead><tbody>' +
                   featureRows +
                   '</tbody></table></div>'
-                : '<div class="card-note">Brak danych do oceny driftu cech — baseline zapisywany jest przy treningu ML. Uruchom trening aby ustalić rozkłady referencyjne.</div>';
+                : scopeUnavailable
+                  ? '<div class="card-note">Drift cech: niedostępny dla tego modelu.</div>'
+                  : '<div class="card-note">Brak danych do oceny driftu cech — baseline zapisywany jest przy treningu ML. Uruchom trening, aby ustalić rozkłady referencyjne.</div>';
             host.innerHTML =
                 '<div class="ai-section-title"><i data-lucide="waves"></i> Drift modelu</div>' +
+                (scopeUnavailable
+                    ? '<div class="card-note" role="status">Drift cech i etykiet jest niedostępny — ' +
+                      scopeReason +
+                      modelLabel +
+                      '.</div>'
+                    : '') +
                 '<div class="ai-drift-grid">' +
                 predCard +
                 featureCard +
@@ -488,6 +562,11 @@
                 if (data.error === 'unavailable') {
                     container.innerHTML =
                         '<div class="card-note">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
+                    return;
+                }
+                if (data.error === 'model_untrained') {
+                    container.innerHTML =
+                        '<div class="card-note">Model nie jest wytrenowany — ważność cech będzie dostępna po udanym treningu.</div>';
                     return;
                 }
                 container.innerHTML = window.aiApiErrorHtml(data.error);
