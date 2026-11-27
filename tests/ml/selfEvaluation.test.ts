@@ -108,7 +108,11 @@ describe('SelfEvaluation - sliding window', () => {
             version: 'model-current',
             metrics: { rocAuc: 0.1 }
         });
-        mockPromoteBestModel.mockResolvedValue({ id: 'model-old', version: 'v-old' });
+        mockPromoteBestModel.mockResolvedValue({
+            id: 'model-old',
+            version: 'v-old',
+            metrics: { rocAuc: 0.8 }
+        });
         mockShouldTrain.mockResolvedValue({ ok: false, reason: 'too_soon' });
         const mod = await import('../../src/services/ml/SelfEvaluation');
         SelfEvaluationClass = mod.SelfEvaluation;
@@ -141,39 +145,49 @@ describe('SelfEvaluation - sliding window', () => {
         }
         mockGetActiveModel.mockResolvedValue({ id: 'model-v2', version: 'model-v2' });
 
-        await expect(ev.checkAndRollbackIfNeeded()).resolves.toEqual({
-            rolledBack: false,
-            slidingAuc: null
-        });
+        await expect(ev.evaluateOnlineAuc()).resolves.toEqual({ slidingAuc: null });
 
         expect(mockRollbackToPrevious).not.toHaveBeenCalled();
         expect((ev as unknown as { slidingWindow: unknown[] }).slidingWindow).toHaveLength(0);
     });
 
-    it('checkAndRollbackIfNeeded zwraca null gdy window < 10', async () => {
+    it('evaluateOnlineAuc zwraca null gdy window < 10', async () => {
         const ev = new SelfEvaluationClass();
         for (let i = 0; i < 5; i++) {
             ev.recordPredictionResult(1, 0.1);
         }
-        const result = await ev.checkAndRollbackIfNeeded();
-        expect(result).toEqual({ rolledBack: false, slidingAuc: null });
+        const result = await ev.evaluateOnlineAuc();
+        expect(result).toEqual({ slidingAuc: null });
         expect(mockRollbackToPrevious).not.toHaveBeenCalled();
     });
 
-    it('rollback przy sliding AUC < progu', async () => {
+    it('słabe online AUC pozostaje diagnostyczne i nie zmienia aktywnego modelu', async () => {
         const ev = new SelfEvaluationClass();
+        let activeModel = {
+            id: 'model-current',
+            version: 'model-current',
+            metrics: { rocAuc: 0.9 }
+        };
+        mockGetActiveModel.mockImplementation(async () => activeModel);
+        mockRollbackToPrevious.mockImplementation(async () => {
+            activeModel = { id: 'model-old', version: 'model-old', metrics: { rocAuc: 0.8 } };
+            return activeModel;
+        });
+        const before = await mockGetActiveModel();
         // odwrócona klasyfikacja (pozytywy dostają niskie score) -> AUC=0 < 0.65
         for (let i = 0; i < 20; i++) {
             ev.recordPredictionResult(i % 2, i % 2 === 0 ? 0.9 : 0.1, 'model-current');
         }
-        mockRollbackToPrevious.mockResolvedValue({ id: 'prev', version: 'v0.9.0' });
-        const result = await ev.checkAndRollbackIfNeeded();
-        expect(result.rolledBack).toBe(true);
+        const result = await ev.evaluateOnlineAuc();
+        const after = await mockGetActiveModel();
+        expect(result.slidingAuc).toBe(0);
         expect(result.slidingAuc).toBeLessThan(0.65);
-        expect(mockRollbackToPrevious).toHaveBeenCalledWith('model-current');
-        expect(logger.info).toHaveBeenCalledWith('SelfEvaluation', 'Auto-rollback zakończony');
-        const status = ev as unknown as { slidingWindow: unknown[] };
-        expect(status.slidingWindow.length).toBe(0);
+        expect(after).toMatchObject({ id: before.id, version: before.version });
+        expect(mockRollbackToPrevious).not.toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalledWith(
+            'SelfEvaluation',
+            expect.stringContaining('rollback online wyłączony')
+        );
     });
 
     it('brak rollbacku przy zdrowym AUC', async () => {
@@ -181,20 +195,29 @@ describe('SelfEvaluation - sliding window', () => {
         for (let i = 0; i < 20; i++) {
             ev.recordPredictionResult(i % 2, i % 2 === 0 ? 0.1 : 0.9, 'model-current');
         }
-        const result = await ev.checkAndRollbackIfNeeded();
-        expect(result.rolledBack).toBe(false);
+        const result = await ev.evaluateOnlineAuc();
         expect(result.slidingAuc).toBeGreaterThanOrEqual(0.65);
         expect(mockRollbackToPrevious).not.toHaveBeenCalled();
     });
 
-    it('brak poprzedniego modelu nie rzuca błędu', async () => {
+    it('ogranicza powtarzane ostrzeżenia o słabym AUC do jednego na okno czasowe', async () => {
         const ev = new SelfEvaluationClass();
+        let now = Date.now();
+        const nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => now);
         for (let i = 0; i < 20; i++) {
-            ev.recordPredictionResult(i % 2, i % 2 === 0 ? 0.1 : 0.9, 'model-current');
+            ev.recordPredictionResult(i % 2, i % 2 === 0 ? 0.9 : 0.1, 'model-current');
         }
-        mockRollbackToPrevious.mockResolvedValue(null);
-        const result = await ev.checkAndRollbackIfNeeded();
-        expect(result.rolledBack).toBe(false);
+        try {
+            await ev.evaluateOnlineAuc();
+            await ev.evaluateOnlineAuc();
+            expect(logger.warn).toHaveBeenCalledTimes(1);
+
+            now += 5 * 60 * 1000;
+            await ev.evaluateOnlineAuc();
+            expect(logger.warn).toHaveBeenCalledTimes(2);
+        } finally {
+            nowSpy.mockRestore();
+        }
     });
 
     it('okno samych ACCEPT nie wyzwala rollbacku', async () => {
@@ -202,8 +225,7 @@ describe('SelfEvaluation - sliding window', () => {
         for (let i = 0; i < 20; i++) {
             ev.recordPredictionResult(1, 0.5 + (i % 5) * 0.1, 'model-current');
         }
-        const result = await ev.checkAndRollbackIfNeeded();
-        expect(result.rolledBack).toBe(false);
+        const result = await ev.evaluateOnlineAuc();
         expect(result.slidingAuc).toBeNull();
         expect(mockRollbackToPrevious).not.toHaveBeenCalled();
     });
@@ -213,8 +235,7 @@ describe('SelfEvaluation - sliding window', () => {
         for (let i = 0; i < 20; i++) {
             ev.recordPredictionResult(0, 0.2 + (i % 5) * 0.1, 'model-current');
         }
-        const result = await ev.checkAndRollbackIfNeeded();
-        expect(result.rolledBack).toBe(false);
+        const result = await ev.evaluateOnlineAuc();
         expect(result.slidingAuc).toBeNull();
         expect(mockRollbackToPrevious).not.toHaveBeenCalled();
     });
@@ -229,5 +250,13 @@ describe('SelfEvaluation - sliding window', () => {
         await expect(ev.runDaily()).resolves.toEqual({ rolledBack: false });
 
         expect(mockPromoteBestModel).not.toHaveBeenCalled();
+    });
+
+    it('runDaily nadal promuje najlepszy model na podstawie oceny modelu po treningu', async () => {
+        const ev = new SelfEvaluationClass();
+
+        await expect(ev.runDaily()).resolves.toEqual({ rolledBack: true });
+
+        expect(mockPromoteBestModel).toHaveBeenCalledTimes(1);
     });
 });

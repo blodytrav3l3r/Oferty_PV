@@ -230,6 +230,10 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 - **Paradygmat uczenia** (`src/services/ml/SelfEvaluation.ts`, `RewardCalculator.ts`):
   feedback-based learning — model uczy się z decyzji użytkownika (accept/reject/modify)
   i samooceny AUC; nie jest to reinforcement learning (brak state/action/policy/update rule).
+  Sliding AUC z bieżących predykcji jest wyłącznie diagnostyczne: przy wyniku poniżej
+  progu loguje ostrzeżenie (maksymalnie raz na 5 minut dla wersji modelu) i nie zmienia
+  aktywnego modelu. Ręczny rollback pozostaje dostępny, a zaplanowane `runDaily` nadal
+  ocenia modele po treningu i zachowuje dotychczasową obsługę najlepszego modelu.
 - **Retencja rejestru modeli ML** (`src/services/ml/ModelRegistry.ts` — `pruneOldModels`):
   po każdym `saveModel` oraz przy starcie serwera rejestr `AiModel` jest przycinany do
   polityki `ML_CONFIG.retention` (`src/services/ml/trainingConfig.ts`, domyślnie

@@ -42,6 +42,24 @@ import { getTrainingUserIds } from '../services/ml/trainingUsers';
 const router = Router();
 type FallbackOutcomeReason = z.infer<typeof fallbackOutcomeReasonSchema>;
 const COMPATIBILITY_SAMPLE_LIMIT = 500;
+const ONLINE_AUC_ERROR_LOG_INTERVAL_MS = 5 * 60 * 1000;
+let lastOnlineAucErrorLogAt: number | null = null;
+
+function logOnlineAucDiagnosticFailure(error: unknown): void {
+    const now = Date.now();
+    if (
+        lastOnlineAucErrorLogAt !== null &&
+        now - lastOnlineAucErrorLogAt < ONLINE_AUC_ERROR_LOG_INTERVAL_MS
+    ) {
+        return;
+    }
+    lastOnlineAucErrorLogAt = now;
+    const errorName = error instanceof Error ? error.name : 'UnknownError';
+    logger.error(
+        'AiPredictBatchRoute',
+        `Online AUC diagnostic failed (${errorName}); prediction response was already returned`
+    );
+}
 
 type CompatibilityOutcome = 'compatible' | 'warning' | 'blocked' | 'unknown';
 
@@ -291,14 +309,12 @@ router.post(
 
             recordAiPredictionOutcome('success');
             res.json({ scores });
-            // Fire-and-forget — nie blokuje odpowiedzi; pomija, gdy trwa trening
+            // Wyłącznie obserwacja. Wynik AUC nie może zmienić aktywnego modelu.
+            // Fire-and-forget — predykcja pozostaje poprawna także przy błędzie diagnostyki.
             if (!trainingPipeline.getStatus().running) {
-                selfEvaluation.checkAndRollbackIfNeeded().catch((e) => {
-                    logger.error(
-                        'AiPredictBatchRoute',
-                        `Sliding AUC check failed: ${e instanceof Error ? e.message : String(e)}`
-                    );
-                });
+                void Promise.resolve()
+                    .then(() => selfEvaluation.evaluateOnlineAuc())
+                    .catch(logOnlineAucDiagnosticFailure);
             }
         } catch (e) {
             recordAiPredictionOutcome('server_error');

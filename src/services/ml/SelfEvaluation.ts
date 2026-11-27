@@ -11,11 +11,11 @@ export class SelfEvaluation {
     private readonly SLIDING_WINDOW_SIZE = 200;
     private featureVersion: string = ML_CONSTANTS.FEATURE_VERSION;
     private windowModelVersion: string | null = null;
-    // Mutex + agregacja: równoległe wywołania checkAndRollbackIfNeeded
-    // (predict/batch fire-and-forget) współdzielą jedno wykonywanie — bez tego
-    // dwa jednoczesne rollbacki przesuwałyby model o 2 pozycje wstecz (flapping).
-    private rollbackPromise: Promise<{ rolledBack: boolean; slidingAuc: number | null }> | null =
-        null;
+    // Mutex + agregacja diagnostyki: równoległe wywołania z predict/batch
+    // współdzielą jedno odczytanie modelu i jedną ewaluację okna.
+    private evaluationPromise: Promise<{ slidingAuc: number | null }> | null = null;
+    private lastLowAucWarning: { modelVersion: string; loggedAt: number } | null = null;
+    private readonly LOW_AUC_WARNING_INTERVAL_MS = 5 * 60 * 1000;
 
     recordPredictionResult(
         actualLabel: number,
@@ -42,52 +42,55 @@ export class SelfEvaluation {
         }
     }
 
-    async checkAndRollbackIfNeeded(): Promise<{ rolledBack: boolean; slidingAuc: number | null }> {
-        if (this.rollbackPromise) return this.rollbackPromise;
-        this.rollbackPromise = this._runCheck().finally(() => {
-            this.rollbackPromise = null;
+    async evaluateOnlineAuc(): Promise<{ slidingAuc: number | null }> {
+        if (this.evaluationPromise) return this.evaluationPromise;
+        this.evaluationPromise = this._evaluateOnlineAuc().finally(() => {
+            this.evaluationPromise = null;
         });
-        return this.rollbackPromise;
+        return this.evaluationPromise;
     }
 
-    private async _runCheck(): Promise<{ rolledBack: boolean; slidingAuc: number | null }> {
+    private async _evaluateOnlineAuc(): Promise<{ slidingAuc: number | null }> {
         const window = this.slidingWindow;
         if (window.length < 10) {
-            return { rolledBack: false, slidingAuc: null };
+            return { slidingAuc: null };
         }
 
         const activeModel = await modelRegistry.getActiveModel();
         if (!activeModel || this.windowModelVersion !== activeModel.version) {
             this.slidingWindow = [];
             this.windowModelVersion = activeModel?.version ?? null;
-            return { rolledBack: false, slidingAuc: null };
+            return { slidingAuc: null };
         }
 
         const scores = window.map((w) => w.score);
         const labels = window.map((w) => w.label);
 
         // Okno z tylko jedną klasą (np. same ACCEPT) nie ma sensu dla AUC —
-        // computeRocAuc zwraca wtedy degeneracyjne 0.5, co wywołałoby fałszywy auto-rollback.
+        // computeRocAuc zwracałoby wtedy degeneracyjne 0.5 bez sygnału jakości.
         if (labels.every((l) => l === 1) || labels.every((l) => l === 0)) {
-            return { rolledBack: false, slidingAuc: null };
+            return { slidingAuc: null };
         }
 
         const slidingAuc = computeRocAuc(scores, labels);
 
         if (slidingAuc < ML_CONFIG.rollbackAucThreshold) {
-            logger.warn(
-                'SelfEvaluation',
-                `Sliding AUC=${slidingAuc.toFixed(4)} < ${ML_CONFIG.rollbackAucThreshold} — auto-rollback`
-            );
-            const previous = await modelRegistry.rollbackToPrevious(activeModel.version);
-            if (previous) {
-                logger.info('SelfEvaluation', 'Auto-rollback zakończony');
-                this.slidingWindow = [];
-                this.windowModelVersion = null;
-                return { rolledBack: true, slidingAuc };
+            const now = Date.now();
+            const warningIsDue =
+                !this.lastLowAucWarning ||
+                this.lastLowAucWarning.modelVersion !== activeModel.version ||
+                now - this.lastLowAucWarning.loggedAt >= this.LOW_AUC_WARNING_INTERVAL_MS;
+            if (warningIsDue) {
+                logger.warn(
+                    'SelfEvaluation',
+                    `Sliding AUC=${slidingAuc.toFixed(4)} < ${ML_CONFIG.rollbackAucThreshold} — rollback online wyłączony do czasu weryfikacji pochodzenia danych`
+                );
+                this.lastLowAucWarning = { modelVersion: activeModel.version, loggedAt: now };
             }
+        } else {
+            this.lastLowAucWarning = null;
         }
-        return { rolledBack: false, slidingAuc };
+        return { slidingAuc };
     }
 
     async runDaily(): Promise<{ rolledBack: boolean; evaluationId?: string }> {

@@ -1456,7 +1456,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 });
 
                 // Zapamiętaj aiScore finalnego wyboru do reward (scoreBefore) — odblokowuje
-                // sliding AUC / auto-rollback w SelfEvaluation (backend /ai/reward).
+                // obserwacyjną sliding AUC w SelfEvaluation (backend /ai/reward).
                 const winnerEntry = rankResult.ranked.find(function (r) {
                     return r.solution === winner;
                 });

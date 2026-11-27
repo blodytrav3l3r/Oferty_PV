@@ -55,9 +55,7 @@ jest.mock('../../src/services/ml/ModelRegistry', () => ({
 
 const mockGetStatus = jest.fn<any>().mockReturnValue({ running: false });
 const mockTrainingRun = jest.fn<any>().mockResolvedValue({ trained: false });
-const mockCheckAndRollback = jest
-    .fn<any>()
-    .mockResolvedValue({ rolledBack: false, slidingAuc: null });
+const mockEvaluateOnlineAuc = jest.fn<any>().mockResolvedValue({ slidingAuc: null });
 const mockRecordPredictionResult = jest.fn<any>();
 
 jest.mock('../../src/services/ml/TrainingPipeline', () => ({
@@ -130,7 +128,7 @@ describe('POST /api/telemetry/ai/rollback', () => {
 
 jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     selfEvaluation: {
-        checkAndRollbackIfNeeded: (...args: any[]) => mockCheckAndRollback(...args),
+        evaluateOnlineAuc: (...args: any[]) => mockEvaluateOnlineAuc(...args),
         recordPredictionResult: (...args: any[]) => mockRecordPredictionResult(...args)
     }
 }));
@@ -236,6 +234,7 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
 
     beforeEach(async () => {
         jest.clearAllMocks();
+        mockEvaluateOnlineAuc.mockResolvedValue({ slidingAuc: null });
         const { default: router } = await import('../../src/routes/telemetryAiMl');
         app = express();
         app.use(express.json());
@@ -285,6 +284,65 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         expect(res.body.scores[0].predictionToken).toMatch(
             /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
         );
+        expect(mockEvaluateOnlineAuc).toHaveBeenCalledTimes(1);
+        expect(mockRollbackToPrevious).not.toHaveBeenCalled();
+    });
+
+    it('błąd diagnostyki AUC nie blokuje poprawnej predykcji', async () => {
+        mockGetActiveModel.mockResolvedValue({
+            id: 'model-v1',
+            version: 'v1.0.0-test',
+            weights: new Array(29).fill(0.1),
+            bias: 0,
+            featureMins: new Array(29).fill(0),
+            featureMaxs: new Array(29).fill(1)
+        });
+        mockPredict.mockReturnValue(0.7);
+        mockEvaluateOnlineAuc.mockRejectedValue(new Error('diagnostic unavailable'));
+        const { logger } = (await import('../../src/utils/logger')) as any;
+
+        const payload = {
+            candidates: [{ id: 10, wellId: 'well-diagnostic', features: new Array(29).fill(0.5) }]
+        };
+        const sendPrediction = () =>
+            request(app)
+                .post('/api/telemetry/ai/predict/batch')
+                .set({ 'x-test-userid': 'userA' })
+                .send(payload);
+        const [res, repeatedRes] = await Promise.all([sendPrediction(), sendPrediction()]);
+
+        expect(res.status).toBe(200);
+        expect(repeatedRes.status).toBe(200);
+        expect(res.body.scores[0]).toMatchObject({ score: 0.7 });
+        expect(res.body.scores[0].predictionToken).toMatch(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        );
+        expect(mockRollbackToPrevious).not.toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalledWith(
+            'AiPredictBatchRoute',
+            expect.stringContaining('Online AUC diagnostic failed')
+        );
+        expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('odrzuca zły wymiar cech przed wywołaniem diagnostyki AUC', async () => {
+        mockGetActiveModel.mockResolvedValue({
+            id: 'model-v1',
+            version: 'v1.0.0-test',
+            weights: new Array(29).fill(0.1),
+            bias: 0,
+            featureMins: new Array(29).fill(0),
+            featureMaxs: new Array(29).fill(1)
+        });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/predict/batch')
+            .set({ 'x-test-userid': 'userA' })
+            .send({ candidates: [{ id: 11, features: [0.5] }] });
+
+        expect(res.status).toBe(400);
+        expect(mockEvaluateOnlineAuc).not.toHaveBeenCalled();
+        expect(mockRollbackToPrevious).not.toHaveBeenCalled();
     });
 
     it('batch predict z cache: drugi identyczny request dostaje cached: true', async () => {
@@ -333,6 +391,7 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
                 candidates: [{ id: 1, features: new Array(29).fill(0.5) }]
             });
         expect(res.status).toBe(503);
+        expect(mockEvaluateOnlineAuc).not.toHaveBeenCalled();
     });
 });
 

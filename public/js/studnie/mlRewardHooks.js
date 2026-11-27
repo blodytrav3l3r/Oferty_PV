@@ -80,7 +80,7 @@
 
         // scoreBefore/scoreAfter z ostatniej decyzji rankingu (well._aiRankInfo ustawiany
         // w solverAutoSelect.js po AI DUAL-RANKING). Jawna wartość z callera ma priorytet.
-        // To odblokowuje sliding AUC / auto-rollback w SelfEvaluation (backend /ai/reward).
+        // To zasila obserwacyjną sliding AUC w SelfEvaluation (backend /ai/reward).
         const rankInfo = (w && w._aiRankInfo) || {};
         const scoreBefore =
             params.scoreBefore !== undefined ? params.scoreBefore : rankInfo.scoreBefore;

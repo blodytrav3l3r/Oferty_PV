@@ -38,7 +38,7 @@ jest.mock('../../src/services/ml/RewardCalculator', () => ({
 
 jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     selfEvaluation: {
-        checkAndRollbackIfNeeded: jest.fn<any>().mockResolvedValue({}),
+        evaluateOnlineAuc: jest.fn<any>().mockResolvedValue({ slidingAuc: null }),
         recordPredictionResult: jest.fn<any>()
     }
 }));

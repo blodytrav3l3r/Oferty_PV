@@ -119,7 +119,7 @@ jest.mock('../../src/services/ml/TrainingPipeline', () => ({
 
 jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     selfEvaluation: {
-        checkAndRollbackIfNeeded: jest.fn().mockResolvedValue({ rolledBack: false }),
+        evaluateOnlineAuc: jest.fn().mockResolvedValue({ slidingAuc: null }),
         recordPredictionResult: jest.fn()
     }
 }));
