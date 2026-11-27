@@ -2,6 +2,8 @@ import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 
 const mockFindMany = jest.fn<any>();
 const mockFindUnique = jest.fn<any>();
+const mockUsersFindMany = jest.fn<any>();
+const mockLockedUsersQuery = jest.fn<any>();
 const mockCreateKb = jest.fn<any>();
 const mockFindFirstKb = jest.fn<any>();
 const mockUpsertSettings = jest.fn<any>();
@@ -24,10 +26,17 @@ jest.mock('../../src/prismaClient', () => {
                 upsert: (...args: any[]) => mockUpsertSettings(...args)
             },
             ai_knowledge_base: mockAiKnowledgeBase,
+            users: {
+                findMany: (...args: any[]) => mockUsersFindMany(...args)
+            },
             $transaction: jest.fn<any>((fn: (tx: any) => Promise<any>) =>
                 fn({
                     ai_knowledge_base: mockAiKnowledgeBase,
-                    $queryRaw: jest.fn<any>().mockResolvedValue([{ value: '["learning-user"]' }])
+                    $queryRaw: jest.fn<any>((query: { sql?: string }) =>
+                        query.sql?.includes('FROM "users"')
+                            ? mockLockedUsersQuery(query)
+                            : Promise.resolve([{ value: '["learning-user"]' }])
+                    )
                 })
             )
         }
@@ -85,6 +94,10 @@ function makeRecord(dn: string, overrides: Record<string, unknown> = {}) {
 describe('LearningEngine', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockUsersFindMany.mockImplementation(async ({ where }: any) =>
+            where.id.in.map((id: string) => ({ id }))
+        );
+        mockLockedUsersQuery.mockResolvedValue([{ id: 'learning-user' }]);
         mockFindUnique.mockImplementation(async ({ where }: any) =>
             where.key === 'ai_training_user_ids' ? { value: '["learning-user"]' } : null
         );
@@ -176,5 +189,25 @@ describe('LearningEngine', () => {
         const result = await engine.runFullCycle();
 
         expect(result.persistedToKb).toBeGreaterThan(0);
+    });
+
+    it('nie utrwala wzorców, gdy allowlisted user został usunięty przed zapisem KB', async () => {
+        mockFindMany.mockResolvedValue([
+            makeRecord('1000'),
+            makeRecord('1000'),
+            makeRecord('1000')
+        ]);
+        mockUsersFindMany
+            .mockResolvedValueOnce([{ id: 'learning-user' }])
+            .mockResolvedValueOnce([]);
+        mockLockedUsersQuery.mockResolvedValueOnce([]);
+
+        const mod = await import('../../src/services/telemetry/learning/LearningEngine');
+        const engine = new mod.LearningEngine();
+        const result = await engine.runFullCycle();
+
+        expect(result.error).toBe('training_users_changed');
+        expect(result.persistedToKb).toBe(0);
+        expect(mockCreateKb).not.toHaveBeenCalled();
     });
 });

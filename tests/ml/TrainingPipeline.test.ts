@@ -78,12 +78,25 @@ jest.mock('../../src/prismaClient', () => ({
             deleteMany: (...args: any[]) => mockRunDeleteMany(...args)
         },
         aiRewardLog: { count: jest.fn<any>().mockResolvedValue(0) },
-        users: { update: jest.fn<any>() },
+        users: {
+            findMany: jest.fn<any>(async ({ where }: any) =>
+                where.id.in.map((id: string) => ({ id }))
+            ),
+            update: jest.fn<any>()
+        },
+        $queryRaw: async (query: { sql?: string }) =>
+            query.sql?.includes('FROM "users"')
+                ? [{ id: 'userA' }]
+                : [{ value: JSON.stringify(['userA']) }],
         settings: {
             findUnique: (...args: any[]) => mockSettingsFindUnique(...args)
         },
         $transaction: async (callback: any) =>
             callback({
+                $queryRaw: async (query: { sql?: string }) =>
+                    query.sql?.includes('FROM "users"')
+                        ? [{ id: 'userA' }]
+                        : [{ value: JSON.stringify(['userA']) }],
                 aiModel: {
                     findFirst: (...args: any[]) => mockFindFirst(...args),
                     update: (...args: any[]) => mockUpdate(...args),

@@ -28,7 +28,12 @@ import {
     type DatasetRow
 } from './dataset';
 import { buildTelemetryAggregates } from './telemetryExport';
-import { getTrainingUserIds, TRAINING_USERS_KEY } from '../trainingUsers';
+import {
+    getTrainingUserIds,
+    hasSameTrainingUsers,
+    lockTrainingUserScope,
+    TRAINING_USERS_KEY
+} from '../trainingUsers';
 
 /**
  * P7.2 — Export model-only (samowystarczalny artefakt).
@@ -162,27 +167,6 @@ function assertKnowledgeExportScope(options: ExportOptions): void {
             'Eksport knowledge jest niedostępny: wzorce nie mają lineage właściciela i nie można potwierdzić zakresu allowlisty.'
         );
     }
-}
-
-function sameUserScope(left: readonly string[], right: readonly string[]): boolean {
-    if (left.length !== right.length) return false;
-    const sortedLeft = [...left].sort();
-    const sortedRight = [...right].sort();
-    return sortedLeft.every((userId, index) => userId === sortedRight[index]);
-}
-
-function parseUserScope(value: string | null | undefined): string[] | null {
-    if (value === null || value === undefined) return [];
-    let parsed: unknown;
-    try {
-        parsed = JSON.parse(value);
-    } catch {
-        return null;
-    }
-    if (!Array.isArray(parsed) || parsed.some((userId) => typeof userId !== 'string')) {
-        return null;
-    }
-    return [...new Set(parsed as string[])];
 }
 
 /** Podgląd eksportu (bez generowania pliku) — użytkownik widzi, co opuszcza komputer. */
@@ -468,8 +452,8 @@ export async function buildModelPackage(
             const rows = await tx.$queryRaw<Array<{ value: string | null }>>(
                 Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
             );
-            const currentUsers = parseUserScope(rows[0]?.value);
-            if (currentUsers === null || !sameUserScope(allowlist, currentUsers)) {
+            const currentUsers = await lockTrainingUserScope(rows[0]?.value, tx);
+            if (currentUsers === null || !hasSameTrainingUsers(allowlist, currentUsers)) {
                 throw new TransferError(
                     'DATA_SCOPE_UNAVAILABLE',
                     'Allowlista zmieniła się podczas eksportu. Wykonaj podgląd i eksport ponownie.'

@@ -13,6 +13,7 @@ const deleteRecord = jest.fn();
 const count = jest.fn();
 const transaction = jest.fn();
 const queryRaw = jest.fn();
+const lockUsers = jest.fn();
 const clearPredictionCache = jest.fn();
 
 jest.mock('../../src/prismaClient', () => {
@@ -32,7 +33,8 @@ jest.mock('../../src/prismaClient', () => {
         transaction(cb);
         return cb(prisma);
     };
-    prisma.$queryRaw = (...args: unknown[]) => queryRaw(...args);
+    prisma.$queryRaw = (...args: any[]) =>
+        args[0]?.sql?.includes('FROM "users"') ? lockUsers(...args) : queryRaw(...args);
     return { __esModule: true, default: prisma };
 });
 
@@ -125,6 +127,7 @@ beforeEach(() => {
     count.mockResolvedValue(0);
     update.mockResolvedValue({});
     updateMany.mockResolvedValue({ count: 0 });
+    lockUsers.mockResolvedValue([]);
     deleteRecord.mockResolvedValue({});
     jest.spyOn(registry, 'pruneOldModels').mockResolvedValue({
         deletedCount: 0,
@@ -206,8 +209,23 @@ describe('ModelRegistry.saveModel', () => {
         expect(create).not.toHaveBeenCalled();
     });
 
+    it('blokuje promocję, gdy właściciel ze snapshotu został usunięty', async () => {
+        queryRaw.mockResolvedValueOnce([{ value: '["user-a"]' }]);
+        lockUsers.mockResolvedValueOnce([]);
+
+        await expect(
+            registry.saveModel(model, metrics, ['f1'], [0], [1], true, undefined, undefined, null, [
+                'user-a'
+            ])
+        ).rejects.toBeInstanceOf(TrainingUsersChangedError);
+
+        expect(update).not.toHaveBeenCalled();
+        expect(create).not.toHaveBeenCalled();
+    });
+
     it('porównuje allowlistę pod blokadą rekordu ustawień przed promocją', async () => {
         queryRaw.mockResolvedValueOnce([{ value: '["user-b", "user-a"]' }]);
+        lockUsers.mockResolvedValueOnce([{ id: 'user-a' }, { id: 'user-b' }]);
 
         await registry.saveModel(
             model,

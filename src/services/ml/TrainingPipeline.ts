@@ -1,4 +1,5 @@
 import prisma from '../../prismaClient';
+import { Prisma } from '../../../generated/prisma-postgres/client';
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
 import {
@@ -44,7 +45,9 @@ import {
     countEligibleNewFeatures,
     filterFeaturesByTrainingUsers,
     hasSameTrainingUsers,
-    getTrainingUserIds
+    getTrainingUserIds,
+    lockTrainingUserScope,
+    TRAINING_USERS_KEY
 } from './trainingUsers';
 
 // Semantyka statusów treningu (plan MLOps):
@@ -602,6 +605,20 @@ export class TrainingPipeline {
                 }
             });
 
+            const preprocessingInScope = await prisma.$transaction(async (tx) => {
+                const rows = await tx.$queryRaw<Array<{ value: string | null }>>(
+                    Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
+                );
+                const lockedUsers = await lockTrainingUserScope(rows[0]?.value, tx);
+                return !!lockedUsers && hasSameTrainingUsers(allowlist, lockedUsers);
+            });
+            if (!preprocessingInScope) {
+                return finish(TRAINING_STATUS.SKIPPED, 'training_users_changed');
+            }
+
+            // Preprocessing wyłącznie utrwala historię. Nie trzymaj blokady kont
+            // podczas potencjalnie długich batchy; zakres sprawdzimy ponownie przed
+            // treningiem, a transakcje zapisu modelu i tak blokują efektywną listę.
             await measureStage('extract', () => featureExtractor.extractAndStore(allowlist));
             // Feedback (accept/reject/modify) często nadchodzi PO ekstrakcji cech.
             // Re-synchronizuj etykiety, żeby trening miał klasę negatywną (bez niej

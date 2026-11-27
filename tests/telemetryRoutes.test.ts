@@ -939,6 +939,7 @@ describe('RecommendationEngine', () => {
 
 describe('LearningEngine - pipeline', () => {
     let le: LearningEngine;
+    let learningUserId: string | null = null;
     // Izolacja od współdzielonego dev-DB: fixture musi jawnie należeć do
     // allowlisty i być kwalifikujący, tak jak realne dane dla LearningEngine.
     // Zapisujemy klucz, czyścimy na czas suity, potem przywracamy.
@@ -946,6 +947,7 @@ describe('LearningEngine - pipeline', () => {
     let hadTrainingUsersKey = false;
     beforeEach(async () => {
         le = new LearningEngine();
+        learningUserId = null;
         try {
             const row = await prisma.settings.findUnique({
                 where: { key: 'ai_training_user_ids' }
@@ -961,6 +963,10 @@ describe('LearningEngine - pipeline', () => {
 
     afterEach(async () => {
         await prisma.ai_telemetry_logs.deleteMany({ where: { override_reason: 'test' } });
+        if (learningUserId) {
+            await prisma.users.deleteMany({ where: { id: learningUserId } });
+            learningUserId = null;
+        }
         try {
             if (!hadTrainingUsersKey) {
                 await prisma.settings.delete({ where: { key: 'ai_training_user_ids' } });
@@ -983,17 +989,26 @@ describe('LearningEngine - pipeline', () => {
     });
 
     it('runFullCycle z rekordami → patterns wykryte', async () => {
+        learningUserId = `learning-engine-${crypto.randomUUID()}`;
+        await prisma.users.create({
+            data: {
+                id: learningUserId,
+                username: learningUserId,
+                password: 'test-only-password',
+                role: 'user'
+            }
+        });
         await prisma.settings.upsert({
             where: { key: 'ai_training_user_ids' },
-            update: { value: JSON.stringify(['test-user']) },
-            create: { key: 'ai_training_user_ids', value: JSON.stringify(['test-user']) }
+            update: { value: JSON.stringify([learningUserId]) },
+            create: { key: 'ai_training_user_ids', value: JSON.stringify([learningUserId]) }
         });
         // Wstaw kilka rekordów telemetry z dn='1200'
         for (let i = 0; i < 5; i++) {
             await prisma.ai_telemetry_logs.create({
                 data: {
                     id: crypto.randomUUID(),
-                    userId: 'test-user',
+                    userId: learningUserId,
                     trainingEligible: true,
                     dn: '1200',
                     wellHeight: 3000 + i * 100,

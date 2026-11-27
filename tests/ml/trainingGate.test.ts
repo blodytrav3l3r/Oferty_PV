@@ -37,6 +37,11 @@ jest.mock('../../src/prismaClient', () => ({
         settings: {
             findUnique: (...args: any[]) => mockSettingsFindUnique(...args)
         },
+        users: {
+            findMany: jest.fn<any>(async ({ where }: any) =>
+                where.id.in.map((id: string) => ({ id }))
+            )
+        },
         aiModel: {
             findFirst: jest.fn<any>().mockResolvedValue(null),
             findMany: jest.fn<any>().mockResolvedValue([])

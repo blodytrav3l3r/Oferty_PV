@@ -1,4 +1,5 @@
 import prisma from '../../prismaClient';
+import { Prisma } from '../../../generated/prisma-postgres/client';
 import { logger } from '../../utils/logger';
 
 export const TRAINING_USERS_KEY = 'ai_training_user_ids';
@@ -51,11 +52,49 @@ export async function getTrainingUsersConfig(): Promise<TrainingUsersConfig> {
     if (!userIds) {
         return { status: 'INVALID', userIds: [], legacyMigrated: false };
     }
-    return { status: 'CONFIGURED', userIds, legacyMigrated };
+    try {
+        const effectiveUserIds = await filterExistingTrainingUserIds(userIds);
+        return { status: 'CONFIGURED', userIds: effectiveUserIds, legacyMigrated };
+    } catch {
+        logger.warn('ML', 'Nie można sprawdzić kont allowlisty — trening zablokowany');
+        return { status: 'UNAVAILABLE', userIds: [], legacyMigrated: false };
+    }
 }
 
 export async function getTrainingUserIds(): Promise<string[]> {
-    return (await getTrainingUsersConfig()).userIds;
+    const config = await getTrainingUsersConfig();
+    return config.status === 'CONFIGURED' ? config.userIds : [];
+}
+
+type TrainingUserLookup = Pick<typeof prisma.users, 'findMany'>;
+
+export async function filterExistingTrainingUserIds(
+    userIds: readonly string[],
+    users: TrainingUserLookup = prisma.users
+): Promise<string[]> {
+    if (userIds.length === 0) return [];
+    const existingUsers = await users.findMany({
+        where: { id: { in: [...userIds] } },
+        select: { id: true }
+    });
+    const existingIds = new Set(existingUsers.map(({ id }) => id));
+    return userIds.filter((userId) => existingIds.has(userId));
+}
+
+export async function lockTrainingUserScope(
+    value: string | null | undefined,
+    transaction: Pick<typeof prisma, '$queryRaw'>
+): Promise<string[] | null> {
+    const configuredIds = parseTrainingUserIds(value);
+    if (!configuredIds) return null;
+    if (configuredIds.length === 0) return [];
+    const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "users"
+        WHERE "id" IN (${Prisma.join(configuredIds)})
+        FOR KEY SHARE
+    `);
+    const existingIds = new Set(rows.map(({ id }) => id));
+    return configuredIds.filter((userId) => existingIds.has(userId));
 }
 
 /**

@@ -26,10 +26,18 @@ jest.mock('../../src/services/auditService', () => ({
 }));
 
 const settingsStore = new Map<string, string>();
+const deletedUserIds = new Set<string>();
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        users: {
+            findMany: jest.fn<any>(async ({ where }: any) =>
+                where.id.in
+                    .filter((id: string) => !deletedUserIds.has(id))
+                    .map((id: string) => ({ id }))
+            )
+        },
         settings: {
             findUnique: jest.fn<any>(async ({ where }: any) =>
                 settingsStore.has(where.key)
@@ -50,6 +58,7 @@ let app: express.Application;
 beforeEach(async () => {
     jest.clearAllMocks();
     settingsStore.clear();
+    deletedUserIds.clear();
     // P0.5 fail-closed: PUT wymaga flagi ON; testy logiki pracuja przy ON.
     settingsStore.set('feature_ai_ml_enabled', '"1"');
     const { default: router } = await import('../../src/routes/telemetryAiMl');
@@ -80,6 +89,15 @@ describe('GET /ai/training-users', () => {
             userIds: ['A', 'B'],
             legacyMigrated: false
         });
+    });
+
+    it('nie zwraca usuniętych kont jako efektywnie dozwolonych', async () => {
+        settingsStore.set('ai_training_user_ids', JSON.stringify(['A', 'deleted-user']));
+        deletedUserIds.add('deleted-user');
+        const res = await request(app).get('/api/telemetry/ai/training-users');
+
+        expect(res.status).toBe(200);
+        expect(res.body.userIds).toEqual(['A']);
     });
 
     it('oznacza listę odziedziczoną migracją do sprawdzenia przez admina', async () => {

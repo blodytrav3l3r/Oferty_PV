@@ -8,7 +8,7 @@ import { ML_CONFIG } from './trainingConfig';
 import { clearPredictionCache } from './predictionCache';
 import type { ConfusionMatrix } from './metrics';
 import { AiModelState, assertValidAiModelState, type AiModelStateValue } from './aiModelState';
-import { TRAINING_USERS_KEY } from './trainingUsers';
+import { hasSameTrainingUsers, lockTrainingUserScope, TRAINING_USERS_KEY } from './trainingUsers';
 
 export class TrainingUsersChangedError extends Error {
     constructor() {
@@ -22,22 +22,6 @@ export class ProductionModelChangedError extends Error {
         super('production_model_changed_during_training');
         this.name = 'ProductionModelChangedError';
     }
-}
-
-function hasSameUsers(value: string | null, expected: readonly string[]): boolean {
-    if (!value) return false;
-    let parsed: unknown;
-    try {
-        parsed = JSON.parse(value);
-    } catch {
-        return false;
-    }
-    if (!Array.isArray(parsed) || parsed.some((id) => typeof id !== 'string')) return false;
-    const current = [...new Set(parsed)].sort();
-    const snapshot = [...expected].sort();
-    return (
-        current.length === snapshot.length && current.every((id, index) => id === snapshot[index])
-    );
 }
 
 export interface ModelMetrics {
@@ -175,7 +159,11 @@ export class ModelRegistry {
                     const rows = await tx.$queryRaw<Array<{ value: string | null }>>(
                         Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
                     );
-                    if (!hasSameUsers(rows[0]?.value ?? null, expectedTrainingUsers)) {
+                    const currentUsers = await lockTrainingUserScope(rows[0]?.value, tx);
+                    if (
+                        !currentUsers ||
+                        !hasSameTrainingUsers(currentUsers, expectedTrainingUsers)
+                    ) {
                         throw new TrainingUsersChangedError();
                     }
                 }

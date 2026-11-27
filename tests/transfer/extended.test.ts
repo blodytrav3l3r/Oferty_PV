@@ -25,8 +25,8 @@ jest.mock('../../src/utils/logger', () => ({
     logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 }));
 
-const UID = 'p7ext';
 const TAG = `p7ext-${Date.now().toString(36)}`;
+const UID = `${TAG}-owner`;
 const createdModelIds: string[] = [];
 const createdTransferIds: string[] = [];
 let originalTrainingUsersSetting: { value: string | null } | null = null;
@@ -39,6 +39,9 @@ beforeAll(async () => {
     ]);
     originalTrainingUsersSetting = users ? { value: users.value } : null;
     originalTrainingUsersMigratedSetting = migrated ? { value: migrated.value } : null;
+    await prisma.users.create({
+        data: { id: UID, username: UID, password: 'test-only-password', role: 'user' }
+    });
 });
 
 async function restoreSetting(
@@ -226,6 +229,7 @@ afterAll(async () => {
     await prisma.aiFeature.deleteMany({ where: { id: { startsWith: TAG } } });
     await prisma.ai_telemetry_logs.deleteMany({ where: { id: { startsWith: TAG } } });
     await prisma.ai_knowledge_base.deleteMany({ where: { patternKey: { startsWith: TAG } } });
+    await prisma.users.deleteMany({ where: { id: { startsWith: TAG } } });
     await restoreSetting('ai_training_user_ids', originalTrainingUsersSetting);
     await restoreSetting('ai_training_user_ids_migrated', originalTrainingUsersMigratedSetting);
     await prisma.$disconnect();
@@ -284,6 +288,14 @@ describe('P7.5 Extended', () => {
 
     it('telemetria eksportuje wyłącznie agregaty allowlisty z co najmniej 5 właścicielami', async () => {
         const allowedUsers = Array.from({ length: 6 }, (_, i) => `${TAG}-user-${i}`);
+        await prisma.users.createMany({
+            data: allowedUsers.map((id) => ({
+                id,
+                username: id,
+                password: 'test-only-password',
+                role: 'user'
+            }))
+        });
         await prisma.settings.upsert({
             where: { key: 'ai_training_user_ids' },
             update: { value: JSON.stringify(allowedUsers) },

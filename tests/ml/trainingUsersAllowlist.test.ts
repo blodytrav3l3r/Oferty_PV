@@ -13,6 +13,7 @@ type Row = Record<string, any>;
 
 const store = {
     settings: new Map<string, string>(),
+    deletedUsers: new Set<string>(),
     telemetry: [] as Row[],
     features: [] as Row[],
     kb: [] as Row[]
@@ -85,6 +86,13 @@ const mockFeatureFindMany = jest.fn<any>(async (args: any = {}) => {
 });
 
 const fakePrisma: any = {
+    users: {
+        findMany: jest.fn<any>(async ({ where }: any) =>
+            (where?.id?.in ?? [])
+                .filter((id: string) => !store.deletedUsers.has(id))
+                .map((id: string) => ({ id }))
+        )
+    },
     settings: {
         findUnique: jest.fn<any>(async ({ where }: any) =>
             store.settings.has(where.key)
@@ -146,7 +154,11 @@ const fakePrisma: any = {
         }),
         updateMany: jest.fn<any>(async () => ({ count: 0 }))
     },
-    $queryRaw: jest.fn<any>(async () => {
+    $queryRaw: jest.fn<any>(async (query: { sql?: string }) => {
+        if (query.sql?.includes('FROM "users"')) {
+            const ids = JSON.parse(store.settings.get('ai_training_user_ids') || '[]') as string[];
+            return ids.filter((id) => !store.deletedUsers.has(id)).map((id) => ({ id }));
+        }
         const value = store.settings.get('ai_training_user_ids');
         return value === undefined ? [] : [{ value }];
     }),
@@ -195,6 +207,7 @@ function telemetryFixture(id: string, userId: string | null, dn: string, extra: 
 
 beforeEach(() => {
     store.settings.clear();
+    store.deletedUsers.clear();
     store.telemetry = [];
     store.features = [];
     store.kb = [];
@@ -225,6 +238,14 @@ describe('getTrainingUserIds', () => {
         });
     });
 
+    it('wyklucza usunięte konta z efektywnej allowlisty', async () => {
+        store.settings.set('ai_training_user_ids', JSON.stringify(['A', 'deleted-user']));
+        store.deletedUsers.add('deleted-user');
+        const { getTrainingUserIds } = await import('../../src/services/ml/trainingUsers');
+
+        await expect(getTrainingUserIds()).resolves.toEqual(['A']);
+    });
+
     it('uszkodzona wartość = UNAVAILABLE i brak treningu', async () => {
         store.settings.set('ai_training_user_ids', 'nie-json');
         const { getTrainingUserIds, getTrainingUsersConfig } =
@@ -247,6 +268,18 @@ describe('getTrainingUserIds', () => {
             legacyMigrated: false
         });
         expect(await getTrainingUserIds()).toEqual([]);
+    });
+
+    it('błąd sprawdzania istnienia kont = UNAVAILABLE i brak treningu', async () => {
+        store.settings.set('ai_training_user_ids', JSON.stringify(['A']));
+        jest.spyOn(fakePrisma.users, 'findMany').mockRejectedValueOnce(new Error('db down'));
+        const { getTrainingUsersConfig } = await import('../../src/services/ml/trainingUsers');
+
+        await expect(getTrainingUsersConfig()).resolves.toEqual({
+            status: 'UNAVAILABLE',
+            userIds: [],
+            legacyMigrated: false
+        });
     });
 });
 

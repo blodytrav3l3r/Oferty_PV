@@ -22,7 +22,7 @@ import type { KnowledgePattern } from './KnowledgeBase';
 import {
     getTrainingUserIds,
     hasSameTrainingUsers,
-    parseTrainingUserIds,
+    lockTrainingUserScope,
     TRAINING_USERS_KEY
 } from '../../ml/trainingUsers';
 
@@ -273,9 +273,7 @@ export class LearningEngine {
                 const settings = await tx.$queryRaw<Array<{ value: string | null }>>(
                     Prisma.sql`SELECT "value" FROM "settings" WHERE "key" = ${TRAINING_USERS_KEY} FOR SHARE`
                 );
-                const lockedTrainingUsers = settings[0]
-                    ? parseTrainingUserIds(settings[0].value)
-                    : [];
+                const lockedTrainingUsers = await lockTrainingUserScope(settings[0]?.value, tx);
                 if (
                     !lockedTrainingUsers ||
                     !hasSameTrainingUsers(trainingUserIds, lockedTrainingUsers)
