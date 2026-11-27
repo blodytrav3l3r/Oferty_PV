@@ -4,6 +4,30 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.65.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.28...v1.65.0) (2026-11-27)
+
+### Features
+
+- **telemetry:** dodaj p99 i ogranicz dane w logach ([d004919](https://github.com/blodytrav3l3r/Oferty_PV/commit/d0049192c54c9058800984588f9449ed8f58d1dc))
+- **telemetry:** dodaj statystyki akcji predykcji ([be06aa9](https://github.com/blodytrav3l3r/Oferty_PV/commit/be06aa903f553ffa4cef26c65cefd159560a891a))
+- **telemetry:** dodaj sygnaly zdrowia ai ([528a99e](https://github.com/blodytrav3l3r/Oferty_PV/commit/528a99e9731c88ea54977cba58c580cf1dcdfc8d))
+- **telemetry:** mierz inferencje i feedback ai ([e20c83a](https://github.com/blodytrav3l3r/Oferty_PV/commit/e20c83a83211f0fc3e9ed4d1489ae0bbe287b69c))
+- **telemetry:** utrwal reprodukowalność i lineage ml ([3be06cf](https://github.com/blodytrav3l3r/Oferty_PV/commit/3be06cf1f3955fa568d70079f019103f6a5db45d))
+- **telemetry:** wyjaśnij metryki i utwardź akcje dashboardu ([4cef54f](https://github.com/blodytrav3l3r/Oferty_PV/commit/4cef54f785ef8c335aca12f493974325dc815a38))
+
+### Bug Fixes
+
+- **security:** ogranicz współbieżny import transferu ([8e192d5](https://github.com/blodytrav3l3r/Oferty_PV/commit/8e192d5014ca5b1676012a465265eff0861c3ca4))
+- **telemetry:** enforce training eligibility across ai ([f25bcea](https://github.com/blodytrav3l3r/Oferty_PV/commit/f25bceab67526b1cbcd19dfb4a90855857602af8))
+- **telemetry:** fail closed ai training user scope ([3dcde98](https://github.com/blodytrav3l3r/Oferty_PV/commit/3dcde98db36c2564cace845c269c59beee8c45ad))
+- **telemetry:** fit ml scaler on train data ([f05f45b](https://github.com/blodytrav3l3r/Oferty_PV/commit/f05f45bc098750de7178c16b63efb78b79d842c0))
+- **telemetry:** ogranicz identyfikatory w logach ([53ce1d8](https://github.com/blodytrav3l3r/Oferty_PV/commit/53ce1d8178e3b7b9cee48360a9b67b8eaee68394))
+- **telemetry:** scope ai transfer data to allowed users ([fccf343](https://github.com/blodytrav3l3r/Oferty_PV/commit/fccf3435351a8993fcfd6ddb7c4be81cb415eaeb))
+- **telemetry:** uczyń zapis feedbacku atomowym ([aa171ee](https://github.com/blodytrav3l3r/Oferty_PV/commit/aa171ee817d589e4ec8d638ad672b75436b88c96))
+- **telemetry:** wyklucz usuniete konta z ai ([cd065be](https://github.com/blodytrav3l3r/Oferty_PV/commit/cd065be14ad1b789f54b23d4b49f36993aeb8684))
+- **telemetry:** zabezpiecz współbieżność treningu ml ([37fe2de](https://github.com/blodytrav3l3r/Oferty_PV/commit/37fe2de75bce901e04c5128afaebcf5233f65795))
+- **ui:** popraw responsywność dashboardu ai ([5d3d992](https://github.com/blodytrav3l3r/Oferty_PV/commit/5d3d992e25cecd35caa06831877e95a9b7f86889))
+
 ### [1.64.28](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.27...v1.64.28) (2026-11-26)
 
 ### [1.64.27](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.26...v1.64.27) (2026-11-26)
