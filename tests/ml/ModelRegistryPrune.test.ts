@@ -6,6 +6,7 @@
 
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { ML_CONSTANTS } from '../../src/config/mlConstants';
+import { logger } from '../../src/utils/logger';
 
 const mockFindMany = jest.fn<any>();
 const mockDeleteMany = jest.fn<any>();
@@ -94,6 +95,10 @@ describe('ModelRegistry.pruneOldModels', () => {
         const result = await modelRegistry.pruneOldModels();
 
         expect(result.deletedCount).toBe(1);
+        expect(logger.info).toHaveBeenCalledWith(
+            'ModelRegistry',
+            'Przycięto rejestr modeli: usunięto 1'
+        );
         const deletedIds = deletedIdsFromCalls();
         expect(deletedIds).toHaveLength(1);
         expect(deletedIds).not.toContain(activeId);

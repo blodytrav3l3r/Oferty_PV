@@ -166,7 +166,7 @@ describe('ModelRegistry.saveModel', () => {
         expect(clearPredictionCache).toHaveBeenCalledTimes(1);
         expect(logger.info).toHaveBeenCalledWith(
             'ModelRegistry',
-            `Zapisano model ${version} (active=true, auc=0.9000)`
+            'Zapisano model (active=true, auc=0.9000)'
         );
     });
 
@@ -349,13 +349,10 @@ describe('ModelRegistry.getBestAuc / listModels / getModelCount', () => {
         expect(list[0]).toMatchObject({ id: 'm-1', active: true, features: ['f1', 'f2'] });
         expect(list[1].metrics).toBeNull();
         expect(list[1].features).toEqual([]);
+        expect(logger.warn).toHaveBeenCalledWith('ModelRegistry', 'Uszkodzone metryki JSON modelu');
         expect(logger.warn).toHaveBeenCalledWith(
             'ModelRegistry',
-            'Uszkodzone metryki JSON w modelu m-2 (version v2)'
-        );
-        expect(logger.warn).toHaveBeenCalledWith(
-            'ModelRegistry',
-            'Uszkodzona lista cech JSON w modelu m-2 (version v2)'
+            'Uszkodzona lista cech JSON modelu'
         );
     });
 
@@ -413,7 +410,7 @@ describe('ModelRegistry.rollbackToPrevious', () => {
         });
         expect(clearPredictionCache).toHaveBeenCalledTimes(1);
         expect(restored).toMatchObject({ id: 'prev', active: false });
-        expect(logger.info).toHaveBeenCalledWith('ModelRegistry', 'Rollback do modelu v-prev');
+        expect(logger.info).toHaveBeenCalledWith('ModelRegistry', 'Rollback modelu zakończony');
     });
 
     it('bez poprzedniego modelu loguje ostrzeżenie i zwraca null', async () => {
@@ -460,7 +457,7 @@ describe('ModelRegistry.activateModel', () => {
         expect(transaction).not.toHaveBeenCalled();
         expect(logger.warn).toHaveBeenCalledWith(
             'ModelRegistry',
-            `Odrzucono aktywację modelu v1.0.0-20260101-abcdef12 (featureVersion=v0 != ${CURRENT_FV})`
+            'Odrzucono aktywację modelu: niezgodna wersja cech'
         );
     });
 
@@ -590,7 +587,7 @@ describe('ModelRegistry.approveModel', () => {
         expect(approved).toMatchObject({ id: 'm-1', state: AiModelState.APPROVED });
         expect(logger.info).toHaveBeenCalledWith(
             'ModelRegistry',
-            expect.stringContaining('Ręczny approve modelu')
+            'Ręczny approve modelu zakończony'
         );
     });
 
@@ -656,7 +653,7 @@ describe('ModelRegistry.promoteBestModel', () => {
         expect(promoted).toMatchObject({ id: 'best' });
         expect(logger.info).toHaveBeenCalledWith(
             'ModelRegistry',
-            'Promowano najlepszy model v1.0.0-20260101-abcdef12 (auc=0.99)'
+            'Promowano najlepszy model (auc=0.99)'
         );
     });
 
@@ -692,7 +689,7 @@ describe('ModelRegistry.deleteModel', () => {
 
         await expect(registry.deleteModel('m-9')).resolves.toMatchObject({ id: 'm-9' });
         expect(deleteRecord).toHaveBeenCalledWith({ where: { id: 'm-9' } });
-        expect(logger.info).toHaveBeenCalledWith('ModelRegistry', 'Usunięto model v9');
+        expect(logger.info).toHaveBeenCalledWith('ModelRegistry', 'Usunięto model');
     });
 });
 
@@ -741,7 +738,7 @@ describe('ModelRegistry.ensureStarterModelExists', () => {
         expect(starter.version).toBe('v0.1.0-starter');
         expect(logger.info).toHaveBeenCalledWith(
             'ModelRegistry',
-            'Utworzono i aktywowano domyślny model startowy ML (v0.1.0-starter)'
+            'Utworzono i aktywowano domyślny model startowy ML'
         );
     });
 

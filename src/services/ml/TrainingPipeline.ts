@@ -540,7 +540,7 @@ export class TrainingPipeline {
                 finishFailed = true;
                 logger.error(
                     'TrainingPipeline',
-                    `Błąd zapisu AiTrainingRun ${runId}: ${e instanceof Error ? e.message : String(e)}`
+                    `Błąd zapisu AiTrainingRun (${e instanceof Error ? e.name : 'UnknownError'})`
                 );
                 throw e;
             }
@@ -1020,10 +1020,7 @@ export class TrainingPipeline {
             }
             candidateModelVersion = version;
             terminalSaved = true;
-            logger.info(
-                'TrainingPipeline',
-                `Wytrenowano i wdrożono ${version} (auc=${metrics.rocAuc})`
-            );
+            logger.info('TrainingPipeline', `Wytrenowano i wdrożono model (auc=${metrics.rocAuc})`);
             return finish(TRAINING_STATUS.SUCCESS, undefined).then(() => ({
                 trained: true,
                 version,
@@ -1042,7 +1039,8 @@ export class TrainingPipeline {
             else if (e instanceof TrainingTimeoutError) status = TRAINING_STATUS.FAILED_TIMEOUT;
             else if (e instanceof TrainingDivergenceError)
                 status = TRAINING_STATUS.FAILED_VALIDATION;
-            logger.error('TrainingPipeline', `${status}: ${msg}`);
+            const errorType = e instanceof Error ? e.name : 'UnknownError';
+            logger.error('TrainingPipeline', `${status} (${errorType})`);
             await finish(status, `${status.toLowerCase()}:${msg}`);
             return { trained: false, reason: `${status.toLowerCase()}:${msg}` };
         } finally {

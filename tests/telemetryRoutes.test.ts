@@ -13,7 +13,7 @@
  * - Walidację wersji solvera
  */
 
-import { describe, expect, it, beforeEach, afterEach } from '@jest/globals';
+import { describe, expect, it, beforeEach, afterEach, jest } from '@jest/globals';
 
 // Testy ML/telemetrii mierzą 2–5 s solo (obliczenia confidence/dedup);
 // pod obciążeniem 15 workerów przekraczają domyślne 10 s (flake timeout,
@@ -36,6 +36,7 @@ import { LearningEngine } from '../src/services/telemetry/learning/LearningEngin
 import { cronService } from '../src/utils/cronService';
 import { RewardCalculator } from '../src/services/ml/RewardCalculator';
 import { featureExtractor } from '../src/services/ml/FeatureExtractor';
+import { logger } from '../src/utils/logger';
 
 /* ===== Pomocnicy ===== */
 
@@ -488,6 +489,49 @@ describe('telemetryService - deduplikacja AUTO_JS', () => {
         expect(count).toBe(1);
     });
 
+    it('logi zapisu i deduplikacji nie zawierają telemetryId ani wellId', async () => {
+        const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+        try {
+            const first = await telemetryService.recordConfig(basePayload({ a: 'privacy' }));
+            await telemetryService.recordConfig(basePayload({ a: 'privacy' }));
+
+            const logs = infoSpy.mock.calls.map(([, message]) => String(message)).join('\n');
+            expect(logs).toContain('Zapisano konfigurację telemetrii');
+            expect(logs).toContain('Dedup AUTO_JS: pominięto duplikat');
+            expect(logs).not.toContain(first.telemetryId);
+            expect(logs).not.toContain(wellId);
+        } finally {
+            infoSpy.mockRestore();
+        }
+    });
+
+    it('log rejestracji komponentu nie zawiera jego wersji wysokiej kardynalności', async () => {
+        const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+        const version = 'private-build-' + crypto.randomUUID();
+        let registeredId: string | null = null;
+        try {
+            const result = await telemetryService.registerVersion({
+                componentType: 'solver',
+                version,
+                isActive: false
+            });
+            registeredId = result.id;
+
+            expect(infoSpy).toHaveBeenCalledWith(
+                'Telemetry',
+                'Zarejestrowano wersję komponentu solver'
+            );
+            const logs = infoSpy.mock.calls.map(([, message]) => String(message)).join('\n');
+            expect(logs).not.toContain(version);
+            expect(logs).not.toContain(registeredId);
+        } finally {
+            infoSpy.mockRestore();
+            if (registeredId) {
+                await prisma.ai_telemetry_versions.deleteMany({ where: { id: registeredId } });
+            }
+        }
+    });
+
     it('zagnieżdżony featureSnapshot z przestawioną kolejnością kluczy → dedup działa', async () => {
         // Te same dane, ale inna kolejność kluczy na poziomie top-level ORAZ
         // wewnątrz zagnieżdżonego obiektu — kanoniczny serializer musi dać
@@ -858,6 +902,36 @@ describe('KnowledgeBase - operacje na DB', () => {
         });
         const result = await kb.getPatternsForDn(dn, 0.1);
         expect(result.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('wadliwy wzorzec nie ujawnia jego identyfikatora w logu', async () => {
+        const id = 'private-pattern-' + crypto.randomUUID();
+        const patternKey = 'test_corrupt_' + crypto.randomUUID().slice(0, 8);
+        await prisma.ai_knowledge_base.create({
+            data: {
+                id,
+                patternType: 'dennica_swap',
+                patternKey,
+                context: '{broken',
+                confidence: 0.9,
+                status: 'active'
+            }
+        });
+        const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+        try {
+            await kb.getPatternsForDn('all_dn', 0);
+
+            expect(warnSpy).toHaveBeenCalledWith(
+                'KnowledgeBase',
+                'Pominięto uszkodzony wzorzec KB'
+            );
+            expect(
+                warnSpy.mock.calls.map(([, message]) => String(message)).join('\n')
+            ).not.toContain(id);
+        } finally {
+            warnSpy.mockRestore();
+            await prisma.ai_knowledge_base.deleteMany({ where: { id } });
+        }
     });
 
     it('getPatternsForDn all_dn traktuje jako wildcard (bez filtra DN)', async () => {

@@ -81,7 +81,7 @@ export class SelfEvaluation {
             );
             const previous = await modelRegistry.rollbackToPrevious(activeModel.version);
             if (previous) {
-                logger.info('SelfEvaluation', `Auto-rollback do ${previous.version}`);
+                logger.info('SelfEvaluation', 'Auto-rollback zakończony');
                 this.slidingWindow = [];
                 this.windowModelVersion = null;
                 return { rolledBack: true, slidingAuc };
@@ -137,7 +137,7 @@ export class SelfEvaluation {
             if (best && best.id !== activeModel.id) {
                 logger.info(
                     'SelfEvaluation',
-                    `Promowano ${best.version} (AUC=${best.metrics.rocAuc})`
+                    `Promowano najlepszy model (AUC=${best.metrics.rocAuc})`
                 );
                 return { rolledBack: true };
             }

@@ -1,6 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import telemetryRoutes from '../src/routes/telemetry';
+import { logger } from '../src/utils/logger';
 
 /**
  * P1.5: kontrakt API telemetrii (wczesniej placeholder [200,201,400,404]).
@@ -101,6 +102,26 @@ describe('telemetry GET /logs', () => {
         expect(res.body).toHaveLength(1);
         expect(res.body[0].original_auto_config).toEqual([{ a: 1 }]);
         expect(res.body[0].final_user_config).toEqual([{ a: 2 }]);
+    });
+
+    it('wadliwy JSON nie umieszcza identyfikatorów w logu', async () => {
+        store.logs = [
+            {
+                id: 'telemetry-private-id',
+                wellId: 'well-private-id',
+                original_auto_config: '{broken',
+                final_user_config: '[]'
+            }
+        ];
+
+        const res = await request(createApp()).get('/api/telemetry/logs');
+
+        expect(res.status).toBe(200);
+        expect(logger.warn).toHaveBeenCalledWith(
+            'Telemetry',
+            'Pominięto niepoprawny JSON konfiguracji telemetrii'
+        );
+        expect(logger.warn).toHaveBeenCalledTimes(1);
     });
 
     it('user (nie admin) -> 403 bez wycieku', async () => {

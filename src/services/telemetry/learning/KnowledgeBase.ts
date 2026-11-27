@@ -200,11 +200,8 @@ export class KnowledgeBase {
                         rejectionCount: r.rejectionCount,
                         status: r.status as 'active' | 'stale' | 'archived'
                     });
-                } catch (recErr) {
-                    logger.warn(
-                        'KnowledgeBase',
-                        `Pominięto uszkodzony wzorzec ${r.id}: ${recErr instanceof Error ? recErr.message : String(recErr)}`
-                    );
+                } catch {
+                    logger.warn('KnowledgeBase', 'Pominięto uszkodzony wzorzec KB');
                 }
             }
             return patterns;

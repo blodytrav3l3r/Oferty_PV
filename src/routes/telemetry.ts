@@ -82,10 +82,7 @@ router.get('/logs', requireAuth, WRITE_LIMITER, (req, res) => {
                         l.final_user_config = JSON.parse(final);
                     }
                 } catch (_e) {
-                    logger.warn('Telemetry', 'Uszkodzony JSON config w logu telemetrii', {
-                        id: l.id,
-                        wellId: l.wellId
-                    });
+                    logger.warn('Telemetry', 'Pominięto niepoprawny JSON konfiguracji telemetrii');
                 }
             });
 

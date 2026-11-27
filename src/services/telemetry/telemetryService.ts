@@ -293,10 +293,7 @@ class TelemetryService {
                                 ...(payload.warehouse ? { warehouse: payload.warehouse } : {})
                             }
                         });
-                        logger.info(
-                            'Telemetry',
-                            `Dedup AUTO_JS: pominięto duplikat ${existing.id} (well=${payload.wellId})`
-                        );
+                        logger.info('Telemetry', 'Dedup AUTO_JS: pominięto duplikat');
                         return {
                             success: true,
                             telemetryId: existing.id,
@@ -333,8 +330,7 @@ class TelemetryService {
 
             logger.info(
                 'Telemetry',
-                `Zapisano konfigurację ${telemetryId} ` +
-                    `(well=${payload.wellId || 'brak'}, transitions=${transitionsCreated}, history=${configHistoryCreated})`
+                `Zapisano konfigurację telemetrii (transitions=${transitionsCreated}, history=${configHistoryCreated})`
             );
 
             // Propaguj etykietę decyzji na sugestię AUTO (parentConfigId). Decyzja
@@ -567,10 +563,7 @@ class TelemetryService {
                     createdAt: now
                 }
             });
-            logger.info(
-                'Telemetry',
-                `Zarejestrowano wersję ${input.componentType}:${input.version}`
-            );
+            logger.info('Telemetry', `Zarejestrowano wersję komponentu ${input.componentType}`);
             return { success: true, id };
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
@@ -647,10 +640,8 @@ class TelemetryService {
                 }
             });
         } catch (e) {
-            logger.error(
-                'Telemetry',
-                `Nie udało się zaktualizować acceptance dla ${telemetryId}: ${e}`
-            );
+            const errorType = e instanceof Error ? e.name : 'UnknownError';
+            logger.error('Telemetry', `Nie udało się zaktualizować acceptance (${errorType})`);
             throw e;
         }
     }

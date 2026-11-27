@@ -392,7 +392,7 @@ export class FeatureExtractor {
         if (result && result.count === 0) {
             logger.warn(
                 'FeatureExtractor',
-                `updateLabelByTelemetry: brak cech dla telemetryId=${telemetryId} (label ${label})`
+                `updateLabelByTelemetry: brak cech dla telemetry (label ${label})`
             );
         }
     }

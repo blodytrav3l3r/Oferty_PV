@@ -5,6 +5,7 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { AcceptanceModel, TrainingNumericalError } from '../../src/services/ml/AcceptanceModel';
 import { FEATURE_NAMES } from '../../src/config/mlConstants';
+import { logger } from '../../src/utils/logger';
 
 const mockFindMany = jest.fn<any>();
 const mockFindFirst = jest.fn<any>();
@@ -198,11 +199,16 @@ describe('FeatureExtractor', () => {
 
     it('updateLabelByTelemetry ustawia etykiete negatywna (REJECTED) w aiFeature', async () => {
         const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        mockUpdateMany.mockResolvedValueOnce({ count: 0 });
         await featureExtractor.updateLabelByTelemetry('telemetry-1', 'REJECTED');
         expect(mockUpdateMany).toHaveBeenCalledWith({
             where: { telemetryId: 'telemetry-1' },
             data: { label: 'REJECTED', reward: -1.0 }
         });
+        expect(logger.warn).toHaveBeenCalledWith(
+            'FeatureExtractor',
+            'updateLabelByTelemetry: brak cech dla telemetry (label REJECTED)'
+        );
     });
 
     it('resyncLabels używa kursora (createdAt, id) z orderBy array (A-18)', async () => {
@@ -1207,22 +1213,24 @@ describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
     it('run() kończy FAILED_ERROR przy wyjątku z ekstrakcji cech', async () => {
         const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
         const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const privateFailureDetail = 'private-telemetry-sentinel';
         jest.spyOn(featureExtractor, 'extractAndStore')
-            .mockRejectedValueOnce(new Error('extract crash'))
+            .mockRejectedValueOnce(new Error(privateFailureDetail))
             .mockResolvedValue(0);
 
         const res = await trainingPipeline.run();
 
         expect(res.trained).toBe(false);
-        expect(res.reason).toMatch(/failed_error:extract crash/);
+        expect(res.reason).toBe(`failed_error:${privateFailureDetail}`);
         expect(mockRunUpdate).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({
                     status: 'FAILED_ERROR',
-                    error: 'failed_error:extract crash'
+                    error: `failed_error:${privateFailureDetail}`
                 })
             })
         );
+        expect(logger.error).toHaveBeenCalledWith('TrainingPipeline', 'FAILED_ERROR (Error)');
         jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
         jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
         mockFindMany.mockResolvedValue([]);
@@ -1241,6 +1249,10 @@ describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
 
         await expect(trainingPipeline.run()).rejects.toThrow('database unavailable');
         expect(mockRunUpdate).toHaveBeenCalledTimes(1);
+        expect(logger.error).toHaveBeenCalledWith(
+            'TrainingPipeline',
+            'Błąd zapisu AiTrainingRun (Error)'
+        );
     });
 
     it('run() kończy FAILED_VALIDATION gdy kandydat nie przechodzi gate AUC', async () => {

@@ -180,10 +180,7 @@ export class ModelRegistry {
                             where: { id: existing.id },
                             data: { active: false, state: AiModelState.ROLLED_BACK }
                         });
-                        logger.info(
-                            'ModelRegistry',
-                            `Dezaktywowano poprzedni model ${existing.version}`
-                        );
+                        logger.info('ModelRegistry', 'Dezaktywowano poprzedni model');
                     }
                 }
 
@@ -232,7 +229,7 @@ export class ModelRegistry {
 
         logger.info(
             'ModelRegistry',
-            `Zapisano model ${version} (active=${shouldActivate}, auc=${metrics.rocAuc.toFixed(4)})`
+            `Zapisano model (active=${shouldActivate}, auc=${metrics.rocAuc.toFixed(4)})`
         );
         return version;
     }
@@ -280,19 +277,13 @@ export class ModelRegistry {
             try {
                 metrics = JSON.parse(r.metrics) as ModelMetrics;
             } catch {
-                logger.warn(
-                    'ModelRegistry',
-                    `Uszkodzone metryki JSON w modelu ${r.id} (version ${r.version})`
-                );
+                logger.warn('ModelRegistry', 'Uszkodzone metryki JSON modelu');
             }
             let features: string[] = [];
             try {
                 features = JSON.parse(r.features) as string[];
             } catch {
-                logger.warn(
-                    'ModelRegistry',
-                    `Uszkodzona lista cech JSON w modelu ${r.id} (version ${r.version})`
-                );
+                logger.warn('ModelRegistry', 'Uszkodzona lista cech JSON modelu');
             }
             return {
                 id: r.id,
@@ -342,7 +333,7 @@ export class ModelRegistry {
                         data: { active: true, state: AiModelState.PRODUCTION }
                     });
                 });
-                logger.info('ModelRegistry', `Rollback do modelu ${previous.version}`);
+                logger.info('ModelRegistry', 'Rollback modelu zakończony');
                 clearPredictionCache();
                 return this.recordToModel(previous);
             }
@@ -364,10 +355,7 @@ export class ModelRegistry {
             // cech dałaby FEATURE_COUNT_MISMATCH na predict (a getActiveModel i tak
             // go nie zwróci, więc status "active" byłby mylący).
             if (target.featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
-                logger.warn(
-                    'ModelRegistry',
-                    `Odrzucono aktywację modelu ${target.version} (featureVersion=${target.featureVersion ?? 'null'} != ${ML_CONSTANTS.FEATURE_VERSION})`
-                );
+                logger.warn('ModelRegistry', 'Odrzucono aktywację modelu: niezgodna wersja cech');
                 throw new Error(
                     `Nie można aktywować modelu spoza bieżącej wersji cech (${target.featureVersion ?? 'stara'} != ${ML_CONSTANTS.FEATURE_VERSION})`
                 );
@@ -387,7 +375,7 @@ export class ModelRegistry {
                     data: { active: true, state: AiModelState.PRODUCTION }
                 });
             });
-            logger.info('ModelRegistry', `Ręcznie wybrano model ${target.version}`);
+            logger.info('ModelRegistry', 'Ręcznie wybrano model');
             clearPredictionCache();
             return this.recordToModel(target);
         });
@@ -438,7 +426,7 @@ export class ModelRegistry {
                     data: { active: false }
                 });
             });
-            logger.info('ModelRegistry', `Promowano model ${target.version} do PRODUCTION`);
+            logger.info('ModelRegistry', 'Promowano model do PRODUCTION');
             clearPredictionCache();
             return this.recordToModel(target);
         });
@@ -462,7 +450,7 @@ export class ModelRegistry {
             where: { id },
             data: { state: AiModelState.APPROVED, notes }
         });
-        logger.info('ModelRegistry', `Ręczny approve modelu ${target.version} (${adminUser})`);
+        logger.info('ModelRegistry', 'Ręczny approve modelu zakończony');
         return this.recordToModel({ ...target, state: AiModelState.APPROVED, notes });
     }
 
@@ -505,10 +493,7 @@ export class ModelRegistry {
                     data: { active: true, state: AiModelState.PRODUCTION }
                 });
             });
-            logger.info(
-                'ModelRegistry',
-                `Promowano najlepszy model ${best.version} (auc=${bestAuc})`
-            );
+            logger.info('ModelRegistry', `Promowano najlepszy model (auc=${bestAuc})`);
             clearPredictionCache();
             return this.recordToModel(best);
         });
@@ -522,7 +507,7 @@ export class ModelRegistry {
                 throw new Error('Nie można usunąć aktywnego modelu');
             }
             await prisma.aiModel.delete({ where: { id } });
-            logger.info('ModelRegistry', `Usunięto model ${record.version}`);
+            logger.info('ModelRegistry', 'Usunięto model');
             return this.recordToModel(record);
         });
     }
@@ -579,10 +564,7 @@ export class ModelRegistry {
                 createdAt: new Date().toISOString()
             }
         });
-        logger.info(
-            'ModelRegistry',
-            `Utworzono i aktywowano domyślny model startowy ML (${starter.version})`
-        );
+        logger.info('ModelRegistry', 'Utworzono i aktywowano domyślny model startowy ML');
         return this.recordToModel(starter);
     }
 
@@ -652,7 +634,7 @@ export class ModelRegistry {
                     if (deletedCount > 0) {
                         logger.info(
                             'ModelRegistry',
-                            `Przycięto rejestr modeli: usunięto ${deletedCount} (${deletedVersions.join(', ')})`
+                            `Przycięto rejestr modeli: usunięto ${deletedCount}`
                         );
                     }
                     return { deletedCount, deletedVersions };

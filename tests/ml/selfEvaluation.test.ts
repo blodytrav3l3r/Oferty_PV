@@ -1,5 +1,6 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { computeRocAuc } from '../../src/services/ml/TrainingPipeline';
+import { logger } from '../../src/utils/logger';
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -170,6 +171,7 @@ describe('SelfEvaluation - sliding window', () => {
         expect(result.rolledBack).toBe(true);
         expect(result.slidingAuc).toBeLessThan(0.65);
         expect(mockRollbackToPrevious).toHaveBeenCalledWith('model-current');
+        expect(logger.info).toHaveBeenCalledWith('SelfEvaluation', 'Auto-rollback zakończony');
         const status = ev as unknown as { slidingWindow: unknown[] };
         expect(status.slidingWindow.length).toBe(0);
     });
