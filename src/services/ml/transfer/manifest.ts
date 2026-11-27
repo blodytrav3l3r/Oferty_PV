@@ -22,8 +22,8 @@ const artifactSchema = z.object({
 const datasetSchema = z.object({
     fingerprint: z.string().min(1).nullable(),
     fingerprintAlgorithm: z.string().min(1),
-    fingerprintVersion: z.number().int().positive(),
-    datasetSchemaVersion: z.string().min(1),
+    fingerprintVersion: z.union([z.literal(1), z.literal(2)]),
+    datasetSchemaVersion: z.enum(['1', '2']),
     recordCount: z.number().int().nonnegative().nullable(),
     mode: z.enum(['fingerprint-only', 'full', 'not-included'])
 });
@@ -35,6 +35,64 @@ const modelSchema = z.object({
     modelSchemaVersion: z.string().min(1)
 });
 
+const partitionFingerprintSchema = z.object({
+    count: z.number().int().nonnegative(),
+    fingerprint: z.string().min(1)
+});
+
+export const trainingSnapshotSchema = z.object({
+    lineageSchemaVersion: z.literal(2),
+    runId: z.string().min(1),
+    modelVersion: z.string().min(1).nullable(),
+    appVersion: z.string().min(1),
+    appCommitSha: z.string().min(1).nullable(),
+    codeFingerprint: z.string().min(1).nullable(),
+    featureSchemaVersion: z.string().min(1),
+    featureSchemaFingerprint: z.string().min(1),
+    datasetFingerprint: z.string().min(1),
+    trainingConfigFingerprint: z.string().min(1),
+    trainingConfig: z.object({
+        algorithm: z.string().min(1),
+        learningRate: z.number().finite(),
+        epochs: z.number().int().positive(),
+        l2Lambda: z.number().finite(),
+        forgettingLambda: z.number().finite(),
+        splitPolicyVersion: z.string().min(1),
+        preprocessingVersion: z.string().min(1),
+        seed: z.number().int(),
+        seedUsage: z.literal('metadata_only'),
+        gateAndDeploymentThresholds: z.record(z.string(), z.number().finite())
+    }),
+    splitPolicyVersion: z.string().min(1),
+    splitFingerprints: z.object({
+        train: partitionFingerprintSchema,
+        validation: partitionFingerprintSchema,
+        test: partitionFingerprintSchema
+    }),
+    solverVersion: z.string().min(1).nullable(),
+    rulesVersion: z.string().min(1).nullable(),
+    unavailableFields: z.array(z.string().min(1)),
+    environment: z.object({
+        nodeVersion: z.string().min(1),
+        platform: z.string().min(1),
+        arch: z.string().min(1)
+    }),
+    validationResult: z
+        .object({
+            status: z.string().min(1),
+            reason: z.string().min(1).nullable(),
+            metrics: z.record(z.string(), z.number().finite().nullable()).nullable()
+        })
+        .nullable(),
+    decision: z
+        .object({
+            deployed: z.boolean(),
+            reason: z.string().min(1).nullable()
+        })
+        .nullable(),
+    modelFingerprint: z.string().min(1).nullable()
+});
+
 const lineageSchema = z.object({
     datasetFingerprint: z.string().min(1).nullable(),
     datasetSchemaVersion: z.string().min(1).nullable(),
@@ -43,27 +101,48 @@ const lineageSchema = z.object({
     trainingRunId: z.string().min(1).nullable(),
     trainingConfigFingerprint: z.string().min(1).nullable(),
     validationResult: z.string().min(1).nullable(),
-    sourceSokVersion: z.string().min(1)
+    sourceSokVersion: z.string().min(1),
+    snapshot: trainingSnapshotSchema.optional()
 });
 
-export const manifestSchema = z.object({
-    format: z.literal(SOKML_FORMAT),
-    formatVersion: z.literal(SOKML_FORMAT_VERSION),
-    manifestVersion: z.literal(SOKML_MANIFEST_VERSION),
-    aiSchemaVersion: z.string().min(1),
-    featureSchemaVersion: z.string().min(1),
-    lineageSchemaVersion: z.string().min(1),
-    modelSchemaVersion: z.string().min(1),
-    transferPackageId: z.string().min(1),
-    packageFingerprint: z.string().regex(/^sha256:[0-9a-f]{64}$/),
-    createdAt: z.string().min(1),
-    sourceSokVersion: z.string().min(1),
-    sourcePlatform: z.string().min(1),
-    dataset: datasetSchema,
-    model: modelSchema,
-    lineage: lineageSchema,
-    artifacts: z.array(artifactSchema).min(1)
-});
+export const manifestSchema = z
+    .object({
+        format: z.literal(SOKML_FORMAT),
+        formatVersion: z.literal(SOKML_FORMAT_VERSION),
+        manifestVersion: z.literal(SOKML_MANIFEST_VERSION),
+        aiSchemaVersion: z.string().min(1),
+        featureSchemaVersion: z.string().min(1),
+        lineageSchemaVersion: z.enum(['1', '2']),
+        modelSchemaVersion: z.string().min(1),
+        transferPackageId: z.string().min(1),
+        packageFingerprint: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+        createdAt: z.string().min(1),
+        sourceSokVersion: z.string().min(1),
+        sourcePlatform: z.string().min(1),
+        dataset: datasetSchema,
+        model: modelSchema,
+        lineage: lineageSchema,
+        artifacts: z.array(artifactSchema).min(1)
+    })
+    .superRefine((manifest, context) => {
+        if (manifest.lineageSchemaVersion === '2' && !manifest.lineage.snapshot) {
+            context.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['lineage', 'snapshot'],
+                message: 'Brak wymaganego snapshotu lineage v2'
+            });
+        }
+        if (
+            manifest.dataset.fingerprintVersion === 2 &&
+            manifest.dataset.datasetSchemaVersion !== '2'
+        ) {
+            context.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['dataset', 'datasetSchemaVersion'],
+                message: 'Wersja fingerprintu niezgodna ze schematem datasetu'
+            });
+        }
+    });
 
 export type SokmlManifest = z.infer<typeof manifestSchema>;
 

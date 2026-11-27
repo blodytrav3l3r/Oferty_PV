@@ -49,6 +49,7 @@ describe('ModelRegistry training result transaction PostgreSQL', () => {
             trainSize: 10,
             valSize: 2
         };
+        const lineageSnapshot = JSON.stringify({ lineageSchemaVersion: 2, modelVersion: null });
         const version = await registry.saveModel(
             model,
             metrics,
@@ -73,7 +74,8 @@ describe('ModelRegistry training result transaction PostgreSQL', () => {
                     error: null
                 }
             },
-            null
+            null,
+            lineageSnapshot
         );
         const modelRecord = await prisma.aiModel.findUnique({ where: { version } });
         modelIdsForCleanup = [modelRecord!.id];
@@ -84,6 +86,9 @@ describe('ModelRegistry training result transaction PostgreSQL', () => {
             candidateModelVersion: version,
             deployed: true
         });
+        expect(JSON.parse(modelRecord!.lineageSnapshot!)).toMatchObject({ modelVersion: version });
+        const persistedRun = await prisma.aiTrainingRun.findUnique({ where: { id: runId } });
+        expect(JSON.parse(persistedRun!.lineageSnapshot!)).toMatchObject({ modelVersion: version });
 
         const countBefore = await prisma.aiModel.count();
         await expect(

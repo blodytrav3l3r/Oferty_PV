@@ -2,6 +2,7 @@ import prisma from '../../../prismaClient';
 import { Prisma } from '../../../../generated/prisma-postgres/client';
 import { ML_CONSTANTS } from '../../../config/mlConstants';
 import { computeDatasetFingerprint } from '../TrainingPipeline';
+import { computeDatasetSnapshotFingerprint } from '../trainingLineage';
 import { SOKML_DATASET_SCHEMA_VERSION } from './transferConstants';
 import { TransferError } from './transferErrors';
 import { getTrainingUserIds } from '../trainingUsers';
@@ -13,7 +14,8 @@ import { getTrainingUserIds } from '../trainingUsers';
  * z metadanych (sliding window, filtry, allowlista, resync) — eksport FULL
  * to snapshot AKTUALNIE kwalifikowalnych wierszy AiFeature (te same reguły
  * co pipeline: label != NO_FEEDBACK, okno TRAINING_BATCH_SIZE).
- * Fingerprint liczony TĄ SAMĄ funkcją co TrainingPipeline (reuse, nie kopia).
+ * Fingerprint snapshotu pomija identyfikatory, ale obejmuje wszystkie pola
+ * danych. Nie jest dokładnym fingerprintem historycznego zbioru treningowego.
  */
 
 export interface DatasetRow {
@@ -95,11 +97,18 @@ export async function fetchEligibleDatasetRows(
 }
 
 export function datasetFingerprintOf(
-    rows: Array<{ id: string; createdAt: string; label: string }>,
-    featureVersion: string = ML_CONSTANTS.FEATURE_VERSION
+    rows: DatasetRow[],
+    featureVersion: string = ML_CONSTANTS.FEATURE_VERSION,
+    datasetSchemaVersion: string = SOKML_DATASET_SCHEMA_VERSION
 ): string {
-    return computeDatasetFingerprint(
-        rows.map((r) => ({ id: r.id, timestamp: r.createdAt, label: r.label })),
+    if (datasetSchemaVersion === '1') {
+        return computeDatasetFingerprint(
+            rows.map((r) => ({ id: r.id, timestamp: r.createdAt, label: r.label })),
+            featureVersion
+        );
+    }
+    return computeDatasetSnapshotFingerprint(
+        rows as unknown as Array<Record<string, unknown>>,
         featureVersion
     );
 }
@@ -145,7 +154,7 @@ export function parseRecordsNdjson(text: string): DatasetRow[] {
 export interface DatasetManifest {
     fingerprint: string;
     fingerprintAlgorithm: 'SHA-256';
-    fingerprintVersion: 1;
+    fingerprintVersion: 2;
     datasetSchemaVersion: string;
     recordCount: number;
     mode: 'full';
@@ -155,7 +164,7 @@ export function buildDatasetManifest(rows: DatasetRow[]): DatasetManifest {
     return {
         fingerprint: datasetFingerprintOf(rows),
         fingerprintAlgorithm: 'SHA-256',
-        fingerprintVersion: 1,
+        fingerprintVersion: 2,
         datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
         recordCount: rows.length,
         mode: 'full'
@@ -169,9 +178,10 @@ export function buildDatasetManifest(rows: DatasetRow[]): DatasetManifest {
 export function verifyDatasetIntegrity(
     rows: DatasetRow[],
     expectedFingerprint: string,
-    featureVersion: string
+    featureVersion: string,
+    datasetSchemaVersion: string = SOKML_DATASET_SCHEMA_VERSION
 ): void {
-    if (datasetFingerprintOf(rows, featureVersion) !== expectedFingerprint) {
+    if (datasetFingerprintOf(rows, featureVersion, datasetSchemaVersion) !== expectedFingerprint) {
         throw new TransferError('DATASET_INVALID', 'Fingerprint rekordów niezgodny z manifestem');
     }
 }

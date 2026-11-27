@@ -190,7 +190,8 @@ export async function importPackage(
         verifyDatasetIntegrity(
             datasetRows,
             manifest.dataset.fingerprint ?? '',
-            manifest.model.featureVersion
+            manifest.model.featureVersion,
+            manifest.dataset.datasetSchemaVersion
         );
     }
     const patternsText = files.get('knowledge/patterns.json')?.toString('utf8');
@@ -245,6 +246,9 @@ export async function importPackage(
                 featureVersion: manifest.model.featureVersion,
                 state: AiModelState.CANDIDATE,
                 seed: null,
+                lineageSnapshot: manifest.lineage.snapshot
+                    ? JSON.stringify(manifest.lineage.snapshot)
+                    : null,
                 featureDistributions: null,
                 active: false,
                 notes: `Import transfer ${transferId} (${manifest.transferPackageId})`,

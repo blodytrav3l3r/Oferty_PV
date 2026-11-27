@@ -41,6 +41,8 @@ export interface CompatTarget {
     solverVersion: string | null;
     rulesVersion: string | null;
     datasetFingerprint: string | null;
+    datasetSchemaVersion: string;
+    lineageSchemaVersion: string;
 }
 
 function majorOf(version: string): number | null {
@@ -103,13 +105,10 @@ function versionedCheck(
     manifestValue: string | null,
     targetValue: string | null
 ): CompatCheck {
-    if (manifestValue === null && targetValue === null) {
-        return { code: passCode, status: 'PASS' };
-    }
     if (manifestValue !== null && manifestValue === targetValue) {
         return { code: passCode, status: 'PASS' };
     }
-    if (targetValue === null) {
+    if (manifestValue === null || targetValue === null) {
         return { code: unverifiedCode, status: 'WARNING' };
     }
     return { code: mismatchCode, status: 'BLOCKED', detail: `${manifestValue} → ${targetValue}` };
@@ -121,6 +120,25 @@ export function checkCompatibility(
     target: CompatTarget
 ): CompatReport {
     const checks: CompatCheck[] = [sokCheck(manifest, target)];
+
+    checks.push(
+        manifest.lineageSchemaVersion === target.lineageSchemaVersion
+            ? { code: 'LINEAGE_SCHEMA_MATCH', status: 'PASS' }
+            : {
+                  code: 'LINEAGE_SCHEMA_UNVERIFIED',
+                  status: 'WARNING',
+                  detail: `${manifest.lineageSchemaVersion} → ${target.lineageSchemaVersion}`
+              }
+    );
+    checks.push(
+        manifest.dataset.datasetSchemaVersion === target.datasetSchemaVersion
+            ? { code: 'DATASET_SCHEMA_MATCH', status: 'PASS' }
+            : {
+                  code: 'DATASET_SCHEMA_UNVERIFIED',
+                  status: 'WARNING',
+                  detail: `${manifest.dataset.datasetSchemaVersion} → ${target.datasetSchemaVersion}`
+              }
+    );
 
     checks.push(
         manifest.aiSchemaVersion === target.aiSchemaVersion

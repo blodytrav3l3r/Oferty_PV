@@ -11,14 +11,14 @@ import {
     SOKML_AI_SCHEMA_VERSION,
     SOKML_MODEL_SCHEMA_VERSION,
     SOKML_LINEAGE_SCHEMA_VERSION,
-    SOKML_FEATURE_SCHEMA_VERSION,
-    SOKML_DATASET_SCHEMA_VERSION
+    SOKML_FEATURE_SCHEMA_VERSION
 } from './transferConstants';
 import { TransferError } from './transferErrors';
 import {
     computePackageFingerprint,
     buildChecksumsFile,
     sha256Hex,
+    trainingSnapshotSchema,
     type SokmlManifest
 } from './manifest';
 import {
@@ -130,6 +130,29 @@ export interface ExportOptions {
     dataset?: 'fingerprint-only' | 'full' | 'not-included';
     knowledge?: boolean;
     telemetry?: boolean;
+}
+
+function parseTrainingSnapshot(value: string | null): SokmlManifest['lineage']['snapshot'] {
+    if (!value) return undefined;
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(value);
+    } catch {
+        throw new TransferError('MODEL_INVALID', 'Uszkodzony snapshot lineage modelu');
+    }
+    const result = trainingSnapshotSchema.safeParse(parsed);
+    if (!result.success) {
+        throw new TransferError('MODEL_INVALID', 'Nieprawidłowy snapshot lineage modelu');
+    }
+    return result.data;
+}
+
+function datasetFingerprintVersion(fingerprint: string | null): 1 | 2 {
+    return fingerprint?.startsWith('sok-ml-dataset-v2:') ? 2 : 1;
+}
+
+function datasetSchemaVersion(fingerprint: string | null): '1' | '2' {
+    return datasetFingerprintVersion(fingerprint) === 2 ? '2' : '1';
 }
 
 function assertKnowledgeExportScope(options: ExportOptions): void {
@@ -246,6 +269,19 @@ export async function buildModelPackage(
     });
     const withFingerprint = runs.find((r) => r.datasetFingerprint);
     const sokVersion = getVersion().version;
+    const lineageSnapshot =
+        parseTrainingSnapshot(record.lineageSnapshot) ??
+        parseTrainingSnapshot(withFingerprint?.lineageSnapshot ?? null);
+    const runDatasetFingerprint =
+        withFingerprint?.datasetFingerprint ?? lineageSnapshot?.datasetFingerprint ?? null;
+    const trainingRecordCount =
+        withFingerprint?.datasetSize ??
+        (lineageSnapshot
+            ? Object.values(lineageSnapshot.splitFingerprints).reduce(
+                  (total, split) => total + split.count,
+                  0
+              )
+            : null);
 
     const modelArtifact = {
         modelSchemaVersion: SOKML_MODEL_SCHEMA_VERSION,
@@ -268,7 +304,8 @@ export async function buildModelPackage(
     const contentArtifacts: Array<{ path: string; text: string }> = [
         { path: modelPath, text: modelText }
     ];
-    const datasetMode = options.dataset ?? (withFingerprint ? 'fingerprint-only' : 'not-included');
+    const datasetMode =
+        options.dataset ?? (runDatasetFingerprint ? 'fingerprint-only' : 'not-included');
     let datasetRows: DatasetRow[] | null = null;
     let resolvedFingerprint: string | null = null;
     let resolvedRecordCount: number | null = null;
@@ -286,15 +323,16 @@ export async function buildModelPackage(
             path: 'datasets/records.ndjson',
             text: serializeRecordsNdjson(datasetRows)
         });
-    } else if (withFingerprint?.datasetFingerprint && datasetMode === 'fingerprint-only') {
+    } else if (runDatasetFingerprint && datasetMode === 'fingerprint-only') {
+        const runFingerprintVersion = datasetFingerprintVersion(runDatasetFingerprint);
         contentArtifacts.push({
             path: 'datasets/manifest.json',
             text: JSON.stringify({
-                fingerprint: withFingerprint.datasetFingerprint,
+                fingerprint: runDatasetFingerprint,
                 fingerprintAlgorithm: 'SHA-256',
-                fingerprintVersion: 1,
-                datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
-                recordCount: withFingerprint.datasetSize,
+                fingerprintVersion: runFingerprintVersion,
+                datasetSchemaVersion: runFingerprintVersion === 2 ? '2' : '1',
+                recordCount: trainingRecordCount,
                 mode: 'fingerprint-only'
             })
         });
@@ -305,9 +343,8 @@ export async function buildModelPackage(
             text: JSON.stringify(await buildTelemetryAggregates(30, allowlist))
         });
     }
-    // Model niesie finalny fingerprint datasetu (full ze snapshotu albo run).
-    modelArtifact.datasetFingerprint =
-        resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null;
+    // Model zachowuje fingerprint runu; FULL dataset ma własny fingerprint w datasets/manifest.json.
+    modelArtifact.datasetFingerprint = runDatasetFingerprint;
     contentArtifacts[0] = { path: modelPath, text: JSON.stringify(modelArtifact) };
     contentArtifacts.push({
         path: 'training/runs.json',
@@ -322,6 +359,7 @@ export async function buildModelPackage(
                 seed: r.seed,
                 candidateModelVersion: r.candidateModelVersion,
                 datasetFingerprint: r.datasetFingerprint,
+                lineageSnapshot: parseTrainingSnapshot(r.lineageSnapshot),
                 deployed: r.deployed,
                 deploymentReason: r.deploymentReason
             }))
@@ -330,11 +368,11 @@ export async function buildModelPackage(
     contentArtifacts.push({
         path: 'lineage/snapshots.json',
         text: JSON.stringify([
-            {
+            lineageSnapshot ?? {
                 modelVersion: record.version,
                 featureVersion: record.featureVersion ?? ML_CONSTANTS.FEATURE_VERSION,
-                datasetFingerprint: withFingerprint?.datasetFingerprint ?? null,
-                datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
+                datasetFingerprint: runDatasetFingerprint,
+                datasetSchemaVersion: datasetSchemaVersion(runDatasetFingerprint),
                 solverVersion: null,
                 rulesVersion: null,
                 trainingRunId: withFingerprint?.id ?? null,
@@ -355,7 +393,7 @@ export async function buildModelPackage(
         manifestVersion: SOKML_MANIFEST_VERSION,
         aiSchemaVersion: SOKML_AI_SCHEMA_VERSION,
         featureSchemaVersion: SOKML_FEATURE_SCHEMA_VERSION,
-        lineageSchemaVersion: SOKML_LINEAGE_SCHEMA_VERSION,
+        lineageSchemaVersion: lineageSnapshot ? SOKML_LINEAGE_SCHEMA_VERSION : '1',
         modelSchemaVersion: SOKML_MODEL_SCHEMA_VERSION,
         transferPackageId: 'pkg_' + crypto.randomUUID().replace(/-/g, '').slice(0, 12),
         packageFingerprint,
@@ -363,11 +401,17 @@ export async function buildModelPackage(
         sourceSokVersion: sokVersion,
         sourcePlatform: `${process.platform}-${process.arch}`,
         dataset: {
-            fingerprint: resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null,
+            fingerprint: resolvedFingerprint ?? runDatasetFingerprint,
             fingerprintAlgorithm: 'SHA-256',
-            fingerprintVersion: 1,
-            datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
-            recordCount: resolvedRecordCount ?? withFingerprint?.datasetSize ?? null,
+            fingerprintVersion:
+                datasetMode === 'full'
+                    ? 2
+                    : datasetFingerprintVersion(resolvedFingerprint ?? runDatasetFingerprint),
+            datasetSchemaVersion:
+                datasetMode === 'full'
+                    ? '2'
+                    : datasetSchemaVersion(resolvedFingerprint ?? runDatasetFingerprint),
+            recordCount: resolvedRecordCount ?? trainingRecordCount,
             mode: datasetMode
         },
         model: {
@@ -377,14 +421,17 @@ export async function buildModelPackage(
             modelSchemaVersion: SOKML_MODEL_SCHEMA_VERSION
         },
         lineage: {
-            datasetFingerprint: resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null,
-            datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
-            solverVersion: null,
-            rulesVersion: null,
-            trainingRunId: withFingerprint?.id ?? null,
-            trainingConfigFingerprint: null,
-            validationResult: null,
-            sourceSokVersion: sokVersion
+            datasetFingerprint: runDatasetFingerprint,
+            datasetSchemaVersion: datasetSchemaVersion(runDatasetFingerprint),
+            solverVersion: lineageSnapshot?.solverVersion ?? null,
+            rulesVersion: lineageSnapshot?.rulesVersion ?? null,
+            trainingRunId: lineageSnapshot?.runId ?? withFingerprint?.id ?? null,
+            trainingConfigFingerprint: lineageSnapshot?.trainingConfigFingerprint ?? null,
+            validationResult: lineageSnapshot?.validationResult
+                ? JSON.stringify(lineageSnapshot.validationResult)
+                : null,
+            sourceSokVersion: sokVersion,
+            ...(lineageSnapshot ? { snapshot: lineageSnapshot } : {})
         },
         artifacts: hashes
     };

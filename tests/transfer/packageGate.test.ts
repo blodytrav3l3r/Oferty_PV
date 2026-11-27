@@ -181,6 +181,15 @@ describe('inspectArchive', () => {
 });
 
 describe('verifyGatedPackage', () => {
+    it('brak wymaganego snapshotu w lineage v2 → MANIFEST_INVALID', async () => {
+        const buffer = await buildValidPackage({ lineageSchemaVersion: '2' });
+        const gated = await inspectArchive(buffer);
+
+        expect(() => verifyGatedPackage(gated)).toThrow(
+            expect.objectContaining({ code: 'MANIFEST_INVALID' })
+        );
+    });
+
     it('weryfikuje poprawny pakiet', async () => {
         const gated = await inspectArchive(await buildValidPackage());
         const { manifest } = verifyGatedPackage(gated);

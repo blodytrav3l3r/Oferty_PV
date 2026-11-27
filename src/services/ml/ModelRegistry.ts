@@ -139,7 +139,8 @@ export class ModelRegistry {
         featureDistributions?: string | null,
         expectedTrainingUsers?: readonly string[],
         trainingRunCompletion?: TrainingRunCompletion,
-        expectedProductionVersion?: string | null
+        expectedProductionVersion?: string | null,
+        lineageSnapshot?: string | null
     ): Promise<string> {
         const now = new Date();
         // wersja musi być unikalna (kolumna @unique) — suffix zapobiega
@@ -149,6 +150,22 @@ export class ModelRegistry {
             .slice(0, 8)}`;
 
         const id = crypto.randomUUID();
+        let persistedLineageSnapshot = lineageSnapshot ?? null;
+        if (persistedLineageSnapshot) {
+            let parsedSnapshot: unknown;
+            try {
+                parsedSnapshot = JSON.parse(persistedLineageSnapshot);
+            } catch {
+                throw new Error('invalid_training_lineage_snapshot');
+            }
+            if (typeof parsedSnapshot !== 'object' || parsedSnapshot === null) {
+                throw new Error('invalid_training_lineage_snapshot');
+            }
+            persistedLineageSnapshot = JSON.stringify({
+                ...(parsedSnapshot as Record<string, unknown>),
+                modelVersion: version
+            });
+        }
 
         // Transakcja gwarantuje atomowość: dezaktywacja starych + utworzenie nowego
         // — zapobiega race condition z dwoma aktywnymi modelami jednocześnie.
@@ -200,13 +217,20 @@ export class ModelRegistry {
                             state ||
                             (shouldActivate ? AiModelState.APPROVED : AiModelState.CANDIDATE),
                         featureDistributions: featureDistributions ?? null,
+                        lineageSnapshot: persistedLineageSnapshot,
                         createdAt: now.toISOString()
                     }
                 });
                 if (trainingRunCompletion) {
                     await tx.aiTrainingRun.update({
                         where: { id: trainingRunCompletion.id },
-                        data: { ...trainingRunCompletion.data, candidateModelVersion: version }
+                        data: {
+                            ...trainingRunCompletion.data,
+                            candidateModelVersion: version,
+                            ...(persistedLineageSnapshot
+                                ? { lineageSnapshot: persistedLineageSnapshot }
+                                : {})
+                        }
                     });
                 }
             })

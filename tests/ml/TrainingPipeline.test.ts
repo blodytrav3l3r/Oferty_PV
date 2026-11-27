@@ -949,9 +949,40 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             expect(result.trained).toBe(true);
             expect(saveSpy.mock.calls[0][10]).toMatchObject({
                 id: expect.any(String),
-                data: expect.objectContaining({ status: 'SUCCESS', deployed: true })
+                data: expect.objectContaining({
+                    status: 'SUCCESS',
+                    deployed: true,
+                    datasetFingerprint: expect.stringMatching(/^sok-ml-dataset-v2:sha256:/),
+                    lineageSnapshot: expect.any(String),
+                    metrics: expect.any(String)
+                })
             });
             expect(saveSpy.mock.calls[0][11]).toBeNull();
+            const lineageSnapshot = JSON.parse(saveSpy.mock.calls[0][12] as string);
+            expect(lineageSnapshot).toMatchObject({
+                lineageSchemaVersion: 2,
+                runId: expect.any(String),
+                modelVersion: null,
+                featureSchemaVersion: expect.any(String),
+                trainingConfig: {
+                    learningRate: 0.01,
+                    epochs: 5000,
+                    l2Lambda: 0.01,
+                    maxTrainingDurationMs: expect.any(Number),
+                    divergenceThreshold: expect.any(Number),
+                    divergenceEpochs: expect.any(Number),
+                    seed: 42,
+                    seedUsage: 'metadata_only'
+                },
+                splitFingerprints: {
+                    train: { count: 280 },
+                    validation: { count: 60 },
+                    test: { count: 60 }
+                },
+                solverVersion: null,
+                rulesVersion: null,
+                decision: { deployed: true }
+            });
             expect(mockRunUpdate).not.toHaveBeenCalled();
             expect(featureMins[totalPriceIndex]).toBe(2500);
             expect(featureMaxs[totalPriceIndex]).toBe(2779);

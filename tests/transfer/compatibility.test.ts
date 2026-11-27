@@ -65,6 +65,8 @@ function target(overrides: Partial<CompatTarget> = {}): CompatTarget {
         solverVersion: null,
         rulesVersion: null,
         datasetFingerprint: 'sok-dataset-v1:abc',
+        datasetSchemaVersion: '2',
+        lineageSchemaVersion: '2',
         ...overrides
     };
 }
@@ -84,10 +86,65 @@ function codesOf(status: ReturnType<typeof checkCompatibility>): string[] {
 }
 
 describe('checkCompatibility', () => {
-    it('identyczne środowiska → compatible, same PASS', () => {
+    it('nieznane wersje solvera i reguł nigdy nie oznaczają pełnej zgodności', () => {
         const report = checkCompatibility(manifest(), model(), target());
+        expect(report.status).toBe('warning');
+        expect(codesOf(report)).toContain('SOLVER_VERSION_UNVERIFIED');
+        expect(codesOf(report)).toContain('RULES_VERSION_UNVERIFIED');
+    });
+
+    it('identyczne znane wersje środowiska → compatible, same PASS', () => {
+        const knownManifest = manifest({
+            lineageSchemaVersion: '2',
+            dataset: {
+                fingerprint: 'sok-dataset-v1:abc',
+                fingerprintAlgorithm: 'SHA-256',
+                fingerprintVersion: 1,
+                datasetSchemaVersion: '2',
+                recordCount: 100,
+                mode: 'fingerprint-only'
+            },
+            lineage: {
+                datasetFingerprint: 'sok-dataset-v1:abc',
+                datasetSchemaVersion: '2',
+                solverVersion: 'solver-v1',
+                rulesVersion: 'rules-v1',
+                trainingRunId: null,
+                trainingConfigFingerprint: null,
+                validationResult: null,
+                sourceSokVersion: '1.34.0'
+            }
+        });
+        const report = checkCompatibility(
+            knownManifest,
+            model(),
+            target({ solverVersion: 'solver-v1', rulesVersion: 'rules-v1' })
+        );
         expect(report.status).toBe('compatible');
         expect(report.checks.every((c) => c.status === 'PASS')).toBe(true);
+    });
+
+    it('potwierdzony mismatch solvera blokuje pakiet', () => {
+        const knownManifest = manifest({
+            lineage: {
+                datasetFingerprint: 'sok-dataset-v1:abc',
+                datasetSchemaVersion: '1',
+                solverVersion: 'solver-v1',
+                rulesVersion: 'rules-v1',
+                trainingRunId: null,
+                trainingConfigFingerprint: null,
+                validationResult: null,
+                sourceSokVersion: '1.34.0'
+            }
+        });
+        const report = checkCompatibility(
+            knownManifest,
+            model(),
+            target({ solverVersion: 'solver-v2' })
+        );
+
+        expect(report.status).toBe('blocked');
+        expect(codesOf(report)).toContain('SOLVER_VERSION_MISMATCH');
     });
     it('FEATURE_VERSION_MISMATCH → blocked', () => {
         const m = manifest({

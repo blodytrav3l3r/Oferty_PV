@@ -656,6 +656,7 @@ model AiModel {
   featureVersion       String? // wersja cech ML (np. 'v5', 'v6') — null dla starych modeli
   state                String? // cykl życia modelu: CANDIDATE | APPROVED | PRODUCTION | REJECTED | ROLLED_BACK (null = legacy)
   seed                 Int? // seed treningu (metadata/audyt; algorytm nie używa RNG)
+  lineageSnapshot      String? // wersjonowane, privacy-safe metadane treningu
   featureDistributions String? // JSON: { version: 1, features: { <cecha>: { bins: [], counts: [] } } } — baseline driftu z TRAIN
   active               Boolean @default(false)
   notes                String?
@@ -685,7 +686,8 @@ model AiTrainingRun {
   comparedAgainstVersion String? // model PRODUCTION, z którym porównywano kandydata
   datasetStartAt         String? // pierwszy rekord datasetu (time-based split)
   datasetEndAt           String? // ostatni rekord datasetu
-  datasetFingerprint     String? // SHA-256(sorted(recordId + timestamp + label + featureVersion))
+  datasetFingerprint     String? // wersjonowany fingerprint cech, labeli, wag i splitu
+  lineageSnapshot       String? // JSON: konfiguracja, provenance, split fingerprinty i wynik
   metrics                String? // JSON: rozszerzony ModelMetrics (val + test)
   baselineAccuracy       Float? // accuracy klasyfikatora majority-class = max(positiveRate, 1 - positiveRate)
   positiveRate           Float? // częstotliwość klasy pozytywnej w train (osobno — przydatna w label drift)

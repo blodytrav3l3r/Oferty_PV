@@ -39,6 +39,7 @@ jest.mock('../../src/services/ml/transfer/dataset', () => {
 });
 
 const UID = 'p7-test';
+const SEED_DATASET_FINGERPRINT = 'sok-ml-dataset-v2:sha256:' + 'a'.repeat(64);
 const createdModelIds: string[] = [];
 let createdTransferIds: string[] = [];
 
@@ -47,6 +48,49 @@ function uniqVersion(): string {
 }
 
 async function seedModel(version: string): Promise<string> {
+    const runId = crypto.randomUUID();
+    const lineageSnapshot = {
+        lineageSchemaVersion: 2,
+        runId,
+        modelVersion: version,
+        appVersion: '1.64.28',
+        appCommitSha: null,
+        codeFingerprint: null,
+        featureSchemaVersion: ML_CONSTANTS.FEATURE_VERSION,
+        featureSchemaFingerprint: 'sok-ml-feature-schema-v1:sha256:' + 'b'.repeat(64),
+        datasetFingerprint: SEED_DATASET_FINGERPRINT,
+        trainingConfigFingerprint: 'sok-ml-config-v1:sha256:' + 'c'.repeat(64),
+        trainingConfig: {
+            algorithm: 'logistic-gradient-descent-v1',
+            learningRate: 0.01,
+            epochs: 5000,
+            l2Lambda: 0.01,
+            forgettingLambda: 0.01,
+            splitPolicyVersion: 'chronological-70-15-15-v1',
+            preprocessingVersion: 'train-only-minmax-v1',
+            seed: 7,
+            seedUsage: 'metadata_only',
+            gateAndDeploymentThresholds: { minAuc: 0.55 }
+        },
+        splitPolicyVersion: 'chronological-70-15-15-v1',
+        splitFingerprints: {
+            train: { count: 84, fingerprint: 'sha256:' + 'd'.repeat(64) },
+            validation: { count: 18, fingerprint: 'sha256:' + 'e'.repeat(64) },
+            test: { count: 18, fingerprint: 'sha256:' + 'f'.repeat(64) }
+        },
+        solverVersion: null,
+        rulesVersion: null,
+        unavailableFields: ['solverVersion: unavailable', 'rulesVersion: unavailable'],
+        environment: { nodeVersion: 'v22.0.0', platform: 'test', arch: 'x64' },
+        validationResult: {
+            status: 'SUCCESS',
+            reason: null,
+            metrics: { rocAuc: 0.81, testRocAuc: 0.8 }
+        },
+        decision: { deployed: true, reason: 'seed P7' },
+        modelFingerprint: 'sok-ml-model-v1:sha256:' + '1'.repeat(64)
+    };
+    const snapshotText = JSON.stringify(lineageSnapshot);
     const weights = FEATURE_NAMES.map((_, i) => (i % 2 === 0 ? 0.05 : -0.03));
     const model = await prisma.aiModel.create({
         data: {
@@ -62,13 +106,14 @@ async function seedModel(version: string): Promise<string> {
             featureVersion: ML_CONSTANTS.FEATURE_VERSION,
             state: 'PRODUCTION',
             active: false,
+            lineageSnapshot: snapshotText,
             notes: 'seed P7',
             createdAt: new Date().toISOString()
         }
     });
     await prisma.aiTrainingRun.create({
         data: {
-            id: crypto.randomUUID(),
+            id: runId,
             startedAt: new Date().toISOString(),
             finishedAt: new Date().toISOString(),
             status: 'SUCCESS',
@@ -79,7 +124,8 @@ async function seedModel(version: string): Promise<string> {
             featureVersion: ML_CONSTANTS.FEATURE_VERSION,
             seed: 7,
             candidateModelVersion: version,
-            datasetFingerprint: 'sok-dataset-v1:p7seed',
+            datasetFingerprint: SEED_DATASET_FINGERPRINT,
+            lineageSnapshot: snapshotText,
             deployed: true,
             deploymentReason: 'seed P7'
         }
@@ -111,7 +157,7 @@ describe('P7 round-trip', () => {
         const preview = await buildExportPreview(modelId);
         expect(preview.model.version).toBe(version);
         expect(preview.dataset.mode).toBe('fingerprint-only');
-        expect(preview.dataset.fingerprint).toBe('sok-dataset-v1:p7seed');
+        expect(preview.dataset.fingerprint).toBe(SEED_DATASET_FINGERPRINT);
         expect(preview.trainingRuns).toBe(1);
         await expect(buildExportPreview('nope')).rejects.toMatchObject({ code: 'MODEL_NOT_FOUND' });
     });
@@ -122,6 +168,8 @@ describe('P7 round-trip', () => {
         const { manifest } = verifyGatedPackage(await inspectArchive(pkg.buffer));
         expect(manifest.model.version).toBe(version);
         expect(manifest.packageFingerprint).toBe(pkg.packageFingerprint);
+        expect(manifest.lineageSchemaVersion).toBe('2');
+        expect(manifest.lineage.snapshot?.datasetFingerprint).toBe(SEED_DATASET_FINGERPRINT);
     });
 
     it('dry-run nie tworzy modeli ani transferów', async () => {
@@ -156,6 +204,11 @@ describe('P7 round-trip', () => {
         const imported = await prisma.aiModel.findUnique({ where: { id: result.modelId } });
         expect(imported?.state).toBe('CANDIDATE');
         expect(imported?.active).toBe(false);
+        expect(JSON.parse(imported!.lineageSnapshot!)).toMatchObject({
+            modelVersion: freshVersion,
+            datasetFingerprint: SEED_DATASET_FINGERPRINT,
+            trainingConfigFingerprint: 'sok-ml-config-v1:sha256:' + 'c'.repeat(64)
+        });
 
         const probe = FEATURE_NAMES.map((_, i) => (i * 0.37) % 1);
         const before = new AcceptanceModel(FEATURE_NAMES.length, sourceWeights, sourceBias).predict(

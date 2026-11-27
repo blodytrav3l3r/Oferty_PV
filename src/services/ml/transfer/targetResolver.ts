@@ -2,7 +2,11 @@ import prisma from '../../../prismaClient';
 import { logger } from '../../../utils/logger';
 import { getVersion } from '../../../version';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../../../config/mlConstants';
-import { SOKML_AI_SCHEMA_VERSION } from './transferConstants';
+import {
+    SOKML_AI_SCHEMA_VERSION,
+    SOKML_DATASET_SCHEMA_VERSION,
+    SOKML_LINEAGE_SCHEMA_VERSION
+} from './transferConstants';
 import type { CompatTarget } from './compatibility';
 
 /**
@@ -23,7 +27,9 @@ export function buildImportTarget(datasetFingerprint: string | null): CompatTarg
         featureNames: [...FEATURE_NAMES],
         solverVersion: null,
         rulesVersion: null,
-        datasetFingerprint
+        datasetFingerprint,
+        datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
+        lineageSchemaVersion: SOKML_LINEAGE_SCHEMA_VERSION
     };
 }
 

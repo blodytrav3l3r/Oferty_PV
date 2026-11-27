@@ -15,9 +15,9 @@ export const SOKML_MANIFEST_VERSION = 1;
 // Wersje poszczególnych schematów (osobne kontrakty — rozdz. 3 planu P7).
 export const SOKML_AI_SCHEMA_VERSION = '1';
 export const SOKML_MODEL_SCHEMA_VERSION = '1'; // AcceptanceModel: regresja logistyczna
-export const SOKML_LINEAGE_SCHEMA_VERSION = '1'; // koperta lineageSnapshot v1
+export const SOKML_LINEAGE_SCHEMA_VERSION = '2'; // privacy-safe, versioned training lineage
 export const SOKML_FEATURE_SCHEMA_VERSION = ML_CONSTANTS.FEATURE_VERSION;
-export const SOKML_DATASET_SCHEMA_VERSION = '1';
+export const SOKML_DATASET_SCHEMA_VERSION = '2';
 
 function envInt(name: string, fallback: number): number {
     const raw = process.env[name];

@@ -33,6 +33,14 @@ import {
 } from './metrics';
 import { buildFeatureDistributions } from './featureDistributions';
 import {
+    computeFeatureSchemaFingerprint,
+    computeModelFingerprint,
+    computeTrainingConfigFingerprint,
+    computeTrainingFingerprints,
+    type TrainingLineageSnapshot
+} from './trainingLineage';
+import { getVersion } from '../../version';
+import {
     countEligibleNewFeatures,
     filterFeaturesByTrainingUsers,
     hasSameTrainingUsers,
@@ -56,6 +64,15 @@ export const TRAINING_STATUS = {
 } as const;
 
 export const SEED = 42;
+export const TRAINING_HYPERPARAMETERS = {
+    algorithm: 'logistic-gradient-descent-v1',
+    learningRate: 0.01,
+    epochs: 5000,
+    l2Lambda: 0.01,
+    forgettingLambda: 0.01,
+    splitPolicyVersion: 'chronological-70-15-15-v1',
+    preprocessingVersion: 'train-only-minmax-v1'
+} as const;
 
 export type TrainingGateReason = 'already_running' | 'too_soon' | 'insufficient_new_data';
 export type TrainingGate = { ok: true } | { ok: false; reason: string };
@@ -117,8 +134,7 @@ export function computeDatasetFingerprint(
 }
 
 function applyForgetting(exampleAgeDays: number): number {
-    const lambda = 0.01;
-    return Math.exp(-lambda * exampleAgeDays);
+    return Math.exp(-TRAINING_HYPERPARAMETERS.forgettingLambda * exampleAgeDays);
 }
 
 export function seasonToNum(s: string): number {
@@ -451,6 +467,7 @@ export class TrainingPipeline {
         let fingerprint: string | null = null;
         let datasetStartAt: string | null = null;
         let datasetEndAt: string | null = null;
+        let lineageSnapshot: TrainingLineageSnapshot | null = null;
         let status: string = TRAINING_STATUS.RUNNING;
         let finishFailed = false;
         let terminalSaved = false;
@@ -473,6 +490,20 @@ export class TrainingPipeline {
         ): Promise<{ trained: boolean; reason: string }> => {
             status = s;
             if (reason) errorMsg = reason;
+            if (!terminalSaved && lineageSnapshot) {
+                lineageSnapshot = {
+                    ...lineageSnapshot,
+                    validationResult: {
+                        status: s,
+                        reason: reason ?? null,
+                        metrics: lineageSnapshot.validationResult?.metrics ?? null
+                    },
+                    decision: lineageSnapshot.decision ?? {
+                        deployed: false,
+                        reason: reason ?? null
+                    }
+                };
+            }
             logger.info(
                 'TrainingPipeline',
                 `Czasy runu: ${JSON.stringify({ status: s, totalMs: Date.now() - new Date(startedAt).getTime(), stagesMs: stageDurations })}`
@@ -493,6 +524,7 @@ export class TrainingPipeline {
                         datasetStartAt,
                         datasetEndAt,
                         datasetFingerprint: fingerprint,
+                        lineageSnapshot: lineageSnapshot ? JSON.stringify(lineageSnapshot) : null,
                         metrics: metricsJson,
                         baselineAccuracy,
                         positiveRate,
@@ -529,6 +561,7 @@ export class TrainingPipeline {
                 datasetStartAt,
                 datasetEndAt,
                 datasetFingerprint: fingerprint,
+                lineageSnapshot: lineageSnapshot ? JSON.stringify(lineageSnapshot) : null,
                 metrics: metricsJson,
                 baselineAccuracy,
                 positiveRate,
@@ -563,6 +596,8 @@ export class TrainingPipeline {
                     testSize: 0,
                     featureVersion: ML_CONSTANTS.FEATURE_VERSION,
                     seed: SEED,
+                    datasetFingerprint: null,
+                    lineageSnapshot: null,
                     deployed: false
                 }
             });
@@ -672,14 +707,93 @@ export class TrainingPipeline {
                 );
             }
 
-            // Fingerprint datasetu (z rekordów po filtrze NO_FEEDBACK) + zakres czasowy.
+            // Fingerprint bazuje na dokładnych znormalizowanych wektorach,
+            // efektywnych wagach i przypisaniu do splitu; nie zawiera ID użytkownika ani rekordu.
             if (records.length > 0) {
-                fingerprint = computeDatasetFingerprint(
-                    records.map((r) => ({ id: r.id, timestamp: r.createdAt, label: r.label })),
-                    ML_CONSTANTS.FEATURE_VERSION
+                const fingerprintRows = [
+                    ...trainSet.map((example) => ({ split: 'train' as const, ...example })),
+                    ...valSet.map((example) => ({ split: 'validation' as const, ...example })),
+                    ...testSet.map((example) => ({ split: 'test' as const, ...example }))
+                ];
+                const splitPolicyVersion = TRAINING_HYPERPARAMETERS.splitPolicyVersion;
+                const fingerprints = computeTrainingFingerprints(
+                    fingerprintRows.map((row) => ({
+                        split: row.split,
+                        features: row.vec,
+                        label: row.label,
+                        weight: row.weight
+                    })),
+                    ML_CONSTANTS.FEATURE_VERSION,
+                    splitPolicyVersion
                 );
+                fingerprint = fingerprints.datasetFingerprint;
                 datasetStartAt = records[0].createdAt;
                 datasetEndAt = records[records.length - 1].createdAt;
+                const trainingConfig: TrainingLineageSnapshot['trainingConfig'] = {
+                    ...TRAINING_HYPERPARAMETERS,
+                    maxTrainingDurationMs: ML_CONFIG.maxTrainingDurationMs,
+                    divergenceThreshold: ML_CONFIG.divergenceThreshold,
+                    divergenceEpochs: ML_CONFIG.divergenceEpochs,
+                    seed: SEED,
+                    seedUsage: 'metadata_only',
+                    gateAndDeploymentThresholds: {
+                        minFeatureCountForTraining: ML_CONFIG.minFeatureCountForTraining,
+                        minDatasetForSplit: ML_CONFIG.minDatasetForSplit,
+                        minTrain: ML_CONFIG.minTrain,
+                        minVal: ML_CONFIG.minVal,
+                        minTest: ML_CONFIG.minTest,
+                        minTestPositive: ML_CONFIG.minTestPositive,
+                        minTestNegative: ML_CONFIG.minTestNegative,
+                        minAuc: ML_CONFIG.minAuc,
+                        minPrAuc: ML_CONFIG.minPrAuc,
+                        maxLogLoss: ML_CONFIG.maxLogLoss,
+                        maxEce: ML_CONFIG.maxEce,
+                        deployAucImprovement: ML_CONFIG.deployAucImprovement,
+                        maxLogLossRegression: ML_CONFIG.maxLogLossRegression,
+                        maxEceRegression: ML_CONFIG.maxEceRegression
+                    }
+                };
+                const configFingerprint = computeTrainingConfigFingerprint({
+                    featureSchemaVersion: ML_CONSTANTS.FEATURE_VERSION,
+                    featureNames: FEATURE_NAMES,
+                    trainingConfig
+                });
+                const version = getVersion();
+                const commitSha = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/i.test(version.commitHash)
+                    ? version.commitHash
+                    : null;
+                lineageSnapshot = {
+                    lineageSchemaVersion: 2,
+                    runId,
+                    modelVersion: null,
+                    appVersion: version.version,
+                    appCommitSha: commitSha,
+                    codeFingerprint: commitSha ? `git-commit:${commitSha}` : null,
+                    featureSchemaVersion: ML_CONSTANTS.FEATURE_VERSION,
+                    featureSchemaFingerprint: computeFeatureSchemaFingerprint(
+                        ML_CONSTANTS.FEATURE_VERSION,
+                        FEATURE_NAMES
+                    ),
+                    datasetFingerprint: fingerprint,
+                    trainingConfigFingerprint: configFingerprint,
+                    trainingConfig,
+                    splitPolicyVersion,
+                    splitFingerprints: fingerprints.splitFingerprints,
+                    solverVersion: null,
+                    rulesVersion: null,
+                    unavailableFields: [
+                        'solverVersion: no stable solver version constant',
+                        'rulesVersion: no stable rules version constant'
+                    ],
+                    environment: {
+                        nodeVersion: process.version,
+                        platform: process.platform,
+                        arch: process.arch
+                    },
+                    validationResult: null,
+                    decision: null,
+                    modelFingerprint: null
+                };
             }
 
             // Guarda balansu klas: model trenowany na jednej klasie (np. same
@@ -707,9 +821,9 @@ export class TrainingPipeline {
                         label: ex.label,
                         weight: ex.weight
                     })),
-                    0.01,
-                    5000,
-                    0.01,
+                    TRAINING_HYPERPARAMETERS.learningRate,
+                    TRAINING_HYPERPARAMETERS.epochs,
+                    TRAINING_HYPERPARAMETERS.l2Lambda,
                     {
                         // Timeout: cooperative cancellation — deadline sprawdzany co epokę
                         deadline: Date.now() + ML_CONFIG.maxTrainingDurationMs,
@@ -722,6 +836,37 @@ export class TrainingPipeline {
             // TEST — wyłącznie końcowa, niezależna ocena. NIE wpływa na tuning,
             // thresholdy, wybór modelu ani decyzję o treningu/deploy.
             const metrics = this.evaluateModel(model, valSet, testSet, trainSet.length);
+            metricsJson = JSON.stringify(metrics);
+            const lineageMetrics = {
+                accuracy: metrics.accuracy,
+                precision: metrics.precision,
+                recall: metrics.recall,
+                f1: metrics.f1,
+                rocAuc: metrics.rocAuc,
+                testRocAuc: metrics.testRocAuc ?? null,
+                prAuc: metrics.prAuc ?? null,
+                logLoss: metrics.logLoss ?? null,
+                brierScore: metrics.brierScore ?? null,
+                ece: metrics.ece ?? null
+            };
+            const modelFingerprint = computeModelFingerprint({
+                features: FEATURE_NAMES,
+                weights: model.getWeights(),
+                bias: model.getBias(),
+                featureMins: mins,
+                featureMaxs: maxs
+            });
+            if (lineageSnapshot) {
+                lineageSnapshot = {
+                    ...lineageSnapshot,
+                    validationResult: {
+                        status: 'EVALUATED',
+                        reason: null,
+                        metrics: lineageMetrics
+                    },
+                    modelFingerprint
+                };
+            }
 
             // Baseline: accuracy klasyfikatora majority-class (ETAP 5).
             // positiveRate = częstotliwość klasy pozytywnej w TRAIN (osobno
@@ -744,6 +889,17 @@ export class TrainingPipeline {
 
             const gate = this.evaluateDeployGuard(metrics, productionModel, isFirstModel);
             if (!gate.ok) {
+                if (lineageSnapshot) {
+                    lineageSnapshot = {
+                        ...lineageSnapshot,
+                        validationResult: {
+                            status: TRAINING_STATUS.FAILED_VALIDATION,
+                            reason: `${gate.code}:${gate.reason}`,
+                            metrics: lineageMetrics
+                        },
+                        decision: { deployed: false, reason: gate.reason }
+                    };
+                }
                 logger.info(
                     'TrainingPipeline',
                     `Kandydat nie przeszedł guardrailu deploy (${gate.reason}) — FAILED_VALIDATION, REJECTED`
@@ -765,7 +921,9 @@ export class TrainingPipeline {
                         buildRunCompletion(
                             TRAINING_STATUS.FAILED_VALIDATION,
                             `${gate.code}:${gate.reason}`
-                        )
+                        ),
+                        undefined,
+                        lineageSnapshot ? JSON.stringify(lineageSnapshot) : null
                     )
                 );
                 candidateModelVersion = rejectedVersion;
@@ -778,6 +936,17 @@ export class TrainingPipeline {
             let version: string;
             deployed = true;
             deploymentReason = gate.reason;
+            if (lineageSnapshot) {
+                lineageSnapshot = {
+                    ...lineageSnapshot,
+                    validationResult: {
+                        status: TRAINING_STATUS.SUCCESS,
+                        reason: null,
+                        metrics: lineageMetrics
+                    },
+                    decision: { deployed: true, reason: gate.reason }
+                };
+            }
             try {
                 version = await measureStage('saveAndFinalize', () =>
                     modelRegistry.saveModel(
@@ -792,13 +961,25 @@ export class TrainingPipeline {
                         this.buildFeatureDistributionsJson(trainSet),
                         allowlist,
                         buildRunCompletion(TRAINING_STATUS.SUCCESS, null),
-                        comparedAgainstVersion
+                        comparedAgainstVersion,
+                        lineageSnapshot ? JSON.stringify(lineageSnapshot) : null
                     )
                 );
             } catch (e) {
                 if (!(e instanceof ProductionModelChangedError)) throw e;
                 deployed = false;
                 deploymentReason = 'production_model_changed_during_training';
+                if (lineageSnapshot) {
+                    lineageSnapshot = {
+                        ...lineageSnapshot,
+                        validationResult: {
+                            status: TRAINING_STATUS.SKIPPED,
+                            reason: deploymentReason,
+                            metrics: lineageMetrics
+                        },
+                        decision: { deployed: false, reason: deploymentReason }
+                    };
+                }
                 version = await measureStage('saveAndFinalize', () =>
                     modelRegistry.saveModel(
                         model,
@@ -811,7 +992,9 @@ export class TrainingPipeline {
                         AiModelState.CANDIDATE,
                         this.buildFeatureDistributionsJson(trainSet),
                         undefined,
-                        buildRunCompletion(TRAINING_STATUS.SKIPPED, deploymentReason)
+                        buildRunCompletion(TRAINING_STATUS.SKIPPED, deploymentReason),
+                        undefined,
+                        lineageSnapshot ? JSON.stringify(lineageSnapshot) : null
                     )
                 );
                 candidateModelVersion = version;

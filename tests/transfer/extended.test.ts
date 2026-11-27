@@ -382,6 +382,13 @@ describe('P7.5 Extended', () => {
         expect(pkg.manifest.dataset.mode).toBe('full');
         expect(pkg.manifest.dataset.recordCount).toBe(4);
         const zip = await JSZip.loadAsync(pkg.buffer);
+        const datasetManifest = JSON.parse(
+            await zip.file('datasets/manifest.json')!.async('string')
+        );
+        expect(datasetManifest).toMatchObject({
+            fingerprintVersion: 2,
+            datasetSchemaVersion: pkg.manifest.dataset.datasetSchemaVersion
+        });
         const rows = (await zip.file('datasets/records.ndjson')!.async('string'))
             .trim()
             .split('\n')
