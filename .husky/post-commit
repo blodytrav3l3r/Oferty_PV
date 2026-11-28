@@ -25,15 +25,13 @@ if [ -n "${WINDIR:-}" ] || [ -n "${MSYSTEM:-}" ]; then
     export GRAPHIFY_MAX_WORKERS="${GRAPHIFY_MAX_WORKERS:-1}"
 fi
 
-# Skip during rebase/merge/cherry-pick to avoid blocking --continue with unstaged changes
+# Skip during a rebase or merge to avoid blocking --continue with unstaged changes
 # git exports GIT_DIR to hooks; the rev-parse fallback only runs when invoked by
 # hand (each git exec costs 1s+ on AV-scanned Windows machines).
 GIT_DIR=${GIT_DIR:-$(git rev-parse --git-dir 2>/dev/null)}
 [ -d "$GIT_DIR/rebase-merge" ] && exit 0
 [ -d "$GIT_DIR/rebase-apply" ] && exit 0
 [ -f "$GIT_DIR/MERGE_HEAD" ] && exit 0
-[ -f "$GIT_DIR/CHERRY_PICK_HEAD" ] && exit 0
-
 [ "${GRAPHIFY_SKIP_HOOK:-0}" = "1" ] && exit 0
 
 _GFY_GITDIR=$(cd "$(git rev-parse --git-dir 2>/dev/null)" 2>/dev/null && pwd)
@@ -41,8 +39,53 @@ _GFY_COMMONDIR=$(cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null 
 if [ -n "$_GFY_COMMONDIR" ] && [ "$_GFY_GITDIR" != "$_GFY_COMMONDIR" ]; then
     exit 0
 fi
+if [ -z "${GIT_WORK_TREE:-}" ] && [ "${_GFY_COMMONDIR##*/}" = ".git" ]; then
+    _GFY_TOP=${_GFY_COMMONDIR%/*}
+else
+    _GFY_TOP=$(git rev-parse --show-toplevel 2>/dev/null)
+fi
+[ -n "$_GFY_TOP" ] && cd "$_GFY_TOP" || exit 0
+[ -n "$_GFY_GITDIR" ] && GIT_DIR=$_GFY_GITDIR
 
-CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null)
+# CHERRY_PICK_HEAD can't be the skip signal: git leaves it on disk while post-commit
+# runs, so every pick was silenced (#4490, same trap as MERGE_HEAD in #4463). For a
+# range pick or revert, skip every step but the last and rebuild once from
+# sequencer/head, so a tracked graph.json isn't rewritten between steps. sequencer/ is
+# trusted only when its first todo line is the commit just made; a stale one left by
+# `git reset --hard` would otherwise silence every later commit.
+_GFY_SEQ_BASE=""
+if [ -f "$GIT_DIR/sequencer/todo" ]; then
+    IFS= read -r _GFY_FIRST < "$GIT_DIR/sequencer/todo"
+    _GFY_VERB=${_GFY_FIRST%% *}
+    _GFY_REST=${_GFY_FIRST#* }
+    case "$_GFY_REST" in
+        *" "*) _GFY_SUBJ=${_GFY_REST#* } ;;
+        *)     _GFY_SUBJ="" ;;
+    esac
+    _GFY_SEQ_LIVE=0
+    _GFY_Q='"'
+    case "$_GFY_VERB" in
+        pick)   [ "$(git log -1 --format=%s 2>/dev/null)" = "$_GFY_SUBJ" ] && _GFY_SEQ_LIVE=1 ;;
+        revert) [ "$(git log -1 --format=%s 2>/dev/null)" = "Revert ${_GFY_Q}${_GFY_SUBJ}${_GFY_Q}" ] && _GFY_SEQ_LIVE=1 ;;
+    esac
+    if [ "$_GFY_SEQ_LIVE" = "1" ]; then
+        _GFY_PENDING=0
+        while IFS= read -r _GFY_STEP || [ -n "$_GFY_STEP" ]; do
+            [ -n "$_GFY_STEP" ] && _GFY_PENDING=$((_GFY_PENDING + 1))
+        done < "$GIT_DIR/sequencer/todo"
+        [ "$_GFY_PENDING" -gt 1 ] && exit 0
+        [ -f "$GIT_DIR/sequencer/head" ] && IFS= read -r _GFY_SEQ_BASE < "$GIT_DIR/sequencer/head"
+    fi
+fi
+
+# core.quotePath=false: by default git prints a non-ASCII path as a quoted
+# octal-escaped string, which matches no file on disk, so the edit was silently
+# left out of the rebuild. Names git still quotes are decoded in the rebuild.
+CHANGED=$(git -c core.quotePath=false diff --name-only HEAD~1 HEAD 2>/dev/null || git -c core.quotePath=false diff --name-only HEAD 2>/dev/null)
+# Last pick of a range: cover every commit picked since the sequence began, not only this one.
+if [ -n "$_GFY_SEQ_BASE" ]; then
+    CHANGED=$(git -c core.quotePath=false diff --name-only "$_GFY_SEQ_BASE" HEAD 2>/dev/null)
+fi
 if [ -z "$CHANGED" ]; then
     exit 0
 fi
@@ -68,8 +111,8 @@ if [ -z "$_NON_GRAPH" ]; then
 fi
 
 # Detect the correct Python interpreter (handles uv tool, pipx, venv, system installs).
-# No pinned machine-local path here (repo must stay portable) — probes below
-# cover .graphify_python, the launcher on PATH, uv tool envs and system python.
+# _PINNED was recorded at hook-install time; tried first so the hook works even
+# when the graphify launcher is not on PATH (common in GUI clients and CI).
 #
 # Probes check availability with importlib.util.find_spec instead of importing
 # the package: a probe that imports graphify wholesale executes the full package
@@ -80,7 +123,11 @@ fi
 # fails loudly in the log if the package is broken under that interpreter.
 _GFY_PROBE="import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('graphify') else 1)"
 GRAPHIFY_PYTHON=""
-# First probe: read graphify-out/.graphify_python (written by the skill and
+_PINNED=''
+if [ -n "$_PINNED" ] && [ -x "$_PINNED" ] && "$_PINNED" -c "$_GFY_PROBE" 2>/dev/null; then
+    GRAPHIFY_PYTHON="$_PINNED"
+fi
+# Second probe: read graphify-out/.graphify_python (written by the skill and
 # CLI; survives uv-tool reinstalls and is the same source the README documents).
 if [ -z "$GRAPHIFY_PYTHON" ]; then
     _GFY_PYTHON_FILE="graphify-out/.graphify_python"
@@ -94,7 +141,7 @@ if [ -z "$GRAPHIFY_PYTHON" ]; then
         fi
     fi
 fi
-# Second probe: resolve via the graphify launcher on PATH.
+# Third probe: resolve via the graphify launcher on PATH.
 if [ -z "$GRAPHIFY_PYTHON" ]; then
     GRAPHIFY_BIN=$(command -v graphify 2>/dev/null)
     if [ -n "$GRAPHIFY_BIN" ]; then
@@ -139,7 +186,7 @@ if [ -z "$GRAPHIFY_PYTHON" ]; then
         fi
     fi
 fi
-# Third probe: uv tool environments. `uv tool install` (the README's
+# Fourth probe: uv tool environments. `uv tool install` (the README's
 # recommended method) puts graphify in an isolated venv that no ambient
 # python can import, and on Windows its launcher on PATH is a binary
 # trampoline with no shebang to parse — so the probes above can all miss a
@@ -192,8 +239,10 @@ _src = '''
 import os, signal, sys, threading, multiprocessing
 from pathlib import Path
 
+from graphify.hooks import _unquote_git_path
+
 changed_raw = os.environ.get('GRAPHIFY_CHANGED', '')
-changed = [Path(f.strip()) for f in changed_raw.strip().splitlines() if f.strip()]
+changed = [Path(_unquote_git_path(f.strip())) for f in changed_raw.strip().splitlines() if f.strip()]
 
 if not changed:
     sys.exit(0)
@@ -230,7 +279,7 @@ try:
             _watchdog.start()
     _force = os.environ.get('GRAPHIFY_FORCE', '').lower() in ('1', 'true', 'yes')
     _root = Path('.')
-    _out = os.environ.get('GRAPHIFY_OUT', 'graphify-out')
+    from graphify.paths import GRAPHIFY_OUT as _out
     _saved = Path(_out) / '.graphify_root'
     if _saved.exists():
         _txt = _saved.read_text(encoding='utf-8-sig').strip()

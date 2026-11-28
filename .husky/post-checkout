@@ -55,9 +55,16 @@ _GFY_COMMONDIR=$(cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null 
 if [ -n "$_GFY_COMMONDIR" ] && [ "$_GFY_GITDIR" != "$_GFY_COMMONDIR" ]; then
     exit 0
 fi
+if [ -z "${GIT_WORK_TREE:-}" ] && [ "${_GFY_COMMONDIR##*/}" = ".git" ]; then
+    _GFY_TOP=${_GFY_COMMONDIR%/*}
+else
+    _GFY_TOP=$(git rev-parse --show-toplevel 2>/dev/null)
+fi
+[ -n "$_GFY_TOP" ] && cd "$_GFY_TOP" || exit 0
+[ -n "$_GFY_GITDIR" ] && GIT_DIR=$_GFY_GITDIR
 # Detect the correct Python interpreter (handles uv tool, pipx, venv, system installs).
-# No pinned machine-local path here (repo must stay portable) — probes below
-# cover .graphify_python, the launcher on PATH, uv tool envs and system python.
+# _PINNED was recorded at hook-install time; tried first so the hook works even
+# when the graphify launcher is not on PATH (common in GUI clients and CI).
 #
 # Probes check availability with importlib.util.find_spec instead of importing
 # the package: a probe that imports graphify wholesale executes the full package
@@ -68,7 +75,11 @@ fi
 # fails loudly in the log if the package is broken under that interpreter.
 _GFY_PROBE="import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('graphify') else 1)"
 GRAPHIFY_PYTHON=""
-# First probe: read graphify-out/.graphify_python (written by the skill and
+_PINNED=''
+if [ -n "$_PINNED" ] && [ -x "$_PINNED" ] && "$_PINNED" -c "$_GFY_PROBE" 2>/dev/null; then
+    GRAPHIFY_PYTHON="$_PINNED"
+fi
+# Second probe: read graphify-out/.graphify_python (written by the skill and
 # CLI; survives uv-tool reinstalls and is the same source the README documents).
 if [ -z "$GRAPHIFY_PYTHON" ]; then
     _GFY_PYTHON_FILE="graphify-out/.graphify_python"
@@ -82,7 +93,7 @@ if [ -z "$GRAPHIFY_PYTHON" ]; then
         fi
     fi
 fi
-# Second probe: resolve via the graphify launcher on PATH.
+# Third probe: resolve via the graphify launcher on PATH.
 if [ -z "$GRAPHIFY_PYTHON" ]; then
     GRAPHIFY_BIN=$(command -v graphify 2>/dev/null)
     if [ -n "$GRAPHIFY_BIN" ]; then
@@ -127,7 +138,7 @@ if [ -z "$GRAPHIFY_PYTHON" ]; then
         fi
     fi
 fi
-# Third probe: uv tool environments. `uv tool install` (the README's
+# Fourth probe: uv tool environments. `uv tool install` (the README's
 # recommended method) puts graphify in an isolated venv that no ambient
 # python can import, and on Windows its launcher on PATH is a binary
 # trampoline with no shebang to parse — so the probes above can all miss a
@@ -206,7 +217,7 @@ try:
     # (no changed_paths) is correct here. The flock inside _rebuild_code still
     # prevents pile-ups when commit + checkout fire back-to-back.
     _root = Path('.')
-    _out = os.environ.get('GRAPHIFY_OUT', 'graphify-out')
+    from graphify.paths import GRAPHIFY_OUT as _out
     _saved = Path(_out) / '.graphify_root'
     if _saved.exists():
         _txt = _saved.read_text(encoding='utf-8-sig').strip()

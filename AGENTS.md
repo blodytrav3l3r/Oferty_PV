@@ -115,6 +115,9 @@ Model subagentów w `.opencode/opencode.json` (`agents.<id>.model`). Zmiana conf
 
 Knowledge graph w `graphify-out/`. Na `/graphify`: `query` → `path` → `explain`. Po zmianie kodu: `graphify update .`.
 
+- Interpreter dla lokalnych operacji wskazuje `graphify-out/.graphify_python`; utrzymuj go zgodnego z `graphify --version`. Hooki Husky korzystają z tego znacznika jako pierwszego źródła. Nie zapisuj ścieżek interpretera konkretnej maszyny w śledzonych plikach `.husky/post-*`; po `graphify hook install` sprawdź je i uruchom `graphify hook status`.
+- Hooki odświeżają graf po commicie, merge/rewrite i zmianie gałęzi. Niezatwierdzone zmiany odśwież ręcznie przez `graphify update .`.
+
 - `query_graph` z `token_budget: 1000–1200` i `depth: 2`; szerszy budżet tylko gdy pytanie obejmuje cały moduł.
 - **Zakaz czytania `GRAPH_REPORT.md`** w głównym wątku — to artefakt do przeglądu poza agentem; do architektury wystarczy `query_graph` lub `god_nodes`.
 - `graph.json` jest generowany i gitignored — nigdy nie czytaj go bezpośrednio.
