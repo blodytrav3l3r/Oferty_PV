@@ -396,31 +396,46 @@
             html +
             top
                 .map(function (entry) {
-                    var stats = entry[1];
-                    var recent = stats.recent;
-                    var details = stats.errors + '/' + stats.n + ' od startu';
-                    if (recent && recent.n > 0) {
-                        details +=
-                            ' · ' +
-                            recent.errors +
-                            '/' +
-                            recent.n +
-                            ' (' +
-                            ((recent.errors / recent.n) * 100).toFixed(1) +
-                            '%) · p95 ' +
-                            stats.p95 +
-                            ' ms · p99 ' +
-                            stats.p99 +
-                            ' ms';
-                    }
-                    return row(
-                        entry[0],
-                        esc(details),
-                        recent ? (recent.errors ? 'WARNING' : 'OK') : 'UNKNOWN',
-                        'Błędy / żądania od startu oraz w ostatnich próbkach i ich czas p95/p99.'
-                    );
+                    return endpointErrorRow(entry[0], entry[1]);
                 })
                 .join('')
+        );
+    }
+
+    function endpointErrorRow(endpoint, stats) {
+        var recent = stats.recent;
+        var label =
+            endpoint === 'GET /api/telemetry/ai/feature-importance' ? 'Ważność cech AI' : endpoint;
+        var recentDetails = '';
+        if (recent && recent.n > 0) {
+            recentDetails =
+                '<div>Ostatnie próbki — błędy 5xx: <strong>' +
+                esc(String(recent.errors)) +
+                ' / ' +
+                esc(String(recent.n)) +
+                ' żądań (' +
+                esc(((recent.errors / recent.n) * 100).toFixed(1)) +
+                '%)</strong></div><div>Czas próbek: <strong>p95 ' +
+                esc(String(stats.p95)) +
+                ' ms · p99 ' +
+                esc(String(stats.p99)) +
+                ' ms</strong></div>';
+        }
+        var state = recent ? (recent.errors ? 'WARNING' : 'OK') : 'UNKNOWN';
+        return (
+            '<div class="ops-endpoint-row"><div class="ops-endpoint-heading"><span class="ops-endpoint-name" title="' +
+            escAttr(endpoint) +
+            '">' +
+            esc(label) +
+            '</span>' +
+            pill(state) +
+            '</div><div class="ops-endpoint-details"><div>Od startu — błędy 5xx: <strong>' +
+            esc(String(stats.errors)) +
+            ' / ' +
+            esc(String(stats.n)) +
+            ' żądań</strong></div>' +
+            recentDetails +
+            '</div></div>'
         );
     }
 

@@ -267,12 +267,12 @@ describe('P6 ops dashboard', () => {
         expect(fallback?.textContent).toContain('limit nieznany');
     });
 
-    test('przy niedostępnym pomiarze bazy zachowuje metryki i pokazuje trasę błędów', async () => {
+    test('pokazuje błędy endpointu pod czytelną nazwą i porządkuje metryki czasu', async () => {
         global.fetch = jest.fn(async (url: string) =>
             url === '/metrics'
                 ? resp({
                       endpoints: {
-                          'GET /api/offers/:id': {
+                          'GET /api/telemetry/ai/feature-importance': {
                               n: 20,
                               errors: 6,
                               p95: 120,
@@ -287,12 +287,19 @@ describe('P6 ops dashboard', () => {
         loadDom();
         evalFile();
         await new Promise((r) => setTimeout(r, 50));
-        const rows = Array.from(document.querySelectorAll('.ops-row'));
-        const size = rows.find((el) => el.textContent.includes('Rozmiar bazy PostgreSQL'));
-        expect(size?.querySelector('.ops-unknown')).not.toBeNull();
-        expect(
-            rows.find((el) => el.textContent.includes('/api/offers/:id'))?.textContent
-        ).toContain('6/20 od startu · 3/10 (30.0%) · p95 120 ms · p99 240 ms');
+        const dbSize = opsRow('Rozmiar bazy PostgreSQL');
+        expect(dbSize?.querySelector('.ops-unknown')).not.toBeNull();
+        const endpoint = document.querySelector('.ops-endpoint-row');
+        expect(endpoint?.querySelector('.ops-endpoint-name')?.textContent).toBe('Ważność cech AI');
+        expect(endpoint?.querySelector('.ops-endpoint-name')?.getAttribute('title')).toBe(
+            'GET /api/telemetry/ai/feature-importance'
+        );
+        expect(endpoint?.textContent).toContain('Od startu — błędy 5xx: 6 / 20 żądań');
+        expect(endpoint?.textContent).toContain(
+            'Ostatnie próbki — błędy 5xx: 3 / 10 żądań (30.0%)'
+        );
+        expect(endpoint?.textContent).toContain('Czas próbek: p95 120 ms · p99 240 ms');
+        expect(endpoint?.querySelector('.ops-warn')).not.toBeNull();
     });
 
     test('zdrowy backend -> 4 sekcje z OK', async () => {

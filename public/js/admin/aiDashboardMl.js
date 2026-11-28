@@ -101,15 +101,50 @@
             });
     }
 
-    // F3: czysta prezentacja strukturalnego statusu bramki z backendu
-    // (trainingGate z /ai/ml-status). Zero logiki decyzyjnej po stronie UI.
+    // F3: prezentuje status bramki z backendu bez zmiany decyzji treningowej.
+    function formatTrainingGateReason(gate) {
+        const g = gate || {};
+        const reason = String(g.reason || '');
+        if (reason === 'ok') return 'Gotowy do treningu';
+        if (reason === 'already_running') return 'Trening już trwa';
+        if (reason.indexOf('too_soon:') === 0) {
+            const elapsed = Number(g.hoursSinceLastTrain);
+            const minimum = Number(g.minHoursSinceLastTrain);
+            if (
+                g.hoursSinceLastTrain != null &&
+                g.minHoursSinceLastTrain != null &&
+                Number.isFinite(elapsed) &&
+                Number.isFinite(minimum)
+            ) {
+                return (
+                    'Za krótko od ostatniego treningu (' +
+                    elapsed.toFixed(1) +
+                    ' z ' +
+                    minimum +
+                    ' h)'
+                );
+            }
+            return 'Za krótko od ostatniego treningu';
+        }
+        if (reason.indexOf('insufficient_new_data:') === 0) {
+            const count = Number(g.newSinceLastTrain);
+            const minimum = Number(g.minNewData);
+            const safeCount = Number.isFinite(count) && count >= 0 ? count : 0;
+            const safeMinimum = Number.isFinite(minimum) && minimum >= 0 ? minimum : 50;
+            return (
+                'Za mało nowych kwalifikujących się danych (' + safeCount + '/' + safeMinimum + ')'
+            );
+        }
+        return 'Brak danych o przyczynie lub nieznany status treningu';
+    }
+
     function gateCards(gate) {
         const g = gate || {};
         const fmtHours = function (v) {
-            return v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(1) + 'h' : 'brak';
+            return v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(1) + 'h' : 'Brak';
         };
         const last = g.lastAttempt || null;
-        const lastValue = last ? window.escapeHtml(last.status || '—') : 'brak prób';
+        const lastValue = last ? window.escapeHtml(last.status || '—') : 'Brak prób';
         const lastStatus = last ? last.status || '' : '';
         const lastColor = !last
             ? 'var(--text-muted)'
@@ -136,9 +171,9 @@
             ),
             window.aiStatCard(
                 'Powód bramki',
-                window.escapeHtml(g.reason || '—'),
+                window.escapeHtml(formatTrainingGateReason(g)),
                 g.reason === 'ok' ? 'var(--success)' : 'var(--text-muted)',
-                'ok / already_running / too_soon / insufficient_new_data (backend, nie UI)'
+                'Opisuje, dlaczego trening może lub nie może się teraz rozpocząć. Liczba nowych danych jest porównywana z progiem treningu.'
             ),
             window.aiStatCard(
                 'Nowe dane',
@@ -149,16 +184,16 @@
                 'Kwalifikujące nowe rekordy od ostatniego SUCCESS na tle progu (ta sama definicja co w pipeline)'
             ),
             window.aiStatCard(
-                'Od SUCCESS',
+                'Od sukcesu',
                 fmtHours(g.hoursSinceLastTrain),
                 'var(--accent-hover)',
-                'Czas od zakończonego treningu (minimum ' +
+                'Czas od ostatniego zakończonego treningu (minimum ' +
                     (g.minHoursSinceLastTrain != null ? g.minHoursSinceLastTrain : 4) +
                     'h)' +
                     (g.nextEligibleAt ? '. Kolejny możliwy: ' + g.nextEligibleAt.slice(0, 16) : ''),
                 g.nextEligibleAt
                     ? 'Kolejny trening możliwy od ' + g.nextEligibleAt.slice(0, 16)
-                    : 'Brak poprzedniego SUCCESS (first-run) lub bramka czasowa spełniona'
+                    : 'Brak wcześniejszego udanego treningu (pierwsze uruchomienie) lub wymagany odstęp już minął'
             ),
             window.aiStatCard(
                 'Ostatnia próba',
@@ -482,7 +517,7 @@
                             "Rozmiar cache'a predykcji w pamięci (liczba zapisanych wyników)"
                         )
                     ]) +
-                    mlGroup('Bramka treningu', 'ai-ml-col-5', gateCards(status.trainingGate)) +
+                    mlGroup('Bramka treningu', 'ai-ml-col-3', gateCards(status.trainingGate)) +
                     '<div class="ai-influence-widget">' +
                     '<label style="display:flex;align-items:center;gap:10px;cursor:pointer" title="Procentowy wp\u0142yw AI na ranking produkt\u00f3w (0% = tylko ludzkie preferencje, 100% = w pe\u0142ni automatyczny)">' +
                     '<i data-lucide="sliders-horizontal" class="icon-sm" style="color:var(--accent-text);flex-shrink:0"></i>' +

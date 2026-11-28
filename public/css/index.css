@@ -2847,6 +2847,43 @@ a.admin-stat-card {
     border-bottom: none;
 }
 
+.ops-endpoint-row {
+    padding: var(--tile-gap-xs) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.ops-endpoint-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tile-gap-2xs);
+}
+
+.ops-endpoint-name {
+    min-width: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    overflow-wrap: anywhere;
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+
+.ops-endpoint-details {
+    display: grid;
+    gap: var(--tile-gap-2xs);
+    margin-top: var(--tile-gap-2xs);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    line-height: 1.4;
+}
+
+.ops-endpoint-details strong {
+    color: var(--text-secondary);
+    font-weight: var(--fw-semibold);
+}
+
 .ops-name {
     flex: 1 1 auto;
     min-width: 0;
@@ -2924,18 +2961,32 @@ a.admin-stat-card {
 }
 
 /* ── Drift model — brak w poprzedniej wersji (białe linie, niezdefiniowane klasy) ── */
+.ai-drift-host {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-sm-plus);
+}
+
+.ai-drift-host > .ai-section-title,
+.ai-drift-host > .ai-drift-grid,
+.ai-drift-host > .ai-drift-label,
+.ai-drift-host > .card-note,
+.ai-drift-host > .ai-table-wrap {
+    margin: 0;
+}
+
 .ai-drift-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tile-gap-sm-plus);
 }
 
 .ai-drift-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 12px;
+    min-width: 0;
+    padding: var(--tile-gap-sm-plus);
     transition:
         border-color 0.2s,
         box-shadow 0.2s;
@@ -3113,8 +3164,9 @@ hr.border-top-glass-m4,
 /* ── Model table ── */
 .ai-model-table-wrap {
     overflow-x: auto;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
+    background: var(--bg-card);
 }
 
 .ai-model-table {
@@ -3125,7 +3177,7 @@ hr.border-top-glass-m4,
 }
 
 .ai-model-table thead th {
-    padding: 6px 8px;
+    padding: var(--tile-gap-2xs) var(--tile-gap-sm-plus);
     text-align: left;
     font-weight: var(--fw-bold);
     background: var(--bg-tertiary);
@@ -3144,9 +3196,13 @@ hr.border-top-glass-m4,
 }
 
 .ai-model-table tbody td {
-    padding: 6px 8px;
+    padding: var(--tile-gap-xs-plus) var(--tile-gap-sm-plus);
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
+}
+
+.ai-model-table tbody tr:not(.ai-model-row-active):hover td {
+    background: var(--bg-hover);
 }
 
 .ai-model-table tbody td:first-child {
@@ -3177,12 +3233,12 @@ hr.border-top-glass-m4,
 }
 
 .ai-model-row-active {
-    background: var(--success-bg) !important;
-    box-shadow: inset 3px 0 0 var(--success-hover);
+    background: var(--accent-bg);
+    box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .ai-model-row-active td {
-    border-bottom-color: var(--success-border) !important;
+    border-bottom-color: var(--accent-border-dim);
 }
 
 .ai-model-used-tag {

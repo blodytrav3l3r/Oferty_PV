@@ -331,6 +331,86 @@ describe('aiDashboardMl metryki', () => {
         expect(host.querySelector('#ai-ml-rollback-btn').disabled).toBe(true);
     });
 
+    it('wyświetla czytelny powód bramki zamiast technicznego kodu', async () => {
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) =>
+            Promise.resolve(
+                url === '/ml-status'
+                    ? {
+                          ...STATUS,
+                          trainingGate: {
+                              ...STATUS.trainingGate,
+                              eligible: false,
+                              reason: 'insufficient_new_data:0',
+                              newSinceLastTrain: 0,
+                              minNewData: 50
+                          }
+                      }
+                    : { models: [] }
+            )
+        );
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        const reasonCard = Array.from(host.querySelectorAll('.ai-stat-card')).find((card) =>
+            card.textContent.includes('Powód bramki')
+        );
+        expect(reasonCard.textContent).not.toContain('insufficient_new_data:0');
+        expect(reasonCard.querySelector('div').textContent).toContain('0/50');
+        expect(reasonCard.querySelector('div').textContent).toMatch(/za mało nowych/i);
+    });
+
+    it('używa spójnej wielkości liter w pustych kafelkach bramki', async () => {
+        const { win, setFetchJson } = loadMl();
+        setFetchJson((url) =>
+            Promise.resolve(
+                url === '/ml-status'
+                    ? {
+                          ...STATUS,
+                          trainingGate: {
+                              ...STATUS.trainingGate,
+                              eligible: false,
+                              reason: 'too_soon:4h',
+                              hoursSinceLastTrain: null,
+                              lastAttempt: null
+                          }
+                      }
+                    : { models: [] }
+            )
+        );
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        const cards = Array.from(host.querySelectorAll('.ai-stat-card'));
+        const getValue = (title) =>
+            cards.find((card) => card.textContent.includes(title)).querySelector('div').textContent;
+        expect(getValue('Od sukcesu')).toBe('Brak');
+        expect(getValue('Ostatnia próba')).toBe('Brak prób');
+        expect(getValue('Powód bramki')).toBe('Za krótko od ostatniego treningu');
+    });
+
+    it('układa kafelki bramki treningu w trzy kolumny jak pozostałe sekcje ML', async () => {
+        const { win } = loadMl();
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        win.aiRenderMlStatus(host);
+        await tick();
+
+        const gateSection = Array.from(host.querySelectorAll('.ai-ml-group')).find((section) =>
+            section
+                .querySelector('.ai-ml-group-label')
+                .textContent.toLocaleLowerCase('pl-PL')
+                .includes('bramka treningu')
+        );
+        expect(
+            gateSection.querySelector('.ai-ml-group-grid').classList.contains('ai-ml-col-3')
+        ).toBe(true);
+    });
+
     it('ignoruje odpowiedź starszego odświeżenia po nowszym renderze', async () => {
         let resolveOldStatus;
         const oldStatus = new Promise((resolve) => {
