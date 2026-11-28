@@ -1,6 +1,6 @@
 # Status danych AI w ofercie studni
 
-Panel boczny oferty pokazuje przygotowanie danych AI dla każdej studni oraz podsumowanie oferty. Odczyt obejmuje wyłącznie rekordy telemetrii przypisane jednocześnie do `offerId` i `wellId` oraz chroni dostęp istniejącą kontrolą właściciela oferty.
+Panel boczny oferty pokazuje przygotowanie danych AI dla każdej studni oraz podsumowanie oferty. Jest widoczny wyłącznie dla zalogowanego użytkownika znajdującego się na aktualnej liście „Użytkownicy uwzględniani w uczeniu AI”. Serwer egzekwuje ten warunek dla endpointu statusów, niezależnie od widoczności elementu w przeglądarce; brak, błędna konfiguracja lub niedostępność listy oznacza odmowę. Odczyt obejmuje wyłącznie rekordy telemetrii przypisane jednocześnie do `offerId` i `wellId` oraz chroni dostęp istniejącą kontrolą właściciela oferty.
 
 ## Znaczenie statusów
 

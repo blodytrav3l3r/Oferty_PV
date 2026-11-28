@@ -14,6 +14,7 @@ jest.mock('../src/middleware/auth', () => ({
 }));
 
 jest.mock('../src/middleware/rateLimiters', () => ({
+    READ_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next(),
     TELEMETRY_WRITE_LIMITER: (_req: unknown, _res: unknown, next: () => void) => next()
 }));
 

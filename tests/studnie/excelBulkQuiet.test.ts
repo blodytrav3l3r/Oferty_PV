@@ -188,6 +188,16 @@ function makeCtx() {
         applyOrderedWellSoftLockUI: () => {},
         renderOfferSummary: () => {},
         orderEditMode: null,
+        CustomEvent: class CustomEvent {
+            readonly type: string;
+            readonly detail: unknown;
+
+            constructor(type: string, init: { detail?: unknown } = {}) {
+                this.type = type;
+                this.detail = init.detail;
+            }
+        },
+        dispatchEvent: () => true,
         fmtInt: (v: any) => String(v),
         FLOW_TYPES: {},
         wells: [],

@@ -64,6 +64,11 @@ router.get('/ai/offer-status', requireAuth, READ_LIMITER, async (req, res) => {
         if (!(await assertOfferReadable((req as AuthenticatedRequest).user, parse.data.offerId))) {
             return res.status(403).json({ error: 'Brak dostępu do oferty' });
         }
+        const trainingUserIds = await getTrainingUserIds();
+        const viewerUserId = (req as AuthenticatedRequest).user?.id;
+        if (!viewerUserId || !trainingUserIds.includes(viewerUserId)) {
+            return res.status(403).json({ error: 'Brak dostępu do danych AI' });
+        }
 
         const telemetry = await prisma.ai_telemetry_logs.findMany({
             where: { offerId: offer.id, wellId: { in: wellIds } },
@@ -83,12 +88,7 @@ router.get('/ai/offer-status', requireAuth, READ_LIMITER, async (req, res) => {
                   select: { telemetryId: true, label: true }
               })
             : [];
-        const status = buildAiOfferWellStatuses(
-            wellIds,
-            telemetry,
-            features,
-            await getTrainingUserIds()
-        );
+        const status = buildAiOfferWellStatuses(wellIds, telemetry, features, trainingUserIds);
         return res.json(status);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

@@ -12,6 +12,7 @@ jest.mock('../src/middleware/auth', () => ({
 }));
 
 jest.mock('../src/middleware/rateLimiters', () => ({
+    READ_LIMITER: (_req: any, _res: any, next: any) => next(),
     TELEMETRY_WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
@@ -129,14 +130,20 @@ describe('POST /api/telemetry/ai/acceptance-batch', () => {
         expect(res.body.updated[0]).toEqual({ index: 0, telemetryId: 't1' });
         expect(res.body.duplicates).toEqual([]);
         expect(res.body.rejected).toEqual([]);
-        // jeden updateMany z id IN (grupowanie po fladze), nie 2× update
-        expect(mockUpdateMany).toHaveBeenCalledTimes(1);
+        // Jeden batch aktualizuje flagi, drugi przypina brakujące powiązanie oferty.
+        expect(mockUpdateMany).toHaveBeenCalledTimes(2);
         expect(mockUpdateMany.mock.calls[0][0]).toEqual(
             expect.objectContaining({
                 where: {
                     id: { in: ['t1', 't2'] },
                     OR: [{ wasAccepted: { not: true } }, { wasRejected: { not: false } }]
                 }
+            })
+        );
+        expect(mockUpdateMany.mock.calls[1][0]).toEqual(
+            expect.objectContaining({
+                where: { id: { in: ['t1', 't2'] }, offerId: null },
+                data: { offerId: 'o1' }
             })
         );
         expect(mockEventsCreateMany).toHaveBeenCalledTimes(1);
@@ -156,7 +163,14 @@ describe('POST /api/telemetry/ai/acceptance-batch', () => {
         expect(res.status).toBe(200);
         expect(res.body.updated).toEqual([]);
         expect(res.body.duplicates).toHaveLength(2);
-        expect(mockUpdateMany).not.toHaveBeenCalled();
+        // Powtórka nie zmienia flag acceptance, ale dopina brakujący offerId.
+        expect(mockUpdateMany).toHaveBeenCalledTimes(1);
+        expect(mockUpdateMany.mock.calls[0][0]).toEqual(
+            expect.objectContaining({
+                where: { id: { in: ['t1', 't2'] }, offerId: null },
+                data: { offerId: 'o1' }
+            })
+        );
         expect(mockEventsCreateMany).toHaveBeenCalledTimes(1);
         expect(mockFeatureUpdateMany).toHaveBeenCalledTimes(2);
     });

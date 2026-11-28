@@ -140,6 +140,35 @@ describe('P1.1 telemetry ownership', () => {
         );
     });
 
+    it('ai/offer-status: blokuje podgląd użytkownikowi spoza listy uczenia AI', async () => {
+        mockUser.id = 'u2';
+        prismaMock.offers_studnie_rel.findUnique
+            .mockResolvedValueOnce({ id: 'off-own' })
+            .mockResolvedValueOnce({ userId: 'u2' });
+        trainingUsersMock.getTrainingUserIds.mockResolvedValue(['u1']);
+
+        const res = await request(app)
+            .get('/api/telemetry/ai/offer-status')
+            .query({ offerId: 'off-own', wellId: 'well-1' });
+
+        expect(res.statusCode).toBe(403);
+        expect(prismaMock.ai_telemetry_logs.findMany).not.toHaveBeenCalled();
+    });
+
+    it('ai/offer-status: blokuje podgląd, gdy lista uczenia AI jest pusta', async () => {
+        prismaMock.offers_studnie_rel.findUnique
+            .mockResolvedValueOnce({ id: 'off-own' })
+            .mockResolvedValueOnce({ userId: 'u1' });
+        trainingUsersMock.getTrainingUserIds.mockResolvedValue([]);
+
+        const res = await request(app)
+            .get('/api/telemetry/ai/offer-status')
+            .query({ offerId: 'off-own', wellId: 'well-1' });
+
+        expect(res.statusCode).toBe(403);
+        expect(prismaMock.ai_telemetry_logs.findMany).not.toHaveBeenCalled();
+    });
+
     it('ai/offer-status: nie ujawnia danych cudzej oferty ani nieznanego ID', async () => {
         prismaMock.offers_studnie_rel.findUnique
             .mockResolvedValueOnce({ id: 'off-other' })

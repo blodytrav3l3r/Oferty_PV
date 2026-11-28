@@ -452,21 +452,41 @@
             <section
                 class="ai-offer-status"
                 id="ai-offer-status"
+                hidden
                 aria-live="polite"
                 aria-busy="false"
             >
                 <div class="ai-offer-status-heading">
-                    <i data-lucide="brain" aria-hidden="true"></i>
-                    <strong>Dane AI z tej oferty</strong>
+                    <div class="ai-offer-status-title">
+                        <i data-lucide="brain" aria-hidden="true"></i>
+                        <strong
+                            title="Podsumowanie pokazuje, ile studni z tej oferty ma dane powiązane z AI i na jakim są etapie. Najedź na licznik, aby poznać jego znaczenie."
+                        >
+                            Dane AI z tej oferty
+                        </strong>
+                    </div>
+                    <button
+                        type="button"
+                        class="btn-icon ai-offer-status-toggle"
+                        data-ai-status-toggle
+                        aria-controls="ai-offer-status-content"
+                        aria-expanded="true"
+                        aria-label="Zwiń dane AI"
+                        title="Zwiń dane AI"
+                    >
+                        <i data-lucide="chevron-down" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <p class="ai-offer-status-message" data-ai-status-message>
-                    Zapisz ofertę, aby sprawdzić jej dane AI.
-                </p>
-                <div class="ai-offer-status-counts" data-ai-status-counts hidden></div>
-                <p class="ai-offer-status-note">
-                    „Dane” spełniają podstawowe warunki AI. To nie potwierdza użycia próbki w
-                    konkretnym treningu ani modelu.
-                </p>
+                <div id="ai-offer-status-content" data-ai-status-content>
+                    <p class="ai-offer-status-message" data-ai-status-message>
+                        Zapisz ofertę, aby sprawdzić jej dane AI.
+                    </p>
+                    <div class="ai-offer-status-counts" data-ai-status-counts hidden></div>
+                    <p class="ai-offer-status-note">
+                        „Dane” spełniają podstawowe warunki AI. To nie potwierdza użycia próbki w
+                        konkretnym treningu ani modelu.
+                    </p>
+                </div>
             </section>
         </div>
         <div id="sidebar-discounts-content" class="sidebar-discounts-content">

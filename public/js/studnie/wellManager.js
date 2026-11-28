@@ -92,9 +92,9 @@ function refreshAll(skipSummary = false) {
     if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
     if (typeof window !== 'undefined') {
         window.dispatchEvent(
-            new CustomEvent('sok:studnie-offer-rendered', {
+            new window.CustomEvent('sok:studnie-offer-rendered', {
                 detail: {
-                    offerId: editingOfferIdStudnie || null,
+                    offerId: window.editingOfferIdStudnie || null,
                     wellIds: wells.map((item) => item && item.id).filter(Boolean)
                 }
             })
