@@ -118,9 +118,10 @@
     /* ===== FEATURE FLAG — hierarchia: URL override > localStorage > backend > 0 ===== */
 
     async function fetchFeatureVersionFromBackend() {
+        let timeoutId = null;
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(function () {
+            timeoutId = setTimeout(function () {
                 controller.abort();
             }, 2000);
             const res = await fetch(FEATURE_SCHEMA_URL, {
@@ -128,12 +129,13 @@
                 credentials: 'same-origin',
                 signal: controller.signal
             });
-            clearTimeout(timeoutId);
             if (!res.ok) return null;
             const data = await res.json();
             return typeof data.version === 'string' ? data.version : null;
         } catch (_e) {
             return null;
+        } finally {
+            if (timeoutId !== null) clearTimeout(timeoutId);
         }
     }
 
@@ -150,9 +152,10 @@
     }
 
     async function fetchAiInfluenceFromBackend() {
+        let timeoutId = null;
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(function () {
+            timeoutId = setTimeout(function () {
                 controller.abort();
             }, 2000);
             const res = await fetch(SETTINGS_URL, {
@@ -160,12 +163,13 @@
                 credentials: 'same-origin',
                 signal: controller.signal
             });
-            clearTimeout(timeoutId);
             if (!res.ok) return null;
             const data = await res.json();
             return parseInt(data.value, 10);
         } catch (_e) {
             return null;
+        } finally {
+            if (timeoutId !== null) clearTimeout(timeoutId);
         }
     }
 
@@ -445,11 +449,14 @@
             // jest systematycznie zaniżona (skew cech train/serve).
             if (gasketsEnabled) {
                 for (const dnStr of Object.keys(sealQtyByDn)) {
-                    const gasketProd = window.studnieProducts.find(
-                        (p) =>
-                            p.componentType === 'uszczelka' &&
-                            p.name === gasketNameForDn(well.uszczelka, dnStr)
-                    );
+                    const gasketProd =
+                        typeof window.findGasketProduct === 'function'
+                            ? window.findGasketProduct(well.uszczelka, dnStr)
+                            : window.studnieProducts.find(
+                                  (p) =>
+                                      p.componentType === 'uszczelka' &&
+                                      p.name === gasketNameForDn(well.uszczelka, dnStr)
+                              );
                     if (gasketProd) {
                         const qty = sealQtyByDn[dnStr];
                         if (!hasLayoutTotalPrice) {
@@ -584,9 +591,10 @@
             return { scores: resultMap, predictionTokens: predictionTokens };
         }
 
+        let timeoutId = null;
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(function () {
+            timeoutId = setTimeout(function () {
                 controller.abort();
             }, FETCH_TIMEOUT);
 
@@ -666,6 +674,8 @@
             for (let n = 0; n < toFetch.length; n++) {
                 resultMap.set(toFetch[n].id, -1);
             }
+        } finally {
+            if (timeoutId !== null) clearTimeout(timeoutId);
         }
 
         return { scores: resultMap, predictionTokens: predictionTokens };

@@ -276,6 +276,16 @@ describe('mlDualRanking.rankCandidates (min-max normalizacja aiCost)', () => {
 
     test('zapisuje anonimowy outcome fallback po timeout bez zmiany rankingu technicznego', async () => {
         const events: any[] = [];
+        const activeTimers = new Set<ReturnType<typeof setTimeout>>();
+        sandbox.setTimeout = (callback: (...args: any[]) => void, delay?: number) => {
+            const timer = setTimeout(callback, delay);
+            activeTimers.add(timer);
+            return timer;
+        };
+        sandbox.clearTimeout = (timer: ReturnType<typeof setTimeout>) => {
+            activeTimers.delete(timer);
+            clearTimeout(timer);
+        };
         sandbox.window.telemetryRecordEvent = (event: any) => events.push(event);
         sandbox.fetch = (url: string) => {
             if (url.includes('/feature-schema')) {
@@ -299,6 +309,7 @@ describe('mlDualRanking.rankCandidates (min-max normalizacja aiCost)', () => {
         expect(result.ranked[0].id).toBe(0);
         expect(result.mlOnline).toBe(false);
         expect(events).toEqual([{ eventType: 'fallback_triggered', changeReason: 'timeout' }]);
+        expect(activeTimers.size).toBe(0);
     });
 
     test('aiInfluencePct=0 (shadow) → niezależnie od rozrzutu porządek techniczny', async () => {

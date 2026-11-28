@@ -1,4 +1,7 @@
 import type { Config } from '@jest/types';
+import { randomUUID } from 'node:crypto';
+
+process.env.SOK_POSTGRES_TEST_RUN_ID = randomUUID().replaceAll('-', '').slice(0, 16);
 
 const config: Config.InitialOptions = {
     preset: 'ts-jest',
@@ -19,6 +22,7 @@ const config: Config.InitialOptions = {
             displayName: 'backend',
             preset: 'ts-jest',
             testEnvironment: '<rootDir>/tests/postgresTestEnvironment.cjs',
+            globalTeardown: '<rootDir>/tests/postgresGlobalTeardown.cjs',
             roots: ['<rootDir>/tests'],
             moduleNameMapper: {
                 // Puppeteer >= 25 jest ESM-only — patrz tests/mocks/puppeteer.stub.js.

@@ -19,34 +19,14 @@ function getPostgresUrl() {
     return url;
 }
 
-function registerSchemaCleanup(baseUrl, schema) {
-    process.once('exit', () => {
-        const dropScript = [
-            "const { Client } = require('pg');",
-            'const client = new Client({ connectionString: process.env.DATABASE_URL });',
-            'client.connect()',
-            '  .then(() => client.query(`DROP SCHEMA "${process.argv[1]}" CASCADE`))',
-            '  .catch(() => { console.error("Unable to drop isolated PostgreSQL test schema"); process.exitCode = 1; })',
-            '  .finally(() => client.end());'
-        ].join('\n');
-        try {
-            execFileSync(process.execPath, ['-e', dropScript, schema], {
-                cwd: projectRoot,
-                env: { ...process.env, DATABASE_URL: baseUrl },
-                stdio: 'inherit',
-                timeout: 30_000
-            });
-        } catch {
-            process.stderr.write(`Unable to drop isolated PostgreSQL Jest schema ${schema}.\n`);
-            process.exitCode = 1;
-        }
-    });
-}
-
 async function initializeWorkerSchema() {
     const baseUrl = getPostgresUrl();
+    const runId = process.env.SOK_POSTGRES_TEST_RUN_ID;
+    if (!runId || !/^[a-f0-9]{16}$/.test(runId)) {
+        throw new Error('SOK_POSTGRES_TEST_RUN_ID must be a 16-character lowercase hex id');
+    }
     const suffix = randomUUID().replaceAll('-', '').slice(0, 12);
-    const schema = `sok_jest_${process.pid}_${suffix}`;
+    const schema = `sok_jest_${runId}_${process.pid}_${suffix}`;
     const client = new Client({
         connectionString: baseUrl.toString(),
         connectionTimeoutMillis: 5_000
@@ -54,7 +34,6 @@ async function initializeWorkerSchema() {
     try {
         await client.connect();
         await client.query(`CREATE SCHEMA "${schema}"`);
-        registerSchemaCleanup(baseUrl.toString(), schema);
     } finally {
         await client.end();
     }
