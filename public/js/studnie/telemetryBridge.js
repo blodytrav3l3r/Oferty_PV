@@ -469,6 +469,7 @@
 
             const payload = {
                 // Kontekst
+                offerId: window.editingOfferIdStudnie || undefined,
                 wellId: well.id || undefined,
                 warehouse: well.magazyn || undefined,
                 dn: well.dn != null && well.dn !== '' ? String(well.dn) : undefined,
@@ -700,9 +701,9 @@
      * @param {Object} [options.configSnapshot] - snapshot konfiguracji
      */
     window.telemetryRecordAcceptanceFull = function (options) {
-        if (!options || !options.telemetryId) return;
+        if (!options || !options.telemetryId) return Promise.resolve();
         try {
-            safeFetch(ACCEPTANCE_FULL_URL, {
+            return safeFetch(ACCEPTANCE_FULL_URL, {
                 telemetryId: options.telemetryId,
                 accepted: !!options.accepted,
                 offerId: options.offerId || undefined,
@@ -712,6 +713,7 @@
             });
         } catch (_e) {
             /* pasywne — ignore */
+            return Promise.resolve();
         }
     };
 
@@ -722,12 +724,17 @@
     const ACCEPTANCE_BATCH_URL = '/api/telemetry/ai/acceptance-batch';
 
     function acceptanceSingleFallback(items) {
-        (items || []).forEach(function (options) {
-            try {
-                if (window.telemetryRecordAcceptanceFull)
-                    window.telemetryRecordAcceptanceFull(options);
-            } catch (_e) {}
-        });
+        return Promise.all(
+            (items || []).map(function (options) {
+                try {
+                    return window.telemetryRecordAcceptanceFull
+                        ? window.telemetryRecordAcceptanceFull(options)
+                        : Promise.resolve();
+                } catch (_e) {
+                    return Promise.resolve();
+                }
+            })
+        );
     }
 
     /**
@@ -735,7 +742,7 @@
      * @param {Array} items - tablica opcji jak do telemetryRecordAcceptanceFull
      */
     window.telemetryRecordAcceptanceFullBatch = function (items) {
-        if (!Array.isArray(items) || items.length === 0) return;
+        if (!Array.isArray(items) || items.length === 0) return Promise.resolve();
         const payloads = [];
         for (let i = 0; i < items.length; i++) {
             const options = items[i];
@@ -749,11 +756,12 @@
                 configSnapshot: options.configSnapshot || undefined
             });
         }
-        if (payloads.length === 0) return;
-        safeFetch(ACCEPTANCE_BATCH_URL, { items: payloads }).then(function (res) {
+        if (payloads.length === 0) return Promise.resolve();
+        return safeFetch(ACCEPTANCE_BATCH_URL, { items: payloads }).then(function (res) {
             if (!res || (!Array.isArray(res.updated) && !Array.isArray(res.duplicates))) {
-                acceptanceSingleFallback(items);
+                return acceptanceSingleFallback(items);
             }
+            return res;
         });
     };
 

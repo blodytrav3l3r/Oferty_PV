@@ -9,10 +9,14 @@
 
 import express from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
-import { TELEMETRY_WRITE_LIMITER } from '../middleware/rateLimiters';
+import { READ_LIMITER, TELEMETRY_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import { telemetryService } from '../services/telemetry';
 import { assertOfferReadable, assertTelemetryIdWritable } from '../utils/telemetryOwnership';
+import prisma from '../prismaClient';
+import { getTrainingUserIds } from '../services/ml/trainingUsers';
+import { buildAiOfferWellStatuses } from '../services/telemetry/aiOfferStatus';
+import { z } from 'zod';
 import {
     type TelemetryAcceptanceFullInput,
     type TelemetryConfigInput,
@@ -28,6 +32,70 @@ import {
 import type { TelemetryConfigPayload } from '../services/telemetry/telemetryTypes';
 
 const router = express.Router();
+const MAX_OFFER_STATUS_TELEMETRY_ROWS = 5000;
+
+const aiOfferStatusQuerySchema = z.object({
+    offerId: z.string().trim().min(1).max(200),
+    wellId: z.union([
+        z.string().trim().min(1).max(200),
+        z.array(z.string().trim().min(1).max(200)).max(100)
+    ])
+});
+
+/**
+ * GET /api/telemetry/ai/offer-status
+ * Zwraca wyłącznie status przygotowania danych AI dla wskazanych studni oferty.
+ * Status READY oznacza etykietowaną próbkę dopuszczoną do zbioru, nie użycie w modelu.
+ */
+router.get('/ai/offer-status', requireAuth, READ_LIMITER, async (req, res) => {
+    const parse = aiOfferStatusQuerySchema.safeParse(req.query);
+    if (!parse.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
+    const wellIds = [
+        ...new Set(Array.isArray(parse.data.wellId) ? parse.data.wellId : [parse.data.wellId])
+    ];
+    if (wellIds.length > 100) return res.status(400).json({ error: 'Maksymalnie 100 studni' });
+
+    try {
+        const offer = await prisma.offers_studnie_rel.findUnique({
+            where: { id: parse.data.offerId },
+            select: { id: true }
+        });
+        if (!offer) return res.status(404).json({ error: 'Nie znaleziono oferty' });
+        if (!(await assertOfferReadable((req as AuthenticatedRequest).user, parse.data.offerId))) {
+            return res.status(403).json({ error: 'Brak dostępu do oferty' });
+        }
+
+        const telemetry = await prisma.ai_telemetry_logs.findMany({
+            where: { offerId: offer.id, wellId: { in: wellIds } },
+            orderBy: { createdAt: 'desc' },
+            take: MAX_OFFER_STATUS_TELEMETRY_ROWS + 1,
+            select: { id: true, wellId: true, userId: true, trainingEligible: true }
+        });
+        if (telemetry.length > MAX_OFFER_STATUS_TELEMETRY_ROWS) {
+            return res.status(503).json({
+                error: 'Historia AI tej oferty przekracza limit bezpiecznego podsumowania.'
+            });
+        }
+        const telemetryIds = telemetry.map(({ id }) => id);
+        const features = telemetryIds.length
+            ? await prisma.aiFeature.findMany({
+                  where: { telemetryId: { in: telemetryIds } },
+                  select: { telemetryId: true, label: true }
+              })
+            : [];
+        const status = buildAiOfferWellStatuses(
+            wellIds,
+            telemetry,
+            features,
+            await getTrainingUserIds()
+        );
+        return res.json(status);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error('Telemetry', `Błąd odczytu statusu AI oferty: ${message}`);
+        return res.status(500).json({ error: 'Nie udało się pobrać statusu AI' });
+    }
+});
 
 /**
  * POST /api/telemetry/ai/config
@@ -320,7 +388,8 @@ router.post('/ai/acceptance-full', requireAuth, TELEMETRY_WRITE_LIMITER, async (
                     telemetryId: data.telemetryId,
                     changeReason: data.accepted ? 'offer_saved_user_accept' : 'offer_rejected'
                 },
-                userId
+                userId,
+                offerId: data.offerId
             }
         );
 

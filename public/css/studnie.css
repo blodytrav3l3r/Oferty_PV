@@ -607,6 +607,101 @@ html[data-theme='light'] .unit-popup-preview {
     overflow-anchor: none;
 }
 
+.ai-offer-status {
+    flex: 0 0 auto;
+    margin: 0.35rem 0.6rem 0.55rem;
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.ai-offer-status[hidden],
+.ai-offer-status-counts[hidden],
+.well-ai-indicator[hidden] {
+    display: none;
+}
+
+.ai-offer-status-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-heading);
+    font-size: var(--fs-xs);
+}
+
+.ai-offer-status-heading i {
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--accent-text);
+}
+
+.ai-offer-status-message {
+    margin: 0.4rem 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-2xs);
+    line-height: 1.4;
+}
+
+.ai-offer-status-counts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3rem;
+}
+
+.ai-offer-status-count {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.35rem;
+    padding: 0.28rem 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: var(--fs-3xs);
+}
+
+.ai-offer-status-count strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.ai-offer-status-note {
+    margin: 0.45rem 0 0;
+    color: var(--text-muted);
+    font-size: var(--fs-3xs);
+    line-height: 1.35;
+}
+
+.well-ai-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.08rem 0.32rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font-size: var(--fs-3xs);
+    font-weight: var(--fw-semibold);
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+.well-ai-indicator.is-ready {
+    border-color: var(--success-border);
+    color: var(--success-hover);
+}
+
+.well-ai-indicator.is-waiting,
+.well-ai-indicator.is-collecting {
+    border-color: var(--warn-border);
+    color: var(--warn-hover);
+}
+
+.well-ai-indicator.is-excluded,
+.well-ai-indicator.is-no-data {
+    color: var(--text-muted);
+}
+
 /* Perf: przy >200 kart wyłącz kosztowny blur/animację (visual-safe — blur niewidoczny w scroll) */
 .wells-list--many .well-list-item {
     -webkit-backdrop-filter: none !important;

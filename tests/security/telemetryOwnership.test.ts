@@ -11,6 +11,7 @@ jest.mock('../../src/middleware/auth', () => ({
 }));
 
 jest.mock('../../src/middleware/rateLimiters', () => ({
+    READ_LIMITER: (_req: any, _res: any, next: any) => next(),
     TELEMETRY_WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
@@ -29,6 +30,10 @@ const telemetryServiceMock = {
     recordAcceptance: jest.fn()
 };
 
+const trainingUsersMock = { getTrainingUserIds: jest.fn(async () => ['u1']) };
+
+jest.mock('../../src/services/ml/trainingUsers', () => trainingUsersMock);
+
 jest.mock('../../src/services/telemetry', () => ({
     telemetryService: telemetryServiceMock
 }));
@@ -40,7 +45,8 @@ jest.mock('../../src/services/telemetry/telemetryService', () => ({
 const prismaMock = {
     offers_rel: { findUnique: jest.fn() },
     offers_studnie_rel: { findUnique: jest.fn() },
-    ai_telemetry_logs: { findUnique: jest.fn(), findFirst: jest.fn() }
+    ai_telemetry_logs: { findUnique: jest.fn(), findFirst: jest.fn(), findMany: jest.fn() },
+    aiFeature: { findMany: jest.fn() }
 };
 
 jest.mock('../../src/prismaClient', () => ({
@@ -76,6 +82,9 @@ describe('P1.1 telemetry ownership', () => {
         prismaMock.offers_studnie_rel.findUnique.mockResolvedValue(null);
         prismaMock.ai_telemetry_logs.findUnique.mockResolvedValue(null);
         prismaMock.ai_telemetry_logs.findFirst.mockResolvedValue(null);
+        prismaMock.ai_telemetry_logs.findMany.mockResolvedValue([]);
+        prismaMock.aiFeature.findMany.mockResolvedValue([]);
+        trainingUsersMock.getTrainingUserIds.mockResolvedValue(['u1']);
         telemetryServiceMock.recordConfig.mockResolvedValue({ success: true });
         telemetryServiceMock.recordEvent.mockResolvedValue({ success: true });
         telemetryServiceMock.recordAcceptance.mockResolvedValue(undefined);
@@ -105,6 +114,91 @@ describe('P1.1 telemetry ownership', () => {
             .post('/api/telemetry/ai/config')
             .send({ solverSource: 'AUTO_JS', offerId: 'draft-niezapisany' });
         expect(draft.statusCode).toBe(200);
+    });
+
+    it('ai/offer-status: wymaga istniejącej, dostępnej oferty i zwraca tylko statusy', async () => {
+        prismaMock.offers_studnie_rel.findUnique
+            .mockResolvedValueOnce({ id: 'off-own' })
+            .mockResolvedValueOnce({ userId: 'u1' });
+        prismaMock.ai_telemetry_logs.findMany.mockResolvedValue([
+            { id: 'tel-1', wellId: 'well-1', userId: 'u1', trainingEligible: true }
+        ]);
+        prismaMock.aiFeature.findMany.mockResolvedValue([
+            { telemetryId: 'tel-1', label: 'ACCEPTED' }
+        ]);
+
+        const res = await request(app)
+            .get('/api/telemetry/ai/offer-status')
+            .query({ offerId: 'off-own', wellId: 'well-1' });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.wells).toEqual([{ wellId: 'well-1', status: 'READY' }]);
+        expect(res.body.counts.ready).toBe(1);
+        expect(JSON.stringify(res.body)).not.toContain('tel-1');
+        expect(prismaMock.ai_telemetry_logs.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { offerId: 'off-own', wellId: { in: ['well-1'] } } })
+        );
+    });
+
+    it('ai/offer-status: nie ujawnia danych cudzej oferty ani nieznanego ID', async () => {
+        prismaMock.offers_studnie_rel.findUnique
+            .mockResolvedValueOnce({ id: 'off-other' })
+            .mockResolvedValueOnce({ userId: 'u2' });
+        const foreign = await request(app)
+            .get('/api/telemetry/ai/offer-status')
+            .query({ offerId: 'off-other', wellId: 'well-1' });
+        expect(foreign.statusCode).toBe(403);
+
+        prismaMock.offers_studnie_rel.findUnique.mockResolvedValueOnce(null);
+        const missing = await request(app)
+            .get('/api/telemetry/ai/offer-status')
+            .query({ offerId: 'missing', wellId: 'well-1' });
+        expect(missing.statusCode).toBe(404);
+        expect(prismaMock.ai_telemetry_logs.findMany).not.toHaveBeenCalled();
+    });
+
+    it('ai/offer-status: odmawia niepełnego podsumowania po przekroczeniu limitu historii', async () => {
+        prismaMock.offers_studnie_rel.findUnique
+            .mockResolvedValueOnce({ id: 'off-own' })
+            .mockResolvedValueOnce({ userId: 'u1' });
+        prismaMock.ai_telemetry_logs.findMany.mockResolvedValue(
+            Array.from({ length: 5001 }, (_, index) => ({
+                id: `tel-${index}`,
+                wellId: 'well-1',
+                userId: 'u1',
+                trainingEligible: true
+            }))
+        );
+
+        const res = await request(app)
+            .get('/api/telemetry/ai/offer-status')
+            .query({ offerId: 'off-own', wellId: 'well-1' });
+
+        expect(res.statusCode).toBe(503);
+        expect(res.body.error).toContain('limit');
+        expect(prismaMock.aiFeature.findMany).not.toHaveBeenCalled();
+        expect(prismaMock.ai_telemetry_logs.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({ take: 5001 })
+        );
+    });
+
+    it('acceptance-full: przekazuje ofertę do bezpiecznego powiązania telemetrii', async () => {
+        prismaMock.ai_telemetry_logs.findUnique.mockResolvedValue({ userId: 'u1', offerId: null });
+        prismaMock.offers_studnie_rel.findUnique.mockResolvedValue({ userId: 'u1' });
+        const res = await request(app).post('/api/telemetry/ai/acceptance-full').send({
+            telemetryId: 'tel-1',
+            accepted: true,
+            offerId: 'off-own',
+            wellId: 'well-1'
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(telemetryServiceMock.recordAcceptance).toHaveBeenCalledWith(
+            'tel-1',
+            true,
+            'well-1',
+            expect.objectContaining({ offerId: 'off-own' })
+        );
     });
 
     it('ai/event: cudzy wiersz telemetry → 403', async () => {

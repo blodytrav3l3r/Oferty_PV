@@ -18,8 +18,15 @@ function matchWhere(row: LogRow, where: any): boolean {
     if (!where) return true;
     if (where.OR && !(where.OR as any[]).some((condition) => matchWhere(row, condition)))
         return false;
-    if (where.id !== undefined && row.id !== where.id) return false;
-    if (where.wellId !== undefined && row.wellId !== where.wellId) return false;
+    if (where.id !== undefined) {
+        if (where.id.in && !where.id.in.includes(row.id)) return false;
+        if (!where.id.in && row.id !== where.id) return false;
+    }
+    if (where.wellId !== undefined) {
+        if (where.wellId.in && !where.wellId.in.includes(row.wellId)) return false;
+        if (!where.wellId.in && row.wellId !== where.wellId) return false;
+    }
+    if (where.offerId !== undefined && row.offerId !== where.offerId) return false;
     if (where.solverSource !== undefined && row.solverSource !== where.solverSource) return false;
     const notAcc = where.wasAccepted?.not;
     if (notAcc !== undefined && row.wasAccepted === notAcc) return false;
@@ -46,6 +53,7 @@ jest.mock('../src/middleware/auth', () => ({
 }));
 
 jest.mock('../src/middleware/rateLimiters', () => ({
+    READ_LIMITER: (_req: any, _res: any, next: any) => next(),
     TELEMETRY_WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
@@ -72,7 +80,7 @@ jest.mock('../src/prismaClient', () => ({
                 if (orderBy?.createdAt === 'desc')
                     rows.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
                 const hit = rows[0];
-                return hit ? { id: hit.id } : null;
+                return hit ? { id: hit.id, offerId: hit.offerId ?? null } : null;
             }),
             findMany: jest.fn(async ({ where }: any) => logs.filter((r) => matchWhere(r, where))),
             update: jest.fn(async ({ where, data }: any) => {
@@ -105,7 +113,7 @@ jest.mock('../src/prismaClient', () => ({
                     ai_telemetry_logs: {
                         findFirst: jest.fn(async ({ where }: any) => {
                             const row = logs.find((entry) => matchWhere(entry, where));
-                            return row ? { id: row.id } : null;
+                            return row ? { id: row.id, offerId: row.offerId ?? null } : null;
                         }),
                         updateMany: jest.fn(async ({ where, data }: any) => {
                             let count = 0;
@@ -135,6 +143,10 @@ jest.mock('../src/prismaClient', () => ({
                         create: jest.fn(async ({ data }: any) => {
                             events.push({ ...data });
                             return data;
+                        }),
+                        createMany: jest.fn(async ({ data }: any) => {
+                            events.push(...data.map((row: any) => ({ ...row })));
+                            return { count: data.length };
                         })
                     }
                 };
@@ -219,6 +231,74 @@ describe('D-FIX-3 acceptance idempotentne', () => {
         expect(logs.find((r) => r.id === 't1')).toEqual(
             expect.objectContaining({ wasAccepted: false, wasRejected: true, usageCount: 1 })
         );
+    });
+
+    test('akceptacja wiąże istniejącą telemetrię z ofertą, jeśli nie miała powiązania', async () => {
+        logs.push({
+            id: 't-linked',
+            wellId: 'w-linked',
+            offerId: null,
+            wasAccepted: false,
+            wasRejected: false,
+            usageCount: 0,
+            createdAt: '2026-01-01'
+        });
+
+        await telemetryService.recordAcceptance('t-linked', true, 'w-linked', {
+            event: { eventType: 'accept', telemetryId: 't-linked', wellId: 'w-linked' },
+            userId: 'u1',
+            offerId: 'o1'
+        });
+
+        expect(logs.find((row) => row.id === 't-linked')).toEqual(
+            expect.objectContaining({ offerId: 'o1', wasAccepted: true })
+        );
+    });
+
+    test('acceptance-batch wiąże istniejący rekord i nie nadpisuje innej oferty', async () => {
+        logs.push(
+            {
+                id: 'batch-unlinked',
+                wellId: 'w-batch-unlinked',
+                offerId: null,
+                wasAccepted: false,
+                wasRejected: false,
+                usageCount: 0,
+                createdAt: '2026-01-01'
+            },
+            {
+                id: 'batch-linked',
+                wellId: 'w-batch-linked',
+                offerId: 'other-offer',
+                wasAccepted: false,
+                wasRejected: false,
+                usageCount: 0,
+                createdAt: '2026-01-01'
+            }
+        );
+
+        const response = await request(app)
+            .post('/api/telemetry/ai/acceptance-batch')
+            .send({
+                items: [
+                    {
+                        telemetryId: 'batch-unlinked',
+                        accepted: true,
+                        offerId: 'current-offer',
+                        wellId: 'w-batch-unlinked'
+                    },
+                    {
+                        telemetryId: 'batch-linked',
+                        accepted: true,
+                        offerId: 'current-offer',
+                        wellId: 'w-batch-linked'
+                    }
+                ]
+            });
+
+        expect(response.status).toBe(200);
+        expect(logs.find((row) => row.id === 'batch-unlinked')?.offerId).toBe('current-offer');
+        expect(logs.find((row) => row.id === 'batch-linked')?.offerId).toBe('other-offer');
     });
 
     test('równoległy double-POST acceptance-full: 1× MANUAL, 1× increment', async () => {

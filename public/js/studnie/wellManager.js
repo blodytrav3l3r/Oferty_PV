@@ -90,6 +90,16 @@ function refreshAll(skipSummary = false) {
     if (window.lucide) window.lucide.createIcons();
     __refreshAllDepth--;
     if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+            new CustomEvent('sok:studnie-offer-rendered', {
+                detail: {
+                    offerId: editingOfferIdStudnie || null,
+                    wellIds: wells.map((item) => item && item.id).filter(Boolean)
+                }
+            })
+        );
+    }
 }
 
 // P0.5 lightweight refresh — tylko aktywna studnia, BEZ listy/oferty/DN tiles (v1.1 kontrakt)

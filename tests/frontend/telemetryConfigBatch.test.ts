@@ -6,11 +6,24 @@ import vm from 'vm';
 
 let calls: { url: string; body: any }[] = [];
 let fetchMode: 'ok' | '404' | 'badbody' = 'ok';
+let acceptanceMode: 'ok' | '404' | 'badbody' = 'ok';
 let store: Record<string, string> = {};
 
 function fetchMock(url: string, opts: any) {
     const body = JSON.parse(opts.body);
     calls.push({ url, body });
+    if (String(url).endsWith('/ai/acceptance-batch')) {
+        if (acceptanceMode === '404') {
+            return Promise.resolve({ status: 404, json: () => Promise.reject(new Error('html')) });
+        }
+        if (acceptanceMode === 'badbody') {
+            return Promise.resolve({ status: 200, json: () => Promise.resolve({ error: 'x' }) });
+        }
+        return Promise.resolve({
+            status: 200,
+            json: () => Promise.resolve({ updated: [], duplicates: [] })
+        });
+    }
     if (String(url).endsWith('/ai/config-batch')) {
         if (fetchMode === '404') {
             return Promise.resolve({ status: 404, json: () => Promise.reject(new Error('html')) });
@@ -45,6 +58,7 @@ function AbortControllerStub(this: any) {
 function loadBridge() {
     calls = [];
     fetchMode = 'ok';
+    acceptanceMode = 'ok';
     store = {};
     const sandbox: any = {
         console,
@@ -108,6 +122,15 @@ function flush(ms = 20) {
 }
 
 describe('telemetry config-batch (FE)', () => {
+    test('powiązuje zapis telemetrii z aktualną ofertą', async () => {
+        const sb = loadBridge();
+        sb.window.editingOfferIdStudnie = 'offer-1';
+        sb.window.telemetryRecordConfigBatch([opts(well('w1', 'AUTO_JS'))]);
+        await flush();
+        const batch = calls.find((call) => call.url.endsWith('/ai/config-batch'));
+        expect(batch.body.items[0].offerId).toBe('offer-1');
+    });
+
     test('batch: 1 POST z N items + chain _lastAutoTelemetryId', async () => {
         const sb = loadBridge();
         const w1 = well('w1', 'AUTO_JS');
@@ -162,5 +185,18 @@ describe('telemetry config-batch (FE)', () => {
         expect(posts[0].body.solverSource).toBe('AUTO_JS');
         expect(posts[0].body.wellId).toBe('w1');
         expect(w1._lastAutoTelemetryId).toBe('single-1');
+    });
+
+    test('acceptance batch czeka na zakończenie fallbacku do żądań pojedynczych', async () => {
+        const sb = loadBridge();
+        acceptanceMode = '404';
+
+        await sb.window.telemetryRecordAcceptanceFullBatch([
+            { telemetryId: 't1', accepted: true, offerId: 'offer-1', wellId: 'w1' },
+            { telemetryId: 't2', accepted: true, offerId: 'offer-1', wellId: 'w2' }
+        ]);
+
+        expect(calls.filter((call) => call.url.endsWith('/ai/acceptance-batch'))).toHaveLength(1);
+        expect(calls.filter((call) => call.url.endsWith('/ai/acceptance-full'))).toHaveLength(2);
     });
 });

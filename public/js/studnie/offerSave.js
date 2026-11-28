@@ -415,9 +415,10 @@ async function saveOfferStudnie() {
                 }
             });
         });
+        let acceptanceRequest;
         if (typeof window.telemetryRecordAcceptanceFullBatch === 'function') {
             try {
-                window.telemetryRecordAcceptanceFullBatch(acceptanceBatch);
+                acceptanceRequest = window.telemetryRecordAcceptanceFullBatch(acceptanceBatch);
             } catch (_e) {
                 // silent
             }
@@ -430,6 +431,15 @@ async function saveOfferStudnie() {
                 }
             });
         }
+
+        Promise.resolve(acceptanceRequest).then(
+            function () {
+                document.dispatchEvent(new Event('sok:ai-offer-status-refresh'));
+            },
+            function () {
+                document.dispatchEvent(new Event('sok:ai-offer-status-refresh'));
+            }
+        );
 
         return true;
     } catch (err) {

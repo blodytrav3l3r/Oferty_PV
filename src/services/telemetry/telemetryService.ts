@@ -585,7 +585,7 @@ class TelemetryService {
         telemetryId: string,
         accepted: boolean,
         wellId?: string,
-        eventContext?: { event: TelemetryEventInput; userId?: string }
+        eventContext?: { event: TelemetryEventInput; userId?: string; offerId?: string }
     ): Promise<void> {
         try {
             const now = new Date().toISOString();
@@ -603,7 +603,7 @@ class TelemetryService {
                 // then resolve the newest row, within the same transaction.
                 const exact = await tx.ai_telemetry_logs.findFirst({
                     where: { id: telemetryId },
-                    select: { id: true }
+                    select: { id: true, offerId: true }
                 });
                 const target =
                     exact ??
@@ -611,10 +611,15 @@ class TelemetryService {
                         ? await tx.ai_telemetry_logs.findFirst({
                               where: { wellId },
                               orderBy: { createdAt: 'desc' },
-                              select: { id: true }
+                              select: { id: true, offerId: true }
                           })
                         : null);
                 if (target) {
+                    const linkedOfferId =
+                        eventContext?.offerId &&
+                        (!target.offerId || target.offerId === eventContext.offerId)
+                            ? eventContext.offerId
+                            : undefined;
                     // Compare both flags. A first reject starts from false/false,
                     // so checking wasAccepted alone would silently drop it.
                     await tx.ai_telemetry_logs.updateMany({
@@ -622,10 +627,11 @@ class TelemetryService {
                             id: target.id,
                             OR: [
                                 { wasAccepted: { not: accepted } },
-                                { wasRejected: { not: !accepted } }
+                                { wasRejected: { not: !accepted } },
+                                ...(linkedOfferId ? [{ offerId: null }] : [])
                             ]
                         },
-                        data: updates
+                        data: { ...updates, ...(linkedOfferId ? { offerId: linkedOfferId } : {}) }
                     });
                     await featureExtractor.updateLabelByTelemetry(
                         target.id,
@@ -753,6 +759,7 @@ class TelemetryService {
         const eventRows: EventRow[] = [];
         type ManualPlan = { index: number; payload: TelemetryConfigPayload };
         const manualPlans: ManualPlan[] = [];
+        const offerLinks = new Map<string, string>();
         const lock = await this.lock.acquireLock();
         try {
             // Prefetch: wiersze po id + latest per wellId (2 zapytania zamiast N×3).
@@ -763,25 +770,32 @@ class TelemetryService {
             const [byIdRows, latestRows] = await Promise.all([
                 prisma.ai_telemetry_logs.findMany({
                     where: { id: { in: ids } },
-                    select: { id: true, wasAccepted: true, wasRejected: true }
+                    select: { id: true, offerId: true, wasAccepted: true, wasRejected: true }
                 }),
                 wellIds.length > 0
                     ? prisma.ai_telemetry_logs.findMany({
                           where: { wellId: { in: wellIds } },
                           orderBy: { createdAt: 'desc' },
-                          select: { id: true, wellId: true, wasAccepted: true, wasRejected: true }
+                          select: {
+                              id: true,
+                              wellId: true,
+                              offerId: true,
+                              wasAccepted: true,
+                              wasRejected: true
+                          }
                       })
                     : []
             ]);
             const byId = new Map(byIdRows.map((r) => [r.id, r]));
             const latestByWell = new Map<
                 string,
-                { id: string; wasAccepted: boolean; wasRejected: boolean }
+                { id: string; offerId: string | null; wasAccepted: boolean; wasRejected: boolean }
             >();
             for (const r of latestRows) {
                 if (r.wellId && !latestByWell.has(r.wellId))
                     latestByWell.set(r.wellId, {
                         id: r.id,
+                        offerId: r.offerId ?? null,
                         wasAccepted: r.wasAccepted,
                         wasRejected: r.wasRejected
                     });
@@ -791,11 +805,19 @@ class TelemetryService {
             items.forEach((data, index) => {
                 const accepted = data.accepted;
                 // Resolve jak single: id → repetycja → latest per well.
-                let target: { id: string; wasAccepted: boolean; wasRejected: boolean } | undefined;
+                let target:
+                    | {
+                          id: string;
+                          offerId: string | null;
+                          wasAccepted: boolean;
+                          wasRejected: boolean;
+                      }
+                    | undefined;
                 const row = byId.get(data.telemetryId);
                 if (row) {
                     target = {
                         id: row.id,
+                        offerId: row.offerId ?? null,
                         wasAccepted: row.wasAccepted,
                         wasRejected: row.wasRejected
                     };
@@ -804,6 +826,9 @@ class TelemetryService {
                     if (latest) target = latest;
                 }
                 if (target) {
+                    if (data.offerId && !target.offerId && !offerLinks.has(target.id)) {
+                        offerLinks.set(target.id, data.offerId);
+                    }
                     if (target.wasAccepted !== accepted || target.wasRejected !== !accepted) {
                         updates.push({ id: target.id, accepted });
                         updated.push({ index, telemetryId: target.id });
@@ -853,6 +878,16 @@ class TelemetryService {
                             usageCount: { increment: 1 },
                             lastUsedAt: now
                         }
+                    });
+                }
+                const linksByOffer = new Map<string, string[]>();
+                offerLinks.forEach((offerId, id) => {
+                    linksByOffer.set(offerId, [...(linksByOffer.get(offerId) || []), id]);
+                });
+                for (const [offerId, ids] of linksByOffer) {
+                    await tx.ai_telemetry_logs.updateMany({
+                        where: { id: { in: ids }, offerId: null },
+                        data: { offerId }
                     });
                 }
                 if (eventRows.length > 0) {

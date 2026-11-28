@@ -501,14 +501,16 @@ function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
     const uwagiTitle = hasUwagi
         ? `Uwagi: ${escAttr(String(w.uwagi).slice(0, 80))}${String(w.uwagi).length > 80 ? '…' : ''} — kliknij aby edytować`
         : 'Dodaj uwagi do studni';
+    const wellIdAttr = escAttr(String(w.id || ''));
 
     const logRowAttr =
         logicalRow !== undefined && logicalRow !== null ? ` data-logical-row="${logicalRow}"` : '';
 
     const minH = hasElevations ? 104 : 76;
-    let html = `<div class="well-list-item${isActive ? ' active' : ''}${isLocked ? ' is-locked' : ''}" data-widx="${i}" data-well-idx="${i}"${logRowAttr} style="min-height:${minH}px;box-sizing:border-box;${changeStyling}${errorStyling}" data-csp="selectWell" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}">
+    let html = `<div class="well-list-item${isActive ? ' active' : ''}${isLocked ? ' is-locked' : ''}" data-widx="${i}" data-well-idx="${i}" data-well-id="${wellIdAttr}"${logRowAttr} style="min-height:${minH}px;box-sizing:border-box;${changeStyling}${errorStyling}" data-csp="selectWell" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}">
       <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
         <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escFn(w.name || '').replace(/"/g, '&quot;')}">${escFn(w.name || '')}</div>
+        <span class="well-ai-indicator" data-ai-well-status hidden></span>
         <div class="well-list-actions">
           <button class="well-list-action ${hasUwagi ? 'has-uwagi' : ''}" title="${uwagiTitle}" aria-label="Uwagi" data-csp="openWellNotesModal" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" data-csp-stop="1"><i data-lucide="file-text" aria-hidden="true"></i></button>
           <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" data-csp="duplicateWell" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" data-csp-stop="1"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
