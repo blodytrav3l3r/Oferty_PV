@@ -45,8 +45,8 @@
     let _influenceCache = { value: null, expiresAt: 0 };
 
     // FEATURE_VERSION musi być zgodny z wymiarami wektorów z FeatureExtractor
-    // (v7 = 29 cech). Zgodna wersja unika 400 MISMATCH.
-    let FEATURE_VERSION = 'v7';
+    // (v8 = 30 cech). Zgodna wersja unika 400 MISMATCH.
+    let FEATURE_VERSION = 'v8';
     let _featureVersionFetched = false;
     const RANKING_VERSION = 'dual_v1';
 
@@ -477,7 +477,8 @@
         const kineta = (well.kineta || '').toLowerCase();
         const isKinetaPreco = kineta === 'preco' || kineta === 'precotop';
         const isKinetaUnolith = kineta === 'unolith';
-        const isKinetaStandard = kineta === 'beton' || kineta === '';
+        const isKinetaStandard = kineta === 'beton' || kineta === 'standard';
+        const isKinetaNone = kineta === 'brak';
         // ponytail: dennicaHeight = wysokość dennicy ocenianego kandydata (layout.dennica).
         // Solver emituje 1 dennnicę na studnię, więc jest to spójne z telemetryBridge
         // (sumą dennicy z finalnego configa). Przy konfiguracji z 2+ dennnicami byłby
@@ -536,6 +537,7 @@
             isKinetaPreco ? 1 : 0,
             isKinetaUnolith ? 1 : 0,
             isKinetaStandard ? 1 : 0,
+            isKinetaNone ? 1 : 0,
             dennicaHeightMm,
             transList.length,
             transMaxDn,
@@ -608,8 +610,6 @@
                 }),
                 signal: controller.signal
             });
-
-            clearTimeout(timeoutId);
 
             if (!res.ok) {
                 mlOnline = false;

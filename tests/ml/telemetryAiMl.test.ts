@@ -9,6 +9,9 @@ import {
     releasePredictionProof
 } from '../../src/services/ml/predictionCache';
 import { getMetricsSnapshot, resetMetrics } from '../../src/utils/metrics';
+import { FEATURE_NAMES } from '../../src/config/mlConstants';
+
+const FEATURE_COUNT = FEATURE_NAMES.length;
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -334,10 +337,10 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(29).fill(0.1),
+            weights: new Array(FEATURE_COUNT).fill(0.1),
             bias: 0,
-            featureMins: new Array(29).fill(0),
-            featureMaxs: new Array(29).fill(1)
+            featureMins: new Array(FEATURE_COUNT).fill(0),
+            featureMaxs: new Array(FEATURE_COUNT).fill(1)
         });
         mockPredict.mockReturnValue(0.5);
         clearPredictionCache();
@@ -352,14 +355,14 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
                         wellId: 'well-1',
                         features: [
                             1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000,
-                            1, 0, 0, 1, 0, 2, 630, 0, 1800, 900
+                            1, 0, 0, 0, 1, 0, 2, 630, 0, 1800, 900
                         ]
                     },
                     {
                         id: 2,
                         features: [
                             1200, 3500, 0, 1, 0, 1, 0, 0, 0, 4, 3, 2, 3000, 6000, 4, 1, 0, 1, 4200,
-                            0, 1, 0, 0, 0, 1, 400, 200, 200, 200
+                            0, 1, 0, 0, 0, 0, 1, 400, 200, 200, 200
                         ]
                     }
                 ]
@@ -381,17 +384,23 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(29).fill(0.1),
+            weights: new Array(FEATURE_COUNT).fill(0.1),
             bias: 0,
-            featureMins: new Array(29).fill(0),
-            featureMaxs: new Array(29).fill(1)
+            featureMins: new Array(FEATURE_COUNT).fill(0),
+            featureMaxs: new Array(FEATURE_COUNT).fill(1)
         });
         mockPredict.mockReturnValue(0.7);
         mockEvaluateOnlineAuc.mockRejectedValue(new Error('diagnostic unavailable'));
         const { logger } = (await import('../../src/utils/logger')) as any;
 
         const payload = {
-            candidates: [{ id: 10, wellId: 'well-diagnostic', features: new Array(29).fill(0.5) }]
+            candidates: [
+                {
+                    id: 10,
+                    wellId: 'well-diagnostic',
+                    features: new Array(FEATURE_COUNT).fill(0.5)
+                }
+            ]
         };
         const sendPrediction = () =>
             request(app)
@@ -418,10 +427,10 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(29).fill(0.1),
+            weights: new Array(FEATURE_COUNT).fill(0.1),
             bias: 0,
-            featureMins: new Array(29).fill(0),
-            featureMaxs: new Array(29).fill(1)
+            featureMins: new Array(FEATURE_COUNT).fill(0),
+            featureMaxs: new Array(FEATURE_COUNT).fill(1)
         });
 
         const res = await request(app)
@@ -439,10 +448,10 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(29).fill(0.1),
+            weights: new Array(FEATURE_COUNT).fill(0.1),
             bias: 0,
-            featureMins: new Array(29).fill(0),
-            featureMaxs: new Array(29).fill(1)
+            featureMins: new Array(FEATURE_COUNT).fill(0),
+            featureMaxs: new Array(FEATURE_COUNT).fill(1)
         });
         mockPredict.mockReturnValue(0.42);
 
@@ -452,7 +461,7 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
                     id: 7,
                     features: [
                         1600, 3200, 1, 0, 0, 1, 0, 0, 0, 5, 3, 2, 4100, 7200, 4, 1, 1, 1, 8000, 0,
-                        0, 0, 1, 0, 3, 500, 0, 1500, 750
+                        0, 0, 1, 0, 0, 3, 500, 0, 1500, 750
                     ]
                 }
             ]
@@ -477,7 +486,7 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         const res = await request(app)
             .post('/api/telemetry/ai/predict/batch')
             .send({
-                candidates: [{ id: 1, features: new Array(29).fill(0.5) }]
+                candidates: [{ id: 1, features: new Array(FEATURE_COUNT).fill(0.5) }]
             });
         expect(res.status).toBe(503);
         expect(mockEvaluateOnlineAuc).not.toHaveBeenCalled();
@@ -878,7 +887,7 @@ describe('POST /api/telemetry/ai/reward', () => {
             .send({
                 action: 'ACCEPT',
                 wellId: 'well-1',
-                scoreBefore: 0.9,
+                scoreBefore: 0.895,
                 wasAiRanked: true,
                 predictionToken
             });

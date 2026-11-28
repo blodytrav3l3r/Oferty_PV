@@ -2,6 +2,7 @@ import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import { clearPredictionCache, predictionCacheSize } from '../../src/services/ml/predictionCache';
+import { FEATURE_NAMES } from '../../src/config/mlConstants';
 import {
     offerItemSchema,
     wellComponentSchema,
@@ -115,16 +116,17 @@ jest.mock('../../src/services/auditService', () => ({
     logAudit: jest.fn()
 }));
 
-const FEATS = (fill = 0.5): number[] => new Array(29).fill(fill);
+const FEATURE_COUNT = FEATURE_NAMES.length;
+const FEATS = (fill = 0.5): number[] => new Array(FEATURE_COUNT).fill(fill);
 
 function mockModel(): void {
     mockGetActiveModel.mockResolvedValue({
         id: 'model-v1',
         version: 'v1.0.0-test',
-        weights: new Array(29).fill(0.1),
+        weights: new Array(FEATURE_COUNT).fill(0.1),
         bias: 0,
-        featureMins: new Array(29).fill(0),
-        featureMaxs: new Array(29).fill(1)
+        featureMins: new Array(FEATURE_COUNT).fill(0),
+        featureMaxs: new Array(FEATURE_COUNT).fill(1)
     });
 }
 
@@ -146,7 +148,11 @@ describe('aiFinite: NaN/Inf nie wchodzi ani nie wychodzi z /ai/predict/batch', (
             .post('/api/telemetry/ai/predict/batch')
             .send({
                 candidates: [
-                    { id: 1, wellId: 'well-finite-1', features: [...FEATS().slice(0, 28), null] }
+                    {
+                        id: 1,
+                        wellId: 'well-finite-1',
+                        features: [...FEATS().slice(0, FEATURE_COUNT - 1), null]
+                    }
                 ]
             });
         expect(res.status).toBe(400);

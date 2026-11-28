@@ -621,7 +621,7 @@ model AiFeature {
   ringCount               Int     @default(0)
   bottomType              String
   topType                 String
-  kinetaType              String? // 'preco' | 'unolith' | 'standard' | 'brak' (null = brak danych)
+  kinetaType              String? // 'preco' | 'unolith' | 'standard' | 'beton' | 'brak' (null = brak danych)
   dennicaHeight           Float? // wysokość dennicy w mm (suma dennicy z config)
   connectionCount         Int     @default(0)
   transitionsAboveDennica Int     @default(0)

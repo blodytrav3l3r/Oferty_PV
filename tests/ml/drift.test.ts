@@ -148,7 +148,7 @@ function makeBaselineModel(): StoredModel {
         trainingRows: 100,
         active: true,
         createdAt: new Date().toISOString(),
-        featureVersion: 'v7',
+        featureVersion: 'v8',
         featureDistributions: JSON.stringify(buildFeatureDistributions(FEATURE_NAMES, trainVectors))
     };
 }
@@ -322,6 +322,30 @@ describe('rawFeatureValue (transition*)', () => {
         expect(rawFeatureValue(f, 'minTransitionHeightMm', agg)).toBe(300);
         expect(rawFeatureValue(f, 'maxTransitionHeightMm', agg)).toBe(500);
         expect(rawFeatureValue(f, 'avgTransitionHeightMm', agg)).toBe(400);
+    });
+
+    describe('rawFeatureValue (kineta categories)', () => {
+        it('odróżnia jawny brak kinety od betonu, Unolith, PRECO i braku danych', () => {
+            const categories = [
+                { kinetaType: 'brak', expected: [0, 0, 0, 1] },
+                { kinetaType: 'beton', expected: [0, 0, 1, 0] },
+                { kinetaType: 'standard', expected: [0, 0, 1, 0] },
+                { kinetaType: 'unolith', expected: [0, 1, 0, 0] },
+                { kinetaType: 'preco', expected: [1, 0, 0, 0] },
+                { kinetaType: null, expected: [0, 0, 0, 0] }
+            ];
+
+            for (const { kinetaType, expected } of categories) {
+                const feature = makeFeature({ kinetaType });
+                const values = [
+                    rawFeatureValue(feature, 'kineta_preco'),
+                    rawFeatureValue(feature, 'kineta_unolith'),
+                    rawFeatureValue(feature, 'kineta_standard'),
+                    rawFeatureValue(feature, 'kineta_none')
+                ];
+                expect(values).toEqual(expected);
+            }
+        });
     });
 
     it('zwraca 0 (nie null) gdy brak transAgg — semantyka spójna z treningiem', () => {
@@ -540,7 +564,7 @@ describe('computeShadowStats', () => {
             featureMaxs: JSON.stringify(production.featureMaxs),
             state: 'APPROVED',
             active: false,
-            featureVersion: 'v7',
+            featureVersion: 'v8',
             createdAt: new Date().toISOString()
         };
         const trainingRun = {

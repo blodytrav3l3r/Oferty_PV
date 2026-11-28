@@ -22,6 +22,7 @@ export const FEATURE_NAMES = [
     'kineta_preco',
     'kineta_unolith',
     'kineta_standard',
+    'kineta_none',
     'dennicaHeight',
     'transitionCount',
     'maxTransitionDnMm',
@@ -31,7 +32,7 @@ export const FEATURE_NAMES = [
 ];
 
 export const ML_CONSTANTS = {
-    FEATURE_VERSION: process.env.ML_FEATURE_VERSION || 'v7',
+    FEATURE_VERSION: 'v8',
     RANKING_VERSION: process.env.ML_RANKING_VERSION || 'dual_v1',
     FEATURE_COUNT: FEATURE_NAMES.length,
     PREDICTION_CACHE_TTL_MS: 15 * 60 * 1000,

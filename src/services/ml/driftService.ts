@@ -2,7 +2,7 @@
  * Monitoring driftu (ETAP 6 planu MLOps).
  *
  * - Feature drift: PSI każdej cechy vs baseline z AiModel.featureDistributions
- *   (histogramy z TRAIN przy treningu). Wszystkie 29 cech — żadna nie wypada
+ *   (histogramy z TRAIN przy treningu). Wszystkie 30 cech — żadna nie wypada
  *   z monitoringu przy zmianie top-features.
  * - Prediction drift: PSI rozkładu score produkcyjnych (aiRewardLog.scoreBefore)
  *   między bieżącym a historycznym oknem.
@@ -451,7 +451,7 @@ export async function buildDriftReport(): Promise<DriftReport> {
         const trainingScope = await resolveTrainingScope(production);
         const [feature, prediction, label, shadow] = await Promise.all([
             computeFeatureDrift(production, trainingScope),
-            computePredictionDrift(),
+            computePredictionDrift(production?.version ?? null),
             computeLabelDrift(production, trainingScope),
             computeShadowStats(production, trainingScope)
         ]);
@@ -562,7 +562,9 @@ export function rawFeatureValue(
         case 'kineta_unolith':
             return kineta === 'unolith' ? 1 : 0;
         case 'kineta_standard':
-            return kineta === 'beton' || kineta === '' ? 1 : 0;
+            return kineta === 'beton' || kineta === 'standard' ? 1 : 0;
+        case 'kineta_none':
+            return kineta === 'brak' ? 1 : 0;
         case 'dennicaHeight':
             return f.dennicaHeight ?? null;
         case 'transitionCount':

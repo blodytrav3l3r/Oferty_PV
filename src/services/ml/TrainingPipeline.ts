@@ -199,8 +199,8 @@ export function oneHotEncode(raw: Record<string, unknown>): number[] {
     const dn = Number(raw.dn) || 0;
     const ringCount = Number(raw.ringCount) || 0;
 
-    // v6: kineta — one-hot (preco/precotop→preco, unolith, reszta→standard).
-    // Spójne z buildFeatureVector (mlDualRanking.js): 'brak'/nieznane → wszystkie 0.
+    // v8: kineta — beton/standard, preco, unolith i jawny brak są osobnymi cechami.
+    // Brak wartości lub nieznana etykieta nie są zgadywane jako żadna z kategorii.
     const kineta = String(raw.kinetaType ?? raw.kineta ?? '').toLowerCase();
 
     const vec: number[] = [];
@@ -226,7 +226,8 @@ export function oneHotEncode(raw: Record<string, unknown>): number[] {
     vec.push(warehouse === 'KLB' && wellType === 'standard' ? 1 : 0);
     vec.push(kineta === 'preco' || kineta === 'precotop' ? 1 : 0);
     vec.push(kineta === 'unolith' ? 1 : 0);
-    vec.push(kineta === 'beton' || kineta === '' ? 1 : 0);
+    vec.push(kineta === 'beton' || kineta === 'standard' ? 1 : 0);
+    vec.push(kineta === 'brak' ? 1 : 0);
     vec.push(Number(raw.dennicaHeight) || 0);
     vec.push(Number(raw.transitionCount) || 0);
     vec.push(Number(raw.maxTransitionDnMm) || 0);

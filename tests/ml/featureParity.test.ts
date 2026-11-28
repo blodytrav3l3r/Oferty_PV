@@ -3,11 +3,11 @@
  *
  * Weryfikuje, że frontend (public/js/studnie/mlDualRanking.js buildFeatureVector)
  * i backend (src/services/ml/TrainingPipeline.ts oneHotEncode) produkują
- * IDENTYCZNY 29-wymiarowy wektor cech (v7) dla tej samej konfiguracji studni.
+ * IDENTYCZNY 30-wymiarowy wektor cech (v8) dla tej samej konfiguracji studni.
  *
  * Jeśli jedna strona zmieni kolejność/semantykę cech, model trenowany na
  * wektorach backendu będzie dostawał na serve zupełnie inne bity — test łapie
- * to przed wdrożeniem. Tło: FEATURE_NAMES (29 cech) + FEATURE_VERSION 'v7'
+ * to przed wdrożeniem. Tło: FEATURE_NAMES (30 cech) + FEATURE_VERSION 'v8'
  * + guard FEATURE_VERSION_MISMATCH na endpointach.
  */
 
@@ -30,9 +30,10 @@ jest.mock('../../src/utils/logger', () => ({
 }));
 
 import { oneHotEncode, seasonToNum } from '../../src/services/ml/TrainingPipeline';
+import { FEATURE_NAMES, ML_CONSTANTS } from '../../src/config/mlConstants';
 
-const FEATURE_VERSION = 'v7';
-const FEATURE_COUNT = 29;
+const FEATURE_VERSION = 'v8';
+const FEATURE_COUNT = 30;
 
 function makeProduct(
     id: string,
@@ -90,7 +91,7 @@ function makeWell(overrides: any = {}): any {
         magazyn: 'Kluczbork',
         type: 'standard',
         uszczelka: 'brak',
-        kineta: '',
+        kineta: 'beton',
         rzednaDna: 0,
         przejscia: [],
         ...overrides
@@ -369,10 +370,12 @@ describe('parytet cech train/serve (buildFeatureVector vs oneHotEncode)', () => 
     });
 
     it(
-        'stały wymiar: frontend i backend produkują 29 cech (FEATURE_VERSION ' +
+        'stały wymiar: frontend i backend produkują 30 cech (FEATURE_VERSION ' +
             FEATURE_VERSION +
             ')',
         () => {
+            expect(ML_CONSTANTS.FEATURE_VERSION).toBe(FEATURE_VERSION);
+            expect(FEATURE_NAMES).toHaveLength(FEATURE_COUNT);
             const front = buildFeatureVector(makeLayout(), makeWell());
             const back = oneHotEncode(buildBackendRaw(makeLayout(), makeWell(), PRODUCTS) as any);
             expect(front).toHaveLength(FEATURE_COUNT);
@@ -399,7 +402,8 @@ describe('parytet cech train/serve (buildFeatureVector vs oneHotEncode)', () => 
         expect(front[17]).toBe(0); // topHasKnown (brak konusa)
         expect(front[19]).toBe(1); // KLB && standard
         expect(front[22]).toBe(1); // kineta standard
-        expect(front[23]).toBe(500); // dennicaHeight
+        expect(front[23]).toBe(0); // brak kinety
+        expect(front[24]).toBe(500); // dennicaHeight
     });
 
     it('studnia z uszczelkami GSG: connectionCount i cena z uszczelkami po obu stronach', () => {
@@ -453,6 +457,27 @@ describe('parytet cech train/serve (buildFeatureVector vs oneHotEncode)', () => 
         expect(front[20]).toBe(1); // preco
         expect(front[21]).toBe(0); // unolith
         expect(front[22]).toBe(0); // standard
+        expect(front[23]).toBe(0); // brak kinety
+    });
+
+    it('brak kinety: tylko osobny bit kineta_none ustawiony', () => {
+        const layout = makeLayout();
+        const well = makeWell({ kineta: 'brak' });
+        const front = buildFeatureVector(layout, well);
+        const back = oneHotEncode(buildBackendRaw(layout, well, PRODUCTS) as any);
+
+        expect(front).toEqual(back);
+        expect(front.slice(20, 24)).toEqual([0, 0, 0, 1]);
+    });
+
+    it('brak danych o kinetcie nie jest utożsamiany z betonem ani z jej brakiem', () => {
+        const layout = makeLayout();
+        const well = makeWell({ kineta: '' });
+        const front = buildFeatureVector(layout, well);
+        const back = oneHotEncode(buildBackendRaw(layout, well, PRODUCTS) as any);
+
+        expect(front).toEqual(back);
+        expect(front.slice(20, 24)).toEqual([0, 0, 0, 0]);
     });
 
     it('magazyn Włocławek: bity warehouse po obu stronach', () => {
@@ -488,10 +513,10 @@ describe('parytet cech train/serve (buildFeatureVector vs oneHotEncode)', () => 
         const front = buildFeatureVector(layout, well);
         const back = oneHotEncode(buildBackendRaw(layout, well, PRODUCTS) as any);
         expect(front).toEqual(back);
-        expect(front[24]).toBe(4); // transitionCount
-        expect(front[25]).toBe(630); // maxTransitionDnMm
-        expect(front[26]).toBe(0); // minTransitionHeightMm (rzedna 1.0 == dno)
-        expect(front[27]).toBe(1200); // maxTransitionHeightMm (2.2 - 1.0 = 1200mm)
-        expect(front[28]).toBe(600); // avgTransitionHeightMm ((0+1200+0+1200)/4)
+        expect(front[25]).toBe(4); // transitionCount
+        expect(front[26]).toBe(630); // maxTransitionDnMm
+        expect(front[27]).toBe(0); // minTransitionHeightMm (rzedna 1.0 == dno)
+        expect(front[28]).toBe(1200); // maxTransitionHeightMm (2.2 - 1.0 = 1200mm)
+        expect(front[29]).toBe(600); // avgTransitionHeightMm ((0+1200+0+1200)/4)
     });
 });

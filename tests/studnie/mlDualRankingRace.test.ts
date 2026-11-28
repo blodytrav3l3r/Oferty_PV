@@ -126,7 +126,7 @@ function mockFetch(
             return delayed(delays.mlStatus ?? 0, () => ({
                 ok: true,
                 status: 200,
-                json: () => Promise.resolve({ version: 'v7' })
+                json: () => Promise.resolve({ version: 'v8' })
             }));
         }
         return delayed(delays.predict ?? 0, () => {
@@ -219,7 +219,7 @@ describe('mlDualRanking P0 race', () => {
                 return origDelayed(0, () => ({
                     ok: true,
                     status: 200,
-                    json: () => Promise.resolve({ version: 'v7' })
+                    json: () => Promise.resolve({ version: 'v8' })
                 }));
             }
             const body = JSON.parse(fOpts.body);

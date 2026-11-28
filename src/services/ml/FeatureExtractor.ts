@@ -333,9 +333,8 @@ export class FeatureExtractor {
         const dennPos = allDistinct.findIndex(isDennicaProductId);
         if (dennPos >= 0) bottomType = allDistinct[dennPos];
 
-        // v6: kineta — surowa wartość z payloadu (frontend wysyła 'brak', 'beton',
-        // 'preco', 'precotop', 'unolith'). oneHotEncode tłumaczy ją na bity —
-        // 'brak'/nieznane = wszystkie bity 0 (spójnie z buildFeatureVector).
+        // v8: zachowaj kategorię kinety z payloadu. Encoder ustawia osobny bit
+        // dla jawnego 'brak'; brak lub nieznana etykieta pozostaje nieokreślona.
         let kinetaType = String(record.kineta || '').toLowerCase();
         if (kinetaType === 'precotop') kinetaType = 'preco';
 

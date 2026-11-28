@@ -11,7 +11,7 @@ import vm from 'vm';
  * oraz realne cechy kandydatów (ringCount / totalPrice / totalWeight).
  */
 
-const FEATURE_VERSION = 'v6';
+const FEATURE_VERSION = 'v8';
 
 function makeProduct(
     id: string,
