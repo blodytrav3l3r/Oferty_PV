@@ -1,6 +1,6 @@
 # Instalacja S.O.K. na nowym komputerze Windows
 
-**Wersja dokumentacji:** 1.65.0
+**Wersja dokumentacji:** 1.66.0
 
 **Aktualizacja:** 2026-11-05
 

@@ -4,6 +4,26 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.66.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.65.0...v1.66.0) (2026-11-28)
+
+### Features
+
+- **studnie:** rozróżnij brak kinety w ai ([0340e01](https://github.com/blodytrav3l3r/Oferty_PV/commit/0340e015e20731ae25639f68893bbbc8605110c7))
+- **telemetry:** diagnozuj przecieki grup treningowych ([3d23fb0](https://github.com/blodytrav3l3r/Oferty_PV/commit/3d23fb03bc617fd2885d4fd708f53e6eba87252b))
+- **telemetry:** utrwal metryki operacyjne ai ([661a8a7](https://github.com/blodytrav3l3r/Oferty_PV/commit/661a8a79d9b64b7989228cba7e36279411433aa5))
+
+### Bug Fixes
+
+- **deploy:** migrate postgres before app startup ([08e824a](https://github.com/blodytrav3l3r/Oferty_PV/commit/08e824a045ecba0edbde4a80188f2562024495f7))
+- **studnie:** avoid double-counting partial totals ([32e38ec](https://github.com/blodytrav3l3r/Oferty_PV/commit/32e38ece85f47389cde90f1dac0930bd72da5375))
+- **studnie:** naprawa timerów i parytetu uszczelek ([d387666](https://github.com/blodytrav3l3r/Oferty_PV/commit/d387666a748a65c0f5cf5c7feef0c745d65f902d))
+- **telemetry:** disable online auc rollback ([7e0a011](https://github.com/blodytrav3l3r/Oferty_PV/commit/7e0a0110ca95bee2f78a055b738bde7b6018a6cc))
+- **telemetry:** guard ai feedback and scan training data ([c1429f5](https://github.com/blodytrav3l3r/Oferty_PV/commit/c1429f576620ed932c7ef8b6e6933ad5fd79cccd))
+- **telemetry:** popraw metryki ai i cykl modeli ([5952858](https://github.com/blodytrav3l3r/Oferty_PV/commit/5952858a8bccc7c63ccd84837ee0e36da24b7d5a))
+- **telemetry:** popraw stabilnosc pr-auc i dostepnosc panelu ([acf3b8a](https://github.com/blodytrav3l3r/Oferty_PV/commit/acf3b8a0d52679a57017f68fe5a845b08621ba43))
+- **telemetry:** wiąż metryki predykcji z proofem ([17154c9](https://github.com/blodytrav3l3r/Oferty_PV/commit/17154c99b0f0fd5edcb483e5656cd3b1cf9686d0))
+- **ui:** uporządkuj dashboard ai i metryki api ([564df17](https://github.com/blodytrav3l3r/Oferty_PV/commit/564df17b3b198ee53252464b71d348bac32d7cb6))
+
 ## [1.65.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.64.28...v1.65.0) (2026-11-27)
 
 ### Features

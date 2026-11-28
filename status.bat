@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.65.0
+REM  Wersja: 1.66.0
 REM Rola: Pokazuje wersje, commity i lokalne zmiany przed uruchomieniem S.O.K.
 REM Uzycie: status.bat
 REM Uruchamia: scripts/commit-info.mjs; nie uruchamia aplikacji.
